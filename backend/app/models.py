@@ -780,3 +780,1351 @@ class ChefRecipes(models.Model):
 
     class Meta:
         db_table = 'chef_recipies'
+
+
+# --- Diet Food Style (from db_food PDF) ---
+
+class DietFoodStyleAdd(models.Model):
+    food_style_add_id = models.AutoField(primary_key=True)
+    food_style_master_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'diet_food_style_add'
+
+
+class DietFoodStyleDataAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    country_id = models.IntegerField()
+    state_id = models.IntegerField()
+    city_id = models.IntegerField()
+    community_id = models.IntegerField()
+    food_style_add_id = models.IntegerField()
+    patient_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'diet_food_style_data_add'
+
+
+class DietFoodStyleMaster(models.Model):
+    food_style_master_id = models.AutoField(primary_key=True)
+    food_style_id = models.IntegerField()
+    status = models.IntegerField(null=True, default=0)
+    created_at = models.DateField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'diet_food_style_master'
+
+
+class DietSvasthfoodGroupMaster(models.Model):
+    food_group_id = models.AutoField(primary_key=True)
+    food_category_id = models.IntegerField()
+    status = models.IntegerField(default=0)
+    created_by = models.IntegerField()
+    created_at = models.DateField()
+
+    class Meta:
+        db_table = 'diet_svasthfood_group_master'
+
+
+class DietSvasthFoodGroupAdd(models.Model):
+    food_group_add_id = models.AutoField(primary_key=True)
+    food_group_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'diet_svasth_food_group_add'
+
+
+class DietSvasthGroupAddData(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_group_add_id = models.IntegerField()
+    food_style_add_id = models.IntegerField()
+    dietitian_comment = models.CharField(max_length=250)
+    patient_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'diet_svasth_group_add_data'
+
+
+# --- Misc System (from db_food PDF) ---
+
+class Images(models.Model):
+    id = models.IntegerField(primary_key=True)
+    image = models.CharField(max_length=100)
+    image_text = models.TextField()
+
+    class Meta:
+        db_table = 'images'
+
+
+class IpaddressLikesMap(models.Model):
+    id = models.AutoField(primary_key=True)
+    tutorial_id = models.IntegerField()
+    ip_address = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'ipaddress_likes_map'
+
+
+class Likes(models.Model):
+    id = models.AutoField(primary_key=True)
+    userid = models.IntegerField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'likes'
+
+
+class MyPages(models.Model):
+    m_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    mobile = models.CharField(max_length=20)
+    email = models.CharField(max_length=50)
+    address = models.CharField(max_length=1000)
+    food_master_id = models.IntegerField()
+    sub_group_id = models.IntegerField()
+    food_main_id = models.IntegerField()
+    description = models.CharField(max_length=250)
+    country_name = models.CharField(max_length=50)
+    state_name = models.CharField(max_length=50)
+    ingredients = models.CharField(max_length=1000)
+    recipe = models.CharField(max_length=1000)
+    photo = models.CharField(max_length=1000)
+
+    class Meta:
+        db_table = 'my_pages'
+
+
+class ProductsUploadImage(models.Model):
+    id = models.AutoField(primary_key=True)
+    product_id = models.IntegerField()
+    photo = models.CharField(max_length=1000)
+    image_title = models.CharField(max_length=50)
+    description = models.CharField(max_length=500)
+    status_id = models.IntegerField()
+    added_at = models.DateTimeField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'products_upload_image'
+
+
+# --- tbl_* Tables (from db_food PDF) ---
+
+class TblBlogsDietitian(models.Model):
+    id = models.AutoField(primary_key=True)
+    image = models.CharField(max_length=250)
+
+    class Meta:
+        db_table = 'tbl_blogs_dietitian'
+
+
+class TblCallCenter(models.Model):
+    cal_ceneter_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_call_center'
+
+
+class TblCallCenterAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    cal_ceneter_id = models.IntegerField()
+    message = models.CharField(max_length=50)
+    created_at = models.IntegerField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_call_center_add'
+
+
+class TblCarotenoid(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    food_name = models.CharField(max_length=50)
+    base_unit = models.CharField(max_length=50)
+    txt_lutein = models.CharField(max_length=50)
+    txt_zxthn = models.CharField(max_length=50)
+    txt_lycopene = models.CharField(max_length=50)
+    txt_crypto = models.CharField(max_length=50)
+    txt_carotene = models.CharField(max_length=50)
+    txt_crtns = models.CharField(max_length=50)
+    txt_crt = models.CharField(max_length=50)
+    txt_cartd = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_carotenoid'
+
+
+class TblChefFeedback(models.Model):
+    id = models.AutoField(primary_key=True)
+    subject = models.CharField(max_length=250)
+    chef_comment = models.CharField(max_length=250)
+    created_at = models.CharField(max_length=250)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_chef_feedback'
+
+
+class TblCommentsAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    tutorial_id = models.IntegerField()
+    ip_address = models.CharField(max_length=250)
+    name = models.CharField(max_length=50)
+    comments = models.CharField(max_length=500)
+    post_date = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_comments_add'
+
+
+class TblCompanyStatus(models.Model):
+    company_status_id = models.AutoField(primary_key=True)
+    status = models.CharField(max_length=50)
+    created_at = models.DateField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_company_status'
+
+
+class TblCompositionIndex(models.Model):
+    id = models.AutoField(primary_key=True)
+    composition_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_composition_index'
+
+
+class TblCookingInstruction(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_cooking_instruction'
+
+
+class TblCreateDietician(models.Model):
+    id = models.AutoField(primary_key=True)
+    patients = models.CharField(max_length=50)
+    patients_category = models.IntegerField()
+    food_plan = models.CharField(max_length=50)
+    created_at = models.DateTimeField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_create_dietician'
+
+
+class TblDays(models.Model):
+    d_id = models.AutoField(primary_key=True)
+    days_name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_days'
+
+
+class TblDevelopSchedule(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_group_add_id = models.IntegerField()
+    time_slot = models.CharField(max_length=50)
+    food_packing_id = models.IntegerField()
+    patient_id = models.IntegerField()
+    created_at = models.DateField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_develop_schedule'
+
+
+class TblDieticianComment(models.Model):
+    id = models.AutoField(primary_key=True)
+    dietician_comment = models.CharField(max_length=250)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+    patient_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_dietician_comment'
+
+
+class TblDieticianDislikeParameter(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_dietician_dislike_parameter'
+
+
+class TblDieticianLikeParameter(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_dietician_like_parameter'
+
+
+class TblDietplanAddMasterTable(models.Model):
+    dietplan_id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=50)
+    description = models.CharField(max_length=1000)
+    code = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_dietplan_add_master_table'
+
+
+class TblDietplanMasterTable(models.Model):
+    diet_com_id = models.AutoField(primary_key=True)
+    dietplan_id = models.IntegerField()
+    dietitian_comment = models.CharField(max_length=250)
+    created_by = models.IntegerField()
+    created_at = models.DateField()
+    patient_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_dietplan_master_table'
+
+
+class TblDietAddSnacks(models.Model):
+    snacks_data_id = models.AutoField(primary_key=True)
+    snacks_id = models.IntegerField()
+    time_slot = models.CharField(max_length=50)
+    snacks_name = models.CharField(max_length=50)
+    patient_id = models.IntegerField()
+    posted_by = models.IntegerField()
+    created_at = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_diet_add_snacks'
+
+
+class TblDietFoodIndexData(models.Model):
+    id = models.AutoField(primary_key=True)
+    m_id = models.CharField(max_length=50)
+    s_id = models.IntegerField()
+    qty = models.IntegerField()
+    energy = models.CharField(max_length=250)
+    carbo_hydrates = models.CharField(max_length=250)
+    calcium = models.CharField(max_length=250)
+    fats = models.CharField(max_length=250)
+    protein = models.CharField(max_length=250)
+    phosphorus = models.CharField(max_length=250)
+    cholestrol = models.CharField(max_length=250)
+    iron = models.CharField(max_length=250)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_diet_food_index_data'
+
+
+class TblDietFoodPatientIndex(models.Model):
+    id = models.AutoField(primary_key=True)
+    calorie = models.CharField(max_length=250)
+    carbo_hydrates = models.CharField(max_length=250)
+    vitamins = models.CharField(max_length=250)
+    fats = models.CharField(max_length=250)
+    protein = models.CharField(max_length=250)
+    sodium = models.CharField(max_length=250)
+    cholestrol = models.CharField(max_length=250)
+    iron = models.CharField(max_length=250)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_diet_food_patient_index'
+
+
+class TblDietPlansAdd(models.Model):
+    diet_pln_master_id = models.AutoField(primary_key=True)
+    diet_pln_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_diet_plans_add'
+
+
+class TblDietPlanGeneratorReport(models.Model):
+    id = models.AutoField(primary_key=True)
+    patient_name = models.CharField(max_length=50)
+    health_history = models.CharField(max_length=50)
+    diet_plan_code = models.IntegerField()
+    diet_plan = models.IntegerField()
+    description = models.CharField(max_length=250)
+    posted_by = models.IntegerField()
+    created_at = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_diet_plan_generator_report'
+
+
+class TblDietSnacks(models.Model):
+    snacks_id = models.AutoField(primary_key=True)
+    snacks_name = models.CharField(max_length=250)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tbl_diet_snacks'
+
+
+class TblDoctorsComment(models.Model):
+    id = models.AutoField(primary_key=True)
+    doctor_comment = models.TextField()
+    created_at = models.DateField()
+    doctor_id = models.IntegerField()
+    patient_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_doctors_comment'
+
+
+class TblDosAndDont(models.Model):
+    dos_and_dont_id = models.AutoField(primary_key=True)
+    health_parameter = models.CharField(max_length=50)
+    food_category = models.CharField(max_length=50)
+    food_products = models.CharField(max_length=50)
+    dos_and_dont = models.CharField(max_length=50)
+    created_at = models.DateTimeField()
+    status_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_dos_and_dont'
+
+
+class TblEcgData(models.Model):
+    id = models.AutoField(primary_key=True)
+    titel = models.CharField(max_length=50)
+    message = models.CharField(max_length=3000)
+    channel1_data = models.CharField(max_length=50)
+    posted_by = models.IntegerField()
+    date = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_ecg_data'
+
+
+class TblFattyAcid(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    food_name = models.CharField(max_length=50)
+    base_unit = models.CharField(max_length=50)
+    capric = models.CharField(max_length=50)
+    lauric = models.CharField(max_length=50)
+    myristic = models.CharField(max_length=50)
+    palmitic = models.CharField(max_length=50)
+    stearic = models.CharField(max_length=50)
+    arachidic = models.CharField(max_length=50)
+    behenic = models.CharField(max_length=50)
+    lignoceric = models.CharField(max_length=50)
+    myristoleic = models.CharField(max_length=50)
+    palmitoleic = models.CharField(max_length=50)
+    oleic = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    craeted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_fatty_acid'
+
+
+class TblFatSolubleVtmnsVal(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    base_unit = models.CharField(max_length=50)
+    food_name = models.CharField(max_length=50)
+    erg_cal = models.CharField(max_length=50)
+    txt_tocpha = models.CharField(max_length=50)
+    txt_tocphb = models.CharField(max_length=50)
+    txt_tocphg = models.CharField(max_length=50)
+    txt_tocphd = models.CharField(max_length=50)
+    txt_toctra = models.CharField(max_length=50)
+    txt_toctrb = models.CharField(max_length=50)
+    txt_toctrg = models.CharField(max_length=50)
+    txt_toctrd = models.CharField(max_length=50)
+    txt_vite = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_fat_soluble_vtmns_val'
+
+
+class TblFoodstyleMaster(models.Model):
+    food_style_id = models.AutoField(primary_key=True)
+    food_style_code = models.CharField(max_length=25)
+    title = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+    created_at = models.DateField()
+
+    class Meta:
+        db_table = 'tbl_foodstyle_master'
+
+
+class TblFoodDietIndexData(models.Model):
+    id = models.AutoField(primary_key=True)
+    m_id = models.IntegerField()
+    calorie = models.CharField(max_length=250)
+    carbo_hydrates = models.CharField(max_length=250)
+    vitamins = models.CharField(max_length=250)
+    fats = models.CharField(max_length=250)
+    protein = models.CharField(max_length=250)
+    sodium = models.CharField(max_length=250)
+    cholestrol = models.CharField(max_length=250)
+    iron = models.CharField(max_length=250)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_food_diet_index_data'
+
+
+class TblFoodMainDataAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_master_id = models.IntegerField()
+    code = models.IntegerField()
+    food_main_id = models.IntegerField()
+    sub_group_id = models.IntegerField()
+    description = models.CharField(max_length=250)
+    calorie = models.CharField(max_length=250)
+    carbo_hydrates = models.CharField(max_length=250)
+    vitamins = models.CharField(max_length=250)
+    fats = models.CharField(max_length=250)
+    protein = models.CharField(max_length=250)
+    created_by = models.IntegerField()
+    created_at = models.DateField()
+    sodium = models.CharField(max_length=250)
+    cholestrol = models.CharField(max_length=250)
+    iron = models.CharField(max_length=250)
+
+    class Meta:
+        db_table = 'tbl_food_main_data_add'
+
+
+class TblFoodMenu(models.Model):
+    id = models.AutoField(primary_key=True)
+    m_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_food_menu'
+
+
+class TblFoodPacking(models.Model):
+    food_packing_id = models.AutoField(primary_key=True)
+    food_pack_description = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_food_packing'
+
+
+class TblFoodPlanGenerator(models.Model):
+    id = models.AutoField(primary_key=True)
+    week_id = models.IntegerField()
+    d_id = models.IntegerField()
+    food_master_id = models.IntegerField()
+    food_style_add_id = models.IntegerField()
+    country_id = models.IntegerField()
+    state_id = models.IntegerField()
+    items_id = models.IntegerField()
+    m_id = models.CharField(max_length=1000)
+    um = models.CharField(max_length=50)
+    food_group = models.CharField(max_length=250)
+    input_code = models.CharField(max_length=50)
+    food_name_data = models.CharField(max_length=50)
+    base_qty_units = models.IntegerField()
+    base_qty_uoms = models.CharField(max_length=50)
+    serving_qty_unit = models.IntegerField()
+    serving_qty_unit_uoms = models.CharField(max_length=50)
+    calorie = models.CharField(max_length=50)
+    carbo_hydrates = models.CharField(max_length=50)
+    vitamins = models.CharField(max_length=50)
+    fats = models.CharField(max_length=50)
+    protein = models.CharField(max_length=50)
+    sodium = models.CharField(max_length=50)
+    cholestrol = models.CharField(max_length=50)
+    iron = models.CharField(max_length=50)
+    start = models.DateField()
+    posted_by = models.IntegerField()
+    patient_id = models.IntegerField()
+    patient_weight = models.CharField(max_length=50, null=True)
+    patient_height = models.CharField(max_length=50, null=True)
+    patient_bmi = models.CharField(max_length=50, null=True)
+    ingredients = models.TextField(null=True)
+    add_on = models.TextField(null=True)
+    fruites_and_juices = models.TextField(null=True)
+    vegetables = models.TextField(null=True)
+    disease_name = models.CharField(max_length=100, null=True)
+    title = models.CharField(max_length=50)
+    like = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'tbl_food_plan_generator'
+
+
+class TblFoodProductGenerator(models.Model):
+    food_product_id = models.AutoField(primary_key=True)
+    food_category_id = models.IntegerField()
+    sub_group_id = models.IntegerField()
+    food_code = models.CharField(max_length=250)
+    food_description = models.CharField(max_length=250)
+    base_qty = models.CharField(max_length=50)
+    uom_grams = models.CharField(max_length=50)
+    equivalent_base = models.CharField(max_length=50)
+    uom = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_food_product_generator'
+
+
+class TblFoodProductMaster(models.Model):
+    food_product_id = models.AutoField(primary_key=True)
+    food_name = models.CharField(max_length=250)
+    food_code = models.CharField(max_length=50)
+    base_qty = models.IntegerField()
+    uom_master_id = models.IntegerField()
+    ingredients_id = models.IntegerField()
+    uom = models.IntegerField()
+    ing_base_qty = models.IntegerField()
+    suppliers_id = models.IntegerField()
+    created_at = models.DateField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_food_product_master'
+
+
+class TblFoodSpecification(models.Model):
+    food_specification_id = models.AutoField(primary_key=True)
+    food_specification_name = models.CharField(max_length=100)
+    rating = models.CharField(max_length=50)
+    measure = models.CharField(max_length=50)
+    posted_by = models.IntegerField()
+    created_at = models.DateTimeField()
+    status_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_food_specification'
+
+
+class TblHealthparameterMaster(models.Model):
+    healthparameter_master_id = models.AutoField(primary_key=True)
+    healthparameter_master_name = models.CharField(max_length=250)
+    posted_by = models.IntegerField()
+    created_at = models.DateTimeField()
+    status_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_healthparameter_master'
+
+
+class TblHealthConditions(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tbl_health_conditions'
+
+
+class TblImageList(models.Model):
+    id = models.AutoField(primary_key=True)
+    picture = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'tbl_image_list'
+
+
+class TblIngredientsCategoryMaster(models.Model):
+    ingredients_id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    category_description = models.CharField(max_length=100)
+    posted_by = models.IntegerField()
+    created_at = models.DateTimeField()
+    status_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_ingredients_category_master'
+
+
+class TblIngredientsMaster(models.Model):
+    ingredients_id = models.AutoField(primary_key=True)
+    item_name = models.CharField(max_length=250)
+    item_code = models.CharField(max_length=50)
+    uom_master_id = models.IntegerField()
+    suppliers_id = models.IntegerField()
+    food_packing_id = models.IntegerField()
+    created_at = models.DateField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_ingredients_master'
+
+
+class TblItems(models.Model):
+    items_id = models.AutoField(primary_key=True)
+    item_name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_items'
+
+
+class TblLanguagesKnown(models.Model):
+    id = models.AutoField(primary_key=True)
+    user_id = models.IntegerField()
+    language = models.CharField(max_length=100)
+    can_speak = models.IntegerField(null=True, default=0)
+    can_read = models.IntegerField(null=True, default=0)
+    can_write = models.IntegerField(null=True, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tbl_languages_known'
+
+
+class TblNutritionFood(models.Model):
+    nutrition_food_id = models.AutoField(primary_key=True)
+    food_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_nutrition_food'
+
+
+class TblNutritionServiningSize(models.Model):
+    servining_size_id = models.AutoField(primary_key=True)
+    servining_size_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_nutrition_servining_size'
+
+
+class TblNutritionValProducts(models.Model):
+    nutrition_product_id = models.AutoField(primary_key=True)
+    nutrition_food_id = models.IntegerField()
+    servining_size_id = models.IntegerField()
+    calories = models.CharField(max_length=50)
+    total_fat = models.CharField(max_length=50)
+    saturated_fat = models.CharField(max_length=50, db_column='Saturated Fat 4.2g')
+    sodium = models.CharField(max_length=50)
+    total_carbohydrate = models.CharField(max_length=50)
+    dietary_fiber = models.CharField(max_length=50)
+    sugar = models.CharField(max_length=50)
+    protein = models.CharField(max_length=50)
+    vitamin_a = models.CharField(max_length=50)
+    vitamin_c = models.CharField(max_length=50)
+    calcium = models.CharField(max_length=50)
+    iron = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_nutrition_val_products'
+
+
+class TblOrganicAcid(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    food_name = models.CharField(max_length=50)
+    base_unit = models.CharField(max_length=50)
+    oxalate = models.CharField(max_length=50)
+    soluble = models.CharField(max_length=50)
+    insoluble = models.CharField(max_length=50)
+    citac = models.CharField(max_length=50)
+    fumac = models.CharField(max_length=50)
+    malac = models.CharField(max_length=50)
+    quinic_acid = models.CharField(max_length=50)
+    sucac = models.CharField(max_length=50)
+    tarac = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_organic_acid'
+
+
+class TblPackingInstruction(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_packing_instruction'
+
+
+class TblPatientCategory(models.Model):
+    patient_id = models.AutoField(primary_key=True)
+    patient_category = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_patient_category'
+
+
+class TblPatientFoodItem(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_name = models.CharField(max_length=250)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_patient_food_item'
+
+
+class TblPatientHealth(models.Model):
+    patienthealth_id = models.AutoField(primary_key=True)
+    autocode = models.CharField(max_length=100)
+    healthparameter_master_id = models.IntegerField()
+    product_id = models.IntegerField()
+    alpha_num = models.CharField(max_length=50)
+    measures = models.CharField(max_length=50)
+    actual = models.CharField(max_length=250)
+    normal = models.CharField(max_length=50)
+    remarks = models.CharField(max_length=50)
+    patient_id = models.IntegerField()
+    created_at = models.DateTimeField()
+    status_id = models.IntegerField()
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_patient_health'
+
+
+class TblPatientOrderFood(models.Model):
+    id = models.AutoField(primary_key=True)
+    diet_id = models.IntegerField()
+    food_master_id = models.IntegerField()
+    d_id = models.CharField(max_length=50)
+    food_category_name = models.CharField(max_length=50)
+    food_style_name = models.CharField(max_length=50)
+    country = models.CharField(max_length=50)
+    prp_method_one = models.CharField(max_length=2000)
+    prp_method_two = models.CharField(max_length=2000)
+    prp_method_three = models.CharField(max_length=2000)
+    ingredient = models.CharField(max_length=10000)
+    calorie = models.CharField(max_length=50)
+    carbo_hydrates = models.CharField(max_length=50)
+    vitamins = models.CharField(max_length=50)
+    fats = models.CharField(max_length=50)
+    protein = models.CharField(max_length=50)
+    sodium = models.CharField(max_length=50)
+    cholestrol = models.CharField(max_length=50)
+    iron = models.CharField(max_length=50)
+    diet_name = models.IntegerField()
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_patient_order_food'
+
+
+class TblPatientSatisfactionIndex(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_quality = models.CharField(max_length=250)
+    food_quantity = models.CharField(max_length=250)
+    packing_quality = models.CharField(max_length=250)
+    quantity = models.CharField(max_length=250)
+    test = models.CharField(max_length=250)
+    comments = models.CharField(max_length=250)
+    created_at = models.DateField()
+    posted_by = models.CharField(max_length=11)
+
+    class Meta:
+        db_table = 'tbl_patient_satisfaction_index'
+
+
+class TblPatDislikeFood(models.Model):
+    id = models.AutoField(primary_key=True)
+    description = models.CharField(max_length=250)
+    patient_id = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tbl_pat_dislike_food'
+
+
+class TblPayAnalysis(models.Model):
+    id = models.AutoField(primary_key=True)
+    bill_no = models.IntegerField()
+    date = models.CharField(max_length=50)
+    payment_mode = models.CharField(max_length=50)
+    status = models.CharField(max_length=50, default='unpaid')
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_pay_analysis'
+
+
+class TblPayBiils(models.Model):
+    id = models.AutoField(primary_key=True)
+    bill_no = models.IntegerField()
+    datetimepicker = models.CharField(max_length=50)
+    service_code = models.IntegerField()
+    bill_val = models.CharField(max_length=50)
+    query = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_pay_biils'
+
+
+class TblPhytates(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    food_name = models.CharField(max_length=50)
+    base_unit = models.CharField(max_length=50)
+    raffinose = models.CharField(max_length=50)
+    stachyose = models.CharField(max_length=50)
+    verbascose = models.CharField(max_length=50)
+    ajugose = models.CharField(max_length=50)
+    campesterol = models.CharField(max_length=50)
+    stigmasterol = models.CharField(max_length=50)
+    sitostero = models.CharField(max_length=50)
+    phytate = models.CharField(max_length=50)
+    saponin = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_phytates'
+
+
+class TblPolyphenols(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    food_name = models.CharField(max_length=50)
+    base_unit = models.CharField(max_length=50)
+    benzoic_acid = models.CharField(max_length=50)
+    benzaldehyde = models.CharField(max_length=50)
+    protocatechuic = models.CharField(max_length=50)
+    vanillic_acid = models.CharField(max_length=50)
+    gallic_acid = models.CharField(max_length=50)
+    cinamic = models.CharField(max_length=50)
+    o_coumaric = models.CharField(max_length=50)
+    p_coumaric = models.CharField(max_length=50)
+    caffeic_acid = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_polyphenols'
+
+
+class TblProximateData(models.Model):
+    proximate_id = models.AutoField(primary_key=True)
+    proximate_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_proximate_data'
+
+
+class TblQuestions(models.Model):
+    id = models.AutoField(primary_key=True)
+    pat_name = models.CharField(max_length=50)
+    pat_age = models.CharField(max_length=50)
+    ddl_gender = models.CharField(max_length=50)
+    txt_height = models.CharField(max_length=50)
+    text_weight = models.CharField(max_length=50)
+    type_of_work = models.CharField(max_length=50)
+    diet_pat = models.CharField(max_length=50)
+    consume_egg = models.CharField(max_length=50)
+    consume_dairy = models.CharField(max_length=50)
+    txt_food_allergies_data = models.CharField(max_length=50)
+    txt_no_meals = models.CharField(max_length=50)
+    txt_snack = models.CharField(max_length=50)
+    txt_fruits_everyday = models.CharField(max_length=50)
+    txt_diet = models.CharField(max_length=50)
+    txt_vggetables = models.CharField(max_length=50)
+    txt_skip_meals = models.CharField(max_length=50)
+    txt_get_food = models.CharField(max_length=50)
+    p_activity = models.CharField(max_length=50)
+    eat_food_out = models.CharField(max_length=50)
+    consume_alcohol = models.CharField(max_length=50)
+    d_smoke_day = models.CharField(max_length=50)
+    txt_wkup = models.CharField(max_length=50)
+    digestive_prblm = models.CharField(max_length=50)
+    health_issue = models.CharField(max_length=50)
+    eye_issue = models.CharField(max_length=50)
+    txt_skin_issue = models.CharField(max_length=50)
+    txt_anemia = models.CharField(max_length=50)
+    txt_diabetes = models.CharField(max_length=50)
+    txt_fm_diabetes = models.CharField(max_length=50)
+    txt_hyper_tnsn = models.CharField(max_length=50)
+    txt_fm_hyptnsn = models.CharField(max_length=50)
+    txt_cardic_prblm = models.CharField(max_length=50)
+    txt_fm_cardic_prblm = models.CharField(max_length=50)
+    txt_thrd_prblm = models.CharField(max_length=50)
+    txt_thrd_fm_prblm = models.CharField(max_length=50)
+    txt_health_issue = models.CharField(max_length=50)
+    txt_fm_prblm = models.CharField(max_length=50)
+    txt_crntly_med = models.CharField(max_length=250)
+    txt_fall_ill = models.CharField(max_length=50)
+    any_m_prblm = models.CharField(max_length=50)
+    txt_prblms_bl = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_questions'
+
+
+class TblQuestionSuggestionPat(models.Model):
+    id = models.AutoField(primary_key=True)
+    patient_id = models.IntegerField()
+    suggest = models.CharField(max_length=1000)
+    created_at = models.CharField(max_length=50)
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_question_suggestion_pat'
+
+
+class TblRecepeDevEntry(models.Model):
+    recepe_dev_id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=50)
+    firstname = models.CharField(max_length=50)
+    address = models.CharField(max_length=50)
+    date = models.CharField(max_length=50)
+    email = models.CharField(max_length=50)
+    mobile = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_recepe_dev_entry'
+
+
+class TblRecipiesMaster(models.Model):
+    recipies_master_id = models.AutoField(primary_key=True)
+    food_category_id = models.CharField(max_length=50)
+    food_products_id = models.CharField(max_length=50)
+    base_quantity = models.CharField(max_length=50)
+    ingredients_code = models.CharField(max_length=50)
+    ingredients_name = models.CharField(max_length=50)
+    uom = models.CharField(max_length=50)
+    qty = models.CharField(max_length=100)
+    special_instruction = models.CharField(max_length=100)
+    posted_by = models.IntegerField()
+    created_at = models.DateTimeField()
+    status_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_recipies_master'
+
+
+class TblRemainder(models.Model):
+    id = models.AutoField(primary_key=True)
+    mobile = models.CharField(max_length=50)
+    status = models.IntegerField(default=0)
+    created_at = models.CharField(max_length=50)
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_remainder'
+
+
+class TblRemainderDiet(models.Model):
+    id = models.AutoField(primary_key=True)
+    diet_id = models.IntegerField()
+    mobile = models.CharField(max_length=50)
+    patient_id = models.CharField(max_length=50)
+    status = models.IntegerField(default=0)
+    created_at = models.CharField(max_length=50)
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_remainder_diet'
+
+
+class TblScheduleOtherServices(models.Model):
+    id = models.AutoField(primary_key=True)
+    service_code = models.CharField(max_length=50)
+    date_time = models.CharField(max_length=50)
+    time_slotone = models.CharField(max_length=50)
+    time_slottwo = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_schedule_other_services'
+
+
+class TblScmPerson(models.Model):
+    scm_person_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_scm_person'
+
+
+class TblScmPersonAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    scm_person_id = models.IntegerField()
+    message = models.CharField(max_length=50)
+    created_at = models.IntegerField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_scm_person_add'
+
+
+class TblSubGroup(models.Model):
+    sub_group_id = models.AutoField(primary_key=True)
+    sub_group_name = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'tbl_sub_group'
+
+
+class TblSubItemGroup(models.Model):
+    s_id = models.AutoField(primary_key=True)
+    group_name = models.CharField(max_length=250)
+
+    class Meta:
+        db_table = 'tbl_sub_item_group'
+
+
+class TblSuggestions(models.Model):
+    id = models.AutoField(primary_key=True)
+    suggestions = models.CharField(max_length=50)
+    messages = models.CharField(max_length=250)
+    created_at = models.DateField()
+    posted_by = models.IntegerField()
+    ip = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = 'tbl_suggestions'
+
+
+class TblSvasthfoodGroupMaster(models.Model):
+    food_category_id = models.AutoField(primary_key=True)
+    food_category = models.CharField(max_length=250)
+    group_code = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+    created_at = models.DateField()
+
+    class Meta:
+        db_table = 'tbl_svasthfood_group_master'
+
+
+class TblSvasthhealthPm(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_group_add_id = models.IntegerField()
+    food_code = models.IntegerField()
+    food_style_add_id = models.IntegerField()
+    food_description = models.CharField(max_length=250)
+    sub_group_id = models.IntegerField()
+    calorific_value = models.CharField(max_length=50)
+    generate_rcp = models.CharField(max_length=250)
+    image = models.CharField(max_length=50)
+    patient_id = models.IntegerField()
+    posted_by = models.IntegerField()
+    created_at = models.DateField()
+
+    class Meta:
+        db_table = 'tbl_svasthhealth_pm'
+
+
+class TblSvasthFoodCategory(models.Model):
+    food_category_id = models.AutoField(primary_key=True)
+    food_category_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_svasth_food_category'
+
+
+class TblSvasthFoodMasterDataAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    food_master_id = models.IntegerField()
+    food_masters_id = models.IntegerField()
+    sub_group_id = models.IntegerField()
+    food_title = models.CharField(max_length=250)
+    brief_ingredients = models.CharField(max_length=250)
+    calorific_val = models.IntegerField()
+    recepe = models.CharField(max_length=250)
+    patient_id = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_svasth_food_master_data_add'
+
+
+class TblSvasthFoodPlanMaster(models.Model):
+    svasth_food_plan_id = models.AutoField(primary_key=True)
+    plan_name = models.CharField(max_length=250)
+    code = models.CharField(max_length=250)
+    description = models.CharField(max_length=250)
+    price_per_uom = models.IntegerField()
+    price_per_month = models.IntegerField()
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_svasth_food_plan_master'
+
+
+class TblSvasthFoodStyle(models.Model):
+    food_style_id = models.AutoField(primary_key=True)
+    food_style_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_svasth_food_style'
+
+
+class TblSvasthHealthyTips(models.Model):
+    health_tips_id = models.AutoField(primary_key=True)
+    health_tips = models.CharField(max_length=250)
+    patient_id = models.IntegerField()
+    posted_by = models.IntegerField()
+    created_at = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_svasth_healthy_tips'
+
+
+class TblSvasthNutrient(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50)
+    snp_parameter_id = models.IntegerField()
+    serving_base = models.CharField(max_length=50)
+    serving_size_qty = models.CharField(max_length=50)
+    serving_size_unit = models.CharField(max_length=50)
+    serving_weight_gms = models.CharField(max_length=50)
+    metric_qty = models.CharField(max_length=50)
+    created_at = models.CharField(max_length=50)
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_svasth_nutrient'
+
+
+class TblSvasthSnpParameters(models.Model):
+    snp_parameter_id = models.AutoField(primary_key=True)
+    snp_parameter = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_svasth_snp_parameters'
+
+
+class TblUploadHealthChart(models.Model):
+    id = models.AutoField(primary_key=True)
+    report = models.CharField(max_length=50)
+    date = models.DateField()
+    posted_by = models.IntegerField()
+    updated_by_dietitian = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'tbl_upload_health_chart'
+
+
+class TblUploadKitchenDetails(models.Model):
+    id = models.AutoField(primary_key=True)
+    kitchen_report = models.CharField(max_length=250)
+    created_at = models.CharField(max_length=250)
+    posted_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_upload_kitchen_details'
+
+
+class TblUploadReport(models.Model):
+    id = models.AutoField(primary_key=True)
+    report = models.CharField(max_length=50, null=True)
+    new_report = models.CharField(max_length=250, null=True)
+    date = models.DateField()
+    posted_by = models.IntegerField()
+    diet_id = models.IntegerField()
+    updated_by_dietitian = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'tbl_upload_report'
+
+
+class TblUploadReports(models.Model):
+    id = models.AutoField(primary_key=True)
+    report = models.CharField(max_length=50)
+    date = models.DateField()
+    posted_by = models.IntegerField()
+    updated_by_dietitian = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'tbl_upload_reports'
+
+
+class TblUserLoginDetails(models.Model):
+    id = models.AutoField(primary_key=True)
+    email = models.CharField(max_length=50)
+    password = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_user_login_details'
+
+
+class TblUserMapping(models.Model):
+    id = models.AutoField(primary_key=True)
+    nutrition = models.CharField(max_length=50)
+    food_customer = models.CharField(max_length=50)
+    food_supplier = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_user_mapping'
+
+
+class TblWeeks(models.Model):
+    week_id = models.AutoField(primary_key=True)
+    week_name = models.CharField(max_length=50)
+    created_at = models.DateField()
+    created_by = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_weeks'
+
+
+class ViewRating(models.Model):
+    rating_id = models.AutoField(primary_key=True)
+    post_id = models.IntegerField()
+    rating_number = models.IntegerField()
+    total_points = models.IntegerField()
+    patient_id = models.IntegerField()
+    posted_by = models.IntegerField()
+    compliance_rating = models.CharField(max_length=50)
+    created = models.DateTimeField()
+    modified = models.DateTimeField()
+    status = models.IntegerField(default=1)
+
+    class Meta:
+        db_table = 'view_rating'
