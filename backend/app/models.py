@@ -70,7 +70,6 @@ class UserRegister(AbstractUser):
         db_table = 'users'
 
 class Role(models.Model):
-    id = models.AutoField(primary_key=True, db_column='role_id')
     role_name = models.CharField(max_length=50)
     status = models.IntegerField()
 
@@ -79,7 +78,6 @@ class Role(models.Model):
 
 
 class Status(models.Model):
-    id = models.AutoField(primary_key=True, db_column='status_id')
     status_name = models.CharField(max_length=50)
 
     class Meta:
@@ -95,7 +93,6 @@ class Country(models.Model):
 
 
 class State(models.Model):
-    id = models.AutoField(primary_key=True, db_column='state_id')
     state_name = models.CharField(max_length=333)
     country = models.ForeignKey(
         Country,
@@ -108,7 +105,6 @@ class State(models.Model):
 
 
 class City(models.Model):
-    id = models.AutoField(primary_key=True, db_column='city_id')
     city_name = models.CharField(max_length=333)
     state = models.ForeignKey(
         State,
@@ -133,7 +129,6 @@ class Community(models.Model):
 # --- Recipe & Food Management ---
 
 class RecipeDevEntryThree(models.Model):
-    id = models.AutoField(primary_key=True, db_column='recepe_en_three')
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -186,7 +181,6 @@ class RecipeDevEntryThree(models.Model):
 
 
 class RecipeDevEntryTwo(models.Model):
-    id = models.AutoField(primary_key=True, db_column='recepe_dev_en_id')
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -239,7 +233,6 @@ class RecipeDevEntryTwo(models.Model):
         db_table = 'add_recepe_dev_entry_two'
 
 class FoodCategory(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_category_id')
     food_category_name = models.CharField(max_length=50)
     remarks = models.CharField(max_length=100)
     posted_by = models.IntegerField()
@@ -255,7 +248,6 @@ class FoodCategory(models.Model):
 
 
 class FoodSubgroup(models.Model):
-    id = models.AutoField(primary_key=True, db_column='sub_group_id')
     subgroub_name = models.CharField(max_length=250)
     created_by = models.IntegerField()
     created_at = models.DateField()
@@ -265,7 +257,6 @@ class FoodSubgroup(models.Model):
 
 
 class FoodMainCode(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_main_id')
     food_main_category = models.CharField(max_length=250)
     food_main_code = models.CharField(max_length=250)
     created_at = models.DateField()
@@ -286,7 +277,6 @@ class FoodMaster(models.Model):
 
 
 class FoodProduct(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_product_id')
     category = models.ForeignKey(
         'Category',
         on_delete=models.CASCADE,
@@ -355,7 +345,6 @@ class RecipeBuilder(models.Model):
 # --- Diet & Nutrition ---
 
 class DietPlanMaster(models.Model):
-    id = models.AutoField(primary_key=True, db_column='diet_pln_id')
     dietplan = models.ForeignKey(
         'TblDietplanAddMasterTable',
         on_delete=models.CASCADE,
@@ -383,7 +372,6 @@ class DietQualification(models.Model):
         db_table = 'diet_qualification_details'
 
 class UomMaster(models.Model):
-    id = models.AutoField(primary_key=True, db_column='uom_master_id')
     code = models.CharField(max_length=50)
     uom = models.CharField(max_length=100)
     created_at = models.DateTimeField()
@@ -561,7 +549,6 @@ class HealthFoodPlan(models.Model):
         db_table = 'health_food_plan'
 
 class PatientHistory(models.Model):
-    pat_id = models.AutoField(primary_key=True)
     pat_name = models.CharField(max_length=50)
     pat_location = models.CharField(max_length=50)
     pat_medical_history = models.CharField(max_length=500)
@@ -581,7 +568,6 @@ class PatientHistory(models.Model):
         db_table = 'patient_history'
 
 class Dietician(models.Model):
-    id = models.AutoField(primary_key=True, db_column='diet_id')
     name = models.CharField(max_length=50)
     photo = models.CharField(max_length=500)
     location = models.CharField(max_length=100)
@@ -694,7 +680,6 @@ class IndividualSugar(models.Model):
 # --- Ingredients & Supplies ---
 
 class Ingredients(models.Model):
-    id = models.AutoField(primary_key=True, db_column='ingredients_id')
     food_group = models.CharField(max_length=50)
     code = models.CharField(max_length=50)
     food_name_data = models.CharField(max_length=50)
@@ -716,7 +701,6 @@ class Ingredients(models.Model):
         db_table = 'tbl_ingredients'
 
 class Suppliers(models.Model):
-    id = models.AutoField(primary_key=True, db_column='suppliers_id')
     vault_no = models.CharField(max_length=50)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=250)
@@ -766,7 +750,6 @@ class FoodRecipe(models.Model):
         db_table = 'tbl_food_recepe'
 
 class InputBOM(models.Model):
-    id = models.AutoField(primary_key=True, db_column='bom_id')
     items = models.ForeignKey(
         'TblItems',
         on_delete=models.CASCADE,
@@ -805,7 +788,6 @@ class InputBOM(models.Model):
         db_table = 'tbl_input_bom'
 
 class OrderSentLogistic(models.Model):
-    id = models.AutoField(primary_key=True, db_column='l_id')
     patient_name = models.CharField(max_length=50)
     food_category = models.CharField(max_length=50)
     food_style_name = models.CharField(max_length=50)
@@ -888,7 +870,6 @@ class ChefRecipes(models.Model):
 # --- Diet Food Style (from db_food PDF) ---
 
 class DietFoodStyleAdd(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_style_add_id')
     food_style_master = models.ForeignKey(
         'DietFoodStyleMaster',
         on_delete=models.CASCADE,
@@ -902,7 +883,6 @@ class DietFoodStyleAdd(models.Model):
 
 
 class DietFoodStyleDataAdd(models.Model):
-    id = models.AutoField(primary_key=True)
     country_id = models.IntegerField()
     state_id = models.IntegerField()
     city_id = models.IntegerField()
@@ -917,7 +897,6 @@ class DietFoodStyleDataAdd(models.Model):
 
 
 class DietFoodStyleMaster(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_style_master_id')
     food_style = models.ForeignKey(
         'TblFoodstyleMaster',
         on_delete=models.CASCADE,
@@ -932,7 +911,6 @@ class DietFoodStyleMaster(models.Model):
 
 
 class DietSvasthfoodGroupMaster(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_group_id')
     food_category = models.ForeignKey(
         FoodCategory,
         on_delete=models.CASCADE,
@@ -947,7 +925,6 @@ class DietSvasthfoodGroupMaster(models.Model):
 
 
 class DietSvasthFoodGroupAdd(models.Model):
-    id = models.AutoField(primary_key=True, db_column='food_group_add_id')
     food_group = models.ForeignKey(
         DietSvasthfoodGroupMaster,
         on_delete=models.CASCADE,
@@ -1011,7 +988,6 @@ class Likes(models.Model):
 
 
 class MyPages(models.Model):
-    id = models.AutoField(primary_key=True, db_column='m_id')
     name = models.CharField(max_length=50)
     mobile = models.CharField(max_length=20)
     email = models.CharField(max_length=50)
@@ -1057,7 +1033,6 @@ class TblBlogsDietitian(models.Model):
 
 
 class TblCallCenter(models.Model):
-    cal_ceneter_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1117,7 +1092,6 @@ class TblCommentsAdd(models.Model):
 
 
 class TblCompanyStatus(models.Model):
-    company_status_id = models.AutoField(primary_key=True)
     status = models.CharField(max_length=50)
     created_at = models.DateField()
     posted_by = models.IntegerField()
@@ -1154,7 +1128,6 @@ class TblCreateDietician(models.Model):
 
 
 class TblDays(models.Model):
-    d_id = models.AutoField(primary_key=True)
     days_name = models.CharField(max_length=50)
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1204,7 +1177,6 @@ class TblDieticianLikeParameter(models.Model):
 
 
 class TblDietplanAddMasterTable(models.Model):
-    dietplan_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=1000)
     code = models.CharField(max_length=50)
@@ -1216,7 +1188,6 @@ class TblDietplanAddMasterTable(models.Model):
 
 
 class TblDietplanMasterTable(models.Model):
-    diet_com_id = models.AutoField(primary_key=True)
     dietplan_id = models.IntegerField()
     dietitian_comment = models.CharField(max_length=250)
     created_by = models.IntegerField()
@@ -1228,7 +1199,6 @@ class TblDietplanMasterTable(models.Model):
 
 
 class TblDietAddSnacks(models.Model):
-    snacks_data_id = models.AutoField(primary_key=True)
     snacks_id = models.IntegerField()
     time_slot = models.CharField(max_length=50)
     snacks_name = models.CharField(max_length=50)
@@ -1276,7 +1246,6 @@ class TblDietFoodPatientIndex(models.Model):
 
 
 class TblDietPlansAdd(models.Model):
-    diet_pln_master_id = models.AutoField(primary_key=True)
     diet_pln_id = models.IntegerField()
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1299,7 +1268,6 @@ class TblDietPlanGeneratorReport(models.Model):
 
 
 class TblDietSnacks(models.Model):
-    snacks_id = models.AutoField(primary_key=True)
     snacks_name = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1309,7 +1277,6 @@ class TblDietSnacks(models.Model):
 
 
 class TblDoctorsComment(models.Model):
-    id = models.AutoField(primary_key=True)
     doctor_comment = models.TextField()
     created_at = models.DateField()
     doctor_id = models.IntegerField()
@@ -1320,7 +1287,6 @@ class TblDoctorsComment(models.Model):
 
 
 class TblDosAndDont(models.Model):
-    dos_and_dont_id = models.AutoField(primary_key=True)
     health_parameter = models.CharField(max_length=50)
     food_category = models.CharField(max_length=50)
     food_products = models.CharField(max_length=50)
@@ -1366,7 +1332,6 @@ class TblFattyAcid(models.Model):
 
 
 class TblFatSolubleVtmnsVal(models.Model):
-    id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
@@ -1388,7 +1353,6 @@ class TblFatSolubleVtmnsVal(models.Model):
 
 
 class TblFoodstyleMaster(models.Model):
-    food_style_id = models.AutoField(primary_key=True)
     food_style_code = models.CharField(max_length=25)
     title = models.CharField(max_length=50)
     created_by = models.IntegerField()
@@ -1437,7 +1401,6 @@ class TblFoodMainDataAdd(models.Model):
 
 
 class TblFoodMenu(models.Model):
-    id = models.AutoField(primary_key=True)
     m_id = models.IntegerField()
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1447,7 +1410,6 @@ class TblFoodMenu(models.Model):
 
 
 class TblFoodPacking(models.Model):
-    food_packing_id = models.AutoField(primary_key=True)
     food_pack_description = models.CharField(max_length=50)
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1500,7 +1462,6 @@ class TblFoodPlanGenerator(models.Model):
 
 
 class TblFoodProductGenerator(models.Model):
-    food_product_id = models.AutoField(primary_key=True)
     food_category_id = models.IntegerField()
     sub_group_id = models.IntegerField()
     food_code = models.CharField(max_length=250)
@@ -1517,7 +1478,6 @@ class TblFoodProductGenerator(models.Model):
 
 
 class TblFoodProductMaster(models.Model):
-    food_product_id = models.AutoField(primary_key=True)
     food_name = models.CharField(max_length=250)
     food_code = models.CharField(max_length=50)
     base_qty = models.IntegerField()
@@ -1534,7 +1494,6 @@ class TblFoodProductMaster(models.Model):
 
 
 class TblFoodSpecification(models.Model):
-    food_specification_id = models.AutoField(primary_key=True)
     food_specification_name = models.CharField(max_length=100)
     rating = models.CharField(max_length=50)
     measure = models.CharField(max_length=50)
@@ -1547,7 +1506,6 @@ class TblFoodSpecification(models.Model):
 
 
 class TblHealthparameterMaster(models.Model):
-    healthparameter_master_id = models.AutoField(primary_key=True)
     healthparameter_master_name = models.CharField(max_length=250)
     posted_by = models.IntegerField()
     created_at = models.DateTimeField()
@@ -1574,7 +1532,6 @@ class TblImageList(models.Model):
 
 
 class TblIngredientsCategoryMaster(models.Model):
-    ingredients_id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=50)
     category_description = models.CharField(max_length=100)
     posted_by = models.IntegerField()
@@ -1600,7 +1557,6 @@ class TblIngredientsMaster(models.Model):
 
 
 class TblItems(models.Model):
-    items_id = models.AutoField(primary_key=True)
     item_name = models.CharField(max_length=50)
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1610,7 +1566,6 @@ class TblItems(models.Model):
 
 
 class TblLanguagesKnown(models.Model):
-    id = models.AutoField(primary_key=True)
     user_id = models.IntegerField()
     language = models.CharField(max_length=100)
     can_speak = models.IntegerField(null=True, default=0)
@@ -1624,7 +1579,6 @@ class TblLanguagesKnown(models.Model):
 
 
 class TblNutritionFood(models.Model):
-    nutrition_food_id = models.AutoField(primary_key=True)
     food_name = models.CharField(max_length=50)
 
     class Meta:
@@ -1632,7 +1586,6 @@ class TblNutritionFood(models.Model):
 
 
 class TblNutritionServiningSize(models.Model):
-    servining_size_id = models.AutoField(primary_key=True)
     servining_size_name = models.CharField(max_length=50)
 
     class Meta:
@@ -1640,7 +1593,6 @@ class TblNutritionServiningSize(models.Model):
 
 
 class TblNutritionValProducts(models.Model):
-    nutrition_product_id = models.AutoField(primary_key=True)
     nutrition_food_id = models.IntegerField()
     servining_size_id = models.IntegerField()
     calories = models.CharField(max_length=50)
@@ -1690,7 +1642,6 @@ class TblPackingInstruction(models.Model):
 
 
 class TblPatientCategory(models.Model):
-    patient_id = models.AutoField(primary_key=True)
     patient_category = models.CharField(max_length=50)
 
     class Meta:
@@ -1707,7 +1658,6 @@ class TblPatientFoodItem(models.Model):
 
 
 class TblPatientHealth(models.Model):
-    patienthealth_id = models.AutoField(primary_key=True)
     autocode = models.CharField(max_length=100)
     healthparameter_master_id = models.IntegerField()
     product_id = models.IntegerField()
@@ -1726,7 +1676,6 @@ class TblPatientHealth(models.Model):
 
 
 class TblPatientOrderFood(models.Model):
-    id = models.AutoField(primary_key=True)
     diet_id = models.IntegerField()
     food_master_id = models.IntegerField()
     d_id = models.CharField(max_length=50)
@@ -1768,7 +1717,6 @@ class TblPatientSatisfactionIndex(models.Model):
 
 
 class TblPatDislikeFood(models.Model):
-    id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=250)
     patient_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1803,7 +1751,6 @@ class TblPayBiils(models.Model):
 
 
 class TblPhytates(models.Model):
-    id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -1844,7 +1791,6 @@ class TblPolyphenols(models.Model):
 
 
 class TblProximateData(models.Model):
-    proximate_id = models.AutoField(primary_key=True)
     proximate_name = models.CharField(max_length=50)
 
     class Meta:
@@ -1901,7 +1847,6 @@ class TblQuestions(models.Model):
 
 
 class TblQuestionSuggestionPat(models.Model):
-    id = models.AutoField(primary_key=True)
     patient_id = models.IntegerField()
     suggest = models.CharField(max_length=1000)
     created_at = models.CharField(max_length=50)
@@ -1912,7 +1857,6 @@ class TblQuestionSuggestionPat(models.Model):
 
 
 class TblRecepeDevEntry(models.Model):
-    recepe_dev_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=50)
     firstname = models.CharField(max_length=50)
     address = models.CharField(max_length=50)
@@ -1926,7 +1870,6 @@ class TblRecepeDevEntry(models.Model):
 
 
 class TblRecipiesMaster(models.Model):
-    recipies_master_id = models.AutoField(primary_key=True)
     food_category_id = models.CharField(max_length=50)
     food_products_id = models.CharField(max_length=50)
     base_quantity = models.CharField(max_length=50)
@@ -1954,7 +1897,6 @@ class TblRemainder(models.Model):
 
 
 class TblRemainderDiet(models.Model):
-    id = models.AutoField(primary_key=True)
     diet_id = models.IntegerField()
     mobile = models.CharField(max_length=50)
     patient_id = models.CharField(max_length=50)
@@ -1979,7 +1921,6 @@ class TblScheduleOtherServices(models.Model):
 
 
 class TblScmPerson(models.Model):
-    scm_person_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -1999,7 +1940,6 @@ class TblScmPersonAdd(models.Model):
 
 
 class TblSubGroup(models.Model):
-    sub_group_id = models.AutoField(primary_key=True)
     sub_group_name = models.CharField(max_length=100)
 
     class Meta:
@@ -2007,7 +1947,6 @@ class TblSubGroup(models.Model):
 
 
 class TblSubItemGroup(models.Model):
-    s_id = models.AutoField(primary_key=True)
     group_name = models.CharField(max_length=250)
 
     class Meta:
@@ -2026,7 +1965,6 @@ class TblSuggestions(models.Model):
 
 
 class TblSvasthfoodGroupMaster(models.Model):
-    food_category_id = models.AutoField(primary_key=True)
     food_category = models.CharField(max_length=250)
     group_code = models.CharField(max_length=50)
     created_by = models.IntegerField()
@@ -2054,7 +1992,6 @@ class TblSvasthhealthPm(models.Model):
 
 
 class TblSvasthFoodCategory(models.Model):
-    food_category_id = models.AutoField(primary_key=True)
     food_category_name = models.CharField(max_length=50)
 
     class Meta:
@@ -2062,7 +1999,6 @@ class TblSvasthFoodCategory(models.Model):
 
 
 class TblSvasthFoodMasterDataAdd(models.Model):
-    id = models.AutoField(primary_key=True)
     food_master_id = models.IntegerField()
     food_masters_id = models.IntegerField()
     sub_group_id = models.IntegerField()
@@ -2079,7 +2015,6 @@ class TblSvasthFoodMasterDataAdd(models.Model):
 
 
 class TblSvasthFoodPlanMaster(models.Model):
-    svasth_food_plan_id = models.AutoField(primary_key=True)
     plan_name = models.CharField(max_length=250)
     code = models.CharField(max_length=250)
     description = models.CharField(max_length=250)
@@ -2093,7 +2028,6 @@ class TblSvasthFoodPlanMaster(models.Model):
 
 
 class TblSvasthFoodStyle(models.Model):
-    food_style_id = models.AutoField(primary_key=True)
     food_style_name = models.CharField(max_length=50)
 
     class Meta:
@@ -2101,7 +2035,6 @@ class TblSvasthFoodStyle(models.Model):
 
 
 class TblSvasthHealthyTips(models.Model):
-    health_tips_id = models.AutoField(primary_key=True)
     health_tips = models.CharField(max_length=250)
     patient_id = models.IntegerField()
     posted_by = models.IntegerField()
@@ -2127,7 +2060,6 @@ class TblSvasthNutrient(models.Model):
 
 
 class TblSvasthSnpParameters(models.Model):
-    snp_parameter_id = models.AutoField(primary_key=True)
     snp_parameter = models.CharField(max_length=50)
 
     class Meta:
@@ -2135,7 +2067,6 @@ class TblSvasthSnpParameters(models.Model):
 
 
 class TblUploadHealthChart(models.Model):
-    id = models.AutoField(primary_key=True)
     report = models.CharField(max_length=50)
     date = models.DateField()
     posted_by = models.IntegerField()
@@ -2167,7 +2098,6 @@ class TblUploadReport(models.Model):
 
 
 class TblUploadReports(models.Model):
-    id = models.AutoField(primary_key=True)
     report = models.CharField(max_length=50)
     date = models.DateField()
     posted_by = models.IntegerField()
@@ -2195,7 +2125,6 @@ class TblUserMapping(models.Model):
 
 
 class TblWeeks(models.Model):
-    week_id = models.AutoField(primary_key=True)
     week_name = models.CharField(max_length=50)
     created_at = models.DateField()
     created_by = models.IntegerField()
@@ -2205,7 +2134,6 @@ class TblWeeks(models.Model):
 
 
 class ViewRating(models.Model):
-    rating_id = models.AutoField(primary_key=True)
     post_id = models.IntegerField()
     rating_number = models.IntegerField()
     total_points = models.IntegerField()
