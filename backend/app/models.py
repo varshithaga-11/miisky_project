@@ -10,7 +10,7 @@ from django.db import models
 
 class AddRecepeDevEntryThree(models.Model):
     recepe_en_three = models.AutoField(primary_key=True)
-    user_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
     input_one = models.CharField(max_length=50)
     eq_base_qty = models.CharField(max_length=50)
     food_group = models.CharField(max_length=50)
@@ -60,12 +60,12 @@ class AddRecepeDevEntryThree(models.Model):
 
 class AddRecepeDevEntryTwo(models.Model):
     recepe_dev_en_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('Users', on_delete=models.CASCADE, db_column='user_id')
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
     recepe_name = models.CharField(max_length=50)
-    food_category = models.ForeignKey('TblFoodCategory', on_delete=models.CASCADE, db_column='food_category_id')
-    food_style = models.ForeignKey('TblFoodstyleMaster', on_delete=models.CASCADE, db_column='food_style_id')
-    country = models.ForeignKey('TblCountry', on_delete=models.CASCADE, db_column='country_id')
-    state = models.ForeignKey('TblState', on_delete=models.CASCADE, db_column='state_id')
+    food_category = models.ForeignKey('TblFoodCategory', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_category_id')
+    food_style = models.ForeignKey('TblFoodstyleMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_id')
+    country = models.ForeignKey('TblCountry', on_delete=models.SET_NULL,null=True,blank=True, db_column='country_id')
+    state = models.ForeignKey('TblState', on_delete=models.SET_NULL,null=True,blank=True, db_column='state_id')
     uom_master_id = models.CharField(max_length=50)
     base_qty = models.CharField(max_length=50)
     uom_master_id_two = models.CharField(max_length=50)
@@ -96,8 +96,8 @@ class AddRecepeDevEntryTwo(models.Model):
 
 class Blog(models.Model):
     messages = models.CharField(max_length=5000)
-    user_id = models.IntegerField()
-    status_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -108,8 +108,8 @@ class CallBack(models.Model):
     description = models.TextField(blank=True, null=True)
     time_slot = models.CharField(max_length=250, blank=True, null=True)
     google_meet_link = models.CharField(max_length=250, blank=True, null=True)
-    diet_id = models.IntegerField()
-    patient_id = models.IntegerField()
+    diet = models.ForeignKey('TblDietician', on_delete=models.SET_NULL,null=True,blank=True, db_column='diet_id')
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id')
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
 
@@ -119,8 +119,8 @@ class CallBack(models.Model):
 
 
 class Cart(models.Model):
-    user_id = models.IntegerField()
-    product_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
+    product = models.ForeignKey('Products', on_delete=models.SET_NULL,null=True,blank=True, db_column='product_id')
     quantity = models.IntegerField()
 
     class Meta:
@@ -131,7 +131,7 @@ class Cart(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=100)
     cat_slug = models.CharField(max_length=100, blank=True, null=True)
-    posted_by = models.IntegerField(blank=True, null=True)
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='posted_by')
     created_at = models.DateTimeField()
 
     class Meta:
@@ -175,8 +175,8 @@ class ChefRecipies(models.Model):
 
 
 class Details(models.Model):
-    sales_id = models.IntegerField()
-    product_id = models.IntegerField()
+    sales = models.ForeignKey('Sales', on_delete=models.SET_NULL,null=True,blank=True, db_column='sales_id')
+    product = models.ForeignKey('Products', on_delete=models.SET_NULL,null=True,blank=True, db_column='product_id')
     quantity = models.IntegerField()
 
     class Meta:
@@ -186,9 +186,9 @@ class Details(models.Model):
 
 class DietFoodStyleAdd(models.Model):
     food_style_add_id = models.AutoField(primary_key=True)
-    food_style_master_id = models.IntegerField()
+    food_style_master = models.ForeignKey('DietFoodStyleMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_master_id')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -196,14 +196,14 @@ class DietFoodStyleAdd(models.Model):
 
 
 class DietFoodStyleDataAdd(models.Model):
-    country_id = models.IntegerField()
-    state_id = models.IntegerField()
-    city_id = models.IntegerField()
-    community_id = models.IntegerField()
-    food_style_add_id = models.IntegerField()
-    patient_id = models.IntegerField()
+    country = models.ForeignKey('TblCountry', on_delete=models.SET_NULL,null=True,blank=True, db_column='country_id')
+    state = models.ForeignKey('TblState', on_delete=models.SET_NULL,null=True,blank=True, db_column='state_id')
+    city = models.ForeignKey('TblCity', on_delete=models.SET_NULL,null=True,blank=True, db_column='city_id')
+    community = models.ForeignKey('TblCommunity', on_delete=models.SET_NULL,null=True,blank=True, db_column='community_id')
+    food_style_add = models.ForeignKey('DietFoodStyleAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_add_id')
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='diet_food_style_data_add_patients')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='diet_food_style_data_add_created')
 
     class Meta:
         # managed = False
@@ -212,10 +212,10 @@ class DietFoodStyleDataAdd(models.Model):
 
 class DietFoodStyleMaster(models.Model):
     food_style_master_id = models.AutoField(primary_key=True)
-    food_style_id = models.IntegerField()
+    food_style = models.ForeignKey('TblFoodstyleMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_id')
     status = models.IntegerField(blank=True, null=True)
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -231,8 +231,8 @@ class DietFoodTaken(models.Model):
     carbohydrate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     base_value = models.CharField(max_length=100, blank=True, null=True)
     food_image = models.CharField(max_length=255, blank=True, null=True)
-    posted_by = models.IntegerField()
-    patient_id = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='diet_food_taken_posted')
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='diet_food_taken_patients')
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
@@ -243,10 +243,10 @@ class DietFoodTaken(models.Model):
 
 class DietPlanMaster(models.Model):
     diet_pln_id = models.AutoField(primary_key=True)
-    dietplan_id = models.IntegerField()
+    dietplan = models.ForeignKey('TblDietplanAddMasterTable', on_delete=models.SET_NULL,null=True,blank=True, db_column='dietplan_id')
     status = models.IntegerField()
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -254,7 +254,7 @@ class DietPlanMaster(models.Model):
 
 
 class DietQualificationDetails(models.Model):
-    user_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
     qulification = models.CharField(max_length=250)
     report = models.CharField(max_length=250)
     recognitions = models.CharField(max_length=250)
@@ -266,9 +266,9 @@ class DietQualificationDetails(models.Model):
 
 class DietSvasthFoodGroupAdd(models.Model):
     food_group_add_id = models.AutoField(primary_key=True)
-    food_group_id = models.IntegerField()
+    food_group = models.ForeignKey('DietSvasthfoodGroupMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_group_id')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -276,12 +276,12 @@ class DietSvasthFoodGroupAdd(models.Model):
 
 
 class DietSvasthGroupAddData(models.Model):
-    food_group_add_id = models.IntegerField()
-    food_style_add_id = models.IntegerField()
+    food_group_add = models.ForeignKey('DietSvasthFoodGroupAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_group_add_id')
+    food_style_add = models.ForeignKey('DietFoodStyleAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_add_id')
     dietitian_comment = models.CharField(max_length=250)
-    patient_id = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='diet_svasth_group_add_data_patients')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='diet_svasth_group_add_data_created')
 
     class Meta:
         # managed = False
@@ -290,9 +290,9 @@ class DietSvasthGroupAddData(models.Model):
 
 class DietSvasthfoodGroupMaster(models.Model):
     food_group_id = models.AutoField(primary_key=True)
-    food_category_id = models.IntegerField()
+    food_category = models.ForeignKey('TblFoodCategory', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_category_id')
     status = models.IntegerField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
     created_at = models.DateField()
 
     class Meta:
@@ -305,8 +305,8 @@ class Feedback(models.Model):
     email = models.CharField(max_length=50)
     rbtn = models.CharField(max_length=50)
     messages = models.CharField(max_length=500)
-    user_id = models.IntegerField()
-    status_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -364,7 +364,7 @@ class Images(models.Model):
 
 
 class IpaddressLikesMap(models.Model):
-    tutorial_id = models.IntegerField()
+    tutorial = models.ForeignKey('Tutorial', on_delete=models.SET_NULL,null=True,blank=True, db_column='tutorial_id')
     ip_address = models.CharField(max_length=255)
 
     class Meta:
@@ -373,8 +373,8 @@ class IpaddressLikesMap(models.Model):
 
 
 class Likes(models.Model):
-    userid = models.IntegerField()
-    posted_by = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='userid', related_name='likes_user')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='likes_posted_by')
 
     class Meta:
         # managed = False
@@ -387,9 +387,9 @@ class MyPages(models.Model):
     mobile = models.CharField(max_length=20)
     email = models.CharField(max_length=50)
     address = models.CharField(max_length=1000)
-    food_master_id = models.IntegerField()
-    sub_group_id = models.IntegerField()
-    food_main_id = models.IntegerField()
+    food_master = models.ForeignKey('TblFoodMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_master_id')
+    sub_group = models.ForeignKey('TblFoodSubgroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='sub_group_id')
+    food_main = models.ForeignKey('TblFoodMainCode', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_main_id')
     description = models.CharField(max_length=250)
     country_name = models.CharField(max_length=50)
     state_name = models.CharField(max_length=50)
@@ -425,7 +425,7 @@ class PatientHistory(models.Model):
 
 
 class Products(models.Model):
-    category_id = models.IntegerField()
+    category = models.ForeignKey('Category', on_delete=models.SET_NULL,null=True,blank=True, db_column='category_id')
     name = models.TextField()
     description = models.TextField()
     slug = models.CharField(max_length=200)
@@ -440,13 +440,13 @@ class Products(models.Model):
 
 
 class ProductsUploadImage(models.Model):
-    product_id = models.IntegerField()
+    product = models.ForeignKey('Products', on_delete=models.SET_NULL,null=True,blank=True, db_column='product_id')
     photo = models.CharField(max_length=1000)
     image_title = models.CharField(max_length=50)
     description = models.CharField(max_length=500)
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
     added_at = models.DateTimeField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -454,7 +454,7 @@ class ProductsUploadImage(models.Model):
 
 
 class Sales(models.Model):
-    user_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
     pay_id = models.CharField(max_length=50)
     sales_date = models.DateField()
 
@@ -466,9 +466,9 @@ class Sales(models.Model):
 class StandardReportChat(models.Model):
     report = models.TextField(blank=True, null=True)
     date = models.DateTimeField(blank=True, null=True)
-    posted_by = models.IntegerField(blank=True, null=True)
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='posted_by')
     title = models.CharField(max_length=255, blank=True, null=True)
-    diet_id = models.IntegerField(blank=True, null=True)
+    diet = models.ForeignKey('TblDietician', on_delete=models.SET_NULL, blank=True, null=True, db_column='diet_id')
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
 
@@ -492,7 +492,7 @@ class TblAminoAcids(models.Model):
     tryptophan = models.CharField(max_length=50)
     valine = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -511,7 +511,7 @@ class TblCallCenter(models.Model):
     cal_ceneter_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -519,10 +519,10 @@ class TblCallCenter(models.Model):
 
 
 class TblCallCenterAdd(models.Model):
-    cal_ceneter_id = models.IntegerField()
+    cal_ceneter = models.ForeignKey('TblCallCenter', on_delete=models.SET_NULL,null=True,blank=True, db_column='cal_ceneter_id')
     message = models.CharField(max_length=50)
     created_at = models.IntegerField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -542,7 +542,7 @@ class TblCarotenoid(models.Model):
     txt_crt = models.CharField(max_length=50)
     txt_cartd = models.CharField(max_length=50)
     created_at = models.DateTimeField()
-    created_by = models.IntegerField(blank=True, null=True)
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -553,7 +553,7 @@ class TblChefFeedback(models.Model):
     subject = models.CharField(max_length=250)
     chef_comment = models.CharField(max_length=250)
     created_at = models.CharField(max_length=250)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -563,7 +563,7 @@ class TblChefFeedback(models.Model):
 class TblCity(models.Model):
     city_id = models.BigAutoField(primary_key=True)
     city_name = models.CharField(max_length=333)
-    state_id = models.BigIntegerField()
+    state = models.ForeignKey('TblState', on_delete=models.SET_NULL,null=True,blank=True, db_column='state_id')
 
     class Meta:
         # managed = False
@@ -571,7 +571,7 @@ class TblCity(models.Model):
 
 
 class TblCommentsAdd(models.Model):
-    tutorial_id = models.IntegerField()
+    tutorial = models.ForeignKey('Tutorial', on_delete=models.SET_NULL,null=True,blank=True, db_column='tutorial_id')
     ip_address = models.CharField(max_length=250)
     name = models.CharField(max_length=50)
     comments = models.CharField(max_length=500)
@@ -587,7 +587,7 @@ class TblCommunity(models.Model):
     brief_on_community = models.CharField(max_length=250)
     code = models.CharField(max_length=50)
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -598,7 +598,7 @@ class TblCompanyStatus(models.Model):
     company_status_id = models.AutoField(primary_key=True)
     status = models.CharField(max_length=50)
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -616,7 +616,7 @@ class TblCompositionIndex(models.Model):
 class TblCookingInstruction(models.Model):
     name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -649,7 +649,7 @@ class TblDays(models.Model):
     d_id = models.AutoField(primary_key=True)
     days_name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -657,12 +657,12 @@ class TblDays(models.Model):
 
 
 class TblDevelopSchedule(models.Model):
-    food_group_add_id = models.IntegerField()
+    food_group_add = models.ForeignKey('DietSvasthFoodGroupAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_group_add_id')
     time_slot = models.CharField(max_length=50)
-    food_packing_id = models.IntegerField()
-    patient_id = models.IntegerField()
+    food_packing = models.ForeignKey('TblFoodPacking', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_packing_id')
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldevelopschedule_patients')
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tbldevelopschedule_posted')
 
     class Meta:
         # managed = False
@@ -671,11 +671,11 @@ class TblDevelopSchedule(models.Model):
 
 class TblDietAddSnacks(models.Model):
     snacks_data_id = models.AutoField(primary_key=True)
-    snacks_id = models.IntegerField()
+    snacks = models.ForeignKey('TblDietSnacks', on_delete=models.SET_NULL,null=True,blank=True, db_column='snacks_id')
     time_slot = models.CharField(max_length=50)
     snacks_name = models.CharField(max_length=50)
-    patient_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldietaddsnacks_patients')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tbldietaddsnacks_posted')
     created_at = models.CharField(max_length=50)
     uom = models.CharField(max_length=50, blank=True, null=True)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -694,7 +694,7 @@ class TblDietAddSnacks(models.Model):
 
 
 class TblDietChatMenu(models.Model):
-    diet_id = models.IntegerField()
+    diet = models.ForeignKey('TblDietician', on_delete=models.SET_NULL,null=True,blank=True, db_column='diet_id')
     food_name = models.CharField(max_length=255)
     base_value = models.CharField(max_length=100, blank=True, null=True)
     energy = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -706,8 +706,8 @@ class TblDietChatMenu(models.Model):
     helps = models.TextField(blank=True, null=True)
     not_recommended = models.TextField(blank=True, null=True)
     product_code = models.CharField(max_length=100, blank=True, null=True)
-    patient_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldietchatmenu_patients')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tbldietchatmenu_posted')
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
@@ -718,7 +718,7 @@ class TblDietChatMenu(models.Model):
 
 class TblDietFoodIndexData(models.Model):
     m_id = models.CharField(max_length=50)
-    s_id = models.IntegerField()
+    s_id = models.ForeignKey('TblSubItemGroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='s_id')
     qty = models.IntegerField()
     energy = models.CharField(max_length=250)
     carbo_hydrates = models.CharField(max_length=250)
@@ -729,7 +729,7 @@ class TblDietFoodIndexData(models.Model):
     cholestrol = models.CharField(max_length=250)
     iron = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -746,7 +746,7 @@ class TblDietFoodPatientIndex(models.Model):
     cholestrol = models.CharField(max_length=250)
     iron = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -759,7 +759,7 @@ class TblDietPlanGeneratorReport(models.Model):
     diet_plan_code = models.IntegerField()
     diet_plan = models.IntegerField()
     description = models.CharField(max_length=250)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.IntegerField()
 
     class Meta:
@@ -769,9 +769,9 @@ class TblDietPlanGeneratorReport(models.Model):
 
 class TblDietPlansAdd(models.Model):
     diet_pln_master_id = models.AutoField(primary_key=True)
-    diet_pln_id = models.IntegerField()
+    diet_pln = models.ForeignKey('DietPlanMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='diet_pln_id')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -795,7 +795,7 @@ class TblDietician(models.Model):
     photo = models.CharField(max_length=500)
     location = models.CharField(max_length=100)
     contact = models.CharField(max_length=20)
-    role_id = models.IntegerField()
+    role = models.ForeignKey('TblRole', on_delete=models.SET_NULL,null=True,blank=True, db_column='role_id')
     created_at = models.DateTimeField()
 
     class Meta:
@@ -806,8 +806,8 @@ class TblDietician(models.Model):
 class TblDieticianComment(models.Model):
     dietician_comment = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
-    patient_id = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='tbldieticiancomment_created')
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldieticiancomment_patients')
 
     class Meta:
         # managed = False
@@ -817,7 +817,7 @@ class TblDieticianComment(models.Model):
 class TblDieticianDislikeParameter(models.Model):
     name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -827,8 +827,8 @@ class TblDieticianDislikeParameter(models.Model):
 class TblDieticianFoodAvoid(models.Model):
     dietician_food_taken = models.TextField(blank=True, null=True)
     dietician_comment = models.TextField(blank=True, null=True)
-    patient_id = models.IntegerField()
-    created_by = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldieticianfoodavoid_patients')
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='tbldieticianfoodavoid_created')
     created_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -839,7 +839,7 @@ class TblDieticianFoodAvoid(models.Model):
 class TblDieticianLikeParameter(models.Model):
     name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -852,7 +852,7 @@ class TblDietplanAddMasterTable(models.Model):
     description = models.CharField(max_length=1000)
     code = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -861,11 +861,11 @@ class TblDietplanAddMasterTable(models.Model):
 
 class TblDietplanMasterTable(models.Model):
     diet_com_id = models.AutoField(primary_key=True)
-    dietplan_id = models.IntegerField()
+    dietplan = models.ForeignKey('TblDietplanAddMasterTable', on_delete=models.SET_NULL,null=True,blank=True, db_column='dietplan_id')
     dietitian_comment = models.CharField(max_length=250)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='tbldietplanmastertable_created')
     created_at = models.DateField()
-    patient_id = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldietplanmastertable_patients')
     food_avoid = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -876,8 +876,8 @@ class TblDietplanMasterTable(models.Model):
 class TblDoctorsComment(models.Model):
     doctor_comment = models.TextField()
     created_at = models.DateField()
-    doctor_id = models.IntegerField()
-    patient_id = models.IntegerField()
+    doctor = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='doctor_id', related_name='tbldoctorscomment_doctors')
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tbldoctorscomment_patients')
 
     class Meta:
         # managed = False
@@ -891,7 +891,7 @@ class TblDosAndDont(models.Model):
     food_products = models.CharField(max_length=50)
     dos_and_dont = models.CharField(max_length=50)
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -902,7 +902,7 @@ class TblEcgData(models.Model):
     titel = models.CharField(max_length=50)
     message = models.CharField(max_length=3000)
     channel1_data = models.CharField(max_length=50)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     date = models.CharField(max_length=50)
 
     class Meta:
@@ -925,7 +925,7 @@ class TblFatSolubleVtmnsVal(models.Model):
     txt_toctrd = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     txt_vite = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     created_at = models.DateTimeField()
-    created_by = models.IntegerField(blank=True, null=True)
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -983,7 +983,7 @@ class TblFattyAcidProfile(models.Model):
     tmufa = models.CharField(db_column='TMUFA', max_length=50)  # Field name made lowercase.
     tpufa = models.CharField(db_column='TPUFA', max_length=50)  # Field name made lowercase.
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -994,9 +994,9 @@ class TblFoodCategory(models.Model):
     food_category_id = models.AutoField(primary_key=True)
     food_category_name = models.CharField(max_length=50)
     remarks = models.CharField(max_length=100)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -1004,7 +1004,7 @@ class TblFoodCategory(models.Model):
 
 
 class TblFoodDietIndexData(models.Model):
-    m_id = models.IntegerField()
+    m_id = models.ForeignKey('MyPages', on_delete=models.SET_NULL,null=True,blank=True, db_column='m_id')
     calorie = models.CharField(max_length=250)
     carbo_hydrates = models.CharField(max_length=250)
     vitamins = models.CharField(max_length=250)
@@ -1014,7 +1014,7 @@ class TblFoodDietIndexData(models.Model):
     cholestrol = models.CharField(max_length=250)
     iron = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1026,7 +1026,7 @@ class TblFoodMainCode(models.Model):
     food_main_category = models.CharField(max_length=250)
     food_main_code = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1034,17 +1034,17 @@ class TblFoodMainCode(models.Model):
 
 
 class TblFoodMainDataAdd(models.Model):
-    food_master_id = models.IntegerField()
+    food_master = models.ForeignKey('TblFoodMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_master_id')
     code = models.IntegerField()
-    food_main_id = models.IntegerField()
-    sub_group_id = models.IntegerField()
+    food_main = models.ForeignKey('TblFoodMainCode', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_main_id')
+    sub_group = models.ForeignKey('TblFoodSubgroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='sub_group_id')
     description = models.CharField(max_length=250)
     calorie = models.CharField(max_length=250)
     carbo_hydrates = models.CharField(max_length=250)
     vitamins = models.CharField(max_length=250)
     fats = models.CharField(max_length=250)
     protein = models.CharField(max_length=250)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
     created_at = models.DateField()
     sodium = models.CharField(max_length=250)
     cholestrol = models.CharField(max_length=250)
@@ -1060,7 +1060,7 @@ class TblFoodMaster(models.Model):
     food_category = models.CharField(max_length=250)
     food_code = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1068,9 +1068,9 @@ class TblFoodMaster(models.Model):
 
 
 class TblFoodMenu(models.Model):
-    m_id = models.IntegerField()
+    m_id = models.ForeignKey('MyPages', on_delete=models.SET_NULL,null=True,blank=True, db_column='m_id')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1081,7 +1081,7 @@ class TblFoodPacking(models.Model):
     food_packing_id = models.AutoField(primary_key=True)
     food_pack_description = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1089,13 +1089,13 @@ class TblFoodPacking(models.Model):
 
 
 class TblFoodPlanGenerator(models.Model):
-    week_id = models.IntegerField()
-    d_id = models.IntegerField()
-    food_master_id = models.IntegerField()
-    food_style_add_id = models.IntegerField()
-    country_id = models.IntegerField()
-    state_id = models.IntegerField()
-    items_id = models.IntegerField()
+    week = models.ForeignKey('TblWeeks', on_delete=models.SET_NULL,null=True,blank=True, db_column='week_id')
+    d_id = models.ForeignKey('TblDays', on_delete=models.SET_NULL,null=True,blank=True, db_column='d_id')
+    food_master = models.ForeignKey('TblFoodMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_master_id')
+    food_style_add = models.ForeignKey('DietFoodStyleAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_add_id')
+    country = models.ForeignKey('TblCountry', on_delete=models.SET_NULL,null=True,blank=True, db_column='country_id')
+    state = models.ForeignKey('TblState', on_delete=models.SET_NULL,null=True,blank=True, db_column='state_id')
+    items = models.ForeignKey('TblItems', on_delete=models.SET_NULL,null=True,blank=True, db_column='items_id')
     m_id = models.CharField(max_length=1000)
     um = models.CharField(max_length=50)
     food_group = models.CharField(max_length=250)
@@ -1134,14 +1134,14 @@ class TblFoodPlanGenerator(models.Model):
 
 class TblFoodProduct(models.Model):
     food_product_id = models.AutoField(primary_key=True)
-    category_id = models.IntegerField()
+    category = models.ForeignKey('TblFoodCategory', on_delete=models.SET_NULL,null=True,blank=True, db_column='category_id')
     product_code = models.CharField(unique=True, max_length=50)
     product_title = models.CharField(max_length=50)
     uom = models.CharField(max_length=50)
     specification = models.CharField(max_length=100)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -1150,8 +1150,8 @@ class TblFoodProduct(models.Model):
 
 class TblFoodProductGenerator(models.Model):
     food_product_id = models.AutoField(primary_key=True)
-    food_category_id = models.IntegerField()
-    sub_group_id = models.IntegerField()
+    food_category = models.ForeignKey('TblFoodCategory', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_category_id')
+    sub_group = models.ForeignKey('TblFoodSubgroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='sub_group_id')
     food_code = models.CharField(max_length=250)
     food_description = models.CharField(max_length=250)
     base_qty = models.CharField(max_length=50)
@@ -1159,7 +1159,7 @@ class TblFoodProductGenerator(models.Model):
     equivalent_base = models.CharField(max_length=50)
     uom = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1171,13 +1171,13 @@ class TblFoodProductMaster(models.Model):
     food_name = models.CharField(max_length=250)
     food_code = models.CharField(max_length=50)
     base_qty = models.IntegerField()
-    uom_master_id = models.IntegerField()
-    ingredients_id = models.IntegerField()
+    uom_master = models.ForeignKey('TblUomMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='uom_master_id')
+    ingredients = models.ForeignKey('TblIngredientsMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='ingredients_id')
     uom = models.IntegerField()
     ing_base_qty = models.IntegerField()
-    suppliers_id = models.IntegerField()
+    suppliers = models.ForeignKey('TblSuppliers', on_delete=models.SET_NULL,null=True,blank=True, db_column='suppliers_id')
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1187,12 +1187,12 @@ class TblFoodProductMaster(models.Model):
 class TblFoodRecepe(models.Model):
     food_product_id = models.CharField(max_length=11)
     ingredients = models.CharField(max_length=250)
-    uom_master_id = models.IntegerField()
+    uom_master = models.ForeignKey('TblUomMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='uom_master_id')
     base_qty = models.IntegerField()
     description = models.CharField(max_length=250)
     special_instruction = models.CharField(max_length=250)
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1204,9 +1204,9 @@ class TblFoodSpecification(models.Model):
     food_specification_name = models.CharField(max_length=100)
     rating = models.CharField(max_length=50)
     measure = models.CharField(max_length=50)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -1216,7 +1216,7 @@ class TblFoodSpecification(models.Model):
 class TblFoodSubgroup(models.Model):
     sub_group_id = models.AutoField(primary_key=True)
     subgroub_name = models.CharField(max_length=250)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
     created_at = models.DateField()
 
     class Meta:
@@ -1228,7 +1228,7 @@ class TblFoodstyleMaster(models.Model):
     food_style_id = models.AutoField(primary_key=True)
     food_style_code = models.CharField(max_length=25)
     title = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
     created_at = models.DateField()
 
     class Meta:
@@ -1249,9 +1249,9 @@ class TblHealthConditions(models.Model):
 class TblHealthparameterMaster(models.Model):
     healthparameter_master_id = models.AutoField(primary_key=True)
     healthparameter_master_name = models.CharField(max_length=250)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -1269,7 +1269,7 @@ class TblImageList(models.Model):
 class TblIndividualSugar(models.Model):
     food_group = models.CharField(max_length=50)
     code = models.CharField(max_length=50)
-    s_id = models.IntegerField()
+    s_id = models.ForeignKey('TblSubItemGroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='s_id')
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
     carbo_hydrates = models.CharField(max_length=50)
@@ -1280,7 +1280,7 @@ class TblIndividualSugar(models.Model):
     maltose = models.CharField(max_length=50)
     sugar = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1303,8 +1303,8 @@ class TblIngredients(models.Model):
     cltrl = models.CharField(max_length=50)
     irn = models.CharField(max_length=50)
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1315,9 +1315,9 @@ class TblIngredientsCategoryMaster(models.Model):
     ingredients_id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=50)
     category_description = models.CharField(max_length=100)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -1328,11 +1328,11 @@ class TblIngredientsMaster(models.Model):
     ingredients_id = models.AutoField(primary_key=True)
     item_name = models.CharField(max_length=250)
     item_code = models.CharField(max_length=50)
-    uom_master_id = models.IntegerField()
-    suppliers_id = models.IntegerField()
-    food_packing_id = models.IntegerField()
+    uom_master = models.ForeignKey('TblUomMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='uom_master_id')
+    suppliers = models.ForeignKey('TblSuppliers', on_delete=models.SET_NULL,null=True,blank=True, db_column='suppliers_id')
+    food_packing = models.ForeignKey('TblFoodPacking', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_packing_id')
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1341,9 +1341,9 @@ class TblIngredientsMaster(models.Model):
 
 class TblInputBom(models.Model):
     bom_id = models.AutoField(primary_key=True)
-    items_id = models.IntegerField()
+    items = models.ForeignKey('TblItems', on_delete=models.SET_NULL,null=True,blank=True, db_column='items_id')
     code = models.CharField(max_length=50)
-    food_category_id = models.IntegerField()
+    food_category = models.ForeignKey('TblFoodCategory', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_category_id')
     food_code = models.CharField(max_length=50)
     recepe_title = models.CharField(max_length=50)
     food_group = models.CharField(max_length=50)
@@ -1367,7 +1367,7 @@ class TblInputBom(models.Model):
     phprs = models.CharField(max_length=50)
     cltrl = models.CharField(max_length=50)
     irn = models.CharField(max_length=50)
-    cmp_id = models.IntegerField()
+    cmp_id = models.ForeignKey('TblCompositionIndex', on_delete=models.SET_NULL,null=True,blank=True, db_column='cmp_id')
     created_at = models.CharField(max_length=50)
     created_by = models.CharField(max_length=11)
 
@@ -1380,7 +1380,7 @@ class TblItems(models.Model):
     items_id = models.AutoField(primary_key=True)
     item_name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1388,7 +1388,7 @@ class TblItems(models.Model):
 
 
 class TblLanguagesKnown(models.Model):
-    user_id = models.PositiveIntegerField()
+    user = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='user_id')
     language = models.CharField(max_length=100)
     can_speak = models.IntegerField(blank=True, null=True)
     can_read = models.IntegerField(blank=True, null=True)
@@ -1453,8 +1453,8 @@ class TblNutritionServiningSize(models.Model):
 
 class TblNutritionValProducts(models.Model):
     nutrition_product_id = models.AutoField(primary_key=True)
-    nutrition_food_id = models.IntegerField()
-    servining_size_id = models.IntegerField()
+    nutrition_food = models.ForeignKey('TblNutritionFood', on_delete=models.SET_NULL,null=True,blank=True, db_column='nutrition_food_id')
+    servining_size = models.ForeignKey('TblNutritionServiningSize', on_delete=models.SET_NULL,null=True,blank=True, db_column='servining_size_id')
     calories = models.CharField(max_length=50)
     total_fat = models.CharField(max_length=50)
     saturated_fat_4_2g = models.CharField(db_column='Saturated Fat 4.2g', max_length=50)  # Field name made lowercase. Field renamed to remove unsuitable characters.
@@ -1483,8 +1483,8 @@ class TblOrderSentLogistic(models.Model):
     cook_inst = models.CharField(max_length=250)
     order_service = models.CharField(max_length=50)
     service_date = models.CharField(max_length=50)
-    u_id = models.IntegerField()
-    created_by = models.IntegerField()
+    u_id = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='u_id', related_name='tblordersentlogistic_users')
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='tblordersentlogistic_created')
     created_at = models.CharField(max_length=50)
 
     class Meta:
@@ -1516,7 +1516,7 @@ class TblOrganicAcid(models.Model):
 class TblPackingInstruction(models.Model):
     name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1525,7 +1525,7 @@ class TblPackingInstruction(models.Model):
 
 class TblPatDislikeFood(models.Model):
     description = models.CharField(max_length=250)
-    patient_id = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id')
     created_at = models.DateTimeField()
 
     class Meta:
@@ -1545,7 +1545,7 @@ class TblPatientCategory(models.Model):
 class TblPatientFoodItem(models.Model):
     food_name = models.CharField(max_length=250)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1555,17 +1555,17 @@ class TblPatientFoodItem(models.Model):
 class TblPatientHealth(models.Model):
     patienthealth_id = models.AutoField(primary_key=True)
     autocode = models.CharField(max_length=100)
-    healthparameter_master_id = models.IntegerField()
-    product_id = models.IntegerField()
+    healthparameter_master = models.ForeignKey('TblHealthparameterMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='healthparameter_master_id')
+    product = models.ForeignKey('TblFoodProduct', on_delete=models.SET_NULL,null=True,blank=True, db_column='product_id')
     alpha_num = models.CharField(max_length=50)
     measures = models.CharField(max_length=50)
     actual = models.CharField(max_length=250)
     normal = models.CharField(max_length=50)
     remarks = models.CharField(max_length=50)
-    patient_id = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tblpatienthealth_patients')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tblpatienthealth_posted')
 
     class Meta:
         # managed = False
@@ -1573,8 +1573,8 @@ class TblPatientHealth(models.Model):
 
 
 class TblPatientOrderFood(models.Model):
-    diet_id = models.IntegerField()
-    food_master_id = models.IntegerField()
+    diet = models.ForeignKey('TblDietician', on_delete=models.SET_NULL,null=True,blank=True, db_column='diet_id')
+    food_master = models.ForeignKey('TblFoodMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_master_id')
     d_id = models.CharField(max_length=50)
     food_category_name = models.CharField(max_length=50)
     food_style_name = models.CharField(max_length=50)
@@ -1593,7 +1593,7 @@ class TblPatientOrderFood(models.Model):
     iron = models.CharField(max_length=50)
     diet_name = models.IntegerField()
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1621,7 +1621,7 @@ class TblPayAnalysis(models.Model):
     payment_mode = models.CharField(max_length=50)
     status = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1635,7 +1635,7 @@ class TblPayBiils(models.Model):
     bill_val = models.CharField(max_length=50)
     query = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1717,10 +1717,10 @@ class TblProximateDietaryFiber(models.Model):
 
 
 class TblQuestionSuggestionPat(models.Model):
-    patient_id = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tblquestionsuggestionpat_patients')
     suggest = models.CharField(max_length=1000)
     created_at = models.CharField(max_length=50)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tblquestionsuggestionpat_posted')
 
     class Meta:
         # managed = False
@@ -1770,7 +1770,7 @@ class TblQuestions(models.Model):
     any_m_prblm = models.CharField(max_length=50)
     txt_prblms_bl = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1779,17 +1779,17 @@ class TblQuestions(models.Model):
 
 class TblRcpBuilder(models.Model):
     food_master_id = models.CharField(max_length=50)
-    items_id = models.IntegerField()
-    m_id = models.IntegerField()
+    items = models.ForeignKey('TblItems', on_delete=models.SET_NULL,null=True,blank=True, db_column='items_id')
+    m_id = models.ForeignKey('MyPages', on_delete=models.SET_NULL,null=True,blank=True, db_column='m_id')
     txtqty = models.CharField(max_length=50)
-    uom_master_id = models.IntegerField()
+    uom_master = models.ForeignKey('TblUomMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='uom_master_id')
     txt_ingrdnts = models.CharField(max_length=2000)
     upload_image = models.CharField(max_length=250)
     item_no = models.CharField(max_length=50)
     item_description = models.CharField(max_length=1000)
     qty = models.CharField(max_length=50)
     unit_of_m = models.CharField(max_length=50)
-    ingredients_master_id = models.IntegerField()
+    ingredients_master = models.ForeignKey('TblIngredientsMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='ingredients_master_id')
     input_code = models.CharField(max_length=50)
     food_name_data = models.CharField(max_length=50)
     clrs = models.CharField(max_length=50)
@@ -1800,11 +1800,11 @@ class TblRcpBuilder(models.Model):
     sdm = models.CharField(max_length=50)
     cltrl = models.CharField(max_length=50)
     irn = models.CharField(max_length=50)
-    v_id = models.IntegerField()
+    v_id = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='v_id', related_name='tblrcpbuilder_users')
     add_recepe = models.CharField(max_length=1000)
     diet_plan_for = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='tblrcpbuilder_created')
 
     class Meta:
         # managed = False
@@ -1836,9 +1836,9 @@ class TblRecipiesMaster(models.Model):
     uom = models.CharField(max_length=50)
     qty = models.CharField(max_length=100)
     special_instruction = models.CharField(max_length=100)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     created_at = models.DateTimeField()
-    status_id = models.IntegerField()
+    status = models.ForeignKey('TblStatus', on_delete=models.SET_NULL,null=True,blank=True, db_column='status_id')
 
     class Meta:
         # managed = False
@@ -1857,12 +1857,12 @@ class TblRemainder(models.Model):
 
 
 class TblRemainderDiet(models.Model):
-    diet_id = models.IntegerField()
+    diet = models.ForeignKey('TblDietician', on_delete=models.SET_NULL,null=True,blank=True, db_column='diet_id')
     mobile = models.CharField(max_length=50)
     patient_id = models.CharField(max_length=50)
     status = models.IntegerField()
     created_at = models.CharField(max_length=50)
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1896,7 +1896,7 @@ class TblScmPerson(models.Model):
     scm_person_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -1917,7 +1917,7 @@ class TblScmPersonAdd(models.Model):
 class TblState(models.Model):
     state_id = models.BigAutoField(primary_key=True)
     state_name = models.CharField(max_length=333, db_collation='utf8mb3_general_ci')
-    country_id = models.IntegerField()
+    country = models.ForeignKey('TblCountry', on_delete=models.SET_NULL,null=True,blank=True, db_column='country_id')
 
     class Meta:
         # managed = False
@@ -1955,7 +1955,7 @@ class TblSuggestions(models.Model):
     suggestions = models.CharField(max_length=50)
     messages = models.CharField(max_length=250)
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
     ip = models.CharField(max_length=20)
 
     class Meta:
@@ -1976,7 +1976,7 @@ class TblSuppliers(models.Model):
     branch_name = models.CharField(max_length=50)
     ifsc_code = models.CharField(max_length=50)
     created_at = models.DateField()
-    posted_by = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
 
     class Meta:
         # managed = False
@@ -1993,16 +1993,16 @@ class TblSvasthFoodCategory(models.Model):
 
 
 class TblSvasthFoodMasterDataAdd(models.Model):
-    food_master_id = models.IntegerField()
-    food_masters_id = models.IntegerField()
-    sub_group_id = models.IntegerField()
+    food_master = models.ForeignKey('TblFoodMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_master_id')
+    food_masters = models.ForeignKey('TblFoodMaster', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_masters_id', related_name='svasth_food_masters')
+    sub_group = models.ForeignKey('TblFoodSubgroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='sub_group_id')
     food_title = models.CharField(max_length=250)
     brief_ingredients = models.CharField(max_length=250)
     calorific_val = models.IntegerField()
     recepe = models.CharField(max_length=250)
-    patient_id = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tblsvasthfoodmasterdataadd_patients')
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', related_name='tblsvasthfoodmasterdataadd_created')
 
     class Meta:
         # managed = False
@@ -2017,7 +2017,7 @@ class TblSvasthFoodPlanMaster(models.Model):
     price_per_uom = models.IntegerField()
     price_per_month = models.IntegerField()
     created_at = models.DateField()
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -2036,8 +2036,8 @@ class TblSvasthFoodStyle(models.Model):
 class TblSvasthHealthyTips(models.Model):
     health_tips_id = models.AutoField(primary_key=True)
     health_tips = models.CharField(max_length=250)
-    patient_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tblsvasthhealthytips_patients')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tblsvasthhealthytips_posted')
     created_at = models.CharField(max_length=50)
 
     class Meta:
@@ -2054,7 +2054,7 @@ class TblSvasthNutrient(models.Model):
     serving_weight_gms = models.CharField(max_length=50)
     metric_qty = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.IntegerField()
+    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by')
 
     class Meta:
         # managed = False
@@ -2083,16 +2083,16 @@ class TblSvasthfoodGroupMaster(models.Model):
 
 
 class TblSvasthhealthPm(models.Model):
-    food_group_add_id = models.IntegerField()
+    food_group_add = models.ForeignKey('DietSvasthFoodGroupAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_group_add_id')
     food_code = models.IntegerField()
-    food_style_add_id = models.IntegerField()
+    food_style_add = models.ForeignKey('DietFoodStyleAdd', on_delete=models.SET_NULL,null=True,blank=True, db_column='food_style_add_id')
     food_description = models.CharField(max_length=250)
-    sub_group_id = models.IntegerField()
+    sub_group = models.ForeignKey('TblFoodSubgroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='sub_group_id')
     calorific_value = models.CharField(max_length=50)
     generate_rcp = models.CharField(max_length=250)
     image = models.CharField(max_length=50)
-    patient_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='tblsvasthhealthpm_patients')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='tblsvasthhealthpm_posted')
     created_at = models.DateField()
 
     class Meta:
@@ -2114,8 +2114,8 @@ class TblUomMaster(models.Model):
 class TblUploadHealthChart(models.Model):
     report = models.CharField(max_length=50)
     date = models.DateField()
-    posted_by = models.IntegerField()
-    updated_by_dietitian = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
+    updated_by_dietitian = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='updated_by_dietitian', related_name='health_chart_updates')
 
     class Meta:
         # managed = False
@@ -2136,9 +2136,9 @@ class TblUploadReport(models.Model):
     report = models.CharField(max_length=50, blank=True, null=True)
     new_report = models.CharField(max_length=250, blank=True, null=True)
     date = models.DateField()
-    posted_by = models.IntegerField()
-    diet_id = models.IntegerField()
-    updated_by_dietitian = models.IntegerField()
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by')
+    diet = models.ForeignKey('TblDietician', on_delete=models.SET_NULL,null=True,blank=True, db_column='diet_id')
+    updated_by_dietitian = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='updated_by_dietitian', related_name='report_updates')
 
     class Meta:
         # managed = False
@@ -2212,7 +2212,7 @@ class Tutorial(models.Model):
     titel = models.CharField(max_length=255, blank=True, null=True)
     message = models.TextField(blank=True, null=True)
     channel1_data = models.CharField(max_length=250, blank=True, null=True)
-    posted_by = models.IntegerField(blank=True, null=True)
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='posted_by')
     date = models.CharField(max_length=50, blank=True, null=True)
     updated_date = models.CharField(max_length=50, blank=True, null=True)
     likes = models.IntegerField(blank=True, null=True)
@@ -2260,7 +2260,7 @@ class Users(models.Model):
     join_date = models.DateTimeField(blank=True, null=True)
     company_name = models.CharField(max_length=50, blank=True, null=True)
     dor = models.CharField(max_length=50, blank=True, null=True)
-    company_status_id = models.IntegerField(blank=True, null=True)
+    company_status = models.ForeignKey('TblCompanyStatus', on_delete=models.SET_NULL, blank=True, null=True, db_column='company_status_id')
     bank_name = models.CharField(max_length=50, blank=True, null=True)
     acc_no = models.BigIntegerField(blank=True, null=True)
     branch_name = models.CharField(max_length=50, blank=True, null=True)
@@ -2293,8 +2293,9 @@ class ViewRating(models.Model):
     post_id = models.IntegerField()
     rating_number = models.IntegerField()
     total_points = models.IntegerField()
-    patient_id = models.IntegerField()
-    posted_by = models.IntegerField()
+    patient = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='patient_id', related_name='viewrating_patients')
+    posted_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='posted_by', related_name='viewrating_posted')
+
     compliance_rating = models.CharField(max_length=50)
     created = models.DateTimeField()
     modified = models.DateTimeField()
