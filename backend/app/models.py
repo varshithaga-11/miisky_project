@@ -54,18 +54,18 @@ class AddRecepeDevEntryThree(models.Model):
     recepe_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'add_recepe_dev_entry_three'
 
 
 class AddRecepeDevEntryTwo(models.Model):
     recepe_dev_en_id = models.AutoField(primary_key=True)
-    user_id = models.IntegerField()
+    user = models.ForeignKey('Users', on_delete=models.CASCADE, db_column='user_id')
     recepe_name = models.CharField(max_length=50)
-    food_category_id = models.IntegerField()
-    food_style_id = models.IntegerField()
-    country_id = models.IntegerField()
-    state_id = models.IntegerField()
+    food_category = models.ForeignKey('TblFoodCategory', on_delete=models.CASCADE, db_column='food_category_id')
+    food_style = models.ForeignKey('TblFoodstyleMaster', on_delete=models.CASCADE, db_column='food_style_id')
+    country = models.ForeignKey('TblCountry', on_delete=models.CASCADE, db_column='country_id')
+    state = models.ForeignKey('TblState', on_delete=models.CASCADE, db_column='state_id')
     uom_master_id = models.CharField(max_length=50)
     base_qty = models.CharField(max_length=50)
     uom_master_id_two = models.CharField(max_length=50)
@@ -90,7 +90,7 @@ class AddRecepeDevEntryTwo(models.Model):
     recepe_created_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'add_recepe_dev_entry_two'
 
 
@@ -100,7 +100,7 @@ class Blog(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'blog'
 
 
@@ -114,7 +114,7 @@ class CallBack(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'call_back'
 
 
@@ -124,7 +124,7 @@ class Cart(models.Model):
     quantity = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'cart'
 
 
@@ -135,7 +135,7 @@ class Category(models.Model):
     created_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'category'
 
 
@@ -149,7 +149,7 @@ class ChefPatientFood(models.Model):
     status = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'chef_patient_food'
 
 
@@ -170,7 +170,7 @@ class ChefRecipies(models.Model):
     status = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'chef_recipies'
 
 
@@ -180,7 +180,7 @@ class Details(models.Model):
     quantity = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'details'
 
 
@@ -191,7 +191,7 @@ class DietFoodStyleAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_food_style_add'
 
 
@@ -206,7 +206,7 @@ class DietFoodStyleDataAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_food_style_data_add'
 
 
@@ -218,7 +218,7 @@ class DietFoodStyleMaster(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_food_style_master'
 
 
@@ -237,7 +237,7 @@ class DietFoodTaken(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_food_taken'
 
 
@@ -249,7 +249,7 @@ class DietPlanMaster(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_plan_master'
 
 
@@ -260,7 +260,7 @@ class DietQualificationDetails(models.Model):
     recognitions = models.CharField(max_length=250)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_qualification_details'
 
 
@@ -271,7 +271,7 @@ class DietSvasthFoodGroupAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_svasth_food_group_add'
 
 
@@ -284,7 +284,7 @@ class DietSvasthGroupAddData(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_svasth_group_add_data'
 
 
@@ -296,7 +296,7 @@ class DietSvasthfoodGroupMaster(models.Model):
     created_at = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'diet_svasthfood_group_master'
 
 
@@ -309,7 +309,7 @@ class Feedback(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'feedback'
 
 
@@ -349,7 +349,7 @@ class HealthFoodPlan(models.Model):
     created_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'health_food_plan'
 
 
@@ -359,7 +359,7 @@ class Images(models.Model):
     image_text = models.TextField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'images'
 
 
@@ -368,7 +368,7 @@ class IpaddressLikesMap(models.Model):
     ip_address = models.CharField(max_length=255)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'ipaddress_likes_map'
 
 
@@ -377,7 +377,7 @@ class Likes(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'likes'
 
 
@@ -398,7 +398,7 @@ class MyPages(models.Model):
     photo = models.CharField(max_length=1000)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'my_pages'
 
 
@@ -420,7 +420,7 @@ class PatientHistory(models.Model):
     pat_last_report = models.CharField(max_length=500)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'patient_history'
 
 
@@ -435,7 +435,7 @@ class Products(models.Model):
     counter = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'products'
 
 
@@ -449,7 +449,7 @@ class ProductsUploadImage(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'products_upload_image'
 
 
@@ -459,7 +459,7 @@ class Sales(models.Model):
     sales_date = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'sales'
 
 
@@ -473,7 +473,7 @@ class StandardReportChat(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'standard_report_chat'
 
 
@@ -495,7 +495,7 @@ class TblAminoAcids(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_amino_acids'
 
 
@@ -503,7 +503,7 @@ class TblBlogsDietitian(models.Model):
     image = models.CharField(max_length=250)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_blogs_dietitian'
 
 
@@ -514,7 +514,7 @@ class TblCallCenter(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_call_center'
 
 
@@ -525,7 +525,7 @@ class TblCallCenterAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_call_center_add'
 
 
@@ -545,7 +545,7 @@ class TblCarotenoid(models.Model):
     created_by = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_carotenoid'
 
 
@@ -556,7 +556,7 @@ class TblChefFeedback(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_chef_feedback'
 
 
@@ -566,7 +566,7 @@ class TblCity(models.Model):
     state_id = models.BigIntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_city'
 
 
@@ -578,7 +578,7 @@ class TblCommentsAdd(models.Model):
     post_date = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_comments_add'
 
 
@@ -590,7 +590,7 @@ class TblCommunity(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_community'
 
 
@@ -601,7 +601,7 @@ class TblCompanyStatus(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_company_status'
 
 
@@ -609,7 +609,7 @@ class TblCompositionIndex(models.Model):
     composition_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_composition_index'
 
 
@@ -619,7 +619,7 @@ class TblCookingInstruction(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_cooking_instruction'
 
 
@@ -629,7 +629,7 @@ class TblCountry(models.Model):
     created_at = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_country'
 
 
@@ -641,7 +641,7 @@ class TblCreateDietician(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_create_dietician'
 
 
@@ -652,7 +652,7 @@ class TblDays(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_days'
 
 
@@ -665,7 +665,7 @@ class TblDevelopSchedule(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_develop_schedule'
 
 
@@ -689,7 +689,7 @@ class TblDietAddSnacks(models.Model):
     iron = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_add_snacks'
 
 
@@ -712,7 +712,7 @@ class TblDietChatMenu(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_chat_menu'
 
 
@@ -732,7 +732,7 @@ class TblDietFoodIndexData(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_food_index_data'
 
 
@@ -749,7 +749,7 @@ class TblDietFoodPatientIndex(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_food_patient_index'
 
 
@@ -763,7 +763,7 @@ class TblDietPlanGeneratorReport(models.Model):
     created_at = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_plan_generator_report'
 
 
@@ -774,7 +774,7 @@ class TblDietPlansAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_plans_add'
 
 
@@ -785,7 +785,7 @@ class TblDietSnacks(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_diet_snacks'
 
 
@@ -799,7 +799,7 @@ class TblDietician(models.Model):
     created_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietician'
 
 
@@ -810,7 +810,7 @@ class TblDieticianComment(models.Model):
     patient_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietician_comment'
 
 
@@ -820,7 +820,7 @@ class TblDieticianDislikeParameter(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietician_dislike_parameter'
 
 
@@ -832,7 +832,7 @@ class TblDieticianFoodAvoid(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietician_food_avoid'
 
 
@@ -842,7 +842,7 @@ class TblDieticianLikeParameter(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietician_like_parameter'
 
 
@@ -855,7 +855,7 @@ class TblDietplanAddMasterTable(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietplan_add_master_table'
 
 
@@ -869,7 +869,7 @@ class TblDietplanMasterTable(models.Model):
     food_avoid = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dietplan_master_table'
 
 
@@ -880,7 +880,7 @@ class TblDoctorsComment(models.Model):
     patient_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_doctors_comment'
 
 
@@ -894,7 +894,7 @@ class TblDosAndDont(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_dos_and_dont'
 
 
@@ -906,7 +906,7 @@ class TblEcgData(models.Model):
     date = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_ecg_data'
 
 
@@ -928,7 +928,7 @@ class TblFatSolubleVtmnsVal(models.Model):
     created_by = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_fat_soluble_vtmns_val'
 
 
@@ -951,7 +951,7 @@ class TblFattyAcid(models.Model):
     craeted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_fatty_acid'
 
 
@@ -986,7 +986,7 @@ class TblFattyAcidProfile(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_fatty_acid_profile'
 
 
@@ -999,7 +999,7 @@ class TblFoodCategory(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_category'
 
 
@@ -1017,7 +1017,7 @@ class TblFoodDietIndexData(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_diet_index_data'
 
 
@@ -1029,7 +1029,7 @@ class TblFoodMainCode(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_main_code'
 
 
@@ -1051,7 +1051,7 @@ class TblFoodMainDataAdd(models.Model):
     iron = models.CharField(max_length=250)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_main_data_add'
 
 
@@ -1063,7 +1063,7 @@ class TblFoodMaster(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_master'
 
 
@@ -1073,7 +1073,7 @@ class TblFoodMenu(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_menu'
 
 
@@ -1084,7 +1084,7 @@ class TblFoodPacking(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_packing'
 
 
@@ -1128,7 +1128,7 @@ class TblFoodPlanGenerator(models.Model):
     like = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_plan_generator'
 
 
@@ -1144,7 +1144,7 @@ class TblFoodProduct(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_product'
 
 
@@ -1162,7 +1162,7 @@ class TblFoodProductGenerator(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_product_generator'
 
 
@@ -1180,7 +1180,7 @@ class TblFoodProductMaster(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_product_master'
 
 
@@ -1195,7 +1195,7 @@ class TblFoodRecepe(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_recepe'
 
 
@@ -1209,7 +1209,7 @@ class TblFoodSpecification(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_specification'
 
 
@@ -1220,7 +1220,7 @@ class TblFoodSubgroup(models.Model):
     created_at = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_food_subgroup'
 
 
@@ -1232,7 +1232,7 @@ class TblFoodstyleMaster(models.Model):
     created_at = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_foodstyle_master'
 
 
@@ -1242,7 +1242,7 @@ class TblHealthConditions(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_health_conditions'
 
 
@@ -1254,7 +1254,7 @@ class TblHealthparameterMaster(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_healthparameter_master'
 
 
@@ -1262,7 +1262,7 @@ class TblImageList(models.Model):
     picture = models.CharField(max_length=500)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_image_list'
 
 
@@ -1283,7 +1283,7 @@ class TblIndividualSugar(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_individual_sugar'
 
 
@@ -1307,7 +1307,7 @@ class TblIngredients(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_ingredients'
 
 
@@ -1320,7 +1320,7 @@ class TblIngredientsCategoryMaster(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_ingredients_category_master'
 
 
@@ -1335,7 +1335,7 @@ class TblIngredientsMaster(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_ingredients_master'
 
 
@@ -1372,7 +1372,7 @@ class TblInputBom(models.Model):
     created_by = models.CharField(max_length=11)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_input_bom'
 
 
@@ -1383,7 +1383,7 @@ class TblItems(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_items'
 
 
@@ -1397,7 +1397,7 @@ class TblLanguagesKnown(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_languages_known'
 
 
@@ -1429,7 +1429,7 @@ class TblMinerals(models.Model):
     zinc = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_minerals'
 
 
@@ -1438,7 +1438,7 @@ class TblNutritionFood(models.Model):
     food_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_nutrition_food'
 
 
@@ -1447,7 +1447,7 @@ class TblNutritionServiningSize(models.Model):
     servining_size_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_nutrition_servining_size'
 
 
@@ -1469,7 +1469,7 @@ class TblNutritionValProducts(models.Model):
     iron = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_nutrition_val_products'
 
 
@@ -1488,7 +1488,7 @@ class TblOrderSentLogistic(models.Model):
     created_at = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_order_sent_logistic'
 
 
@@ -1509,7 +1509,7 @@ class TblOrganicAcid(models.Model):
     created_by = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_organic_acid'
 
 
@@ -1519,7 +1519,7 @@ class TblPackingInstruction(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_packing_instruction'
 
 
@@ -1529,7 +1529,7 @@ class TblPatDislikeFood(models.Model):
     created_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_pat_dislike_food'
 
 
@@ -1538,7 +1538,7 @@ class TblPatientCategory(models.Model):
     patient_category = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_patient_category'
 
 
@@ -1548,7 +1548,7 @@ class TblPatientFoodItem(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_patient_food_item'
 
 
@@ -1568,7 +1568,7 @@ class TblPatientHealth(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_patient_health'
 
 
@@ -1596,7 +1596,7 @@ class TblPatientOrderFood(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_patient_order_food'
 
 
@@ -1611,7 +1611,7 @@ class TblPatientSatisfactionIndex(models.Model):
     posted_by = models.CharField(max_length=11)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_patient_satisfaction_index'
 
 
@@ -1624,7 +1624,7 @@ class TblPayAnalysis(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_pay_analysis'
 
 
@@ -1638,7 +1638,7 @@ class TblPayBiils(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_pay_biils'
 
 
@@ -1659,7 +1659,7 @@ class TblPhytates(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_phytates'
 
 
@@ -1680,7 +1680,7 @@ class TblPolyphenols(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_polyphenols'
 
 
@@ -1689,7 +1689,7 @@ class TblProximateData(models.Model):
     proximate_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_proximate_data'
 
 
@@ -1712,7 +1712,7 @@ class TblProximateDietaryFiber(models.Model):
     created_by = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_proximate_dietary_fiber'
 
 
@@ -1723,7 +1723,7 @@ class TblQuestionSuggestionPat(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_question_suggestion_pat'
 
 
@@ -1773,7 +1773,7 @@ class TblQuestions(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_questions'
 
 
@@ -1807,7 +1807,7 @@ class TblRcpBuilder(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_rcp_builder'
 
 
@@ -1822,7 +1822,7 @@ class TblRecepeDevEntry(models.Model):
     created_at = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_recepe_dev_entry'
 
 
@@ -1841,7 +1841,7 @@ class TblRecipiesMaster(models.Model):
     status_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_recipies_master'
 
 
@@ -1852,7 +1852,7 @@ class TblRemainder(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_remainder'
 
 
@@ -1865,7 +1865,7 @@ class TblRemainderDiet(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_remainder_diet'
 
 
@@ -1875,7 +1875,7 @@ class TblRole(models.Model):
     status = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_role'
 
 
@@ -1888,7 +1888,7 @@ class TblScheduleOtherServices(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_schedule_other_services'
 
 
@@ -1899,7 +1899,7 @@ class TblScmPerson(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_scm_person'
 
 
@@ -1910,7 +1910,7 @@ class TblScmPersonAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_scm_person_add'
 
 
@@ -1920,7 +1920,7 @@ class TblState(models.Model):
     country_id = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_state'
 
 
@@ -1929,7 +1929,7 @@ class TblStatus(models.Model):
     status_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_status'
 
 
@@ -1938,7 +1938,7 @@ class TblSubGroup(models.Model):
     sub_group_name = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_sub_group'
 
 
@@ -1947,7 +1947,7 @@ class TblSubItemGroup(models.Model):
     group_name = models.CharField(max_length=250)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_sub_item_group'
 
 
@@ -1959,7 +1959,7 @@ class TblSuggestions(models.Model):
     ip = models.CharField(max_length=20)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_suggestions'
 
 
@@ -1979,7 +1979,7 @@ class TblSuppliers(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_suppliers'
 
 
@@ -1988,7 +1988,7 @@ class TblSvasthFoodCategory(models.Model):
     food_category_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_food_category'
 
 
@@ -2005,7 +2005,7 @@ class TblSvasthFoodMasterDataAdd(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_food_master_data_add'
 
 
@@ -2020,7 +2020,7 @@ class TblSvasthFoodPlanMaster(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_food_plan_master'
 
 
@@ -2029,7 +2029,7 @@ class TblSvasthFoodStyle(models.Model):
     food_style_name = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_food_style'
 
 
@@ -2041,7 +2041,7 @@ class TblSvasthHealthyTips(models.Model):
     created_at = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_healthy_tips'
 
 
@@ -2057,7 +2057,7 @@ class TblSvasthNutrient(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_nutrient'
 
 
@@ -2066,7 +2066,7 @@ class TblSvasthSnpParameters(models.Model):
     snp_parameter = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasth_snp_parameters'
 
 
@@ -2078,7 +2078,7 @@ class TblSvasthfoodGroupMaster(models.Model):
     created_at = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasthfood_group_master'
 
 
@@ -2096,7 +2096,7 @@ class TblSvasthhealthPm(models.Model):
     created_at = models.DateField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_svasthhealth_pm'
 
 
@@ -2107,7 +2107,7 @@ class TblUomMaster(models.Model):
     created_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_uom_master'
 
 
@@ -2118,7 +2118,7 @@ class TblUploadHealthChart(models.Model):
     updated_by_dietitian = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_upload_health_chart'
 
 
@@ -2128,7 +2128,7 @@ class TblUploadKitchenDetails(models.Model):
     posted_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_upload_kitchen_details'
 
 
@@ -2141,7 +2141,7 @@ class TblUploadReport(models.Model):
     updated_by_dietitian = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_upload_report'
 
 
@@ -2152,7 +2152,7 @@ class TblUploadReports(models.Model):
     updated_by_dietitian = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_upload_reports'
 
 
@@ -2161,7 +2161,7 @@ class TblUserLoginDetails(models.Model):
     password = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_user_login_details'
 
 
@@ -2171,7 +2171,7 @@ class TblUserMapping(models.Model):
     food_supplier = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_user_mapping'
 
 
@@ -2193,7 +2193,7 @@ class TblWaterSolubleVtmnsval(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_water_soluble_vtmnsval'
 
 
@@ -2204,7 +2204,7 @@ class TblWeeks(models.Model):
     created_by = models.IntegerField()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tbl_weeks'
 
 
@@ -2219,7 +2219,7 @@ class Tutorial(models.Model):
     youtube_link = models.CharField(max_length=250, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'tutorial'
 
 
@@ -2284,7 +2284,7 @@ class Users(models.Model):
     work_expirence = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'users'
 
 
@@ -2301,5 +2301,5 @@ class ViewRating(models.Model):
     status = models.IntegerField(db_comment='1 = Block, 0 = Unblock')
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'view_rating'
