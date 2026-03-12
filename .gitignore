@@ -58,3 +58,7 @@ frontend/.env.production
 .coverage
 htmlcov/
 pytest_cache/
+
+
+data.json
+backend/data.json

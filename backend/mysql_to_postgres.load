@@ -1,0 +1,10 @@
+/*
+ * MySQL to PostgreSQL migration using pgloader
+ */
+
+LOAD DATABASE
+    FROM mysql://root:86604%40Ga@host.docker.internal:3306/db_food_with_data
+    INTO postgresql://postgres:1234@host.docker.internal:5432/db_food_with_data
+
+WITH include drop, create tables, create indexes, reset sequences,
+     workers = 4, concurrency = 1

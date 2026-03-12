@@ -7,18 +7,18 @@ from .views import *
 
 router = DefaultRouter()
 
-router.register(r'profile', ProfileView, basename='profile')
-router.register(r"companies", CompanyViewSet, basename="company")
+# router.register(r'profile', ProfileView, basename='profile')
+# router.register(r"companies", CompanyViewSet, basename="company")
 
 
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('register/', UserRegisterView.as_view(), name='register'),
+    # path('register/', UserRegisterView.as_view(), name='register'),
     # path('userlist/', UserListView.as_view(), name='user_list'),
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
-    path('login/', LoginView.as_view(), name='login'),
-    path('token/refresh/', RefreshTokenView.as_view(), name='token_refresh'),
+    # path('login/', LoginView.as_view(), name='login'),
+    # path('token/refresh/', RefreshTokenView.as_view(), name='token_refresh'),
     # path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     # path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),
     # path('resetpassword/', ResetPasswordView.as_view(), name='resetpassword'),
