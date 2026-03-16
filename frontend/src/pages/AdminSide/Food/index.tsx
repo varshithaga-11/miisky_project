@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiLayers } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getFoodList, deleteFood, Food } from "./foodapi";
@@ -88,9 +88,8 @@ const FoodManagementPage: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
+    setCurrentPage(1);
   };
-
-  if (loading && foods.length === 0) return <div className="p-6">Loading foods...</div>;
 
   return (
     <>
@@ -107,21 +106,17 @@ const FoodManagementPage: React.FC = () => {
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           </div>
           
           <div className="flex items-center gap-4">
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
+              <FiPlus />
               Add Food
             </Button>
             
             <div className="flex items-center gap-2">
-              <Label className="text-sm dark:text-gray-400">Show:</Label>
+              <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Show:</Label>
               <Select
                 value={String(pageSize)}
                 onChange={(val) => { setPageSize(Number(val)); setCurrentPage(1); }}
@@ -129,10 +124,17 @@ const FoodManagementPage: React.FC = () => {
                   { value: "5", label: "5" },
                   { value: "10", label: "10" },
                   { value: "25", label: "25" },
+                  { value: "50", label: "50" },
                 ]}
                 className="w-20"
               />
             </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
         </div>
       </div>
@@ -142,25 +144,29 @@ const FoodManagementPage: React.FC = () => {
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 text-start">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start">Image</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50" onClick={() => handleSort('name')}>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Image</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('name')}>
                   <div className="flex items-center gap-2">
                     Food Name {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50" onClick={() => handleSort('category_name')}>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('category_name')}>
                   <div className="flex items-center gap-2">
                     Category {sortField === 'category_name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start">Action</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {sortedFoods.length === 0 ? (
+              {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500">No food items found</TableCell>
+                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">Loading foods...</TableCell>
+                </TableRow>
+              ) : sortedFoods.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">No food items found</TableCell>
                 </TableRow>
               ) : (
                 sortedFoods.map((food, index) => (
@@ -168,15 +174,19 @@ const FoodManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4">
                       {food.image ? (
-                        <img src={food.image} alt={food.name} className="w-12 h-12 rounded object-cover" />
+                        <img src={food.image} alt={food.name} className="w-12 h-12 rounded-lg object-cover border border-gray-100 dark:border-gray-700 shadow-sm" />
                       ) : (
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded text-gray-400">
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded-lg text-gray-400">
                           <FiLayers />
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{food.name}</TableCell>
-                    <TableCell className="px-5 py-4">{food.category_name || "Uncategorized"}</TableCell>
+                    <TableCell className="px-5 py-4">
+                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                        {food.category_name || "Uncategorized"}
+                       </span>
+                    </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditFoodId(food.id!); setIsEditModalOpen(true); }}>
@@ -196,22 +206,22 @@ const FoodManagementPage: React.FC = () => {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between text-sm">
-          <div className="text-gray-500">
-            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
-          </div>
-          <div className="flex gap-2">
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600 dark:text-gray-400"
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
             >
-              Prev
+              Previous
             </button>
+            <span className="text-sm dark:text-gray-400">
+               Page {currentPage} of {totalPages}
+            </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600 dark:text-gray-400"
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
             >
               Next
             </button>

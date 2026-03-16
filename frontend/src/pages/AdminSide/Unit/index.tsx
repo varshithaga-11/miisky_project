@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getUnitList, deleteUnit, Unit } from "./unitapi";
@@ -7,6 +7,7 @@ import AddUnit from "./AddUnit";
 import EditUnit from "./EditUnit";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
+import Label from "../../../components/form/Label";
 
 const UnitManagementPage: React.FC = () => {
   const [units, setUnits] = useState<Unit[]>([]);
@@ -21,11 +22,12 @@ const UnitManagementPage: React.FC = () => {
   }, []);
 
   const fetchUnits = async () => {
+    setLoading(true);
     try {
       const list = await getUnitList();
       setUnits(list);
     } catch {
-      alert("Failed to load units.");
+      console.error("Failed to load units.");
     } finally {
       setLoading(false);
     }
@@ -35,7 +37,7 @@ const UnitManagementPage: React.FC = () => {
     if (!window.confirm("Are you sure?")) return;
     try {
       await deleteUnit(id);
-      setUnits(prev => prev.filter(u => u.id !== id));
+      fetchUnits();
     } catch {
       alert("Failed to delete unit.");
     }
@@ -50,41 +52,73 @@ const UnitManagementPage: React.FC = () => {
       <PageMeta title="Unit Management" description="Manage measurement units" />
       <PageBreadcrumb pageTitle="Unit Management" />
 
-      <div className="mb-6 flex justify-between items-center">
-        <input
-          type="text"
-          placeholder="Search units..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-xs p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        />
-        <Button onClick={() => setIsAddModalOpen(true)}>Add Unit</Button>
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              placeholder="Search units..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            />
+            <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+          <div className="flex items-center gap-4">
+            <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
+              <FiPlus />
+              Add Unit
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {filteredUnits.length} of {units.length} entries
+          </div>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableCell isHeader>#</TableCell>
-              <TableCell isHeader>Unit Name</TableCell>
-              <TableCell isHeader>Action</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUnits.map((u, i) => (
-              <TableRow key={u.id}>
-                <TableCell>{i + 1}</TableCell>
-                <TableCell>{u.name}</TableCell>
-                <TableCell>
-                  <div className="flex gap-3 text-lg">
-                    <button onClick={() => { setEditUnitId(u.id!); setIsEditModalOpen(true); }} className="text-blue-500"><FiEdit /></button>
-                    <button onClick={() => handleDelete(u.id!)} className="text-red-500"><FiTrash2 /></button>
-                  </div>
-                </TableCell>
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Unit Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">Loading units...</TableCell>
+                </TableRow>
+              ) : filteredUnits.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No units found</TableCell>
+                </TableRow>
+              ) : (
+                filteredUnits.map((u, i) => (
+                  <TableRow key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4">{i + 1}</TableCell>
+                    <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{u.name}</TableCell>
+                    <TableCell className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditUnitId(u.id!); setIsEditModalOpen(true); }}>
+                          <FiEdit />
+                        </button>
+                        <button className="text-red-600 hover:text-red-800" title="Delete" onClick={() => handleDelete(u.id!)}>
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {isAddModalOpen && <AddUnit onClose={() => setIsAddModalOpen(false)} onAdd={() => { fetchUnits(); setIsAddModalOpen(false); }} />}
