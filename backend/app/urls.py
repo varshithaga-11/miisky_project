@@ -13,6 +13,13 @@ router.register(r'country', CountryViewSet)
 router.register(r'state', StateViewSet)
 router.register(r'city', CityViewSet)
 
+# Food System routes
+router.register(r'foodcategory',  FoodCategoryViewSet)
+router.register(r'food',          FoodViewSet)
+router.register(r'ingredient',    IngredientViewSet)
+router.register(r'unit',          UnitViewSet)
+router.register(r'foodingredient', FoodIngredientViewSet, basename='foodingredient')
+router.register(r'foodstep',      FoodStepViewSet,       basename='foodstep')
 
 
 urlpatterns = [

@@ -170,3 +170,56 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = "__all__"
+
+
+# ── Food System Serializers ────────────────────────────────────────────────────
+
+class FoodCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodCategory
+        fields = "__all__"
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ingredient
+        fields = "__all__"
+
+
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Unit
+        fields = "__all__"
+
+
+class FoodIngredientSerializer(serializers.ModelSerializer):
+    # Read-only nested display names
+    ingredient_name = serializers.CharField(source='ingredient.name', read_only=True)
+    unit_name       = serializers.CharField(source='unit.name',       read_only=True)
+
+    class Meta:
+        model = FoodIngredient
+        fields = ['id', 'food', 'ingredient', 'ingredient_name',
+                  'quantity', 'unit', 'unit_name', 'notes']
+
+
+class FoodStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodStep
+        fields = "__all__"
+
+
+class FoodSerializer(serializers.ModelSerializer):
+    # Nested read — show full ingredient + step lists when retrieving a food
+    ingredients = FoodIngredientSerializer(
+        source='foodingredient_set', many=True, read_only=True
+    )
+    steps = FoodStepSerializer(
+        source='foodstep_set', many=True, read_only=True
+    )
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = Food
+        fields = ['id', 'name', 'category', 'category_name',
+                  'description', 'image', 'ingredients', 'steps']
