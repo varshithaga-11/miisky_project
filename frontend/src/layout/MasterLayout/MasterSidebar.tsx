@@ -59,10 +59,11 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Food Category", path: "/master/food-category" },
       { name: "Foods", path: "/master/food" },
+      { name: "Recipe Management", path: "/master/recipe-creator" },
       { name: "Units", path: "/master/unit" },
       { name: "Ingredients", path: "/master/ingredient" },
-      { name: "Recipe Ingredients", path: "/master/food-ingredient" },
-      { name: "Preparation Steps", path: "/master/food-step" },
+      // { name: "Recipe Ingredients", path: "/master/food-ingredient" },
+      // { name: "Preparation Steps", path: "/master/food-step" },
     ],
   },
   // {
@@ -179,8 +180,8 @@ const MasterSidebar: React.FC = () => {
             <button
               onClick={() => handleSubmenuToggle(index)}
               className={`menu-item group ${openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
+                ? "menu-item-active"
+                : "menu-item-inactive"
                 } cursor-pointer ${!isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
@@ -188,8 +189,8 @@ const MasterSidebar: React.FC = () => {
             >
               <span
                 className={`menu-item-icon-size ${openSubmenu?.index === index
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
+                  ? "menu-item-icon-active"
+                  : "menu-item-icon-inactive"
                   }`}
               >
                 {nav.icon}
@@ -200,8 +201,8 @@ const MasterSidebar: React.FC = () => {
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
                   className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.index === index
-                      ? "rotate-180 text-brand-500"
-                      : ""
+                    ? "rotate-180 text-brand-500"
+                    : ""
                     }`}
                 />
               )}
@@ -211,14 +212,14 @@ const MasterSidebar: React.FC = () => {
               <Link
                 to={nav.path}
                 className={`menu-item group ${isActive(nav.path)
-                    ? "menu-item-active"
-                    : "menu-item-inactive"
+                  ? "menu-item-active"
+                  : "menu-item-inactive"
                   }`}
               >
                 <span
                   className={`menu-item-icon-size ${isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
                     }`}
                 >
                   {nav.icon}
@@ -249,8 +250,8 @@ const MasterSidebar: React.FC = () => {
                     <Link
                       to={subItem.path}
                       className={`menu-dropdown-item ${isActive(subItem.path)
-                          ? "menu-dropdown-item-active"
-                          : "menu-dropdown-item-inactive"
+                        ? "menu-dropdown-item-active"
+                        : "menu-dropdown-item-inactive"
                         }`}
                     >
                       {subItem.name}
@@ -259,8 +260,8 @@ const MasterSidebar: React.FC = () => {
                           {subItem.new && (
                             <span
                               className={`menu-dropdown-badge ${isActive(subItem.path)
-                                  ? "menu-dropdown-badge-active"
-                                  : "menu-dropdown-badge-inactive"
+                                ? "menu-dropdown-badge-active"
+                                : "menu-dropdown-badge-inactive"
                                 }`}
                             >
                               new
@@ -269,8 +270,8 @@ const MasterSidebar: React.FC = () => {
                           {subItem.pro && (
                             <span
                               className={`menu-dropdown-badge ${isActive(subItem.path)
-                                  ? "menu-dropdown-badge-active"
-                                  : "menu-dropdown-badge-inactive"
+                                ? "menu-dropdown-badge-active"
+                                : "menu-dropdown-badge-inactive"
                                 }`}
                             >
                               pro
@@ -319,8 +320,8 @@ const MasterSidebar: React.FC = () => {
         <nav className="mb-6">
           <h2
             className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                ? "lg:justify-center"
-                : "justify-start"
+              ? "lg:justify-center"
+              : "justify-start"
               }`}
           >
             {isExpanded || isHovered || isMobileOpen ? (

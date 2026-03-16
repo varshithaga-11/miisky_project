@@ -32,6 +32,7 @@ import UnitManagementPage from "./pages/AdminSide/Unit/index";
 import IngredientManagementPage from "./pages/AdminSide/Ingredient/index";
 import FoodIngredientManagementPage from "./pages/AdminSide/FoodIngredient/index";
 import FoodStepManagementPage from "./pages/AdminSide/FoodStep/index";
+import RecipeManagementPage from "./pages/AdminSide/RecipeManagement/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -75,6 +76,7 @@ export function appRoutes() {
           <Route path="master/ingredient" element={<IngredientManagementPage />} />
           <Route path="master/food-ingredient" element={<FoodIngredientManagementPage />} />
           <Route path="master/food-step" element={<FoodStepManagementPage />} />
+          <Route path="master/recipe-creator" element={<RecipeManagementPage />} />
 
 
           {/* Others Page */}
