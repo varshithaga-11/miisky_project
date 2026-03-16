@@ -21,7 +21,7 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
 
-import UserManagementPage from "./pages/UserManagement/index";
+import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 
 
 import ClientPage from "./pages/registration/client";

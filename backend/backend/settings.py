@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 
-# ##AUTH_USER_MODEL = 'app.UserRegister'
+AUTH_USER_MODEL = 'app.UserRegister'
 
 
 # Application definition
@@ -94,7 +94,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_food_with_data',
+        'NAME': 'miisky_project',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': 'localhost',

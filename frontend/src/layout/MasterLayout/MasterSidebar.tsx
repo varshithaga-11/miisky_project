@@ -39,6 +39,19 @@ const navItems: NavItem[] = [
     name: "Company",
     path: "/companies",
   },
+      {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "country",
+    path: "/companies",
+  },    {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "state",
+    path: "/companies",
+  },    {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "city",
+    path: "/companies",
+  },
   // {
   //   icon: <FileText className="w-5 h-5" />,
   //   name: "Client and Supplier Registration ",

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { getUserById, updateUser, UserRegister } from "./api";
-import Button from "../../components/ui/button/Button";
-import Input from "../../components/form/input/InputField";
-import Label from "../../components/form/Label";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Select from "../../components/form/Select";
+import Select from "../../../components/form/Select";
 
 interface EditUserProps {
   userId: number;

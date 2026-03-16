@@ -84,7 +84,7 @@ export default function SignUpForm() {
     try {
       const userData = {
         ...formData,
-        role: "master",
+        role: "admin",
       };
 
       const result = await registerUser(userData);

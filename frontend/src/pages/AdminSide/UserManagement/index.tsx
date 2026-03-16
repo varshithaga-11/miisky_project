@@ -1,14 +1,14 @@
 import { useEffect, useState ,useMemo} from "react";
 import { FiTrash2, FiEdit } from "react-icons/fi";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import PageMeta from "../../components/common/PageMeta";
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import PageMeta from "../../../components/common/PageMeta";
 import { getUserList, deleteUser, userId } from "./api";
 import AddUser from "./AddUser";
 import EditUser from "./EditUser";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
-import Button from "../../components/ui/button/Button";
-import Select from "../../components/form/Select";
-import Label from "../../components/form/Label";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import Button from "../../../components/ui/button/Button";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 
 export interface UserRegister {
   id?: number;
