@@ -27,12 +27,12 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
     // Fetch both on mount
     const fetchData = async () => {
       try {
-        const [countryList, stateList] = await Promise.all([
-          getCountryList(),
-          getStateList()
+        const [countryRes, stateRes] = await Promise.all([
+          getCountryList(1, "all"),
+          getStateList(1, "all")
         ]);
-        setCountries(countryList);
-        setStates(stateList);
+        setCountries(countryRes.results);
+        setStates(stateRes.results);
       } catch (err) {
         console.error(err);
       }

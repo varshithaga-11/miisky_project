@@ -26,7 +26,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getFoodCategoryList().then(setCategories).catch(console.error);
+    getFoodCategoryList(1, "all").then(res => setCategories(res.results)).catch(console.error);
   }, []);
 
   useEffect(() => {

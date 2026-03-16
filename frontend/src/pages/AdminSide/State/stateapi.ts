@@ -7,6 +7,17 @@ export interface State {
   country?: number;
 }
 
+export interface PaginatedResponses<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+  status_counts?: Record<string, number>;
+  totals?: Record<string, number>;
+}
+
 // Create
 export const createState = async (data: State) => {
   const url = createApiUrl("api/state/");
@@ -17,12 +28,26 @@ export const createState = async (data: State) => {
 };
 
 // Get list
-export const getStateList = async (): Promise<State[]> => {
-  const url = createApiUrl("api/state/");
-  const response = await axios.get(url, {
-    headers: await getAuthHeaders(),
-  });
-  return response.data;
+export const getStateList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string
+): Promise<PaginatedResponses<State>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+
+    const url = createApiUrl("api/state/");
+    const response = await axios.get<PaginatedResponses<State>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching state list:", error);
+    throw error;
+  }
 };
 
 // Get by ID

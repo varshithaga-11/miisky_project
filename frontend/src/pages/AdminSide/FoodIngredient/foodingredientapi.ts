@@ -12,6 +12,17 @@ export interface FoodIngredient {
   notes?: string;
 }
 
+export interface PaginatedResponses<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+  status_counts?: Record<string, number>;
+  totals?: Record<string, number>;
+}
+
 // Create
 export const createFoodIngredient = async (data: FoodIngredient) => {
   const url = createApiUrl("api/foodingredient/");
@@ -22,15 +33,28 @@ export const createFoodIngredient = async (data: FoodIngredient) => {
 };
 
 // Get List (optionally filter by food)
-export const getFoodIngredientList = async (foodId?: number): Promise<FoodIngredient[]> => {
-  let url = createApiUrl("api/foodingredient/");
-  if (foodId) {
-    url += `?food=${foodId}`;
+export const getFoodIngredientList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string,
+  foodId?: number
+): Promise<PaginatedResponses<FoodIngredient>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (foodId) params.food = foodId;
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+
+    const url = createApiUrl("api/foodingredient/");
+    const response = await axios.get<PaginatedResponses<FoodIngredient>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching food ingredient list:", error);
+    throw error;
   }
-  const response = await axios.get(url, {
-    headers: await getAuthHeaders(),
-  });
-  return response.data;
 };
 
 // Update

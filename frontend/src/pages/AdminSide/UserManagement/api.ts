@@ -72,14 +72,38 @@ export const deleteUser = async (id: number) => {
   return response.data;
 };
 
-export const getUserList = async (createdBy?: number): Promise<UserRegister[]> => {
-  let url = createApiUrl("/app/usermanagement/");
-  if (createdBy) {
-    url += `?created_by=${createdBy}`;
+export interface PaginatedResponses<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+  status_counts?: Record<string, number>;
+  totals?: Record<string, number>;
+}
+
+export const getUserList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string,
+  createdBy?: number
+): Promise<PaginatedResponses<UserRegister>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (createdBy) params.created_by = createdBy;
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+
+    const url = createApiUrl("/app/usermanagement/");
+    const response = await axios.get<PaginatedResponses<UserRegister>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user list:", error);
+    throw error;
   }
-  const response = await axios.get<UserRegister[]>(url, {
-    headers: await getAuthHeaders(),
-  });
-  return response.data;
 };
 

@@ -47,11 +47,11 @@ export const saveFullRecipe = async (data: FullRecipeRow) => {
  * Deletes all ingredients and steps for a specific food.
  */
 export const deleteFullRecipe = async (foodId: number) => {
-    const ingredients = await getFoodIngredientList(foodId);
-    const steps = await getFoodStepList(foodId);
+    const ingredientsRes = await getFoodIngredientList(1, "all", undefined, foodId);
+    const stepsRes = await getFoodStepList(1, "all", undefined, foodId);
 
-    const deleteIngPromises = ingredients.map(ing => deleteFoodIngredient(ing.id!));
-    const deleteStepPromises = steps.map(step => deleteFoodStep(step.id!));
+    const deleteIngPromises = ingredientsRes.results.map(ing => deleteFoodIngredient(ing.id!));
+    const deleteStepPromises = stepsRes.results.map(step => deleteFoodStep(step.id!));
 
     await Promise.all([...deleteIngPromises, ...deleteStepPromises]);
 };

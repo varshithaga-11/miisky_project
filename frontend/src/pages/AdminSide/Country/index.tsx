@@ -13,6 +13,8 @@ import Label from "../../../components/form/Label";
 const CountryManagementPage: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editCountryId, setEditCountryId] = useState<number | null>(null);
@@ -26,13 +28,15 @@ const CountryManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchCountries();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchCountries = async () => {
     setLoading(true);
     try {
-      const list = await getCountryList();
-      setCountries(list);
+      const response = await getCountryList(currentPage, pageSize, searchTerm);
+      setCountries(response.results);
+      setTotalItems(response.count);
+      setTotalPages(response.total_pages);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -44,7 +48,7 @@ const CountryManagementPage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this country?")) return;
     try {
       await deleteCountry(id);
-      setCountries((prev) => prev.filter((c) => c.id !== id));
+      fetchCountries(); // Refresh from backend
     } catch {
       alert("Failed to delete country.");
     }
@@ -57,18 +61,11 @@ const CountryManagementPage: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1);
   };
 
-  const filteredCountries = useMemo(() => {
-    return countries.filter(country =>
-      country.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [countries, searchTerm]);
-
   const sortedCountries = useMemo(() => {
-    if (!sortField) return filteredCountries;
-    return [...filteredCountries].sort((a, b) => {
+    if (!sortField) return countries;
+    return [...countries].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       if (!aValue && !bValue) return 0;
@@ -80,14 +77,7 @@ const CountryManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredCountries, sortField, sortDirection]);
-
-  const paginatedCountries = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedCountries.slice(startIndex, startIndex + pageSize);
-  }, [sortedCountries, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(sortedCountries.length / pageSize);
+  }, [countries, sortField, sortDirection]);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -143,8 +133,8 @@ const CountryManagementPage: React.FC = () => {
 
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <div>
-            Showing {sortedCountries.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedCountries.length)} of {sortedCountries.length} entries
-            {searchTerm && ` (filtered from ${countries.length} total entries)`}
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+            {searchTerm && ` (filtered from search)`}
           </div>
         </div>
       </div>
@@ -172,12 +162,12 @@ const CountryManagementPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedCountries.length === 0 ? (
+              {sortedCountries.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No countries found</TableCell>
                 </TableRow>
               ) : (
-                paginatedCountries.map((country, index) => (
+                sortedCountries.map((country, index) => (
                   <TableRow key={country.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}

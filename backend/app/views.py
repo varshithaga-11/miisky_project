@@ -1,33 +1,40 @@
 from django.shortcuts import render
-from django.shortcuts import render
-from rest_framework import viewsets
-
-from .models import *
-
-from .serializers import *
-import os
-from django.conf import settings
-from django.http import FileResponse, HttpResponse
+from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated,AllowAny
-import random
-from django.conf import settings
-from .models import *
-from .serializers import *
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-import os
-from rest_framework import viewsets, status
-
-from rest_framework.permissions import AllowAny
-
+from rest_framework.pagination import PageNumberPagination
+from django.conf import settings
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
-# from_email = settings.EMAIL_HOST_USER
+import os
+import random
 
-# from django.core.mail import send_mail
+from .models import *
+from .serializers import *
+
+class Pagination(PageNumberPagination):
+    page_query_param = "page"
+    page_size_query_param = "limit"
+    page_size = 10
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        current_page = self.page.number
+        total_pages = self.page.paginator.num_pages
+
+        next_page = self.page.next_page_number() if self.page.has_next() else None
+        previous_page = self.page.previous_page_number() if self.page.has_previous() else None
+
+        return Response({
+            "count": self.page.paginator.count,
+            "next": next_page,            # ✅ numeric next
+            "previous": previous_page,    # ✅ numeric previous
+            "current_page": current_page,
+            "total_pages": total_pages,
+            "results": data,
+        })
 
 
 
@@ -98,21 +105,25 @@ class ProfileView(viewsets.ModelViewSet):
     # permission_classes = [IsAuthenticated]
     queryset = UserRegister.objects.all()
     serializer_class = ProfileSerializer
+    pagination_class = Pagination
 
 
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
+    pagination_class = Pagination
 
 
 class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    pagination_class = Pagination
 
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    pagination_class = Pagination
 
 
 # ── Food System ViewSets ───────────────────────────────────────────────────────
@@ -129,6 +140,7 @@ class FoodCategoryViewSet(viewsets.ModelViewSet):
     """
     queryset = FoodCategory.objects.all()
     serializer_class = FoodCategorySerializer
+    pagination_class = Pagination
     permission_classes = [AllowAny]
 
 
@@ -149,6 +161,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = FoodSerializer
     permission_classes = [AllowAny]
+    pagination_class = Pagination
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -159,6 +172,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
+    pagination_class = Pagination
 
 
 class UnitViewSet(viewsets.ModelViewSet):
@@ -179,6 +193,7 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
     """
     serializer_class = FoodIngredientSerializer
     permission_classes = [AllowAny]
+    pagination_class = Pagination
 
     def get_queryset(self):
         qs = FoodIngredient.objects.select_related(
@@ -198,6 +213,7 @@ class FoodStepViewSet(viewsets.ModelViewSet):
     """
     serializer_class = FoodStepSerializer
     permission_classes = [AllowAny]
+    pagination_class = Pagination
 
     def get_queryset(self):
         qs = FoodStep.objects.select_related('food').all()

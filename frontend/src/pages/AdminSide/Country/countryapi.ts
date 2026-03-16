@@ -7,6 +7,17 @@ export interface Country {
   created_at?: string;
 }
 
+export interface PaginatedResponses<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+  status_counts?: Record<string, number>;
+  totals?: Record<string, number>;
+}
+
 // Create Country
 export const createCountry = async (data: Country) => {
   const url = createApiUrl("api/country/");
@@ -17,12 +28,26 @@ export const createCountry = async (data: Country) => {
 };
 
 // Get Country List
-export const getCountryList = async (): Promise<Country[]> => {
-  const url = createApiUrl("api/country/");
-  const response = await axios.get(url, {
-    headers: await getAuthHeaders(),
-  });
-  return response.data;
+export const getCountryList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string
+): Promise<PaginatedResponses<Country>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+
+    const url = createApiUrl("api/country/");
+    const response = await axios.get<PaginatedResponses<Country>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching country list:", error);
+    throw error;
+  }
 };
 
 // Get Country by ID

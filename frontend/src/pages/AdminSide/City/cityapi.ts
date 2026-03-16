@@ -7,6 +7,17 @@ export interface City {
   state?: number;
 }
 
+export interface PaginatedResponses<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+  status_counts?: Record<string, number>;
+  totals?: Record<string, number>;
+}
+
 // Create
 export const createCity = async (data: City) => {
   const url = createApiUrl("api/city/");
@@ -17,12 +28,26 @@ export const createCity = async (data: City) => {
 };
 
 // Get List
-export const getCityList = async (): Promise<City[]> => {
-  const url = createApiUrl("api/city/");
-  const response = await axios.get(url, {
-    headers: await getAuthHeaders(),
-  });
-  return response.data;
+export const getCityList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string
+): Promise<PaginatedResponses<City>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+
+    const url = createApiUrl("api/city/");
+    const response = await axios.get<PaginatedResponses<City>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching city list:", error);
+    throw error;
+  }
 };
 
 // Get By ID

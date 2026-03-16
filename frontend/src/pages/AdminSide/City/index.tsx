@@ -15,6 +15,8 @@ const CityManagementPage: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
   const [states, setStates] = useState<State[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editCityId, setEditCityId] = useState<number | null>(null);
@@ -27,17 +29,19 @@ const CityManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [cityList, stateList] = await Promise.all([
-        getCityList(),
-        getStateList()
+      const [cityRes, stateRes] = await Promise.all([
+        getCityList(currentPage, pageSize, searchTerm),
+        getStateList(1, "all")
       ]);
-      setCities(cityList);
-      setStates(stateList);
+      setCities(cityRes.results);
+      setTotalItems(cityRes.count);
+      setTotalPages(cityRes.total_pages);
+      setStates(stateRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -53,7 +57,7 @@ const CityManagementPage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this city?")) return;
     try {
       await deleteCity(id);
-      setCities((prev) => prev.filter((c) => c.id !== id));
+      fetchData();
     } catch {
       alert("Failed to delete city.");
     }
@@ -66,19 +70,11 @@ const CityManagementPage: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1);
   };
 
-  const filteredCities = useMemo(() => {
-    return cities.filter(c =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getStateName(c.state).toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [cities, searchTerm, states]);
-
   const sortedCities = useMemo(() => {
-    if (!sortField) return filteredCities;
-    return [...filteredCities].sort((a, b) => {
+    if (!sortField) return cities;
+    return [...cities].sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
       
@@ -97,14 +93,7 @@ const CityManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredCities, sortField, sortDirection, states]);
-
-  const paginatedCities = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedCities.slice(startIndex, startIndex + pageSize);
-  }, [sortedCities, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(sortedCities.length / pageSize);
+  }, [cities, sortField, sortDirection, states]);
 
   const handleSearch = (val: string) => {
     setSearchTerm(val);
@@ -160,8 +149,8 @@ const CityManagementPage: React.FC = () => {
 
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
            <div>
-            Showing {sortedCities.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedCities.length)} of {sortedCities.length} entries
-            {searchTerm && ` (filtered from ${cities.length} total entries)`}
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+            {searchTerm && ` (filtered from search)`}
           </div>
         </div>
       </div>
@@ -200,12 +189,12 @@ const CityManagementPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedCities.length === 0 ? (
+              {sortedCities.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No cities found</TableCell>
                 </TableRow>
               ) : (
-                paginatedCities.map((city, index) => (
+                sortedCities.map((city, index) => (
                   <TableRow key={city.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}

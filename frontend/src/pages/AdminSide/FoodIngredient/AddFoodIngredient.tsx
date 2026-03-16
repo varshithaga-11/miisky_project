@@ -13,7 +13,7 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 interface AddFoodIngredientProps {
   onClose: () => void;
   onAdd: () => void;
-  initialFoodId?: string;
+  initialFoodId?: string | number;
 }
 
 interface IngredientForm {
@@ -24,7 +24,7 @@ interface IngredientForm {
 }
 
 const AddFoodIngredient: React.FC<AddFoodIngredientProps> = ({ onClose, onAdd, initialFoodId }) => {
-  const [foodId, setFoodId] = useState(initialFoodId || "");
+  const [foodId, setFoodId] = useState(initialFoodId ? String(initialFoodId) : "");
   const [ingredientRows, setIngredientRows] = useState<IngredientForm[]>([
     { ingredient: "", quantity: "", unit: "", notes: "" }
   ]);
@@ -35,8 +35,8 @@ const AddFoodIngredient: React.FC<AddFoodIngredientProps> = ({ onClose, onAdd, i
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getFoodList().then(setFoods).catch(console.error);
-    getIngredientList().then(setIngredients).catch(console.error);
+    getFoodList(1, "all").then(res => setFoods(res.results)).catch(console.error);
+    getIngredientList(1, "all").then(res => setIngredients(res.results)).catch(console.error);
     getUnitList().then(setUnits).catch(console.error);
   }, []);
 

@@ -59,9 +59,10 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Food Category", path: "/master/food-category" },
       { name: "Foods", path: "/master/food" },
-      { name: "Recipe Management", path: "/master/recipe-creator" },
       { name: "Units", path: "/master/unit" },
       { name: "Ingredients", path: "/master/ingredient" },
+      { name: "Recipe Management", path: "/master/recipe-creator" },
+
       // { name: "Recipe Ingredients", path: "/master/food-ingredient" },
       // { name: "Preparation Steps", path: "/master/food-step" },
     ],

@@ -31,12 +31,12 @@ const RecipeManagementPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [foodList, catList] = await Promise.all([
-                getFoodList(),
-                getFoodCategoryList()
+            const [foodRes, catRes] = await Promise.all([
+                getFoodList(1, "all"),
+                getFoodCategoryList(1, "all")
             ]);
-            setFoods(foodList);
-            setCategories(catList);
+            setFoods(foodRes.results);
+            setCategories(catRes.results);
         } catch (err) {
             console.error(err);
         } finally {

@@ -19,11 +19,11 @@ const ViewRecipeModal: React.FC<ViewRecipeModalProps> = ({ food, isOpen, onClose
         if (isOpen && food.id) {
             setLoading(true);
             Promise.all([
-                getFoodIngredientList(food.id),
-                getFoodStepList(food.id)
-            ]).then(([ingList, stepList]) => {
-                setIngredients(ingList);
-                setSteps(stepList.sort((a, b) => a.step_number - b.step_number));
+                getFoodIngredientList(1, "all", undefined, food.id),
+                getFoodStepList(1, "all", undefined, food.id)
+            ]).then(([ingRes, stepRes]) => {
+                setIngredients(ingRes.results);
+                setSteps(stepRes.results.sort((a, b) => a.step_number - b.step_number));
             }).catch(console.error).finally(() => setLoading(false));
         }
     }, [isOpen, food]);

@@ -11,7 +11,7 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 interface AddFoodStepProps {
   onClose: () => void;
   onAdd: () => void;
-  initialFoodId?: string;
+  initialFoodId?: string | number;
 }
 
 interface StepForm {
@@ -20,14 +20,14 @@ interface StepForm {
 }
 
 const AddFoodStep: React.FC<AddFoodStepProps> = ({ onClose, onAdd, initialFoodId }) => {
-  const [foodId, setFoodId] = useState(initialFoodId || "");
+  const [foodId, setFoodId] = useState(initialFoodId ? String(initialFoodId) : "");
   const [steps, setSteps] = useState<StepForm[]>([{ step_number: "1", instruction: "" }]);
   
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getFoodList().then(setFoods).catch(console.error);
+    getFoodList(1, "all").then(res => setFoods(res.results)).catch(console.error);
   }, []);
 
   const addStepRow = () => {
@@ -62,7 +62,6 @@ const AddFoodStep: React.FC<AddFoodStepProps> = ({ onClose, onAdd, initialFoodId
 
     setLoading(true);
     try {
-      // Send multiple requests (or ideally a bulk request if backend supported it)
       for (const step of steps) {
         await createFoodStep({
           food: Number(foodId),

@@ -13,6 +13,8 @@ import Label from "../../../components/form/Label";
 const FoodCategoryManagementPage: React.FC = () => {
   const [categories, setCategories] = useState<FoodCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
@@ -26,12 +28,15 @@ const FoodCategoryManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchCategories = async () => {
+    setLoading(true);
     try {
-      const list = await getFoodCategoryList();
-      setCategories(list);
+      const response = await getFoodCategoryList(currentPage, pageSize, searchTerm);
+      setCategories(response.results);
+      setTotalItems(response.count);
+      setTotalPages(response.total_pages);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -43,7 +48,7 @@ const FoodCategoryManagementPage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
     try {
       await deleteFoodCategory(id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      fetchCategories();
     } catch {
       alert("Failed to delete category.");
     }
@@ -60,19 +65,9 @@ const FoodCategoryManagementPage: React.FC = () => {
     setEditCategoryId(null);
   };
 
-  const filteredCategories = useMemo(() => {
-    let filtered = categories;
-    if (searchTerm) {
-      filtered = filtered.filter(cat =>
-        cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    return filtered;
-  }, [categories, searchTerm]);
-
   const sortedCategories = useMemo(() => {
-    if (!sortField) return filteredCategories;
-    return [...filteredCategories].sort((a, b) => {
+    if (!sortField) return categories;
+    return [...categories].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       if (aValue === undefined && bValue === undefined) return 0;
@@ -84,14 +79,7 @@ const FoodCategoryManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredCategories, sortField, sortDirection]);
-
-  const paginatedCategories = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedCategories.slice(startIndex, startIndex + pageSize);
-  }, [sortedCategories, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(sortedCategories.length / pageSize);
+  }, [categories, sortField, sortDirection]);
 
   const handleSort = (field: keyof FoodCategory) => {
     if (sortField === field) {
@@ -100,7 +88,6 @@ const FoodCategoryManagementPage: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1);
   };
 
   if (loading && categories.length === 0) return <div className="p-6">Loading categories...</div>;
@@ -165,12 +152,12 @@ const FoodCategoryManagementPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedCategories.length === 0 ? (
+              {sortedCategories.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-500">No categories found</TableCell>
                 </TableRow>
               ) : (
-                paginatedCategories.map((category, index) => (
+                sortedCategories.map((category, index) => (
                   <TableRow key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{category.name}</TableCell>
@@ -195,7 +182,7 @@ const FoodCategoryManagementPage: React.FC = () => {
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Page {currentPage} of {totalPages}
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
           <div className="flex gap-2">
             <button

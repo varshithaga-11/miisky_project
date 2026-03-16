@@ -13,7 +13,8 @@ import Label from "../../../components/form/Label";
 const FoodManagementPage: React.FC = () => {
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFoodId, setEditFoodId] = useState<number | null>(null);
@@ -27,14 +28,17 @@ const FoodManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchFoods();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchFoods = async () => {
+    setLoading(true);
     try {
-      const list = await getFoodList();
-      setFoods(list);
+      const response = await getFoodList(currentPage, pageSize, searchTerm);
+      setFoods(response.results);
+      setTotalItems(response.count);
+      setTotalPages(response.total_pages);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -44,7 +48,7 @@ const FoodManagementPage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this food item?")) return;
     try {
       await deleteFood(id);
-      setFoods((prev) => prev.filter((f) => f.id !== id));
+      fetchFoods();
     } catch {
       alert("Failed to delete food item.");
     }
@@ -61,20 +65,9 @@ const FoodManagementPage: React.FC = () => {
     setEditFoodId(null);
   };
 
-  const filteredFoods = useMemo(() => {
-    let filtered = foods;
-    if (searchTerm) {
-      filtered = filtered.filter(f =>
-        f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    return filtered;
-  }, [foods, searchTerm]);
-
   const sortedFoods = useMemo(() => {
-    if (!sortField) return filteredFoods;
-    return [...filteredFoods].sort((a, b) => {
+    if (!sortField) return foods;
+    return [...foods].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       if (aValue === undefined && bValue === undefined) return 0;
@@ -86,14 +79,7 @@ const FoodManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredFoods, sortField, sortDirection]);
-
-  const paginatedFoods = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedFoods.slice(startIndex, startIndex + pageSize);
-  }, [sortedFoods, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(sortedFoods.length / pageSize);
+  }, [foods, sortField, sortDirection]);
 
   const handleSort = (field: keyof Food) => {
     if (sortField === field) {
@@ -102,7 +88,6 @@ const FoodManagementPage: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1);
   };
 
   if (loading && foods.length === 0) return <div className="p-6">Loading foods...</div>;
@@ -173,12 +158,12 @@ const FoodManagementPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedFoods.length === 0 ? (
+              {sortedFoods.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500">No food items found</TableCell>
                 </TableRow>
               ) : (
-                paginatedFoods.map((food, index) => (
+                sortedFoods.map((food, index) => (
                   <TableRow key={food.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4">
@@ -211,22 +196,22 @@ const FoodManagementPage: React.FC = () => {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Page {currentPage} of {totalPages}
+        <div className="mt-6 flex items-center justify-between text-sm">
+          <div className="text-gray-500">
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600 dark:text-gray-400"
             >
               Prev
             </button>
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600 dark:text-gray-400"
             >
               Next
             </button>

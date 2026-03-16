@@ -34,8 +34,8 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
 
     useEffect(() => {
         if (isOpen) {
-            getFoodList().then(setFoods).catch(console.error);
-            getIngredientList().then(setIngredients).catch(console.error);
+            getFoodList(1, "all").then(res => setFoods(res.results)).catch(console.error);
+            getIngredientList(1, "all").then(res => setIngredients(res.results)).catch(console.error);
             getUnitList().then(setUnits).catch(console.error);
         }
     }, [isOpen]);

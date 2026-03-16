@@ -8,6 +8,17 @@ export interface FoodStep {
   instruction: string;
 }
 
+export interface PaginatedResponses<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+  status_counts?: Record<string, number>;
+  totals?: Record<string, number>;
+}
+
 // Create
 export const createFoodStep = async (data: FoodStep) => {
   const url = createApiUrl("api/foodstep/");
@@ -18,15 +29,28 @@ export const createFoodStep = async (data: FoodStep) => {
 };
 
 // Get List (optionally filter by food)
-export const getFoodStepList = async (foodId?: number): Promise<FoodStep[]> => {
-  let url = createApiUrl("api/foodstep/");
-  if (foodId) {
-    url += `?food=${foodId}`;
+export const getFoodStepList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string,
+  foodId?: number
+): Promise<PaginatedResponses<FoodStep>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (foodId) params.food = foodId;
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+
+    const url = createApiUrl("api/foodstep/");
+    const response = await axios.get<PaginatedResponses<FoodStep>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching food step list:", error);
+    throw error;
   }
-  const response = await axios.get(url, {
-    headers: await getAuthHeaders(),
-  });
-  return response.data;
 };
 
 // Update

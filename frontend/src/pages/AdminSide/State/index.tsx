@@ -15,6 +15,8 @@ const StateManagementPage: React.FC = () => {
   const [states, setStates] = useState<State[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editStateId, setEditStateId] = useState<number | null>(null);
@@ -27,17 +29,19 @@ const StateManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [stateList, countryList] = await Promise.all([
-        getStateList(),
-        getCountryList()
+      const [stateRes, countryRes] = await Promise.all([
+        getStateList(currentPage, pageSize, searchTerm),
+        getCountryList(1, "all")
       ]);
-      setStates(stateList);
-      setCountries(countryList);
+      setStates(stateRes.results);
+      setTotalItems(stateRes.count);
+      setTotalPages(stateRes.total_pages);
+      setCountries(countryRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -53,7 +57,7 @@ const StateManagementPage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this state?")) return;
     try {
       await deleteState(id);
-      setStates((prev) => prev.filter((s) => s.id !== id));
+      fetchData();
     } catch {
       alert("Failed to delete state.");
     }
@@ -66,19 +70,11 @@ const StateManagementPage: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1);
   };
 
-  const filteredStates = useMemo(() => {
-    return states.filter(s =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getCountryName(s.country).toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [states, searchTerm, countries]);
-
   const sortedStates = useMemo(() => {
-    if (!sortField) return filteredStates;
-    return [...filteredStates].sort((a, b) => {
+    if (!sortField) return states;
+    return [...states].sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
       
@@ -97,14 +93,7 @@ const StateManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredStates, sortField, sortDirection, countries]);
-
-  const paginatedStates = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedStates.slice(startIndex, startIndex + pageSize);
-  }, [sortedStates, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(sortedStates.length / pageSize);
+  }, [states, sortField, sortDirection, countries]);
 
   const handleSearch = (val: string) => {
     setSearchTerm(val);
@@ -160,8 +149,8 @@ const StateManagementPage: React.FC = () => {
 
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
            <div>
-            Showing {sortedStates.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedStates.length)} of {sortedStates.length} entries
-            {searchTerm && ` (filtered from ${states.length} total entries)`}
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+            {searchTerm && ` (filtered from search)`}
           </div>
         </div>
       </div>
@@ -200,12 +189,12 @@ const StateManagementPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedStates.length === 0 ? (
+              {sortedStates.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No states found</TableCell>
                 </TableRow>
               ) : (
-                paginatedStates.map((state, index) => (
+                sortedStates.map((state, index) => (
                   <TableRow key={state.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}
