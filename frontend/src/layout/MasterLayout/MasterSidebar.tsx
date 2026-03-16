@@ -54,6 +54,36 @@ const navItems: NavItem[] = [
     name: "Cities",
     path: "/master/city",
   },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "User Management",
+    path: "/master/usermanagement",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Food Category",
+    path: "/master/food-category",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Foods",
+    path: "/master/food",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Units",
+    path: "/master/unit",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Ingredients",
+    path: "/master/ingredient",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Recipe Ingredients",
+    path: "/master/food-ingredient",
+  },
   // {
   //   icon: <FileText className="w-5 h-5" />,
   //   name: "Client and Supplier Registration ",
