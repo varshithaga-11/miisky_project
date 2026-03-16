@@ -41,18 +41,12 @@ const navItems: NavItem[] = [
   },
   {
     icon: <MapPin className="w-5 h-5" />,
-    name: "Countries",
-    path: "/master/country",
-  },
-  {
-    icon: <MapPin className="w-5 h-5" />,
-    name: "States",
-    path: "/master/state",
-  },
-  {
-    icon: <MapPin className="w-5 h-5" />,
-    name: "Cities",
-    path: "/master/city",
+    name: "Locations",
+    subItems: [
+      { name: "Countries", path: "/master/country" },
+      { name: "States", path: "/master/state" },
+      { name: "Cities", path: "/master/city" },
+    ],
   },
   {
     icon: <Users className="w-5 h-5" />,
@@ -61,33 +55,15 @@ const navItems: NavItem[] = [
   },
   {
     icon: <Briefcase className="w-5 h-5" />,
-    name: "Food Category",
-    path: "/master/food-category",
-  },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Foods",
-    path: "/master/food",
-  },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Units",
-    path: "/master/unit",
-  },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Ingredients",
-    path: "/master/ingredient",
-  },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Recipe Ingredients",
-    path: "/master/food-ingredient",
-  },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Preparation Steps",
-    path: "/master/food-step",
+    name: "Food Management",
+    subItems: [
+      { name: "Food Category", path: "/master/food-category" },
+      { name: "Foods", path: "/master/food" },
+      { name: "Units", path: "/master/unit" },
+      { name: "Ingredients", path: "/master/ingredient" },
+      { name: "Recipe Ingredients", path: "/master/food-ingredient" },
+      { name: "Preparation Steps", path: "/master/food-step" },
+    ],
   },
   // {
   //   icon: <FileText className="w-5 h-5" />,
