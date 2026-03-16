@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { FiPlus, FiEye, FiSearch, FiBox } from "react-icons/fi";
+import { FiPlus, FiEye, FiSearch, FiBox, FiEdit, FiTrash2 } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getFoodList, Food } from "../Food/foodapi";
 import { getFoodCategoryList, FoodCategory } from "../FoodCategory/foodcategoryapi";
+import { deleteFullRecipe } from "./recipeapi";
 import AddRecipeModal from "./AddRecipeModal";
+import EditRecipeModal from "./EditRecipeModal";
 import ViewRecipeModal from "./ViewRecipeModal";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
+import { toast, ToastContainer } from "react-toastify";
 
 const RecipeManagementPage: React.FC = () => {
     const [foods, setFoods] = useState<Food[]>([]);
@@ -17,6 +20,7 @@ const RecipeManagementPage: React.FC = () => {
     
     // Modals
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
 
@@ -40,7 +44,20 @@ const RecipeManagementPage: React.FC = () => {
         }
     };
 
-    const filteredFoods = foods.filter(f => 
+    const handleDelete = async (foodId: number) => {
+        if (!window.confirm("Are you sure you want to delete all ingredients and steps for this recipe?")) return;
+        
+        try {
+            await deleteFullRecipe(foodId);
+            toast.success("Recipe cleared successfully!");
+            // We don't remove the food itself from the list because the food record still exists, 
+            // but its ingredients/steps are gone.
+        } catch (err) {
+            toast.error("Failed to delete recipe data.");
+        }
+    };
+
+    const filteredFoods = foods.filter((f: Food) => 
         f.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -48,6 +65,7 @@ const RecipeManagementPage: React.FC = () => {
         <>
             <PageMeta title="Recipe Management" description="View and Manage Full Recipes" />
             <PageBreadcrumb pageTitle="Recipe Management" />
+            <ToastContainer position="bottom-right" />
 
             <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="relative w-full max-w-sm">
@@ -96,7 +114,7 @@ const RecipeManagementPage: React.FC = () => {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredFoods.map((food, i) => (
+                            filteredFoods.map((food: Food, i: number) => (
                                 <TableRow key={food.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
                                     <TableCell className="w-12 text-gray-400">{i + 1}</TableCell>
                                     <TableCell>
@@ -118,7 +136,7 @@ const RecipeManagementPage: React.FC = () => {
                                     </TableCell>
                                     <TableCell>
                                         <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">
-                                            {categories.find(c => c.id === food.category)?.name || "Uncategorized"}
+                                            {categories.find((c: FoodCategory) => c.id === food.category)?.name || "Uncategorized"}
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -130,7 +148,20 @@ const RecipeManagementPage: React.FC = () => {
                                             >
                                                 <FiEye size={18} />
                                             </button>
-                                            {/* We can add delete here too if needed */}
+                                            <button 
+                                                onClick={() => { setSelectedFood(food); setIsEditModalOpen(true); }}
+                                                className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition-colors border border-transparent hover:border-green-100"
+                                                title="Edit Recipe"
+                                            >
+                                                <FiEdit size={18} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDelete(food.id!)}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                                title="Delete Recipe Data"
+                                            >
+                                                <FiTrash2 size={18} />
+                                            </button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -148,11 +179,19 @@ const RecipeManagementPage: React.FC = () => {
             />
 
             {selectedFood && (
-                <ViewRecipeModal 
-                    food={selectedFood}
-                    isOpen={isViewModalOpen}
-                    onClose={() => setIsViewModalOpen(false)}
-                />
+                <>
+                    <ViewRecipeModal 
+                        food={selectedFood}
+                        isOpen={isViewModalOpen}
+                        onClose={() => setIsViewModalOpen(false)}
+                    />
+                    <EditRecipeModal 
+                        food={selectedFood}
+                        isOpen={isEditModalOpen}
+                        onClose={() => setIsEditModalOpen(false)}
+                        onSuccess={() => { fetchData(); setIsEditModalOpen(false); }}
+                    />
+                </>
             )}
         </>
     );

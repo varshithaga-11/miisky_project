@@ -1,5 +1,5 @@
-import { createFoodIngredient } from "../FoodIngredient/foodingredientapi";
-import { createFoodStep } from "../FoodStep/foodstepapi";
+import { createFoodIngredient, getFoodIngredientList, deleteFoodIngredient } from "../FoodIngredient/foodingredientapi";
+import { createFoodStep, getFoodStepList, deleteFoodStep } from "../FoodStep/foodstepapi";
 
 export interface FullRecipeRow {
     food: number;
@@ -41,4 +41,25 @@ export const saveFullRecipe = async (data: FullRecipeRow) => {
     // Run all creations
     const results = await Promise.all([...ingredientPromises, ...stepPromises]);
     return results;
+};
+
+/**
+ * Deletes all ingredients and steps for a specific food.
+ */
+export const deleteFullRecipe = async (foodId: number) => {
+    const ingredients = await getFoodIngredientList(foodId);
+    const steps = await getFoodStepList(foodId);
+
+    const deleteIngPromises = ingredients.map(ing => deleteFoodIngredient(ing.id!));
+    const deleteStepPromises = steps.map(step => deleteFoodStep(step.id!));
+
+    await Promise.all([...deleteIngPromises, ...deleteStepPromises]);
+};
+
+/**
+ * Updates a full recipe by clearing old data and saving new data.
+ */
+export const updateFullRecipe = async (data: FullRecipeRow) => {
+    await deleteFullRecipe(data.food);
+    return await saveFullRecipe(data);
 };

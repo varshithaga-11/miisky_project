@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getStateList, deleteState, State } from "./stateapi";
@@ -15,7 +15,6 @@ const StateManagementPage: React.FC = () => {
   const [states, setStates] = useState<State[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editStateId, setEditStateId] = useState<number | null>(null);
@@ -23,12 +22,15 @@ const StateManagementPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<keyof State | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [stateList, countryList] = await Promise.all([
         getStateList(),
@@ -37,7 +39,7 @@ const StateManagementPage: React.FC = () => {
       setStates(stateList);
       setCountries(countryList);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -57,6 +59,16 @@ const StateManagementPage: React.FC = () => {
     }
   };
 
+  const handleSort = (field: keyof State) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
   const filteredStates = useMemo(() => {
     return states.filter(s =>
       s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,88 +76,197 @@ const StateManagementPage: React.FC = () => {
     );
   }, [states, searchTerm, countries]);
 
+  const sortedStates = useMemo(() => {
+    if (!sortField) return filteredStates;
+    return [...filteredStates].sort((a, b) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+      
+      if (sortField === 'country') {
+          aValue = getCountryName(a.country);
+          bValue = getCountryName(b.country);
+      }
+
+      if (!aValue && !bValue) return 0;
+      if (!aValue) return 1;
+      if (!bValue) return -1;
+      
+      if (sortDirection === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+  }, [filteredStates, sortField, sortDirection, countries]);
+
   const paginatedStates = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return filteredStates.slice(startIndex, startIndex + pageSize);
-  }, [filteredStates, currentPage, pageSize]);
+    return sortedStates.slice(startIndex, startIndex + pageSize);
+  }, [sortedStates, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(filteredStates.length / pageSize);
+  const totalPages = Math.ceil(sortedStates.length / pageSize);
 
-  if (loading && states.length === 0) return <div className="p-6">Loading states...</div>;
+  const handleSearch = (val: string) => {
+    setSearchTerm(val);
+    setCurrentPage(1);
+  };
+
+  if (loading && states.length === 0) return <div className="text-black dark:text-white p-6">Loading states...</div>;
 
   return (
     <>
-      <PageMeta title="State Management" description="Manage states" />
+      <PageMeta title="State Management" description="Manage states and provinces efficiently" />
       <PageBreadcrumb pageTitle="State Management" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search state or country..."
               value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-white"
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
           
-          <div className="flex items-center gap-4">
-            <Button size="sm" onClick={() => setIsAddModalOpen(true)}>Add State</Button>
-            <Select
-              value={String(pageSize)}
-              onChange={(val) => { setPageSize(Number(val)); setCurrentPage(1); }}
-              options={[
-                { value: "5", label: "5" },
-                { value: "10", label: "10" },
-                { value: "25", label: "25" },
-              ]}
-              className="w-20"
-            />
+          <div className="flex items-center gap-6">
+            <Button 
+                size="sm" 
+                className="inline-flex items-center gap-2"
+                onClick={() => setIsAddModalOpen(true)}
+            >
+              <FiPlus /> Add State
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
+              <Select
+                value={String(pageSize)}
+                onChange={(val) => { setPageSize(Number(val)); setCurrentPage(1); }}
+                options={[
+                  { value: "5", label: "5" },
+                  { value: "10", label: "10" },
+                  { value: "25", label: "25" },
+                  { value: "50", label: "50" },
+                ]}
+                className="w-20"
+              />
+              <span className="text-sm text-gray-600 whitespace-nowrap">entries</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+           <div>
+            Showing {sortedStates.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedStates.length)} of {sortedStates.length} entries
+            {searchTerm && ` (filtered from ${states.length} total entries)`}
           </div>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-white/[0.03]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableCell isHeader>#</TableCell>
-              <TableCell isHeader>State Name</TableCell>
-              <TableCell isHeader>Country</TableCell>
-              <TableCell isHeader>Action</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedStates.length === 0 ? (
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">No states found</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
+                <TableCell 
+                    isHeader 
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center gap-2">
+                    State Name
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell 
+                    isHeader 
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    onClick={() => handleSort('country')}
+                >
+                  <div className="flex items-center gap-2">
+                    Country
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === 'country' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
-            ) : (
-              paginatedStates.map((state, index) => (
-                <TableRow key={state.id}>
-                  <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell className="font-medium">{state.name}</TableCell>
-                  <TableCell>{getCountryName(state.country)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <button className="text-blue-600" onClick={() => { setEditStateId(state.id!); setIsEditModalOpen(true); }}><FiEdit /></button>
-                      <button className="text-red-600" onClick={() => handleDelete(state.id!)}><FiTrash2 /></button>
-                    </div>
-                  </TableCell>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {paginatedStates.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No states found</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                paginatedStates.map((state, index) => (
+                  <TableRow key={state.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">
+                        {state.name}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium dark:bg-blue-900/30">
+                            {getCountryName(state.country)}
+                        </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
+                        <div className="flex items-center gap-3">
+                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => { setEditStateId(state.id!); setIsEditModalOpen(true); }}><FiEdit /></button>
+                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(state.id!)}><FiTrash2 /></button>
+                        </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-between items-center text-sm text-gray-500">
-          <div>Page {currentPage} of {totalPages}</div>
-          <div className="flex gap-2">
-            <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
-            <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+        <div className="mt-6 flex items-center justify-between">
+           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? 'bg-blue-600 text-white border border-blue-600'
+                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Next
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
           </div>
         </div>
       )}
@@ -156,7 +277,7 @@ const StateManagementPage: React.FC = () => {
           stateId={editStateId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={() => fetchData()}
+          onUpdated={() => { fetchData(); setIsEditModalOpen(false); setEditStateId(null); }}
         />
       )}
     </>
