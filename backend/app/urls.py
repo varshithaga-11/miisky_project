@@ -9,6 +9,9 @@ router = DefaultRouter()
 
 # router.register(r'profile', ProfileView, basename='profile')
 # router.register(r"companies", CompanyViewSet, basename="company")
+router.register(r'country', CountryViewSet)
+router.register(r'state', StateViewSet)
+router.register(r'city', CityViewSet)
 
 
 

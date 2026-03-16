@@ -22,6 +22,9 @@ const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
+import CountryManagementPage from "./pages/AdminSide/Country/index";
+import StateManagementPage from "./pages/AdminSide/State/index";
+import CityManagementPage from "./pages/AdminSide/City/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -55,6 +58,10 @@ export function appRoutes() {
             <Route path="master/master-dashboard" element={<MasterDashboard />} />
             <Route path="master/client" element={<ClientPage />} />
             <Route path="master/supplier" element={<SupplierPage />} />
+            <Route path="master/usermanagement" element={<UserManagementPage />} />
+            <Route path="master/country" element={<CountryManagementPage />} />
+            <Route path="master/state" element={<StateManagementPage />} />
+            <Route path="master/city" element={<CityManagementPage />} />
 
 
             {/* Others Page */}
