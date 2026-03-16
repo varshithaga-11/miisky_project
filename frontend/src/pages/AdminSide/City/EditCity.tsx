@@ -51,7 +51,7 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
           setName(data.name);
           const cityStateId = data.state;
           setStateId(String(cityStateId || ""));
-          
+
           // Find country for this state
           const stateObj = states.find(s => s.id === cityStateId);
           if (stateObj) {
@@ -127,8 +127,8 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
               <Select
                 value={countryId}
                 onChange={(val) => {
-                    setCountryId(val);
-                    setStateId(""); // Reset state when country changes
+                  setCountryId(val);
+                  setStateId(""); // Reset state when country changes
                 }}
                 options={countryOptions}
                 className="w-full"
