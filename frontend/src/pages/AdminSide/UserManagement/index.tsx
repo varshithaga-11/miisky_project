@@ -1,4 +1,4 @@
-import { useEffect, useState ,useMemo} from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -36,7 +36,7 @@ const UserManagementPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'master'|'employee'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'master' | 'employee'>('all');
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -83,7 +83,7 @@ const UserManagementPage: React.FC = () => {
   // but search and page-size are now backend-driven.
   const filteredUsers = useMemo(() => {
     let filtered = users;
-    
+
     // Filter by status
     if (statusFilter === 'active') {
       filtered = filtered.filter(user => user.is_active);
@@ -94,22 +94,22 @@ const UserManagementPage: React.FC = () => {
     if (roleFilter !== 'all') {
       filtered = filtered.filter(user => user.role === roleFilter);
     }
-    
+
     return filtered;
   }, [users, statusFilter, roleFilter]);
 
 
   const sortedDefinitions = useMemo(() => {
     if (!sortField) return filteredUsers;
-    
+
     return [...filteredUsers].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
-      
+
       if (!aValue && !bValue) return 0;
       if (!aValue) return 1;
       if (!bValue) return -1;
-      
+
       if (sortDirection === 'asc') {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
@@ -152,7 +152,7 @@ const UserManagementPage: React.FC = () => {
             />
             <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           </div>
-    
+
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -185,8 +185,8 @@ const UserManagementPage: React.FC = () => {
               </div>
             </div>
 
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="inline-flex items-center gap-2"
               onClick={() => setIsAddModalOpen(true)}
             >
@@ -213,7 +213,7 @@ const UserManagementPage: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <div>
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
@@ -228,7 +228,7 @@ const UserManagementPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('username')}>Username</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('email')}>Email</TableCell>                
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('email')}>Email</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">First Name</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Last Name</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Role</TableCell>
@@ -255,13 +255,13 @@ const UserManagementPage: React.FC = () => {
                   <TableRow key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{user.username}</TableCell>
-                    <TableCell className="px-5 py-4">{user.email}</TableCell>                    
-                    <TableCell className="px-5 py-4">{user.first_name}</TableCell>                    
-                    <TableCell className="px-5 py-4">{user.last_name}</TableCell>                    
+                    <TableCell className="px-5 py-4">{user.email}</TableCell>
+                    <TableCell className="px-5 py-4">{user.first_name}</TableCell>
+                    <TableCell className="px-5 py-4">{user.last_name}</TableCell>
                     <TableCell className="px-5 py-4">
-                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
                         {user.role}
-                       </span>
+                      </span>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <input

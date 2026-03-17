@@ -222,4 +222,21 @@ class FoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
         fields = ['id', 'name', 'category', 'category_name',
-                  'description', 'image', 'ingredients', 'steps']
+                  'description', 'image', 'ingredients', 'steps']
+
+
+class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
+    health_parameter_name = serializers.CharField(source='health_parameter.name', read_only=True)
+    
+    class Meta:
+        model = NormalRangeForHealthParameter
+        fields = "__all__"
+
+
+class HealthParameterSerializer(serializers.ModelSerializer):
+    normal_ranges = NormalRangeForHealthParameterSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = HealthParameter
+        fields = "__all__"
+

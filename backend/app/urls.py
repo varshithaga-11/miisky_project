@@ -20,6 +20,8 @@ router.register(r'ingredient',    IngredientViewSet)
 router.register(r'unit',          UnitViewSet)
 router.register(r'foodingredient', FoodIngredientViewSet, basename='foodingredient')
 router.register(r'foodstep',      FoodStepViewSet,       basename='foodstep')
+router.register(r'healthparameter', HealthParameterViewSet)
+router.register(r'normalrange', NormalRangeForHealthParameterViewSet)
 
 
 urlpatterns = [

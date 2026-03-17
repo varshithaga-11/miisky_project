@@ -284,3 +284,31 @@ class FoodStep(models.Model):
 
     def __str__(self):
         return f"{self.food.name} - Step {self.step_number}"
+
+
+
+class HealthParameter(models.Model):#diabetes, bloodpressure,RBE
+    name = models.CharField(max_length=255)
+    posted_by = models.ForeignKey(UserRegister,on_delete=models.SET_NULL,null=True,blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active=models.BooleanField(default=True)
+
+    def _str__(self):
+        return self.name
+    
+class NormalRangeForHealthParameter(models.Model):
+    health_parameter = models.ForeignKey(HealthParameter,on_delete=models.CASCADE,related_name='normal_ranges')  # e.g. Hemoglobin, Glucose
+    raw_value = models.TextField(null=True, blank=True)  # original messy data → "4.36|3.7-5.6 mg/dL", "Negative", "Normal: <100 Prediabetes: 100-125"
+    min_value = models.FloatField(null=True, blank=True)  # extracted → 3.7
+    max_value = models.FloatField(null=True, blank=True)  # extracted → 5.6
+    unit = models.CharField(max_length=50, null=True, blank=True)  # "mg/dL", "%", "cells/mcL"
+    reference_text = models.TextField(null=True, blank=True)  # "Normal: <100 Prediabetes: 100-125 Diabetes: >=126"
+    qualitative_value = models.CharField(max_length=100, null=True, blank=True)  # "Negative", "Nil", "Pale Yellow"
+    interpretation_flag = models.CharField(max_length=10, null=True, blank=True)  # "*", "H", "L"
+    remarks = models.TextField(null=True, blank=True)  # "Slightly elevated", "Within normal limits"
+    created_at = models.DateTimeField(auto_now_add=True)  # auto timestamp when record created
+    is_active = models.BooleanField(default=True)  # active/inactive flag
+    created_by = models.ForeignKey(UserRegister,on_delete=models.SET_NULL,null=True,blank=True)  # user who added this range
+
+    def __str__(self):
+        return self.health_parameter.name

@@ -139,6 +139,14 @@ const navItems: NavItem[] = [
     name: "User Management",
     path: "/master/usermanagement",
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Health Monitoring",
+    subItems: [
+      { name: "Health Parameters", path: "/master/health-parameter" },
+      { name: "Normal Ranges", path: "/master/normal-range" },
+    ],
+  },
 ];
 const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();

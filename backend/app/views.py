@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -106,24 +106,32 @@ class ProfileView(viewsets.ModelViewSet):
     queryset = UserRegister.objects.all()
     serializer_class = ProfileSerializer
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
 
 
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 # ── Food System ViewSets ───────────────────────────────────────────────────────
@@ -141,6 +149,8 @@ class FoodCategoryViewSet(viewsets.ModelViewSet):
     queryset = FoodCategory.objects.all()
     serializer_class = FoodCategorySerializer
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
     permission_classes = [AllowAny]
 
 
@@ -162,6 +172,8 @@ class FoodViewSet(viewsets.ModelViewSet):
     serializer_class = FoodSerializer
     permission_classes = [AllowAny]
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -173,6 +185,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 class UnitViewSet(viewsets.ModelViewSet):
@@ -183,6 +197,8 @@ class UnitViewSet(viewsets.ModelViewSet):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
     permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 class FoodIngredientViewSet(viewsets.ModelViewSet):
@@ -194,6 +210,8 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
     serializer_class = FoodIngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food__name', 'ingredient__name']
 
     def get_queryset(self):
         qs = FoodIngredient.objects.select_related(
@@ -214,6 +232,8 @@ class FoodStepViewSet(viewsets.ModelViewSet):
     serializer_class = FoodStepSerializer
     permission_classes = [AllowAny]
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food__name', 'instruction']
 
     def get_queryset(self):
         qs = FoodStep.objects.select_related('food').all()
@@ -221,3 +241,27 @@ class FoodStepViewSet(viewsets.ModelViewSet):
         if food_id:
             qs = qs.filter(food_id=food_id)
         return qs
+
+
+class HealthParameterViewSet(viewsets.ModelViewSet):
+    queryset = HealthParameter.objects.all()
+    serializer_class = HealthParameterSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+
+    def perform_create(self, serializer):
+        serializer.save(posted_by=self.request.user if self.request.user.is_authenticated else None)
+
+
+class NormalRangeForHealthParameterViewSet(viewsets.ModelViewSet):
+    queryset = NormalRangeForHealthParameter.objects.all()
+    serializer_class = NormalRangeForHealthParameterSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['health_parameter__name', 'raw_value', 'unit', 'remarks']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
