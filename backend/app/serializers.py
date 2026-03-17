@@ -174,9 +174,9 @@ class CitySerializer(serializers.ModelSerializer):
 
 # ── Food System Serializers ────────────────────────────────────────────────────
 
-class FoodCategorySerializer(serializers.ModelSerializer):
+class MealTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FoodCategory
+        model = MealType
         fields = "__all__"
 
 
@@ -229,13 +229,13 @@ class FoodSerializer(serializers.ModelSerializer):
     steps = FoodStepSerializer(
         source='foodstep_set', many=True, read_only=True
     )
-    category_names = serializers.StringRelatedField(source='category', many=True, read_only=True)
+    meal_type_names = serializers.StringRelatedField(source='meal_types', many=True, read_only=True)
     cuisine_type_names = serializers.StringRelatedField(source='cuisine_types', many=True, read_only=True)
     nutrition = FoodNutritionSerializer(read_only=True)
 
     class Meta:
         model = Food
-        fields = ['id', 'name', 'category', 'category_names', 'cuisine_types', 'cuisine_type_names',
+        fields = ['id', 'name', 'meal_types', 'meal_type_names', 'cuisine_types', 'cuisine_type_names',
                   'description', 'image', 'ingredients', 'steps', 'nutrition']
 
 

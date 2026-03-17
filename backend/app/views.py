@@ -136,18 +136,18 @@ class CityViewSet(viewsets.ModelViewSet):
 
 # ── Food System ViewSets ───────────────────────────────────────────────────────
 
-class FoodCategoryViewSet(viewsets.ModelViewSet):
+class MealTypeViewSet(viewsets.ModelViewSet):
     """
-    CRUD for food categories.
+    CRUD for meal types.
     Endpoints:
-        GET    /app/foodcategory/       → list all categories
-        POST   /app/foodcategory/       → create new category
-        GET    /app/foodcategory/{id}/  → retrieve single
-        PUT    /app/foodcategory/{id}/  → update
-        DELETE /app/foodcategory/{id}/  → delete
+        GET    /app/mealtype/       → list all types
+        POST   /app/mealtype/       → create new type
+        GET    /app/mealtype/{id}/  → retrieve single
+        PUT    /app/mealtype/{id}/  → update
+        DELETE /app/mealtype/{id}/  → delete
     """
-    queryset = FoodCategory.objects.all()
-    serializer_class = FoodCategorySerializer
+    queryset = MealType.objects.all()
+    serializer_class = MealTypeSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
@@ -174,7 +174,7 @@ class FoodViewSet(viewsets.ModelViewSet):
         DELETE /app/food/{id}/  → delete
     """
     queryset = Food.objects.prefetch_related(
-        'category',
+        'meal_types',
         'cuisine_types',
         'foodingredient_set__ingredient',
         'foodingredient_set__unit',

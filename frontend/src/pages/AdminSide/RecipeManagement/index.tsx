@@ -3,7 +3,7 @@ import { FiPlus, FiEye, FiSearch, FiBox, FiEdit, FiTrash2 } from "react-icons/fi
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getFoodList, Food } from "../Food/foodapi";
-import { getFoodCategoryList, FoodCategory } from "../FoodCategory/foodcategoryapi";
+import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import { deleteFullRecipe } from "./recipeapi";
 import AddRecipeModal from "./AddRecipeModal";
 import EditRecipeModal from "./EditRecipeModal";
@@ -16,7 +16,7 @@ import { toast, ToastContainer } from "react-toastify";
 
 const RecipeManagementPage: React.FC = () => {
     const [foods, setFoods] = useState<Food[]>([]);
-    const [categories, setCategories] = useState<FoodCategory[]>([]);
+    const [mealTypes, setMealTypes] = useState<MealType[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [pageSize, setPageSize] = useState(10);
@@ -35,12 +35,12 @@ const RecipeManagementPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [foodRes, catRes] = await Promise.all([
+            const [foodRes, mealRes] = await Promise.all([
                 getFoodList(1, "all"),
-                getFoodCategoryList(1, "all")
+                getMealTypeList(1, "all")
             ]);
             setFoods(foodRes.results);
-            setCategories(catRes.results);
+            setMealTypes(mealRes.results);
         } catch (err) {
             console.error(err);
         } finally {
@@ -130,7 +130,7 @@ const RecipeManagementPage: React.FC = () => {
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Image</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Food Name</TableCell>
-                                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Category</TableCell>
+                                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Meal Types</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Actions</TableCell>
                             </TableRow>
                         </TableHeader>
@@ -169,9 +169,17 @@ const RecipeManagementPage: React.FC = () => {
                                             <div className="text-xs text-gray-400 line-clamp-1">{food.description || "No description"}</div>
                                         </TableCell>
                                         <TableCell className="px-5 py-4">
-                                            <span className="px-3 py-1 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-full text-xs font-medium">
-                                                {categories.find((c: FoodCategory) => c.id === food.category)?.name || "Uncategorized"}
-                                            </span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {food.meal_type_names && food.meal_type_names.length > 0 ? (
+                                                    food.meal_type_names.map((meal, idx) => (
+                                                        <span key={idx} className="px-2 py-0.5 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-full text-[10px] font-medium border border-blue-100 dark:border-blue-900/50">
+                                                            {meal}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs italic">none</span>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell className="px-5 py-4">
                                             <div className="flex items-center gap-3">

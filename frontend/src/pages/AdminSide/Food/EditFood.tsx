@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getFoodById, updateFood, updateFoodNutrition, createFoodNutrition, Food, FoodNutrition, getCuisineTypeList, CuisineType } from "./foodapi";
-import { getFoodCategoryList, FoodCategory } from "../FoodCategory/foodcategoryapi";
+import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
@@ -17,10 +17,10 @@ interface EditFoodProps {
 
 const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedMealTypes, setSelectedMealTypes] = useState<string[]>([]);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [description, setDescription] = useState("");
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
   const [existingImage, setExistingImage] = useState<string | null>(null);
@@ -51,7 +51,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   });
 
   useEffect(() => {
-    getFoodCategoryList(1, "all").then(res => setCategories(res.results)).catch(console.error);
+    getMealTypeList(1, "all").then(res => setMealTypes(res.results)).catch(console.error);
     getCuisineTypeList(1, "all").then(res => setCuisines(res.results)).catch(console.error);
   }, []);
 
@@ -61,7 +61,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
       getFoodById(foodId)
         .then((data: Food) => {
           setName(data.name);
-          setSelectedCategories(data.category.map(String));
+          setSelectedMealTypes(data.meal_types.map(String));
           setSelectedCuisines(data.cuisine_types ? data.cuisine_types.map(String) : []);
           setDescription(data.description || "");
           setExistingImage(data.image || null);
@@ -107,7 +107,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
       const formData = new FormData();
       formData.append("name", name);
       // Append M2M IDs
-      selectedCategories.forEach(id => formData.append("category", id));
+      selectedMealTypes.forEach(id => formData.append("meal_types", id));
       selectedCuisines.forEach(id => formData.append("cuisine_types", id));
       
       formData.append("description", description);
@@ -139,7 +139,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
 
   if (!isOpen) return null;
 
-  const categoryOptions = categories.map(cat => ({ value: String(cat.id), text: cat.name }));
+  const mealTypeOptions = mealTypes.map(m => ({ value: String(m.id), text: m.name }));
   const cuisineOptions = cuisines.map(c => ({ value: String(c.id), text: c.name }));
 
   return (
@@ -164,7 +164,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                   <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                       <MultiSelect label="Categories (Meal Types) *" options={categoryOptions} defaultSelected={selectedCategories} onChange={setSelectedCategories} />
+                       <MultiSelect label="Meal Types *" options={mealTypeOptions} defaultSelected={selectedMealTypes} onChange={setSelectedMealTypes} />
                     </div>
                     <div className="md:col-span-2">
                        <MultiSelect label="Cuisine Types" options={cuisineOptions} defaultSelected={selectedCuisines} onChange={setSelectedCuisines} />

@@ -33,8 +33,8 @@ export interface CuisineType {
 export interface Food {
   id?: number;
   name: string;
-  category: number[];
-  category_names?: string[];
+  meal_types: number[];
+  meal_type_names?: string[];
   cuisine_types?: number[];
   cuisine_type_names?: string[];
   description?: string;

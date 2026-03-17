@@ -14,7 +14,7 @@ router.register(r'state', StateViewSet)
 router.register(r'city', CityViewSet)
 
 # Food System routes
-router.register(r'foodcategory',  FoodCategoryViewSet)
+router.register(r'mealtype',      MealTypeViewSet)
 router.register(r'cuisinetype',   CuisineTypeViewSet)
 router.register(r'food',          FoodViewSet)
 router.register(r'ingredient',    IngredientViewSet)

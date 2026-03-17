@@ -101,7 +101,7 @@ const FoodManagementPage: React.FC = () => {
           <div className="relative flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search food or category..."
+              placeholder="Search food or meal type..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -152,7 +152,7 @@ const FoodManagementPage: React.FC = () => {
                   </div>
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Categories
+                  Meal Types
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
                   Cuisines
@@ -163,11 +163,11 @@ const FoodManagementPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">Loading foods...</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">Loading foods...</TableCell>
                 </TableRow>
               ) : sortedFoods.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">No food items found</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">No food items found</TableCell>
                 </TableRow>
               ) : (
                 sortedFoods.map((food, index) => (
@@ -185,10 +185,10 @@ const FoodManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{food.name}</TableCell>
                     <TableCell className="px-5 py-4">
                        <div className="flex flex-wrap gap-1">
-                        {food.category_names && food.category_names.length > 0 ? (
-                           food.category_names.map((cat, i) => (
+                        {food.meal_type_names && food.meal_type_names.length > 0 ? (
+                           food.meal_type_names.map((meal, i) => (
                              <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
-                               {cat}
+                               {meal}
                              </span>
                            ))
                         ) : (
@@ -210,7 +210,7 @@ const FoodManagementPage: React.FC = () => {
                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
-                      <div className="flex items-center gap-3">
+                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditFoodId(food.id!); setIsEditModalOpen(true); }}>
                           <FiEdit />
                         </button>

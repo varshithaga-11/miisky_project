@@ -1,48 +1,48 @@
 import React, { useEffect, useState } from "react";
-import { getFoodCategoryById, updateFoodCategory } from "./foodcategoryapi";
+import { getMealTypeById, updateMealType } from "./mealtypeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-interface EditFoodCategoryProps {
-  categoryId: number;
+interface EditMealTypeProps {
+  mealTypeId: number;
   isOpen: boolean;
   onClose: () => void;
   onUpdated: () => void;
 }
 
-const EditFoodCategory: React.FC<EditFoodCategoryProps> = ({ categoryId, isOpen, onClose, onUpdated }) => {
+const EditMealType: React.FC<EditMealTypeProps> = ({ mealTypeId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen && categoryId) {
+    if (isOpen && mealTypeId) {
       setLoading(true);
-      getFoodCategoryById(categoryId)
+      getMealTypeById(mealTypeId)
         .then((data) => {
           setName(data.name);
         })
-        .catch(() => toast.error("Failed to load category data"))
+        .catch(() => toast.error("Failed to load meal type data"))
         .finally(() => setLoading(false));
     }
-  }, [isOpen, categoryId]);
+  }, [isOpen, mealTypeId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateFoodCategory(categoryId, { name });
-      toast.success("Food Category updated successfully!");
+      await updateMealType(mealTypeId, { name });
+      toast.success("Meal Type updated successfully!");
       setTimeout(() => {
         onUpdated();
         onClose();
       }, 1500);
     } catch (err: any) {
-      console.error("Error updating category:", err);
-      toast.error(err.response?.data?.name?.[0] || err.message || "Failed to update category");
+      console.error("Error updating meal type:", err);
+      toast.error(err.response?.data?.name?.[0] || err.message || "Failed to update meal type");
     } finally {
       setSaving(false);
     }
@@ -55,14 +55,14 @@ const EditFoodCategory: React.FC<EditFoodCategoryProps> = ({ categoryId, isOpen,
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative mt-24">
         <button onClick={onClose} className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold">×</button>
-        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Edit Food Category</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Edit Meal Type</h2>
 
         {loading ? (
-          <div className="py-10 text-center text-gray-500">Loading category data...</div>
+          <div className="py-10 text-center text-gray-500">Loading meal type data...</div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Category Name *</Label>
+              <Label htmlFor="name">Meal Type Name *</Label>
               <Input
                 id="name"
                 type="text"
@@ -85,4 +85,4 @@ const EditFoodCategory: React.FC<EditFoodCategoryProps> = ({ categoryId, isOpen,
   );
 };
 
-export default EditFoodCategory;
+export default EditMealType;

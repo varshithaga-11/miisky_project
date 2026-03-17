@@ -57,7 +57,7 @@ const navItems: NavItem[] = [
     icon: <Briefcase className="w-5 h-5" />,
     name: "Food Management",
     subItems: [
-      { name: "Food Category", path: "/master/food-category" },
+      { name: "Meal Type", path: "/master/meal-type" },
       { name: "Cuisine Type", path: "/master/cuisine-type" },
       { name: "Foods", path: "/master/food" },
       { name: "Units", path: "/master/unit" },

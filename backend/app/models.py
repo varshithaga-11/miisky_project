@@ -131,7 +131,7 @@ class UserRegister(AbstractUser):
 # =============================================================================
 
 
-class FoodCategory(models.Model):#mealtype
+class MealType(models.Model):
     """
     Top-level grouping for foods.
 
@@ -160,10 +160,10 @@ class CuisineType(models.Model):
 
 class Food(models.Model):
     """
-    Represents a single food dish belonging to a category.
+    Represents a single food dish belonging to meal types.
 
     Example data:
-        id | name       | category  | description
+        id | name       | meal_types | description
         -------------------------------------------
         1  | Idli       | Breakfast | Soft steamed rice cakes
         2  | Ragi Idli  | Breakfast | Healthy ragi version
@@ -172,7 +172,7 @@ class Food(models.Model):
     name = models.CharField(max_length=150)
     # Example: Idli, Ragi Idli, Rava Idli, Masala Dosa
 
-    category = models.ManyToManyField(FoodCategory,null=True,blank=True)
+    meal_types = models.ManyToManyField(MealType,null=True,blank=True)
     # Example: Idli → Breakfast
 
     cuisine_types = models.ManyToManyField(CuisineType,null=True,blank=True)

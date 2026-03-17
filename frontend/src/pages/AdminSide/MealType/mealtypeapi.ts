@@ -1,7 +1,7 @@
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import axios from "axios";
 
-export interface FoodCategory {
+export interface MealType {
   id?: number;
   name: string;
 }
@@ -18,8 +18,8 @@ export interface PaginatedResponses<T> {
 }
 
 // Create
-export const createFoodCategory = async (data: FoodCategory) => {
-  const url = createApiUrl("api/foodcategory/");
+export const createMealType = async (data: MealType) => {
+  const url = createApiUrl("api/mealtype/");
   const response = await axios.post(url, data, {
     headers: await getAuthHeaders(),
   });
@@ -27,31 +27,31 @@ export const createFoodCategory = async (data: FoodCategory) => {
 };
 
 // Get List
-export const getFoodCategoryList = async (
+export const getMealTypeList = async (
   page: number = 1,
   limit: number | "all" = 10,
   search?: string
-): Promise<PaginatedResponses<FoodCategory>> => {
+): Promise<PaginatedResponses<MealType>> => {
   try {
     const params: Record<string, any> = { page };
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("api/foodcategory/");
-    const response = await axios.get<PaginatedResponses<FoodCategory>>(url, {
+    const url = createApiUrl("api/mealtype/");
+    const response = await axios.get<PaginatedResponses<MealType>>(url, {
       headers: await getAuthHeaders(),
       params: limit === "all" ? { ...params, limit: 9999 } : params,
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching food category list:", error);
+    console.error("Error fetching meal type list:", error);
     throw error;
   }
 };
 
 // Get By ID
-export const getFoodCategoryById = async (id: number) => {
-  const url = createApiUrl(`api/foodcategory/${id}/`);
+export const getMealTypeById = async (id: number) => {
+  const url = createApiUrl(`api/mealtype/${id}/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
   });
@@ -59,8 +59,8 @@ export const getFoodCategoryById = async (id: number) => {
 };
 
 // Update
-export const updateFoodCategory = async (id: number, data: Partial<FoodCategory>) => {
-  const url = createApiUrl(`api/foodcategory/${id}/`);
+export const updateMealType = async (id: number, data: Partial<MealType>) => {
+  const url = createApiUrl(`api/mealtype/${id}/`);
   const response = await axios.put(url, data, {
     headers: await getAuthHeaders(),
   });
@@ -68,8 +68,8 @@ export const updateFoodCategory = async (id: number, data: Partial<FoodCategory>
 };
 
 // Delete
-export const deleteFoodCategory = async (id: number) => {
-  const url = createApiUrl(`api/foodcategory/${id}/`);
+export const deleteMealType = async (id: number) => {
+  const url = createApiUrl(`api/mealtype/${id}/`);
   const response = await axios.delete(url, {
     headers: await getAuthHeaders(),
   });
