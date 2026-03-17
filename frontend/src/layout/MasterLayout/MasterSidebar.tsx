@@ -6,15 +6,12 @@ import {
   LayoutDashboard,
   FileText,
   Users,
-  Newspaper,
-  HelpCircle,
-  Briefcase,
   MapPin,
   UserCog,
-  Images,
-  MessageCircle,
-  FolderKanban,
   ChevronDownIcon,
+  Briefcase,
+  Database,
+  FilePlus2
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -66,6 +63,16 @@ const navItems: NavItem[] = [
       // { name: "Recipe Ingredients", path: "/master/food-ingredient" },
       // { name: "Preparation Steps", path: "/master/food-step" },
     ],
+  },
+  {
+    icon: <Database className="w-5 h-5" />,
+    name: "SQL Import",
+    path: "/import-sql-data",
+  },
+  {
+    icon: <FilePlus2 className="w-5 h-5" />,
+    name: "Advanced Import",
+    path: "/import-advanced-data",
   },
   // {
   //   icon: <FileText className="w-5 h-5" />,

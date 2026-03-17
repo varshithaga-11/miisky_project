@@ -1,4 +1,3 @@
-
 // gkghb
 
 import { Route, Routes } from "react-router-dom";
@@ -21,6 +20,8 @@ const BarChart = lazy(() => import("./pages/Charts/BarChart"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
+const ImportSQLDataPage = lazy(() => import("./pages/ImportSQLDataPage"));
+const ImportAdvancedDataPage = lazy(() => import("./pages/ImportAdvancedDataPage"));
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 import CountryManagementPage from "./pages/AdminSide/Country/index";
@@ -59,13 +60,10 @@ const LoadingSpinner = () => (
 
 export function appRoutes() {
   return (
-
     <Suspense fallback={<LoadingSpinner />}>
-
       <Routes>
         {/* Dashboard Layout */}
         <Route element={<MasterLayout />}>
-
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="master/client" element={<ClientPage />} />
           <Route path="master/supplier" element={<SupplierPage />} />
@@ -83,6 +81,8 @@ export function appRoutes() {
           <Route path="master/health-parameter" element={<HealthParameterManagementPage />} />
           <Route path="master/normal-range" element={<NormalRangeManagementPage />} />
           <Route path="master/diet-plan" element={<DietPlanManagementPage />} />
+          <Route path="/import-sql-data" element={<ImportSQLDataPage />} />
+          <Route path="/import-advanced-data" element={<ImportAdvancedDataPage />} />
 
 
           {/* Others Page */}
@@ -141,6 +141,5 @@ export function appRoutes() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
-
   );
 }
