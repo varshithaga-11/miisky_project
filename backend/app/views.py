@@ -338,38 +338,3 @@ class ImportSQLDataView(APIView):
             return Response({'message': f'Import failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
             default_storage.delete(file_path)
-
-
-class ImportAdvancedDataView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request, format=None):
-        file_obj = request.FILES.get('file')
-        if not file_obj:
-            return Response({'message': 'No file uploaded.'}, status=status.HTTP_400_BAD_REQUEST)
-        file_path = default_storage.save(file_obj.name, file_obj)
-        abs_path = default_storage.path(file_path)
-        try:
-            if file_obj.name.endswith('.sql'):
-                with open(abs_path, 'r', encoding='utf-8') as f:
-                    sql = f.read()
-                with connection.cursor() as cursor:
-                    for statement in sql.split(';'):
-                        stmt = statement.strip()
-                        if stmt:
-                            cursor.execute(stmt)
-                return Response({'message': 'SQL file executed successfully!'}, status=status.HTTP_200_OK)
-            elif file_obj.name.endswith('.xlsx') or file_obj.name.endswith('.xls'):
-                df = pd.read_excel(abs_path)
-                # TODO: Map DataFrame to your models (example: Food, Ingredient, etc.)
-                return Response({'message': 'Excel file parsed. Implement model import logic.'}, status=status.HTTP_200_OK)
-            elif file_obj.name.endswith('.csv'):
-                df = pd.read_csv(abs_path)
-                # TODO: Map DataFrame to your models
-                return Response({'message': 'CSV file parsed. Implement model import logic.'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'message': 'Unsupported file format.'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'message': f'Import failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        finally:
-            default_storage.delete(file_path)

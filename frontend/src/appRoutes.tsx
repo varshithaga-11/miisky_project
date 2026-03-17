@@ -21,7 +21,6 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
 const ImportSQLDataPage = lazy(() => import("./pages/ImportSQLDataPage"));
-const ImportAdvancedDataPage = lazy(() => import("./pages/ImportAdvancedDataPage"));
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 import CountryManagementPage from "./pages/AdminSide/Country/index";
@@ -84,7 +83,6 @@ export function appRoutes() {
           <Route path="master/normal-range" element={<NormalRangeManagementPage />} />
           <Route path="master/diet-plan" element={<DietPlanManagementPage />} />
           <Route path="/import-sql-data" element={<ImportSQLDataPage />} />
-          <Route path="/import-advanced-data" element={<ImportAdvancedDataPage />} />
 
 
           {/* Others Page */}

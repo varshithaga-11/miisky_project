@@ -70,11 +70,6 @@ const navItems: NavItem[] = [
     name: "SQL Import",
     path: "/import-sql-data",
   },
-  {
-    icon: <FilePlus2 className="w-5 h-5" />,
-    name: "Advanced Import",
-    path: "/import-advanced-data",
-  },
   // {
   //   icon: <FileText className="w-5 h-5" />,
   //   name: "Client and Supplier Registration ",

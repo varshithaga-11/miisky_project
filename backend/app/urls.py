@@ -38,5 +38,4 @@ urlpatterns = [
     # path('resetpassword/', ResetPasswordView.as_view(), name='resetpassword'),
     # path('updateuser/', UpdateUserView.as_view(), name='updateuser'),
     path('import-sql-data/', ImportSQLDataView.as_view(), name='import-sql-data'),
-    path('import-advanced-data/', ImportAdvancedDataView.as_view(), name='import-advanced-data'),
 ]
