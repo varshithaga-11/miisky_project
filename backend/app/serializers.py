@@ -180,6 +180,12 @@ class FoodCategorySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class FoodNutritionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodNutrition
+        fields = "__all__"
+
+
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
@@ -218,11 +224,12 @@ class FoodSerializer(serializers.ModelSerializer):
         source='foodstep_set', many=True, read_only=True
     )
     category_name = serializers.CharField(source='category.name', read_only=True)
+    nutrition = FoodNutritionSerializer(read_only=True)
 
     class Meta:
         model = Food
         fields = ['id', 'name', 'category', 'category_name',
-                  'description', 'image', 'ingredients', 'steps']
+                  'description', 'image', 'ingredients', 'steps', 'nutrition']
 
 
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):

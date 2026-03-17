@@ -177,6 +177,45 @@ class Food(models.Model):
         return self.name
 
 
+class FoodNutrition(models.Model):
+    food = models.OneToOneField(Food, on_delete=models.CASCADE, related_name='nutrition')
+
+    # 🔥 MACRONUTRIENTS
+    calories = models.FloatField(null=True, blank=True)  # e.g. 120 kcal
+    protein = models.FloatField(null=True, blank=True)   # grams
+    carbs = models.FloatField(null=True, blank=True)     # grams
+    fat = models.FloatField(null=True, blank=True)       # grams
+    fiber = models.FloatField(null=True, blank=True)     # grams
+
+    # 🔥 ADVANCED MACROS
+    sugar = models.FloatField(null=True, blank=True)     # grams
+    saturated_fat = models.FloatField(null=True, blank=True)  # grams
+    trans_fat = models.FloatField(null=True, blank=True)      # grams
+
+    # 🔥 MINERALS
+    sodium = models.FloatField(null=True, blank=True)    # mg
+    potassium = models.FloatField(null=True, blank=True) # mg
+    calcium = models.FloatField(null=True, blank=True)   # mg
+    iron = models.FloatField(null=True, blank=True)      # mg
+
+    # 🔥 VITAMINS
+    vitamin_a = models.FloatField(null=True, blank=True)
+    vitamin_c = models.FloatField(null=True, blank=True)
+    vitamin_d = models.FloatField(null=True, blank=True)
+    vitamin_b12 = models.FloatField(null=True, blank=True)
+
+    # 🔥 OTHER USEFUL
+    cholesterol = models.FloatField(null=True, blank=True)  # mg
+    glycemic_index = models.FloatField(null=True, blank=True)  # important for diabetes
+
+    # 🔥 META
+    serving_size = models.CharField(max_length=100, null=True, blank=True)  
+    # e.g. "1 plate", "100g", "2 pieces"
+
+    def __str__(self):
+        return self.food.name
+    
+
 class Ingredient(models.Model):
     """
     Raw ingredient used in food recipes.
@@ -255,6 +294,10 @@ class FoodIngredient(models.Model):
 
     def __str__(self):
         return f"{self.food.name} - {self.ingredient.name}"
+    
+
+    class Meta:
+        unique_together = ['food', 'ingredient']
 
 
 class FoodStep(models.Model):
@@ -284,6 +327,10 @@ class FoodStep(models.Model):
 
     def __str__(self):
         return f"{self.food.name} - Step {self.step_number}"
+    
+    class Meta:
+        ordering = ['step_number']
+        unique_together = ['food', 'step_number']
 
 
 

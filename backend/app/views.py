@@ -167,13 +167,22 @@ class FoodViewSet(viewsets.ModelViewSet):
     queryset = Food.objects.select_related('category').prefetch_related(
         'foodingredient_set__ingredient',
         'foodingredient_set__unit',
-        'foodstep_set'
+        'foodstep_set',
+        'nutrition'
     ).all()
     serializer_class = FoodSerializer
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+
+class FoodNutritionViewSet(viewsets.ModelViewSet):
+    queryset = FoodNutrition.objects.all()
+    serializer_class = FoodNutritionSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food__name']
 
 
 class IngredientViewSet(viewsets.ModelViewSet):

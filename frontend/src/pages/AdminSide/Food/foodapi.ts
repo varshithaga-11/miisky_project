@@ -1,6 +1,30 @@
 import { createApiUrl, getAuthHeaders, getAuthHeadersFile } from "../../../access/access";
 import axios from "axios";
 
+export interface FoodNutrition {
+  id?: number;
+  food: number;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  fiber?: number;
+  sugar?: number;
+  saturated_fat?: number;
+  trans_fat?: number;
+  sodium?: number;
+  potassium?: number;
+  calcium?: number;
+  iron?: number;
+  vitamin_a?: number;
+  vitamin_c?: number;
+  vitamin_d?: number;
+  vitamin_b12?: number;
+  cholesterol?: number;
+  glycemic_index?: number;
+  serving_size?: string;
+}
+
 export interface Food {
   id?: number;
   name: string;
@@ -8,6 +32,7 @@ export interface Food {
   category_name?: string;
   description?: string;
   image?: string;
+  nutrition?: FoodNutrition;
 }
 
 export interface PaginatedResponses<T> {
@@ -75,6 +100,23 @@ export const updateFood = async (id: number, data: FormData) => {
 export const deleteFood = async (id: number) => {
   const url = createApiUrl(`api/food/${id}/`);
   const response = await axios.delete(url, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// Food Nutrition
+export const createFoodNutrition = async (data: Partial<FoodNutrition>) => {
+  const url = createApiUrl("api/foodnutrition/");
+  const response = await axios.post(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+export const updateFoodNutrition = async (id: number, data: Partial<FoodNutrition>) => {
+  const url = createApiUrl(`api/foodnutrition/${id}/`);
+  const response = await axios.put(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;
