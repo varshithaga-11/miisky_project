@@ -35,6 +35,7 @@ import FoodStepManagementPage from "./pages/AdminSide/FoodStep/index";
 import RecipeManagementPage from "./pages/AdminSide/RecipeManagement/index";
 import HealthParameterManagementPage from "./pages/AdminSide/HealthParameter/index";
 import NormalRangeManagementPage from "./pages/AdminSide/NormalRangeForHealthParameter/index";
+import DietPlanManagementPage from "./pages/AdminSide/DietPlan/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -81,6 +82,7 @@ export function appRoutes() {
           <Route path="master/recipe-creator" element={<RecipeManagementPage />} />
           <Route path="master/health-parameter" element={<HealthParameterManagementPage />} />
           <Route path="master/normal-range" element={<NormalRangeManagementPage />} />
+          <Route path="master/diet-plan" element={<DietPlanManagementPage />} />
 
 
           {/* Others Page */}

@@ -240,3 +240,18 @@ class HealthParameterSerializer(serializers.ModelSerializer):
         model = HealthParameter
         fields = "__all__"
 
+
+class DietPlanFeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DietPlanFeature
+        fields = "__all__"
+
+
+class DietPlanSerializer(serializers.ModelSerializer):
+    features = DietPlanFeatureSerializer(many=True, read_only=True)
+    final_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = DietPlans
+        fields = "__all__"
+

@@ -22,6 +22,8 @@ router.register(r'foodingredient', FoodIngredientViewSet, basename='foodingredie
 router.register(r'foodstep',      FoodStepViewSet,       basename='foodstep')
 router.register(r'healthparameter', HealthParameterViewSet)
 router.register(r'normalrange', NormalRangeForHealthParameterViewSet)
+router.register(r'dietplan', DietPlanViewSet)
+router.register(r'dietplanfeature', DietPlanFeatureViewSet)
 
 
 urlpatterns = [

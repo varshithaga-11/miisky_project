@@ -145,6 +145,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Health Parameters", path: "/master/health-parameter" },
       { name: "Normal Ranges", path: "/master/normal-range" },
+      { name: "Diet Plans", path: "/master/diet-plan" },
     ],
   },
 ];

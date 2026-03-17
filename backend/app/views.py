@@ -265,3 +265,24 @@ class NormalRangeForHealthParameterViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+
+
+class DietPlanViewSet(viewsets.ModelViewSet):
+    queryset = DietPlans.objects.all()
+    serializer_class = DietPlanSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'code']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+
+
+class DietPlanFeatureViewSet(viewsets.ModelViewSet):
+    queryset = DietPlanFeature.objects.all()
+    serializer_class = DietPlanFeatureSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['feature', 'diet_plan__title']

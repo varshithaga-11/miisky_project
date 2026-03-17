@@ -312,3 +312,49 @@ class NormalRangeForHealthParameter(models.Model):
 
     def __str__(self):
         return self.health_parameter.name
+
+
+class DietPlans(models.Model):
+    title = models.CharField(max_length=100)  # e.g. "Weight Loss Plan"
+    code = models.CharField(max_length=50, unique=True, null=True, blank=True)  # e.g. "WL001"
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)  # e.g. 2000.00
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # e.g. 500.00
+
+    no_of_days = models.IntegerField(null=True, blank=True)  # e.g. 30 days
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    created_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    @property
+    def final_amount(self):
+        # amount = 2000, discount = 500 → 1500
+        if self.discount_amount:
+            return max(self.amount - self.discount_amount, 0)
+        return self.amount
+
+    def __str__(self):
+        return self.title
+
+
+class DietPlanFeature(models.Model):
+    diet_plan = models.ForeignKey(
+        DietPlans,
+        on_delete=models.CASCADE,
+        related_name='features'
+    )  # linked to plan
+    feature = models.CharField(max_length=255)  # e.g. "Personalized diet chart"
+    order = models.PositiveIntegerField(default=0)  # 1,2,3...
+
+    def __str__(self):
+        return f"{self.diet_plan.title} - {self.feature}"
+
+    class Meta:
+        ordering = ['order']
