@@ -12,7 +12,6 @@ from django.contrib.auth.hashers import make_password
 import os
 import random
 from rest_framework import status
-import pandas as pd
 
 from .models import *
 from .serializers import *
@@ -310,31 +309,3 @@ class DietPlanFeatureViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['feature', 'diet_plan__title']
 
-
-class ImportSQLDataView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request, format=None):
-        file_obj = request.FILES.get('file')
-        if not file_obj:
-            return Response({'message': 'No file uploaded.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Save file temporarily
-        file_path = default_storage.save(file_obj.name, file_obj)
-        abs_path = default_storage.path(file_path)
-        try:
-            if file_obj.name.endswith('.sql'):
-                with open(abs_path, 'r', encoding='utf-8') as f:
-                    sql = f.read()
-                with connection.cursor() as cursor:
-                    for statement in sql.split(';'):
-                        stmt = statement.strip()
-                        if stmt:
-                            cursor.execute(stmt)
-                return Response({'message': 'SQL file executed successfully!'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'message': 'Only .sql files are supported in this endpoint.'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'message': f'Import failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        finally:
-            default_storage.delete(file_path)

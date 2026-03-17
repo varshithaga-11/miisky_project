@@ -65,11 +65,6 @@ const navItems: NavItem[] = [
       // { name: "Preparation Steps", path: "/master/food-step" },
     ],
   },
-  {
-    icon: <Database className="w-5 h-5" />,
-    name: "SQL Import",
-    path: "/import-sql-data",
-  },
   // {
   //   icon: <FileText className="w-5 h-5" />,
   //   name: "Client and Supplier Registration ",

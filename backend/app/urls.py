@@ -37,5 +37,4 @@ urlpatterns = [
     # path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),
     # path('resetpassword/', ResetPasswordView.as_view(), name='resetpassword'),
     # path('updateuser/', UpdateUserView.as_view(), name='updateuser'),
-    path('import-sql-data/', ImportSQLDataView.as_view(), name='import-sql-data'),
 ]
