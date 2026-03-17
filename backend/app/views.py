@@ -154,6 +154,15 @@ class FoodCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
 
 
+class CuisineTypeViewSet(viewsets.ModelViewSet):
+    queryset = CuisineType.objects.all()
+    serializer_class = CuisineTypeSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    permission_classes = [AllowAny]
+
+
 class FoodViewSet(viewsets.ModelViewSet):
     """
     CRUD for foods. Returns nested ingredients and steps on detail view.
@@ -164,7 +173,9 @@ class FoodViewSet(viewsets.ModelViewSet):
         PUT    /app/food/{id}/  → update
         DELETE /app/food/{id}/  → delete
     """
-    queryset = Food.objects.select_related('category').prefetch_related(
+    queryset = Food.objects.prefetch_related(
+        'category',
+        'cuisine_types',
         'foodingredient_set__ingredient',
         'foodingredient_set__unit',
         'foodstep_set',

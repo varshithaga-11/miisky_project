@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
     name: "Food Management",
     subItems: [
       { name: "Food Category", path: "/master/food-category" },
+      { name: "Cuisine Type", path: "/master/cuisine-type" },
       { name: "Foods", path: "/master/food" },
       { name: "Units", path: "/master/unit" },
       { name: "Ingredients", path: "/master/ingredient" },

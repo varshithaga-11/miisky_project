@@ -180,6 +180,12 @@ class FoodCategorySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class CuisineTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CuisineType
+        fields = "__all__"
+
+
 class FoodNutritionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FoodNutrition
@@ -223,12 +229,13 @@ class FoodSerializer(serializers.ModelSerializer):
     steps = FoodStepSerializer(
         source='foodstep_set', many=True, read_only=True
     )
-    category_name = serializers.CharField(source='category.name', read_only=True)
+    category_names = serializers.StringRelatedField(source='category', many=True, read_only=True)
+    cuisine_type_names = serializers.StringRelatedField(source='cuisine_types', many=True, read_only=True)
     nutrition = FoodNutritionSerializer(read_only=True)
 
     class Meta:
         model = Food
-        fields = ['id', 'name', 'category', 'category_name',
+        fields = ['id', 'name', 'category', 'category_names', 'cuisine_types', 'cuisine_type_names',
                   'description', 'image', 'ingredients', 'steps', 'nutrition']
 
 

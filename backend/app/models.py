@@ -131,7 +131,7 @@ class UserRegister(AbstractUser):
 # =============================================================================
 
 
-class FoodCategory(models.Model):
+class FoodCategory(models.Model):#mealtype
     """
     Top-level grouping for foods.
 
@@ -145,6 +145,14 @@ class FoodCategory(models.Model):
     """
     name = models.CharField(max_length=100)
     # Example: Breakfast, Lunch, Dinner, Snacks
+
+    def __str__(self):
+        return self.name
+
+
+class CuisineType(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    # Example: North Indian, South Indian, Chinese, Italian
 
     def __str__(self):
         return self.name
@@ -164,8 +172,11 @@ class Food(models.Model):
     name = models.CharField(max_length=150)
     # Example: Idli, Ragi Idli, Rava Idli, Masala Dosa
 
-    category = models.ForeignKey(FoodCategory, on_delete=models.CASCADE)
+    category = models.ManyToManyField(FoodCategory,null=True,blank=True)
     # Example: Idli → Breakfast
+
+    cuisine_types = models.ManyToManyField(CuisineType,null=True,blank=True)
+    # Example: Idli → South Indian
 
     description = models.TextField(blank=True, null=True)
     # Example: "Soft steamed rice cakes from South India"

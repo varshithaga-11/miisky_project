@@ -151,10 +151,11 @@ const FoodManagementPage: React.FC = () => {
                     Food Name {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('category_name')}>
-                  <div className="flex items-center gap-2">
-                    Category {sortField === 'category_name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
-                  </div>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
+                  Categories
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
+                  Cuisines
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
@@ -183,9 +184,30 @@ const FoodManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{food.name}</TableCell>
                     <TableCell className="px-5 py-4">
-                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                        {food.category_name || "Uncategorized"}
-                       </span>
+                       <div className="flex flex-wrap gap-1">
+                        {food.category_names && food.category_names.length > 0 ? (
+                           food.category_names.map((cat, i) => (
+                             <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
+                               {cat}
+                             </span>
+                           ))
+                        ) : (
+                          <span className="text-gray-400 text-xs italic">none</span>
+                        )}
+                       </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                       <div className="flex flex-wrap gap-1">
+                        {food.cuisine_type_names && food.cuisine_type_names.length > 0 ? (
+                           food.cuisine_type_names.map((c, i) => (
+                             <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
+                               {c}
+                             </span>
+                           ))
+                        ) : (
+                          <span className="text-gray-400 text-xs italic">none</span>
+                        )}
+                       </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
