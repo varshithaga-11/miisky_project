@@ -18,8 +18,8 @@ from .serializers import *
 
 import os
 from rest_framework.decorators import action
-from utils.file_parsers import get_file_parser
-from services.import_service import ImportService
+from .utils.file_parsers import get_file_parser
+from .services.import_service import ImportService
 
 class Pagination(PageNumberPagination):
     page_query_param = "page"
