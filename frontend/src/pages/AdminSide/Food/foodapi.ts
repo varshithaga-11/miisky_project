@@ -25,11 +25,18 @@ export interface FoodNutrition {
   serving_size?: string;
 }
 
+export interface CuisineType {
+  id: number;
+  name: string;
+}
+
 export interface Food {
   id?: number;
   name: string;
-  category: number;
-  category_name?: string;
+  meal_types: number[];
+  meal_type_names?: string[];
+  cuisine_types?: number[];
+  cuisine_type_names?: string[];
   description?: string;
   image?: string;
   nutrition?: FoodNutrition;
@@ -118,6 +125,24 @@ export const updateFoodNutrition = async (id: number, data: Partial<FoodNutritio
   const url = createApiUrl(`api/foodnutrition/${id}/`);
   const response = await axios.put(url, data, {
     headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// Cuisine Type
+export const getCuisineTypeList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string
+): Promise<PaginatedResponses<CuisineType>> => {
+  const params: Record<string, any> = { page };
+  if (limit !== "all") params.limit = limit;
+  if (search) params.search = search;
+
+  const url = createApiUrl("api/cuisinetype/");
+  const response = await axios.get<PaginatedResponses<CuisineType>>(url, {
+    headers: await getAuthHeaders(),
+    params: limit === "all" ? { ...params, limit: 9999 } : params,
   });
   return response.data;
 };

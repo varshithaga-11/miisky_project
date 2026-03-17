@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { getFoodById, updateFood, updateFoodNutrition, createFoodNutrition, Food, FoodNutrition } from "./foodapi";
-import { getFoodCategoryList, FoodCategory } from "../FoodCategory/foodcategoryapi";
+import { getFoodById, updateFood, updateFoodNutrition, createFoodNutrition, Food, FoodNutrition, getCuisineTypeList, CuisineType } from "./foodapi";
+import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
+import MultiSelect from "../../../components/form/MultiSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -17,9 +17,11 @@ interface EditFoodProps {
 
 const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [selectedMealTypes, setSelectedMealTypes] = useState<string[]>([]);
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [description, setDescription] = useState("");
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
   const [existingImage, setExistingImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,8 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   });
 
   useEffect(() => {
-    getFoodCategoryList(1, "all").then(res => setCategories(res.results)).catch(console.error);
+    getMealTypeList(1, "all").then(res => setMealTypes(res.results)).catch(console.error);
+    getCuisineTypeList(1, "all").then(res => setCuisines(res.results)).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -58,7 +61,8 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
       getFoodById(foodId)
         .then((data: Food) => {
           setName(data.name);
-          setCategoryId(String(data.category));
+          setSelectedMealTypes(data.meal_types.map(String));
+          setSelectedCuisines(data.cuisine_types ? data.cuisine_types.map(String) : []);
           setDescription(data.description || "");
           setExistingImage(data.image || null);
           if (data.nutrition) {
@@ -102,7 +106,10 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
     try {
       const formData = new FormData();
       formData.append("name", name);
-      formData.append("category", categoryId);
+      // Append M2M IDs
+      selectedMealTypes.forEach(id => formData.append("meal_types", id));
+      selectedCuisines.forEach(id => formData.append("cuisine_types", id));
+      
       formData.append("description", description);
       if (image) {
         formData.append("image", image);
@@ -132,10 +139,8 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
 
   if (!isOpen) return null;
 
-  const categoryOptions = [
-    { value: "", label: "Select Category" },
-    ...categories.map(cat => ({ value: String(cat.id), label: cat.name }))
-  ];
+  const mealTypeOptions = mealTypes.map(m => ({ value: String(m.id), text: m.name }));
+  const cuisineOptions = cuisines.map(c => ({ value: String(c.id), text: c.name }));
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -159,8 +164,10 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                   <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Select value={categoryId} onChange={(val) => setCategoryId(val)} options={categoryOptions} className="w-full" disabled={saving} />
+                       <MultiSelect label="Meal Types *" options={mealTypeOptions} defaultSelected={selectedMealTypes} onChange={setSelectedMealTypes} />
+                    </div>
+                    <div className="md:col-span-2">
+                       <MultiSelect label="Cuisine Types" options={cuisineOptions} defaultSelected={selectedCuisines} onChange={setSelectedCuisines} />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="name">Food Name *</Label>
@@ -177,7 +184,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                     </div>
                     <div>
                       <Label htmlFor="serving_size">Serving Size</Label>
-                      <Input id="serving_size" type="text" value={nutrition.serving_size} onChange={(e) => handleNutritionChange("serving_size", e.target.value)} placeholder="e.g. 100g,3-4" disabled={saving} />
+                      <Input id="serving_size" type="text" value={nutrition.serving_size} onChange={(e) => handleNutritionChange("serving_size", e.target.value)} placeholder="e.g. 100g, 3-4" disabled={saving} />
                     </div>
                   </div>
                 </section>

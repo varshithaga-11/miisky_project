@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { createFood, createFoodNutrition, Food, FoodNutrition } from "./foodapi";
-import { getFoodCategoryList, FoodCategory } from "../FoodCategory/foodcategoryapi";
+import { createFood, createFoodNutrition, Food, FoodNutrition, getCuisineTypeList, CuisineType } from "./foodapi";
+import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
+import MultiSelect from "../../../components/form/MultiSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -15,9 +15,11 @@ interface AddFoodProps {
 
 const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   const [name, setName] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [selectedMealTypes, setSelectedMealTypes] = useState<string[]>([]);
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [description, setDescription] = useState("");
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +47,8 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   });
 
   useEffect(() => {
-    getFoodCategoryList(1, "all").then(res => setCategories(res.results)).catch(console.error);
+    getMealTypeList(1, "all").then(res => setMealTypes(res.results)).catch(console.error);
+    getCuisineTypeList(1, "all").then(res => setCuisines(res.results)).catch(console.error);
   }, []);
 
   const handleNutritionChange = (field: keyof FoodNutrition, value: any) => {
@@ -54,8 +57,8 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryId) {
-      toast.error("Please select a category");
+    if (selectedMealTypes.length === 0) {
+      toast.error("Please select at least one meal type");
       return;
     }
 
@@ -63,7 +66,10 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
     try {
       const formData = new FormData();
       formData.append("name", name);
-      formData.append("category", categoryId);
+      // Append many-to-many fields
+      selectedMealTypes.forEach(id => formData.append("meal_types", id));
+      selectedCuisines.forEach(id => formData.append("cuisine_types", id));
+      
       formData.append("description", description);
       if (image) {
         formData.append("image", image);
@@ -90,10 +96,8 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
     }
   };
 
-  const categoryOptions = [
-    { value: "", label: "Select Category" },
-    ...categories.map(cat => ({ value: String(cat.id), label: cat.name }))
-  ];
+  const mealTypeOptions = mealTypes.map(m => ({ value: String(m.id), text: m.name }));
+  const cuisineOptions = cuisines.map(c => ({ value: String(c.id), text: c.name }));
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -111,8 +115,10 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                 <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <Label htmlFor="category">Category *</Label>
-                    <Select value={categoryId} onChange={(val) => setCategoryId(val)} options={categoryOptions} className="w-full" disabled={loading} />
+                    <MultiSelect label="Meal Types *" options={mealTypeOptions} onChange={setSelectedMealTypes} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <MultiSelect label="Cuisine Types" options={cuisineOptions} onChange={setSelectedCuisines} />
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="name">Food Name *</Label>
@@ -128,7 +134,7 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                   </div>
                   <div>
                     <Label htmlFor="serving_size">Serving Size</Label>
-                    <Input id="serving_size" type="text" value={nutrition.serving_size} onChange={(e) => handleNutritionChange("serving_size", e.target.value)} placeholder="e.g. 100g,3-4" disabled={loading} />
+                    <Input id="serving_size" type="text" value={nutrition.serving_size} onChange={(e) => handleNutritionChange("serving_size", e.target.value)} placeholder="e.g. 100g, 3-4" disabled={loading} />
                   </div>
                 </div>
               </section>

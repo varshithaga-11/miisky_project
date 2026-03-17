@@ -2,23 +2,23 @@ import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getFoodCategoryList, deleteFoodCategory, FoodCategory } from "./foodcategoryapi";
-import AddFoodCategory from "./AddFoodCategory";
-import EditFoodCategory from "./EditFoodCategory";
+import { getMealTypeList, deleteMealType, MealType } from "./mealtypeapi";
+import AddMealType from "./AddMealType";
+import EditMealType from "./EditMealType";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 
-const FoodCategoryManagementPage: React.FC = () => {
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
+const MealTypeManagementPage: React.FC = () => {
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
-  const [sortField, setSortField] = useState<keyof FoodCategory | null>(null);
+  const [editMealTypeId, setEditMealTypeId] = useState<number | null>(null);
+  const [sortField, setSortField] = useState<keyof MealType | null>(null);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,14 +27,14 @@ const FoodCategoryManagementPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
-    fetchCategories();
+    fetchMealTypes();
   }, [currentPage, pageSize, searchTerm]);
 
-  const fetchCategories = async () => {
+  const fetchMealTypes = async () => {
     setLoading(true);
     try {
-      const response = await getFoodCategoryList(currentPage, pageSize, searchTerm);
-      setCategories(response.results);
+      const response = await getMealTypeList(currentPage, pageSize, searchTerm);
+      setMealTypes(response.results);
       setTotalItems(response.count);
       setTotalPages(response.total_pages);
     } catch (err: unknown) {
@@ -45,29 +45,29 @@ const FoodCategoryManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    if (!window.confirm("Are you sure you want to delete this meal type?")) return;
     try {
-      await deleteFoodCategory(id);
-      fetchCategories();
+      await deleteMealType(id);
+      fetchMealTypes();
     } catch {
-      alert("Failed to delete category.");
+      alert("Failed to delete meal type.");
     }
   };
 
-  const onCategoryAdded = () => {
-    fetchCategories();
+  const onMealTypeAdded = () => {
+    fetchMealTypes();
     setIsAddModalOpen(false);
   };
 
-  const onCategoryUpdated = () => {
-    fetchCategories();
+  const onMealTypeUpdated = () => {
+    fetchMealTypes();
     setIsEditModalOpen(false);
-    setEditCategoryId(null);
+    setEditMealTypeId(null);
   };
 
-  const sortedCategories = useMemo(() => {
-    if (!sortField) return categories;
-    return [...categories].sort((a, b) => {
+  const sortedMealTypes = useMemo(() => {
+    if (!sortField) return mealTypes;
+    return [...mealTypes].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       if (aValue === undefined && bValue === undefined) return 0;
@@ -79,9 +79,9 @@ const FoodCategoryManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [categories, sortField, sortDirection]);
+  }, [mealTypes, sortField, sortDirection]);
 
-  const handleSort = (field: keyof FoodCategory) => {
+  const handleSort = (field: keyof MealType) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -93,15 +93,15 @@ const FoodCategoryManagementPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Food Category Management" description="Manage food categories" />
-      <PageBreadcrumb pageTitle="Food Category Management" />
+      <PageMeta title="Meal Type Management" description="Manage meal types" />
+      <PageBreadcrumb pageTitle="Meal Type Management" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search category..."
+              placeholder="Search meal type..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -112,7 +112,7 @@ const FoodCategoryManagementPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
               <FiPlus />
-              Add Category
+              Add Meal Type
             </Button>
             
             <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ const FoodCategoryManagementPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('name')}>
                   <div className="flex items-center gap-2">
-                    Category Name {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                    Meal Type Name {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
@@ -156,23 +156,23 @@ const FoodCategoryManagementPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                  <TableRow>
-                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">Loading categories...</TableCell>
+                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">Loading meal types...</TableCell>
                  </TableRow>
-              ) : sortedCategories.length === 0 ? (
+              ) : sortedMealTypes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No categories found</TableCell>
+                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No meal types found</TableCell>
                 </TableRow>
               ) : (
-                sortedCategories.map((category, index) => (
-                  <TableRow key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                sortedMealTypes.map((mealType, index) => (
+                  <TableRow key={mealType.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
-                    <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{category.name}</TableCell>
+                    <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{mealType.name}</TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditCategoryId(category.id!); setIsEditModalOpen(true); }}>
+                        <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditMealTypeId(mealType.id!); setIsEditModalOpen(true); }}>
                           <FiEdit />
                         </button>
-                        <button className="text-red-600 hover:text-red-800" title="Delete" onClick={() => handleDelete(category.id!)}>
+                        <button className="text-red-600 hover:text-red-800" title="Delete" onClick={() => handleDelete(mealType.id!)}>
                           <FiTrash2 />
                         </button>
                       </div>
@@ -209,17 +209,17 @@ const FoodCategoryManagementPage: React.FC = () => {
         </div>
       )}
 
-      {isAddModalOpen && <AddFoodCategory onClose={() => setIsAddModalOpen(false)} onAdd={onCategoryAdded} />}
-      {isEditModalOpen && editCategoryId !== null && (
-        <EditFoodCategory
-          categoryId={editCategoryId}
+      {isAddModalOpen && <AddMealType onClose={() => setIsAddModalOpen(false)} onAdd={onMealTypeAdded} />}
+      {isEditModalOpen && editMealTypeId !== null && (
+        <EditMealType
+          mealTypeId={editMealTypeId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={onCategoryUpdated}
+          onUpdated={onMealTypeUpdated}
         />
       )}
     </>
   );
 };
 
-export default FoodCategoryManagementPage;
+export default MealTypeManagementPage;
