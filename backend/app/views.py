@@ -16,6 +16,11 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 
+import os
+from rest_framework.decorators import action
+from utils.file_parsers import get_file_parser
+from services.import_service import ImportService
+
 class Pagination(PageNumberPagination):
     page_query_param = "page"
     page_size_query_param = "limit"
@@ -308,4 +313,37 @@ class DietPlanFeatureViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['feature', 'diet_plan__title']
+
+
+class UniversalImportView(APIView):
+    """
+    Universal Import API for Location, Food, and Health modules.
+    Endpoint: /api/<module>/<submenu>/import/
+    """
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [AllowAny] # Adjust as needed
+
+    def post(self, request, module, submenu):
+        file_obj = request.data.get('file')
+        if not file_obj:
+            return Response({"success": False, "message": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        file_name = file_obj.name
+        file_extension = os.path.splitext(file_name)[1].lower()
+
+        try:
+            parser = get_file_parser(file_extension)
+            file_content = file_obj.read()
+            data = parser(file_content)
+        except ValueError as e:
+            return Response({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"success": False, "message": f"Error parsing file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = ImportService.import_data(module, submenu, data)
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 

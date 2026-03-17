@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getCountryList, deleteCountry, Country } from "./countryapi";
 import AddCountry from "./AddCountry";
 import EditCountry from "./EditCountry";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -105,6 +106,7 @@ const CountryManagementPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-6">
+            <ImportButton onSuccess={fetchCountries} />
             <Button
               size="sm"
               className="inline-flex items-center gap-2"

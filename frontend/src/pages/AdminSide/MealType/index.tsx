@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getMealTypeList, deleteMealType, MealType } from "./mealtypeapi";
 import AddMealType from "./AddMealType";
 import EditMealType from "./EditMealType";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -110,6 +111,7 @@ const MealTypeManagementPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <ImportButton onSuccess={fetchMealTypes} />
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
               <FiPlus />
               Add Meal Type

@@ -8,6 +8,7 @@ import { deleteFullRecipe } from "./recipeapi";
 import AddRecipeModal from "./AddRecipeModal";
 import EditRecipeModal from "./EditRecipeModal";
 import ViewRecipeModal from "./ViewRecipeModal";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -87,6 +88,7 @@ const RecipeManagementPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-4">
+                        <ImportButton onSuccess={fetchData} />
                         <Button 
                             onClick={() => setIsAddModalOpen(true)}
                             size="sm"

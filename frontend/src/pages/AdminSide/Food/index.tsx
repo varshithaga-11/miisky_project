@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getFoodList, deleteFood, Food } from "./foodapi";
 import AddFood from "./AddFood";
 import EditFood from "./EditFood";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -110,6 +111,7 @@ const FoodManagementPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <ImportButton onSuccess={fetchFoods} />
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
               <FiPlus />
               Add Food

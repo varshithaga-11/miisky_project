@@ -10,8 +10,6 @@ import {
   UserCog,
   ChevronDownIcon,
   Briefcase,
-  Database,
-  FilePlus2
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";

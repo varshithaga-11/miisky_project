@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getCuisineTypeList, deleteCuisineType, CuisineType } from "./cuisinetypeapi";
 import AddCuisineType from "./AddCuisineType";
 import EditCuisineType from "./EditCuisineType";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import { toast, ToastContainer } from 'react-toastify';
@@ -66,9 +67,12 @@ const CuisineTypePage: React.FC = () => {
           <FiSearch className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
         </div>
         
-        <Button size="sm" className="flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
-          <FiPlus /> Add Cuisine
-        </Button>
+        <div className="flex items-center gap-4">
+          <ImportButton onSuccess={fetchCuisines} />
+          <Button size="sm" className="flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
+            <FiPlus /> Add Cuisine
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">

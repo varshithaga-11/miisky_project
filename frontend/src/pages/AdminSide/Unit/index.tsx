@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getUnitList, deleteUnit, Unit } from "./unitapi";
 import AddUnit from "./AddUnit";
 import EditUnit from "./EditUnit";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Label from "../../../components/form/Label";
@@ -65,6 +66,7 @@ const UnitManagementPage: React.FC = () => {
             <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           </div>
           <div className="flex items-center gap-4">
+            <ImportButton onSuccess={fetchUnits} />
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
               <FiPlus />
               Add Unit

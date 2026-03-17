@@ -6,6 +6,7 @@ import { getCityList, deleteCity, City } from "./cityapi";
 import { getStateList, State } from "../State/stateapi";
 import AddCity from "./AddCity";
 import EditCity from "./EditCity";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -121,6 +122,7 @@ const CityManagementPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-6">
+            <ImportButton onSuccess={fetchData} />
             <Button 
                 size="sm" 
                 className="inline-flex items-center gap-2"

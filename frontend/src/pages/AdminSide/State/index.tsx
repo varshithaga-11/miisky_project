@@ -6,6 +6,7 @@ import { getStateList, deleteState, State } from "./stateapi";
 import { getCountryList, Country } from "../Country/countryapi";
 import AddState from "./AddState";
 import EditState from "./EditState";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -121,6 +122,7 @@ const StateManagementPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-6">
+            <ImportButton onSuccess={fetchData} />
             <Button 
                 size="sm" 
                 className="inline-flex items-center gap-2"

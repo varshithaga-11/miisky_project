@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getDietPlanList, deleteDietPlan, DietPlan } from "./dietplanapi";
 import AddDietPlan from "./AddDietPlan";
 import EditDietPlan from "./EditDietPlan";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -99,6 +100,7 @@ const DietPlanManagement: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-6">
+            <ImportButton onSuccess={fetchPlans} />
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
               <FiPlus /> Add Plan
             </Button>
