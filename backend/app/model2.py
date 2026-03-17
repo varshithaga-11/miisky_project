@@ -477,7 +477,8 @@ class StandardReportChat(models.Model):
         db_table = 'standard_report_chat'
 
 
-class TblAminoAcids(models.Model):
+class TblAminoAcids(models.Model):#Amino Acid Profile
+
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -529,7 +530,7 @@ class TblCallCenterAdd(models.Model):
         db_table = 'tbl_call_center_add'
 
 
-class TblCarotenoid(models.Model):
+class TblCarotenoid(models.Model):#Carotenoids
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -910,7 +911,8 @@ class TblEcgData(models.Model):
         db_table = 'tbl_ecg_data'
 
 
-class TblFatSolubleVtmnsVal(models.Model):
+class TblFatSolubleVtmnsVal(models.Model):#Fat Soluble Vitamins
+
     code = models.CharField(max_length=50, blank=True, null=True)
     base_unit = models.CharField(max_length=250, blank=True, null=True)
     food_name = models.CharField(max_length=50)
@@ -932,7 +934,8 @@ class TblFatSolubleVtmnsVal(models.Model):
         db_table = 'tbl_fat_soluble_vtmns_val'
 
 
-class TblFattyAcid(models.Model):
+class TblFattyAcid(models.Model):#Fatty Acid Profile
+
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -955,7 +958,9 @@ class TblFattyAcid(models.Model):
         db_table = 'tbl_fatty_acid'
 
 
-class TblFattyAcidProfile(models.Model):
+class TblFattyAcidProfile(models.Model):#Fatty Acid Profile of Edible Oils and Fats
+
+
     food_group = models.CharField(max_length=250)
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
@@ -1266,7 +1271,8 @@ class TblImageList(models.Model):
         db_table = 'tbl_image_list'
 
 
-class TblIndividualSugar(models.Model):
+class TblIndividualSugar(models.Model):#Starch and Individual Sugars
+
     food_group = models.CharField(max_length=50)
     code = models.CharField(max_length=50)
     s_id = models.ForeignKey('TblSubItemGroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='s_id', db_constraint=False)
@@ -1401,7 +1407,8 @@ class TblLanguagesKnown(models.Model):
         db_table = 'tbl_languages_known'
 
 
-class TblMinerals(models.Model):
+class TblMinerals(models.Model):#Minerals and Trace Elements
+
     food_group = models.CharField(max_length=50)
     code = models.CharField(max_length=50)
     minerals = models.ForeignKey('TblProximateData', on_delete=models.SET_NULL, null=True, blank=True, db_column='minerals_id', db_constraint=False)
@@ -1492,7 +1499,8 @@ class TblOrderSentLogistic(models.Model):
         db_table = 'tbl_order_sent_logistic'
 
 
-class TblOrganicAcid(models.Model):
+class TblOrganicAcid(models.Model):#Organic Acids
+
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -1641,8 +1649,10 @@ class TblPayBiils(models.Model):
         # managed = False
         db_table = 'tbl_pay_biils'
 
+#
+class TblPhytates(models.Model):#OLIGOSACCHARIDES, PHYTOSTEROLS, PHYTATES AND SAPONINS
 
-class TblPhytates(models.Model):
+
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -1663,7 +1673,7 @@ class TblPhytates(models.Model):
         db_table = 'tbl_phytates'
 
 
-class TblPolyphenols(models.Model):
+class TblPolyphenols(models.Model):#Polyphenols
     code = models.CharField(max_length=50)
     food_name = models.CharField(max_length=50)
     base_unit = models.CharField(max_length=50)
@@ -1693,7 +1703,8 @@ class TblProximateData(models.Model):
         db_table = 'tbl_proximate_data'
 
 
-class TblProximateDietaryFiber(models.Model):
+class TblProximateDietaryFiber(models.Model):#Proximate Principles and Dietary Fiber
+
     code = models.CharField(max_length=15, blank=True, null=True)
     food_group = models.CharField(max_length=50, blank=True, null=True)
     prxmate = models.IntegerField(blank=True, null=True)
@@ -2175,7 +2186,8 @@ class TblUserMapping(models.Model):
         db_table = 'tbl_user_mapping'
 
 
-class TblWaterSolubleVtmnsval(models.Model):
+class TblWaterSolubleVtmnsval(models.Model):#Water Soluble Vitamins
+
     food_group = models.CharField(max_length=50)
     code = models.CharField(max_length=50)
     waterslbl = models.IntegerField()
