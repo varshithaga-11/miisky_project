@@ -44,6 +44,9 @@ router.register(r'dietplan', DietPlanViewSet)
 router.register(r'dietplanfeature', DietPlanFeatureViewSet)
 
 
+router.register(r'profile', ProfileViewSet, basename='profile')
+
+
 urlpatterns = [
     path('', include(router.urls)),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),

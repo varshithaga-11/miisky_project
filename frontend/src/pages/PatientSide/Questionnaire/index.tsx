@@ -9,10 +9,17 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getMyQuestionnaire, saveMyQuestionnaire, UserQuestionnaire } from "./api";
 
-const toJsonOrNull = (val: string) => {
-  const trimmed = val.trim();
-  if (!trimmed) return null;
-  return JSON.parse(trimmed);
+const normalizeItem = (s: string) =>
+  s
+    .trim()
+    .replace(/\s+/g, " "); // collapse multiple spaces
+
+const toListOrNull = (val: string) => {
+  const items = val
+    .split(",")
+    .map(normalizeItem)
+    .filter(Boolean);
+  return items.length ? items : null;
 };
 
 export default function PatientQuestionnairePage() {
@@ -34,13 +41,15 @@ export default function PatientQuestionnairePage() {
       try {
         const res = await getMyQuestionnaire();
         setData(res || {});
-        setHealthConditionsText(res?.health_conditions ? JSON.stringify(res.health_conditions, null, 2) : "");
-        setSymptomsText(res?.symptoms ? JSON.stringify(res.symptoms, null, 2) : "");
-        setDeficienciesText(res?.deficiencies ? JSON.stringify(res.deficiencies, null, 2) : "");
-        setAutoimmuneText(res?.autoimmune_diseases ? JSON.stringify(res.autoimmune_diseases, null, 2) : "");
-        setDigestiveText(res?.digestive_issues ? JSON.stringify(res.digestive_issues, null, 2) : "");
-        setFamilyHistoryText(res?.family_history ? JSON.stringify(res.family_history, null, 2) : "");
-        setFoodPreferencesText(res?.food_preferences ? JSON.stringify(res.food_preferences, null, 2) : "");
+        setHealthConditionsText(Array.isArray(res?.health_conditions) ? res!.health_conditions.join(", ") : "");
+        setSymptomsText(Array.isArray(res?.symptoms) ? res!.symptoms.join(", ") : "");
+        setDeficienciesText(Array.isArray(res?.deficiencies) ? res!.deficiencies.join(", ") : "");
+        setAutoimmuneText(Array.isArray(res?.autoimmune_diseases) ? res!.autoimmune_diseases.join(", ") : "");
+        setDigestiveText(Array.isArray(res?.digestive_issues) ? res!.digestive_issues.join(", ") : "");
+        setFamilyHistoryText(Array.isArray(res?.family_history) ? res!.family_history.join(", ") : "");
+        setFoodPreferencesText(
+          Array.isArray(res?.food_preferences) ? res!.food_preferences.join(", ") : ""
+        );
       } catch (err) {
         console.error(err);
         toast.error("Failed to load questionnaire");
@@ -57,20 +66,19 @@ export default function PatientQuestionnairePage() {
     try {
       const payload: Partial<UserQuestionnaire> = {
         ...data,
-        health_conditions: toJsonOrNull(healthConditionsText),
-        symptoms: toJsonOrNull(symptomsText),
-        deficiencies: toJsonOrNull(deficienciesText),
-        autoimmune_diseases: toJsonOrNull(autoimmuneText),
-        digestive_issues: toJsonOrNull(digestiveText),
-        family_history: toJsonOrNull(familyHistoryText),
-        food_preferences: toJsonOrNull(foodPreferencesText),
+        health_conditions: toListOrNull(healthConditionsText),
+        symptoms: toListOrNull(symptomsText),
+        deficiencies: toListOrNull(deficienciesText),
+        autoimmune_diseases: toListOrNull(autoimmuneText),
+        digestive_issues: toListOrNull(digestiveText),
+        family_history: toListOrNull(familyHistoryText),
+        food_preferences: toListOrNull(foodPreferencesText),
       };
       await saveMyQuestionnaire(payload);
       toast.success("Questionnaire saved");
     } catch (err: any) {
       console.error(err);
-      if (err?.message?.includes("JSON")) toast.error("Invalid JSON in one of the JSON fields");
-      else toast.error("Failed to save questionnaire");
+      toast.error("Failed to save questionnaire");
     } finally {
       setSaving(false);
     }
@@ -271,26 +279,62 @@ export default function PatientQuestionnairePage() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              ["health_conditions", "Health Conditions (JSON) ", healthConditionsText, setHealthConditionsText],
-              ["symptoms", "Symptoms (JSON)", symptomsText, setSymptomsText],
-              ["deficiencies", "Deficiencies (JSON)", deficienciesText, setDeficienciesText],
-              ["autoimmune_diseases", "Autoimmune Diseases (JSON)", autoimmuneText, setAutoimmuneText],
-              ["digestive_issues", "Digestive Issues (JSON)", digestiveText, setDigestiveText],
-              ["family_history", "Family History (JSON)", familyHistoryText, setFamilyHistoryText],
-              ["food_preferences", "Food Preferences (JSON)", foodPreferencesText, setFoodPreferencesText],
-            ].map(([k, label, val, setter]) => (
-              <div key={k}>
-                <Label>{label}</Label>
-                <textarea
-                  value={val as string}
-                  onChange={(e) => (setter as any)(e.target.value)}
-                  className="w-full border rounded-lg p-3 font-mono text-xs dark:bg-gray-800 dark:border-gray-700"
-                  rows={6}
-                  placeholder='Example: ["item1","item2"] or {"key":["v1"]}'
-                />
-              </div>
-            ))}
+            <div>
+              <Label>Health conditions</Label>
+              <Input
+                value={healthConditionsText}
+                onChange={(e) => setHealthConditionsText(e.target.value)}
+                placeholder="Diabetes, Alcohol use"
+              />
+            </div>
+            <div>
+              <Label>Symptoms</Label>
+              <Input
+                value={symptomsText}
+                onChange={(e) => setSymptomsText(e.target.value)}
+                placeholder="Fatigue, Hair loss"
+              />
+            </div>
+            <div>
+              <Label>Deficiencies</Label>
+              <Input
+                value={deficienciesText}
+                onChange={(e) => setDeficienciesText(e.target.value)}
+                placeholder="Vitamin B12, Iron"
+              />
+            </div>
+            <div>
+              <Label>Autoimmune diseases</Label>
+              <Input
+                value={autoimmuneText}
+                onChange={(e) => setAutoimmuneText(e.target.value)}
+                placeholder="Psoriasis, Celiac"
+              />
+            </div>
+            <div>
+              <Label>Digestive issues</Label>
+              <Input
+                value={digestiveText}
+                onChange={(e) => setDigestiveText(e.target.value)}
+                placeholder="Acidity, Bloating"
+              />
+            </div>
+            <div>
+              <Label>Family history</Label>
+              <Input
+                value={familyHistoryText}
+                onChange={(e) => setFamilyHistoryText(e.target.value)}
+                placeholder="Diabetes, Cardiac"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Food preferences</Label>
+              <Input
+                value={foodPreferencesText}
+                onChange={(e) => setFoodPreferencesText(e.target.value)}
+                placeholder="Onion, Garlic, Banana, Apple"
+              />
+            </div>
           </div>
 
           <div>

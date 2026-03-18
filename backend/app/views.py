@@ -991,3 +991,20 @@ class TemplateDownloadView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{submenu}_template.xlsx"'
         return response
 
+class ProfileViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = UserRegister.objects.all()
+    serializer_class = ProfileSerializer    
+    
+    def get_queryset(self):
+        return UserRegister.objects.filter(id=self.request.user.id)
+    
+    def update(self, request, *args, **kwargs):
+        partial = True  # allows partial update
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
