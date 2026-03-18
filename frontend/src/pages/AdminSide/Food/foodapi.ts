@@ -161,7 +161,7 @@ export const getCuisineTypeList = async (
   const url = createApiUrl("api/cuisinetype/");
   const response = await axios.get<PaginatedResponses<CuisineType>>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 9999 } : params,
+    params: limit === "all" ? { ...params, limit: 10 } : params,
   });
   return response.data;
 };
