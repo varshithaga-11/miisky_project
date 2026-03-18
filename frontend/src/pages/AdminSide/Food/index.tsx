@@ -10,6 +10,18 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import { createApiUrl } from "../../../access/access";
+
+const getImageUrl = (imagePath: string | undefined | null) => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath;
+  
+  let path = imagePath.startsWith("/") ? imagePath.slice(1) : imagePath;
+  if (!path.startsWith("media/")) {
+    path = `media/${path}`;
+  }
+  return createApiUrl(path);
+};
 
 const FoodManagementPage: React.FC = () => {
   const [foods, setFoods] = useState<Food[]>([]);
@@ -177,7 +189,7 @@ const FoodManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4">
                       {food.image ? (
-                        <img src={food.image} alt={food.name} className="w-12 h-12 rounded-lg object-cover border border-gray-100 dark:border-gray-700 shadow-sm" />
+                        <img src={getImageUrl(food.image)} alt={food.name} className="w-12 h-12 rounded-lg object-cover border border-gray-100 dark:border-gray-700 shadow-sm" />
                       ) : (
                         <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded-lg text-gray-400">
                           <FiLayers />

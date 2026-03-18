@@ -40,6 +40,8 @@ export interface Food {
   description?: string;
   image?: string;
   nutrition?: FoodNutrition;
+  ingredients?: any[];
+  steps?: any[];
 }
 
 export interface PaginatedResponses<T> {

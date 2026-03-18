@@ -11,7 +11,7 @@ from django.db import models
 
 class Country(models.Model):
     name = models.CharField(max_length=100)
-    created_at = models.DateField(blank=True,null=True)
+    created_at = models.DateField(auto_now_add=True, blank=True, null=True)
 
 
 
@@ -174,10 +174,10 @@ class Food(models.Model):
     name = models.CharField(max_length=150)
     # Example: Idli, Ragi Idli, Rava Idli, Masala Dosa
 
-    meal_types = models.ManyToManyField(MealType,null=True,blank=True)
+    meal_types = models.ManyToManyField(MealType, blank=True)
     # Example: Idli → Breakfast
 
-    cuisine_types = models.ManyToManyField(CuisineType,null=True,blank=True)
+    cuisine_types = models.ManyToManyField(CuisineType, blank=True)
     # Example: Idli → South Indian
 
     description = models.TextField(blank=True, null=True)
@@ -290,10 +290,10 @@ class FoodIngredient(models.Model):
         Vegetable Upma | Carrot     | 50       | Gram       | diced
         Vegetable Upma | Oil        | 2        | Tablespoon |
     """
-    food = models.ForeignKey(Food, on_delete=models.CASCADE)
+    food = models.ForeignKey(Food, on_delete=models.CASCADE, null=True, blank=True)
     # Example: Ragi Idli
 
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, null=True, blank=True)
     # Example: Ragi Flour
 
     quantity = models.FloatField()
@@ -446,7 +446,7 @@ class TblAminoAcids(models.Model):#Amino Acid Profile
     tryptophan = models.CharField(max_length=50)
     valine = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -466,7 +466,7 @@ class TblCarotenoid(models.Model):#Carotenoids
     txt_crt = models.CharField(max_length=50)
     txt_cartd = models.CharField(max_length=50)
     created_at = models.DateTimeField()
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -488,7 +488,7 @@ class TblFatSolubleVtmnsVal(models.Model):#Fat Soluble Vitamins
     txt_toctrd = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     txt_vite = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     created_at = models.DateTimeField()
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -512,7 +512,7 @@ class TblFattyAcid(models.Model):#Fatty Acid Profile
     palmitoleic = models.CharField(max_length=50)
     oleic = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    craeted_by = models.ForeignKey('Users', on_delete=models.SET_NULL, null=True, blank=True, db_column='craeted_by', db_constraint=False)
+    craeted_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='craeted_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -549,7 +549,7 @@ class TblFattyAcidProfile(models.Model):#Fatty Acid Profile of Edible Oils and F
     tmufa = models.CharField(db_column='TMUFA', max_length=50)  # Field name made lowercase.
     tpufa = models.CharField(db_column='TPUFA', max_length=50)  # Field name made lowercase.
     created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -594,7 +594,7 @@ class TblPhytates(models.Model):#OLIGOSACCHARIDES, PHYTOSTEROLS, PHYTATES AND SA
     phytate = models.CharField(max_length=50)
     saponin = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -608,7 +608,7 @@ class TblProximateDietaryFiber(models.Model):#Proximate Principles and Dietary F
     prxmate = models.IntegerField(blank=True, null=True)
     food_name = models.CharField(max_length=50, blank=True, null=True)
     base_unit = models.CharField(max_length=50, blank=True, null=True)
-    water = models.CharField(max_length=50, db_collation='utf8mb3_bin', blank=True, null=True)
+    water = models.CharField(max_length=50, blank=True, null=True)
     protein = models.CharField(max_length=50, blank=True, null=True)
     ash = models.CharField(max_length=50, blank=True, null=True)
     fatce = models.CharField(max_length=50, blank=True, null=True)
@@ -618,7 +618,7 @@ class TblProximateDietaryFiber(models.Model):#Proximate Principles and Dietary F
     choavldf = models.CharField(max_length=50, blank=True, null=True)
     energy = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.CharField(max_length=50, blank=True, null=True)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -641,12 +641,28 @@ class TblWaterSolubleVtmnsval(models.Model):#Water Soluble Vitamins
     txt_folate = models.CharField(max_length=50)
     tx_ascorbic = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
         db_table = 'tbl_water_soluble_vtmnsval'
 
+
+
+class TblProximateData(models.Model):
+    proximate_id = models.AutoField(primary_key=True)
+    proximate_name = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'tbl_proximate_data'
+
+
+class TblSubItemGroup(models.Model):
+    s_id = models.AutoField(primary_key=True)
+    group_name = models.CharField(max_length=250)
+
+    class Meta:
+        db_table = 'tbl_sub_item_group'
 
 
 class TblMinerals(models.Model):#Minerals and Trace Elements
@@ -695,7 +711,7 @@ class TblPolyphenols(models.Model):#Polyphenols
     p_coumaric = models.CharField(max_length=50)
     caffeic_acid = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False
@@ -717,7 +733,7 @@ class TblIndividualSugar(models.Model):#Starch and Individual Sugars
     maltose = models.CharField(max_length=50)
     sugar = models.CharField(max_length=50)
     created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('Users', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
+    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
 
     class Meta:
         # managed = False

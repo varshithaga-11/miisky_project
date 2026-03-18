@@ -20,7 +20,7 @@ export interface FullRecipeRow {
  * This runs multiple API calls in sequence.
  */
 export const saveFullRecipe = async (data: FullRecipeRow) => {
-    const ingredientPromises = data.ingredients.map(ing => 
+    const ingredientPromises = data.ingredients.map(ing =>
         createFoodIngredient({
             food: data.food,
             ingredient: ing.ingredient,
@@ -30,7 +30,7 @@ export const saveFullRecipe = async (data: FullRecipeRow) => {
         })
     );
 
-    const stepPromises = data.steps.map(step => 
+    const stepPromises = data.steps.map(step =>
         createFoodStep({
             food: data.food,
             step_number: step.step_number,
@@ -50,8 +50,11 @@ export const deleteFullRecipe = async (foodId: number) => {
     const ingredientsRes = await getFoodIngredientList(1, "all", undefined, foodId);
     const stepsRes = await getFoodStepList(1, "all", undefined, foodId);
 
-    const deleteIngPromises = ingredientsRes.results.map(ing => deleteFoodIngredient(ing.id!));
-    const deleteStepPromises = stepsRes.results.map(step => deleteFoodStep(step.id!));
+    const ingList = ingredientsRes?.results || [];
+    const stepList = stepsRes?.results || [];
+
+    const deleteIngPromises = ingList.map(ing => deleteFoodIngredient(ing.id!));
+    const deleteStepPromises = stepList.map(step => deleteFoodStep(step.id!));
 
     await Promise.all([...deleteIngPromises, ...deleteStepPromises]);
 };

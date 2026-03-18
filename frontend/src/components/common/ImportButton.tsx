@@ -22,17 +22,18 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
     if (path.includes("/city")) return { module: "location", submenu: "city" };
     
     // Food Module
-    if (path.includes("/meal-type")) return { module: "food", submenu: "mealtype" };
-    if (path.includes("/cuisine-type")) return { module: "food", submenu: "cuisinetype" };
+    if (path.includes("/meal-type")) return { module: "food", submenu: "meal-type" };
+    if (path.includes("/cuisine-type")) return { module: "food", submenu: "cuisine-type" };
     if (path.includes("/food")) return { module: "food", submenu: "food" };
     if (path.includes("/unit")) return { module: "food", submenu: "unit" };
     if (path.includes("/ingredient")) return { module: "food", submenu: "ingredient" };
     if (path.includes("/recipe-creator")) return { module: "food", submenu: "recipe" };
+    if (path.includes("/food-step")) return { module: "food", submenu: "food-step" };
     
     // Health Module
-    if (path.includes("/health-parameter")) return { module: "health", submenu: "healthparameter" };
-    if (path.includes("/normal-range")) return { module: "health", submenu: "normalrange" };
-    if (path.includes("/diet-plan")) return { module: "health", submenu: "dietplan" };
+    if (path.includes("/health-parameter")) return { module: "health", submenu: "health-parameter" };
+    if (path.includes("/normal-range")) return { module: "health", submenu: "normal-range" };
+    if (path.includes("/diet-plan")) return { module: "health", submenu: "diet-plan" };
 
     return null;
   }, [location.pathname]);

@@ -29,6 +29,7 @@ router.register(r'dietplanfeature', DietPlanFeatureViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
+    path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),
     # path('userlist/', UserListView.as_view(), name='user_list'),
     # ...

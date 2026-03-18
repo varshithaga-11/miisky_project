@@ -1,9 +1,20 @@
-import React, { useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { FiX, FiUploadCloud, FiFileText, FiTrash2, FiLoader } from "react-icons/fi";
-import { toast } from "react-toastify";
-import { importFile } from "../../services/importService";
-import Button from "../ui/button/Button";
+import React, { useState, useRef } from "react";
+import { 
+  X, 
+  Download, 
+  Upload, 
+  AlertTriangle, 
+  Loader2, 
+  CheckCircle2, 
+  FileSpreadsheet,
+  ChevronDown,
+  ChevronUp,
+  Trash2
+} from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import { importFile, downloadTemplate } from "../../services/importService";
+import { Table, TableHeader, TableRow, TableCell, TableBody } from "../ui/table";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -20,148 +31,476 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   submenu,
   onSuccess,
 }) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [errors, setErrors] = useState<any[]>([]);
-
-  const onDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const selectedFile = acceptedFiles[0];
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        toast.error("File size exceeds 5MB limit.");
-        return;
-      }
-      setFile(selectedFile);
-      setErrors([]);
-    }
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-      "application/vnd.ms-excel": [".xls"],
-      "application/pdf": [".pdf"],
-    },
-    multiple: false,
-  });
-
-  const handleUpload = async () => {
-    if (!file) {
-      toast.error("Please select a file first.");
-      return;
-    }
-
-    setUploading(true);
-    setErrors([]);
-
-    try {
-      const response = await importFile(module, submenu, file);
-      if (response.success) {
-        toast.success(`Import successful! Created: ${response.created}, Updated: ${response.updated}`);
-        if (onSuccess) onSuccess();
-        onClose();
-        setFile(null);
-      } else {
-        toast.error(response.message || "Import failed.");
-        setErrors(response.errors || []);
-      }
-    } catch (error: any) {
-      const apiErrors = error.response?.data?.errors || [];
-      const message = error.response?.data?.message || "An error occurred during upload.";
-      toast.error(message);
-      setErrors(apiErrors);
-    } finally {
-      setUploading(false);
-    }
-  };
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [excelData, setExcelData] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size exceeds 5MB limit.");
+        return;
+      }
+      setExcelFile(file);
+      setExcelData([]);
+      setExpandedRows(new Set());
+    }
+  };
+
+  const closeModal = () => {
+    setExcelFile(null);
+    setExcelData([]);
+    setExpandedRows(new Set());
+    onClose();
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      toast.info(`Downloading template for ${submenu}...`);
+      await downloadTemplate(module, submenu);
+    } catch (error) {
+      toast.error("Failed to download template. Please try again.");
+    }
+  };
+
+  const handleImportExcel = async () => {
+    if (!excelFile) return;
+    
+    setIsValidating(true);
+    try {
+      const response = await importFile(module, submenu, excelFile, 'analyse');
+      if (response.success) {
+        setExcelData(response.data || []);
+        toast.success("File parsed successfully. Please review the data.");
+      } else {
+        // Even if validation failed, show the data so user can see errors/duplicates
+        if (response.data) {
+          setExcelData(response.data);
+        } else if (response.errors) {
+          setExcelData(response.errors.map((err: any) => ({ ...err, is_error: true })));
+        }
+        toast.error(response.message || "Validation errors found.");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Error validating file.");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleBulkSubmit = async () => {
+    if (excelData.some(row => row.errors && row.errors.length > 0)) {
+      toast.error("Please fix errors before submitting.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const response = await importFile(module, submenu, excelFile!, 'submit');
+      if (response.success) {
+        toast.success(`Successfully imported ${response.created || excelData.length} records!`);
+        if (onSuccess) onSuccess();
+        closeModal();
+      } else {
+        toast.error(response.message || "Import failed.");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Error during import.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  const handleRemoveRow = (indexToRemove: number) => {
+    setExcelData(prev => {
+      const newData = prev.filter((_, index) => index !== indexToRemove);
+      return newData;
+    });
+    
+    setExpandedRows(prev => {
+      const next = new Set<number>();
+      prev.forEach(idx => {
+        if (idx < indexToRemove) next.add(idx);
+        if (idx > indexToRemove) next.add(idx - 1);
+      });
+      return next;
+    });
+    
+    toast.info("Row removed from preview.");
+  };
+
+  const toggleRowExpansion = (index: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedRows(newExpanded);
+  };
+
+  const getColumns = () => {
+    if (excelData.length === 0) return [];
+    return Object.keys(excelData[0]).filter(header => 
+      !['errors', 'status', 'is_error', 'id', 'is_old', 'branch_status', 'department_status', 'designation_status'].includes(header) && !header.endsWith('_input')
+    );
+  };
+
+  // Re-calculate error rows from current excelData state
+  const errorRows = excelData.filter(row => row.errors && row.errors.length > 0);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Import Records ({submenu})</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-            <FiX size={24} />
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+      <ToastContainer position="top-right" autoClose={3000} />
+      <div className="relative w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+        
+        {/* Modal Header */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+              <FileSpreadsheet className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Import Excel - {submenu.charAt(0).toUpperCase() + submenu.slice(1)}</h2>
+          </div>
+          <button
+            onClick={closeModal}
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+          >
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="p-6">
-          {!file ? (
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                isDragActive
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500"
-              }`}
-            >
-              <input {...getInputProps()} />
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-full mb-4 text-blue-600 dark:text-blue-400">
-                <FiUploadCloud size={40} />
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
+          
+          {!excelData.length ? (
+            <div className="space-y-8 py-4">
+              {/* Upload Excel Section */}
+              <div className="text-center space-y-4">
+                <div className="inline-flex flex-col items-center">
+                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Upload your file</h3>
+                   <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                     Download our template file to ensure your data is in the correct format before uploading.
+                   </p>
+                </div>
+
+                {/* Download Template Button */}
+                <div>
+                  <button
+                    onClick={handleDownloadTemplate}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-100 bg-emerald-50 px-8 py-3 text-sm font-bold text-emerald-700 transition-all hover:bg-emerald-100 hover:border-emerald-200 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40"
+                  >
+                    <Download className="h-5 w-5" />
+                    Download Sample Template
+                  </button>
+                </div>
+
+                {/* File Input (Dashed Box) */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`relative cursor-pointer rounded-2xl border-2 border-dashed py-16 text-center transition-all ${
+                    excelFile 
+                      ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10" 
+                      : "border-gray-200 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50/30 dark:border-gray-800 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full transition-colors ${
+                    excelFile ? "bg-emerald-100 text-emerald-600" : "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                  }`}>
+                    <Upload className="h-10 w-10" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {excelFile ? "File Selected!" : "Select Excel File"}
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {excelFile ? (
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">{excelFile.name} ({(excelFile.size/1024).toFixed(1)} KB)</span>
+                    ) : (
+                      "Drag & drop your file here or click to browse"
+                    )}
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-center gap-4 pt-4">
+                  <button
+                    onClick={closeModal}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-8 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
+                    <X className="h-5 w-5" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleImportExcel}
+                    disabled={!excelFile || isValidating}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-10 py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-indigo-700 hover:translate-y-[-2px] disabled:opacity-50"
+                  >
+                    {isValidating ? (
+                      <><Loader2 className="h-5 w-5 animate-spin" /> Processing...</>
+                    ) : (
+                      <><CheckCircle2 className="h-5 w-5" /> Analyze Data</>
+                    )}
+                  </button>
+                </div>
               </div>
-              <p className="text-center text-gray-600 dark:text-gray-300">
-                <span className="font-semibold text-blue-600 dark:text-blue-400">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-xs text-gray-400 mt-2">XLSX, XLS, or PDF (Max 5MB)</p>
             </div>
           ) : (
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 flex items-center justify-between border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400">
-                  <FiFileText size={24} />
+            <div className="space-y-6">
+              {/* Excel Data Preview */}
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-6 dark:border-gray-800 dark:bg-gray-950/20">
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-lg bg-indigo-100 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400">
+                      Total Records: {excelData.length}
+                    </div>
+                    {errorRows.length > 0 && (
+                      <div className="inline-flex items-center gap-2 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4" />
+                        {errorRows.length} Errors Found
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    {errorRows.length > 0 && (
+                      <button
+                        onClick={() => setIsErrorModalOpen(true)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-700 transition-all hover:bg-red-100 dark:border-red-900/40 dark:bg-red-900/30"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        View All Errors
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setExcelData([])}
+                      className="text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline underline-offset-4"
+                    >
+                      Re-upload File
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
-                    {file.name}
+
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm">
+                  <div className="max-h-[400px] overflow-auto">
+                    <Table className="w-full border-collapse">
+                      <TableHeader className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 shadow-sm">
+                        <TableRow>
+                          <TableCell isHeader className="p-3 text-left text-xs font-bold text-gray-600 dark:text-gray-400 w-16">Row</TableCell>
+                          {getColumns().map(header => (
+                            <TableCell key={header} isHeader className="p-3 text-left text-xs font-bold text-gray-600 dark:text-gray-400 capitalize">
+                              {header.replace(/_/g, ' ')}
+                            </TableCell>
+                          ))}
+                          <TableCell isHeader className="p-3 text-left text-xs font-bold text-gray-600 dark:text-gray-400 w-24">Status</TableCell>
+                          <TableCell isHeader className="p-3 w-10 text-center text-xs font-bold text-gray-600 dark:text-gray-400">Action</TableCell>
+                          <TableCell isHeader className="p-3 w-10" children={undefined}></TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {excelData.map((row, index) => {
+                          const isExpanded = expandedRows.has(index);
+                          const hasErrors = row.errors && row.errors.length > 0;
+                          
+                          return (
+                            <React.Fragment key={index}>
+                              <TableRow
+                                onClick={() => toggleRowExpansion(index)}
+                                className={`group cursor-pointer border-b border-gray-50 dark:border-gray-800 transition-colors ${
+                                  hasErrors 
+                                    ? 'bg-red-50/30 hover:bg-red-50/50 dark:bg-red-900/5 dark:hover:bg-red-900/10' 
+                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                }`}
+                              >
+                                <TableCell className="p-3 text-xs font-semibold text-gray-500">{index + 2}</TableCell>
+                                {getColumns().map(col => (
+                                  <TableCell key={col} className="p-3 text-xs text-gray-700 dark:text-gray-300">
+                                    {col.toLowerCase().includes('name') ? (
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-800">
+                                          {(String(row[col] || 'L')).charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="font-semibold text-gray-900 dark:text-white">{String(row[col] || 'N/A')}</span>
+                                      </div>
+                                    ) : (
+                                      String(row[col] || 'N/A')
+                                    )}
+                                  </TableCell>
+                                ))}
+                                <TableCell className="p-3">
+                                  {hasErrors ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      {row.errors.length} Error{row.errors.length > 1 ? 's' : ''}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      Valid
+                                    </span>
+                                  )}
+                                </TableCell>
+                                  <TableCell className="p-3 w-10 text-center">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveRow(index);
+                                      }}
+                                      className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                                      title="Remove this row"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </TableCell>
+                                  <TableCell className="p-3 w-10">
+                                    {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                                  </TableCell>
+                              </TableRow>
+                              
+                              {isExpanded && (
+                                <TableRow className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                                  <TableCell colSpan={getColumns().length + 4} className="p-4">
+                                    <div className="grid grid-cols-1 gap-4">
+                                      {hasErrors && (
+                                        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+                                          <div className="flex items-center gap-2 text-sm font-bold text-red-800 dark:text-red-400 mb-2">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            Validation Errors
+                                          </div>
+                                          <ul className="list-inside list-disc space-y-1 text-xs text-red-700 dark:text-red-300">
+                                            {row.errors.map((error: string, errIndex: number) => (
+                                              <li key={errIndex}>{error}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      <div className="flex flex-wrap gap-8 text-xs">
+                                        {Object.entries(row).map(([k, v]) => {
+                                          if(['errors', 'status', 'is_error', 'is_old'].includes(k) || k.endsWith('_input')) return null;
+                                          return (
+                                            <div key={k}>
+                                              <span className="font-bold text-gray-500 uppercase tracking-tight">{k.replace(/_/g, ' ')}:</span>
+                                              <span className="ml-2 text-gray-900 dark:text-white font-medium">{String(v || 'N/A')}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                
+                {/* Submit Action Block */}
+                <div className="mt-8 border-t border-gray-100 dark:border-gray-800 pt-6">
+                  <button
+                    onClick={handleBulkSubmit}
+                    disabled={isUploading || errorRows.length > 0}
+                    className="w-full relative group overflow-hidden rounded-2xl bg-emerald-600 px-8 py-4 text-md font-bold text-white shadow-xl shadow-emerald-200 dark:shadow-none transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 hover:translate-y-[-2px]"
+                  >
+                    <div className="relative z-10 flex items-center justify-center gap-3">
+                      {isUploading ? (
+                        <><Loader2 className="h-6 w-6 animate-spin" /> Finalizing Import...</>
+                      ) : (
+                        <><Upload className="h-6 w-6" /> Submit Bulk Upload</>
+                      )}
+                    </div>
+                  </button>
+                  <p className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
+                    {errorRows.length > 0 
+                      ? "❌ You cannot submit until all validation errors are fixed in your Excel file." 
+                      : "✅ All records are valid. Click the button above to complete the import."}
                   </p>
-                  <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
                 </div>
               </div>
-              <button
-                disabled={uploading}
-                onClick={() => setFile(null)}
-                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                title="Remove file"
-              >
-                <FiTrash2 size={18} />
-              </button>
             </div>
           )}
-
-          {errors.length > 0 && (
-            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/40 overflow-y-auto max-h-40">
-              <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-2">Partial Failure Details:</p>
-              <ul className="space-y-1 text-xs text-red-600 dark:text-red-400">
-                {errors.map((err, i) => (
-                  <li key={i}>Row {err.row}: {JSON.stringify(err.errors)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 bg-gray-50 dark:bg-gray-900/30 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-700">
-          <Button variant="outline" onClick={onClose} disabled={uploading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleUpload}
-            disabled={!file || uploading}
-            className="min-w-[120px]"
-          >
-            {uploading ? (
-              <span className="flex items-center gap-2">
-                <FiLoader className="animate-spin" /> Uploading...
-              </span>
-            ) : (
-              "Upload File"
-            )}
-          </Button>
         </div>
       </div>
+
+      {/* Error Details Modal */}
+      {isErrorModalOpen && (
+        <div className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col rounded-3xl bg-white shadow-3xl dark:bg-gray-800 border-4 border-red-50 dark:border-red-900/20">
+            <div className="flex items-center justify-between border-b border-gray-100 px-8 py-6 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 text-red-600 rounded-xl">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Import Errors Summary
+                </h2>
+              </div>
+              <button
+                onClick={() => setIsErrorModalOpen(false)}
+                className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto px-8 py-8 space-y-6">
+              <div className="bg-red-50/50 dark:bg-red-900/10 rounded-2xl p-6 border border-red-100 dark:border-red-900/30">
+                <p className="text-sm text-red-800 dark:text-red-400 font-medium">
+                  We found <span className="font-bold underline">{errorRows.length} rows</span> with validation issues. 
+                  Please review the errors below, correct them in your source Excel file, and re-upload.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                {errorRows.map((row, index) => (
+                  <div key={index} className="group rounded-2xl border border-red-100 bg-white p-6 shadow-sm transition-all hover:border-red-300 dark:border-red-900/40 dark:bg-gray-900/40">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="text-md font-bold text-gray-900 dark:text-red-300">
+                        Row {excelData.indexOf(row) + 2}
+                      </h3>
+                      <span className="rounded-lg bg-red-100 px-3 py-1 text-[10px] font-bold text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                        {row.errors.length} ERROR{row.errors.length > 1 ? 'S' : ''}
+                      </span>
+                    </div>
+                    <ul className="space-y-2">
+                      {row.errors.map((error: string, errIndex: number) => (
+                        <li key={errIndex} className="flex items-start gap-3 text-sm text-red-700 dark:text-red-300">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end border-t border-gray-100 px-8 py-6 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
+              <button
+                onClick={() => setIsErrorModalOpen(false)}
+                className="rounded-xl bg-gray-900 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-black active:scale-95"
+              >
+                Got it, I'll fix it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

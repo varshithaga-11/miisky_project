@@ -5,6 +5,8 @@ export interface City {
   id?: number;
   name: string;
   state?: number;
+  state_name?: string;
+  country_name?: string;
 }
 
 export interface PaginatedResponses<T> {

@@ -50,8 +50,8 @@ const StateManagementPage: React.FC = () => {
     }
   };
 
-  const getCountryName = (id?: number) => {
-    return countries.find(c => c.id === id)?.name || "N/A";
+  const getCountryName = (state: State) => {
+    return state.country_name || countries.find(c => c.id === state.country)?.name || "N/A";
   };
 
   const handleDelete = async (id: number) => {
@@ -80,8 +80,8 @@ const StateManagementPage: React.FC = () => {
       let bValue = b[sortField];
       
       if (sortField === 'country') {
-          aValue = getCountryName(a.country);
-          bValue = getCountryName(b.country);
+          aValue = getCountryName(a);
+          bValue = getCountryName(b);
       }
 
       if (!aValue && !bValue) return 0;
@@ -206,7 +206,7 @@ const StateManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium dark:bg-blue-900/30">
-                            {getCountryName(state.country)}
+                            {getCountryName(state)}
                         </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -6,6 +6,7 @@ import { getFoodIngredientList, deleteFoodIngredient, FoodIngredient } from "./f
 import { getFoodList, Food } from "../Food/foodapi";
 import AddFoodIngredient from "./AddFoodIngredient";
 import EditFoodIngredient from "./EditFoodIngredient";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -96,6 +97,7 @@ const FoodIngredientManagementPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <ImportButton onSuccess={fetchFoodIngredients} />
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
               <FiPlus />
               Add Item

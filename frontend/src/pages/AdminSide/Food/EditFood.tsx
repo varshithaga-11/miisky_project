@@ -131,7 +131,24 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
       }, 1500);
     } catch (err: any) {
       console.error("Error updating food:", err);
-      toast.error(err.message || "Failed to update food item");
+      let errorMessage = "Failed to update food item";
+      if (err.response && err.response.data) {
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (typeof err.response.data === 'object') {
+          if (err.response.data.name && Array.isArray(err.response.data.name)) {
+            errorMessage = err.response.data.name[0];
+          } else if (err.response.data.detail) {
+            errorMessage = err.response.data.detail;
+          } else {
+            const allErrors = Object.values(err.response.data).flat();
+            if (allErrors.length > 0) errorMessage = allErrors.join(', ');
+          }
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -143,7 +160,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   const cuisineOptions = cuisines.map(c => ({ value: String(c.id), text: c.name }));
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-5xl relative max-h-[95vh] overflow-y-auto mt-5">
         <button onClick={onClose} className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold">×</button>

@@ -43,17 +43,17 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
         setInitialLoading(true);
         try {
             const [ingList, unitList, existingIngs, existingSteps] = await Promise.all([
-                getIngredientList(),
+                getIngredientList(1, "all"),
                 getUnitList(),
-                getFoodIngredientList(food!.id),
-                getFoodStepList(food!.id)
+                getFoodIngredientList(1, "all", undefined, food!.id),
+                getFoodStepList(1, "all", undefined, food!.id)
             ]);
             
-            setIngredients(ingList);
+            setIngredients(ingList.results || []);
             setUnits(unitList);
 
-            if (existingIngs.length > 0) {
-                setIngredientRows(existingIngs.map(i => ({
+            if (existingIngs.results && existingIngs.results.length > 0) {
+                setIngredientRows(existingIngs.results.map((i: any) => ({
                     ingredient: String(i.ingredient),
                     quantity: String(i.quantity),
                     unit: String(i.unit),
@@ -63,14 +63,15 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
                 setIngredientRows([{ ingredient: "", quantity: "", unit: "", notes: "" }]);
             }
 
-            if (existingSteps.length > 0) {
-                setStepRows(existingSteps.sort((a,b) => a.step_number - b.step_number).map(s => ({
+            if (existingSteps.results && existingSteps.results.length > 0) {
+                setStepRows(existingSteps.results.sort((a: any, b: any) => a.step_number - b.step_number).map((s: any) => ({
                     step_number: String(s.step_number),
                     instruction: s.instruction
                 })));
             } else {
                 setStepRows([{ step_number: "1", instruction: "" }]);
             }
+
 
         } catch (err) {
             toast.error("Failed to load recipe data.");

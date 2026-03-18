@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 from django.http import FileResponse, HttpResponse
+import csv
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 import os
@@ -68,16 +69,14 @@ class UserRegisterView(APIView):
                 })
             return Response({
                 "status": "failed",
-                "response_code": status.HTTP_400_BAD_REQUEST,
                 "message": serializer.errors
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             message = str(e)
             return Response({
                 "status": "failed",
-                "response_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "message": message
-            })
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 
 class LoginView(APIView):
@@ -87,11 +86,11 @@ class LoginView(APIView):
         try:
             serializer = LoginSerializer(data=request.data)
             if serializer.is_valid():
-                return Response({"status":"success","response_code":status.HTTP_200_OK,"message":"User logged in successfully","tokens":serializer.validated_data})
-            return Response({"status":"failed","response_code":status.HTTP_404_NOT_FOUND,"message":serializer.errors})
+                return Response({"status":"success","message":"User logged in successfully","tokens":serializer.validated_data})
+            return Response({"status":"failed","message":serializer.errors}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             message = str(e)
-            return Response({"status":"failed","response_code":status.HTTP_500_INTERNAL_SERVER_ERROR,"message":message})
+            return Response({"status":"failed","message":message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
 class RefreshTokenView(APIView):
@@ -102,10 +101,10 @@ class RefreshTokenView(APIView):
             serializer = RefreshTokenSerializer(data=request.data)
             if serializer.is_valid():
                 return Response(serializer.validated_data)
-            return Response({"status":"failed","response_code":status.HTTP_404_NOT_FOUND,"message":serializer.errors})
+            return Response({"status":"failed","message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             message = str(e)
-            return Response({"status":"failed","response_code":status.HTTP_500_INTERNAL_SERVER_ERROR,"message":message})
+            return Response({"status":"failed","message":message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ProfileView(viewsets.ModelViewSet):
@@ -340,10 +339,113 @@ class UniversalImportView(APIView):
         except Exception as e:
             return Response({"success": False, "message": f"Error parsing file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        result = ImportService.import_data(module, submenu, data)
+        action = request.data.get('action', 'analyse')
+        result = ImportService.import_data(module, submenu, data, action=action)
         
-        if result['success']:
-            return Response(result, status=status.HTTP_200_OK)
-        else:
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        # Always return 200 for analysis so frontend can show the results table
+        # For 'submit', we return 200 but results['success'] will be false if it failed
+        return Response(result, status=status.HTTP_200_OK)
+
+class TemplateDownloadView(APIView):
+    """
+    API to download sample Excel/CSV templates for specific modules and submenus.
+    Endpoint: /api/import/<module>/<submenu>/template/
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, module, submenu):
+        from openpyxl import Workbook
+        from io import BytesIO
+        
+        # Define headers for each submenu based on available fields
+        templates = {
+            "location": {
+                "country": ["name"],
+                "state": ["name", "country_name"],
+                "city": ["name", "state_name", "country_name"]
+            },
+            "food": {
+                "meal-type": ["name"],
+                "mealtype": ["name"],
+                "cuisine-type": ["name"],
+                "cuisinetype": ["name"],
+                "food": ["name", "description", "meal_type_names", "cuisine_type_names", 
+                         "calories", "protein", "carbs", "fat", "fiber", "serving_size",
+                         "glycemic_index", "sugar", "saturated_fat", "trans_fat", "cholesterol",
+                         "sodium", "potassium", "calcium", "iron", 
+                         "vitamin_a", "vitamin_c", "vitamin_d", "vitamin_b12"],
+                "unit": ["name"],
+                "ingredient": ["name"],
+                "recipe": ["food_name", "ingredient_name", "quantity", "unit_name", "notes", "steps"],
+                "food-step": ["food_name", "step_number", "instruction"]
+            },
+            "health": {
+                "health-parameter": ["name"],
+                "healthparameter": ["name"],
+                "normal-range": ["health_parameter_name", "raw_value", "min_value", "max_value", "unit", "reference_text", "qualitative_value", "remarks"],
+                "normalrange": ["health_parameter_name", "raw_value", "min_value", "max_value", "unit", "reference_text", "qualitative_value", "remarks"],
+                "diet-plan": ["title", "code", "amount", "discount_amount", "no_of_days"],
+                "dietplan": ["title", "code", "amount", "discount_amount", "no_of_days"]
+            }
+        }
+
+        module_templates = templates.get(module, {})
+        headers = module_templates.get(submenu, ["name"])
+
+        # Create Excel Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"{submenu.replace('-', ' ').title()} Template"
+        
+        # Add Headers
+        ws.append(headers)
+        
+        # Add a sample row to guide the user
+        sample_rows = {
+            "country": ["India"],
+            "state": ["Karnataka", "India"],
+            "city": ["Bangalore", "Karnataka", "India"],
+            "meal-type": ["Breakfast"],
+            "mealtype": ["Breakfast"],
+            "cuisine-type": ["South Indian"],
+            "cuisinetype": ["South Indian"],
+            "food": ["Masala Dosa", "Crispy rice crepe with potato filling", "Breakfast, Snacks", "South Indian", 
+                     "350", "8", "50", "12", "4", "1 plate", 
+                     "55", "2", "1.5", "0", "0", 
+                     "450", "150", "30", "1.5", 
+                     "0", "0", "0", "0"],
+            "unit": ["Gram"],
+            "ingredient": ["Rice"],
+            "recipe": [
+                "Masala Dosa", "Rice", "200", "Gram", "Soaked and ground",
+                "1. Soak rice and urad dal for 6 hours; 2. Grind to paste; 3. Cook on tawa"
+            ],
+            "food-step": ["Masala Dosa", "1", "Soak rice and urad dal for 6 hours."],
+            "health-parameter": ["Hemoglobin"],
+            "healthparameter": ["Hemoglobin"],
+            "normal-range": ["Hemoglobin", "14.5 g/dL", "13.5", "17.5", "g/dL", "Normal 13.5-17.5", "", "Male range"],
+            "normalrange": ["Hemoglobin", "14.5 g/dL", "13.5", "17.5", "g/dL", "Normal 13.5-17.5", "", "Male range"],
+            "diet-plan": ["Weight Loss", "WL001", "2000.00", "500.00", "30"],
+            "dietplan": ["Weight Loss", "WL001", "2000.00", "500.00", "30"]
+        }
+        
+        if submenu in sample_rows:
+            ws.append(sample_rows[submenu])
+
+        # Style the header
+        from openpyxl.styles import Font
+        for cell in ws[1]:
+            cell.font = Font(bold=True)
+
+        # Save to BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(), 
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{submenu}_template.xlsx"'
+        return response
 

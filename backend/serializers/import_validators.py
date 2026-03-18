@@ -1,14 +1,14 @@
 from app.models import (
     Country, State, City, MealType, CuisineType, Food, 
     Ingredient, Unit, HealthParameter, NormalRangeForHealthParameter, 
-    DietPlans, FoodIngredient
+    DietPlans, FoodIngredient, FoodStep
 )
 from app.serializers import (
     CountrySerializer, StateSerializer, CitySerializer, 
     MealTypeSerializer, CuisineTypeSerializer, FoodSerializer, 
     IngredientSerializer, UnitSerializer, HealthParameterSerializer, 
     NormalRangeForHealthParameterSerializer, DietPlanSerializer,
-    FoodIngredientSerializer
+    FoodIngredientSerializer, FoodStepSerializer
 )
 
 # Mapping of module + submenu to Model and Serializer
@@ -20,16 +20,22 @@ MODEL_MAPPING = {
     },
     'food': {
         'mealtype': (MealType, MealTypeSerializer),
+        'meal-type': (MealType, MealTypeSerializer),
         'cuisinetype': (CuisineType, CuisineTypeSerializer),
+        'cuisine-type': (CuisineType, CuisineTypeSerializer),
         'food': (Food, FoodSerializer),
         'ingredient': (Ingredient, IngredientSerializer),
         'unit': (Unit, UnitSerializer),
         'recipe': (FoodIngredient, FoodIngredientSerializer),
+        'food-step': (FoodStep, FoodStepSerializer),
     },
     'health': {
         'healthparameter': (HealthParameter, HealthParameterSerializer),
+        'health-parameter': (HealthParameter, HealthParameterSerializer),
         'normalrange': (NormalRangeForHealthParameter, NormalRangeForHealthParameterSerializer),
+        'normal-range': (NormalRangeForHealthParameter, NormalRangeForHealthParameterSerializer),
         'dietplan': (DietPlans, DietPlanSerializer),
+        'diet-plan': (DietPlans, DietPlanSerializer),
     }
 }
 

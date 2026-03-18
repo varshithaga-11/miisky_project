@@ -24,7 +24,9 @@ const EditState: React.FC<EditStateProps> = ({ stateId, isOpen, onClose, onUpdat
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getCountryList().then(setCountries).catch(console.error);
+    getCountryList(1, "all")
+      .then((res) => setCountries(res.results))
+      .catch((err) => console.error("Error fetching countries:", err));
   }, []);
 
   useEffect(() => {

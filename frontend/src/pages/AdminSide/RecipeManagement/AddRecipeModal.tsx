@@ -127,7 +127,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
                             <Select
                                 value={selectedFoodId}
                                 onChange={setSelectedFoodId}
-                                options={[{ value: "", label: "Choose a Food..." }, ...foods.map(f => ({ value: String(f.id), label: f.name }))]}
+                                options={[{ value: "", label: "Choose a Food..." }, ...foods.filter(f => (!f.ingredients || f.ingredients.length === 0) && (!f.steps || f.steps.length === 0)).map(f => ({ value: String(f.id), label: f.name }))]}
                                 className="max-w-md"
                             />
                         </div>

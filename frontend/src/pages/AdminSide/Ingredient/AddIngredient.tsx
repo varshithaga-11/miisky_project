@@ -16,8 +16,8 @@ const AddIngredient: React.FC<{ onClose: () => void; onAdd: () => void }> = ({ o
       await createIngredient({ name });
       toast.success("Ingredient created!");
       setTimeout(onAdd, 1000);
-    } catch {
-      toast.error("Failed to create ingredient.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.name?.[0] || err.response?.data?.detail || err.message || "Failed to create ingredient.");
     } finally {
       setLoading(false);
     }

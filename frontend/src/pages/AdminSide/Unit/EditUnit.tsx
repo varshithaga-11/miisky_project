@@ -22,8 +22,8 @@ const EditUnit: React.FC<{ unitId: number; isOpen: boolean; onClose: () => void;
       await updateUnit(unitId, { name });
       toast.success("Updated!");
       setTimeout(onUpdated, 1000);
-    } catch {
-      toast.error("Failed.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.name?.[0] || err.response?.data?.detail || err.message || "Failed to update unit.");
     } finally {
       setLoading(false);
     }

@@ -50,8 +50,12 @@ const CityManagementPage: React.FC = () => {
     }
   };
 
-  const getStateName = (id?: number) => {
-    return states.find(s => s.id === id)?.name || "N/A";
+  const getStateName = (city: City) => {
+    return city.state_name || states.find(s => s.id === city.state)?.name || "N/A";
+  };
+
+  const getCountryName = (city: City) => {
+    return city.country_name || states.find(s => s.id === city.state)?.country_name || "N/A";
   };
 
   const handleDelete = async (id: number) => {
@@ -80,8 +84,11 @@ const CityManagementPage: React.FC = () => {
       let bValue = b[sortField];
       
       if (sortField === 'state') {
-          aValue = getStateName(a.state);
-          bValue = getStateName(b.state);
+          aValue = getStateName(a);
+          bValue = getStateName(b);
+      } else if (sortField === 'country_name' as any) {
+          aValue = getCountryName(a);
+          bValue = getCountryName(b);
       }
 
       if (!aValue && !bValue) return 0;
@@ -187,6 +194,18 @@ const CityManagementPage: React.FC = () => {
                     </span>
                   </div>
                 </TableCell>
+                <TableCell 
+                    isHeader 
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    onClick={() => handleSort('country_name' as any)}
+                >
+                  <div className="flex items-center gap-2">
+                    Country
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === 'country_name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                    </span>
+                  </div>
+                </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -206,7 +225,12 @@ const CityManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium dark:bg-orange-900/30">
-                            {getStateName(city.state)}
+                            {getStateName(city)}
+                        </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium dark:bg-blue-900/30">
+                            {getCountryName(city)}
                         </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">

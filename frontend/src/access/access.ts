@@ -35,13 +35,20 @@ const createApiUrl = (path: string): string => {
 const getAuthHeaders = async (): Promise<AuthHeaders> => {
   let access_token: string | null = localStorage.getItem('access');
   let refresh_token: string | null = localStorage.getItem('refresh');
-  console.log("access token",access_token)
-  console.log("refresh token ",refresh_token)
 
   if (isAccessTokenExpired(access_token)) {
-    const newAccessToken = await refreshAccessToken(refresh_token);
-    access_token = newAccessToken;
-    localStorage.setItem('access', newAccessToken);
+    console.log("Access token expired or missing, attempting refresh...");
+    try {
+      const newAccessToken = await refreshAccessToken(refresh_token);
+      access_token = newAccessToken;
+      localStorage.setItem('access', newAccessToken);
+      console.log("Token refreshed successfully.");
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      // Optional: redirect to login if refresh fails
+      // window.location.href = '/login';
+      throw error;
+    }
   }
 
   const headers: AuthHeaders = {
@@ -76,7 +83,8 @@ const isAccessTokenExpired = (access_token: string | null): boolean => {
   try {
     const decoded = jwtDecode<JwtPayload>(access_token);
     const currentTime = Date.now() / 1000;
-    const isExpired = decoded.exp < currentTime;
+    // Buffer of 10 seconds
+    const isExpired = decoded.exp < (currentTime + 10);
     return isExpired;
   } catch (error) {
     return true;
@@ -85,39 +93,38 @@ const isAccessTokenExpired = (access_token: string | null): boolean => {
 
 const refreshAccessToken = async (refresh_token: string | null): Promise<string> => {
   if (!refresh_token) {
-    throw new Error('No refresh token available');
+    console.error("No refresh token found in localStorage.");
+    throw new Error('No refresh token available. Please log in again.');
   }
 
-  try {
-    const refreshUrl = createApiUrl('api/token/refresh/');
-    
-    const response = await fetch(refreshUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        refresh: refresh_token,
-      }),
-    });
+  const refreshUrl = createApiUrl('api/token/refresh/');
+  console.log("Requesting token refresh from:", refreshUrl);
+  
+  const response = await fetch(refreshUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      refresh: refresh_token,
+    }),
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to refresh access token');
-    }
+  const data = await response.json();
 
-    const data: RefreshTokenResponse = await response.json();
-    
-    // The response should be in format: {"access": "<token>"}
-    const accessToken = data.access;
-    
-    if (!accessToken) {
-      throw new Error('No access token received in response');
-    }
-    
-    return accessToken;
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    console.error("Refresh API returned error:", response.status, data);
+    throw new Error(data.message || data.detail || 'Failed to refresh access token');
   }
+
+  const accessToken = data.access;
+  
+  if (!accessToken) {
+    console.error("Refresh API returned 200 but no access token was found in body:", data);
+    throw new Error('No access token received in response');
+  }
+  
+  return accessToken;
 };
 
 export { createApiUrl, getAuthHeaders, getAuthHeadersFile };

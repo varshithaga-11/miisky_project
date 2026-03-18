@@ -14,6 +14,18 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
+import { createApiUrl } from "../../../access/access";
+
+const getImageUrl = (imagePath: string | undefined | null) => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath;
+
+  let path = imagePath.startsWith("/") ? imagePath.slice(1) : imagePath;
+  if (!path.startsWith("media/")) {
+    path = `media/${path}`;
+  }
+  return createApiUrl(path);
+};
 
 const RecipeManagementPage: React.FC = () => {
     const [foods, setFoods] = useState<Food[]>([]);
@@ -61,7 +73,11 @@ const RecipeManagementPage: React.FC = () => {
         }
     };
 
-    const filteredFoods = foods.filter((f: Food) => 
+    const recipeFoods = foods.filter((f: Food) => 
+        (f.ingredients && f.ingredients.length > 0) || (f.steps && f.steps.length > 0)
+    );
+
+    const filteredFoods = recipeFoods.filter((f: Food) => 
         f.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -156,7 +172,7 @@ const RecipeManagementPage: React.FC = () => {
                                         <TableCell className="px-5 py-4">
                                             {food.image ? (
                                                 <img 
-                                                    src={food.image as string} 
+                                                    src={getImageUrl(food.image as string)} 
                                                     alt={food.name} 
                                                     className="w-12 h-12 rounded-lg object-cover border border-gray-100 dark:border-gray-700 shadow-sm"
                                                 />

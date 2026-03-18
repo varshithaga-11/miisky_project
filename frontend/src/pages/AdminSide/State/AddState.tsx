@@ -20,7 +20,9 @@ const AddState: React.FC<AddStateProps> = ({ onClose, onAdd }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getCountryList().then(setCountries).catch(console.error);
+    getCountryList(1, "all")
+      .then((res) => setCountries(res.results))
+      .catch((err) => console.error("Error fetching countries:", err));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

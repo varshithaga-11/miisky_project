@@ -8,7 +8,6 @@ import EditUnit from "./EditUnit";
 import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
-import Label from "../../../components/form/Label";
 
 const UnitManagementPage: React.FC = () => {
   const [units, setUnits] = useState<Unit[]>([]);

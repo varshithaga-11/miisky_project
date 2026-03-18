@@ -159,17 +159,123 @@ class CountrySerializer(serializers.ModelSerializer):
         model = Country
         fields = "__all__"
 
+    def validate_name(self, value):
+        query = Country.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("A country with this name already exists.")
+        return value
+
 
 class StateSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    country_name_input = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = State
-        fields = "__all__"
+        fields = ['id', 'name', 'country', 'country_name', 'country_name_input']
+
+    def create(self, validated_data):
+        country_name = validated_data.pop('country_name_input', None)
+        if country_name:
+            # Look up or create the country by name
+            country, _ = Country.objects.get_or_create(name=country_name.strip())
+            validated_data['country'] = country
+        return super().create(validated_data)
+
+    def validate(self, data):
+        name = data.get('name')
+        country = data.get('country')
+        country_name_input = data.get('country_name_input')
+
+        # During creation or update, we need to handle the country object
+        # It could be from the 'country' FK or the 'country_name_input'
+        if not country and country_name_input:
+            # If we're creating via import/input, check if that country will exist
+            # Note: The actual get_or_create happens in create/update,
+            # but we can check existence here for validation.
+            country = Country.objects.filter(name__iexact=country_name_input.strip()).first()
+
+        if name and country:
+            query = State.objects.filter(name__iexact=name.strip(), country=country)
+            if self.instance:
+                query = query.exclude(id=self.instance.id)
+            if query.exists():
+                raise serializers.ValidationError({"name": "A state with this name already exists in this country."})
+        return data
+
+    def update(self, instance, validated_data):
+        country_name = validated_data.pop('country_name_input', None)
+        if country_name:
+            country, _ = Country.objects.get_or_create(name=country_name.strip())
+            validated_data['country'] = country
+        return super().update(instance, validated_data)
 
 
 class CitySerializer(serializers.ModelSerializer):
+    state_name = serializers.CharField(source='state.name', read_only=True)
+    country_name = serializers.CharField(source='state.country.name', read_only=True)
+    state_name_input = serializers.CharField(write_only=True, required=False)
+    country_name_input = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = City
-        fields = "__all__"
+        fields = ['id', 'name', 'state', 'state_name', 'country_name', 'state_name_input', 'country_name_input']
+
+    def create(self, validated_data):
+        state_name = validated_data.pop('state_name_input', None)
+        country_name = validated_data.pop('country_name_input', None)
+        
+        if state_name:
+            if country_name:
+                # Look up/create country first
+                country, _ = Country.objects.get_or_create(name=country_name.strip())
+                # Look up/create state under this country
+                state, _ = State.objects.get_or_create(name=state_name.strip(), country=country)
+            else:
+                # Look up/create state (without country context)
+                state, _ = State.objects.get_or_create(name=state_name.strip())
+            validated_data['state'] = state
+        return super().create(validated_data)
+
+    def validate(self, data):
+        name = data.get('name')
+        state = data.get('state')
+        state_name_input = data.get('state_name_input')
+        country_name_input = data.get('country_name_input')
+
+        if not state and state_name_input:
+            # If we have country info, use it to find the correct state
+            if country_name_input:
+                country = Country.objects.filter(name__iexact=country_name_input.strip()).first()
+                if country:
+                    state = State.objects.filter(name__iexact=state_name_input.strip(), country=country).first()
+            
+            # Fallback if country info didn't help or wasn't provided
+            if not state:
+                state = State.objects.filter(name__iexact=state_name_input.strip()).first()
+
+        if name and state:
+            query = City.objects.filter(name__iexact=name.strip(), state=state)
+            if self.instance:
+                query = query.exclude(id=self.instance.id)
+            if query.exists():
+                raise serializers.ValidationError({"name": "A city with this name already exists in this state."})
+        return data
+
+    def update(self, instance, validated_data):
+        state_name = validated_data.pop('state_name_input', None)
+        country_name = validated_data.pop('country_name_input', None)
+
+        if state_name:
+            if country_name:
+                country, _ = Country.objects.get_or_create(name=country_name.strip())
+                state, _ = State.objects.get_or_create(name=state_name.strip(), country=country)
+            else:
+                state, _ = State.objects.get_or_create(name=state_name.strip())
+            validated_data['state'] = state
+        return super().update(instance, validated_data)
 
 
 # ── Food System Serializers ────────────────────────────────────────────────────
@@ -179,11 +285,27 @@ class MealTypeSerializer(serializers.ModelSerializer):
         model = MealType
         fields = "__all__"
 
+    def validate_name(self, value):
+        query = MealType.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("A meal type with this name already exists.")
+        return value
+
 
 class CuisineTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CuisineType
         fields = "__all__"
+
+    def validate_name(self, value):
+        query = CuisineType.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("A cuisine type with this name already exists.")
+        return value
 
 
 class FoodNutritionSerializer(serializers.ModelSerializer):
@@ -197,11 +319,27 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
         fields = "__all__"
 
+    def validate_name(self, value):
+        query = Ingredient.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("An ingredient with this name already exists.")
+        return value
+
 
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
         fields = "__all__"
+
+    def validate_name(self, value):
+        query = Unit.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("A unit with this name already exists.")
+        return value
 
 
 class FoodIngredientSerializer(serializers.ModelSerializer):
@@ -209,16 +347,95 @@ class FoodIngredientSerializer(serializers.ModelSerializer):
     ingredient_name = serializers.CharField(source='ingredient.name', read_only=True)
     unit_name       = serializers.CharField(source='unit.name',       read_only=True)
 
+    food_name_input = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    ingredient_name_input = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    unit_name_input = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = FoodIngredient
         fields = ['id', 'food', 'ingredient', 'ingredient_name',
-                  'quantity', 'unit', 'unit_name', 'notes']
+                  'quantity', 'unit', 'unit_name', 'notes',
+                  'food_name_input', 'ingredient_name_input', 'unit_name_input']
+        validators = []  # Disable default unique_together validator to allow update_or_create
+
+    def create(self, validated_data):
+        food_name = validated_data.pop('food_name_input', None)
+        ingredient_name = validated_data.pop('ingredient_name_input', None)
+        unit_name = validated_data.pop('unit_name_input', None)
+
+        if food_name:
+            food, _ = Food.objects.get_or_create(name=food_name.strip())
+            validated_data['food'] = food
+        if ingredient_name:
+            ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name.strip())
+            validated_data['ingredient'] = ingredient
+        if unit_name:
+            unit, _ = Unit.objects.get_or_create(name=unit_name.strip())
+            validated_data['unit'] = unit
+
+        # Handle update_or_create for unique_together fields
+        food = validated_data.get('food')
+        ingredient = validated_data.get('ingredient')
+        if food and ingredient:
+            instance, created = FoodIngredient.objects.update_or_create(
+                food=food,
+                ingredient=ingredient,
+                defaults=validated_data
+            )
+            return instance
+
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        food_name = validated_data.pop('food_name_input', None)
+        ingredient_name = validated_data.pop('ingredient_name_input', None)
+        unit_name = validated_data.pop('unit_name_input', None)
+
+        if food_name:
+            food, _ = Food.objects.get_or_create(name=food_name.strip())
+            validated_data['food'] = food
+        if ingredient_name:
+            ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name.strip())
+            validated_data['ingredient'] = ingredient
+        if unit_name:
+            unit, _ = Unit.objects.get_or_create(name=unit_name.strip())
+            validated_data['unit'] = unit
+
+        return super().update(instance, validated_data)
 
 
 class FoodStepSerializer(serializers.ModelSerializer):
+    food_name_input = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = FoodStep
         fields = "__all__"
+        validators = []  # Disable default unique_together validator to allow update_or_create
+
+    def create(self, validated_data):
+        food_name = validated_data.pop('food_name_input', None)
+        if food_name:
+            food, _ = Food.objects.get_or_create(name=food_name.strip())
+            validated_data['food'] = food
+            
+        food = validated_data.get('food')
+        step_number = validated_data.get('step_number')
+        if food and step_number is not None:
+            instance, created = FoodStep.objects.update_or_create(
+                food=food,
+                step_number=step_number,
+                defaults=validated_data
+            )
+            return instance
+
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        food_name = validated_data.pop('food_name_input', None)
+        if food_name:
+            food, _ = Food.objects.get_or_create(name=food_name.strip())
+            validated_data['food'] = food
+        return super().update(instance, validated_data)
 
 
 class FoodSerializer(serializers.ModelSerializer):
@@ -233,18 +450,164 @@ class FoodSerializer(serializers.ModelSerializer):
     cuisine_type_names = serializers.StringRelatedField(source='cuisine_types', many=True, read_only=True)
     nutrition = FoodNutritionSerializer(read_only=True)
 
+    meal_type_names_input = serializers.CharField(write_only=True, required=False)
+    cuisine_type_names_input = serializers.CharField(write_only=True, required=False)
+
+    # Nutrition fields for easy import
+    calories = serializers.FloatField(write_only=True, required=False)
+    protein = serializers.FloatField(write_only=True, required=False)
+    carbs = serializers.FloatField(write_only=True, required=False)
+    fat = serializers.FloatField(write_only=True, required=False)
+    fiber = serializers.FloatField(write_only=True, required=False)
+    serving_size = serializers.CharField(write_only=True, required=False)
+
+    glycemic_index = serializers.FloatField(write_only=True, required=False)
+    sugar = serializers.FloatField(write_only=True, required=False)
+    saturated_fat = serializers.FloatField(write_only=True, required=False)
+    trans_fat = serializers.FloatField(write_only=True, required=False)
+    cholesterol = serializers.FloatField(write_only=True, required=False)
+    sodium = serializers.FloatField(write_only=True, required=False)
+    potassium = serializers.FloatField(write_only=True, required=False)
+    calcium = serializers.FloatField(write_only=True, required=False)
+    iron = serializers.FloatField(write_only=True, required=False)
+    vitamin_a = serializers.FloatField(write_only=True, required=False)
+    vitamin_c = serializers.FloatField(write_only=True, required=False)
+    vitamin_d = serializers.FloatField(write_only=True, required=False)
+    vitamin_b12 = serializers.FloatField(write_only=True, required=False)
+
     class Meta:
         model = Food
         fields = ['id', 'name', 'meal_types', 'meal_type_names', 'cuisine_types', 'cuisine_type_names',
-                  'description', 'image', 'ingredients', 'steps', 'nutrition']
+                  'description', 'image', 'ingredients', 'steps', 'nutrition',
+                  'meal_type_names_input', 'cuisine_type_names_input',
+                  'calories', 'protein', 'carbs', 'fat', 'fiber', 'serving_size',
+                  'glycemic_index', 'sugar', 'saturated_fat', 'trans_fat', 'cholesterol',
+                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12']
+
+    def create(self, validated_data):
+        meal_names = validated_data.pop('meal_type_names_input', None)
+        cuisine_names = validated_data.pop('cuisine_type_names_input', None)
+        
+        # Pop nutrition data
+        nutrition_data = {
+            'calories': validated_data.pop('calories', None),
+            'protein': validated_data.pop('protein', None),
+            'carbs': validated_data.pop('carbs', None),
+            'fat': validated_data.pop('fat', None),
+            'fiber': validated_data.pop('fiber', None),
+            'serving_size': validated_data.pop('serving_size', None),
+            'glycemic_index': validated_data.pop('glycemic_index', None),
+            'sugar': validated_data.pop('sugar', None),
+            'saturated_fat': validated_data.pop('saturated_fat', None),
+            'trans_fat': validated_data.pop('trans_fat', None),
+            'cholesterol': validated_data.pop('cholesterol', None),
+            'sodium': validated_data.pop('sodium', None),
+            'potassium': validated_data.pop('potassium', None),
+            'calcium': validated_data.pop('calcium', None),
+            'iron': validated_data.pop('iron', None),
+            'vitamin_a': validated_data.pop('vitamin_a', None),
+            'vitamin_c': validated_data.pop('vitamin_c', None),
+            'vitamin_d': validated_data.pop('vitamin_d', None),
+            'vitamin_b12': validated_data.pop('vitamin_b12', None),
+        }
+
+        food = super().create(validated_data)
+
+        # Create nutrition if data is provided
+        if any(v is not None and v != "" for v in nutrition_data.values()):
+            FoodNutrition.objects.update_or_create(food=food, defaults=nutrition_data)
+
+        if meal_names:
+            names = [n.strip() for n in str(meal_names).split(',') if n.strip()]
+            for name in names:
+                mt, _ = MealType.objects.get_or_create(name=name)
+                food.meal_types.add(mt)
+        if cuisine_names:
+            names = [n.strip() for n in str(cuisine_names).split(',') if n.strip()]
+            for name in names:
+                ct, _ = CuisineType.objects.get_or_create(name=name)
+                food.cuisine_types.add(ct)
+        return food
+
+    def update(self, instance, validated_data):
+        meal_names = validated_data.pop('meal_type_names_input', None)
+        cuisine_names = validated_data.pop('cuisine_type_names_input', None)
+        
+        # Pop nutrition data
+        nutrition_data = {
+            'calories': validated_data.pop('calories', None),
+            'protein': validated_data.pop('protein', None),
+            'carbs': validated_data.pop('carbs', None),
+            'fat': validated_data.pop('fat', None),
+            'fiber': validated_data.pop('fiber', None),
+            'serving_size': validated_data.pop('serving_size', None),
+            'glycemic_index': validated_data.pop('glycemic_index', None),
+            'sugar': validated_data.pop('sugar', None),
+            'saturated_fat': validated_data.pop('saturated_fat', None),
+            'trans_fat': validated_data.pop('trans_fat', None),
+            'cholesterol': validated_data.pop('cholesterol', None),
+            'sodium': validated_data.pop('sodium', None),
+            'potassium': validated_data.pop('potassium', None),
+            'calcium': validated_data.pop('calcium', None),
+            'iron': validated_data.pop('iron', None),
+            'vitamin_a': validated_data.pop('vitamin_a', None),
+            'vitamin_c': validated_data.pop('vitamin_c', None),
+            'vitamin_d': validated_data.pop('vitamin_d', None),
+            'vitamin_b12': validated_data.pop('vitamin_b12', None),
+        }
+
+        food = super().update(instance, validated_data)
+
+        # Update nutrition if data is provided
+        if any(v is not None and v != "" for v in nutrition_data.values()):
+            FoodNutrition.objects.update_or_create(food=food, defaults=nutrition_data)
+
+        if meal_names is not None:
+            food.meal_types.clear()
+            names = [n.strip() for n in str(meal_names).split(',') if n.strip()]
+            for name in names:
+                mt, _ = MealType.objects.get_or_create(name=name)
+                food.meal_types.add(mt)
+        
+        if cuisine_names is not None:
+            food.cuisine_types.clear()
+            names = [n.strip() for n in str(cuisine_names).split(',') if n.strip()]
+            for name in names:
+                ct, _ = CuisineType.objects.get_or_create(name=name)
+                food.cuisine_types.add(ct)
+                
+        return food
+
+    def validate_name(self, value):
+        query = Food.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("A food item with this name already exists.")
+        return value
 
 
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
     health_parameter_name = serializers.CharField(source='health_parameter.name', read_only=True)
+    health_parameter_name_input = serializers.CharField(write_only=True, required=False)
     
     class Meta:
         model = NormalRangeForHealthParameter
         fields = "__all__"
+
+    def create(self, validated_data):
+        hp_name = validated_data.pop('health_parameter_name_input', None)
+        if hp_name:
+            hp, _ = HealthParameter.objects.get_or_create(name=hp_name.strip())
+            validated_data['health_parameter'] = hp
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        hp_name = validated_data.pop('health_parameter_name_input', None)
+        if hp_name:
+            hp, _ = HealthParameter.objects.get_or_create(name=hp_name.strip())
+            validated_data['health_parameter'] = hp
+        return super().update(instance, validated_data)
 
 
 class HealthParameterSerializer(serializers.ModelSerializer):
