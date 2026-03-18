@@ -428,313 +428,444 @@ class DietPlanFeature(models.Model):
 
 
 
+# --------------------------------------------------------------------
 
+class FoodGroup(models.Model):
+    name = models.CharField(max_length=150, unique=True)
+    # Example: "EDIBLE OILS AND FATS", "CEREALS", "FRUITS"
 
-class TblAminoAcids(models.Model):#Amino Acid Profile
+    def __str__(self):
+        return self.name
+    
+class Food(models.Model):
+    name = models.CharField(max_length=150)
+    food_group = models.ForeignKey(
+        FoodGroup,
+        on_delete=models.CASCADE,
+        related_name='foods'
+    )
+    code = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    histidine = models.CharField(max_length=50)
-    soleucine = models.CharField(max_length=50)
-    luecine = models.CharField(max_length=50)
-    lysine = models.CharField(max_length=50)
-    methionine = models.CharField(max_length=50)
-    cystin = models.CharField(max_length=50)
-    phenylalanine = models.CharField(max_length=50)
-    threonine = models.CharField(max_length=50)
-    tryptophan = models.CharField(max_length=50)
-    valine = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_amino_acids'
-
-
-class TblCarotenoid(models.Model):#Carotenoids
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    txt_lutein = models.CharField(max_length=50)
-    txt_zxthn = models.CharField(max_length=50)
-    txt_lycopene = models.CharField(max_length=50)
-    txt_crypto = models.CharField(max_length=50)
-    txt_carotene = models.CharField(max_length=50)
-    txt_crtns = models.CharField(max_length=50)
-    txt_crt = models.CharField(max_length=50)
-    txt_cartd = models.CharField(max_length=50)
-    created_at = models.DateTimeField()
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_carotenoid'
-
-class TblFatSolubleVtmnsVal(models.Model):#Fat Soluble Vitamins
-
-    code = models.CharField(max_length=50, blank=True, null=True)
-    base_unit = models.CharField(max_length=250, blank=True, null=True)
-    food_name = models.CharField(max_length=50)
-    erg_cal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_tocpha = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_tocphb = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_tocphg = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_tocphd = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_toctra = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_toctrb = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_toctrg = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_toctrd = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    txt_vite = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    created_at = models.DateTimeField()
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, blank=True, null=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_fat_soluble_vtmns_val'
-
-
-class TblFattyAcid(models.Model):#Fatty Acid Profile
-
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    capric = models.CharField(max_length=50)
-    lauric = models.CharField(max_length=50)
-    myristic = models.CharField(max_length=50)
-    palmitic = models.CharField(max_length=50)
-    stearic = models.CharField(max_length=50)
-    arachidic = models.CharField(max_length=50)
-    behenic = models.CharField(max_length=50)
-    lignoceric = models.CharField(max_length=50)
-    myristoleic = models.CharField(max_length=50)
-    palmitoleic = models.CharField(max_length=50)
-    oleic = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    craeted_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='craeted_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_fatty_acid'
-
-
-class TblFattyAcidProfile(models.Model):#Fatty Acid Profile of Edible Oils and Fats
-
-
-    food_group = models.CharField(max_length=250)
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    butyric = models.CharField(max_length=50)
-    caproic = models.CharField(max_length=50)
-    caprylic = models.CharField(max_length=50)
-    capric = models.CharField(max_length=50)
-    lauric = models.CharField(max_length=50)
-    myristic = models.CharField(max_length=50)
-    palmitic = models.CharField(max_length=50)
-    stearic = models.CharField(max_length=50)
-    arachidic = models.CharField(max_length=50)
-    behenic = models.CharField(max_length=50)
-    lignoceric = models.CharField(max_length=50)
-    myristoleic = models.CharField(max_length=50)
-    palmitoleic = models.CharField(max_length=50)
-    elaidic = models.CharField(max_length=50)
-    oleic = models.CharField(max_length=50)
-    eicosenoic = models.CharField(max_length=50)
-    erucic = models.CharField(max_length=50)
-    linoleic = models.CharField(max_length=50)
-    alpha_linolenic = models.CharField(max_length=50)
-    tsfa = models.CharField(db_column='TSFA', max_length=50)  # Field name made lowercase.
-    tmufa = models.CharField(db_column='TMUFA', max_length=50)  # Field name made lowercase.
-    tpufa = models.CharField(db_column='TPUFA', max_length=50)  # Field name made lowercase.
-    created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_fatty_acid_profile'
-
-
-class TblOrganicAcid(models.Model):#Organic Acids
-
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    oxalate = models.CharField(max_length=50)
-    soluble = models.CharField(max_length=50)
-    insoluble = models.CharField(max_length=50)
-    citac = models.CharField(max_length=50)
-    fumac = models.CharField(max_length=50)
-    malac = models.CharField(max_length=50)
-    quinic_acid = models.CharField(max_length=50)
-    sucac = models.CharField(max_length=50)
-    tarac = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    created_by = models.CharField(max_length=50)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_organic_acid'
-
-#
-class TblPhytates(models.Model):#OLIGOSACCHARIDES, PHYTOSTEROLS, PHYTATES AND SAPONINS
-
-
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    raffinose = models.CharField(max_length=50)
-    stachyose = models.CharField(max_length=50)
-    verbascose = models.CharField(max_length=50)
-    ajugose = models.CharField(max_length=50)
-    campesterol = models.CharField(max_length=50)
-    stigmasterol = models.CharField(max_length=50)
-    sitostero = models.CharField(max_length=50)
-    phytate = models.CharField(max_length=50)
-    saponin = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_phytates'
-
-
-class TblProximateDietaryFiber(models.Model):#Proximate Principles and Dietary Fiber
-
-    code = models.CharField(max_length=15, blank=True, null=True)
-    food_group = models.CharField(max_length=50, blank=True, null=True)
-    prxmate = models.IntegerField(blank=True, null=True)
-    food_name = models.CharField(max_length=50, blank=True, null=True)
-    base_unit = models.CharField(max_length=50, blank=True, null=True)
-    water = models.CharField(max_length=50, blank=True, null=True)
-    protein = models.CharField(max_length=50, blank=True, null=True)
-    ash = models.CharField(max_length=50, blank=True, null=True)
-    fatce = models.CharField(max_length=50, blank=True, null=True)
-    fibtg = models.CharField(max_length=50, blank=True, null=True)
-    fibins = models.CharField(max_length=50, blank=True, null=True)
-    fibsol = models.CharField(max_length=50, blank=True, null=True)
-    choavldf = models.CharField(max_length=50, blank=True, null=True)
-    energy = models.CharField(max_length=50, blank=True, null=True)
-    created_at = models.CharField(max_length=50, blank=True, null=True)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_proximate_dietary_fiber'
-
-
-class TblWaterSolubleVtmnsval(models.Model):#Water Soluble Vitamins
-
-    food_group = models.CharField(max_length=50)
-    code = models.CharField(max_length=50)
-    waterslbl = models.IntegerField()
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    thiamine = models.CharField(max_length=50)
-    riboflavin = models.CharField(max_length=50)
-    niacin = models.CharField(max_length=50)
-    pantothenic = models.CharField(max_length=50)
-    txt_vitbc = models.CharField(max_length=50)
-    txt_biot = models.CharField(max_length=50)
-    txt_folate = models.CharField(max_length=50)
-    tx_ascorbic = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_water_soluble_vtmnsval'
+    def __str__(self):
+        return self.name
 
 
 
-class TblProximateData(models.Model):
-    proximate_id = models.AutoField(primary_key=True)
-    proximate_name = models.CharField(max_length=50)
+class FoodProximate(models.Model):#Proximate Principles and Dietary Fiber
 
-    class Meta:
-        db_table = 'tbl_proximate_data'
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='proximate'
+    )
 
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
 
-class TblSubItemGroup(models.Model):
-    s_id = models.AutoField(primary_key=True)
-    group_name = models.CharField(max_length=250)
+    # Proximate composition
+    proximate=models.FloatField(null=True, blank=True)
+    water = models.FloatField(null=True, blank=True)
+    protein = models.FloatField(null=True, blank=True)
+    fat = models.FloatField(null=True, blank=True)
+    ash = models.FloatField(null=True, blank=True)
+    
 
-    class Meta:
-        db_table = 'tbl_sub_item_group'
+    # Dietary fiber
+    fat_crude_extract = models.FloatField(null=True, blank=True)
+    fiber_total = models.FloatField(null=True, blank=True)
+    fiber_insoluble = models.FloatField(null=True, blank=True)
+    fiber_soluble = models.FloatField(null=True, blank=True)
 
+    # Carbohydrates & energy
+    carbohydrates = models.FloatField(null=True, blank=True)
+    energy = models.FloatField(null=True, blank=True)
 
-class TblMinerals(models.Model):#Minerals and Trace Elements
-
-    food_group = models.CharField(max_length=50)
-    code = models.CharField(max_length=50)
-    minerals = models.ForeignKey('TblProximateData', on_delete=models.SET_NULL, null=True, blank=True, db_column='minerals_id', db_constraint=False)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    aluminium = models.CharField(max_length=50)
-    arsenal = models.CharField(max_length=50)
-    cadmium = models.CharField(max_length=50)
-    calcium = models.CharField(db_column='calcIum', max_length=50)  # Field name made lowercase.
-    chromium = models.CharField(max_length=50)
-    cobalt = models.CharField(max_length=50)
-    copper = models.CharField(max_length=50)
-    iron = models.CharField(max_length=50)
-    lead = models.CharField(max_length=50)
-    lithium = models.CharField(max_length=50)
-    magnesium = models.CharField(max_length=50)
-    manganese = models.CharField(max_length=50)
-    mercury = models.CharField(max_length=50)
-    molebdeum = models.CharField(max_length=50)
-    nickel = models.CharField(max_length=50)
-    phosphorous = models.CharField(max_length=50)
-    potassium = models.CharField(max_length=50)
-    selenium = models.CharField(max_length=50)
-    sodium = models.CharField(max_length=50)
-    zinc = models.CharField(max_length=50)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_minerals'
-
-class TblPolyphenols(models.Model):#Polyphenols
-    code = models.CharField(max_length=50)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    benzoic_acid = models.CharField(max_length=50)
-    benzaldehyde = models.CharField(max_length=50)
-    protocatechuic = models.CharField(max_length=50)
-    vanillic_acid = models.CharField(max_length=50)
-    gallic_acid = models.CharField(max_length=50)
-    cinamic = models.CharField(max_length=50)
-    o_coumaric = models.CharField(max_length=50)
-    p_coumaric = models.CharField(max_length=50)
-    caffeic_acid = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL, null=True, blank=True, db_column='created_by', db_constraint=False)
-
-    class Meta:
-        # managed = False
-        db_table = 'tbl_polyphenols'
+    def __str__(self):
+        return f"{self.food.name} - Proximate"
 
 
-class TblIndividualSugar(models.Model):#Starch and Individual Sugars
+class FoodWaterSolubleVitamins(models.Model):#Water Soluble Vitamins
 
-    food_group = models.CharField(max_length=50)
-    code = models.CharField(max_length=50)
-    s_id = models.ForeignKey('TblSubItemGroup', on_delete=models.SET_NULL,null=True,blank=True, db_column='s_id', db_constraint=False)
-    food_name = models.CharField(max_length=50)
-    base_unit = models.CharField(max_length=50)
-    carbo_hydrates = models.CharField(max_length=50)
-    starch = models.CharField(max_length=50)
-    fructs = models.CharField(max_length=50)
-    glucose = models.CharField(max_length=50)
-    sucrose = models.CharField(max_length=50)
-    maltose = models.CharField(max_length=50)
-    sugar = models.CharField(max_length=50)
-    created_at = models.CharField(max_length=50)
-    created_by = models.ForeignKey('UserRegister', on_delete=models.SET_NULL,null=True,blank=True, db_column='created_by', db_constraint=False)
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='water_soluble_vitamins'
+    )
 
-    class Meta:
-        # managed = False
-        db_table = 'tbl_individual_sugar'
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+
+    water_soluble_index=models.FloatField(null=True, blank=True)
+
+    # ---------------- B-Complex Vitamins ----------------
+    thiamine_b1 = models.FloatField(null=True, blank=True)
+    riboflavin_b2 = models.FloatField(null=True, blank=True)
+    niacin_b3 = models.FloatField(null=True, blank=True)
+    pantothenic_acid_b5 = models.FloatField(null=True, blank=True)
+    biotin_b7 = models.FloatField(null=True, blank=True)
+    folate_b9 = models.FloatField(null=True, blank=True)
+
+    # ---------------- Other Water Soluble ----------------
+    vitamin_b6 = models.FloatField(null=True, blank=True)
+    vitamin_c = models.FloatField(null=True, blank=True)
+
+    # ---------------- Metadata ----------------
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Water Soluble Vitamins"
+
+
+class FoodFatSolubleVitamins(models.Model):#Fat Soluble Vitamins
+
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='fat_soluble_vitamins'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # Vitamin A
+    retinol = models.FloatField(null=True, blank=True)  # erg_cal
+
+    # Tocopherols (Vitamin E)
+    alpha_tocopherol = models.FloatField(null=True, blank=True)
+    beta_tocopherol = models.FloatField(null=True, blank=True)
+    gamma_tocopherol = models.FloatField(null=True, blank=True)
+    delta_tocopherol = models.FloatField(null=True, blank=True)
+
+    # Tocotrienols (Vitamin E variants)
+    alpha_tocotrienol = models.FloatField(null=True, blank=True)
+    beta_tocotrienol = models.FloatField(null=True, blank=True)
+    gamma_tocotrienol = models.FloatField(null=True, blank=True)
+    delta_tocotrienol = models.FloatField(null=True, blank=True)
+
+    # Total Vitamin E
+    total_vitamin_e = models.FloatField(null=True, blank=True)
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Fat Soluble Vitamins"
+
+
+class FoodCarotenoids(models.Model):#Carotenoids
+
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='carotenoids'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # Individual carotenoids
+    lutein = models.FloatField(null=True, blank=True)
+    zeaxanthin = models.FloatField(null=True, blank=True)
+    lycopene = models.FloatField(null=True, blank=True)
+    beta_cryptoxanthin = models.FloatField(null=True, blank=True)
+    beta_carotene = models.FloatField(null=True, blank=True)
+
+    # Derived / totals
+    total_carotenoids = models.FloatField(null=True, blank=True)
+    retinol_activity_equivalent = models.FloatField(null=True, blank=True)
+    carotenoid_activity = models.FloatField(null=True, blank=True)
+
+    # Metadata (optional but useful)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Carotenoids"
+
+
+class FoodMinerals(models.Model):#Minerals and Trace Elements
+
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='minerals'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # ---------------- Macro Minerals ----------------
+    calcium = models.FloatField(null=True, blank=True)
+    phosphorus = models.FloatField(null=True, blank=True)
+    magnesium = models.FloatField(null=True, blank=True)
+    sodium = models.FloatField(null=True, blank=True)
+    potassium = models.FloatField(null=True, blank=True)
+
+    # ---------------- Trace Elements ----------------
+    iron = models.FloatField(null=True, blank=True)
+    zinc = models.FloatField(null=True, blank=True)
+    copper = models.FloatField(null=True, blank=True)
+    manganese = models.FloatField(null=True, blank=True)
+    selenium = models.FloatField(null=True, blank=True)
+    chromium = models.FloatField(null=True, blank=True)
+    molybdenum = models.FloatField(null=True, blank=True)
+    cobalt = models.FloatField(null=True, blank=True)
+
+    # ---------------- Heavy / Toxic Elements ----------------
+    aluminium = models.FloatField(null=True, blank=True)
+    arsenic = models.FloatField(null=True, blank=True)
+    cadmium = models.FloatField(null=True, blank=True)
+    mercury = models.FloatField(null=True, blank=True)
+    lead = models.FloatField(null=True, blank=True)
+
+    # ---------------- Optional ----------------
+    nickel = models.FloatField(null=True, blank=True)
+    lithium = models.FloatField(null=True, blank=True)
+
+    # ---------------- Metadata ----------------
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Minerals"
+
+
+
+class FoodSugars(models.Model):#Starch and Individual Sugars
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='sugars'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # ---------------- Carbohydrates ----------------
+    total_carbohydrates = models.FloatField(null=True, blank=True)
+    starch = models.FloatField(null=True, blank=True)
+
+    # ---------------- Individual Sugars ----------------
+    fructose = models.FloatField(null=True, blank=True)
+    glucose = models.FloatField(null=True, blank=True)
+    sucrose = models.FloatField(null=True, blank=True)
+    maltose = models.FloatField(null=True, blank=True)
+
+    # ---------------- Total Sugars ----------------
+    total_sugars = models.FloatField(null=True, blank=True)
+
+    # ---------------- Metadata ----------------
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Sugars"
+
+
+class FoodAminoAcids(models.Model):#Amino Acid Profile
+
+    food = models.OneToOneField(Food, on_delete=models.CASCADE, related_name='amino_acids')
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    histidine = models.FloatField(null=True, blank=True)
+    isoleucine = models.FloatField(null=True, blank=True)
+    leucine = models.FloatField(null=True, blank=True)
+    lysine = models.FloatField(null=True, blank=True)
+    methionine = models.FloatField(null=True, blank=True)
+    cystine = models.FloatField(null=True, blank=True)
+    phenylalanine = models.FloatField(null=True, blank=True)
+    threonine = models.FloatField(null=True, blank=True)
+    tryptophan = models.FloatField(null=True, blank=True)
+    valine = models.FloatField(null=True, blank=True)
+
+
+
+class FoodOrganicAcids(models.Model):#Organic Acids
+
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='organic_acids'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # Organic acids
+    oxalate_total = models.FloatField(null=True, blank=True)
+    oxalate_soluble = models.FloatField(null=True, blank=True)
+    oxalate_insoluble = models.FloatField(null=True, blank=True)
+
+    citric_acid = models.FloatField(null=True, blank=True)
+    fumaric_acid = models.FloatField(null=True, blank=True)
+    malic_acid = models.FloatField(null=True, blank=True)
+    quinic_acid = models.FloatField(null=True, blank=True)
+    succinic_acid = models.FloatField(null=True, blank=True)
+    tartaric_acid = models.FloatField(null=True, blank=True)
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Organic Acids"
+    
+
+
+class FoodPolyphenols(models.Model):#Polyphenols
+
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='polyphenols'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # ---------------- Phenolic Acids ----------------
+    benzoic_acid = models.FloatField(null=True, blank=True)
+    benzaldehyde = models.FloatField(null=True, blank=True)
+    protocatechuic_acid = models.FloatField(null=True, blank=True)
+    vanillic_acid = models.FloatField(null=True, blank=True)
+    gallic_acid = models.FloatField(null=True, blank=True)
+    cinnamic_acid = models.FloatField(null=True, blank=True)
+    o_coumaric_acid = models.FloatField(null=True, blank=True)
+    p_coumaric_acid = models.FloatField(null=True, blank=True)
+    caffeic_acid = models.FloatField(null=True, blank=True)
+
+    # ---------------- Metadata ----------------
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Polyphenols"
+
+
+
+
+
+##OLIGOSACCHARIDES, PHYTOSTEROLS, PHYTATES AND SAPONIN
+class FoodPhytochemicals(models.Model):
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='phytochemicals'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # ---------------- Oligosaccharides ----------------
+    raffinose = models.FloatField(null=True, blank=True)
+    stachyose = models.FloatField(null=True, blank=True)
+    verbascose = models.FloatField(null=True, blank=True)
+    ajugose = models.FloatField(null=True, blank=True)
+
+    # ---------------- Phytosterols ----------------
+    campesterol = models.FloatField(null=True, blank=True)
+    stigmasterol = models.FloatField(null=True, blank=True)
+    beta_sitosterol = models.FloatField(null=True, blank=True)
+
+    # ---------------- Other Compounds ----------------
+    phytate = models.FloatField(null=True, blank=True)
+    saponin = models.FloatField(null=True, blank=True)
+
+    # ---------------- Metadata ----------------
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Phytochemicals"
+
+
+#Fatty Acid Profile 
+
+class FoodFattyAcidProfile(models.Model):
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='fatty_acid_profile'
+    )
+
+    base_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    # 🔹 Short-chain fatty acids (SCFA)
+    butyric = models.FloatField(null=True, blank=True)
+    caproic = models.FloatField(null=True, blank=True)
+    caprylic = models.FloatField(null=True, blank=True)
+
+    # 🔹 Saturated fatty acids (SFA)
+    capric = models.FloatField(null=True, blank=True)
+    lauric = models.FloatField(null=True, blank=True)
+    myristic = models.FloatField(null=True, blank=True)
+    palmitic = models.FloatField(null=True, blank=True)
+    stearic = models.FloatField(null=True, blank=True)
+    arachidic = models.FloatField(null=True, blank=True)
+    behenic = models.FloatField(null=True, blank=True)
+    lignoceric = models.FloatField(null=True, blank=True)
+
+    # 🔹 Monounsaturated fatty acids (MUFA)
+    myristoleic = models.FloatField(null=True, blank=True)
+    palmitoleic = models.FloatField(null=True, blank=True)
+    oleic = models.FloatField(null=True, blank=True)
+    elaidic = models.FloatField(null=True, blank=True)
+    eicosenoic = models.FloatField(null=True, blank=True)
+    erucic = models.FloatField(null=True, blank=True)
+
+    # 🔹 Polyunsaturated fatty acids (PUFA)
+    linoleic = models.FloatField(null=True, blank=True)
+    alpha_linolenic = models.FloatField(null=True, blank=True)
+
+    # 🔹 Totals (very useful for reports)
+    total_sfa = models.FloatField(null=True, blank=True)
+    total_mufa = models.FloatField(null=True, blank=True)
+    total_pufa = models.FloatField(null=True, blank=True)
+
+    # 🔹 Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - Fatty Acid Profile"
