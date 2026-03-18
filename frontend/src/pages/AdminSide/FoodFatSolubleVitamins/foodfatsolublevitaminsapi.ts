@@ -42,12 +42,25 @@ export const getFoodFatSolubleVitaminsList = async (
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
 
-  const url = createApiUrl("api/foodfatsolublevitamins/");
-  const response = await axios.get<PaginatedResponses<FoodFatSolubleVitamins>>(url, {
+  const isAll = limit === "all";
+  const url = createApiUrl(isAll ? "api/foodfatsolublevitamins/all/" : "api/foodfatsolublevitamins/");
+  const response = await axios.get<PaginatedResponses<FoodFatSolubleVitamins> | FoodFatSolubleVitamins[]>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 9999 } : params,
+    params: isAll ? { search } : params,
   });
-  return response.data;
+
+  if (isAll) {
+    return {
+      count: (response.data as FoodFatSolubleVitamins[]).length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: response.data as FoodFatSolubleVitamins[],
+    };
+  }
+
+  return response.data as PaginatedResponses<FoodFatSolubleVitamins>;
 };
 
 export const getFoodFatSolubleVitaminsById = async (id: number) => {

@@ -45,12 +45,25 @@ export const getFoodIngredientList = async (
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("api/foodingredient/");
-    const response = await axios.get<PaginatedResponses<FoodIngredient>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/foodingredient/all/" : "api/foodingredient/");
+    const response = await axios.get<PaginatedResponses<FoodIngredient> | FoodIngredient[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search, food: foodId } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as FoodIngredient[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as FoodIngredient[],
+      };
+    }
+
+    return response.data as PaginatedResponses<FoodIngredient>;
   } catch (error) {
     console.error("Error fetching food ingredient list:", error);
     throw error;

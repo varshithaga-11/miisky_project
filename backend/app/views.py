@@ -123,6 +123,12 @@ class CountryViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_countries(self, request):
+        queryset = self.filter_queryset(self.get_queryset())  # keep search working
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class StateViewSet(viewsets.ModelViewSet):
     serializer_class = StateSerializer
@@ -136,6 +142,12 @@ class StateViewSet(viewsets.ModelViewSet):
         if country:
             queryset = queryset.filter(country=country)
         return queryset
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_states(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class CityViewSet(viewsets.ModelViewSet):
@@ -153,6 +165,12 @@ class CityViewSet(viewsets.ModelViewSet):
         elif country:
             queryset = queryset.filter(state__country=country)
         return queryset
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_cities(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 # ── Food System ViewSets ───────────────────────────────────────────────────────
@@ -174,6 +192,12 @@ class MealTypeViewSet(viewsets.ModelViewSet):
     search_fields = ['name']
     permission_classes = [AllowAny]
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_mealtypes(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class CuisineTypeViewSet(viewsets.ModelViewSet):
     queryset = CuisineType.objects.all()
@@ -182,6 +206,12 @@ class CuisineTypeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     permission_classes = [AllowAny]
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_cuisinetypes(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodViewSet(viewsets.ModelViewSet):
@@ -195,6 +225,15 @@ class FoodViewSet(viewsets.ModelViewSet):
         DELETE /app/food/{id}/  → delete
     """
     serializer_class = FoodSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foods(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_queryset(self):
         queryset = Food.objects.prefetch_related(
@@ -222,8 +261,13 @@ class FoodNutritionViewSet(viewsets.ModelViewSet):
     queryset = FoodNutrition.objects.all()
     serializer_class = FoodNutritionSerializer
     permission_classes = [AllowAny]
-    filter_backends = [filters.SearchFilter]
     search_fields = ['food__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodnutritions(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 # ── Food Composition (FoodName-based) ViewSets ─────────────────────────────────
@@ -236,6 +280,12 @@ class FoodGroupViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodgroups(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodNameViewSet(viewsets.ModelViewSet):
     queryset = FoodName.objects.select_related('food_group').all()
@@ -244,6 +294,12 @@ class FoodNameViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code', 'food_group__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodnames(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodProximateViewSet(viewsets.ModelViewSet):
@@ -254,6 +310,12 @@ class FoodProximateViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodproximates(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodWaterSolubleVitaminsViewSet(viewsets.ModelViewSet):
     queryset = FoodWaterSolubleVitamins.objects.select_related('food_name').all()
@@ -262,6 +324,12 @@ class FoodWaterSolubleVitaminsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodwatersolublevitamins(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodFatSolubleVitaminsViewSet(viewsets.ModelViewSet):
@@ -272,6 +340,12 @@ class FoodFatSolubleVitaminsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodfatsolublevitamins(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodCarotenoidsViewSet(viewsets.ModelViewSet):
     queryset = FoodCarotenoids.objects.select_related('food_name').all()
@@ -280,6 +354,12 @@ class FoodCarotenoidsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodcarotenoids(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodMineralsViewSet(viewsets.ModelViewSet):
@@ -290,6 +370,12 @@ class FoodMineralsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodminerals(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodSugarsViewSet(viewsets.ModelViewSet):
     queryset = FoodSugars.objects.select_related('food_name').all()
@@ -298,6 +384,12 @@ class FoodSugarsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodsugars(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodAminoAcidsViewSet(viewsets.ModelViewSet):
@@ -308,6 +400,12 @@ class FoodAminoAcidsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodaminoacids(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodOrganicAcidsViewSet(viewsets.ModelViewSet):
     queryset = FoodOrganicAcids.objects.select_related('food_name').all()
@@ -316,6 +414,12 @@ class FoodOrganicAcidsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodorganicacids(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodPolyphenolsViewSet(viewsets.ModelViewSet):
@@ -326,6 +430,12 @@ class FoodPolyphenolsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodpolyphenols(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodPhytochemicalsViewSet(viewsets.ModelViewSet):
     queryset = FoodPhytochemicals.objects.select_related('food_name').all()
@@ -335,6 +445,12 @@ class FoodPhytochemicalsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodphytochemicals(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodFattyAcidProfileViewSet(viewsets.ModelViewSet):
     queryset = FoodFattyAcidProfile.objects.select_related('food_name').all()
@@ -343,6 +459,12 @@ class FoodFattyAcidProfileViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodfattyacidprofiles(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -357,6 +479,12 @@ class IngredientViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_ingredients(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class UnitViewSet(viewsets.ModelViewSet):
     """
@@ -368,6 +496,12 @@ class UnitViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_units(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FoodIngredientViewSet(viewsets.ModelViewSet):
@@ -391,6 +525,12 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
             qs = qs.filter(food_id=food_id)
         return qs
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodingredients(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class FoodStepViewSet(viewsets.ModelViewSet):
     """
@@ -411,6 +551,12 @@ class FoodStepViewSet(viewsets.ModelViewSet):
             qs = qs.filter(food_id=food_id)
         return qs
 
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_foodsteps(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class HealthParameterViewSet(viewsets.ModelViewSet):
     queryset = HealthParameter.objects.all()
@@ -422,6 +568,12 @@ class HealthParameterViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(posted_by=self.request.user if self.request.user.is_authenticated else None)
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_healthparameters(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class NormalRangeForHealthParameterViewSet(viewsets.ModelViewSet):
@@ -446,6 +598,12 @@ class DietPlanViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_dietplans(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class DietPlanFeatureViewSet(viewsets.ModelViewSet):

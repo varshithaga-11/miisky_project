@@ -37,12 +37,25 @@ export const getMealTypeList = async (
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("api/mealtype/");
-    const response = await axios.get<PaginatedResponses<MealType>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/mealtype/all/" : "api/mealtype/");
+    const response = await axios.get<PaginatedResponses<MealType> | MealType[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as MealType[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as MealType[],
+      };
+    }
+
+    return response.data as PaginatedResponses<MealType>;
   } catch (error) {
     console.error("Error fetching meal type list:", error);
     throw error;

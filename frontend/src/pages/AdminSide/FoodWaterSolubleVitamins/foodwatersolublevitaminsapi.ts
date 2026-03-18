@@ -41,12 +41,25 @@ export const getFoodWaterSolubleVitaminsList = async (
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
 
-  const url = createApiUrl("api/foodwatersolublevitamins/");
-  const response = await axios.get<PaginatedResponses<FoodWaterSolubleVitamins>>(url, {
+  const isAll = limit === "all";
+  const url = createApiUrl(isAll ? "api/foodwatersolublevitamins/all/" : "api/foodwatersolublevitamins/");
+  const response = await axios.get<PaginatedResponses<FoodWaterSolubleVitamins> | FoodWaterSolubleVitamins[]>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 9999 } : params,
+    params: isAll ? { search } : params,
   });
-  return response.data;
+
+  if (isAll) {
+    return {
+      count: (response.data as FoodWaterSolubleVitamins[]).length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: response.data as FoodWaterSolubleVitamins[],
+    };
+  }
+
+  return response.data as PaginatedResponses<FoodWaterSolubleVitamins>;
 };
 
 export const getFoodWaterSolubleVitaminsById = async (id: number) => {

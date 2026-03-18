@@ -35,12 +35,25 @@ export const getCuisineTypeList = async (
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("api/cuisinetype/");
-    const response = await axios.get<PaginatedResponses<CuisineType>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/cuisinetype/all/" : "api/cuisinetype/");
+    const response = await axios.get<PaginatedResponses<CuisineType> | CuisineType[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as CuisineType[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as CuisineType[],
+      };
+    }
+
+    return response.data as PaginatedResponses<CuisineType>;
   } catch (error) {
     console.error("Error fetching cuisine type list:", error);
     throw error;

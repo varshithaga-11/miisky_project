@@ -52,12 +52,25 @@ export const getFoodMineralsList = async (
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
 
-  const url = createApiUrl("api/foodminerals/");
-  const response = await axios.get<PaginatedResponses<FoodMinerals>>(url, {
+  const isAll = limit === "all";
+  const url = createApiUrl(isAll ? "api/foodminerals/all/" : "api/foodminerals/");
+  const response = await axios.get<PaginatedResponses<FoodMinerals> | FoodMinerals[]>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 9999 } : params,
+    params: isAll ? { search } : params,
   });
-  return response.data;
+
+  if (isAll) {
+    return {
+      count: (response.data as FoodMinerals[]).length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: response.data as FoodMinerals[],
+    };
+  }
+
+  return response.data as PaginatedResponses<FoodMinerals>;
 };
 
 export const getFoodMineralsById = async (id: number) => {

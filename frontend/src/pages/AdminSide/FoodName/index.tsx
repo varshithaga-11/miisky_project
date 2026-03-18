@@ -54,7 +54,7 @@ const FoodNameManagementPage: React.FC = () => {
   };
 
   const groupNameFor = (row: FoodName) => {
-    return row.food_group_name || foodGroups.find((g) => g.id === row.food_group)?.name || "N/A";
+    return row.food_group_name || foodGroups.find((g) => String(g.id) === String(row.food_group))?.name || "N/A";
   };
 
   const handleDelete = async (id: number) => {

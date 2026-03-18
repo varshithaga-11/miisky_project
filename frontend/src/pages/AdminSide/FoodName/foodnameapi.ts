@@ -36,12 +36,28 @@ export const getFoodNameList = async (
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
 
-  const url = createApiUrl("api/foodname/");
-  const response = await axios.get<PaginatedResponses<FoodName>>(url, {
+  const isAll = limit === "all";
+  const url = createApiUrl(isAll ? "api/foodname/all/" : "api/foodname/");
+  console.log(`FoodName API Call: ${isAll ? "Fetching all" : "Page " + page}, URL: ${url}`);
+  const response = await axios.get<PaginatedResponses<FoodName> | FoodName[]>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 9999 } : params,
+    params: isAll ? { search } : params,
   });
-  return response.data;
+
+  console.log(`FoodName API Response Status: ${response.status}, Data type: ${Array.isArray(response.data) ? "Array" : typeof response.data}`);
+
+  if (isAll) {
+    return {
+      count: (response.data as FoodName[]).length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: response.data as FoodName[],
+    };
+  }
+
+  return response.data as PaginatedResponses<FoodName>;
 };
 
 export const getFoodNameById = async (id: number) => {

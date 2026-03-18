@@ -32,12 +32,25 @@ export const getFoodGroupList = async (
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
 
-  const url = createApiUrl("api/foodgroup/");
-  const response = await axios.get<PaginatedResponses<FoodGroup>>(url, {
+  const isAll = limit === "all";
+  const url = createApiUrl(isAll ? "api/foodgroup/all/" : "api/foodgroup/");
+  const response = await axios.get<PaginatedResponses<FoodGroup> | FoodGroup[]>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 9999 } : params,
+    params: isAll ? { search } : params,
   });
-  return response.data;
+
+  if (isAll) {
+    return {
+      count: (response.data as FoodGroup[]).length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: response.data as FoodGroup[],
+    };
+  }
+
+  return response.data as PaginatedResponses<FoodGroup>;
 };
 
 export const getFoodGroupById = async (id: number) => {

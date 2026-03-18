@@ -38,12 +38,25 @@ export const getCountryList = async (
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("api/country/");
-    const response = await axios.get<PaginatedResponses<Country>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/country/all/" : "api/country/");
+    const response = await axios.get<PaginatedResponses<Country> | Country[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as Country[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as Country[],
+      };
+    }
+
+    return response.data as PaginatedResponses<Country>;
   } catch (error) {
     console.error("Error fetching country list:", error);
     throw error;

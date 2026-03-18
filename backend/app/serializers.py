@@ -704,90 +704,77 @@ class FoodCompositionBaseSerializer(serializers.ModelSerializer):
             validated_data['food_name'] = food
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Ensure 'food_name_display' is ALWAYS present for the frontend tables
+        if hasattr(instance, 'food_name') and instance.food_name:
+            ret['food_name_display'] = instance.food_name.name
+        else:
+            ret['food_name_display'] = "N/A"
+        return ret
+
 
 class FoodProximateSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodProximate
         fields = "__all__"
 
 
 class FoodWaterSolubleVitaminsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodWaterSolubleVitamins
         fields = "__all__"
 
 
 class FoodFatSolubleVitaminsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodFatSolubleVitamins
         fields = "__all__"
 
 
 class FoodCarotenoidsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodCarotenoids
         fields = "__all__"
 
 
 class FoodMineralsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodMinerals
         fields = "__all__"
 
 
 class FoodSugarsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodSugars
         fields = "__all__"
 
 
 class FoodAminoAcidsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodAminoAcids
         fields = "__all__"
 
 
 class FoodOrganicAcidsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodOrganicAcids
         fields = "__all__"
 
 
 class FoodPolyphenolsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodPolyphenols
         fields = "__all__"
 
 
 class FoodPhytochemicalsSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodPhytochemicals
         fields = "__all__"
 
 
 class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
-    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
-
     class Meta:
         model = FoodFattyAcidProfile
         fields = "__all__"

@@ -41,12 +41,25 @@ export const getStateList = async (
     if (search) params.search = search;
     if (country) params.country = country;
 
-    const url = createApiUrl("api/state/");
-    const response = await axios.get<PaginatedResponses<State>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/state/all/" : "api/state/");
+    const response = await axios.get<PaginatedResponses<State> | State[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search, country } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as State[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as State[],
+      };
+    }
+
+    return response.data as PaginatedResponses<State>;
   } catch (error) {
     console.error("Error fetching state list:", error);
     throw error;

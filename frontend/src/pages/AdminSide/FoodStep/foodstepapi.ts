@@ -41,12 +41,25 @@ export const getFoodStepList = async (
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("api/foodstep/");
-    const response = await axios.get<PaginatedResponses<FoodStep>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/foodstep/all/" : "api/foodstep/");
+    const response = await axios.get<PaginatedResponses<FoodStep> | FoodStep[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search, food: foodId } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as FoodStep[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as FoodStep[],
+      };
+    }
+
+    return response.data as PaginatedResponses<FoodStep>;
   } catch (error) {
     console.error("Error fetching food step list:", error);
     throw error;

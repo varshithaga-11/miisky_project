@@ -80,8 +80,10 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
 
   useEffect(() => {
     getFoodNameList(1, "all")
-      .then((res) => setFoodNames(res.results))
-      .catch((err) => console.error(err));
+      .then((res) => {
+        setFoodNames(res.results || []);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
       setTotalItems(res.count);
       setTotalPages(res.total_pages);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setLoading(false);
     }
@@ -322,7 +324,10 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
                       {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">
-                      {row.food_name_display || foodNames.find((f) => f.id === row.food_name)?.name || "N/A"}
+                      {row.food_name_display || 
+                       (typeof row.food_name === 'object' ? (row.food_name as any)?.name : 
+                        foodNames.find((f) => String(f.id) === String(row.food_name))?.name) || 
+                       "N/A"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">{row.base_unit || "—"}</TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">

@@ -79,12 +79,25 @@ export const getFoodList = async (
     if (meal_type) params.meal_type = meal_type;
     if (cuisine_type) params.cuisine_type = cuisine_type;
 
-    const url = createApiUrl("api/food/");
-    const response = await axios.get<PaginatedResponses<Food>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/food/all/" : "api/food/");
+    const response = await axios.get<PaginatedResponses<Food> | Food[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search, meal_type, cuisine_type } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as Food[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as Food[],
+      };
+    }
+
+    return response.data as PaginatedResponses<Food>;
   } catch (error) {
     console.error("Error fetching food list:", error);
     throw error;

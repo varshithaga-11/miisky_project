@@ -44,12 +44,25 @@ export const getCityList = async (
     if (state) params.state = state;
     if (country) params.country = country;
 
-    const url = createApiUrl("api/city/");
-    const response = await axios.get<PaginatedResponses<City>>(url, {
+    const isAll = limit === "all";
+    const url = createApiUrl(isAll ? "api/city/all/" : "api/city/");
+    const response = await axios.get<PaginatedResponses<City> | City[]>(url, {
       headers: await getAuthHeaders(),
-      params: limit === "all" ? { ...params, limit: 9999 } : params,
+      params: isAll ? { search, state, country } : params,
     });
-    return response.data;
+
+    if (isAll) {
+      return {
+        count: (response.data as City[]).length,
+        next: null,
+        previous: null,
+        current_page: 1,
+        total_pages: 1,
+        results: response.data as City[],
+      };
+    }
+
+    return response.data as PaginatedResponses<City>;
   } catch (error) {
     console.error("Error fetching city list:", error);
     throw error;
