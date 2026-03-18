@@ -125,19 +125,34 @@ class CountryViewSet(viewsets.ModelViewSet):
 
 
 class StateViewSet(viewsets.ModelViewSet):
-    queryset = State.objects.all()
     serializer_class = StateSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
+    def get_queryset(self):
+        queryset = State.objects.select_related('country').all()
+        country = self.request.query_params.get('country')
+        if country:
+            queryset = queryset.filter(country=country)
+        return queryset
+
 
 class CityViewSet(viewsets.ModelViewSet):
-    queryset = City.objects.all()
     serializer_class = CitySerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+    def get_queryset(self):
+        queryset = City.objects.select_related('state__country').all()
+        state = self.request.query_params.get('state')
+        country = self.request.query_params.get('country')
+        if state:
+            queryset = queryset.filter(state=state)
+        elif country:
+            queryset = queryset.filter(state__country=country)
+        return queryset
 
 
 # ── Food System ViewSets ───────────────────────────────────────────────────────
@@ -179,15 +194,24 @@ class FoodViewSet(viewsets.ModelViewSet):
         PUT    /app/food/{id}/  → update
         DELETE /app/food/{id}/  → delete
     """
-    queryset = Food.objects.prefetch_related(
-        'meal_types',
-        'cuisine_types',
-        'foodingredient_set__ingredient',
-        'foodingredient_set__unit',
-        'foodstep_set',
-        'nutrition'
-    ).all()
     serializer_class = FoodSerializer
+
+    def get_queryset(self):
+        queryset = Food.objects.prefetch_related(
+            'meal_types',
+            'cuisine_types',
+            'foodingredient_set__ingredient',
+            'foodingredient_set__unit',
+            'foodstep_set',
+            'nutrition'
+        ).all()
+        meal_type = self.request.query_params.get('meal_type')
+        cuisine_type = self.request.query_params.get('cuisine_type')
+        if meal_type:
+            queryset = queryset.filter(meal_types=meal_type)
+        if cuisine_type:
+            queryset = queryset.filter(cuisine_types=cuisine_type)
+        return queryset.distinct()
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]

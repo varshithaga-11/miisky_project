@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import SearchableSelect from "../../../components/form/SearchableSelect";
+import { getCountryList, Country } from "../Country/countryapi";
 
 const CityManagementPage: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
@@ -21,6 +23,9 @@ const CityManagementPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editCityId, setEditCityId] = useState<number | null>(null);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [selectedStateId, setSelectedStateId] = useState<number | "">("");
+  const [selectedCountryId, setSelectedCountryId] = useState<number | "">("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,19 +36,21 @@ const CityManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, selectedStateId, selectedCountryId]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [cityRes, stateRes] = await Promise.all([
-        getCityList(currentPage, pageSize, searchTerm),
-        getStateList(1, "all")
+      const [cityRes, stateRes, countryRes] = await Promise.all([
+        getCityList(currentPage, pageSize, searchTerm, selectedStateId, selectedCountryId),
+        getStateList(1, "all"),
+        getCountryList(1, "all")
       ]);
       setCities(cityRes.results);
       setTotalItems(cityRes.count);
       setTotalPages(cityRes.total_pages);
       setStates(stateRes.results);
+      setCountries(countryRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -132,6 +139,41 @@ const CityManagementPage: React.FC = () => {
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="w-full sm:w-64">
+              <SearchableSelect
+                options={[
+                  { value: "", label: "All Countries" },
+                  ...countries.map(c => ({ value: c.id!, label: c.name }))
+                ]}
+                value={selectedCountryId}
+                onChange={(val) => {
+                  setSelectedCountryId(val as number | "");
+                  setSelectedStateId(""); // Reset state filter when country changes
+                  setCurrentPage(1);
+                }}
+                placeholder="Filter by Country"
+              />
+            </div>
+
+            <div className="w-full sm:w-64">
+              <SearchableSelect
+                options={[
+                  { value: "", label: "All States" },
+                  ...states
+                    .filter(s => !selectedCountryId || s.country === selectedCountryId)
+                    .map(s => ({ value: s.id!, label: s.name }))
+                ]}
+                value={selectedStateId}
+                onChange={(val) => {
+                  setSelectedStateId(val as number | "");
+                  setCurrentPage(1);
+                }}
+                placeholder="Filter by State"
+              />
+            </div>
           </div>
           
           <div className="flex items-center gap-6">

@@ -11,6 +11,9 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { createApiUrl } from "../../../access/access";
+import SearchableSelect from "../../../components/form/SearchableSelect";
+import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
+import { getCuisineTypeList, CuisineType } from "./foodapi";
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -32,6 +35,10 @@ const FoodManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFoodId, setEditFoodId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<keyof Food | null>(null);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
+  const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
+  const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,15 +48,21 @@ const FoodManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchFoods();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId]);
 
   const fetchFoods = async () => {
     setLoading(true);
     try {
-      const response = await getFoodList(currentPage, pageSize, searchTerm);
-      setFoods(response.results);
-      setTotalItems(response.count);
-      setTotalPages(response.total_pages);
+      const [foodRes, mealRes, cuisineRes] = await Promise.all([
+        getFoodList(currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId),
+        getMealTypeList(1, "all"),
+        getCuisineTypeList(1, "all")
+      ]);
+      setFoods(foodRes.results);
+      setTotalItems(foodRes.count);
+      setTotalPages(foodRes.total_pages);
+      setMealTypes(mealRes.results);
+      setCuisineTypes(cuisineRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -120,6 +133,38 @@ const FoodManagementPage: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
             <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="w-full sm:w-64">
+              <SearchableSelect
+                options={[
+                  { value: "", label: "All Meal Types" },
+                  ...mealTypes.map(m => ({ value: m.id!, label: m.name }))
+                ]}
+                value={selectedMealTypeId}
+                onChange={(val) => {
+                  setSelectedMealTypeId(val as number | "");
+                  setCurrentPage(1);
+                }}
+                placeholder="Filter by Meal Type"
+              />
+            </div>
+            
+            <div className="w-full sm:w-64">
+              <SearchableSelect
+                options={[
+                  { value: "", label: "All Cuisines" },
+                  ...cuisineTypes.map(c => ({ value: c.id!, label: c.name }))
+                ]}
+                value={selectedCuisineTypeId}
+                onChange={(val) => {
+                  setSelectedCuisineTypeId(val as number | "");
+                  setCurrentPage(1);
+                }}
+                placeholder="Filter by Cuisine"
+              />
+            </div>
           </div>
           
           <div className="flex items-center gap-4">

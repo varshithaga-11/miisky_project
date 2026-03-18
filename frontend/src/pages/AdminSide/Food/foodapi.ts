@@ -68,12 +68,16 @@ export const createFood = async (data: FormData) => {
 export const getFoodList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  meal_type?: string | number,
+  cuisine_type?: string | number
 ): Promise<PaginatedResponses<Food>> => {
   try {
     const params: Record<string, any> = { page };
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
+    if (meal_type) params.meal_type = meal_type;
+    if (cuisine_type) params.cuisine_type = cuisine_type;
 
     const url = createApiUrl("api/food/");
     const response = await axios.get<PaginatedResponses<Food>>(url, {

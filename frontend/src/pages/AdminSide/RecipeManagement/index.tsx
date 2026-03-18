@@ -15,6 +15,8 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import { createApiUrl } from "../../../access/access";
+import SearchableSelect from "../../../components/form/SearchableSelect";
+import { getCuisineTypeList, CuisineType } from "../Food/foodapi";
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -34,6 +36,9 @@ const RecipeManagementPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
+    const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
+    const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
     
     // Modals
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -48,12 +53,14 @@ const RecipeManagementPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [foodRes, mealRes] = await Promise.all([
+            const [foodRes, mealRes, cuisineRes] = await Promise.all([
                 getFoodList(1, "all"),
-                getMealTypeList(1, "all")
+                getMealTypeList(1, "all"),
+                getCuisineTypeList(1, "all")
             ]);
             setFoods(foodRes.results);
             setMealTypes(mealRes.results);
+            setCuisineTypes(cuisineRes.results);
         } catch (err) {
             console.error(err);
         } finally {
@@ -77,9 +84,12 @@ const RecipeManagementPage: React.FC = () => {
         (f.ingredients && f.ingredients.length > 0) || (f.steps && f.steps.length > 0)
     );
 
-    const filteredFoods = recipeFoods.filter((f: Food) => 
-        f.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredFoods = recipeFoods.filter((f: Food) => {
+        const matchesSearch = f.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesMeal = !selectedMealTypeId || f.meal_types?.includes(selectedMealTypeId as number);
+        const matchesCuisine = !selectedCuisineTypeId || f.cuisine_types?.includes(selectedCuisineTypeId as number);
+        return matchesSearch && matchesMeal && matchesCuisine;
+    });
 
     const paginatedFoods = filteredFoods.slice((currentPage - 1) * pageSize, currentPage * pageSize);
     const totalPages = Math.ceil(filteredFoods.length / pageSize);
@@ -101,6 +111,38 @@ const RecipeManagementPage: React.FC = () => {
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                         <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <div className="w-full sm:w-64">
+                            <SearchableSelect
+                                options={[
+                                    { value: "", label: "All Meal Types" },
+                                    ...mealTypes.map(m => ({ value: m.id!, label: m.name }))
+                                ]}
+                                value={selectedMealTypeId}
+                                onChange={(val) => {
+                                    setSelectedMealTypeId(val as number | "");
+                                    setCurrentPage(1);
+                                }}
+                                placeholder="Filter by Meal Type"
+                            />
+                        </div>
+                        
+                        <div className="w-full sm:w-64">
+                            <SearchableSelect
+                                options={[
+                                    { value: "", label: "All Cuisines" },
+                                    ...cuisineTypes.map(c => ({ value: c.id!, label: c.name }))
+                                ]}
+                                value={selectedCuisineTypeId}
+                                onChange={(val) => {
+                                    setSelectedCuisineTypeId(val as number | "");
+                                    setCurrentPage(1);
+                                }}
+                                placeholder="Filter by Cuisine"
+                            />
+                        </div>
                     </div>
                     
                     <div className="flex items-center gap-4">

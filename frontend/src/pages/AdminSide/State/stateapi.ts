@@ -32,12 +32,14 @@ export const createState = async (data: State) => {
 export const getStateList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  country?: string | number
 ): Promise<PaginatedResponses<State>> => {
   try {
     const params: Record<string, any> = { page };
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
+    if (country) params.country = country;
 
     const url = createApiUrl("api/state/");
     const response = await axios.get<PaginatedResponses<State>>(url, {
