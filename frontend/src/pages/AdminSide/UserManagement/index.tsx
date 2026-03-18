@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getUserList, deleteUser, userId } from "./api";
+import { getUserList, deleteUser } from "./api";
 import AddUser from "./AddUser";
 import EditUser from "./EditUser";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -19,6 +19,16 @@ export interface UserRegister {
   role: string;
   is_active?: boolean;
   created_by?: number;
+  mobile?: string | null;
+  whatsapp?: string | null;
+  dob?: string | null;
+  gender?: "male" | "female" | "other" | null;
+  address?: string | null;
+  zip_code?: string | null;
+  country?: number | null;
+  state?: number | null;
+  city?: number | null;
+  joined_date?: string | null;
 }
 
 const UserManagementPage: React.FC = () => {
@@ -36,7 +46,16 @@ const UserManagementPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'master' | 'employee'>('all');
+  const [roleFilter, setRoleFilter] = useState<
+    | "all"
+    | "admin"
+    | "nutritionist"
+    | "patient"
+    | "supply_chain"
+    | "food_buyer"
+    | "micro_kitchen"
+    | "non_patient"
+  >("all");
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -47,7 +66,7 @@ const UserManagementPage: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await getUserList(currentPage, pageSize, searchTerm, userId);
+      const response = await getUserList(currentPage, pageSize, searchTerm);
       setUsers(response.results);
       setTotalItems(response.count);
       setTotalPages(response.total_pages);
@@ -163,8 +182,12 @@ const UserManagementPage: React.FC = () => {
                   options={[
                     { value: "all", label: "All" },
                     { value: "admin", label: "Admin" },
-                    { value: "master", label: "Master" },
-                    { value: "employee", label: "Employee" },
+                    { value: "nutritionist", label: "Nutritionist/Dietician" },
+                    { value: "patient", label: "Patient" },
+                    { value: "supply_chain", label: "Supply Chain" },
+                    { value: "food_buyer", label: "Food Buyer" },
+                    { value: "micro_kitchen", label: "Micro Kitchen" },
+                    { value: "non_patient", label: "Non Patient" },
                   ]}
                   className="w-32"
                 />

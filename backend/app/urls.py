@@ -10,6 +10,7 @@ router = DefaultRouter()
 router.register(r'country', CountryViewSet)
 router.register(r'state', StateViewSet, basename='state')
 router.register(r'city', CityViewSet, basename='city')
+router.register(r'usermanagement', UserManagementViewSet, basename='usermanagement')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)

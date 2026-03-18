@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getUserById, updateUser, UserRegister } from "./api";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
@@ -6,6 +6,9 @@ import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Select from "../../../components/form/Select";
+import { getCountryList, Country } from "../Country/countryapi";
+import { getStateList, State } from "../State/stateapi";
+import { getCityList, City } from "../City/cityapi";
 
 interface EditUserProps {
   userId: number;
@@ -21,6 +24,36 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [states, setStates] = useState<State[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+
+  useEffect(() => {
+    getCountryList(1, "all")
+      .then((res) => setCountries(res.results))
+      .catch((err) => console.error(err));
+    getStateList(1, "all")
+      .then((res) => setStates(res.results))
+      .catch((err) => console.error(err));
+    getCityList(1, "all")
+      .then((res) => setCities(res.results))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const countryOptions = useMemo(
+    () => [{ value: "", label: "Select Country" }, ...countries.map((c) => ({ value: String(c.id), label: c.name }))],
+    [countries]
+  );
+  const stateOptions = useMemo(
+    () => [{ value: "", label: "Select State" }, ...states.map((s) => ({ value: String(s.id), label: s.name }))],
+    [states]
+  );
+  const cityOptions = useMemo(
+    () => [{ value: "", label: "Select City" }, ...cities.map((c) => ({ value: String(c.id), label: c.name }))],
+    [cities]
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -53,18 +86,10 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
 
     setSaving(true);
     try {
-      const updateData: Partial<UserRegister> & { password?: string } = {
-        username: userData.username!,
-        email: userData.email!,
-        role: userData.role!,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        is_active: userData.is_active,
-      };
-
-      if (password) {
-        updateData.password = password;
-      }
+      const updateData: Partial<UserRegister> = { ...userData };
+      if (password) updateData.password = password;
+      if (password || confirmPassword) updateData.password_confirm = confirmPassword;
+      if (photo) updateData.photo = photo;
 
       await updateUser(userId, updateData);
 
@@ -192,14 +217,121 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
           <div>
             <Label htmlFor="role">Role</Label>
             <Select
-              value={userData.role || "employee"}
+              value={userData.role || "patient"}
               onChange={(val) => handleChange("role", val)}
               options={[
-                { value: "master", label: "Master" },
                 { value: "admin", label: "Admin" },
-                { value: "employee", label: "Employee" },
+                { value: "nutritionist", label: "Nutritionist/Dietician" },
+                { value: "patient", label: "Patient" },
+                { value: "supply_chain", label: "Supply Chain" },
+                { value: "food_buyer", label: "Food Buyer" },
+                { value: "micro_kitchen", label: "Micro Kitchen" },
+                { value: "non_patient", label: "Non Patient" },
               ]}
               className="w-full"
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="mobile">Mobile</Label>
+            <Input id="mobile" type="tel" value={userData.mobile || ""} onChange={(e) => handleChange("mobile", e.target.value)} disabled={saving} />
+          </div>
+
+          <div>
+            <Label htmlFor="whatsapp">Whatsapp</Label>
+            <Input id="whatsapp" type="tel" value={userData.whatsapp || ""} onChange={(e) => handleChange("whatsapp", e.target.value)} disabled={saving} />
+          </div>
+
+          <div>
+            <Label htmlFor="dob">Date of Birth</Label>
+            <Input
+              id="dob"
+              type="date"
+              value={(userData.dob as any) || ""}
+              onChange={(e) => handleChange("dob", e.target.value)}
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="gender">Gender</Label>
+            <Select
+              value={(userData.gender as any) || ""}
+              onChange={(val) => handleChange("gender", (val as any) || null)}
+              options={[
+                { value: "", label: "Select Gender" },
+                { value: "male", label: "Male" },
+                { value: "female", label: "Female" },
+                { value: "other", label: "Other" },
+              ]}
+              className="w-full"
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="photo">Photo</Label>
+            <input
+              id="photo"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+              disabled={saving}
+              className="w-full text-sm"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Input id="address" type="text" value={userData.address || ""} onChange={(e) => handleChange("address", e.target.value)} disabled={saving} />
+          </div>
+
+          <div>
+            <Label htmlFor="country">Country</Label>
+            <Select
+              value={userData.country ? String(userData.country) : ""}
+              onChange={(val) => handleChange("country", val ? Number(val) : null)}
+              options={countryOptions}
+              className="w-full"
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="state">State</Label>
+            <Select
+              value={userData.state ? String(userData.state) : ""}
+              onChange={(val) => handleChange("state", val ? Number(val) : null)}
+              options={stateOptions}
+              className="w-full"
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="city">City</Label>
+            <Select
+              value={userData.city ? String(userData.city) : ""}
+              onChange={(val) => handleChange("city", val ? Number(val) : null)}
+              options={cityOptions}
+              className="w-full"
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="zipCode">Zip Code</Label>
+            <Input id="zipCode" type="text" value={userData.zip_code || ""} onChange={(e) => handleChange("zip_code", e.target.value)} disabled={saving} />
+          </div>
+
+          <div>
+            <Label htmlFor="joinedDate">Joined Date</Label>
+            <Input
+              id="joinedDate"
+              type="datetime-local"
+              value={userData.joined_date ? new Date(userData.joined_date).toISOString().slice(0, 16) : ""}
+              onChange={(e) => handleChange("joined_date", e.target.value ? new Date(e.target.value).toISOString() : null)}
               disabled={saving}
             />
           </div>

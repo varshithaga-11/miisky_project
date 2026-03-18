@@ -1,12 +1,5 @@
-from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.conf import settings
-
-
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
 
 
 class Country(models.Model):
@@ -26,102 +19,462 @@ class City(models.Model):
 
 
 
+# class UserRegister(AbstractUser):
+
+#     ROLE_CHOICES = [
+#         ('admin', 'Admin'),
+#         ('nutritionist_dietician', 'NUTRITIONIST/DIETICIAN'),
+#         ('patients', 'PATIENTS'),
+#         ('supply_chain_management', 'SUPPLY CHAIN MANAGEMENT'),
+#         ('food_buyer', 'FOOD BUYER'),
+#         ('micro_kitchen', 'MICRO KITCHEN'),
+#         ('non_patient', 'NON PATIENT'),
+#     ]
+
+#     role = models.CharField(
+#         max_length=50,
+#         choices=ROLE_CHOICES,
+#         null=True,
+#         blank=True
+#     )
+
+#     first_name = models.CharField(max_length=100, null=True, blank=True)
+#     last_name = models.CharField(max_length=100, null=True, blank=True)
+
+#     photo = models.ImageField(upload_to='users/', null=True, blank=True)
+#     aadhar_card=models.ImageField(upload_to='usersaadharcard/', null=True, blank=True)
+
+
+#     address = models.CharField(max_length=255, null=True, blank=True)
+#     city = models.ForeignKey(City,on_delete=models.SET_NULL,null=True,blank=True)
+#     zip_code = models.CharField(max_length=10, null=True, blank=True)
+
+#     state = models.ForeignKey(State,on_delete=models.SET_NULL,null=True,blank=True)
+#     country = models.ForeignKey(Country,on_delete=models.SET_NULL,null=True,blank=True)
+
+#     mobile = models.CharField(max_length=15, null=True, blank=True)
+#     whatsapp = models.CharField(max_length=15, null=True, blank=True)
+
+
+#     dob = models.DateField(null=True, blank=True)
+
+#     GENDER_CHOICES = [
+#         ('male', 'Male'),
+#         ('female', 'Female'),
+#         ('other', 'Other'),
+#     ]
+
+#     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
+#     work_expirence = models.TextField(null=True, blank=True)
+
+#     # company = models.ForeignKey(
+#     #     'Company',
+#     #     on_delete=models.SET_NULL,
+#     #     null=True,
+#     #     blank=True
+#     # )
+    
+#     lattitude = models.CharField(max_length=50, null=True, blank=True)
+#     longitude = models.CharField(max_length=50, null=True, blank=True)
+
+#     vault_no = models.CharField(max_length=100, null=True, blank=True)
+#     file_name = models.CharField(max_length=255, null=True, blank=True)
+
+#     blood_group = models.CharField(max_length=100, null=True, blank=True)
+#     caste = models.CharField(max_length=100, null=True, blank=True)
+#     religion = models.CharField(max_length=100, null=True, blank=True)
+#     community_name=models.CharField(max_length=100,null=True,blank=True)#Brahmin , lingayat
+#     any_community_information=models.CharField(max_length=200, null=True, blank=True)
+#     any_description=models.TextField(null=True,blank=True)
+
+#     medical_history = models.TextField(null=True, blank=True)
+
+#     join_date = models.DateTimeField(null=True, blank=True)
+
+#     bank_name = models.CharField(max_length=100, null=True, blank=True)
+#     acc_no = models.CharField(max_length=20, null=True, blank=True)
+#     branch_name = models.CharField(max_length=100, null=True, blank=True)
+#     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
+#     gst_no = models.CharField(max_length=50, null=True, blank=True)
+
+#     txt_qualification = models.CharField(max_length=100, null=True, blank=True)
+#     txt_computer_knowledge = models.CharField(max_length=100, null=True, blank=True)
+
+#     micro_kitchen_code = models.CharField(max_length=50, null=True, blank=True)
+#     # food_category = models.CharField(max_length=100, null=True, blank=True)
+
+#     details_of_vehicle = models.TextField(null=True, blank=True)
+#     register_number = models.CharField(max_length=250, null=True, blank=True)
+
+#     lc_copy = models.CharField(max_length=250, null=True, blank=True)
+
+#     upload_photo_selfie_sc = models.CharField(max_length=250, null=True, blank=True)
+
+
+
+#     is_active=models.BooleanField(default=True)
+#     created_on = models.DateField(null=True, blank=True)
+#     created_by=models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+
+
+
+
 class UserRegister(AbstractUser):
 
     ROLE_CHOICES = [
         ('admin', 'Admin'),
-        ('nutritionist_dietician', 'NUTRITIONIST/DIETICIAN'),
-        ('patients', 'PATIENTS'),
-        ('supply_chain_management', 'SUPPLY CHAIN MANAGEMENT'),
-        ('food_buyer', 'FOOD BUYER'),
-        ('micro_kitchen', 'MICRO KITCHEN'),
-        ('non_patient', 'NON PATIENT'),
+        ('nutritionist', 'Nutritionist/Dietician'),
+        ('patient', 'Patient'),
+        ('supply_chain', 'Supply Chain'),
+        ('food_buyer', 'Food Buyer'),
+        ('micro_kitchen', 'Micro Kitchen'),
+        ('non_patient', 'Non Patient'),
     ]
 
-    role = models.CharField(
-        max_length=50,
-        choices=ROLE_CHOICES,
-        null=True,
-        blank=True
-    )
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
 
+    # Basic Info
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
-
-    photo = models.ImageField(upload_to='users/', null=True, blank=True)
-    aadhar_card=models.ImageField(upload_to='usersaadharcard/', null=True, blank=True)
-
-
-    address = models.CharField(max_length=255, null=True, blank=True)
-    city = models.ForeignKey(City,on_delete=models.SET_NULL,null=True,blank=True)
-    zip_code = models.CharField(max_length=10, null=True, blank=True)
-
-    state = models.ForeignKey(State,on_delete=models.SET_NULL,null=True,blank=True)
-    country = models.ForeignKey(Country,on_delete=models.SET_NULL,null=True,blank=True)
+    email = models.EmailField(unique=True)
 
     mobile = models.CharField(max_length=15, null=True, blank=True)
     whatsapp = models.CharField(max_length=15, null=True, blank=True)
 
-
     dob = models.DateField(null=True, blank=True)
 
-    GENDER_CHOICES = [
+    gender = models.CharField(max_length=10, choices=[
         ('male', 'Male'),
         ('female', 'Female'),
+        ('other', 'Other')
+    ], null=True, blank=True)
+
+    photo = models.ImageField(upload_to='users/', null=True, blank=True)
+
+    # Address
+    address = models.CharField(max_length=255, null=True, blank=True)
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
+    zip_code = models.CharField(max_length=10, null=True, blank=True)
+
+    state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
+
+
+    joined_date = models.DateTimeField(null=True, blank=True)
+
+
+
+    is_active = models.BooleanField(default=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+
+class NutritionistProfile(models.Model):
+    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE)
+
+    qualification = models.CharField(max_length=100, null=True, blank=True)
+    years_of_experience=models.CharField(max_length=100, null=True, blank=True)
+    experience = models.TextField(null=True, blank=True)
+    license_number = models.CharField(max_length=100, null=True, blank=True)
+    specializations=models.CharField(max_length=100, null=True, blank=True)
+    certifications=models.CharField(max_length=100, null=True, blank=True)
+    education=models.CharField(max_length=100, null=True, blank=True)
+    languages=models.CharField(max_length=100, null=True, blank=True)
+    social_media_links_website_links=models.CharField(max_length=100, null=True, blank=True)
+    rating = models.FloatField(default=0)
+    total_reviews = models.IntegerField(default=0)
+    available_modes = models.CharField(
+        max_length=100, 
+        help_text="Comma-separated modes: video,audio, chat, in_person",
+        null=True, 
+        blank=True
+    )
+    is_verified=models.BooleanField(default=False)
+
+
+
+
+class MicroKitchenProfile(models.Model):
+    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE, related_name="micro_kitchen")
+
+    # 🔹 Basic Info
+    brand_name = models.CharField(max_length=100)
+    kitchen_code = models.CharField(max_length=50, unique=True)
+
+    # 🔹 Compliance
+    fssai_no = models.CharField(max_length=14)
+    fssai_cert = models.FileField(upload_to='kitchen/fssai/')
+    pan_no = models.CharField(max_length=10)
+    gst_no = models.CharField(max_length=50, null=True, blank=True)
+
+    # 🔹 Bank Details
+    bank_name = models.CharField(max_length=100, null=True, blank=True)
+    acc_no = models.CharField(max_length=20, null=True, blank=True)
+    ifsc_code = models.CharField(max_length=20, null=True, blank=True)
+
+    # 🔹 Infrastructure
+    kitchen_area = models.FloatField(null=True, blank=True, help_text="sq.ft")
+    platform_area = models.FloatField(null=True, blank=True)
+
+
+    water_source = models.CharField(max_length=50, null=True, blank=True,help_text="borewell,cmc,municipal")
+
+    PURIFICATION_CHOICES = [
+        ('ro', 'RO'),
+        ('uv', 'UV'),
+        ('ionized', 'Ionized'),
+        ('none', 'None')
+    ]
+    purification_type = models.CharField(max_length=50, choices=PURIFICATION_CHOICES, null=True, blank=True)
+
+    no_of_water_taps = models.IntegerField(null=True, blank=True)
+
+    # 🔹 Hygiene
+    has_pets = models.BooleanField(default=False)
+    pet_details = models.CharField(max_length=255, null=True, blank=True)
+
+    has_pests = models.BooleanField(default=False)
+    pest_details = models.CharField(max_length=255, null=True, blank=True)
+    PEST_CONTROL_FREQUENCY_CHOICES = [
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('half_yearly', 'Half Yearly'),
+        ('annually', 'Annually'),
+    ]
+
+    pest_control_frequency = models.CharField(
+        max_length=20,
+        choices=PEST_CONTROL_FREQUENCY_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    # 🔹 Equipment (stored simply)
+    has_hobs = models.BooleanField(default=False)
+    has_refrigerator = models.BooleanField(default=False)
+    has_mixer = models.BooleanField(default=False)
+    has_grinder = models.BooleanField(default=False)
+    has_blender = models.BooleanField(default=False)
+    other_equipment = models.TextField(null=True, blank=True)
+
+    # 🔹 Operations
+    cuisine_type = models.CharField(max_length=255)
+    meal_type=models.CharField(max_length=255)
+    opening_time = models.TimeField()
+    closing_time = models.TimeField()
+    lpg_cylinders = models.IntegerField(null=True, blank=True)
+
+    time_available = models.CharField(max_length=100, null=True, blank=True)
+
+    # 🔹 About
+    about_you = models.TextField(null=True, blank=True)
+    passion_for_cooking = models.TextField(null=True, blank=True)
+    health_info = models.TextField(null=True, blank=True)
+    constraints = models.TextField(null=True, blank=True)
+
+    # 🔹 Media
+    kitchen_video_url = models.URLField(null=True, blank=True)
+
+    photo_exterior = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
+    photo_entrance = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
+    photo_kitchen = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
+    photo_platform = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
+    additional_photos = models.JSONField(null=True, blank=True)
+
+    # 🔹 Location
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    # 🔹 Status
+    is_verified = models.BooleanField(default=False)
+
+
+
+
+class DeliveryProfile(models.Model):
+    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE, related_name="delivery_profile")
+
+    # 🔹 Vehicle Info
+    VEHICLE_TYPE_CHOICES = [
+        ('bike', 'Bike'),
+        ('scooter', 'Scooter'),
+        ('car', 'Car'),
+        ('van', 'Van'),
         ('other', 'Other'),
     ]
 
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
-    work_expirence = models.TextField(null=True, blank=True)
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, null=True, blank=True)
+    vehicle_details = models.TextField(null=True, blank=True)
 
-    # company = models.ForeignKey(
-    #     'Company',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True
-    # )
+    register_number = models.CharField(max_length=20, null=True, blank=True)
+
+    # 🔹 Documents
+    license_number = models.CharField(max_length=50, null=True, blank=True)
+    license_copy = models.FileField(upload_to='delivery/licenses/', null=True, blank=True)
+
+    rc_copy = models.FileField(upload_to='delivery/rc/', null=True, blank=True)  # Registration Certificate
+    insurance_copy = models.FileField(upload_to='delivery/insurance/', null=True, blank=True)
+
+    available_slots = models.JSONField(null=True, blank=True)
+
+
+
+class UserQuestionnaire(models.Model):
+    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE)
+
+    # 🔹 BASIC DETAILS
+    age = models.IntegerField(null=True, blank=True)
+    height_cm = models.FloatField(null=True, blank=True)
+    weight_kg = models.FloatField(null=True, blank=True)
+
+    # 🔹 LIFESTYLE
+    work_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('sedentary', 'Sedentary'),
+            ('moderate', 'Moderate'),
+            ('heavy', 'Heavy')
+        ],
+        null=True,
+        blank=True
+    )
+
+    physical_activity = models.BooleanField(null=True, blank=True)
+    meals_per_day = models.IntegerField(null=True, blank=True)
+    skips_meals = models.BooleanField(null=True, blank=True)
+    snacks_between_meals = models.BooleanField(null=True, blank=True)
+
+    food_source = models.CharField(
+        max_length=20,
+        choices=[
+            ('home', 'Home'),
+            ('canteen', 'Canteen'),
+            ('hotel', 'Hotel')
+        ],
+        null=True,
+        blank=True
+    )
+
+    # 🔹 FOOD HABITS
+    diet_pattern = models.CharField(
+        max_length=20,
+        choices=[
+            ('veg', 'Veg'),
+            ('non_veg', 'Non Veg'),
+            ('eggetarian', 'Eggetarian')
+        ],
+        null=True,
+        blank=True
+    )
+
+    consumes_egg = models.BooleanField(null=True, blank=True)
+    consumes_dairy = models.BooleanField(null=True, blank=True)
+
+    food_allergy = models.BooleanField(null=True, blank=True)
+    food_allergy_details = models.TextField(null=True, blank=True)
+
+    fruits_per_day = models.IntegerField(null=True, blank=True)
+    vegetables_per_day = models.IntegerField(null=True, blank=True)
+
+    # 🔹 HEALTH (store complex data in JSON)
+    health_conditions = models.JSONField(null=True, blank=True)
+    # Example: ["diabetes", "thyroid"]
+
+    symptoms = models.JSONField(null=True, blank=True)
+    # Example: ["fatigue", "hair_loss"]
+
+    deficiencies = models.JSONField(null=True, blank=True)
+    # Example: ["vitamin_b12", "iron"]
+
+    autoimmune_diseases = models.JSONField(null=True, blank=True)
+    # Example: ["psoriasis", "celiac"]
+
+    digestive_issues = models.JSONField(null=True, blank=True)
+    # Example: ["acidity", "bloating"]
+
+    family_history = models.JSONField(null=True, blank=True)
+    # Example: ["diabetes", "cardiac"]
+
+    # 🔹 MEDICAL FLAGS
+    has_diabetes = models.BooleanField(null=True, blank=True)
+    has_thyroid = models.BooleanField(null=True, blank=True)
+    has_bp = models.CharField(
+        max_length=10,
+        choices=[
+            ('high', 'High'),
+            ('low', 'Low'),
+            ('normal', 'Normal')
+        ],
+        null=True,
+        blank=True
+    )
+    has_cardiac_issues = models.BooleanField(null=True, blank=True)
+    is_anemic = models.BooleanField(null=True, blank=True)
+
+    surgery_history = models.BooleanField(null=True, blank=True)
+    on_medication = models.BooleanField(null=True, blank=True)
+
+    # 🔹 HABITS
+    alcohol_per_week = models.IntegerField(null=True, blank=True)
+    smoking_per_day = models.IntegerField(null=True, blank=True)
+
+    # 🔹 WELL-BEING
+    sleep_quality = models.CharField(
+        max_length=20,
+        choices=[
+            ('fresh', 'Fresh'),
+            ('not_fresh', 'Not Fresh')
+        ],
+        null=True,
+        blank=True
+    )
+
+    stress_level = models.CharField(
+        max_length=10,
+        choices=[
+            ('low', 'Low'),
+            ('medium', 'Medium'),
+            ('high', 'High')
+        ],
+        null=True,
+        blank=True
+    )
+
+    falls_sick_frequency = models.CharField(
+        max_length=20,
+        choices=[
+            ('once', 'Once'),
+            ('twice', 'Twice'),
+            ('frequent', 'Frequent')
+        ],
+        null=True,
+        blank=True
+    )
+
+    # 🔹 FOOD PREFERENCES (IMPORTANT PART)
+    food_preferences = models.JSONField(null=True, blank=True)
+    """
+    Example structure:
+    {
+        "vegetables": ["onion", "garlic"],
+        "fruits": ["banana", "apple"],
+        "grains": ["ragi", "oats"],
+        "pulses": ["rajma"],
+        "oils": ["ghee"],
+        "dairy": ["milk"],
+        "nuts": ["almond"],
+        "seeds": ["chia", "pumpkin"]
+    }
+    """
+
+    # 🔹 EXTRA NOTES
+    additional_notes = models.TextField(null=True, blank=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user} Questionnaire"
     
-    lattitude = models.CharField(max_length=50, null=True, blank=True)
-    longitude = models.CharField(max_length=50, null=True, blank=True)
-
-    vault_no = models.CharField(max_length=100, null=True, blank=True)
-    file_name = models.CharField(max_length=255, null=True, blank=True)
-
-    blood_group = models.CharField(max_length=100, null=True, blank=True)
-    caste = models.CharField(max_length=100, null=True, blank=True)
-    religion = models.CharField(max_length=100, null=True, blank=True)
-    community_name=models.CharField(max_length=100,null=True,blank=True)#Brahmin , lingayat
-    any_community_information=models.CharField(max_length=200, null=True, blank=True)
-    any_description=models.TextField(null=True,blank=True)
-
-    medical_history = models.TextField(null=True, blank=True)
-
-    join_date = models.DateTimeField(null=True, blank=True)
-
-    bank_name = models.CharField(max_length=100, null=True, blank=True)
-    acc_no = models.CharField(max_length=20, null=True, blank=True)
-    branch_name = models.CharField(max_length=100, null=True, blank=True)
-    ifsc_code = models.CharField(max_length=20, null=True, blank=True)
-    gst_no = models.CharField(max_length=50, null=True, blank=True)
-
-    txt_qualification = models.CharField(max_length=100, null=True, blank=True)
-    txt_computer_knowledge = models.CharField(max_length=100, null=True, blank=True)
-
-    micro_kitchen_code = models.CharField(max_length=50, null=True, blank=True)
-    # food_category = models.CharField(max_length=100, null=True, blank=True)
-
-    details_of_vehicle = models.TextField(null=True, blank=True)
-    register_number = models.CharField(max_length=250, null=True, blank=True)
-
-    lc_copy = models.CharField(max_length=250, null=True, blank=True)
-
-    upload_photo_selfie_sc = models.CharField(max_length=250, null=True, blank=True)
-
-
-
-    is_active=models.BooleanField(default=True)
-    created_on = models.DateField(null=True, blank=True)
-    created_by=models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
 
 
 # =============================================================================

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
@@ -114,6 +114,24 @@ class ProfileView(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
+
+
+class UserManagementViewSet(viewsets.ModelViewSet):
+    """
+    Admin CRUD for UserRegister model.
+    Supports search on username/email/name/mobile and optional filter by created_by.
+    Accepts multipart/form-data for photo upload.
+    """
+    queryset = UserRegister.objects.all().order_by('-id')
+    serializer_class = UserManagementSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile', 'whatsapp']
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    # NOTE: UserRegister currently has no created_by field.
+    # We intentionally do not filter by created_by, so list shows all users.
 
 
 class CountryViewSet(viewsets.ModelViewSet):

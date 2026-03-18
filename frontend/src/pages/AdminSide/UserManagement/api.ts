@@ -1,27 +1,5 @@
-import { createApiUrl, getAuthHeaders } from "../../../access/access.ts";
+import { createApiUrl, getAuthHeaders, getAuthHeadersFile } from "../../../access/access.ts";
 import axios from "axios";
-import { jwtDecode } from 'jwt-decode';
-
-
-interface JwtPayload {
-  user_id: number;
-}
-
-export const getLoggedUserFromToken = (): JwtPayload | null => {
-  const token = localStorage.getItem("access_token");
-  if (!token) return null;
-
-  try {
-    return jwtDecode<JwtPayload>(token);
-  } catch {
-    return null;
-  }
-};
-
-export const userId: number | undefined = getLoggedUserFromToken()?.user_id;
-
-
-
 export interface UserRegister {
   id?: number;                 // optional for creation
   username: string;
@@ -31,23 +9,36 @@ export interface UserRegister {
   role: string;                // e.g., 'admin', 'master', 'user', etc.
   is_active?: boolean;
   created_by?: number;         // user ID of creator, optional for creation
-  // Add other fields your model uses, e.g.:
-  // date_joined?: string;     // ISO date string
-  // phone_number?: string;
+  mobile?: string | null;
+  whatsapp?: string | null;
+  dob?: string | null; // YYYY-MM-DD
+  gender?: "male" | "female" | "other" | null;
+  photo?: File | string | null;
+  address?: string | null;
+  city?: number | null;
+  zip_code?: string | null;
+  state?: number | null;
+  country?: number | null;
+  joined_date?: string | null; // ISO datetime
+  created_on?: string;
+  password?: string;
+  password_confirm?: string;
 }
 
 // Create a new user
 export const createUser = async (data: UserRegister) => {
-  const url = createApiUrl("/app/usermanagement/");
-  const response = await axios.post(url, data, {
-    headers: await getAuthHeaders(),
-  });
+  const url = createApiUrl("api/usermanagement/");
+  const hasFile = data.photo instanceof File;
+  const payload = hasFile ? toUserFormData(data) : data;
+  const headers = hasFile ? await getAuthHeadersFile() : await getAuthHeaders();
+
+  const response = await axios.post(url, payload, { headers });
   return response.data;
 };
 
 // Get user by ID
 export const getUserById = async (id: number) => {
-  const url = createApiUrl(`/app/usermanagement/${id}/`);
+  const url = createApiUrl(`api/usermanagement/${id}/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
   });
@@ -56,16 +47,18 @@ export const getUserById = async (id: number) => {
 
 // Update user by ID (full update)
 export const updateUser = async (id: number, data: Partial<UserRegister>) => {
-  const url = createApiUrl(`/app/usermanagement/${id}/`);
-  const response = await axios.put(url, data, {
-    headers: await getAuthHeaders(),
-  });
+  const url = createApiUrl(`api/usermanagement/${id}/`);
+  const hasFile = data.photo instanceof File;
+  const payload = hasFile ? toUserFormData(data) : data;
+  const headers = hasFile ? await getAuthHeadersFile() : await getAuthHeaders();
+
+  const response = await axios.put(url, payload, { headers });
   return response.data;
 };
 
 // Delete user by ID
 export const deleteUser = async (id: number) => {
-  const url = createApiUrl(`/app/usermanagement/${id}/`);
+  const url = createApiUrl(`api/usermanagement/${id}/`);
   const response = await axios.delete(url, {
     headers: await getAuthHeaders(),
   });
@@ -86,16 +79,14 @@ export interface PaginatedResponses<T> {
 export const getUserList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string,
-  createdBy?: number
+  search?: string
 ): Promise<PaginatedResponses<UserRegister>> => {
   try {
     const params: Record<string, any> = { page };
-    if (createdBy) params.created_by = createdBy;
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
-    const url = createApiUrl("/app/usermanagement/");
+    const url = createApiUrl("api/usermanagement/");
     const response = await axios.get<PaginatedResponses<UserRegister>>(url, {
       headers: await getAuthHeaders(),
       params: limit === "all" ? { ...params, limit: 9999 } : params,
@@ -105,5 +96,19 @@ export const getUserList = async (
     console.error("Error fetching user list:", error);
     throw error;
   }
+};
+
+const toUserFormData = (data: Partial<UserRegister>) => {
+  const fd = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined) return;
+    if (value === null) return;
+    if (value instanceof File) {
+      fd.append(key, value);
+      return;
+    }
+    fd.append(key, String(value));
+  });
+  return fd;
 };
 
