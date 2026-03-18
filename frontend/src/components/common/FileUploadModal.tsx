@@ -9,7 +9,8 @@ import {
   FileSpreadsheet,
   ChevronDown,
   ChevronUp,
-  Trash2
+  Trash2,
+  AlertCircle
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -96,8 +97,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   };
 
   const handleBulkSubmit = async () => {
-    if (excelData.some(row => row.errors && row.errors.length > 0)) {
-      toast.error("Please fix errors before submitting.");
+    // Fatal if any row has an error that DOES NOT look like a duplicate skip
+    const hasFatalErrors = excelData.some(row => 
+      row.errors && row.errors.some((err: string) => 
+        !err.toLowerCase().includes("already exists") && !err.toLowerCase().includes("this will be skipped")
+      )
+    );
+
+    if (hasFatalErrors) {
+      toast.error("Please fix critical errors before submitting.");
       return;
     }
 
@@ -153,8 +161,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     );
   };
 
-  // Re-calculate error rows from current excelData state
-  const errorRows = excelData.filter(row => row.errors && row.errors.length > 0);
+  // Re-calculate fatal error rows only (ignoring "already exists" skips)
+  const errorRows = excelData.filter(row => 
+    row.errors && row.errors.some((err: string) => 
+      !err.toLowerCase().includes("already exists") && !err.toLowerCase().includes("this will be skipped")
+    )
+  );
 
   return (
     <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
@@ -313,16 +325,23 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                       <TableBody>
                         {excelData.map((row, index) => {
                           const isExpanded = expandedRows.has(index);
-                          const hasErrors = row.errors && row.errors.length > 0;
+                          const hasFatalErrors = row.errors && row.errors.some((err: string) => 
+                            !err.toLowerCase().includes("already exists") && !err.toLowerCase().includes("this will be skipped")
+                          );
+                          const isDuplicate = row.errors && row.errors.some((err: string) => 
+                            err.toLowerCase().includes("already exists") || err.toLowerCase().includes("this will be skipped")
+                          );
                           
                           return (
                             <React.Fragment key={index}>
                               <TableRow
                                 onClick={() => toggleRowExpansion(index)}
                                 className={`group cursor-pointer border-b border-gray-50 dark:border-gray-800 transition-colors ${
-                                  hasErrors 
-                                    ? 'bg-red-50/30 hover:bg-red-50/50 dark:bg-red-900/5 dark:hover:bg-red-900/10' 
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                  hasFatalErrors 
+                                    ? "bg-red-50/30 hover:bg-red-50/50 dark:bg-red-900/5 dark:hover:bg-red-900/10" 
+                                    : isDuplicate
+                                      ? "bg-amber-50/30 hover:bg-amber-50/50 dark:bg-amber-900/5 dark:hover:bg-amber-900/10"
+                                      : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                 }`}
                               >
                                 <TableCell className="p-3 text-xs font-semibold text-gray-500">{index + 2}</TableCell>
@@ -333,7 +352,9 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-800">
                                           {(String(row[col] || 'L')).charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="font-semibold text-gray-900 dark:text-white">{String(row[col] || 'N/A')}</span>
+                                        <span className={`font-semibold ${isDuplicate ? "text-amber-600 dark:text-amber-400" : "text-gray-900 dark:text-white"}`}>
+                                          {String(row[col] || 'N/A')}
+                                        </span>
                                       </div>
                                     ) : (
                                       String(row[col] || 'N/A')
@@ -341,10 +362,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                   </TableCell>
                                 ))}
                                 <TableCell className="p-3">
-                                  {hasErrors ? (
+                                  {hasFatalErrors ? (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold text-red-700 dark:bg-red-900/40 dark:text-red-400">
                                       <AlertTriangle className="h-3 w-3" />
-                                      {row.errors.length} Error{row.errors.length > 1 ? 's' : ''}
+                                      {row.errors.filter((e: string) => !e.includes("Already exists")).length} Error{row.errors.length > 1 ? 's' : ''}
+                                    </span>
+                                  ) : isDuplicate ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Skip
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
@@ -374,8 +400,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                 <TableRow className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                                   <TableCell colSpan={getColumns().length + 4} className="p-4">
                                     <div className="grid grid-cols-1 gap-4">
-                                      {hasErrors && (
-                                        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+                                      {(hasFatalErrors || isDuplicate) && (
+                                        <div className={`rounded-xl border p-4 ${
+                                          hasFatalErrors ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30" : "border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30"
+                                        }`}>
                                           <div className="flex items-center gap-2 text-sm font-bold text-red-800 dark:text-red-400 mb-2">
                                             <AlertTriangle className="h-4 w-4" />
                                             Validation Errors

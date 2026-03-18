@@ -7,9 +7,15 @@ def get_file_parser(file_extension):
     Supported: .csv, .xls, .xlsx, .sql
     """
     if file_extension == ".csv":
-        return lambda content: pd.read_csv(io.BytesIO(content)).to_dict(orient='records')
+        def parse_csv(content):
+            df = pd.read_csv(io.BytesIO(content))
+            return df.where(pd.notnull(df), None).to_dict(orient='records')
+        return parse_csv
     elif file_extension in [".xlsx", ".xls"]:
-        return lambda content: pd.read_excel(io.BytesIO(content)).to_dict(orient='records')
+        def parse_excel(content):
+            df = pd.read_excel(io.BytesIO(content))
+            return df.where(pd.notnull(df), None).to_dict(orient='records')
+        return parse_excel
     elif file_extension == ".sql":
         return lambda content: content.decode("utf-8")
     else:

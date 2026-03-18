@@ -38,6 +38,17 @@ class ImportService:
         
         if check_field:
             existing_values = set(Model.objects.values_list(check_field, flat=True))
+        
+        # Specific check for join models without single name/title field
+        if module == "food":
+            if submenu == "recipe":
+                from app.models import FoodIngredient
+                existing_values = set(FoodIngredient.objects.select_related('food', 'ingredient').values_list('food__name', 'ingredient__name'))
+                check_field = ('food_name', 'ingredient_name')
+            elif submenu == "food-step":
+                from app.models import FoodStep
+                existing_values = set(FoodStep.objects.select_related('food').values_list('food__name', 'step_number'))
+                check_field = ('food_name', 'step_number')
 
         # Dynamic mapping for nested fields (Excel Header -> Serializer Field)
         NESTED_FIELD_MAP = {
@@ -65,29 +76,59 @@ class ImportService:
                 if hasattr(Model, 'created_at'):
                     mapped_row_data['created_at'] = current_date
 
+            # Replace NaN/Inf values in numeric fields with None early to prevent JSON errors
+            import math
+            for key, value in mapped_row_data.items():
+                if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+                    mapped_row_data[key] = None
+
+            # Extra validation for NormalRangeForHealthParameter
+            if module == "health" and submenu in ["normal-range", "normalrange"]:
+                required_fields = ["health_parameter_name", "raw_value", "min_value", "max_value", "unit"]
+                missing = [f for f in required_fields if not mapped_row_data.get(f)]
+                if missing:
+                    row_copy = mapped_row_data.copy()
+                    row_copy['errors'] = [f"Missing or invalid: {', '.join(missing)}"]
+                    row_copy['is_old'] = False
+                    processed_data.append(row_copy)
+                    continue
+
             # Check if this record already exists in the database
             is_old = False
-            original_val = mapped_row_data.get(check_field) if check_field else None
-            if check_field and original_val and original_val in existing_values:
-                is_old = True
+            if check_field:
+                if isinstance(check_field, tuple):
+                    # Check for join tables (food_name, ingredient_name) or (food_name, step_number)
+                    val1 = mapped_row_data.get(check_field[0])
+                    val2 = mapped_row_data.get(check_field[1])
+                    if val1 and val2 is not None:
+                         # Ensure step_number is integer if that's what's in DB
+                        if check_field[1] == 'step_number':
+                            try: val2 = int(val2)
+                            except: pass
+                        if (str(val1), val2) in existing_values:
+                            is_old = True
+                else:
+                    original_val = mapped_row_data.get(check_field)
+                    if original_val and original_val in existing_values:
+                        is_old = True
 
             serializer = Serializer(data=mapped_row_data)
             row_errors = []
             
             # If it's an old record, mark it as a warning (not a fatal error for submission)
             if is_old:
-                # We still add it to row_errors for the analysis view, 
-                # but we'll handle it specifically during submission
-                row_errors.append(f"{check_field}: Record already exists (will be skipped).")
-
-            if not serializer.is_valid():
-                # Format errors into a list of strings
-                for field, errors in serializer.errors.items():
-                    if isinstance(errors, list):
-                        for error in errors:
-                            row_errors.append(f"{field}: {error}")
-                    else:
-                        row_errors.append(f"{field}: {errors}")
+                # User requested specific phrasing: "Already exists (this will be skipped)"
+                row_errors.append("Already exists (this will be skipped)")
+            else:
+                # Only validate new records via the serializer
+                if not serializer.is_valid():
+                    # Format errors into a list of strings
+                    for field, errors in serializer.errors.items():
+                        if isinstance(errors, list):
+                            for error in errors:
+                                row_errors.append(f"{field}: {error}")
+                        else:
+                            row_errors.append(f"{field}: {errors}")
             
             # Create a copy for analysis table display
             row_copy = mapped_row_data.copy()
@@ -95,9 +136,12 @@ class ImportService:
             row_copy['is_old'] = is_old
             
             # Add "old" or "new" tag to the name/title field for representation
-            if check_field and original_val:
-                tag = "(old)" if is_old else "(new)"
-                row_copy[check_field] = f"{original_val} {tag}"
+            if check_field:
+                tag = "(Already exists)" if is_old else "(new)"
+                target_key = check_field if not isinstance(check_field, tuple) else check_field[0]
+                orig_val = row_copy.get(target_key)
+                if orig_val:
+                    row_copy[target_key] = f"{orig_val} {tag}"
             
             processed_data.append(row_copy)
             
@@ -105,15 +149,16 @@ class ImportService:
                 # For submission tracking, we check if there are REAL errors (not just duplicates)
                 has_fatal_errors = False
                 for err in row_errors:
-                    if "already exists" not in err:
+                    if "Already exists" not in err:
                         has_fatal_errors = True
                         break
                 
                 if has_fatal_errors:
                     error_rows.append(row_copy)
                 else:
-                    # If it only has duplicates, we add it to processed_data for display
-                    # but we don't put it in error_rows so it doesn't block submission
+                    # If it only has duplicates, we add it to valid_rows_data for display
+                    # but we don't put it in error_rows so it doesn't block submission.
+                    # HOWEVER, we should NOT add it to valid_rows_data because we want to SKIP it.
                     pass
             else:
                 valid_rows_data.append(mapped_row_data)
@@ -145,7 +190,11 @@ class ImportService:
                                 from app.models import FoodStep
                                 steps_list = [s.strip() for s in steps_str.split(';') if s.strip()]
                                 for idx, step_text in enumerate(steps_list, start=1):
-                                    FoodStep.objects.create(food=instance.food, step_number=idx, instruction=step_text)
+                                    FoodStep.objects.update_or_create(
+                                        food=instance.food,
+                                        step_number=idx,
+                                        defaults={"instruction": step_text}
+                                    )
                         else:
                             # If it somehow fails now, raise the specific errors
                             raise Exception(f"Row validation failed: {serializer.errors}")
@@ -169,9 +218,17 @@ class ImportService:
             }
 
         # Otherwise, return analysis result
+        duplicates = sum(1 for r in processed_data if r.get('is_old'))
+        msg = f'Analysis complete for {submenu}.'
+        if error_rows:
+            msg += f' {len(error_rows)} fatal errors found.'
+        if duplicates:
+            msg += f' {duplicates} records Already exists (this will be skipped).'
+        msg += f' {len(valid_rows_data)} new records ready for import.'
+
         return {
             'success': len(error_rows) == 0,
-            'message': f'Analysis complete for {submenu}. {len(error_rows)} errors found. {len(valid_rows_data)} new records ready.' if error_rows else f'Analysis complete for {submenu}. All rows checked!',
+            'message': msg,
             'created': len(valid_rows_data),
             'updated': 0,
             'data': processed_data,

@@ -590,6 +590,7 @@ class FoodSerializer(serializers.ModelSerializer):
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
     health_parameter_name = serializers.CharField(source='health_parameter.name', read_only=True)
     health_parameter_name_input = serializers.CharField(write_only=True, required=False)
+    health_parameter = serializers.PrimaryKeyRelatedField(queryset=HealthParameter.objects.all(), required=False)
     
     class Meta:
         model = NormalRangeForHealthParameter
@@ -597,9 +598,12 @@ class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         hp_name = validated_data.pop('health_parameter_name_input', None)
-        if hp_name:
-            hp, _ = HealthParameter.objects.get_or_create(name=hp_name.strip())
-            validated_data['health_parameter'] = hp
+        if not hp_name:
+            hp_name = validated_data.get('health_parameter_name', None)
+        if not hp_name:
+            hp_name = 'Unknown Parameter'
+        hp, _ = HealthParameter.objects.get_or_create(name=hp_name.strip())
+        validated_data['health_parameter'] = hp
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
