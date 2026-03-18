@@ -636,3 +636,107 @@ class DietPlanSerializer(serializers.ModelSerializer):
         model = DietPlans
         fields = "__all__"
 
+
+# ── Food Composition (FoodName-based) Serializers ──────────────────────────────
+
+class FoodGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodGroup
+        fields = "__all__"
+
+
+class FoodNameSerializer(serializers.ModelSerializer):
+    food_group_name = serializers.CharField(source='food_group.name', read_only=True)
+
+    class Meta:
+        model = FoodName
+        fields = "__all__"
+
+
+class FoodProximateSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodProximate
+        fields = "__all__"
+
+
+class FoodWaterSolubleVitaminsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodWaterSolubleVitamins
+        fields = "__all__"
+
+
+class FoodFatSolubleVitaminsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodFatSolubleVitamins
+        fields = "__all__"
+
+
+class FoodCarotenoidsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodCarotenoids
+        fields = "__all__"
+
+
+class FoodMineralsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodMinerals
+        fields = "__all__"
+
+
+class FoodSugarsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodSugars
+        fields = "__all__"
+
+
+class FoodAminoAcidsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodAminoAcids
+        fields = "__all__"
+
+
+class FoodOrganicAcidsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodOrganicAcids
+        fields = "__all__"
+
+
+class FoodPolyphenolsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodPolyphenols
+        fields = "__all__"
+
+
+class FoodPhytochemicalsSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodPhytochemicals
+        fields = "__all__"
+
+
+class FoodFattyAcidProfileSerializer(serializers.ModelSerializer):
+    food_name_display = serializers.CharField(source='food_name.name', read_only=True)
+
+    class Meta:
+        model = FoodFattyAcidProfile
+        fields = "__all__"
+

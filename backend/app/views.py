@@ -202,6 +202,125 @@ class FoodNutritionViewSet(viewsets.ModelViewSet):
     search_fields = ['food__name']
 
 
+# ── Food Composition (FoodName-based) ViewSets ─────────────────────────────────
+
+class FoodGroupViewSet(viewsets.ModelViewSet):
+    queryset = FoodGroup.objects.all()
+    serializer_class = FoodGroupSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+
+
+class FoodNameViewSet(viewsets.ModelViewSet):
+    queryset = FoodName.objects.select_related('food_group').all()
+    serializer_class = FoodNameSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'code', 'food_group__name']
+
+
+class FoodProximateViewSet(viewsets.ModelViewSet):
+    queryset = FoodProximate.objects.select_related('food_name').all()
+    serializer_class = FoodProximateSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodWaterSolubleVitaminsViewSet(viewsets.ModelViewSet):
+    queryset = FoodWaterSolubleVitamins.objects.select_related('food_name').all()
+    serializer_class = FoodWaterSolubleVitaminsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodFatSolubleVitaminsViewSet(viewsets.ModelViewSet):
+    queryset = FoodFatSolubleVitamins.objects.select_related('food_name').all()
+    serializer_class = FoodFatSolubleVitaminsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodCarotenoidsViewSet(viewsets.ModelViewSet):
+    queryset = FoodCarotenoids.objects.select_related('food_name').all()
+    serializer_class = FoodCarotenoidsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodMineralsViewSet(viewsets.ModelViewSet):
+    queryset = FoodMinerals.objects.select_related('food_name').all()
+    serializer_class = FoodMineralsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodSugarsViewSet(viewsets.ModelViewSet):
+    queryset = FoodSugars.objects.select_related('food_name').all()
+    serializer_class = FoodSugarsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodAminoAcidsViewSet(viewsets.ModelViewSet):
+    queryset = FoodAminoAcids.objects.select_related('food_name').all()
+    serializer_class = FoodAminoAcidsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodOrganicAcidsViewSet(viewsets.ModelViewSet):
+    queryset = FoodOrganicAcids.objects.select_related('food_name').all()
+    serializer_class = FoodOrganicAcidsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodPolyphenolsViewSet(viewsets.ModelViewSet):
+    queryset = FoodPolyphenols.objects.select_related('food_name').all()
+    serializer_class = FoodPolyphenolsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodPhytochemicalsViewSet(viewsets.ModelViewSet):
+    queryset = FoodPhytochemicals.objects.select_related('food_name').all()
+    serializer_class = FoodPhytochemicalsSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
+class FoodFattyAcidProfileViewSet(viewsets.ModelViewSet):
+    queryset = FoodFattyAcidProfile.objects.select_related('food_name').all()
+    serializer_class = FoodFattyAcidProfileSerializer
+    permission_classes = [AllowAny]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food_name__name']
+
+
 class IngredientViewSet(viewsets.ModelViewSet):
     """
     CRUD for ingredients.

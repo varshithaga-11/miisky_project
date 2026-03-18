@@ -191,7 +191,7 @@ class Food(models.Model):
 
 
 class FoodNutrition(models.Model):
-    food = models.OneToOneField(Food, on_delete=models.CASCADE, related_name='nutrition')
+    food = models.OneToOneField(Food, on_delete=models.SET_NULL,null=True,blank=True, related_name='nutrition')
 
     # 🔥 MACRONUTRIENTS
     calories = models.FloatField(null=True, blank=True)  # e.g. 120 kcal
@@ -290,10 +290,10 @@ class FoodIngredient(models.Model):
         Vegetable Upma | Carrot     | 50       | Gram       | diced
         Vegetable Upma | Oil        | 2        | Tablespoon |
     """
-    food = models.ForeignKey(Food, on_delete=models.CASCADE, null=True, blank=True)
+    food = models.ForeignKey(Food, on_delete=models.SET_NULL,null=True,blank=True)
     # Example: Ragi Idli
 
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, null=True, blank=True)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.SET_NULL,null=True,blank=True)
     # Example: Ragi Flour
 
     quantity = models.FloatField()
@@ -326,7 +326,7 @@ class FoodStep(models.Model):
         4           | Ferment overnight
         5           | Steam in idli mould for 10 minutes
     """
-    food = models.ForeignKey(Food, on_delete=models.CASCADE)
+    food = models.ForeignKey(Food, on_delete=models.SET_NULL,null=True,blank=True)
     # Example: Ragi Idli
 
     step_number = models.IntegerField()
@@ -357,7 +357,7 @@ class HealthParameter(models.Model):#diabetes, bloodpressure,RBE
         return self.name
     
 class NormalRangeForHealthParameter(models.Model):
-    health_parameter = models.ForeignKey(HealthParameter,on_delete=models.CASCADE,related_name='normal_ranges')  # e.g. Hemoglobin, Glucose
+    health_parameter = models.ForeignKey(HealthParameter,on_delete=models.SET_NULL,null=True,blank=True,related_name='normal_ranges')  # e.g. Hemoglobin, Glucose
     raw_value = models.TextField(null=True, blank=True)  # original messy data → "4.36|3.7-5.6 mg/dL", "Negative", "Normal: <100 Prediabetes: 100-125"
     min_value = models.FloatField(null=True, blank=True)  # extracted → 3.7
     max_value = models.FloatField(null=True, blank=True)  # extracted → 5.6
@@ -409,7 +409,7 @@ class DietPlans(models.Model):
 class DietPlanFeature(models.Model):
     diet_plan = models.ForeignKey(
         DietPlans,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='features'
     )  # linked to plan
     feature = models.CharField(max_length=255)  # e.g. "Personalized diet chart"
@@ -437,11 +437,11 @@ class FoodGroup(models.Model):
     def __str__(self):
         return self.name
     
-class Food(models.Model):
+class FoodName(models.Model):
     name = models.CharField(max_length=150)
     food_group = models.ForeignKey(
         FoodGroup,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='foods'
     )
     code = models.CharField(max_length=50, null=True, blank=True)
@@ -454,9 +454,9 @@ class Food(models.Model):
 
 class FoodProximate(models.Model):#Proximate Principles and Dietary Fiber
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='proximate'
     )
 
@@ -481,14 +481,14 @@ class FoodProximate(models.Model):#Proximate Principles and Dietary Fiber
     energy = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.food.name} - Proximate"
+        return f"{self.food.food_name} - Proximate"
 
 
 class FoodWaterSolubleVitamins(models.Model):#Water Soluble Vitamins
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='water_soluble_vitamins'
     )
 
@@ -509,24 +509,15 @@ class FoodWaterSolubleVitamins(models.Model):#Water Soluble Vitamins
     vitamin_b6 = models.FloatField(null=True, blank=True)
     vitamin_c = models.FloatField(null=True, blank=True)
 
-    # ---------------- Metadata ----------------
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-
     def __str__(self):
-        return f"{self.food.name} - Water Soluble Vitamins"
+        return f"{self.food.food_name} - Water Soluble Vitamins"
 
 
 class FoodFatSolubleVitamins(models.Model):#Fat Soluble Vitamins
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='fat_soluble_vitamins'
     )
 
@@ -550,24 +541,16 @@ class FoodFatSolubleVitamins(models.Model):#Fat Soluble Vitamins
     # Total Vitamin E
     total_vitamin_e = models.FloatField(null=True, blank=True)
 
-    # Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
 
     def __str__(self):
-        return f"{self.food.name} - Fat Soluble Vitamins"
+        return f"{self.food.food_name} - Fat Soluble Vitamins"
 
 
 class FoodCarotenoids(models.Model):#Carotenoids
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='carotenoids'
     )
 
@@ -585,24 +568,15 @@ class FoodCarotenoids(models.Model):#Carotenoids
     retinol_activity_equivalent = models.FloatField(null=True, blank=True)
     carotenoid_activity = models.FloatField(null=True, blank=True)
 
-    # Metadata (optional but useful)
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-
     def __str__(self):
-        return f"{self.food.name} - Carotenoids"
+        return f"{self.food.food_name} - Carotenoids"
 
 
 class FoodMinerals(models.Model):#Minerals and Trace Elements
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='minerals'
     )
 
@@ -636,24 +610,15 @@ class FoodMinerals(models.Model):#Minerals and Trace Elements
     nickel = models.FloatField(null=True, blank=True)
     lithium = models.FloatField(null=True, blank=True)
 
-    # ---------------- Metadata ----------------
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-
     def __str__(self):
-        return f"{self.food.name} - Minerals"
+        return f"{self.food.food_name} - Minerals"
 
 
 
 class FoodSugars(models.Model):#Starch and Individual Sugars
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='sugars'
     )
 
@@ -672,22 +637,14 @@ class FoodSugars(models.Model):#Starch and Individual Sugars
     # ---------------- Total Sugars ----------------
     total_sugars = models.FloatField(null=True, blank=True)
 
-    # ---------------- Metadata ----------------
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
 
     def __str__(self):
-        return f"{self.food.name} - Sugars"
+        return f"{self.food.food_name} - Sugars"
 
 
 class FoodAminoAcids(models.Model):#Amino Acid Profile
 
-    food = models.OneToOneField(Food, on_delete=models.CASCADE, related_name='amino_acids')
+    food_name = models.OneToOneField(FoodName, on_delete=models.SET_NULL,null=True,blank=True, related_name='amino_acids')
 
     base_unit = models.CharField(max_length=50, null=True, blank=True)
 
@@ -706,9 +663,9 @@ class FoodAminoAcids(models.Model):#Amino Acid Profile
 
 class FoodOrganicAcids(models.Model):#Organic Acids
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='organic_acids'
     )
 
@@ -726,25 +683,17 @@ class FoodOrganicAcids(models.Model):#Organic Acids
     succinic_acid = models.FloatField(null=True, blank=True)
     tartaric_acid = models.FloatField(null=True, blank=True)
 
-    # Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
 
     def __str__(self):
-        return f"{self.food.name} - Organic Acids"
+        return f"{self.food.food_name} - Organic Acids"
     
 
 
 class FoodPolyphenols(models.Model):#Polyphenols
 
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='polyphenols'
     )
 
@@ -761,27 +710,16 @@ class FoodPolyphenols(models.Model):#Polyphenols
     p_coumaric_acid = models.FloatField(null=True, blank=True)
     caffeic_acid = models.FloatField(null=True, blank=True)
 
-    # ---------------- Metadata ----------------
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
 
     def __str__(self):
-        return f"{self.food.name} - Polyphenols"
-
-
-
+        return f"{self.food.food_name} - Polyphenols"
 
 
 ##OLIGOSACCHARIDES, PHYTOSTEROLS, PHYTATES AND SAPONIN
 class FoodPhytochemicals(models.Model):
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='phytochemicals'
     )
 
@@ -802,25 +740,17 @@ class FoodPhytochemicals(models.Model):
     phytate = models.FloatField(null=True, blank=True)
     saponin = models.FloatField(null=True, blank=True)
 
-    # ---------------- Metadata ----------------
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
 
     def __str__(self):
-        return f"{self.food.name} - Phytochemicals"
+        return f"{self.food.food_name} - Phytochemicals"
 
 
 #Fatty Acid Profile 
 
 class FoodFattyAcidProfile(models.Model):
-    food = models.OneToOneField(
-        Food,
-        on_delete=models.CASCADE,
+    food_name = models.OneToOneField(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='fatty_acid_profile'
     )
 
@@ -858,14 +788,5 @@ class FoodFattyAcidProfile(models.Model):
     total_mufa = models.FloatField(null=True, blank=True)
     total_pufa = models.FloatField(null=True, blank=True)
 
-    # 🔹 Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        'UserRegister',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-
     def __str__(self):
-        return f"{self.food.name} - Fatty Acid Profile"
+        return f"{self.food.food_name} - Fatty Acid Profile"

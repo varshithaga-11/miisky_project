@@ -36,6 +36,19 @@ import RecipeManagementPage from "./pages/AdminSide/RecipeManagement/index";
 import HealthParameterManagementPage from "./pages/AdminSide/HealthParameter/index";
 import NormalRangeManagementPage from "./pages/AdminSide/NormalRangeForHealthParameter/index";
 import DietPlanManagementPage from "./pages/AdminSide/DietPlan/index";
+import FoodGroupManagementPage from "./pages/AdminSide/FoodGroup/index";
+import FoodNameManagementPage from "./pages/AdminSide/FoodName/index";
+import FoodProximateManagementPage from "./pages/AdminSide/FoodProximate/index";
+import FoodWaterSolubleVitaminsManagementPage from "./pages/AdminSide/FoodWaterSolubleVitamins/index";
+import FoodFatSolubleVitaminsManagementPage from "./pages/AdminSide/FoodFatSolubleVitamins/index";
+import FoodCarotenoidsManagementPage from "./pages/AdminSide/FoodCarotenoids/index";
+import FoodMineralsManagementPage from "./pages/AdminSide/FoodMinerals/index";
+import FoodSugarsManagementPage from "./pages/AdminSide/FoodSugars/index";
+import FoodAminoAcidsManagementPage from "./pages/AdminSide/FoodAminoAcids/index";
+import FoodOrganicAcidsManagementPage from "./pages/AdminSide/FoodOrganicAcids/index";
+import FoodPolyphenolsManagementPage from "./pages/AdminSide/FoodPolyphenols/index";
+import FoodPhytochemicalsManagementPage from "./pages/AdminSide/FoodPhytochemicals/index";
+import FoodFattyAcidProfileManagementPage from "./pages/AdminSide/FoodFattyAcidProfile/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -81,6 +94,19 @@ export function appRoutes() {
           <Route path="master/health-parameter" element={<HealthParameterManagementPage />} />
           <Route path="master/normal-range" element={<NormalRangeManagementPage />} />
           <Route path="master/diet-plan" element={<DietPlanManagementPage />} />
+          <Route path="master/food-group" element={<FoodGroupManagementPage />} />
+          <Route path="master/food-name" element={<FoodNameManagementPage />} />
+          <Route path="master/food-proximate" element={<FoodProximateManagementPage />} />
+          <Route path="master/food-water-soluble-vitamins" element={<FoodWaterSolubleVitaminsManagementPage />} />
+          <Route path="master/food-fat-soluble-vitamins" element={<FoodFatSolubleVitaminsManagementPage />} />
+          <Route path="master/food-carotenoids" element={<FoodCarotenoidsManagementPage />} />
+          <Route path="master/food-minerals" element={<FoodMineralsManagementPage />} />
+          <Route path="master/food-sugars" element={<FoodSugarsManagementPage />} />
+          <Route path="master/food-amino-acids" element={<FoodAminoAcidsManagementPage />} />
+          <Route path="master/food-organic-acids" element={<FoodOrganicAcidsManagementPage />} />
+          <Route path="master/food-polyphenols" element={<FoodPolyphenolsManagementPage />} />
+          <Route path="master/food-phytochemicals" element={<FoodPhytochemicalsManagementPage />} />
+          <Route path="master/food-fatty-acid-profile" element={<FoodFattyAcidProfileManagementPage />} />
 
 
           {/* Others Page */}
