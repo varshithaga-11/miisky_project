@@ -729,6 +729,12 @@ class DeliveryProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserNutritionistMappingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNutritionistMapping
+        fields = "__all__"
+
+
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────
 
 class FoodGroupSerializer(serializers.ModelSerializer):

@@ -15,6 +15,7 @@ router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userqu
 router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
 router.register(r'microkitchenprofile', MicroKitchenProfileViewSet, basename='microkitchenprofile')
 router.register(r'deliveryprofile', DeliveryProfileViewSet, basename='deliveryprofile')
+router.register(r'usernutritionistmapping', UserNutritionistMappingViewSet, basename='usernutritionistmapping')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)

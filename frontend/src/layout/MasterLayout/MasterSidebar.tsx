@@ -155,6 +155,11 @@ const adminNavItems: NavItem[] = [
       { name: "Diet Plans", path: "/master/diet-plan" },
     ],
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Mappings",
+    subItems: [{ name: "User–Nutritionist Mapping", path: "/master/user-nutrition-mapping" }],
+  },
 ];
 
 const patientNavItems: NavItem[] = [
@@ -163,6 +168,11 @@ const patientNavItems: NavItem[] = [
     name: "Questionnaire",
     path: "/patient/questionnaire",
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Nutritionist Allotted",
+    path: "/patient/nutrition-allotted",
+  },
 ];
 
 const nutritionistNavItems: NavItem[] = [
@@ -170,6 +180,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
     path: "/nutrition/questionnaire",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Allotted Patients",
+    path: "/nutrition/allotted-patients",
   },
 ];
 

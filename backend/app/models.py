@@ -68,6 +68,9 @@ class UserRegister(AbstractUser):
     joined_date = models.DateTimeField(null=True, blank=True)
 
 
+    is_patient_mapped = models.BooleanField(default=False)
+
+
 
     is_active = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)

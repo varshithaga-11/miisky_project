@@ -228,6 +228,98 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(obj).data)
 
 
+class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
+    queryset = UserNutritionistMapping.objects.select_related("user", "nutritionist").all()
+    serializer_class = UserNutritionistMappingSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def perform_create(self, serializer):
+        mapping = serializer.save()
+        if hasattr(mapping.user, "is_patient_mapped") and not mapping.user.is_patient_mapped:
+            mapping.user.is_patient_mapped = True
+            mapping.user.save(update_fields=["is_patient_mapped"])
+
+    def perform_update(self, serializer):
+        mapping = serializer.save()
+        if hasattr(mapping.user, "is_patient_mapped") and not mapping.is_active:
+            has_other = UserNutritionistMapping.objects.filter(
+                user=mapping.user, is_active=True
+            ).exclude(pk=mapping.pk).exists()
+            if not has_other:
+                mapping.user.is_patient_mapped = False
+                mapping.user.save(update_fields=["is_patient_mapped"])
+
+    def perform_destroy(self, instance):
+        user = instance.user
+        super().perform_destroy(instance)
+        if hasattr(user, "is_patient_mapped"):
+            has_other = UserNutritionistMapping.objects.filter(user=user, is_active=True).exists()
+            if not has_other:
+                user.is_patient_mapped = False
+                user.save(update_fields=["is_patient_mapped"])
+
+    @action(detail=False, methods=["get"], url_path="my-patients")
+    def my_patients(self, request):
+        qs = UserNutritionistMapping.objects.select_related("user").filter(
+            nutritionist=request.user, is_active=True
+        )
+        results = []
+        for mapping in qs:
+            patient = mapping.user
+            try:
+                q = patient.userquestionnaire
+            except UserQuestionnaire.DoesNotExist:
+                q = None
+            results.append(
+                {
+                    "mapping_id": mapping.id,
+                    "assigned_on": mapping.assigned_on,
+                    "user": {
+                        "id": patient.id,
+                        "username": patient.username,
+                        "first_name": patient.first_name,
+                        "last_name": patient.last_name,
+                        "email": patient.email,
+                        "mobile": patient.mobile,
+                        "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
+                    },
+                    "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
+                }
+            )
+        return Response(results)
+
+    @action(detail=False, methods=["get"], url_path="my-nutritionist")
+    def my_nutritionist(self, request):
+        mapping = UserNutritionistMapping.objects.select_related("nutritionist").filter(
+            user=request.user, is_active=True
+        ).first()
+        if not mapping:
+            return Response({}, status=status.HTTP_200_OK)
+
+        nutritionist = mapping.nutritionist
+        try:
+            profile = nutritionist.nutritionistprofile
+        except NutritionistProfile.DoesNotExist:
+            profile = None
+
+        return Response(
+            {
+                "mapping_id": mapping.id,
+                "assigned_on": mapping.assigned_on,
+                "nutritionist": {
+                    "id": nutritionist.id,
+                    "username": nutritionist.username,
+                    "first_name": nutritionist.first_name,
+                    "last_name": nutritionist.last_name,
+                    "email": nutritionist.email,
+                    "mobile": nutritionist.mobile,
+                },
+                "profile": NutritionistProfileSerializer(profile).data if profile else None,
+            }
+        )
+
+
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
