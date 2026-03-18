@@ -21,9 +21,20 @@ export type PaginatedResponses<T> = {
   results: T[];
 };
 
+export type UserNutritionMapping = {
+  id: number;
+  user: number;
+  nutritionist: number;
+  assigned_on: string;
+  is_active: boolean;
+};
+
 export const getAllUsers = async (): Promise<PaginatedResponses<SimpleUser>> => {
   const url = createApiUrl("api/usermanagement/");
-  const response = await axios.get<PaginatedResponses<SimpleUser>>(url, { headers: await getAuthHeaders(), params: { limit: 9999, page: 1 } });
+  const response = await axios.get<PaginatedResponses<SimpleUser>>(url, {
+    headers: await getAuthHeaders(),
+    params: { limit: 9999, page: 1 },
+  });
   return response.data;
 };
 
@@ -34,6 +45,14 @@ export const createUserNutritionMapping = async (userId: number, nutritionistId:
     { user: userId, nutritionist: nutritionistId, is_active: true },
     { headers: await getAuthHeaders() }
   );
+  return response.data as UserNutritionMapping;
+};
+
+export const getAllUserNutritionMappings = async (): Promise<UserNutritionMapping[]> => {
+  const url = createApiUrl("api/usernutritionistmapping/");
+  const response = await axios.get<UserNutritionMapping[]>(url, {
+    headers: await getAuthHeaders(),
+  });
   return response.data;
 };
 
