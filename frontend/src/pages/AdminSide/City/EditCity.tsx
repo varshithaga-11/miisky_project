@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { getCityById, updateCity, City } from "./cityapi";
+import { getCityById, updateCity } from "./cityapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCountryList, Country } from "../Country/countryapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -26,22 +26,26 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [searchCountry, setSearchCountry] = useState("");
+  const [searchState, setSearchState] = useState("");
 
   useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const [countryRes, stateRes] = await Promise.all([
-          getCountryList(1, "all"),
-          getStateList(1, "all")
-        ]);
-        setCountries(countryRes.results);
-        setStates(stateRes.results);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchMetadata();
-  }, []);
+    const timer = setTimeout(() => {
+      getCountryList(1, "all", searchCountry)
+        .then((res) => setCountries(res.results))
+        .catch((err) => console.error(err));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCountry]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      getStateList(1, "all", searchState)
+        .then((res) => setStates(res.results))
+        .catch((err) => console.error(err));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchState]);
 
   useEffect(() => {
     if (isOpen && cityId && states.length > 0) {
@@ -124,12 +128,13 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div>
               <Label htmlFor="country">Country *</Label>
-              <Select
+              <SearchableSelect
                 value={countryId}
                 onChange={(val) => {
-                  setCountryId(val);
+                  setCountryId(val as string);
                   setStateId(""); // Reset state when country changes
                 }}
+                onSearch={setSearchCountry}
                 options={countryOptions}
                 className="w-full"
                 disabled={saving}
@@ -137,9 +142,10 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
             </div>
             <div>
               <Label htmlFor="state">State *</Label>
-              <Select
+              <SearchableSelect
                 value={stateId}
-                onChange={(val) => setStateId(val)}
+                onChange={(val) => setStateId(val as string)}
+                onSearch={setSearchState}
                 options={stateOptions}
                 className="w-full"
                 disabled={saving || !countryId}

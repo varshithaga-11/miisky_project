@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-
+from .models import FoodGroup
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, style={'input_type': 'password'})
@@ -647,13 +647,65 @@ class FoodGroupSerializer(serializers.ModelSerializer):
 
 class FoodNameSerializer(serializers.ModelSerializer):
     food_group_name = serializers.CharField(source='food_group.name', read_only=True)
+    food_group_name_input = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = FoodName
         fields = "__all__"
 
+    def create(self, validated_data):
+        group_name = validated_data.pop('food_group_name_input', None)
+        if group_name:
+            group, _ = FoodGroup.objects.get_or_create(name=group_name.strip())
+            validated_data['food_group'] = group
+        return super().create(validated_data)
 
-class FoodProximateSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        group_name = validated_data.pop('food_group_name_input', None)
+        if group_name:
+            group, _ = FoodGroup.objects.get_or_create(name=group_name.strip())
+            validated_data['food_group'] = group
+        return super().update(instance, validated_data)
+
+
+class FoodCompositionBaseSerializer(serializers.ModelSerializer):
+    food_name_input = serializers.CharField(write_only=True, required=False)
+    # Make food_name optional in serializer as we provide food_name_input instead
+    food_name = serializers.PrimaryKeyRelatedField(
+        queryset=FoodName.objects.all(), 
+        required=False, 
+        allow_null=True
+    )
+
+    def create(self, validated_data):
+        food_name = validated_data.pop('food_name_input', None)
+        if food_name:
+            food, _ = FoodName.objects.get_or_create(name=food_name.strip())
+            validated_data['food_name'] = food
+        
+        # Use update_or_create to prevent duplicates on OneToOne relations
+        food_obj = validated_data.get('food_name')
+        if food_obj:
+            # Remove the lookup field from defaults to avoid multiple values error
+            defaults = validated_data.copy()
+            defaults.pop('food_name', None)
+            instance, created = self.Meta.model.objects.update_or_create(
+                food_name=food_obj,
+                defaults=defaults
+            )
+            return instance
+            
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        food_name = validated_data.pop('food_name_input', None)
+        if food_name:
+            food, _ = FoodName.objects.get_or_create(name=food_name.strip())
+            validated_data['food_name'] = food
+        return super().update(instance, validated_data)
+
+
+class FoodProximateSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -661,7 +713,7 @@ class FoodProximateSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodWaterSolubleVitaminsSerializer(serializers.ModelSerializer):
+class FoodWaterSolubleVitaminsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -669,7 +721,7 @@ class FoodWaterSolubleVitaminsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodFatSolubleVitaminsSerializer(serializers.ModelSerializer):
+class FoodFatSolubleVitaminsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -677,7 +729,7 @@ class FoodFatSolubleVitaminsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodCarotenoidsSerializer(serializers.ModelSerializer):
+class FoodCarotenoidsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -685,7 +737,7 @@ class FoodCarotenoidsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodMineralsSerializer(serializers.ModelSerializer):
+class FoodMineralsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -693,7 +745,7 @@ class FoodMineralsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodSugarsSerializer(serializers.ModelSerializer):
+class FoodSugarsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -701,7 +753,7 @@ class FoodSugarsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodAminoAcidsSerializer(serializers.ModelSerializer):
+class FoodAminoAcidsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -709,7 +761,7 @@ class FoodAminoAcidsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodOrganicAcidsSerializer(serializers.ModelSerializer):
+class FoodOrganicAcidsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -717,7 +769,7 @@ class FoodOrganicAcidsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodPolyphenolsSerializer(serializers.ModelSerializer):
+class FoodPolyphenolsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -725,7 +777,7 @@ class FoodPolyphenolsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodPhytochemicalsSerializer(serializers.ModelSerializer):
+class FoodPhytochemicalsSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:
@@ -733,7 +785,7 @@ class FoodPhytochemicalsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FoodFattyAcidProfileSerializer(serializers.ModelSerializer):
+class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
     food_name_display = serializers.CharField(source='food_name.name', read_only=True)
 
     class Meta:

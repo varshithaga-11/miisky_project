@@ -5,7 +5,7 @@ import { getCountryList, Country } from "../Country/countryapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -22,23 +22,26 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
   const [states, setStates] = useState<State[]>([]);
   const [filteredStates, setFilteredStates] = useState<State[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchCountry, setSearchCountry] = useState("");
+  const [searchState, setSearchState] = useState("");
 
   useEffect(() => {
-    // Fetch both on mount
-    const fetchData = async () => {
-      try {
-        const [countryRes, stateRes] = await Promise.all([
-          getCountryList(1, "all"),
-          getStateList(1, "all")
-        ]);
-        setCountries(countryRes.results);
-        setStates(stateRes.results);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      getCountryList(1, "all", searchCountry)
+        .then((res) => setCountries(res.results))
+        .catch((err) => console.error(err));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCountry]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      getStateList(1, "all", searchState)
+        .then((res) => setStates(res.results))
+        .catch((err) => console.error(err));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchState]);
 
   useEffect(() => {
     if (countryId) {
@@ -107,9 +110,10 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="country">Country *</Label>
-            <Select
+            <SearchableSelect
               value={countryId}
-              onChange={(val) => setCountryId(val)}
+              onChange={(val) => setCountryId(val as string)}
+              onSearch={setSearchCountry}
               options={countryOptions}
               className="w-full"
               disabled={loading}
@@ -117,9 +121,10 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
           </div>
           <div>
             <Label htmlFor="state">State *</Label>
-            <Select
+            <SearchableSelect
               value={stateId}
-              onChange={(val) => setStateId(val)}
+              onChange={(val) => setStateId(val as string)}
+              onSearch={setSearchState}
               options={stateOptions}
               className="w-full"
               disabled={loading || !countryId}

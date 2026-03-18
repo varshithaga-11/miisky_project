@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiEdit, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
+import { FiEdit, FiPlus, FiSearch, FiTrash2, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
+import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -68,6 +69,8 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewData, setViewData] = useState<T | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formFoodNameId, setFormFoodNameId] = useState<string>("");
@@ -115,6 +118,17 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
   const openAdd = () => {
     resetForm();
     setIsAddOpen(true);
+  };
+
+  const openView = async (id: number) => {
+    try {
+      const data = await api.getById(id);
+      setViewData(data);
+      setIsViewOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load record details");
+    }
   };
 
   const openEdit = async (id: number) => {
@@ -240,7 +254,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
             <Button size="sm" className="inline-flex items-center gap-2" onClick={openAdd}>
               <FiPlus /> {addLabel}
             </Button>
-
+            <ImportButton />
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
               <Select
@@ -313,10 +327,13 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
                     <TableCell className="px-5 py-4 text-start">{row.base_unit || "—"}</TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
-                        <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => openEdit(row.id!)}>
+                        <button className="text-gray-500 hover:text-gray-700 text-lg transition-colors" title="View Details" onClick={() => openView(row.id!)}>
+                          <FiEye />
+                        </button>
+                        <button className="text-blue-600 hover:text-blue-800 text-lg transition-colors" title="Edit" onClick={() => openEdit(row.id!)}>
                           <FiEdit />
                         </button>
-                        <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(row.id!)}>
+                        <button className="text-red-600 hover:text-red-800 text-lg transition-colors" title="Delete" onClick={() => handleDelete(row.id!)}>
                           <FiTrash2 />
                         </button>
                       </div>
@@ -429,6 +446,59 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isViewOpen && viewData && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-0 w-full max-w-2xl overflow-hidden relative animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-between text-white">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <FiEye className="text-2xl" /> View {title} Details
+              </h2>
+              <button
+                onClick={() => setIsViewOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-2xl font-bold leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50">
+                   <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Food Item Name</div>
+                   <div className="text-lg font-bold text-gray-900 dark:text-white">
+                     {viewData.food_name_display || foodNames.find(f => f.id === viewData.food_name)?.name || "N/A"}
+                   </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Base Unit</div>
+                  <div className="text-md font-medium text-gray-900 dark:text-white">{viewData.base_unit || "—"}</div>
+                </div>
+
+                {fields.map((f) => {
+                  const val = (viewData as any)[f.key];
+                  return (
+                    <div key={f.key} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-900/50 transition-colors">
+                      <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{f.label}</div>
+                      <div className="text-md font-bold text-gray-900 dark:text-white">{val === null || val === undefined ? "—" : String(val)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+              <Button onClick={() => setIsViewOpen(false)} variant="primary" className="px-8 shadow-lg shadow-blue-500/20">
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       )}

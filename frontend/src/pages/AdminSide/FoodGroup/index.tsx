@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiEdit, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
+import { FiEdit, FiPlus, FiSearch, FiTrash2, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -9,6 +9,7 @@ import Label from "../../../components/form/Label";
 import { deleteFoodGroup, FoodGroup, getFoodGroupList } from "./foodgroupapi";
 import AddFoodGroup from "./AddFoodGroup";
 import EditFoodGroup from "./EditFoodGroup";
+import ImportButton from "../../../components/common/ImportButton";
 
 const FoodGroupManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodGroup[]>([]);
@@ -18,6 +19,8 @@ const FoodGroupManagementPage: React.FC = () => {
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewData, setViewData] = useState<FoodGroup | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,7 +61,6 @@ const FoodGroupManagementPage: React.FC = () => {
     <>
       <PageMeta title="Food Group Management" description="Manage food groups" />
       <PageBreadcrumb pageTitle="Food Group Management" />
-
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">
@@ -74,30 +76,11 @@ const FoodGroupManagementPage: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
-
           <div className="flex items-center gap-6">
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
               <FiPlus /> Add Food Group
             </Button>
-
-            <div className="flex items-center gap-2">
-              <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
-              <Select
-                value={String(pageSize)}
-                onChange={(val) => {
-                  setPageSize(Number(val));
-                  setCurrentPage(1);
-                }}
-                options={[
-                  { value: "5", label: "5" },
-                  { value: "10", label: "10" },
-                  { value: "25", label: "25" },
-                  { value: "50", label: "50" },
-                ]}
-                className="w-20"
-              />
-              <span className="text-sm text-gray-600 whitespace-nowrap">entries</span>
-            </div>
+            <ImportButton />
           </div>
         </div>
 
@@ -147,6 +130,16 @@ const FoodGroupManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">{row.name}</TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
+                        <button
+                          className="text-gray-500 hover:text-gray-700 text-lg transition-colors"
+                          title="View Details"
+                          onClick={() => {
+                            setViewData(row);
+                            setIsViewOpen(true);
+                          }}
+                        >
+                          <FiEye />
+                        </button>
                         <button
                           className="text-blue-600 hover:text-blue-800 text-lg"
                           onClick={() => {
@@ -228,6 +221,36 @@ const FoodGroupManagementPage: React.FC = () => {
             setEditId(null);
           }}
         />
+      )}
+
+      {isViewOpen && viewData && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-0 w-full max-w-lg overflow-hidden relative animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-between text-white">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <FiEye className="text-2xl" /> Food Group Details
+              </h2>
+              <button onClick={() => setIsViewOpen(false)} className="text-white hover:text-gray-200 text-2xl font-bold">
+                &times;
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">ID</div>
+                <div className="text-md font-bold text-gray-900 dark:text-white">{viewData.id}</div>
+              </div>
+              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Name</div>
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{viewData.name}</div>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+              <Button onClick={() => setIsViewOpen(false)} variant="primary">
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

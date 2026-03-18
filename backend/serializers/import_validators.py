@@ -1,14 +1,23 @@
 from app.models import (
     Country, State, City, MealType, CuisineType, Food, 
     Ingredient, Unit, HealthParameter, NormalRangeForHealthParameter, 
-    DietPlans, FoodIngredient, FoodStep
+    DietPlans, FoodIngredient, FoodStep,
+    FoodGroup, FoodName, FoodProximate, FoodWaterSolubleVitamins,
+    FoodFatSolubleVitamins, FoodCarotenoids, FoodMinerals, FoodSugars,
+    FoodAminoAcids, FoodOrganicAcids, FoodPolyphenols, FoodPhytochemicals,
+    FoodFattyAcidProfile
 )
 from app.serializers import (
     CountrySerializer, StateSerializer, CitySerializer, 
     MealTypeSerializer, CuisineTypeSerializer, FoodSerializer, 
     IngredientSerializer, UnitSerializer, HealthParameterSerializer, 
     NormalRangeForHealthParameterSerializer, DietPlanSerializer,
-    FoodIngredientSerializer, FoodStepSerializer
+    FoodIngredientSerializer, FoodStepSerializer,
+    FoodGroupSerializer, FoodNameSerializer, FoodProximateSerializer,
+    FoodWaterSolubleVitaminsSerializer, FoodFatSolubleVitaminsSerializer,
+    FoodCarotenoidsSerializer, FoodMineralsSerializer, FoodSugarsSerializer,
+    FoodAminoAcidsSerializer, FoodOrganicAcidsSerializer, FoodPolyphenolsSerializer,
+    FoodPhytochemicalsSerializer, FoodFattyAcidProfileSerializer
 )
 
 # Mapping of module + submenu to Model and Serializer
@@ -28,6 +37,32 @@ MODEL_MAPPING = {
         'unit': (Unit, UnitSerializer),
         'recipe': (FoodIngredient, FoodIngredientSerializer),
         'food-step': (FoodStep, FoodStepSerializer),
+        'foodgroup': (FoodGroup, FoodGroupSerializer),
+        'food-group': (FoodGroup, FoodGroupSerializer),
+        'foodname': (FoodName, FoodNameSerializer),
+        'food-name': (FoodName, FoodNameSerializer),
+        'foodproximate': (FoodProximate, FoodProximateSerializer),
+        'food-proximate': (FoodProximate, FoodProximateSerializer),
+        'foodwatersolublevitamins': (FoodWaterSolubleVitamins, FoodWaterSolubleVitaminsSerializer),
+        'food-water-soluble-vitamins': (FoodWaterSolubleVitamins, FoodWaterSolubleVitaminsSerializer),
+        'foodfatsolublevitamins': (FoodFatSolubleVitamins, FoodFatSolubleVitaminsSerializer),
+        'food-fat-soluble-vitamins': (FoodFatSolubleVitamins, FoodFatSolubleVitaminsSerializer),
+        'foodcarotenoids': (FoodCarotenoids, FoodCarotenoidsSerializer),
+        'food-carotenoids': (FoodCarotenoids, FoodCarotenoidsSerializer),
+        'foodminerals': (FoodMinerals, FoodMineralsSerializer),
+        'food-minerals': (FoodMinerals, FoodMineralsSerializer),
+        'foodsugars': (FoodSugars, FoodSugarsSerializer),
+        'food-sugars': (FoodSugars, FoodSugarsSerializer),
+        'foodaminoacids': (FoodAminoAcids, FoodAminoAcidsSerializer),
+        'food-amino-acids': (FoodAminoAcids, FoodAminoAcidsSerializer),
+        'foodorganicacids': (FoodOrganicAcids, FoodOrganicAcidsSerializer),
+        'food-organic-acids': (FoodOrganicAcids, FoodOrganicAcidsSerializer),
+        'foodpolyphenols': (FoodPolyphenols, FoodPolyphenolsSerializer),
+        'food-polyphenols': (FoodPolyphenols, FoodPolyphenolsSerializer),
+        'foodphytochemicals': (FoodPhytochemicals, FoodPhytochemicalsSerializer),
+        'food-phytochemicals': (FoodPhytochemicals, FoodPhytochemicalsSerializer),
+        'foodfattyacidprofile': (FoodFattyAcidProfile, FoodFattyAcidProfileSerializer),
+        'food-fatty-acid-profile': (FoodFattyAcidProfile, FoodFattyAcidProfileSerializer),
     },
     'health': {
         'healthparameter': (HealthParameter, HealthParameterSerializer),

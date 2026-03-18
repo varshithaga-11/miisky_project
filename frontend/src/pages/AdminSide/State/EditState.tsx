@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { getStateById, updateState, State } from "./stateapi";
+import { getStateById, updateState } from "./stateapi";
 import { getCountryList, Country } from "../Country/countryapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -22,12 +22,16 @@ const EditState: React.FC<EditStateProps> = ({ stateId, isOpen, onClose, onUpdat
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [searchCountry, setSearchCountry] = useState("");
 
   useEffect(() => {
-    getCountryList(1, "all")
-      .then((res) => setCountries(res.results))
-      .catch((err) => console.error("Error fetching countries:", err));
-  }, []);
+    const timer = setTimeout(() => {
+      getCountryList(1, "all", searchCountry)
+        .then((res) => setCountries(res.results))
+        .catch((err) => console.error("Error fetching countries:", err));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCountry]);
 
   useEffect(() => {
     if (isOpen && stateId) {
@@ -89,9 +93,10 @@ const EditState: React.FC<EditStateProps> = ({ stateId, isOpen, onClose, onUpdat
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div>
               <Label htmlFor="country">Country *</Label>
-              <Select
+              <SearchableSelect
                 value={countryId}
-                onChange={(val) => setCountryId(val)}
+                onChange={(val) => setCountryId(val as string)}
+                onSearch={setSearchCountry}
                 options={countryOptions}
                 className="w-full"
                 disabled={saving}

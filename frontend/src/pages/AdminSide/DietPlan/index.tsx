@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getDietPlanList, deleteDietPlan, DietPlan } from "./dietplanapi";
 import AddDietPlan from "./AddDietPlan";
 import EditDietPlan from "./EditDietPlan";
+import ViewDietPlan from "./ViewDietPlan";
 import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
@@ -19,7 +20,9 @@ const DietPlanManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [viewingId, setViewingId] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -178,6 +181,9 @@ const DietPlanManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm">
                       <div className="flex items-center gap-3">
+                        <button className="text-blue-600 hover:text-blue-800" title="View" onClick={() => { setViewingId(plan.id!); setIsViewOpen(true); }}>
+                          <FiEye className="text-lg" />
+                        </button>
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditingId(plan.id!); setIsEditOpen(true); }}>
                           <FiEdit className="text-lg" />
                         </button>
@@ -217,6 +223,12 @@ const DietPlanManagement: React.FC = () => {
           id={editingId}
           onClose={() => setIsEditOpen(false)}
           onUpdate={() => { fetchPlans(); setIsEditOpen(false); setEditingId(null); }}
+        />
+      )}
+      {isViewOpen && viewingId !== null && (
+        <ViewDietPlan
+          id={viewingId}
+          onClose={() => { setIsViewOpen(false); setViewingId(null); }}
         />
       )}
     </>

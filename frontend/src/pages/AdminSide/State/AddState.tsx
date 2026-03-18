@@ -4,7 +4,7 @@ import { getCountryList, Country } from "../Country/countryapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -18,12 +18,16 @@ const AddState: React.FC<AddStateProps> = ({ onClose, onAdd }) => {
   const [countryId, setCountryId] = useState<string>("");
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchCountry, setSearchCountry] = useState("");
 
   useEffect(() => {
-    getCountryList(1, "all")
-      .then((res) => setCountries(res.results))
-      .catch((err) => console.error("Error fetching countries:", err));
-  }, []);
+    const timer = setTimeout(() => {
+      getCountryList(1, "all", searchCountry)
+        .then((res) => setCountries(res.results))
+        .catch((err) => console.error("Error fetching countries:", err));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCountry]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,9 +80,10 @@ const AddState: React.FC<AddStateProps> = ({ onClose, onAdd }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="country">Country *</Label>
-            <Select
+            <SearchableSelect
               value={countryId}
-              onChange={(val) => setCountryId(val)}
+              onChange={(val) => setCountryId(val as string)}
+              onSearch={setSearchCountry}
               options={countryOptions}
               className="w-full"
               disabled={loading}

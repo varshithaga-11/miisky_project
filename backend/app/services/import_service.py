@@ -37,7 +37,11 @@ class ImportService:
             check_field = 'food_name'
         
         if check_field:
-            existing_values = set(Model.objects.values_list(check_field, flat=True))
+            if check_field == 'food_name':
+                # For composition models, existing_values should be names of food items
+                existing_values = set(Model.objects.select_related('food_name').values_list('food_name__name', flat=True))
+            else:
+                existing_values = set(Model.objects.values_list(check_field, flat=True))
         
         # Specific check for join models without single name/title field
         if module == "food":
@@ -57,6 +61,7 @@ class ImportService:
             'health_parameter_name': 'health_parameter_name_input',
             'category_name': 'category_name_input',
             'food_name': 'food_name_input',
+            'food_group_name': 'food_group_name_input',
             'ingredient_name': 'ingredient_name_input',
             'unit_name': 'unit_name_input',
             'meal_type_names': 'meal_type_names_input',
@@ -67,9 +72,29 @@ class ImportService:
             # Map Excel column names to Serializer inputs for nested objects
             # e.g. 'country_name' in Excel becomes 'country_name_input' for the Serializer
             mapped_row_data = row_data.copy()
+            
+            # --- Capture original values for duplicate checking BEFORE mapping/deletion ---
+            orig_vals_for_check = {}
+            if check_field:
+                if isinstance(check_field, tuple):
+                    orig_vals_for_check[check_field[0]] = mapped_row_data.get(check_field[0])
+                    orig_vals_for_check[check_field[1]] = mapped_row_data.get(check_field[1])
+                else:
+                    orig_vals_for_check[check_field] = mapped_row_data.get(check_field)
+
             for excel_key, serializer_key in NESTED_FIELD_MAP.items():
-                if excel_key in mapped_row_data and serializer_key not in mapped_row_data:
-                    mapped_row_data[serializer_key] = mapped_row_data[excel_key]
+                if excel_key in mapped_row_data:
+                    # Move value to the _input field if not already set
+                    if serializer_key not in mapped_row_data:
+                        mapped_row_data[serializer_key] = mapped_row_data[excel_key]
+                    
+                    # IMPORTANT: If the excel_key is the same as a real model field (like 'food_name')
+                    # and the value is a string (a name, not a PK), we MUST remove it from mapped_row_data
+                    # to prevent DRF from trying to validate it as a PrimaryKeyRelatedField.
+                    if excel_key != serializer_key and isinstance(mapped_row_data[excel_key], str):
+                        # Only delete if it's not the same key (e.g., 'food_name' -> 'food_name_input')
+                        # This prevents the "Incorrect type. Expected pk value, received str" error.
+                        del mapped_row_data[excel_key]
 
             # Inject created_at if not present and the model/serializer might expect it
             if 'created_at' not in mapped_row_data or not mapped_row_data['created_at']:
@@ -98,8 +123,8 @@ class ImportService:
             if check_field:
                 if isinstance(check_field, tuple):
                     # Check for join tables (food_name, ingredient_name) or (food_name, step_number)
-                    val1 = mapped_row_data.get(check_field[0])
-                    val2 = mapped_row_data.get(check_field[1])
+                    val1 = orig_vals_for_check.get(check_field[0])
+                    val2 = orig_vals_for_check.get(check_field[1])
                     if val1 and val2 is not None:
                          # Ensure step_number is integer if that's what's in DB
                         if check_field[1] == 'step_number':
@@ -108,7 +133,7 @@ class ImportService:
                         if (str(val1), val2) in existing_values:
                             is_old = True
                 else:
-                    original_val = mapped_row_data.get(check_field)
+                    original_val = orig_vals_for_check.get(check_field)
                     if original_val and original_val in existing_values:
                         is_old = True
 
@@ -132,6 +157,20 @@ class ImportService:
             
             # Create a copy for analysis table display
             row_copy = mapped_row_data.copy()
+            
+            # --- RESTORE original values for display in the analysis table ---
+            # If we deleted a field (like 'food_name') because it was a string, 
+            # we should put it back for the user to see in the table.
+            if check_field:
+                if isinstance(check_field, tuple):
+                    if check_field[0] not in row_copy:
+                        row_copy[check_field[0]] = orig_vals_for_check.get(check_field[0])
+                    if check_field[1] not in row_copy:
+                        row_copy[check_field[1]] = orig_vals_for_check.get(check_field[1])
+                else:
+                    if check_field not in row_copy:
+                        row_copy[check_field] = orig_vals_for_check.get(check_field)
+
             row_copy['errors'] = row_errors
             row_copy['is_old'] = is_old
             

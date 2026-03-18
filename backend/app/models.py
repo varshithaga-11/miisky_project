@@ -481,7 +481,7 @@ class FoodProximate(models.Model):#Proximate Principles and Dietary Fiber
     energy = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.food.food_name} - Proximate"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Proximate"
 
 
 class FoodWaterSolubleVitamins(models.Model):#Water Soluble Vitamins
@@ -510,7 +510,7 @@ class FoodWaterSolubleVitamins(models.Model):#Water Soluble Vitamins
     vitamin_c = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.food.food_name} - Water Soluble Vitamins"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Water Soluble Vitamins"
 
 
 class FoodFatSolubleVitamins(models.Model):#Fat Soluble Vitamins
@@ -543,7 +543,7 @@ class FoodFatSolubleVitamins(models.Model):#Fat Soluble Vitamins
 
 
     def __str__(self):
-        return f"{self.food.food_name} - Fat Soluble Vitamins"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Fat Soluble Vitamins"
 
 
 class FoodCarotenoids(models.Model):#Carotenoids
@@ -569,7 +569,7 @@ class FoodCarotenoids(models.Model):#Carotenoids
     carotenoid_activity = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.food.food_name} - Carotenoids"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Carotenoids"
 
 
 class FoodMinerals(models.Model):#Minerals and Trace Elements
@@ -611,7 +611,7 @@ class FoodMinerals(models.Model):#Minerals and Trace Elements
     lithium = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.food.food_name} - Minerals"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Minerals"
 
 
 
@@ -639,7 +639,7 @@ class FoodSugars(models.Model):#Starch and Individual Sugars
 
 
     def __str__(self):
-        return f"{self.food.food_name} - Sugars"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Sugars"
 
 
 class FoodAminoAcids(models.Model):#Amino Acid Profile
@@ -685,7 +685,7 @@ class FoodOrganicAcids(models.Model):#Organic Acids
 
 
     def __str__(self):
-        return f"{self.food.food_name} - Organic Acids"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Organic Acids"
     
 
 
@@ -712,7 +712,7 @@ class FoodPolyphenols(models.Model):#Polyphenols
 
 
     def __str__(self):
-        return f"{self.food.food_name} - Polyphenols"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Polyphenols"
 
 
 ##OLIGOSACCHARIDES, PHYTOSTEROLS, PHYTATES AND SAPONIN
@@ -742,7 +742,7 @@ class FoodPhytochemicals(models.Model):
 
 
     def __str__(self):
-        return f"{self.food.food_name} - Phytochemicals"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Phytochemicals"
 
 
 #Fatty Acid Profile 
@@ -789,4 +789,4 @@ class FoodFattyAcidProfile(models.Model):
     total_pufa = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.food.food_name} - Fatty Acid Profile"
+        return f"{self.food_name.name if self.food_name else 'Unknown'} - Fatty Acid Profile"

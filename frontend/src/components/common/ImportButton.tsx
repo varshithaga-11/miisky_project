@@ -14,14 +14,28 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
 
   const context = useMemo(() => {
     const path = location.pathname;
-    
-    // Mapping current paths to module/submenu structure
+    // Food Groups and Food Names
+    if (path.includes("/food-group")) return { module: "food", submenu: "foodgroup" };
+    if (path.includes("/food-name")) return { module: "food", submenu: "foodname" };
     // Location Module
     if (path.includes("/country")) return { module: "location", submenu: "country" };
     if (path.includes("/state")) return { module: "location", submenu: "state" };
     if (path.includes("/city")) return { module: "location", submenu: "city" };
-    
-    // Food Module
+
+    // Food Composition Submenus
+    if (path.includes("/food-proximate")) return { module: "food", submenu: "foodproximate" };
+    if (path.includes("/food-water-soluble-vitamins")) return { module: "food", submenu: "foodwatersolublevitamins" };
+    if (path.includes("/food-fat-soluble-vitamins")) return { module: "food", submenu: "foodfatsolublevitamins" };
+    if (path.includes("/food-carotenoids")) return { module: "food", submenu: "foodcarotenoids" };
+    if (path.includes("/food-minerals")) return { module: "food", submenu: "foodminerals" };
+    if (path.includes("/food-sugars")) return { module: "food", submenu: "foodsugars" };
+    if (path.includes("/food-amino-acids")) return { module: "food", submenu: "foodaminoacids" };
+    if (path.includes("/food-organic-acids")) return { module: "food", submenu: "foodorganicacids" };
+    if (path.includes("/food-polyphenols")) return { module: "food", submenu: "foodpolyphenols" };
+    if (path.includes("/food-phytochemicals")) return { module: "food", submenu: "foodphytochemicals" };
+    if (path.includes("/food-fatty-acid-profile")) return { module: "food", submenu: "foodfattyacidprofile" };
+
+    // Other Food Module
     if (path.includes("/meal-type")) return { module: "food", submenu: "meal-type" };
     if (path.includes("/cuisine-type")) return { module: "food", submenu: "cuisine-type" };
     if (path.includes("/food")) return { module: "food", submenu: "food" };
@@ -29,7 +43,7 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
     if (path.includes("/ingredient")) return { module: "food", submenu: "ingredient" };
     if (path.includes("/recipe-creator")) return { module: "food", submenu: "recipe" };
     if (path.includes("/food-step")) return { module: "food", submenu: "food-step" };
-    
+
     // Health Module
     if (path.includes("/health-parameter")) return { module: "health", submenu: "health-parameter" };
     if (path.includes("/normal-range")) return { module: "health", submenu: "normal-range" };

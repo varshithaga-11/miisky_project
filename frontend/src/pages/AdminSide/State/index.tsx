@@ -24,6 +24,7 @@ const StateManagementPage: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<keyof State | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -96,10 +97,15 @@ const StateManagementPage: React.FC = () => {
     });
   }, [states, sortField, sortDirection, countries]);
 
-  const handleSearch = (val: string) => {
-    setSearchTerm(val);
-    setCurrentPage(1);
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== searchInput) {
+        setSearchTerm(searchInput);
+        setCurrentPage(1);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, searchTerm]);
 
   if (loading && states.length === 0) return <div className="text-black dark:text-white p-6">Loading states...</div>;
 
@@ -115,8 +121,8 @@ const StateManagementPage: React.FC = () => {
             <input
               type="text"
               placeholder="Search state or country..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
