@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
@@ -114,6 +114,210 @@ class ProfileView(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
+
+
+class UserManagementViewSet(viewsets.ModelViewSet):
+    """
+    Admin CRUD for UserRegister model.
+    Supports search on username/email/name/mobile and optional filter by created_by.
+    Accepts multipart/form-data for photo upload.
+    """
+    queryset = UserRegister.objects.all().order_by('-id')
+    serializer_class = UserManagementSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile', 'whatsapp']
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    # NOTE: UserRegister currently has no created_by field.
+    # We intentionally do not filter by created_by, so list shows all users.
+
+
+# ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
+
+class UserQuestionnaireViewSet(viewsets.ModelViewSet):
+    queryset = UserQuestionnaire.objects.select_related('user').all()
+    serializer_class = UserQuestionnaireSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = UserQuestionnaire.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = UserQuestionnaire.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class NutritionistProfileViewSet(viewsets.ModelViewSet):
+    queryset = NutritionistProfile.objects.select_related('user').all()
+    serializer_class = NutritionistProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = NutritionistProfile.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = NutritionistProfile.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenProfile.objects.select_related('user').all()
+    serializer_class = MicroKitchenProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = MicroKitchenProfile.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = MicroKitchenProfile.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class DeliveryProfileViewSet(viewsets.ModelViewSet):
+    queryset = DeliveryProfile.objects.select_related('user').all()
+    serializer_class = DeliveryProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = DeliveryProfile.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = DeliveryProfile.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
+    queryset = UserNutritionistMapping.objects.select_related("user", "nutritionist").all()
+    serializer_class = UserNutritionistMappingSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def perform_create(self, serializer):
+        mapping = serializer.save()
+        if hasattr(mapping.user, "is_patient_mapped") and not mapping.user.is_patient_mapped:
+            mapping.user.is_patient_mapped = True
+            mapping.user.save(update_fields=["is_patient_mapped"])
+
+    def perform_update(self, serializer):
+        mapping = serializer.save()
+        if hasattr(mapping.user, "is_patient_mapped") and not mapping.is_active:
+            has_other = UserNutritionistMapping.objects.filter(
+                user=mapping.user, is_active=True
+            ).exclude(pk=mapping.pk).exists()
+            if not has_other:
+                mapping.user.is_patient_mapped = False
+                mapping.user.save(update_fields=["is_patient_mapped"])
+
+    def perform_destroy(self, instance):
+        user = instance.user
+        super().perform_destroy(instance)
+        if hasattr(user, "is_patient_mapped"):
+            has_other = UserNutritionistMapping.objects.filter(user=user, is_active=True).exists()
+            if not has_other:
+                user.is_patient_mapped = False
+                user.save(update_fields=["is_patient_mapped"])
+
+    @action(detail=False, methods=["get"], url_path="my-patients")
+    def my_patients(self, request):
+        qs = UserNutritionistMapping.objects.select_related("user").filter(
+            nutritionist=request.user, is_active=True
+        )
+        results = []
+        for mapping in qs:
+            patient = mapping.user
+            try:
+                q = patient.userquestionnaire
+            except UserQuestionnaire.DoesNotExist:
+                q = None
+            results.append(
+                {
+                    "mapping_id": mapping.id,
+                    "assigned_on": mapping.assigned_on,
+                    "user": {
+                        "id": patient.id,
+                        "username": patient.username,
+                        "first_name": patient.first_name,
+                        "last_name": patient.last_name,
+                        "email": patient.email,
+                        "mobile": patient.mobile,
+                        "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
+                    },
+                    "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
+                }
+            )
+        return Response(results)
+
+    @action(detail=False, methods=["get"], url_path="my-nutritionist")
+    def my_nutritionist(self, request):
+        mapping = UserNutritionistMapping.objects.select_related("nutritionist").filter(
+            user=request.user, is_active=True
+        ).first()
+        if not mapping:
+            return Response({}, status=status.HTTP_200_OK)
+
+        nutritionist = mapping.nutritionist
+        try:
+            profile = nutritionist.nutritionistprofile
+        except NutritionistProfile.DoesNotExist:
+            profile = None
+
+        return Response(
+            {
+                "mapping_id": mapping.id,
+                "assigned_on": mapping.assigned_on,
+                "nutritionist": {
+                    "id": nutritionist.id,
+                    "username": nutritionist.username,
+                    "first_name": nutritionist.first_name,
+                    "last_name": nutritionist.last_name,
+                    "email": nutritionist.email,
+                    "mobile": nutritionist.mobile,
+                },
+                "profile": NutritionistProfileSerializer(profile).data if profile else None,
+            }
+        )
 
 
 class CountryViewSet(viewsets.ModelViewSet):
@@ -1036,4 +1240,21 @@ class TemplateDownloadView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{submenu}_template.xlsx"'
         return response
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = UserRegister.objects.all()
+    serializer_class = ProfileSerializer    
+    
+    def get_queryset(self):
+        return UserRegister.objects.filter(id=self.request.user.id)
+    
+    def update(self, request, *args, **kwargs):
+        partial = True  # allows partial update
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 

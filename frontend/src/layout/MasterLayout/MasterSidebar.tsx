@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
   LayoutDashboard,
   FileText,
-  Users,
   MapPin,
   UserCog,
   ChevronDownIcon,
@@ -15,6 +14,7 @@ import {
 import { HorizontaLDots } from "../../icons";
 
 import { useSidebar } from "../../context/SidebarContext";
+import { getUserRoleFromToken } from "../../utils/auth";
 
 type NavItem = {
   name: string;
@@ -23,7 +23,7 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const navItems: NavItem[] = [
+const adminNavItems: NavItem[] = [
   {
     icon: <LayoutDashboard className="w-5 h-5" />,
     name: "Dashboard",
@@ -44,11 +44,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <Users className="w-5 h-5" />,
-    name: "User Management",
-    path: "/master/usermanagement",
-  },
-  {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Food Management",
     subItems: [
@@ -58,9 +53,6 @@ const navItems: NavItem[] = [
       { name: "Units", path: "/master/unit" },
       { name: "Ingredients", path: "/master/ingredient" },
       { name: "Recipe Management", path: "/master/recipe-creator" },
-
-      // { name: "Recipe Ingredients", path: "/master/food-ingredient" },
-      // { name: "Preparation Steps", path: "/master/food-step" },
     ],
   },
   {
@@ -163,6 +155,53 @@ const navItems: NavItem[] = [
       { name: "Diet Plans", path: "/master/diet-plan" },
     ],
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Mappings",
+    subItems: [{ name: "User–Nutritionist Mapping", path: "/master/user-nutrition-mapping" }],
+  },
+];
+
+const patientNavItems: NavItem[] = [
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Questionnaire",
+    path: "/patient/questionnaire",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Nutritionist Allotted",
+    path: "/patient/nutrition-allotted",
+  },
+];
+
+const nutritionistNavItems: NavItem[] = [
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Questionnaire",
+    path: "/nutrition/questionnaire",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Allotted Patients",
+    path: "/nutrition/allotted-patients",
+  },
+];
+
+const microKitchenNavItems: NavItem[] = [
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Questionnaire",
+    path: "/microkitchen/questionnaire",
+  },
+];
+
+const supplyChainNavItems: NavItem[] = [
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Delivery Questionnaire",
+    path: "/supplychain/delivery-questionnaire",
+  },
 ];
 const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -173,6 +212,15 @@ const MasterSidebar: React.FC = () => {
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const navItems = useMemo<NavItem[]>(() => {
+    const role = getUserRoleFromToken();
+    if (role === "patient" || role === "non_patient") return patientNavItems;
+    if (role === "nutritionist") return nutritionistNavItems;
+    if (role === "micro_kitchen") return microKitchenNavItems;
+    if (role === "supply_chain") return supplyChainNavItems;
+    return adminNavItems;
+  }, []);
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,

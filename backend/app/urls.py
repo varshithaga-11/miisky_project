@@ -10,6 +10,12 @@ router = DefaultRouter()
 router.register(r'country', CountryViewSet)
 router.register(r'state', StateViewSet, basename='state')
 router.register(r'city', CityViewSet, basename='city')
+router.register(r'usermanagement', UserManagementViewSet, basename='usermanagement')
+router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
+router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
+router.register(r'microkitchenprofile', MicroKitchenProfileViewSet, basename='microkitchenprofile')
+router.register(r'deliveryprofile', DeliveryProfileViewSet, basename='deliveryprofile')
+router.register(r'usernutritionistmapping', UserNutritionistMappingViewSet, basename='usernutritionistmapping')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)
@@ -37,6 +43,9 @@ router.register(r'healthparameter', HealthParameterViewSet)
 router.register(r'normalrange', NormalRangeForHealthParameterViewSet)
 router.register(r'dietplan', DietPlanViewSet)
 router.register(r'dietplanfeature', DietPlanFeatureViewSet)
+
+
+router.register(r'profile', ProfileViewSet, basename='profile')
 
 
 urlpatterns = [

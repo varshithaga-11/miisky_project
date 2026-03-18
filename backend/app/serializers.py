@@ -53,6 +53,72 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return instance
 
 
+class UserManagementSerializer(serializers.ModelSerializer):
+    """
+    Full CRUD serializer for UserRegister used by AdminSide/UserManagement.
+    Supports optional password change via password + password_confirm.
+    """
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True, style={'input_type': 'password'})
+    password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True, style={'input_type': 'password'})
+
+    class Meta:
+        model = UserRegister
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'role',
+            'mobile',
+            'whatsapp',
+            'dob',
+            'gender',
+            'photo',
+            'address',
+            'city',
+            'zip_code',
+            'state',
+            'country',
+            'joined_date',
+            'is_active',
+            'created_on',
+            'password',
+            'password_confirm',
+        ]
+        read_only_fields = ['created_on']
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        password_confirm = attrs.get('password_confirm')
+        if password or password_confirm:
+            if password != password_confirm:
+                raise serializers.ValidationError({"password_confirm": "Passwords don't match"})
+            if password and len(password) < 6:
+                raise serializers.ValidationError({"password": "Password must be at least 6 characters"})
+        return attrs
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        validated_data.pop('password_confirm', None)
+        user = UserRegister(**validated_data)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        validated_data.pop('password_confirm', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -634,6 +700,38 @@ class DietPlanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DietPlans
+        fields = "__all__"
+
+
+# ── Role Questionnaires / Profiles ─────────────────────────────────────────────
+
+class UserQuestionnaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserQuestionnaire
+        fields = "__all__"
+
+
+class NutritionistProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NutritionistProfile
+        fields = "__all__"
+
+
+class MicroKitchenProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MicroKitchenProfile
+        fields = "__all__"
+
+
+class DeliveryProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryProfile
+        fields = "__all__"
+
+
+class UserNutritionistMappingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNutritionistMapping
         fields = "__all__"
 
 

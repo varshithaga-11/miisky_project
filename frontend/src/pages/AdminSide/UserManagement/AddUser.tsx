@@ -1,11 +1,14 @@
-import React, { useState } from "react";
-import { createUser, UserRegister, userId } from "./api";
+import React, { useEffect, useMemo, useState } from "react";
+import { createUser, UserRegister } from "./api";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Select from "../../../components/form/Select";
+import { getCountryList, Country } from "../Country/countryapi";
+import { getStateList, State } from "../State/stateapi";
+import { getCityList, City } from "../City/cityapi";
 
 
 interface AddUserProps {
@@ -16,15 +19,57 @@ interface AddUserProps {
 const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("employee"); // default role
+  const [role, setRole] = useState<UserRegister["role"]>("patient");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [dob, setDob] = useState<string>("");
+  const [gender, setGender] = useState<UserRegister["gender"]>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [address, setAddress] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [joinedDate, setJoinedDate] = useState("");
+
+  const [countryId, setCountryId] = useState<string>("");
+  const [stateId, setStateId] = useState<string>("");
+  const [cityId, setCityId] = useState<string>("");
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [states, setStates] = useState<State[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error] = useState("");
+
+  useEffect(() => {
+    getCountryList(1, "all")
+      .then((res) => setCountries(res.results))
+      .catch((err) => console.error("Error fetching countries:", err));
+    getStateList(1, "all")
+      .then((res) => setStates(res.results))
+      .catch((err) => console.error("Error fetching states:", err));
+    getCityList(1, "all")
+      .then((res) => setCities(res.results))
+      .catch((err) => console.error("Error fetching cities:", err));
+  }, []);
+
+  const countryOptions = useMemo(
+    () => [{ value: "", label: "Select Country" }, ...countries.map((c) => ({ value: String(c.id), label: c.name }))],
+    [countries]
+  );
+
+  const stateOptions = useMemo(
+    () => [{ value: "", label: "Select State" }, ...states.map((s) => ({ value: String(s.id), label: s.name }))],
+    [states]
+  );
+
+  const cityOptions = useMemo(
+    () => [{ value: "", label: "Select City" }, ...cities.map((c) => ({ value: String(c.id), label: c.name }))],
+    [cities]
+  );
 
 
 const handleSubmit = async (e: React.FormEvent) => {
@@ -41,15 +86,26 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   setLoading(true);
   try {
-    const newUser: UserRegister & { password: string; created_by: number } = {
+    const newUser: UserRegister = {
       username,
       email,
       role,
       first_name: firstName,
       last_name: lastName,
       is_active: isActive,
-      password, // include password for creation
-      created_by: userId!, // logged in user ID
+      password,
+      password_confirm: confirmPassword,
+      mobile: mobile || null,
+      whatsapp: whatsapp || null,
+      dob: dob || null,
+      gender: gender || null,
+      photo: photo || null,
+      address: address || null,
+      zip_code: zipCode || null,
+      country: countryId ? Number(countryId) : null,
+      state: stateId ? Number(stateId) : null,
+      city: cityId ? Number(cityId) : null,
+      joined_date: joinedDate ? new Date(joinedDate).toISOString() : null,
     };
 
     const createdUser = await createUser(newUser);
@@ -163,11 +219,94 @@ const handleSubmit = async (e: React.FormEvent) => {
               value={role}
               onChange={(val) => setRole(val)}
               options={[
-                { value: "master", label: "Master" },
                 { value: "admin", label: "Admin" },
-                { value: "employee", label: "Employee" },
+                { value: "nutritionist", label: "Nutritionist/Dietician" },
+                { value: "patient", label: "Patient" },
+                { value: "supply_chain", label: "Supply Chain" },
+                { value: "food_buyer", label: "Food Buyer" },
+                { value: "micro_kitchen", label: "Micro Kitchen" },
+                { value: "non_patient", label: "Non Patient" },
               ]}
               className="w-full"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="mobile">Mobile</Label>
+            <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="whatsapp">Whatsapp</Label>
+            <Input id="whatsapp" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="dob">Date of Birth</Label>
+            <Input id="dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="gender">Gender</Label>
+            <Select
+              value={gender ?? ""}
+              onChange={(val) => setGender((val as any) || null)}
+              options={[
+                { value: "", label: "Select Gender" },
+                { value: "male", label: "Male" },
+                { value: "female", label: "Female" },
+                { value: "other", label: "Other" },
+              ]}
+              className="w-full"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="photo">Photo</Label>
+            <input
+              id="photo"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+              disabled={loading}
+              className="w-full text-sm"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Input id="address" type="text" value={address} onChange={(e) => setAddress(e.target.value)} disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="country">Country</Label>
+            <Select value={countryId} onChange={(val) => setCountryId(val)} options={countryOptions} className="w-full" disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="state">State</Label>
+            <Select value={stateId} onChange={(val) => setStateId(val)} options={stateOptions} className="w-full" disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="city">City</Label>
+            <Select value={cityId} onChange={(val) => setCityId(val)} options={cityOptions} className="w-full" disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="zipCode">Zip Code</Label>
+            <Input id="zipCode" type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} disabled={loading} />
+          </div>
+
+          <div>
+            <Label htmlFor="joinedDate">Joined Date</Label>
+            <Input
+              id="joinedDate"
+              type="datetime-local"
+              value={joinedDate}
+              onChange={(e) => setJoinedDate(e.target.value)}
               disabled={loading}
             />
           </div>
