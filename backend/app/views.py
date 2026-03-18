@@ -126,7 +126,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     serializer_class = UserManagementSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile', 'whatsapp']
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile', 'whatsapp', 'city__name', 'state__name', 'country__name']
     permission_classes = [AllowAny]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
@@ -338,7 +338,7 @@ class StateViewSet(viewsets.ModelViewSet):
     serializer_class = StateSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    search_fields = ['name', 'country__name']
 
     def get_queryset(self):
         queryset = State.objects.select_related('country').all()
@@ -358,7 +358,7 @@ class CityViewSet(viewsets.ModelViewSet):
     serializer_class = CitySerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    search_fields = ['name', 'state__name', 'state__country__name']
 
     def get_queryset(self):
         queryset = City.objects.select_related('state__country').all()
@@ -431,7 +431,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     serializer_class = FoodSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    search_fields = ['name', 'meal_types__name', 'cuisine_types__name']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foods(self, request):
@@ -458,7 +458,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    search_fields = ['name', 'meal_types__name', 'cuisine_types__name']
 
 
 class FoodNutritionViewSet(viewsets.ModelViewSet):
@@ -512,7 +512,7 @@ class FoodProximateViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodproximates(self, request):
@@ -527,7 +527,7 @@ class FoodWaterSolubleVitaminsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodwatersolublevitamins(self, request):
@@ -542,7 +542,7 @@ class FoodFatSolubleVitaminsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodfatsolublevitamins(self, request):
@@ -557,7 +557,7 @@ class FoodCarotenoidsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodcarotenoids(self, request):
@@ -572,7 +572,7 @@ class FoodMineralsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodminerals(self, request):
@@ -587,7 +587,7 @@ class FoodSugarsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodsugars(self, request):
@@ -602,7 +602,7 @@ class FoodAminoAcidsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodaminoacids(self, request):
@@ -617,7 +617,7 @@ class FoodOrganicAcidsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodorganicacids(self, request):
@@ -632,7 +632,7 @@ class FoodPolyphenolsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodpolyphenols(self, request):
@@ -647,7 +647,7 @@ class FoodPhytochemicalsViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodphytochemicals(self, request):
@@ -662,7 +662,7 @@ class FoodFattyAcidProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['food_name__name']
+    search_fields = ['food_name__name', 'food_name__code']
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodfattyacidprofiles(self, request):
