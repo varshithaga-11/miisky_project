@@ -134,6 +134,100 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     # We intentionally do not filter by created_by, so list shows all users.
 
 
+# ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
+
+class UserQuestionnaireViewSet(viewsets.ModelViewSet):
+    queryset = UserQuestionnaire.objects.select_related('user').all()
+    serializer_class = UserQuestionnaireSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = UserQuestionnaire.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = UserQuestionnaire.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class NutritionistProfileViewSet(viewsets.ModelViewSet):
+    queryset = NutritionistProfile.objects.select_related('user').all()
+    serializer_class = NutritionistProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = NutritionistProfile.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = NutritionistProfile.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenProfile.objects.select_related('user').all()
+    serializer_class = MicroKitchenProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = MicroKitchenProfile.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = MicroKitchenProfile.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
+class DeliveryProfileViewSet(viewsets.ModelViewSet):
+    queryset = DeliveryProfile.objects.select_related('user').all()
+    serializer_class = DeliveryProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        instance = DeliveryProfile.objects.filter(user=request.user).first()
+        if request.method.lower() == 'get':
+            if not instance:
+                return Response({}, status=status.HTTP_200_OK)
+            return Response(self.get_serializer(instance).data)
+
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj, _ = DeliveryProfile.objects.update_or_create(
+            user=request.user,
+            defaults=serializer.validated_data
+        )
+        return Response(self.get_serializer(obj).data)
+
+
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer

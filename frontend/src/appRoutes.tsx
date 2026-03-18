@@ -49,6 +49,10 @@ import FoodOrganicAcidsManagementPage from "./pages/AdminSide/FoodOrganicAcids/i
 import FoodPolyphenolsManagementPage from "./pages/AdminSide/FoodPolyphenols/index";
 import FoodPhytochemicalsManagementPage from "./pages/AdminSide/FoodPhytochemicals/index";
 import FoodFattyAcidProfileManagementPage from "./pages/AdminSide/FoodFattyAcidProfile/index";
+import PatientQuestionnairePage from "./pages/PatientSide/Questionnaire/index";
+import NutritionQuestionarePage from "./pages/NutritionSide/NutritionQuestionare/index";
+import MicroKitchenQuestionarePage from "./pages/MicroKitchenSide/MicroKitchenQuestionare/index";
+import DeliveryQuestionarePage from "./pages/SupplyChain/DeliveryQuestionare/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -107,6 +111,10 @@ export function appRoutes() {
           <Route path="master/food-polyphenols" element={<FoodPolyphenolsManagementPage />} />
           <Route path="master/food-phytochemicals" element={<FoodPhytochemicalsManagementPage />} />
           <Route path="master/food-fatty-acid-profile" element={<FoodFattyAcidProfileManagementPage />} />
+          <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
+          <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
+          <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
+          <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 
 
           {/* Others Page */}

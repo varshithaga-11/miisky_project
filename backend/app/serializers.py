@@ -703,6 +703,32 @@ class DietPlanSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+# ── Role Questionnaires / Profiles ─────────────────────────────────────────────
+
+class UserQuestionnaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserQuestionnaire
+        fields = "__all__"
+
+
+class NutritionistProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NutritionistProfile
+        fields = "__all__"
+
+
+class MicroKitchenProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MicroKitchenProfile
+        fields = "__all__"
+
+
+class DeliveryProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryProfile
+        fields = "__all__"
+
+
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────
 
 class FoodGroupSerializer(serializers.ModelSerializer):
