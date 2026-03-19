@@ -1294,16 +1294,68 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = self.queryset
+        
+        # Check for specific patient filter
+        patient_id = self.request.query_params.get('user')
+        
         if user.role == "admin":
-            return self.queryset
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            return queryset
+            
         if user.role == "nutritionist":
-            # Show reports for patients mapped to this nutritionist
+            # Identify patients mapped to this nutritionist
             mapped_patient_ids = UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
             ).values_list('user_id', flat=True)
-            return self.queryset.filter(user_id__in=mapped_patient_ids)
+            
+            # Start with reports for ALL mapped patients
+            queryset = queryset.filter(user_id__in=mapped_patient_ids)
+            
+            # Refine to specific patient if requested
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            
+            return queryset
+            
         # Patients see their own reports
-        return self.queryset.filter(user=user)
+        return queryset.filter(user=user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class NutritionistReviewViewSet(viewsets.ModelViewSet):
+    queryset = NutritionistReview.objects.all()
+    serializer_class = NutritionistReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = self.queryset
+        
+        # Check for specific patient
+        patient_id = self.request.query_params.get('user')
+        
+        if user.role == "admin":
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            return queryset
+            
+        if user.role == "nutritionist":
+            # Nutritionists see reviews they gave
+            queryset = queryset.filter(nutritionist=user)
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            return queryset
+            
+        if user.role == "patient" or user.role == "non_patient":
+            # Patients see reviews given to them
+            return queryset.filter(user=user)
+            
+        return queryset.none()
+
+    def perform_create(self, serializer):
+        # Automatically set the nutritionist to the logged-in user
+        serializer.save(nutritionist=self.request.user)

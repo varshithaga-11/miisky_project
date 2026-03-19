@@ -929,7 +929,27 @@ class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
 
 
 class PatientHealthReportSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+
     class Meta:
         model = PatientHealthReport
+        fields = [
+            'id', 'user', 'user_details', 'title', 'report_file', 
+            'report_type', 'uploaded_on'
+        ]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                "first_name": obj.user.first_name,
+                "last_name": obj.user.last_name,
+                "email": obj.user.email,
+            }
+        return None
+
+
+class NutritionistReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NutritionistReview
         fields = "__all__"
 

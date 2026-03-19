@@ -18,6 +18,7 @@ router.register(r'microkitcheninspection', MicroKitchenInspectionViewSet, basena
 router.register(r'deliveryprofile', DeliveryProfileViewSet, basename='deliveryprofile')
 router.register(r'usernutritionistmapping', UserNutritionistMappingViewSet, basename='usernutritionistmapping')
 router.register(r'patienthealthreport', PatientHealthReportViewSet, basename='patienthealthreport')
+router.register(r'nutritionistreview', NutritionistReviewViewSet, basename='nutritionistreview')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)

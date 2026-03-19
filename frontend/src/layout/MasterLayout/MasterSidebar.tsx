@@ -208,6 +208,11 @@ const nutritionistNavItems: NavItem[] = [
     name: "Allotted Patients",
     path: "/nutrition/allotted-patients",
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Patient Documents",
+    path: "/nutrition/uploaded-documents",
+  },
 ];
 
 const microKitchenNavItems: NavItem[] = [
