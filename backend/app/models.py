@@ -105,13 +105,13 @@ class MicroKitchenProfile(models.Model):
     user = models.OneToOneField(UserRegister, on_delete=models.CASCADE, related_name="micro_kitchen")
 
     # 🔹 Basic Info
-    brand_name = models.CharField(max_length=100)
-    kitchen_code = models.CharField(max_length=50, unique=True)
+    brand_name = models.CharField(max_length=100,null=True,blank=True)
+    kitchen_code = models.CharField(max_length=50, unique=True,null=True,blank=True)
 
     # 🔹 Compliance
-    fssai_no = models.CharField(max_length=14)
-    fssai_cert = models.FileField(upload_to='kitchen/fssai/')
-    pan_no = models.CharField(max_length=10)
+    fssai_no = models.CharField(max_length=14,null=True,blank=True)
+    fssai_cert = models.FileField(upload_to='kitchen/fssai/',null=True,blank=True)
+    pan_no = models.CharField(max_length=10,null=True,blank=True)
     gst_no = models.CharField(max_length=50, null=True, blank=True)
 
     # 🔹 Bank Details
@@ -165,12 +165,10 @@ class MicroKitchenProfile(models.Model):
     other_equipment = models.TextField(null=True, blank=True)
 
     # 🔹 Operations
-    cuisine_type = models.CharField(max_length=255)
-    meal_type=models.CharField(max_length=255)
-    opening_time = models.TimeField()
-    closing_time = models.TimeField()
+    cuisine_type = models.CharField(max_length=255,null=True,blank=True)
+    meal_type=models.CharField(max_length=255,null=True,blank=True)
     lpg_cylinders = models.IntegerField(null=True, blank=True)
-
+    no_of_staff=models.IntegerField(null=True, blank=True)
     time_available = models.CharField(max_length=100, null=True, blank=True)
 
     # 🔹 About

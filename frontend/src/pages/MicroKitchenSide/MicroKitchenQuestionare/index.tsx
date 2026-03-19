@@ -56,19 +56,19 @@ export default function MicroKitchenQuestionarePage() {
         <div className="space-y-6 max-w-4xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="brand_name">Brand name *</Label>
+              <Label htmlFor="brand_name">Brand name</Label>
               <Input id="brand_name" value={data.brand_name || ""} onChange={(e) => setField("brand_name", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="kitchen_code">Kitchen code *</Label>
+              <Label htmlFor="kitchen_code">Kitchen code</Label>
               <Input id="kitchen_code" value={data.kitchen_code || ""} onChange={(e) => setField("kitchen_code", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="fssai_no">FSSAI no *</Label>
+              <Label htmlFor="fssai_no">FSSAI no</Label>
               <Input id="fssai_no" value={data.fssai_no || ""} onChange={(e) => setField("fssai_no", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="pan_no">PAN no *</Label>
+              <Label htmlFor="pan_no">PAN no</Label>
               <Input id="pan_no" value={data.pan_no || ""} onChange={(e) => setField("pan_no", e.target.value)} />
             </div>
             <div>
@@ -76,24 +76,36 @@ export default function MicroKitchenQuestionarePage() {
               <Input id="gst_no" value={data.gst_no || ""} onChange={(e) => setField("gst_no", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="cuisine_type">Cuisine type *</Label>
-              <Input id="cuisine_type" value={data.cuisine_type || ""} onChange={(e) => setField("cuisine_type", e.target.value)} />
+              <Label htmlFor="bank_name">Bank name</Label>
+              <Input id="bank_name" value={data.bank_name || ""} onChange={(e) => setField("bank_name", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="meal_type">Meal type *</Label>
-              <Input id="meal_type" value={data.meal_type || ""} onChange={(e) => setField("meal_type", e.target.value)} />
+              <Label htmlFor="acc_no">Account no</Label>
+              <Input id="acc_no" value={data.acc_no || ""} onChange={(e) => setField("acc_no", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="opening_time">Opening time *</Label>
-              <Input id="opening_time" type="time" value={data.opening_time || ""} onChange={(e) => setField("opening_time", e.target.value)} />
+              <Label htmlFor="ifsc_code">IFSC code</Label>
+              <Input id="ifsc_code" value={data.ifsc_code || ""} onChange={(e) => setField("ifsc_code", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="closing_time">Closing time *</Label>
-              <Input id="closing_time" type="time" value={data.closing_time || ""} onChange={(e) => setField("closing_time", e.target.value)} />
+              <Label htmlFor="cuisine_type">Cuisine type</Label>
+              <Input id="cuisine_type" value={data.cuisine_type || ""} onChange={(e) => setField("cuisine_type", e.target.value)} placeholder="South Indian,North Indian,etc" />
+            </div>
+            <div>
+              <Label htmlFor="meal_type">Meal type</Label>
+              <Input id="meal_type" value={data.meal_type || ""} onChange={(e) => setField("meal_type", e.target.value)} placeholder="Breakfast,Lunch,Dinner,etc" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="kitchen_area">Kitchen area (sq.ft)</Label>
+              <Input id="kitchen_area" type="number" value={data.kitchen_area ?? ""} onChange={(e) => setField("kitchen_area", e.target.value ? Number(e.target.value) : null)} />
+            </div>
+            <div>
+              <Label htmlFor="platform_area">Platform area (sq.ft)</Label>
+              <Input id="platform_area" type="number" value={data.platform_area ?? ""} onChange={(e) => setField("platform_area", e.target.value ? Number(e.target.value) : null)} />
+            </div>
             <div>
               <Label htmlFor="water_source">Water source</Label>
               <Input id="water_source" value={data.water_source || ""} onChange={(e) => setField("water_source", e.target.value)} placeholder="borewell/cmc/municipal" />
@@ -163,6 +175,10 @@ export default function MicroKitchenQuestionarePage() {
             <div>
               <Label htmlFor="lpg_cylinders">LPG cylinders</Label>
               <Input id="lpg_cylinders" type="number" value={data.lpg_cylinders ?? ""} onChange={(e) => setField("lpg_cylinders", e.target.value ? Number(e.target.value) : null)} />
+            </div>
+            <div>
+              <Label htmlFor="no_of_staff">No of staff</Label>
+              <Input id="no_of_staff" type="number" value={data.no_of_staff ?? ""} onChange={(e) => setField("no_of_staff", e.target.value ? Number(e.target.value) : null)} />
             </div>
           </div>
 

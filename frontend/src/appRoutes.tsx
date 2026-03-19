@@ -56,6 +56,8 @@ import DeliveryQuestionarePage from "./pages/SupplyChain/DeliveryQuestionare/ind
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
+import PlansPage from "./pages/PatientSide/Plans/index";
+import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -87,6 +89,7 @@ export function appRoutes() {
           <Route path="master/client" element={<ClientPage />} />
           <Route path="master/supplier" element={<SupplierPage />} />
           <Route path="master/usermanagement" element={<UserManagementPage />} />
+          <Route path="master/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
           <Route path="master/country" element={<CountryManagementPage />} />
           <Route path="master/state" element={<StateManagementPage />} />
           <Route path="master/city" element={<CityManagementPage />} />
@@ -117,6 +120,7 @@ export function appRoutes() {
           <Route path="master/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
+          <Route path="patient/plans" element={<PlansPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />

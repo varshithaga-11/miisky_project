@@ -183,10 +183,21 @@ class NutritionistProfileViewSet(viewsets.ModelViewSet):
 
 
 class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
-    queryset = MicroKitchenProfile.objects.select_related('user').all()
     serializer_class = MicroKitchenProfileSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['brand_name', 'kitchen_code', 'user__username', 'user__email']
+
+    def get_queryset(self):
+        qs = MicroKitchenProfile.objects.select_related('user').all().order_by('-id')
+        is_verified = self.request.query_params.get('is_verified')
+        if is_verified is not None:
+            # Handle true/false strings from URL
+            val = is_verified.lower() == 'true'
+            qs = qs.filter(is_verified=val)
+        return qs
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):

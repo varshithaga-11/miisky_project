@@ -29,11 +29,10 @@ export type MicroKitchenProfile = {
   has_grinder?: boolean;
   has_blender?: boolean;
   other_equipment?: string | null;
-  cuisine_type?: string;
-  meal_type?: string;
-  opening_time?: string;
-  closing_time?: string;
+  cuisine_type?: string | null;
+  meal_type?: string | null;
   lpg_cylinders?: number | null;
+  no_of_staff?: number | null;
   time_available?: string | null;
   about_you?: string | null;
   passion_for_cooking?: string | null;
@@ -50,12 +49,20 @@ export type MicroKitchenProfile = {
   is_verified?: boolean;
 };
 
+const fileKeys = ["fssai_cert", "photo_exterior", "photo_entrance", "photo_kitchen", "photo_platform"];
+
 const toFormData = (data: Partial<MicroKitchenProfile>) => {
   const fd = new FormData();
   Object.entries(data).forEach(([k, v]) => {
     if (v === undefined || v === null) return;
-    if (v instanceof File) fd.append(k, v);
-    else fd.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+    if (v instanceof File) {
+      fd.append(k, v);
+    } else if (fileKeys.includes(k) && typeof v === "string") {
+      // Skip already uploaded file URLs
+      return;
+    } else {
+      fd.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+    }
   });
   return fd;
 };
@@ -68,15 +75,21 @@ export const getMyMicroKitchenProfile = async (): Promise<MicroKitchenProfile> =
 
 export const saveMyMicroKitchenProfile = async (data: Partial<MicroKitchenProfile>): Promise<MicroKitchenProfile> => {
   const url = createApiUrl("api/microkitchenprofile/me/");
-  const hasFile =
-    data.fssai_cert instanceof File ||
-    data.photo_exterior instanceof File ||
-    data.photo_entrance instanceof File ||
-    data.photo_kitchen instanceof File ||
-    data.photo_platform instanceof File;
-  const payload = hasFile ? toFormData(data) : data;
+  
+  // Clean file fields that are currently URLs
+  const hasFile = fileKeys.some(k => (data as any)[k] instanceof File);
+  
+  let payload: any = { ...data };
+  if (!hasFile) {
+    fileKeys.forEach(k => {
+      if (typeof payload[k] === "string") delete payload[k];
+    });
+  }
+
+  const finalPayload = hasFile ? toFormData(data) : payload;
   const headers = hasFile ? await getAuthHeadersFile() : await getAuthHeaders();
-  const response = await axios.put(url, payload as any, { headers });
+  
+  const response = await axios.patch(url, finalPayload as any, { headers });
   return response.data;
 };
 

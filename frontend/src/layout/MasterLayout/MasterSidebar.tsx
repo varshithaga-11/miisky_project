@@ -147,6 +147,13 @@ const adminNavItems: NavItem[] = [
     path: "/master/usermanagement",
   },
   {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Micro Kitchens",
+    subItems: [
+      { name: "Kitchen Information", path: "/master/micro-kitchen-information" },
+    ],
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Health Monitoring",
     subItems: [
@@ -172,6 +179,11 @@ const patientNavItems: NavItem[] = [
     icon: <FileText className="w-5 h-5" />,
     name: "Nutritionist Allotted",
     path: "/patient/nutrition-allotted",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Diet Plans",
+    path: "/patient/plans",
   },
 ];
 

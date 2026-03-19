@@ -719,9 +719,23 @@ class NutritionistProfileSerializer(serializers.ModelSerializer):
 
 
 class MicroKitchenProfileSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+
     class Meta:
         model = MicroKitchenProfile
         fields = "__all__"
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                "id": obj.user.id,
+                "username": obj.user.username,
+                "first_name": obj.user.first_name,
+                "last_name": obj.user.last_name,
+                "email": obj.user.email,
+                "mobile": obj.user.mobile,
+            }
+        return None
 
 
 class DeliveryProfileSerializer(serializers.ModelSerializer):
