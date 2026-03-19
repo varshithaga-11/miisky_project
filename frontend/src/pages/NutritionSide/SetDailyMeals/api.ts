@@ -39,6 +39,13 @@ export const getUserDailyMeals = async (patientId: number, date: string): Promis
     return Array.isArray(data) ? data : data?.results ?? [];
 };
 
+export const getUserMealsList = async (patientId: number): Promise<UserMeal[]> => {
+    const url = createApiUrl(`api/usermeal/?user=${patientId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    const data = response.data;
+    return Array.isArray(data) ? data : data?.results ?? [];
+};
+
 export const saveBulkMeals = async (meals: UserMeal[]): Promise<any> => {
     const url = createApiUrl("api/usermeal/bulk-create/");
     const response = await axios.post(url, meals, { headers: await getAuthHeaders() });

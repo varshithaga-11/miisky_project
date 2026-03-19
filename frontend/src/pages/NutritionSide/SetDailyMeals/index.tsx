@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, saveBulkMeals, getMealTypeList, getCuisineTypeList, getFoodList } from "./api";
+import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, getUserMealsList, saveBulkMeals, getMealTypeList, getCuisineTypeList, getFoodList } from "./api";
 import type { MappedPatientResponse, UserDietPlan, UserMeal, MealType, Food, CuisineType } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiPlus, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle } from "react-icons/fi";
+import { FiUsers, FiPlus, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiCheck } from "react-icons/fi";
 
 const SetDailyMealsPage: React.FC = () => {
     const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -62,7 +62,10 @@ const SetDailyMealsPage: React.FC = () => {
                             setEndDate(currentPlan.end_date);
                         }
                         
-                        if (!isRangeMode) {
+                        // Fetch based on mode
+                        if (isRangeMode) {
+                            fetchAllMeals(selectedPatient.user.id);
+                        } else {
                             fetchDailyMeals(selectedPatient.user.id, selectedDate);
                         }
                     } else {
@@ -82,6 +85,15 @@ const SetDailyMealsPage: React.FC = () => {
             setDailyEntries(meals);
         } catch (err) {
             toast.error("Failed to load daily schedule");
+        }
+    };
+
+    const fetchAllMeals = async (pid: number) => {
+        try {
+            const meals = await getUserMealsList(pid);
+            setDailyEntries(meals);
+        } catch (err) {
+            toast.error("Failed to load historical schedule");
         }
     };
 
@@ -109,14 +121,18 @@ const SetDailyMealsPage: React.FC = () => {
         setDailyEntries(updated);
     };
 
-    const handleSave = async () => {
-        if (dailyEntries.length === 0) {
-            toast.warning("Add at least one meal template before saving");
+    const handleSave = async (specificDate?: string) => {
+        const entriesToSave = specificDate 
+            ? dailyEntries.filter(e => e.meal_date === specificDate)
+            : dailyEntries;
+
+        if (entriesToSave.length === 0) {
+            toast.warning(`Add at least one meal ${specificDate ? `for ${specificDate}` : 'template'} before saving`);
             return;
         }
         
         // Basic validation
-        const isValid = dailyEntries.every(e => e.meal_type && e.food && e.quantity);
+        const isValid = entriesToSave.every(e => e.meal_type && e.food && e.quantity);
         if (!isValid) {
             toast.error("Please fill all fields for each slot");
             return;
@@ -124,9 +140,12 @@ const SetDailyMealsPage: React.FC = () => {
 
         setSaving(true);
         try {
-            await saveBulkMeals(dailyEntries as UserMeal[]);
-            toast.success(`Successfully programmed ${isRangeMode ? 'range' : 'daily'} schedule`);
-            if (!isRangeMode) fetchDailyMeals(selectedPatient!.user.id, selectedDate);
+            await saveBulkMeals(entriesToSave as UserMeal[]);
+            toast.success(`Successfully programmed ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? 'range' : 'daily'} schedule`);
+            if (!isRangeMode || specificDate) {
+                const fetchDate = specificDate || selectedDate;
+                fetchDailyMeals(selectedPatient!.user.id, fetchDate);
+            }
         } catch (err) {
             toast.error("Failed to sync schedule");
         } finally {
@@ -297,12 +316,21 @@ const SetDailyMealsPage: React.FC = () => {
                                                             </div>
                                                             {formattedDay}
                                                         </h3>
-                                                        <button 
-                                                            onClick={() => handleAddSlot(dateStr)}
-                                                            className="px-6 py-2 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm flex items-center gap-2"
-                                                        >
-                                                            <FiPlus size={14} /> Add Meal
-                                                        </button>
+                                                        <div className="flex items-center gap-3">
+                                                            <button 
+                                                                onClick={() => handleAddSlot(dateStr)}
+                                                                className="px-6 py-2 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm flex items-center gap-2"
+                                                            >
+                                                                <FiPlus size={14} /> Add Meal
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleSave(dateStr)}
+                                                                disabled={saving}
+                                                                className="px-6 py-2 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100/50 dark:border-emerald-900/30 shadow-sm flex items-center gap-2 disabled:opacity-50"
+                                                            >
+                                                                <FiCheck size={14} /> Sync Day
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     <div className="space-y-4">
@@ -394,7 +422,7 @@ const SetDailyMealsPage: React.FC = () => {
 
                                         <div className="pt-12 flex justify-end">
                                             <button 
-                                                onClick={handleSave}
+                                                onClick={() => handleSave()}
                                                 disabled={saving || dailyEntries.length === 0}
                                                 className="px-12 py-5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-[28px] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-gray-400 dark:shadow-none hover:scale-105 transition-all flex items-center gap-4 disabled:opacity-50"
                                             >

@@ -203,6 +203,11 @@ const patientNavItems: NavItem[] = [
     name: "Health Reports",
     path: "/patient/health-reports",
   },
+  {
+    icon: <CheckCircle className="w-5 h-5" />,
+    name: "Meals Allotted",
+    path: "/patient/meals-allotted",
+  },
 ];
 
 const nutritionistNavItems: NavItem[] = [
