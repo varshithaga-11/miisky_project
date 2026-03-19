@@ -1087,3 +1087,44 @@ class UserMealSerializer(serializers.ModelSerializer):
             }
         return None
 
+
+class MeetingRequestSerializer(serializers.ModelSerializer):
+    patient_details = serializers.SerializerMethodField(read_only=True)
+    nutritionist_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = MeetingRequest
+        fields = [
+            'id', 'patient', 'patient_details', 'nutritionist', 'nutritionist_details',
+            'user_diet_plan', 'preferred_date', 'preferred_time', 'reason',
+            'status', 'meeting_link', 'nutritionist_notes', 'scheduled_datetime',
+            'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'created_on', 'updated_on']
+
+    def get_patient_details(self, obj):
+        if obj.patient:
+            return {
+                'id': obj.patient.id,
+                'first_name': obj.patient.first_name or obj.patient.username,
+                'last_name': obj.patient.last_name,
+                'email': obj.patient.email,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'first_name': obj.nutritionist.first_name or obj.nutritionist.username,
+                'last_name': obj.nutritionist.last_name,
+            }
+        return None
+
+    def create(self, validated_data):
+        # Auto-set the patient to the current user if not provided
+        request = self.context.get('request')
+        if request and request.user and not validated_data.get('patient'):
+            validated_data['patient'] = request.user
+        return super().create(validated_data)
+

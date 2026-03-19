@@ -1525,3 +1525,72 @@ class UserMealViewSet(viewsets.ModelViewSet):
                 )
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MeetingRequestViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for handling consultation meeting requests between patients and nutritionists.
+    """
+    queryset = MeetingRequest.objects.all().select_related('patient', 'nutritionist', 'user_diet_plan')
+    serializer_class = MeetingRequestSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['patient__first_name', 'patient__last_name', 'nutritionist__first_name', 'reason']
+
+    def get_queryset(self):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+
+        if role in ['patient', 'non_patient']:
+            # Patients see their own requests
+            return self.queryset.filter(patient=user).order_by('-created_on')
+        elif role == 'nutritionist':
+            # Nutritionists see requests sent to them
+            return self.queryset.filter(nutritionist=user).order_by('-created_on')
+        elif role == 'Admin' or user.is_staff:
+            # Admins see everything
+            return self.queryset.order_by('-created_on')
+        
+        return self.queryset.none()
+
+    def perform_create(self, serializer):
+        # Always set the patient as the current user
+        serializer.save(patient=self.request.user)
+
+    @action(detail=True, methods=['patch'], url_path='update-status')
+    def update_meeting_status(self, request, pk=None):
+        """
+        Specific action for nutritionists to approve/reject/schedule meetings.
+        Expected data: { status: 'approved'|'rejected', meeting_link: '...', scheduled_datetime: '...' }
+        """
+        meeting = self.get_object()
+        user = request.user
+
+        # Only assigned nutritionist or Admin can update status
+        if meeting.nutritionist != user and user.role != 'Admin':
+            return Response({"detail": "Not authorized to update this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        new_status = request.data.get('status')
+        if not new_status:
+            return Response({"detail": "status is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update based on logic
+        if new_status == 'approved':
+            link = request.data.get('meeting_link')
+            dt = request.data.get('scheduled_datetime')
+            if not link or not dt:
+                return Response({"detail": "meeting_link and scheduled_datetime are required for approval."}, status=status.HTTP_400_BAD_REQUEST)
+            meeting.approve(meeting_link=link, scheduled_datetime=dt)
+        elif new_status == 'rejected':
+            note = request.data.get('nutritionist_notes')
+            meeting.reject(note=note)
+        elif new_status == 'completed':
+            meeting.mark_completed()
+        else:
+            # Generic update
+            serializer = self.get_serializer(meeting, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+        return Response(self.get_serializer(meeting).data)

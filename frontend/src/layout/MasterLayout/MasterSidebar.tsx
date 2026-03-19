@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Users,
   Layers,
+  Video,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -208,6 +209,11 @@ const patientNavItems: NavItem[] = [
     name: "Meals Allotted",
     path: "/patient/meals-allotted",
   },
+  {
+    icon: <Video className="w-5 h-5" />,
+    name: "Consultation",
+    path: "/patient/meeting-request",
+  },
 ];
 
 const nutritionistNavItems: NavItem[] = [
@@ -240,6 +246,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Approved Plans",
     path: "/nutrition/approved-plans",
+  },
+  {
+    icon: <Video className="w-5 h-5" />,
+    name: "Meeting Requests",
+    path: "/nutrition/meeting-requests",
   },
 ];
 

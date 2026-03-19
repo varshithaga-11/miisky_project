@@ -1490,3 +1490,92 @@ class UserMeal(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.meal_type} - {self.meal_date}"
+
+
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+from django.db import models
+from django.utils.timezone import now
+
+class MeetingRequest(models.Model):
+    """
+    Patient requests a meeting with a nutritionist.
+    """
+
+    patient = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name="meeting_requests"
+    )
+
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name="nutritionist_meetings"
+    )
+
+    user_diet_plan = models.ForeignKey(
+        UserDietPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="meetings"
+    )
+    # optional: link meeting to a specific plan
+
+    # 🗓️ Scheduling
+    preferred_date = models.DateField()
+    preferred_time = models.TimeField()
+
+    # 📝 Message from patient
+    reason = models.TextField(null=True, blank=True)
+
+    # 🔥 Status Flow
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),        # requested by patient
+        ('approved', 'Approved'),      # nutritionist accepted
+        ('rejected', 'Rejected'),      # nutritionist rejected
+        ('completed', 'Completed'),    # meeting done
+        ('cancelled', 'Cancelled'),    # cancelled by either side
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    # 🔗 Google Meet Link
+    meeting_link = models.URLField(null=True, blank=True)
+
+    # Nutritionist response
+    nutritionist_notes = models.TextField(null=True, blank=True)
+
+    # Final scheduled time (can differ from preferred)
+    scheduled_datetime = models.DateTimeField(null=True, blank=True)
+
+    # Tracking
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    def approve(self, meeting_link, scheduled_datetime):
+        self.status = 'approved'
+        self.meeting_link = meeting_link
+        self.scheduled_datetime = scheduled_datetime
+        self.save()
+
+    def reject(self, note=None):
+        self.status = 'rejected'
+        self.nutritionist_notes = note
+        self.save()
+
+    def mark_completed(self):
+        self.status = 'completed'
+        self.save()
+
+    def __str__(self):
+        return f"{self.patient} → {self.nutritionist} ({self.status})"
