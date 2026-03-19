@@ -927,3 +927,9 @@ class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
         model = FoodFattyAcidProfile
         fields = "__all__"
 
+
+class PatientHealthReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientHealthReport
+        fields = "__all__"
+

@@ -77,7 +77,7 @@ class UserRegister(AbstractUser):
 
 
 class NutritionistProfile(models.Model):
-    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE)
+    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True)
 
     qualification = models.CharField(max_length=100, null=True, blank=True)
     years_of_experience=models.CharField(max_length=100, null=True, blank=True)
@@ -102,7 +102,7 @@ class NutritionistProfile(models.Model):
 
 
 class MicroKitchenProfile(models.Model):
-    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE, related_name="micro_kitchen")
+    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name="micro_kitchen")
 
     # 🔹 Basic Info
     brand_name = models.CharField(max_length=100,null=True,blank=True)
@@ -307,7 +307,7 @@ class MicroKitchenInspection(models.Model):
 
 
 class DeliveryProfile(models.Model):
-    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE, related_name="delivery_profile")
+    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name="delivery_profile")
 
     # 🔹 Vehicle Info
     VEHICLE_TYPE_CHOICES = [
@@ -335,7 +335,7 @@ class DeliveryProfile(models.Model):
 
 
 class UserQuestionnaire(models.Model):
-    user = models.OneToOneField(UserRegister, on_delete=models.CASCADE)
+    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True)
 
     # 🔹 BASIC DETAILS
     age = models.IntegerField(null=True, blank=True)
@@ -1185,12 +1185,12 @@ from django.db.models import Q
 class UserNutritionistMapping(models.Model):
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="nutrition_mappings"
     )
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="patient_mappings"
     )
 
@@ -1228,3 +1228,123 @@ class UserNutritionistMapping(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.nutritionist} ({'Active' if self.is_active else 'Inactive'})"
+
+
+
+
+
+
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+
+
+#✅ 1️⃣ Patient Health Reports (Multiple Uploads)
+
+
+class PatientHealthReport(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="health_reports"
+    )
+
+    title = models.CharField(max_length=100, null=True, blank=True)  # e.g. "Blood Test Jan"
+    
+    report_file = models.FileField(upload_to='health_reports/')
+    
+    report_type = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="blood_test, scan, prescription, etc."
+    )
+
+    uploaded_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.title}"
+    
+
+
+#✅ 2️⃣ Nutritionist Review (Comments on Reports)
+
+
+class NutritionistReview(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="reviews"
+    )
+
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="given_reviews"
+    )
+
+    reports = models.ManyToManyField(
+        PatientHealthReport,
+        blank=True,
+        related_name="reviews"
+    )
+
+    comments = models.TextField(null=True, blank=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review for {self.user} by {self.nutritionist}"
+    
+
+#✅ 3️⃣ Diet Plan Assignment 
+
+
+
+class UserDietPlan(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="diet_plans"
+    )
+
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    diet_plan = models.ForeignKey(
+        DietPlans,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    review = models.ForeignKey(
+        NutritionistReview,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('active', 'Active'),
+            ('completed', 'Completed'),
+            ('stopped', 'Stopped')
+        ],
+        default='active'
+    )
+
+    assigned_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.diet_plan}"

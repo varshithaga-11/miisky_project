@@ -1286,3 +1286,24 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+class PatientHealthReportViewSet(viewsets.ModelViewSet):
+    queryset = PatientHealthReport.objects.all()
+    serializer_class = PatientHealthReportSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "admin":
+            return self.queryset
+        if user.role == "nutritionist":
+            # Show reports for patients mapped to this nutritionist
+            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list('user_id', flat=True)
+            return self.queryset.filter(user_id__in=mapped_patient_ids)
+        # Patients see their own reports
+        return self.queryset.filter(user=user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

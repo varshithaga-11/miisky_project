@@ -190,6 +190,11 @@ const patientNavItems: NavItem[] = [
     name: "Micro-Kitchens",
     path: "/patient/micro-kitchens",
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Health Reports",
+    path: "/patient/health-reports",
+  },
 ];
 
 const nutritionistNavItems: NavItem[] = [
