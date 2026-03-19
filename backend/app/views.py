@@ -1381,7 +1381,12 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return queryset.order_by('-suggested_on')
 
         if user.role == "nutritionist":
-            queryset = queryset.filter(nutritionist=user)
+            # Identify patients mapped to this nutritionist
+            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list('user_id', flat=True)
+            
+            queryset = queryset.filter(user_id__in=mapped_patient_ids)
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
@@ -1459,3 +1464,64 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST)
         udp.confirm_payment(amount=amount, transaction_id=transaction_id)
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+
+class UserMealViewSet(viewsets.ModelViewSet):
+    queryset = UserMeal.objects.all().select_related('user', 'user_diet_plan', 'meal_type', 'food')
+    serializer_class = UserMealSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = self.queryset
+
+        patient_id = self.request.query_params.get('user')
+        plan_id = self.request.query_params.get('user_diet_plan')
+        date_str = self.request.query_params.get('meal_date')
+
+        if user.role == "admin":
+            pass
+        elif user.role == "nutritionist":
+            # Identify patients mapped to this nutritionist
+            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list('user_id', flat=True)
+            queryset = queryset.filter(user_diet_plan__user_id__in=mapped_patient_ids)
+        else:
+            queryset = queryset.filter(user=user)
+
+        if patient_id:
+            queryset = queryset.filter(user_id=patient_id)
+        if plan_id:
+            queryset = queryset.filter(user_diet_plan_id=plan_id)
+        if date_str:
+            queryset = queryset.filter(meal_date=date_str)
+
+        return queryset.order_by('meal_date', 'meal_type__id')
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create_meals(self, request):
+        """Allows nutritionist to set multiple meals at once."""
+        data = request.data
+        if not isinstance(data, list):
+            return Response({"detail": "Expected a list of meal objects."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data=data, many=True)
+        if serializer.is_valid():
+            # Handle potential duplicates (unique_together: user, date, meal_type)
+            # Efficiently batch create or update
+            meals_to_create = []
+            for item in serializer.validated_data:
+                UserMeal.objects.update_or_create(
+                    user=item['user'],
+                    meal_date=item['meal_date'],
+                    meal_type=item['meal_type'],
+                    defaults={
+                        'food': item['food'],
+                        'quantity': item.get('quantity'),
+                        'user_diet_plan': item['user_diet_plan'],
+                        'notes': item.get('notes')
+                    }
+                )
+            return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

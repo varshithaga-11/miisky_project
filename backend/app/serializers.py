@@ -1045,3 +1045,45 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             }
         return None
 
+
+class UserMealSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+    meal_type_details = serializers.SerializerMethodField()
+    food_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserMeal
+        fields = [
+            'id', 'user', 'user_details', 'user_diet_plan', 'meal_type', 
+            'meal_type_details', 'food', 'food_details',
+            'quantity', 'meal_date', 'is_consumed', 'consumed_at', 
+            'notes', 'created_on'
+        ]
+        read_only_fields = ['created_on']
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+            }
+        return None
+
+    def get_meal_type_details(self, obj):
+        if obj.meal_type:
+            return {
+                'id': obj.meal_type.id,
+                'name': obj.meal_type.name,
+            }
+        return None
+
+    def get_food_details(self, obj):
+        if obj.food:
+            return {
+                'id': obj.food.id,
+                'name': obj.food.name,
+                'image': obj.food.image.url if obj.food.image else None,
+            }
+        return None
+

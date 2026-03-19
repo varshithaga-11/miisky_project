@@ -59,6 +59,7 @@ import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
 import SuggestPlanToPatientsPage from "./pages/NutritionSide/SuggestPlanToPatients/index";
 import ApprovesPlansByPatientsPage from "./pages/NutritionSide/ApprovesPlansByPatients/index";
+import SetDailyMealsPage from "./pages/NutritionSide/SetDailyMeals/index";
 import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
 import PlansPage from "./pages/PatientSide/Plans/index";
 import SuggestedPlansPage from "./pages/PatientSide/SuggestedPlans/index";
@@ -133,6 +134,7 @@ export function appRoutes() {
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
+          <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
           <Route path="nutrition/uploaded-documents" element={<UploadedDocumentsByPatientPage />} />
           <Route path="nutrition/suggest-plan" element={<SuggestPlanToPatientsPage />} />
           <Route path="nutrition/approved-plans" element={<ApprovesPlansByPatientsPage />} />

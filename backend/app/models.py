@@ -1428,3 +1428,65 @@ class UserDietPlan(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.diet_plan} ({self.status})"
+
+
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+class UserMeal(models.Model):
+    """
+    Stores personalized meals for each user per day.
+    THIS is where Option 2 (personalization) actually happens.
+    """
+
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name="meals"
+    )
+
+    user_diet_plan = models.ForeignKey(
+        UserDietPlan,
+        on_delete=models.CASCADE,
+        related_name="meals"
+    )
+    # 🔥 Important: link to the ACTIVE plan instance (not just DietPlans)
+
+    meal_type = models.ForeignKey(
+        MealType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    # Breakfast / Lunch / Dinner
+
+    food = models.ForeignKey(
+        Food,
+        on_delete=models.CASCADE,
+        related_name="user_meals"
+    )
+
+    quantity = models.FloatField(null=True, blank=True)
+    # grams / units / servings
+
+    meal_date = models.DateField()
+
+    # 🔹 Tracking
+    is_consumed = models.BooleanField(default=False)
+
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+    notes = models.TextField(null=True, blank=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'meal_date', 'meal_type')
+        indexes = [
+            models.Index(fields=['user', 'meal_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.meal_type} - {self.meal_date}"

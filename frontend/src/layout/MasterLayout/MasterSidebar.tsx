@@ -11,6 +11,7 @@ import {
   Briefcase,
   CheckCircle,
   Users,
+  Layers,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -214,6 +215,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <Users className="w-5 h-5" />,
     name: "Allotted Patients",
     path: "/nutrition/allotted-patients",
+  },
+  {
+    icon: <Layers className="w-5 h-5" />,
+    name: "Meal Optimizer",
+    path: "/nutrition/set-meals",
   },
   {
     icon: <FileText className="w-5 h-5" />,
