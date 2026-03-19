@@ -58,6 +58,7 @@ import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
 import PlansPage from "./pages/PatientSide/Plans/index";
+import ListOfMicroKitchenPage from "./pages/PatientSide/ListOfMicroKitchen/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 
 
@@ -122,6 +123,7 @@ export function appRoutes() {
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
+          <Route path="patient/micro-kitchens" element={<ListOfMicroKitchenPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />

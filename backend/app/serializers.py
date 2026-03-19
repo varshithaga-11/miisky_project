@@ -720,10 +720,23 @@ class NutritionistProfileSerializer(serializers.ModelSerializer):
 
 class MicroKitchenProfileSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
+    latest_inspection = serializers.SerializerMethodField()
 
     class Meta:
         model = MicroKitchenProfile
-        fields = "__all__"
+        fields = [
+            'id', 'user', 'brand_name', 'kitchen_code', 'fssai_no', 'fssai_cert', 
+            'pan_no', 'gst_no', 'bank_name', 'acc_no', 'ifsc_code', 'kitchen_area', 
+            'platform_area', 'water_source', 'cuisine_type', 'meal_type', 
+            'lpg_cylinders', 'no_of_staff', 
+            'time_available', 'purification_type', 'has_pets', 'pet_details', 
+            'has_pests', 'pest_details', 'pest_control_frequency', 'has_hobs', 
+            'has_refrigerator', 'has_mixer', 'has_grinder', 'has_blender', 
+            'other_equipment', 'about_you', 'passion_for_cooking', 'health_info', 
+            'constraints', 'photo_exterior', 'photo_entrance', 'photo_kitchen', 
+            'photo_platform', 'latitude', 'longitude', 'status', 
+            'user_details', 'latest_inspection'
+        ]
 
     def get_user_details(self, obj):
         if obj.user:
@@ -734,6 +747,22 @@ class MicroKitchenProfileSerializer(serializers.ModelSerializer):
                 "last_name": obj.user.last_name,
                 "email": obj.user.email,
                 "mobile": obj.user.mobile,
+                "address": obj.user.address,
+                "city": obj.user.city.name if obj.user.city else None,
+                "state": obj.user.state.name if obj.user.state else None,
+                "country": obj.user.country.name if obj.user.country else None,
+            }
+        return None
+
+    def get_latest_inspection(self, obj):
+        inspection = obj.inspections.filter(status__in=["approved", "submitted"]).order_by("-inspection_date").first()
+        if inspection:
+            return {
+                "overall_score": inspection.overall_score,
+                "status": inspection.status,
+                "inspection_date": inspection.inspection_date,
+                "notes": inspection.notes,
+                "recommendation": inspection.recommendation
             }
         return None
 
