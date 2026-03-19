@@ -1,47 +1,49 @@
 import { useEffect, useMemo, useState } from "react";
+import { FiSearch, FiUserPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
-import Select from "../../../components/form/Select";
-import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  createUserNutritionMapping,
   getAllUserNutritionMappings,
   getAllUsers,
   SimpleUser,
   UserNutritionMapping,
 } from "./api";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import AssignNutritionistModal from "./AssignNutritionistModal";
 
 const UserNutritionMappingPage: React.FC = () => {
   const [users, setUsers] = useState<SimpleUser[]>([]);
   const [mappings, setMappings] = useState<UserNutritionMapping[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedNutritionistId, setSelectedNutritionistId] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [usersRes, mappingsRes] = await Promise.all([getAllUsers(), getAllUserNutritionMappings()]);
+      setUsers(usersRes.results);
+      setMappings(mappingsRes);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load users or mappings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const [usersRes, mappingsRes] = await Promise.all([getAllUsers(), getAllUserNutritionMappings()]);
-        setUsers(usersRes.results);
-        setMappings(mappingsRes);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load users or mappings");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchData();
   }, []);
 
   const unmappedPatients = useMemo(
     () => users.filter((u) => u.role === "patient" && !u.is_patient_mapped),
     [users]
   );
+  
   const nutritionists = useMemo(
     () => users.filter((u) => u.role === "nutritionist"),
     [users]
@@ -57,56 +59,42 @@ const UserNutritionMappingPage: React.FC = () => {
 
   const groupedMappings = useMemo(() => {
     const activeMappings = mappings.filter((m) => m.is_active);
-    const byNutritionist: {
-      nutritionist: SimpleUser;
-      patients: SimpleUser[];
-    }[] = [];
-    const nutIndex: Record<number, number> = {};
+    const byNutritionistMap: Record<number, { nutritionist: SimpleUser; patients: SimpleUser[] }> = {};
 
     activeMappings.forEach((m) => {
       const nutritionist = usersById[m.nutritionist];
       const patient = usersById[m.user];
       if (!nutritionist || !patient) return;
 
-      if (nutIndex[nutritionist.id] === undefined) {
-        nutIndex[nutritionist.id] = byNutritionist.length;
-        byNutritionist.push({ nutritionist, patients: [patient] });
+      if (!byNutritionistMap[nutritionist.id]) {
+        byNutritionistMap[nutritionist.id] = { nutritionist, patients: [patient] };
       } else {
-        byNutritionist[nutritionist.id].patients.push(patient);
+        byNutritionistMap[nutritionist.id].patients.push(patient);
       }
     });
 
-    // sort by nutritionist name for stable UI
-    return byNutritionist.sort((a, b) => {
+    return Object.values(byNutritionistMap).sort((a, b) => {
       const an = `${a.nutritionist.first_name || ""} ${a.nutritionist.last_name || ""} ${a.nutritionist.username}`;
       const bn = `${b.nutritionist.first_name || ""} ${b.nutritionist.last_name || ""} ${b.nutritionist.username}`;
       return an.localeCompare(bn);
     });
   }, [mappings, usersById]);
 
-  const handleAssign = async () => {
-    if (!selectedPatientId || !selectedNutritionistId) {
-      toast.error("Please select both patient and nutritionist");
-      return;
-    }
-    try {
-      const patientId = Number(selectedPatientId);
-      const nutritionistId = Number(selectedNutritionistId);
-      const created = await createUserNutritionMapping(patientId, nutritionistId);
-      toast.success("Nutritionist assigned to patient");
-      // mark patient as mapped locally
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === patientId ? { ...u, is_patient_mapped: true } : u
-        )
+  const filteredGroupedMappings = useMemo(() => {
+    if (!searchTerm) return groupedMappings;
+    const lower = searchTerm.toLowerCase();
+    return groupedMappings.filter(g => {
+      const nutName = `${g.nutritionist.first_name || ""} ${g.nutritionist.last_name || ""} ${g.nutritionist.username}`.toLowerCase();
+      const patientMatch = g.patients.some(p => 
+        `${p.first_name || ""} ${p.last_name || ""} ${p.username}`.toLowerCase().includes(lower)
       );
-      setMappings((prev) => [...prev, created]);
-      setSelectedPatientId("");
-    } catch (err: any) {
-      console.error(err);
-      const msg = err?.response?.data || err.message || "Failed to assign";
-      toast.error(typeof msg === "string" ? msg : "Failed to assign");
-    }
+      return nutName.includes(lower) || patientMatch;
+    });
+  }, [groupedMappings, searchTerm]);
+
+  const handleAssignSuccess = () => {
+    setIsModalOpen(false);
+    fetchData();
   };
 
   return (
@@ -115,81 +103,68 @@ const UserNutritionMappingPage: React.FC = () => {
       <PageMeta title="User–Nutritionist Mapping" description="Map patients to nutritionists" />
       <PageBreadcrumb pageTitle="User–Nutritionist Mapping" />
 
-      <div className="space-y-8">
-        {/* Assignment controls */}
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
-          <div className="flex-1">
-            <Label>Patient (only unmapped)</Label>
-            <Select
-              value={selectedPatientId}
-              onChange={(val) => setSelectedPatientId(val)}
-              options={[
-                { value: "", label: "Select Patient" },
-                ...unmappedPatients.map((p) => ({
-                  value: String(p.id),
-                  label: `${p.first_name || ""} ${p.last_name || ""} (${p.username})`,
-                })),
-              ]}
-              className="w-full"
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              placeholder="Search nutritionist or patient..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
+            <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           </div>
-          <div className="flex-1">
-            <Label>Nutritionist</Label>
-            <Select
-              value={selectedNutritionistId}
-              onChange={(val) => setSelectedNutritionistId(val)}
-              options={[
-                { value: "", label: "Select Nutritionist" },
-                ...nutritionists.map((n) => ({
-                  value: String(n.id),
-                  label: `${n.first_name || ""} ${n.last_name || ""} (${n.username})`,
-                })),
-              ]}
-              className="w-full"
-            />
+          <div className="flex items-center gap-4">
+            <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsModalOpen(true)}>
+              <FiUserPlus />
+              Assign Nutritionist
+            </Button>
           </div>
-          <Button onClick={handleAssign} disabled={loading || !users.length}>
-            Assign
-          </Button>
         </div>
 
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {filteredGroupedMappings.length} nutritionist groups
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-8">
         {/* Current mappings grouped by nutritionist */}
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white px-1">
             Nutritionists &amp; Their Allotted Patients
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            First column shows each nutritionist, and in front you can see the list of patients allotted to them.
-          </p>
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
             <div className="max-w-full overflow-x-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
-                    <TableCell isHeader>Nutritionist</TableCell>
-                    <TableCell isHeader>Patients Allotted</TableCell>
-                    <TableCell isHeader>Total</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Nutritionist</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Patients Allotted</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Total</TableCell>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="px-5 py-6 text-center text-gray-500">
-                        Loading...
+                      <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">
+                        Loading mappings...
                       </TableCell>
                     </TableRow>
-                  ) : groupedMappings.length === 0 ? (
+                  ) : filteredGroupedMappings.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="px-5 py-6 text-center text-gray-500">
-                        No active mappings yet.
+                      <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">
+                        No active mappings found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    groupedMappings.map(({ nutritionist, patients }) => (
-                      <TableRow key={nutritionist.id}>
-                        <TableCell className="whitespace-nowrap">
+                    filteredGroupedMappings.map(({ nutritionist, patients }) => (
+                      <TableRow key={nutritionist.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                        <TableCell className="px-5 py-4">
                           <div className="flex flex-col">
-                            <span className="font-medium">
+                            <span className="font-medium text-gray-800 dark:text-white/90">
                               {nutritionist.first_name || nutritionist.last_name
                                 ? `${nutritionist.first_name || ""} ${nutritionist.last_name || ""}`
                                 : nutritionist.username}
@@ -199,7 +174,7 @@ const UserNutritionMappingPage: React.FC = () => {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-5 py-4">
                           <div className="flex flex-wrap gap-2">
                             {patients.map((p) => (
                               <span
@@ -213,7 +188,7 @@ const UserNutritionMappingPage: React.FC = () => {
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell>{patients.length}</TableCell>
+                        <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{patients.length}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -225,42 +200,42 @@ const UserNutritionMappingPage: React.FC = () => {
 
         {/* Unmapped patients list */}
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white px-1">
             Unmapped Patients
           </h3>
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
             <div className="max-w-full overflow-x-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
-                    <TableCell isHeader>#</TableCell>
-                    <TableCell isHeader>Username</TableCell>
-                    <TableCell isHeader>Name</TableCell>
-                    <TableCell isHeader>Email</TableCell>
-                    <TableCell isHeader>Mobile</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Username</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Name</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Email</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Mobile</TableCell>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="px-5 py-6 text-center text-gray-500">
-                        Loading...
+                      <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
+                        Loading patients...
                       </TableCell>
                     </TableRow>
                   ) : unmappedPatients.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="px-5 py-6 text-center text-gray-500">
+                      <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
                         All patients are mapped.
                       </TableCell>
                     </TableRow>
                   ) : (
                     unmappedPatients.map((p, idx) => (
-                      <TableRow key={p.id}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>{p.username}</TableCell>
-                        <TableCell>{`${p.first_name || ""} ${p.last_name || ""}`}</TableCell>
-                        <TableCell>{p.email}</TableCell>
-                        <TableCell>{p.mobile || "-"}</TableCell>
+                      <TableRow key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                        <TableCell className="px-5 py-4 text-theme-sm text-gray-800 dark:text-white/90">{idx + 1}</TableCell>
+                        <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{p.username}</TableCell>
+                        <TableCell className="px-5 py-4 text-gray-500 dark:text-gray-400">{`${p.first_name || ""} ${p.last_name || ""}`}</TableCell>
+                        <TableCell className="px-5 py-4 text-gray-500 dark:text-gray-400">{p.email}</TableCell>
+                        <TableCell className="px-5 py-4 text-gray-500 dark:text-gray-400">{p.mobile || "-"}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -270,9 +245,19 @@ const UserNutritionMappingPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <AssignNutritionistModal
+          onClose={() => setIsModalOpen(false)}
+          onAssign={handleAssignSuccess}
+          unmappedPatients={unmappedPatients}
+          nutritionists={nutritionists}
+        />
+      )}
     </>
   );
 };
 
 export default UserNutritionMappingPage;
+
 

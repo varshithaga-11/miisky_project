@@ -29,11 +29,11 @@ const adminNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/master-dashboard",
   },
-  {
-    icon: <LayoutDashboard className="w-5 h-5" />,
-    name: "Company",
-    path: "/companies",
-  },
+  // {
+  //   icon: <LayoutDashboard className="w-5 h-5" />,
+  //   name: "Company",
+  //   path: "/companies",
+  // },
   {
     icon: <MapPin className="w-5 h-5" />,
     name: "Locations",

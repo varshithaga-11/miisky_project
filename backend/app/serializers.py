@@ -83,6 +83,7 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'joined_date',
             'is_active',
             'created_on',
+            'is_patient_mapped',
             'password',
             'password_confirm',
         ]
