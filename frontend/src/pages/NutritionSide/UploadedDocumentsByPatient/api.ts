@@ -22,6 +22,12 @@ export type PatientHealthReport = {
   report_file: string;
   report_type: string | null;
   uploaded_on: string;
+  reviews?: {
+    id: number;
+    comments: string;
+    created_on: string;
+    nutritionist_name: string;
+  }[];
 };
 
 export type NutritionistReview = {
@@ -29,6 +35,7 @@ export type NutritionistReview = {
   user: number;
   nutritionist: number;
   reports: number[];
+  report_details?: { id: number; title: string | null }[];
   comments: string;
   created_on: string;
 };

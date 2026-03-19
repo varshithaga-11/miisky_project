@@ -930,12 +930,13 @@ class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
 
 class PatientHealthReportSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
+    reviews = serializers.SerializerMethodField()
 
     class Meta:
         model = PatientHealthReport
         fields = [
             'id', 'user', 'user_details', 'title', 'report_file', 
-            'report_type', 'uploaded_on'
+            'report_type', 'uploaded_on', 'reviews'
         ]
 
     def get_user_details(self, obj):
@@ -947,9 +948,34 @@ class PatientHealthReportSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def get_reviews(self, obj):
+        # Return reviews where this report is included
+        from .models import NutritionistReview
+        revs = obj.reviews.all().order_by('-created_on')
+        return [
+            {
+                "id": r.id, 
+                "comments": r.comments, 
+                "created_on": r.created_on,
+                "nutritionist_name": f"{r.nutritionist.first_name} {r.nutritionist.last_name}" if r.nutritionist else "Unknown"
+            } 
+            for r in revs
+        ]
+
 
 class NutritionistReviewSerializer(serializers.ModelSerializer):
+    report_details = serializers.SerializerMethodField()
+
     class Meta:
         model = NutritionistReview
-        fields = "__all__"
+        fields = [
+            'id', 'user', 'nutritionist', 'reports', 'report_details', 
+            'comments', 'created_on'
+        ]
+
+    def get_report_details(self, obj):
+        return [
+            {"id": r.id, "title": r.title} 
+            for r in obj.reports.all()
+        ]
 

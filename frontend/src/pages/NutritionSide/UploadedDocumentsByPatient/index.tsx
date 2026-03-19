@@ -173,8 +173,27 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                                             <FiFileText size={20} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-gray-900 dark:text-white line-clamp-1">{report.title}</h4>
-                                                            <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider mt-0.5">{report.report_type?.replace('_', ' ')} • {new Date(report.uploaded_on).toLocaleDateString()}</p>
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h4 className="font-bold text-gray-900 dark:text-white line-clamp-1">{report.title}</h4>
+                                                                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider mt-0.5">{report.report_type?.replace('_', ' ')} • {new Date(report.uploaded_on).toLocaleDateString()}</p>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {/* Nested Reviews for this document */}
+                                                            {report.reviews && report.reviews.length > 0 && (
+                                                                <div className="mt-3 space-y-2">
+                                                                    {report.reviews.map(rev => (
+                                                                        <div key={rev.id} className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
+                                                                            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1 flex justify-between">
+                                                                                <span>{rev.nutritionist_name}</span>
+                                                                                <span>{new Date(rev.created_on).toLocaleDateString()}</span>
+                                                                            </p>
+                                                                            <p className="text-[11px] text-gray-600 dark:text-gray-400 font-medium italic">"{rev.comments}"</p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <a 
                                                             href={report.report_file} 
@@ -239,9 +258,13 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                                                 <FiCheckCircle size={10} /> {new Date(review.created_on).toLocaleDateString()} at {new Date(review.created_on).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                             </div>
                                                             <p className="text-gray-700 dark:text-gray-300 text-sm font-medium leading-relaxed italic line-clamp-4">"{review.comments}"</p>
-                                                            {review.reports.length > 0 && (
-                                                                <div className="mt-4 flex flex-wrap gap-2">
-                                                                    <span className="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-[8px] font-black text-gray-400 rounded-lg tracking-widest uppercase"> Linked to {review.reports.length} Documents</span>
+                                                            {review.report_details && review.report_details.length > 0 && (
+                                                                <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-white/[0.05]">
+                                                                    {review.report_details.map(rd => (
+                                                                        <span key={rd.id} className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-[8px] font-black text-blue-500 rounded-lg tracking-widest uppercase border border-blue-100 dark:border-blue-900/30">
+                                                                            {rd.title || "Untitled Document"}
+                                                                        </span>
+                                                                    ))}
                                                                 </div>
                                                             )}
                                                         </div>
