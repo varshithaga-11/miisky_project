@@ -192,11 +192,9 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = MicroKitchenProfile.objects.select_related('user').all().order_by('-id')
-        is_verified = self.request.query_params.get('is_verified')
-        if is_verified is not None:
-            # Handle true/false strings from URL
-            val = is_verified.lower() == 'true'
-            qs = qs.filter(is_verified=val)
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
         return qs
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
@@ -214,6 +212,25 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
             defaults=serializer.validated_data
         )
         return Response(self.get_serializer(obj).data)
+
+
+class MicroKitchenInspectionViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenInspection.objects.all().order_by("-id")
+    serializer_class = MicroKitchenInspectionSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff or user.role == 'Admin':
+            return MicroKitchenInspection.objects.all().order_by("-id")
+        
+        # Micro kitchen users only see their own inspections
+        return MicroKitchenInspection.objects.filter(micro_kitchen__user=user).order_by("-id")
+
+    def perform_create(self, serializer):
+        serializer.save(inspector=self.request.user if self.request.user.is_authenticated else None)
 
 
 class DeliveryProfileViewSet(viewsets.ModelViewSet):

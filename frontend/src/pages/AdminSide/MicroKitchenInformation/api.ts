@@ -52,6 +52,46 @@ export type MicroKitchenProfile = {
   fssai_cert: string | null;
   latitude: number | null;
   longitude: number | null;
+  status: 'draft' | 'approved' | 'rejected';
+};
+
+export type MicroKitchenInspection = {
+  id?: number;
+  micro_kitchen: number;
+  inspector?: number;
+  mc_code: string;
+  inspection_date: string;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  
+  external_cleanliness?: number;
+  interior_cleanliness?: number;
+  kitchen_platform_adequacy?: number;
+  kitchen_platform_neatness?: number;
+  safety?: number;
+  pure_water?: number;
+  storage_facilities?: number;
+  packing_space?: number;
+  kitchen_size?: number;
+  discussion_with_chef?: number;
+  other_observations?: number;
+  support_staff?: number;
+
+  external_cleanliness_media?: File | string | null;
+  interior_cleanliness_media?: File | string | null;
+  kitchen_platform_adequacy_media?: File | string | null;
+  kitchen_platform_neatness_media?: File | string | null;
+  safety_media?: File | string | null;
+  pure_water_media?: File | string | null;
+  storage_facilities_media?: File | string | null;
+  packing_space_media?: File | string | null;
+  kitchen_size_media?: File | string | null;
+  discussion_with_chef_media?: File | string | null;
+  other_observations_media?: File | string | null;
+  support_staff_media?: File | string | null;
+
+  notes?: string;
+  recommendation?: string;
+  overall_score?: number;
 };
 
 export type MicroKitchenListResponse = {
@@ -62,22 +102,33 @@ export type MicroKitchenListResponse = {
   total_pages: number;
 };
 
-export const getMicroKitchenList = async (page = 1, search = "", verified?: boolean): Promise<MicroKitchenListResponse> => {
+export const getMicroKitchenList = async (page = 1, search = "", status?: string): Promise<MicroKitchenListResponse> => {
   let url = createApiUrl(`api/microkitchenprofile/?page=${page}&search=${search}`);
-  if (verified !== undefined) {
-    url += `&is_verified=${verified}`;
+  if (status && status !== 'all') {
+    url += `&status=${status}`;
   }
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   return response.data;
 };
 
-export const toggleMicroKitchenVerification = async (id: number, isVerified: boolean): Promise<MicroKitchenProfile> => {
+export const updateMicroKitchenStatus = async (id: number, status: string): Promise<MicroKitchenProfile> => {
   const url = createApiUrl(`api/microkitchenprofile/${id}/`);
-  const response = await axios.patch(url, { is_verified: isVerified }, { headers: await getAuthHeaders() });
+  const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
   return response.data;
 };
 
 export const deleteMicroKitchen = async (id: number): Promise<void> => {
   const url = createApiUrl(`api/microkitchenprofile/${id}/`);
   await axios.delete(url, { headers: await getAuthHeaders() });
+};
+
+export const saveMicroKitchenInspection = async (inspection: FormData): Promise<MicroKitchenInspection> => {
+  const url = createApiUrl(`api/microkitcheninspection/`);
+  const response = await axios.post(url, inspection, { 
+    headers: {
+      ...(await getAuthHeaders()),
+      'Content-Type': 'multipart/form-data',
+    }
+  });
+  return response.data;
 };

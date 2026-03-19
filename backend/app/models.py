@@ -191,9 +191,119 @@ class MicroKitchenProfile(models.Model):
     longitude = models.FloatField(null=True, blank=True)
 
     # 🔹 Status
-    is_verified = models.BooleanField(default=False)
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
 
+class MicroKitchenInspection(models.Model):
+
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="inspections"
+    )
+
+    inspector = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    # 🔹 Identification
+    mc_code = models.CharField(max_length=50)
+    inspection_date = models.DateField()
+
+    # 🔹 Status Tracking (VERY USEFUL 🔥)
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+
+    # 🔹 Ratings (1–10)
+    external_cleanliness = models.IntegerField(null=True, blank=True)
+    interior_cleanliness = models.IntegerField(null=True, blank=True)
+    kitchen_platform_adequacy = models.IntegerField(null=True, blank=True)
+    kitchen_platform_neatness = models.IntegerField(null=True, blank=True)
+    safety = models.IntegerField(null=True, blank=True)
+    pure_water = models.IntegerField(null=True, blank=True)
+    storage_facilities = models.IntegerField(null=True, blank=True)
+    packing_space = models.IntegerField(null=True, blank=True)
+    kitchen_size = models.IntegerField(null=True, blank=True)
+    discussion_with_chef = models.IntegerField(null=True, blank=True)
+    other_observations = models.IntegerField(null=True, blank=True)
+    support_staff = models.IntegerField(null=True, blank=True)
+
+    # 🔹 Media (Image/Video)
+    external_cleanliness_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    interior_cleanliness_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    kitchen_platform_adequacy_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    kitchen_platform_neatness_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    safety_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    pure_water_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    storage_facilities_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    packing_space_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    kitchen_size_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    discussion_with_chef_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    other_observations_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+    support_staff_media = models.FileField(upload_to='inspection/', null=True, blank=True)
+
+    # 🔹 Extra Notes per inspection (IMPORTANT)
+    notes = models.TextField(null=True, blank=True)
+
+    # 🔹 Final Recommendation
+    recommendation = models.TextField(null=True, blank=True)
+
+    # 🔹 Score (auto calculated 🔥)
+    overall_score = models.FloatField(null=True, blank=True)
+
+    # 🔹 Audit Fields
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        # ✅ Validate rating between 1–10
+        rating_fields = [
+            'external_cleanliness', 'interior_cleanliness',
+            'kitchen_platform_adequacy', 'kitchen_platform_neatness',
+            'safety', 'pure_water', 'storage_facilities',
+            'packing_space', 'kitchen_size',
+            'discussion_with_chef', 'other_observations',
+            'support_staff'
+        ]
+
+        for field in rating_fields:
+            value = getattr(self, field)
+            if value is not None and (value < 1 or value > 10):
+                raise ValueError(f"{field} must be between 1 and 10")
+
+    def save(self, *args, **kwargs):
+        # 🔥 Auto calculate overall score (average)
+        rating_fields = [
+            self.external_cleanliness, self.interior_cleanliness,
+            self.kitchen_platform_adequacy, self.kitchen_platform_neatness,
+            self.safety, self.pure_water, self.storage_facilities,
+            self.packing_space, self.kitchen_size,
+            self.discussion_with_chef, self.other_observations,
+            self.support_staff
+        ]
+
+        valid_ratings = [r for r in rating_fields if r is not None]
+
+        if valid_ratings:
+            self.overall_score = round(sum(valid_ratings) / len(valid_ratings), 2)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.micro_kitchen} - {self.inspection_date}"
 
 
 class DeliveryProfile(models.Model):

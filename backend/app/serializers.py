@@ -738,6 +738,12 @@ class MicroKitchenProfileSerializer(serializers.ModelSerializer):
         return None
 
 
+class MicroKitchenInspectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MicroKitchenInspection
+        fields = "__all__"
+
+
 class DeliveryProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryProfile

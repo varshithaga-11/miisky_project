@@ -206,6 +206,11 @@ const microKitchenNavItems: NavItem[] = [
     name: "Questionnaire",
     path: "/microkitchen/questionnaire",
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Inspection Report",
+    path: "/microkitchen/inspection-report",
+  },
 ];
 
 const supplyChainNavItems: NavItem[] = [
