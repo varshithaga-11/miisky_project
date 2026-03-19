@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getFoodList, deleteFood, Food } from "./foodapi";
 import AddFood from "./AddFood";
 import EditFood from "./EditFood";
+import FoodDetailModal from "./FoodDetailModal";
 import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
@@ -34,6 +35,8 @@ const FoodManagementPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFoodId, setEditFoodId] = useState<number | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [sortField, setSortField] = useState<keyof Food | null>(null);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
@@ -269,7 +272,10 @@ const FoodManagementPage: React.FC = () => {
                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
-                       <div className="flex items-center gap-3">
+                       <div className="flex items-center gap-3 text-lg">
+                        <button className="text-gray-400 hover:text-indigo-600 transition-colors" title="View Full Details" onClick={() => { setSelectedFood(food); setIsDetailModalOpen(true); }}>
+                          <FiEye />
+                        </button>
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditFoodId(food.id!); setIsEditModalOpen(true); }}>
                           <FiEdit />
                         </button>
@@ -317,6 +323,12 @@ const FoodManagementPage: React.FC = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onUpdated={onFoodUpdated}
+        />
+      )}
+      {isDetailModalOpen && selectedFood && (
+        <FoodDetailModal 
+          food={selectedFood} 
+          onClose={() => { setIsDetailModalOpen(false); setSelectedFood(null); }} 
         />
       )}
     </>

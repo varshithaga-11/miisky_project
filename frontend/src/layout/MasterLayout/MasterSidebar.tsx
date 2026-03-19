@@ -9,6 +9,8 @@ import {
   UserCog,
   ChevronDownIcon,
   Briefcase,
+  CheckCircle,
+  Users,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -209,7 +211,7 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/questionnaire",
   },
   {
-    icon: <FileText className="w-5 h-5" />,
+    icon: <Users className="w-5 h-5" />,
     name: "Allotted Patients",
     path: "/nutrition/allotted-patients",
   },
@@ -219,9 +221,14 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/uploaded-documents",
   },
   {
-    icon: <Briefcase className="w-5 h-5" />,
+    icon: <FileText className="w-5 h-5" />,
     name: "Suggest Plan",
     path: "/nutrition/suggest-plan",
+  },
+  {
+    icon: <CheckCircle className="w-5 h-5" />,
+    name: "Approved Plans",
+    path: "/nutrition/approved-plans",
   },
 ];
 
