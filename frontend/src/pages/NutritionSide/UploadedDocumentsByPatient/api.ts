@@ -40,11 +40,11 @@ export type NutritionistReview = {
   created_on: string;
 };
 
-export interface MappedPatientResponse {
+export type MappedPatientResponse = {
     user: Patient;
     mapping_id: number;
     assigned_on: string;
-}
+};
 
 export const getMyPatients = async (): Promise<MappedPatientResponse[]> => {
   const url = createApiUrl("api/usernutritionistmapping/my-patients/");

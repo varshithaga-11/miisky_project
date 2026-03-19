@@ -1359,3 +1359,103 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Automatically set the nutritionist to the logged-in user
         serializer.save(nutritionist=self.request.user)
+
+
+class UserDietPlanViewSet(viewsets.ModelViewSet):
+    queryset = UserDietPlan.objects.all().select_related('user', 'nutritionist', 'diet_plan', 'review').prefetch_related('diet_plan__features')
+    serializer_class = UserDietPlanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = self.queryset
+
+        patient_id = self.request.query_params.get('user')
+        status_filter = self.request.query_params.get('status')
+
+        if user.role == "admin":
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            return queryset.order_by('-suggested_on')
+
+        if user.role == "nutritionist":
+            queryset = queryset.filter(nutritionist=user)
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            return queryset.order_by('-suggested_on')
+
+        if user.role == "patient" or user.role == "non_patient":
+            queryset = queryset.filter(user=user)
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            return queryset.order_by('-suggested_on')
+
+        return queryset.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role == "nutritionist":
+            patient = serializer.validated_data.get('user')
+            pid = patient.id if hasattr(patient, 'id') else patient
+            if pid and not UserNutritionistMapping.objects.filter(
+                nutritionist=user, user_id=pid, is_active=True
+            ).exists():
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("You can only suggest plans to your assigned patients.")
+        serializer.save(nutritionist=user)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """Patient approves plan, selects start_date. End date auto-calculated."""
+        udp = self.get_object()
+        if udp.user_id != request.user.id:
+            return Response({"detail": "Only the assigned patient can approve."}, status=status.HTTP_403_FORBIDDEN)
+        if udp.status != 'suggested':
+            return Response({"detail": f"Cannot approve: current status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        start_date_str = request.data.get('start_date')
+        if not start_date_str:
+            return Response({"detail": "start_date is required."}, status=status.HTTP_400_BAD_REQUEST)
+        from datetime import datetime
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"detail": "Invalid start_date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        if start_date < timezone.now().date():
+            return Response({"detail": "Start date cannot be in the past."}, status=status.HTTP_400_BAD_REQUEST)
+        udp.approve(start_date=start_date)
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        """Patient rejects the suggested plan."""
+        udp = self.get_object()
+        if udp.user_id != request.user.id:
+            return Response({"detail": "Only the assigned patient can reject."}, status=status.HTTP_403_FORBIDDEN)
+        if udp.status != 'suggested':
+            return Response({"detail": f"Cannot reject: current status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        udp.reject(feedback=request.data.get('user_feedback'))
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def confirm_payment(self, request, pk=None):
+        """Confirm payment success and activate plan."""
+        udp = self.get_object()
+        if udp.user_id != request.user.id:
+            return Response({"detail": "Only the assigned patient can confirm payment."}, status=status.HTTP_403_FORBIDDEN)
+        if udp.status != 'payment_pending':
+            return Response({"detail": f"Cannot confirm payment: status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        amount = request.data.get('amount')
+        transaction_id = request.data.get('transaction_id', '')
+        if not amount:
+            return Response({"detail": "amount is required."}, status=status.HTTP_400_BAD_REQUEST)
+        from decimal import Decimal
+        try:
+            amount = Decimal(str(amount))
+        except Exception:
+            return Response({"detail": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST)
+        udp.confirm_payment(amount=amount, transaction_id=transaction_id)
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)

@@ -1,0 +1,300 @@
+import React, { useEffect, useState } from "react";
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import PageMeta from "../../../components/common/PageMeta";
+import {
+  getMyPatients,
+  getDietPlanList,
+  getPatientReviews,
+  suggestPlanToPatient,
+  getSuggestedPlansForPatient,
+  MappedPatientResponse,
+  NutritionistReview,
+  UserDietPlan,
+} from "./api";
+import type { DietPlan } from "./api";
+import { toast, ToastContainer } from "react-toastify";
+import { FiUsers, FiFileText, FiSend, FiCheckCircle, FiPackage } from "react-icons/fi";
+
+const SuggestPlanToPatientsPage: React.FC = () => {
+  const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<MappedPatientResponse | null>(null);
+  const [plans, setPlans] = useState<DietPlan[]>([]);
+  const [reviews, setReviews] = useState<NutritionistReview[]>([]);
+  const [suggestedPlans, setSuggestedPlans] = useState<UserDietPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | "">("");
+  const [selectedReviewId, setSelectedReviewId] = useState<number | "">("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [patientsData, plansData] = await Promise.all([
+          getMyPatients(),
+          getDietPlanList(1, 100).then((r) => r.results),
+        ]);
+        setPatients(patientsData);
+        setPlans(plansData);
+        if (patientsData.length > 0 && !selectedPatient) {
+          setSelectedPatient(patientsData[0]);
+        }
+      } catch (err) {
+        toast.error("Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (selectedPatient) {
+      const load = async () => {
+        try {
+          const [reviewsData, suggestedData] = await Promise.all([
+            getPatientReviews(selectedPatient.user.id),
+            getSuggestedPlansForPatient(selectedPatient.user.id),
+          ]);
+          setReviews(reviewsData);
+          setSuggestedPlans(suggestedData);
+          setSelectedPlanId("");
+          setSelectedReviewId("");
+          setNotes("");
+        } catch (err) {
+          toast.error("Failed to load patient data");
+        }
+      };
+      load();
+    }
+  }, [selectedPatient]);
+
+  const handleSuggest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatient || !selectedPlanId) {
+      toast.warning("Please select a diet plan");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload: {
+        user: number;
+        diet_plan: number;
+        review?: number;
+        nutritionist_notes?: string;
+      } = {
+        user: selectedPatient.user.id,
+        diet_plan: Number(selectedPlanId),
+        nutritionist_notes: notes.trim() || undefined,
+      };
+      if (selectedReviewId) payload.review = Number(selectedReviewId);
+      const created = await suggestPlanToPatient(payload);
+      toast.success("Plan suggested successfully");
+      setSuggestedPlans((prev) => [created, ...prev]);
+      setSelectedPlanId("");
+      setSelectedReviewId("");
+      setNotes("");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to suggest plan");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      suggested: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      approved: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      payment_pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      active: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      completed: "bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-400",
+      stopped: "bg-gray-100 text-gray-600 dark:bg-gray-700/30 dark:text-gray-500",
+    };
+    return map[status] || "bg-gray-100 text-gray-600";
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+      <PageMeta title="Suggest Plan to Patient" description="Suggest diet plans to your patients based on their documents and review" />
+      <PageBreadcrumb pageTitle="Suggest Plan to Patient" />
+      <ToastContainer position="bottom-right" />
+
+      <div className="px-4 md:px-8 pb-12">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* Sidebar: Patient List */}
+          <div className="xl:col-span-1">
+            <div className="bg-white dark:bg-gray-800 rounded-[32px] p-8 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] h-full overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="mb-8">
+                <h1 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                  <FiUsers className="text-blue-500" /> My Patients
+                </h1>
+                <p className="text-gray-500 mt-1 font-medium text-xs">Select a patient to suggest a plan.</p>
+              </div>
+              <div className="space-y-4">
+                {loading && (
+                  <div className="animate-pulse space-y-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700/50 rounded-2xl" />
+                    ))}
+                  </div>
+                )}
+                {patients.map((mapping) => (
+                  <button
+                    key={mapping.user.id}
+                    onClick={() => setSelectedPatient(mapping)}
+                    className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all text-left ${
+                      selectedPatient?.user.id === mapping.user.id
+                        ? "bg-blue-600 text-white shadow-xl shadow-blue-500/30"
+                        : "bg-gray-50 dark:bg-white/[0.02] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    <div
+                      className={`p-2 rounded-xl ${
+                        selectedPatient?.user.id === mapping.user.id ? "bg-white/20" : "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                      }`}
+                    >
+                      <FiUsers size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-sm line-clamp-1">
+                        {mapping.user.first_name} {mapping.user.last_name}
+                      </p>
+                      <p
+                        className={`text-[10px] font-bold ${
+                          selectedPatient?.user.id === mapping.user.id ? "text-blue-100" : "text-gray-400 uppercase tracking-tighter mt-1"
+                        }`}
+                      >
+                        Joined: {new Date(mapping.assigned_on).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="xl:col-span-3 space-y-8">
+            {selectedPatient ? (
+              <>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-white dark:bg-gray-800 rounded-[32px] border border-transparent dark:border-white/[0.05]">
+                  <div>
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white">
+                      {selectedPatient.user.first_name} {selectedPatient.user.last_name}
+                    </h2>
+                    <p className="text-gray-500 font-medium">Suggest diet plan based on documents & review</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Suggest Form */}
+                  <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05]">
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                      <FiPackage className="text-blue-500" /> Suggest Plan
+                    </h3>
+                    <form onSubmit={handleSuggest} className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Diet Plan *</label>
+                        <select
+                          value={selectedPlanId}
+                          onChange={(e) => setSelectedPlanId(e.target.value ? Number(e.target.value) : "")}
+                          required
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                        >
+                          <option value="">Select plan</option>
+                          {plans.filter((p) => p.is_active !== false).map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.title} ({p.code}) - ₹{p.final_amount} / {p.no_of_days} days
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link to review (optional)</label>
+                        <select
+                          value={selectedReviewId}
+                          onChange={(e) => setSelectedReviewId(e.target.value ? Number(e.target.value) : "")}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                        >
+                          <option value="">No specific review</option>
+                          {reviews.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {new Date(r.created_on).toLocaleDateString()} - {r.comments?.slice(0, 40)}...
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Notes for patient</label>
+                        <textarea
+                          rows={4}
+                          placeholder="Why you recommend this plan based on their documents..."
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white font-medium"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={submitting || !selectedPlanId}
+                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3 transition-all"
+                      >
+                        {submitting ? "Sending..." : "Suggest Plan"} <FiSend />
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Previously suggested plans */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                      <FiCheckCircle className="text-blue-500" /> Suggested Plans
+                    </h3>
+                    <div className="space-y-4">
+                      {suggestedPlans.length === 0 ? (
+                        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-[32px] border border-dashed border-gray-200 dark:border-white/10">
+                          <p className="text-gray-500">No plans suggested yet for this patient.</p>
+                        </div>
+                      ) : (
+                        suggestedPlans.map((udp) => (
+                          <div
+                            key={udp.id}
+                            className="bg-white dark:bg-gray-800 p-6 rounded-[32px] border border-transparent dark:border-white/[0.05] shadow-sm"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-gray-900 dark:text-white">
+                                {udp.diet_plan_details?.title || "Plan"}
+                              </h4>
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
+                                {udp.status.replace("_", " ")}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 mb-2">
+                              Suggested: {new Date(udp.suggested_on).toLocaleDateString()}
+                            </p>
+                            {udp.nutritionist_notes && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 italic line-clamp-2">{udp.nutritionist_notes}</p>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col justify-center items-center h-[400px] border-2 border-dashed border-gray-200 dark:border-white/10 rounded-[40px]">
+                <FiUsers className="size-16 text-gray-300 dark:text-gray-600 mb-4" />
+                <h2 className="text-xl font-black text-gray-400">Select a Patient</h2>
+                <p className="text-gray-400 font-medium">Choose a patient to suggest a diet plan.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SuggestPlanToPatientsPage;

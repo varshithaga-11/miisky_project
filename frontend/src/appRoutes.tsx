@@ -57,8 +57,10 @@ import DeliveryQuestionarePage from "./pages/SupplyChain/DeliveryQuestionare/ind
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
+import SuggestPlanToPatientsPage from "./pages/NutritionSide/SuggestPlanToPatients/index";
 import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
 import PlansPage from "./pages/PatientSide/Plans/index";
+import SuggestedPlansPage from "./pages/PatientSide/SuggestedPlans/index";
 import ListOfMicroKitchenPage from "./pages/PatientSide/ListOfMicroKitchen/index";
 import HealthReportUploadPage from "./pages/PatientSide/HealthReportUpload/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
@@ -125,11 +127,13 @@ export function appRoutes() {
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
+          <Route path="patient/suggested-plans" element={<SuggestedPlansPage />} />
           <Route path="patient/micro-kitchens" element={<ListOfMicroKitchenPage />} />
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/uploaded-documents" element={<UploadedDocumentsByPatientPage />} />
+          <Route path="nutrition/suggest-plan" element={<SuggestPlanToPatientsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />

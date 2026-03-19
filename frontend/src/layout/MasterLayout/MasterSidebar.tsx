@@ -186,6 +186,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/plans",
   },
   {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Suggested Plans",
+    path: "/patient/suggested-plans",
+  },
+  {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Micro-Kitchens",
     path: "/patient/micro-kitchens",
@@ -212,6 +217,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <FileText className="w-5 h-5" />,
     name: "Patient Documents",
     path: "/nutrition/uploaded-documents",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Suggest Plan",
+    path: "/nutrition/suggest-plan",
   },
 ];
 

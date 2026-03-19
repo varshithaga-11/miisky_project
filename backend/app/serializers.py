@@ -975,7 +975,73 @@ class NutritionistReviewSerializer(serializers.ModelSerializer):
 
     def get_report_details(self, obj):
         return [
-            {"id": r.id, "title": r.title} 
+            {"id": r.id, "title": r.title}
             for r in obj.reports.all()
         ]
+
+
+class UserDietPlanSerializer(serializers.ModelSerializer):
+    diet_plan_details = serializers.SerializerMethodField()
+    user_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
+    review_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            'id', 'user', 'user_details', 'nutritionist', 'nutritionist_details',
+            'diet_plan', 'diet_plan_details', 'review', 'review_details',
+            'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
+            'amount_paid', 'transaction_id', 'payment_status',
+            'start_date', 'end_date',
+            'suggested_on', 'approved_on', 'created_on', 'updated_on'
+        ]
+        read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on']
+
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                'id': obj.diet_plan.id,
+                'title': obj.diet_plan.title,
+                'code': obj.diet_plan.code,
+                'amount': str(obj.diet_plan.amount),
+                'discount_amount': str(obj.diet_plan.discount_amount) if obj.diet_plan.discount_amount else None,
+                'final_amount': str(obj.diet_plan.final_amount),
+                'no_of_days': obj.diet_plan.no_of_days,
+                'features': [
+                    {'id': f.id, 'feature': f.feature, 'order': f.order}
+                    for f in obj.diet_plan.features.all().order_by('order')
+                ]
+            }
+        return None
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+                'email': obj.user.email,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+                'email': obj.nutritionist.email,
+            }
+        return None
+
+    def get_review_details(self, obj):
+        if obj.review:
+            return {
+                'id': obj.review.id,
+                'comments': obj.review.comments,
+                'created_on': obj.review.created_on,
+                'report_details': [{'id': r.id, 'title': r.title} for r in obj.review.reports.all()]
+            }
+        return None
 

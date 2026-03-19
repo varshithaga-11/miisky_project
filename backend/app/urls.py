@@ -19,6 +19,7 @@ router.register(r'deliveryprofile', DeliveryProfileViewSet, basename='deliverypr
 router.register(r'usernutritionistmapping', UserNutritionistMappingViewSet, basename='usernutritionistmapping')
 router.register(r'patienthealthreport', PatientHealthReportViewSet, basename='patienthealthreport')
 router.register(r'nutritionistreview', NutritionistReviewViewSet, basename='nutritionistreview')
+router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)
