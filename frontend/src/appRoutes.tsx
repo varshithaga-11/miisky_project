@@ -62,6 +62,9 @@ import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
 import PlansPage from "./pages/PatientSide/Plans/index";
 import SuggestedPlansPage from "./pages/PatientSide/SuggestedPlans/index";
 import ListOfMicroKitchenPage from "./pages/PatientSide/ListOfMicroKitchen/index";
+import NonPatientFoodsPage from "./pages/NonPatient/Foods/index";
+import NonPatientListOfMicroKitchenPage from "./pages/NonPatient/ListOfMicroKitchens/index";
+
 import AllotedMicroKitchenByNutritionPage from "./pages/PatientSide/AllotedMicroKitchenByNutrition/index";
 import HealthReportUploadPage from "./pages/PatientSide/HealthReportUpload/index";
 import MealsAllotedPage from "./pages/PatientSide/MealsAlloted/index";
@@ -128,7 +131,9 @@ export function appRoutes() {
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
           <Route path="patient/suggested-plans" element={<SuggestedPlansPage />} />
+          <Route path="patient/foods" element={<NonPatientFoodsPage />} />
           <Route path="patient/micro-kitchens" element={<ListOfMicroKitchenPage />} />
+          <Route path="patient/discover-kitchens" element={<NonPatientListOfMicroKitchenPage />} />
           <Route path="patient/suggested-kitchens" element={<AllotedMicroKitchenByNutritionPage />} />
          <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
