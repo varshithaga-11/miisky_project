@@ -1503,6 +1503,12 @@ class UserMealViewSet(viewsets.ModelViewSet):
                 nutritionist=user, is_active=True
             ).values_list('user_id', flat=True)
             queryset = queryset.filter(user_diet_plan__user_id__in=mapped_patient_ids)
+        elif user.role == "micro_kitchen":
+            # Identify patients mapped to this micro-kitchen
+            mapped_patient_ids = UserMicroKitchenMapping.objects.filter(
+                micro_kitchen__user=user, status='accepted', is_active=True
+            ).values_list('patient_id', flat=True)
+            queryset = queryset.filter(user_id__in=mapped_patient_ids)
         else:
             queryset = queryset.filter(user=user)
 

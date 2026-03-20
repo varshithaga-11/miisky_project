@@ -6,7 +6,27 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiUsers, FiUser, FiInfo, FiActivity, FiMapPin, FiCalendar, FiSearch, FiLayers } from "react-icons/fi";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Calendar Imports
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { GiBreadSlice, GiBowlOfRice, GiHamburger, GiCookingPot } from "react-icons/gi";
+
+interface UserMeal {
+    id: number;
+    meal_date: string;
+    meal_type_details: {
+        name: string;
+    };
+    food_details: {
+        name: string;
+        image?: string;
+    };
+    is_consumed: boolean;
+}
 
 interface PatientAllotted {
     id: number;
@@ -38,6 +58,11 @@ const MicroKitchenPatientsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedPatient, setSelectedPatient] = useState<PatientAllotted | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    
+    // Calendar States
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [patientMeals, setPatientMeals] = useState<UserMeal[]>([]);
+    const [loadingMeals, setLoadingMeals] = useState(false);
 
     const fetchAllotments = async () => {
         setLoading(true);
@@ -53,6 +78,20 @@ const MicroKitchenPatientsPage: React.FC = () => {
         }
     };
 
+    const fetchPatientMeals = async (patientId: number) => {
+        setLoadingMeals(true);
+        setShowCalendar(true);
+        try {
+            const url = createApiUrl(`api/usermeal/?user=${patientId}`);
+            const response = await axios.get(url, { headers: await getAuthHeaders() });
+            setPatientMeals(response.data);
+        } catch (error) {
+            toast.error("Failed to load meal calendar");
+        } finally {
+            setLoadingMeals(false);
+        }
+    };
+
     useEffect(() => {
         fetchAllotments();
     }, []);
@@ -61,6 +100,14 @@ const MicroKitchenPatientsPage: React.FC = () => {
         `${a.patient_details.first_name} ${a.patient_details.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.patient_details.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const getMealIcon = (name: string = "") => {
+        const n = name.toLowerCase();
+        if (n.includes("breakfast")) return <GiBreadSlice size={16} className="text-amber-500" />;
+        if (n.includes("lunch")) return <GiBowlOfRice size={16} className="text-emerald-500" />;
+        if (n.includes("dinner")) return <GiCookingPot size={16} className="text-indigo-500" />;
+        return <GiHamburger size={16} className="text-orange-500" />;
+    };
 
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
@@ -164,7 +211,14 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                     </div>
                                     
                                     <div className="flex gap-4">
-                                        <a href={`tel:${selectedPatient.patient_details.mobile}`} className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-500 hover:bg-indigo-500 hover:text-white transition-all shadow-sm">
+                                        <button 
+                                            onClick={() => fetchPatientMeals(selectedPatient.patient_details.id)}
+                                            className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white hover:scale-110 transition-all shadow-lg shadow-indigo-600/20"
+                                            title="View Meal Calendar"
+                                        >
+                                            <FiCalendar size={20} />
+                                        </button>
+                                        <a href={`tel:${selectedPatient.patient_details.mobile}`} className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-all shadow-sm">
                                             <FiInfo size={20} />
                                         </a>
                                     </div>
@@ -353,6 +407,99 @@ const MicroKitchenPatientsPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Calendar Modal */}
+            <AnimatePresence>
+                {showCalendar && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-xl flex items-center justify-center p-4 lg:p-12"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.9, y: 30 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 30 }}
+                            className="bg-white dark:bg-gray-900 w-full h-full rounded-[50px] overflow-hidden flex flex-col shadow-2xl border border-white/10"
+                        >
+                            {/* Modal Header */}
+                            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white">
+                                        <FiCalendar size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">Meal Calendar</h2>
+                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">
+                                            {selectedPatient?.patient_details.first_name} {selectedPatient?.patient_details.last_name}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowCalendar(false)}
+                                    className="px-6 py-3 bg-gray-50 dark:bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-rose-500 hover:text-white transition-all border border-transparent hover:border-rose-500/20"
+                                >
+                                    Close Dashboard
+                                </button>
+                            </div>
+
+                            {/* Calendar Content */}
+                            <div className="flex-1 p-8 overflow-y-auto no-scrollbar custom-calendar-lite">
+                                {loadingMeals ? (
+                                    <div className="h-full flex flex-col items-center justify-center">
+                                        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] animate-pulse">Syncing Meal Schedule...</p>
+                                    </div>
+                                ) : (
+                                    <FullCalendar
+                                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                        initialView="dayGridMonth"
+                                        headerToolbar={{
+                                            left: 'prev,next today',
+                                            center: 'title',
+                                            right: 'dayGridMonth,timeGridWeek'
+                                        }}
+                                        height="100%"
+                                        events={patientMeals.map(m => ({
+                                            id: String(m.id),
+                                            title: m.meal_type_details.name,
+                                            start: m.meal_date,
+                                            backgroundColor: m.is_consumed ? '#10b981' : '#4f46e5',
+                                            borderColor: 'transparent',
+                                            extendedProps: { food: m.food_details.name }
+                                        }))}
+                                        eventContent={(eventInfo) => (
+                                            <div className="p-1 px-2 flex items-center gap-1.5 overflow-hidden">
+                                                {getMealIcon(eventInfo.event.title)}
+                                                <div className="truncate">
+                                                    <div className="text-[10px] font-black uppercase leading-none">{eventInfo.event.title}</div>
+                                                    <div className="text-[8px] font-medium opacity-80 truncate">{eventInfo.event.extendedProps.food}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    />
+                                )}
+                                { /* CSS Injections for Calendar */ }
+                                <style>{`
+                                    .fc-theme-standard .fc-scrollgrid { border: none !important; }
+                                    .fc .fc-toolbar-title { font-weight: 900; text-transform: uppercase; letter-spacing: -0.05em; font-size: 1.5rem; color: #111827; }
+                                    .fc .fc-button-primary { background: transparent !important; border: 1px solid #e5e7eb !important; color: #6b7280 !important; border-radius: 12px !important; text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 10px 16px !important; }
+                                    .fc .fc-button-primary:hover { background: #f3f4f6 !important; }
+                                    .fc .fc-button-active { background: #4f46e5 !important; border-color: #4f46e5 !important; color: white !important; }
+                                    .fc-daygrid-event { border-radius: 12px !important; margin: 2px 4px !important; padding: 4px !important; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important; border: none !important; }
+                                    .fc-col-header-cell-cushion { font-weight: 900 !important; text-transform: uppercase !important; font-size: 10px !important; letter-spacing: 0.1em !important; color: #9ca3af !important; padding: 15px !important; }
+                                    .dark .fc .fc-button-primary { border-color: rgba(255,255,255,0.05) !important; color: #9ca3af !important; }
+                                    .dark .fc .fc-toolbar-title { color: white; }
+                                    .dark .fc-daygrid-day { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
+                                    .fc-day-today { background: #f5f3ff !important; }
+                                    .dark .fc-day-today { background: rgba(79, 70, 229, 0.05) !important; }
+                                `}</style>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
