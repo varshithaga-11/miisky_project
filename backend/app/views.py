@@ -957,6 +957,9 @@ class TemplateDownloadView(APIView):
                 "normalrange": ["health_parameter_name", "raw_value", "min_value", "max_value", "unit", "reference_text", "qualitative_value", "remarks"],
                 "diet-plan": ["title", "code", "amount", "discount_amount", "no_of_days"],
                 "dietplan": ["title", "code", "amount", "discount_amount", "no_of_days"]
+            },
+            "auth": {
+                "usermanagement": ["username", "email", "first_name", "last_name", "role", "mobile", "whatsapp", "dob", "gender", "address", "zip_code", "country_name", "state_name", "city_name", "joined_date", "password", "password_confirm", "is_active"]
             }
         }
 
@@ -1107,6 +1110,13 @@ class TemplateDownloadView(APIView):
                 ["Fruits", "Vitamins and antioxidants"], ["Milk and Milk Products", "Calcium and protein"],
                 ["Animal Foods", "High quality protein"], ["Fats and Oils", "Energy dense"],
                 ["Nuts and Oilseeds", "Healthy fats"], ["Sugar and Confectionery", "Simple carbohydrates"]
+            ],
+            "usermanagement": [
+                ["johndoe", "john@example.com", "John", "Doe", "patient", "1234567890", "1234567890", "1990-01-01", "male", "123 Main St", "123456", "India", "Karnataka", "Bangalore", "2023-01-01T10:00:00", "password123", "password123", "TRUE"],
+                ["janesmith", "jane@example.com", "Jane", "Smith", "nutritionist", "9876543210", "9876543210", "1985-05-15", "female", "456 Oak Ave", "654321", "India", "Maharashtra", "Mumbai", "2023-02-01T11:00:00", "securepass", "securepass", "TRUE"],
+                ["adminuser", "admin@miisky.com", "System", "Admin", "admin", "5556667777", "5556667777", "1980-10-20", "other", "789 Admin Blvd", "999888", "United States", "California", "Los Angeles", "2022-12-01T09:00:00", "admin123", "admin123", "TRUE"],
+                ["bobross", "bob@example.com", "Bob", "Ross", "patient", "1112223333", "1112223333", "1970-07-07", "male", "101 Art Way", "111000", "Canada", "Ontario", "Toronto", "2023-03-01T12:00:00", "painter123", "painter123", "TRUE"],
+                ["aliceinwonderland", "alice@example.com", "Alice", "Wonder", "patient", "4445556666", "4445556666", "1995-12-12", "female", "202 Rabbit Hole", "222333", "United Kingdom", "England", "London", "2023-04-01T13:00:00", "teaparty", "teaparty", "TRUE"]
             ],
             "foodname": [
                 ["Rice", "Cereals and Millets", "R001", "Polished white rice"], ["Wheat", "Cereals and Millets", "W002", "Whole wheat grain"],

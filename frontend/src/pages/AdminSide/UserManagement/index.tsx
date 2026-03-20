@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ImportButton from "../../../components/common/ImportButton";
 
 export interface UserRegister {
   id?: number;
@@ -208,14 +209,17 @@ const UserManagementPage: React.FC = () => {
               </div>
             </div>
 
-            <Button
-              size="sm"
-              className="inline-flex items-center gap-2"
-              onClick={() => setIsAddModalOpen(true)}
-            >
-              <FiPlus />
-              Add User
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <ImportButton onSuccess={fetchUsers} />
+              <Button
+                size="sm"
+                className="inline-flex items-center gap-2"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <FiPlus />
+                Add User
+              </Button>
+            </div>
 
             <div className="flex items-center justify-center gap-2">
               <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Show:</Label>

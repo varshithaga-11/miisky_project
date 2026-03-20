@@ -14,42 +14,43 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
 
   const context = useMemo(() => {
     const path = location.pathname;
-    // Food Groups and Food Names
-    if (path.includes("/food-group")) return { module: "food", submenu: "foodgroup" };
-    if (path.includes("/food-name")) return { module: "food", submenu: "foodname" };
-    // Location Module
-    if (path.includes("/country")) return { module: "location", submenu: "country" };
-    if (path.includes("/state")) return { module: "location", submenu: "state" };
-    if (path.includes("/city")) return { module: "location", submenu: "city" };
 
-    // Food Composition Submenus
-    if (path.includes("/food-proximate")) return { module: "food", submenu: "foodproximate" };
-    if (path.includes("/food-water-soluble-vitamins")) return { module: "food", submenu: "foodwatersolublevitamins" };
-    if (path.includes("/food-fat-soluble-vitamins")) return { module: "food", submenu: "foodfatsolublevitamins" };
-    if (path.includes("/food-carotenoids")) return { module: "food", submenu: "foodcarotenoids" };
-    if (path.includes("/food-minerals")) return { module: "food", submenu: "foodminerals" };
-    if (path.includes("/food-sugars")) return { module: "food", submenu: "foodsugars" };
-    if (path.includes("/food-amino-acids")) return { module: "food", submenu: "foodaminoacids" };
-    if (path.includes("/food-organic-acids")) return { module: "food", submenu: "foodorganicacids" };
-    if (path.includes("/food-polyphenols")) return { module: "food", submenu: "foodpolyphenols" };
-    if (path.includes("/food-phytochemicals")) return { module: "food", submenu: "foodphytochemicals" };
-    if (path.includes("/food-fatty-acid-profile")) return { module: "food", submenu: "foodfattyacidprofile" };
+    const pathMapping: Record<string, { module: string; submenu: string }> = {
+      '/food-management/food-group': { module: 'food', submenu: 'foodgroup' },
+      '/food-management/food-name': { module: 'food', submenu: 'foodname' },
+      '/food-management/meal-type': { module: 'food', submenu: 'meal-type' },
+      '/food-management/cuisine-type': { module: 'food', submenu: 'cuisine-type' },
+      '/food-management/food': { module: 'food', submenu: 'food' },
+      '/food-management/ingredient': { module: 'food', submenu: 'ingredient' },
+      '/food-management/unit': { module: 'food', submenu: 'unit' },
+      '/food-management/recipe': { module: 'food', submenu: 'recipe' },
+      '/food-management/food-step': { module: 'food', submenu: 'food-step' },
+      '/food-management/proximate': { module: 'food', submenu: 'foodproximate' },
+      '/food-management/water-soluble-vitamins': { module: 'food', submenu: 'foodwatersolublevitamins' },
+      '/food-management/fat-soluble-vitamins': { module: 'food', submenu: 'foodfatsolublevitamins' },
+      '/food-management/carotenoids': { module: 'food', submenu: 'foodcarotenoids' },
+      '/food-management/minerals': { module: 'food', submenu: 'foodminerals' },
+      '/food-management/sugars': { module: 'food', submenu: 'foodsugars' },
+      '/food-management/amino-acids': { module: 'food', submenu: 'foodaminoacids' },
+      '/food-management/organic-acids': { module: 'food', submenu: 'foodorganicacids' },
+      '/food-management/polyphenols': { module: 'food', submenu: 'foodpolyphenols' },
+      '/food-management/phytochemicals': { module: 'food', submenu: 'foodphytochemicals' },
+      '/food-management/fatty-acid-profile': { module: 'food', submenu: 'foodfattyacidprofile' },
+      
+      '/location-management/country': { module: 'location', submenu: 'country' },
+      '/location-management/state': { module: 'location', submenu: 'state' },
+      '/location-management/city': { module: 'location', submenu: 'city' },
 
-    // Other Food Module
-    if (path.includes("/meal-type")) return { module: "food", submenu: "meal-type" };
-    if (path.includes("/cuisine-type")) return { module: "food", submenu: "cuisine-type" };
-    if (path.includes("/food")) return { module: "food", submenu: "food" };
-    if (path.includes("/unit")) return { module: "food", submenu: "unit" };
-    if (path.includes("/ingredient")) return { module: "food", submenu: "ingredient" };
-    if (path.includes("/recipe-creator")) return { module: "food", submenu: "recipe" };
-    if (path.includes("/food-step")) return { module: "food", submenu: "food-step" };
+      '/health-monitoring/parameter': { module: 'health', submenu: 'healthparameter' },
+      '/health-monitoring/normal-range': { module: 'health', submenu: 'normalrange' },
+      '/health-monitoring/diet-plan': { module: 'health', submenu: 'dietplan' },
 
-    // Health Module
-    if (path.includes("/health-parameter")) return { module: "health", submenu: "health-parameter" };
-    if (path.includes("/normal-range")) return { module: "health", submenu: "normal-range" };
-    if (path.includes("/diet-plan")) return { module: "health", submenu: "diet-plan" };
+      '/master/usermanagement': { module: 'auth', submenu: 'usermanagement' },
+    };
 
-    return null;
+    // Find a matching path
+    const match = Object.entries(pathMapping).find(([key]) => path.endsWith(key));
+    return match ? match[1] : null;
   }, [location.pathname]);
 
   if (!context) return null;

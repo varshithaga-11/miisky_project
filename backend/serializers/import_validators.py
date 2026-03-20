@@ -5,7 +5,7 @@ from app.models import (
     FoodGroup, FoodName, FoodProximate, FoodWaterSolubleVitamins,
     FoodFatSolubleVitamins, FoodCarotenoids, FoodMinerals, FoodSugars,
     FoodAminoAcids, FoodOrganicAcids, FoodPolyphenols, FoodPhytochemicals,
-    FoodFattyAcidProfile
+    FoodFattyAcidProfile, UserRegister
 )
 from app.serializers import (
     CountrySerializer, StateSerializer, CitySerializer, 
@@ -17,7 +17,8 @@ from app.serializers import (
     FoodWaterSolubleVitaminsSerializer, FoodFatSolubleVitaminsSerializer,
     FoodCarotenoidsSerializer, FoodMineralsSerializer, FoodSugarsSerializer,
     FoodAminoAcidsSerializer, FoodOrganicAcidsSerializer, FoodPolyphenolsSerializer,
-    FoodPhytochemicalsSerializer, FoodFattyAcidProfileSerializer
+    FoodPhytochemicalsSerializer, FoodFattyAcidProfileSerializer,
+    UserManagementSerializer
 )
 
 # Mapping of module + submenu to Model and Serializer
@@ -26,6 +27,9 @@ MODEL_MAPPING = {
         'country': (Country, CountrySerializer),
         'state': (State, StateSerializer),
         'city': (City, CitySerializer),
+    },
+    'auth': {
+        'usermanagement': (UserRegister, UserManagementSerializer),
     },
     'food': {
         'mealtype': (MealType, MealTypeSerializer),
