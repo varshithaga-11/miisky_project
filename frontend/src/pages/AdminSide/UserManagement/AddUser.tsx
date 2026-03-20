@@ -9,6 +9,7 @@ import Select from "../../../components/form/Select";
 import { getCountryList, Country } from "../Country/countryapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCityList, City } from "../City/cityapi";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 
 interface AddUserProps {
@@ -243,8 +244,12 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           <div>
-            <Label htmlFor="dob">Date of Birth</Label>
-            <Input id="dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} disabled={loading} />
+            <DatePicker2
+                id="dob"
+                label="Date of Birth"
+                value={dob}
+                onChange={(date) => setDob(date)}
+            />
           </div>
 
           <div>
@@ -301,13 +306,11 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           <div>
-            <Label htmlFor="joinedDate">Joined Date</Label>
-            <Input
+            <DatePicker2
               id="joinedDate"
-              type="datetime-local"
+              label="Joined Date"
               value={joinedDate}
-              onChange={(e) => setJoinedDate(e.target.value)}
-              disabled={loading}
+              onChange={(date) => setJoinedDate(date)}
             />
           </div>
 

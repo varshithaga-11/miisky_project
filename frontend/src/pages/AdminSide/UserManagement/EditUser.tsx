@@ -9,6 +9,7 @@ import Select from "../../../components/form/Select";
 import { getCountryList, Country } from "../Country/countryapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCityList, City } from "../City/cityapi";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface EditUserProps {
   userId: number;
@@ -244,13 +245,11 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
           </div>
 
           <div>
-            <Label htmlFor="dob">Date of Birth</Label>
-            <Input
+            <DatePicker2
               id="dob"
-              type="date"
+              label="Date of Birth"
               value={(userData.dob as any) || ""}
-              onChange={(e) => handleChange("dob", e.target.value)}
-              disabled={saving}
+              onChange={(date) => handleChange("dob", date)}
             />
           </div>
 
@@ -326,13 +325,11 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
           </div>
 
           <div>
-            <Label htmlFor="joinedDate">Joined Date</Label>
-            <Input
+            <DatePicker2
               id="joinedDate"
-              type="datetime-local"
-              value={userData.joined_date ? new Date(userData.joined_date).toISOString().slice(0, 16) : ""}
-              onChange={(e) => handleChange("joined_date", e.target.value ? new Date(e.target.value).toISOString() : null)}
-              disabled={saving}
+              label="Joined Date"
+              value={userData.joined_date ? new Date(userData.joined_date).toISOString().split('T')[0] : ""}
+              onChange={(date) => handleChange("joined_date", date)}
             />
           </div>
 

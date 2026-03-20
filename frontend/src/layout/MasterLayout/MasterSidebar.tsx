@@ -394,9 +394,9 @@ const MasterSidebar: React.FC = () => {
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <span className="font-bold text-xl text-gray-900 dark:text-white">Fund Management</span>
+            <span className="font-bold text-xl text-gray-900 dark:text-white">Miisky</span>
           ) : (
-            <span className="font-bold text-base text-gray-900 dark:text-white">KB</span>
+            <span className="font-bold text-base text-gray-900 dark:text-white">M</span>
           )}
         </Link>
       </div>

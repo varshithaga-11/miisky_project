@@ -84,7 +84,7 @@ const MasterHeader: React.FC = () => {
 
           <Link to="/" className="lg:hidden flex items-center">
             {/* Empty logo area for mobile, show only text */}
-            <span className="font-bold text-lg text-gray-900 dark:text-white">Fund Management</span>
+            <span className="font-bold text-lg text-gray-900 dark:text-white">Miisky</span>
           </Link>
 
           <button
