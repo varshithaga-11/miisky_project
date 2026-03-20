@@ -13,6 +13,7 @@ import {
   Users,
   Layers,
   Video,
+  Truck,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -234,6 +235,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <Users className="w-5 h-5" />,
     name: "Patients",
     path: "/microkitchen/patients",
+  },
+  {
+    icon: <Truck className="w-5 h-5" />,
+    name: "Daily Prep",
+    path: "/microkitchen/daily-prep",
   },
 ];
 
