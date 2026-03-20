@@ -4,6 +4,20 @@ A nutrition & diet management platform connecting **Patients**, **Nutritionists*
 
 ---
 
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | |
+| Framework | Django |
+| API Layer | Django REST Framework |
+| Language | Python |
+| **Database** | PostgreSQL |
+| **Frontend** | |
+| Library | React.js |
+
+---
+
 ## 1. User Roles & Access Flow
 
 ```
