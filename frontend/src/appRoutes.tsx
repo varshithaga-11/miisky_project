@@ -15,8 +15,6 @@ const Alerts = lazy(() => import("./pages/UiElements/Alerts"));
 const Badges = lazy(() => import("./pages/UiElements/Badges"));
 const Avatars = lazy(() => import("./pages/UiElements/Avatars"));
 const Buttons = lazy(() => import("./pages/UiElements/Buttons"));
-const LineChart = lazy(() => import("./pages/Charts/LineChart"));
-const BarChart = lazy(() => import("./pages/Charts/BarChart"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
@@ -68,14 +66,9 @@ import HealthReportUploadPage from "./pages/PatientSide/HealthReportUpload/index
 import MealsAllotedPage from "./pages/PatientSide/MealsAlloted/index";
 import SendingMeetingRequest from "./pages/PatientSide/SendingMeetingRequest/index";
 import MeetingRequestsByPatients from "./pages/NutritionSide/MeetingRequestsByPatients/index";
+import ListOfMicroKitchensPage from "./pages/NutritionSide/ListOfMicroKitchens/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
-
-
-import ClientPage from "./pages/registration/client";
-import SupplierPage from "./pages/registration/supplier";
-
-
 
 
 
@@ -98,8 +91,6 @@ export function appRoutes() {
         {/* Dashboard Layout */}
         <Route element={<MasterLayout />}>
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
-          <Route path="master/client" element={<ClientPage />} />
-          <Route path="master/supplier" element={<SupplierPage />} />
           <Route path="master/usermanagement" element={<UserManagementPage />} />
           <Route path="master/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
           <Route path="master/nutrition-information" element={<NutritionInformationPage />} />
@@ -146,6 +137,7 @@ export function appRoutes() {
           <Route path="nutrition/suggest-plan" element={<SuggestPlanToPatientsPage />} />
           <Route path="nutrition/approved-plans" element={<ApprovesPlansByPatientsPage />} />
           <Route path="nutrition/meeting-requests" element={<MeetingRequestsByPatients />} />
+          <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
@@ -170,9 +162,6 @@ export function appRoutes() {
           <Route path="/images" element={<Images />} />
           <Route path="/videos" element={<Videos />} />
 
-          {/* Charts */}
-          <Route path="/line-chart" element={<LineChart />} />
-          <Route path="/bar-chart" element={<BarChart />} />
         </Route>
 
 
@@ -194,10 +183,6 @@ export function appRoutes() {
         <Route path="buttons" element={<Buttons />} />
         <Route path="images" element={<Images />} />
         <Route path="videos" element={<Videos />} />
-
-        {/* Charts */}
-        <Route path="/line-chart" element={<LineChart />} />
-        <Route path="/bar-chart" element={<BarChart />} />
 
         {/* Auth Routes */}
         <Route path="/" element={<SignIn />} />
