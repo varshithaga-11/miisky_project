@@ -1170,3 +1170,40 @@ class MeetingRequestSerializer(serializers.ModelSerializer):
             validated_data['patient'] = request.user
         return super().create(validated_data)
 
+
+class NutritionistRatingSerializer(serializers.ModelSerializer):
+    patient_details = serializers.SerializerMethodField(read_only=True)
+    nutritionist_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = NutritionistRating
+        fields = [
+            'id', 'patient', 'patient_details', 'nutritionist', 'nutritionist_details',
+            'rating', 'review', 'diet_plan', 'created_at'
+        ]
+        read_only_fields = ['id', 'patient', 'created_at']
+
+    def get_patient_details(self, obj):
+        if obj.patient:
+            return {
+                'id': obj.patient.id,
+                'first_name': obj.patient.first_name or obj.patient.username,
+                'last_name': obj.patient.last_name,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'first_name': obj.nutritionist.first_name or obj.nutritionist.username,
+                'last_name': obj.nutritionist.last_name,
+            }
+        return None
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['patient'] = request.user
+        return super().create(validated_data)
+

@@ -311,6 +311,11 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                         "last_name": patient.last_name,
                         "email": patient.email,
                         "mobile": patient.mobile,
+                        "address": patient.address,
+                        "city": patient.city.name if patient.city else None,
+                        "zip_code": patient.zip_code,
+                        "state": patient.state.name if patient.state else None,
+                        "country": patient.country.name if patient.country else None,
                         "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
                     },
                     "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
@@ -1606,3 +1611,46 @@ class MeetingRequestViewSet(viewsets.ModelViewSet):
             serializer.save()
 
         return Response(self.get_serializer(meeting).data)
+
+
+class NutritionistRatingViewSet(viewsets.ModelViewSet):
+    queryset = NutritionistRating.objects.all().select_related('patient', 'nutritionist', 'diet_plan')
+    serializer_class = NutritionistRatingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return self.queryset
+        elif user.role == 'nutritionist':
+            return self.queryset.filter(nutritionist=user)
+        else:
+            return self.queryset.filter(patient=user)
+
+    def perform_create(self, serializer):
+        rating_obj = serializer.save(patient=self.request.user)
+        self.recalculate_nutritionist_stats(rating_obj.nutritionist)
+
+    def perform_update(self, serializer):
+        rating_obj = serializer.save()
+        self.recalculate_nutritionist_stats(rating_obj.nutritionist)
+
+    def perform_destroy(self, instance):
+        nutritionist = instance.nutritionist
+        instance.delete()
+        self.recalculate_nutritionist_stats(nutritionist)
+
+    def recalculate_nutritionist_stats(self, nutritionist):
+        from django.db.models import Avg, Count
+        stats = NutritionistRating.objects.filter(nutritionist=nutritionist).aggregate(
+            avg_rating=Avg('rating'),
+            total=Count('id')
+        )
+        
+        try:
+            profile = nutritionist.nutritionistprofile
+            profile.rating = stats['avg_rating'] or 0
+            profile.total_reviews = stats['total'] or 0
+            profile.save()
+        except NutritionistProfile.DoesNotExist:
+            pass

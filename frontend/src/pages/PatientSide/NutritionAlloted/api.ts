@@ -29,9 +29,31 @@ export type NutritionistWithProfile = {
   } | null;
 };
 
+export type NutritionistRating = {
+  id?: number;
+  patient?: number;
+  nutritionist: number;
+  rating: number;
+  review?: string;
+  diet_plan?: number | null;
+  created_at?: string;
+};
+
 export const getMyNutritionist = async (): Promise<NutritionistWithProfile> => {
   const url = createApiUrl("api/usernutritionistmapping/my-nutritionist/");
   const response = await axios.get<NutritionistWithProfile>(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const submitRating = async (data: NutritionistRating): Promise<NutritionistRating> => {
+  const url = createApiUrl("api/nutritionistrating/");
+  const response = await axios.post<NutritionistRating>(url, data, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const getMyRatings = async (): Promise<NutritionistRating[]> => {
+  const url = createApiUrl("api/nutritionistrating/");
+  const response = await axios.get<NutritionistRating[]>(url, { headers: await getAuthHeaders() });
   return response.data;
 };
 

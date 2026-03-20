@@ -11,6 +11,11 @@ export type AllotedPatient = {
     last_name?: string;
     email: string;
     mobile?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip_code?: string | null;
+    country?: string | null;
     is_patient_mapped?: boolean;
   };
   questionnaire: any | null;

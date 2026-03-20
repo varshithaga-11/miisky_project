@@ -1593,3 +1593,43 @@ class MeetingRequest(models.Model):
 
     def __str__(self):
         return f"{self.patient} → {self.nutritionist} ({self.status})"
+
+
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+class NutritionistRating(models.Model):
+    patient = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name='given_ratings'
+    )
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name='received_ratings'
+    )
+
+    # Rating out of 5
+    rating = models.PositiveIntegerField()  # 1 to 5
+
+    # Optional feedback
+    review = models.TextField(null=True, blank=True)
+
+    # Link to diet plan (optional but recommended)
+    diet_plan = models.ForeignKey(
+        UserDietPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('patient', 'nutritionist', 'diet_plan')
+
+    def __str__(self):
+        return f"{self.patient} rated {self.nutritionist} - {self.rating}"
