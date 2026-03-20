@@ -42,6 +42,7 @@ export interface Food {
   nutrition?: FoodNutrition;
   ingredients?: any[];
   steps?: any[];
+  price?: number;
 }
 
 export interface PaginatedResponses<T> {

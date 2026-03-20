@@ -24,6 +24,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
   const [existingImage, setExistingImage] = useState<string | null>(null);
+  const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -65,6 +66,7 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
           setSelectedCuisines(data.cuisine_types ? data.cuisine_types.map(String) : []);
           setDescription(data.description || "");
           setExistingImage(data.image || null);
+          setPrice(data.price ? String(data.price) : "");
           if (data.nutrition) {
             setNutrition(data.nutrition);
           } else {
@@ -113,6 +115,9 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
       formData.append("description", description);
       if (image) {
         formData.append("image", image);
+      }
+      if (price) {
+        formData.append("price", price);
       }
 
       await updateFood(foodId, formData);
@@ -198,6 +203,10 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                       <Label htmlFor="image">Image</Label>
                       {existingImage && <div className="mb-2"><img src={existingImage} alt="Current" className="w-20 h-20 object-cover rounded shadow-sm border" /></div>}
                       <input id="image" type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500" disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="price">Price (₹)</Label>
+                      <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 150" disabled={saving} />
                     </div>
                     <div>
                       <Label htmlFor="serving_size">Serving Size</Label>

@@ -21,6 +21,7 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
+  const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Nutrition state
@@ -73,6 +74,9 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
       formData.append("description", description);
       if (image) {
         formData.append("image", image);
+      }
+      if (price) {
+        formData.append("price", price);
       }
 
       const createdFood = await createFood(formData);
@@ -153,6 +157,10 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                   <div>
                     <Label htmlFor="image">Image</Label>
                     <input id="image" type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700" disabled={loading} />
+                  </div>
+                  <div>
+                    <Label htmlFor="price">Price (₹)</Label>
+                    <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 150" disabled={loading} />
                   </div>
                   <div>
                     <Label htmlFor="serving_size">Serving Size</Label>

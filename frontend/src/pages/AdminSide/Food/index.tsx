@@ -219,6 +219,11 @@ const FoodManagementPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
                   Cuisines
                 </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('price')}>
+                  <div className="flex items-center gap-2">
+                    Price (₹) {sortField === 'price' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                  </div>
+                </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -270,6 +275,9 @@ const FoodManagementPage: React.FC = () => {
                           <span className="text-gray-400 text-xs italic">none</span>
                         )}
                        </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">
+                      {food.price ? `₹${food.price}` : <span className="text-gray-400 font-normal italic">N/A</span>}
                     </TableCell>
                     <TableCell className="px-5 py-4">
                        <div className="flex items-center gap-3 text-lg">

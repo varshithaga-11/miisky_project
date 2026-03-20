@@ -549,7 +549,7 @@ class FoodSerializer(serializers.ModelSerializer):
                   'meal_type_names_input', 'cuisine_type_names_input',
                   'calories', 'protein', 'carbs', 'fat', 'fiber', 'serving_size',
                   'glycemic_index', 'sugar', 'saturated_fat', 'trans_fat', 'cholesterol',
-                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12']
+                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price']
 
     def create(self, validated_data):
         meal_names = validated_data.pop('meal_type_names_input', None)

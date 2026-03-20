@@ -566,6 +566,8 @@ class Food(models.Model):
     # Example: "Soft steamed rice cakes from South India"
 
     image = models.ImageField(upload_to='foods/', null=True, blank=True)
+
+    price=models.IntegerField(null=True,blank=True)
     # Example image path: media/foods/idli.jpg
 
     def __str__(self):
@@ -1691,3 +1693,9 @@ class UserMicroKitchenMapping(models.Model):
 
     def __str__(self):
         return f"{self.patient} - {self.micro_kitchen} ({self.status})"
+
+
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
