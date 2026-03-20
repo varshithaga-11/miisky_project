@@ -1,3 +1,11 @@
+"""
+Miisky — Nutrition & Diet Management Platform
+
+Models for: Users, Nutritionists, Patients, Micro Kitchens, Food System,
+Health Reports, Diet Plans, Meals, Meetings.
+
+See PROJECT_ROOT/WORKFLOW.md for full workflow and relationships.
+"""
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
