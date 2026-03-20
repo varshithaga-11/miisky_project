@@ -391,6 +391,13 @@ const SetDailyMealsPage: React.FC = () => {
                                                 setMousePos({ x: info.jsEvent.clientX, y: info.jsEvent.clientY });
                                             }}
                                             eventMouseLeave={() => setHoveredEvent(null)}
+                                            dateClick={(info) => {
+                                                const date = info.dateStr;
+                                                setSelectedDate(date);
+                                                setViewMode("list");
+                                                setIsRangeMode(false);
+                                                toast.info(`Managing meals for ${date}`);
+                                            }}
                                             eventClick={(info: any) => {
                                                 const date = info.event.startStr;
                                                 setSelectedDate(date);
