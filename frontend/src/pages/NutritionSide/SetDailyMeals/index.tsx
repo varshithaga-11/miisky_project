@@ -107,6 +107,7 @@ const SetDailyMealsPage: React.FC = () => {
             user_diet_plan: activePlan.id,
             meal_date: specificDate || selectedDate,
             meal_type: mealTypes[0]?.id,
+            cuisine_type: Number(selectedCuisineId) || undefined,
             quantity: 1
         }]);
     };
@@ -142,9 +143,12 @@ const SetDailyMealsPage: React.FC = () => {
         try {
             await saveBulkMeals(entriesToSave as UserMeal[]);
             toast.success(`Successfully programmed ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? 'range' : 'daily'} schedule`);
-            if (!isRangeMode || specificDate) {
-                const fetchDate = specificDate || selectedDate;
-                fetchDailyMeals(selectedPatient!.user.id, fetchDate);
+            
+            // Refresh underlying data to show synced state
+            if (isRangeMode) {
+                fetchAllMeals(selectedPatient!.user.id);
+            } else {
+                fetchDailyMeals(selectedPatient!.user.id, specificDate || selectedDate);
             }
         } catch (err) {
             toast.error("Failed to sync schedule");
@@ -360,8 +364,13 @@ const SetDailyMealsPage: React.FC = () => {
                                                                             <div className="md:col-span-3">
                                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Cuisine</label>
                                                                                 <select 
+                                                                                    value={entry.cuisine_type || ""}
+                                                                                    onChange={(e) => {
+                                                                                        const cid = e.target.value ? Number(e.target.value) : "";
+                                                                                        handleEntryUpdate(globalIdx, 'cuisine_type', cid || null);
+                                                                                        setSelectedCuisineId(cid);
+                                                                                    }}
                                                                                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
-                                                                                    onChange={(e) => setSelectedCuisineId(e.target.value ? Number(e.target.value) : "")}
                                                                                 >
                                                                                     <option value="">All Cuisines</option>
                                                                                     {cuisines.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}

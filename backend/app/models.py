@@ -1468,6 +1468,12 @@ class UserMeal(models.Model):
         null=True,
         blank=True
     )
+    cuisine_type = models.ForeignKey(
+        CuisineType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     # Breakfast / Lunch / Dinner
 
     food = models.ForeignKey(

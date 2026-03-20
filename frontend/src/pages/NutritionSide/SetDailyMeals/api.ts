@@ -13,12 +13,14 @@ export interface UserMeal {
     user: number;
     user_diet_plan: number;
     meal_type: number;
+    cuisine_type?: number;
     food: number;
     quantity: number | null;
     meal_date: string;
     notes?: string;
     is_consumed?: boolean;
     meal_type_details?: { id: number; name: string };
+    cuisine_type_details?: { id: number; name: string };
     food_details?: { id: number; name: string; image?: string };
 }
 

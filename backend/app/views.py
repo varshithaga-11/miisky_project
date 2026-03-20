@@ -1529,6 +1529,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                     meal_type=item['meal_type'],
                     defaults={
                         'food': item['food'],
+                        'cuisine_type': item.get('cuisine_type'),
                         'quantity': item.get('quantity'),
                         'user_diet_plan': item['user_diet_plan'],
                         'notes': item.get('notes')
