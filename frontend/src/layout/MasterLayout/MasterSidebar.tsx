@@ -250,6 +250,19 @@ const supplyChainNavItems: NavItem[] = [
     path: "/supplychain/delivery-questionnaire",
   },
 ];
+
+const nonPatientNavItems: NavItem[] = [
+  {
+    icon: <Layers className="w-5 h-5" />,
+    name: "Foods",
+    path: "/patient/foods",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Micro Kitchen",
+    path: "/patient/discover-kitchens",
+  },
+];
 const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
@@ -262,7 +275,8 @@ const MasterSidebar: React.FC = () => {
 
   const navItems = useMemo<NavItem[]>(() => {
     const role = getUserRoleFromToken();
-    if (role === "patient" || role === "non_patient") return patientNavItems;
+    if (role === "patient") return patientNavItems;
+    if (role === "non_patient") return nonPatientNavItems;
     if (role === "nutritionist") return nutritionistNavItems;
     if (role === "micro_kitchen") return microKitchenNavItems;
     if (role === "supply_chain") return supplyChainNavItems;
