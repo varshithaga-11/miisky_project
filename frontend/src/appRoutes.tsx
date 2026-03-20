@@ -51,6 +51,7 @@ import PatientQuestionnairePage from "./pages/PatientSide/Questionnaire/index";
 import NutritionQuestionarePage from "./pages/NutritionSide/NutritionQuestionare/index";
 import MicroKitchenQuestionarePage from "./pages/MicroKitchenSide/MicroKitchenQuestionare/index";
 import InspectionReportPage from "./pages/MicroKitchenSide/InspectionReport/index";
+import MicroKitchenPatientsPage from "./pages/MicroKitchenSide/Patients/index";
 import DeliveryQuestionarePage from "./pages/SupplyChain/DeliveryQuestionare/index";
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
@@ -149,6 +150,7 @@ export function appRoutes() {
           <Route path="nutrition/allot-micro-kitchen" element={<AllotMicroKitchenToPatientsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
+          <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 
 

@@ -230,6 +230,11 @@ const microKitchenNavItems: NavItem[] = [
     name: "Inspection Report",
     path: "/microkitchen/inspection-report",
   },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "Patients",
+    path: "/microkitchen/patients",
+  },
 ];
 
 const supplyChainNavItems: NavItem[] = [

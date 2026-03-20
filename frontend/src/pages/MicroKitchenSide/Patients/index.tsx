@@ -1,0 +1,360 @@
+import React, { useEffect, useState } from "react";
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import PageMeta from "../../../components/common/PageMeta";
+import axios from "axios";
+import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FiUsers, FiUser, FiInfo, FiActivity, FiMapPin, FiCalendar, FiSearch, FiLayers } from "react-icons/fi";
+import { motion } from "framer-motion";
+
+interface PatientAllotted {
+    id: number;
+    patient_details: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        mobile: string;
+        address: string;
+    };
+    patient_questionnaire: any;
+    nutritionist_details: {
+        first_name: string;
+        last_name: string;
+    };
+    diet_plan_details: {
+        plan_name: string;
+        start_date: string;
+        end_date: string;
+    };
+    status: string;
+    suggested_at: string;
+    responded_at: string;
+}
+
+const MicroKitchenPatientsPage: React.FC = () => {
+    const [allotments, setAllotments] = useState<PatientAllotted[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedPatient, setSelectedPatient] = useState<PatientAllotted | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const fetchAllotments = async () => {
+        setLoading(true);
+        try {
+            const url = createApiUrl("api/usermicrokitchenmapping/?status=accepted");
+            const response = await axios.get(url, { headers: await getAuthHeaders() });
+            setAllotments(response.data);
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to load allotted patients");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAllotments();
+    }, []);
+
+    const filteredAllotments = allotments.filter(a => 
+        `${a.patient_details.first_name} ${a.patient_details.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.patient_details.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+            <PageMeta title="Allotted Patients" description="View and manage patients allotted to your kitchen" />
+            <PageBreadcrumb pageTitle="Kitchen Allotments" />
+            <ToastContainer position="bottom-right" />
+
+            <div className="px-4 md:px-8 pb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* Left: Patient List */}
+                    <div className="lg:col-span-4 space-y-6">
+                        <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 shadow-xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-white/5">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="w-10 h-10 rounded-2xl bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                                    <FiUsers size={20} />
+                                </div>
+                                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Active Consumers</h2>
+                            </div>
+
+                            <div className="relative mb-6">
+                                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <input 
+                                    type="text"
+                                    placeholder="Search patients..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-none text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all"
+                                />
+                            </div>
+
+                            <div className="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-2 no-scrollbar">
+                                {loading ? (
+                                    [1,2,3].map(i => <div key={i} className="h-20 bg-gray-50 dark:bg-gray-900/50 rounded-3xl animate-pulse" />)
+                                ) : filteredAllotments.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <p className="text-gray-400 text-xs font-bold uppercase">No patients found</p>
+                                    </div>
+                                ) : filteredAllotments.map(a => (
+                                    <button
+                                        key={a.id}
+                                        onClick={() => setSelectedPatient(a)}
+                                        className={`w-full p-5 rounded-[28px] text-left transition-all group border ${
+                                            selectedPatient?.id === a.id 
+                                            ? "bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-600/20 translate-x-2" 
+                                            : "bg-gray-50/50 dark:bg-white/[0.02] border-transparent hover:border-indigo-500/30 hover:bg-white dark:hover:bg-white/[0.05]"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs ${
+                                                selectedPatient?.id === a.id ? "bg-white/20 text-white" : "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600"
+                                            }`}>
+                                                {a.patient_details.first_name?.[0] || 'U'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`font-black text-sm truncate uppercase tracking-tight ${selectedPatient?.id === a.id ? "text-white" : "text-gray-900 dark:text-white"}`}>
+                                                    {a.patient_details.first_name} {a.patient_details.last_name}
+                                                </p>
+                                                <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedPatient?.id === a.id ? "text-indigo-100" : "text-gray-400"}`}>
+                                                    {a.diet_plan_details.plan_name}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right: Detail View */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {!selectedPatient ? (
+                            <div className="bg-white dark:bg-gray-800 rounded-[50px] p-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-100 dark:border-white/5">
+                                <div className="w-24 h-24 rounded-[40px] bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-300 dark:text-gray-700 mb-8">
+                                    <FiUser size={40} />
+                                </div>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Profile Access Point</h3>
+                                <p className="text-gray-400 mt-2 font-medium">Select a patient from the list to view their dietary requirements and contact information.</p>
+                            </div>
+                        ) : (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="space-y-8"
+                            >
+                                {/* Core Info Header */}
+                                <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 shadow-xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-white/5 flex flex-wrap items-center justify-between gap-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-20 h-20 rounded-[35px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 shadow-inner">
+                                            <FiActivity size={32} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">
+                                                {selectedPatient.patient_details.first_name} {selectedPatient.patient_details.last_name}
+                                            </h2>
+                                            <div className="flex items-center gap-4 mt-3">
+                                                <span className="px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100/50">Active Allotment</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Since {new Date(selectedPatient.suggested_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex gap-4">
+                                        <a href={`tel:${selectedPatient.patient_details.mobile}`} className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-500 hover:bg-indigo-500 hover:text-white transition-all shadow-sm">
+                                            <FiInfo size={20} />
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {/* Patient Intelligence Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Medical/Nutritional Profile */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6">
+                                        <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-4">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Health Profile</h3>
+                                            <FiLayers className="text-indigo-500" />
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diet Type</p>
+                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.diet_plan_details.plan_name}</p>
+                                            </div>
+                                            <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Age / Weight</p>
+                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.age ?? '--'}Y / {selectedPatient.patient_questionnaire?.weight_kg ?? '--'}kg</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Lifestyle Type</span>
+                                                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{selectedPatient.patient_questionnaire?.work_type || 'Moderate'}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Meals Per Day</span>
+                                                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{selectedPatient.patient_questionnaire?.meals_per_day || '3'} Sessions</span>
+                                            </div>
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Supervising Nutritionist</span>
+                                                <span className="text-xs font-black text-indigo-500 uppercase tracking-tighter">Chef {selectedPatient.nutritionist_details.first_name}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Logistics & Contact */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6">
+                                        <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-4">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Delivery Context</h3>
+                                            <FiMapPin className="text-indigo-500" />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <div className="flex items-start gap-4">
+                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl text-indigo-500">
+                                                    <FiMapPin size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Residential Address</p>
+                                                    <p className="text-sm font-black text-gray-900 dark:text-white leading-relaxed uppercase">{selectedPatient.patient_details.address || "No address provided"}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-4">
+                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl text-indigo-500">
+                                                    <FiCalendar size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Contract Duration</p>
+                                                    <p className="text-sm font-black text-gray-900 dark:text-white leading-relaxed uppercase">
+                                                        {new Date(selectedPatient.diet_plan_details.start_date).toLocaleDateString()} &mdash; {new Date(selectedPatient.diet_plan_details.end_date).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-6 mt-4 border-t border-gray-50 dark:border-white/5">
+                                            <div className="flex gap-4">
+                                                <button className="flex-1 py-4 bg-indigo-600 rounded-3xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all">
+                                                    Initiate Dispatch
+                                                </button>
+                                                <button className="px-6 border border-gray-100 dark:border-white/5 rounded-3xl text-gray-400 hover:text-rose-500 transition-colors">
+                                                    <FiActivity size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Deep Dietary Intelligence */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Dietary Constraints & Safety */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6">
+                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-rose-500 flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                            Safety & Constraints
+                                        </h3>
+                                        
+                                        <div className="space-y-4">
+                                            <div className="p-5 bg-rose-50/30 dark:bg-rose-900/10 rounded-3xl border border-rose-100/50">
+                                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Critical Allergies</p>
+                                                <p className="text-sm font-black text-gray-900 dark:text-white uppercase leading-relaxed">
+                                                    {selectedPatient.patient_questionnaire?.food_allergy ? (
+                                                        <span className="text-rose-600 flex items-center gap-2">
+                                                            <FiInfo size={14} /> {selectedPatient.patient_questionnaire.food_allergy_details || "Allergy Present"}
+                                                        </span>
+                                                    ) : "No Known Allergies"}
+                                                </p>
+                                            </div>
+
+                                            <div className="p-5 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100/50">
+                                                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Avoidance Preferences</p>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {selectedPatient.patient_questionnaire?.food_preferences?.length > 0 ? (
+                                                        selectedPatient.patient_questionnaire.food_preferences.map((p: string) => (
+                                                            <span key={p} className="px-3 py-1 bg-white dark:bg-gray-800 rounded-lg text-[10px] font-black uppercase text-indigo-500 border border-indigo-200/50 shadow-sm">{p}</span>
+                                                        ))
+                                                    ) : <span className="text-xs font-medium text-gray-400">Standard preference list</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Preference & Lifestyle */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6">
+                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                            Culinary Blueprint
+                                        </h3>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diet Pattern</p>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase truncate">{selectedPatient.patient_questionnaire?.diet_pattern?.replace(/_/g, ' ') || "Mixed"}</p>
+                                            </div>
+                                            <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Consumes Egg</p>
+                                                <p className="text-xs font-black text-emerald-500 uppercase">{selectedPatient.patient_questionnaire?.consumes_egg ? "Allowed" : "Restricted"}</p>
+                                            </div>
+                                            <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diary Usage</p>
+                                                <p className="text-xs font-black text-emerald-500 uppercase">{selectedPatient.patient_questionnaire?.consumes_dairy ? "Included" : "Excluded"}</p>
+                                            </div>
+                                            <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Food Source</p>
+                                                <p className="text-xs font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.food_source || "Kitchen"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Health & Condition Awareness Mapping */}
+                                <div className="bg-white dark:bg-gray-800 rounded-[40px] p-10 border border-gray-100 dark:border-white/5 shadow-inner">
+                                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-50 dark:border-white/5">
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Medical Context Mapping</h3>
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] italic">Information for Preparation Guidance Only</span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diabetes Status</p>
+                                            <p className={`text-xs font-black uppercase tracking-tighter ${selectedPatient.patient_questionnaire?.has_diabetes ? "text-rose-500" : "text-emerald-500"}`}>
+                                                {selectedPatient.patient_questionnaire?.has_diabetes ? "Confirmed Type Presence" : "Not Reported"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">BP Levels</p>
+                                            <p className={`text-xs font-black uppercase tracking-tighter ${selectedPatient.patient_questionnaire?.has_bp === 'high' ? "text-rose-500" : "text-emerald-500"}`}>
+                                                {selectedPatient.patient_questionnaire?.has_bp || "Normal Range"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Cardiac Awareness</p>
+                                            <p className={`text-xs font-black uppercase tracking-tighter ${selectedPatient.patient_questionnaire?.has_cardiac_issues ? "text-rose-500" : "text-emerald-500"}`}>
+                                                {selectedPatient.patient_questionnaire?.has_cardiac_issues ? "Special Care Req." : "Low Risk"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Condition List</p>
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedPatient.patient_questionnaire?.health_conditions?.map((c: string) => (
+                                                    <span key={c} className="text-[10px] font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md uppercase">{c}</span>
+                                                )) || "None"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default MicroKitchenPatientsPage;

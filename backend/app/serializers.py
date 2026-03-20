@@ -1206,6 +1206,7 @@ class NutritionistRatingSerializer(serializers.ModelSerializer):
 
 class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
     patient_details = serializers.SerializerMethodField(read_only=True)
+    patient_questionnaire = serializers.SerializerMethodField(read_only=True)
     nutritionist_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     diet_plan_details = serializers.SerializerMethodField(read_only=True)
@@ -1213,7 +1214,7 @@ class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserMicroKitchenMapping
         fields = [
-            'id', 'patient', 'patient_details', 'nutritionist', 'nutritionist_details',
+            'id', 'patient', 'patient_details', 'patient_questionnaire', 'nutritionist', 'nutritionist_details',
             'micro_kitchen', 'kitchen_details', 'diet_plan', 'diet_plan_details',
             'status', 'suggested_at', 'responded_at', 'is_active'
         ]
@@ -1226,7 +1227,20 @@ class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
                 'first_name': obj.patient.first_name or obj.patient.username,
                 'last_name': obj.patient.last_name,
                 'email': obj.patient.email,
+                'mobile': obj.patient.mobile,
+                'address': obj.patient.address,
             }
+        return None
+
+    def get_patient_questionnaire(self, obj):
+        if obj.patient:
+            try:
+                # Local import to avoid circular dependency
+                from .serializers import UserQuestionnaireSerializer
+                q = obj.patient.userquestionnaire
+                return UserQuestionnaireSerializer(q).data
+            except:
+                return None
         return None
 
     def get_nutritionist_details(self, obj):

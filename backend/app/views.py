@@ -1678,6 +1678,8 @@ class UserMicroKitchenMappingViewSet(viewsets.ModelViewSet):
             return qs
         if user.role == 'nutritionist':
             return qs.filter(nutritionist=user)
+        if user.role == 'micro_kitchen':
+            return qs.filter(micro_kitchen__user=user)
         if user.role == 'patient' or user.role == 'non_patient':
             return qs.filter(patient=user)
         
