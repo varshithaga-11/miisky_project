@@ -14,6 +14,8 @@ import {
   Layers,
   Video,
   Truck,
+  ShoppingCart,
+  Package,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -241,6 +243,11 @@ const microKitchenNavItems: NavItem[] = [
     name: "Daily Prep",
     path: "/microkitchen/daily-prep",
   },
+  {
+    icon: <Package className="w-5 h-5" />,
+    name: "Manage Orders",
+    path: "/microkitchen/orders",
+  },
 ];
 
 const supplyChainNavItems: NavItem[] = [
@@ -261,6 +268,16 @@ const nonPatientNavItems: NavItem[] = [
     icon: <Briefcase className="w-5 h-5" />,
     name: "Micro Kitchen",
     path: "/patient/discover-kitchens",
+  },
+  {
+    icon: <ShoppingCart className="w-5 h-5" />,
+    name: "Cart",
+    path: "/patient/cart",
+  },
+  {
+    icon: <Package className="w-5 h-5" />,
+    name: "My Bookings",
+    path: "/patient/orders",
   },
 ];
 const MasterSidebar: React.FC = () => {

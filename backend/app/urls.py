@@ -24,6 +24,9 @@ router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
 router.register(r'meetingrequest', MeetingRequestViewSet, basename='meetingrequest')
 router.register(r'nutritionistrating', NutritionistRatingViewSet, basename='nutritionistrating')
 router.register(r'usermicrokitchenmapping', UserMicroKitchenMappingViewSet, basename='usermicrokitchenmapping')
+router.register(r'cart', CartViewSet, basename='cart')
+router.register(r'cart-item', CartItemViewSet, basename='cart-item')
+router.register(r'order', OrderViewSet, basename='order')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)

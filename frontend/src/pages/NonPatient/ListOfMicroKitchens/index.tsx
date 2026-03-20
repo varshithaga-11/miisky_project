@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getApprovedMicroKitchens, MicroKitchenProfile } from "../../PatientSide/ListOfMicroKitchen/api";
@@ -139,9 +140,12 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                                                 <FiClock className="size-4 text-gray-300" />
                                                 <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{kitchen.time_available || "08:00 - 22:00"}</span>
                                             </div>
-                                            <button className="flex items-center gap-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                                            <Link 
+                                                to={`/patient/kitchen/${kitchen.id}/menu`}
+                                                className="flex items-center gap-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest group-hover:translate-x-1 transition-transform"
+                                            >
                                                 View Menu <FiInfo size={14} />
-                                            </button>
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>

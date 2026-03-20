@@ -18,6 +18,10 @@ const Buttons = lazy(() => import("./pages/UiElements/Buttons"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
+const KitchenMenuPage = lazy(() => import("./pages/NonPatient/KitchenMenu/index"));
+const CartPage = lazy(() => import("./pages/NonPatient/Cart/index"));
+const OrdersPage = lazy(() => import("./pages/NonPatient/Orders/index"));
+const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/Orders/index"));
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 import CountryManagementPage from "./pages/AdminSide/Country/index";
@@ -136,6 +140,10 @@ export function appRoutes() {
           <Route path="patient/foods" element={<NonPatientFoodsPage />} />
           <Route path="patient/micro-kitchens" element={<ListOfMicroKitchenPage />} />
           <Route path="patient/discover-kitchens" element={<NonPatientListOfMicroKitchenPage />} />
+          <Route path="patient/kitchen/:kitchenId/menu" element={<KitchenMenuPage />} />
+          <Route path="patient/cart" element={<CartPage />} />
+          <Route path="patient/orders" element={<OrdersPage />} />
+          <Route path="microkitchen/orders" element={<KitchenOrdersPage />} />
           <Route path="patient/suggested-kitchens" element={<AllotedMicroKitchenByNutritionPage />} />
          <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />

@@ -566,9 +566,11 @@ class Food(models.Model):
     # Example: "Soft steamed rice cakes from South India"
 
     image = models.ImageField(upload_to='foods/', null=True, blank=True)
-
-    price=models.IntegerField(null=True,blank=True)
     # Example image path: media/foods/idli.jpg
+
+    micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.CASCADE, null=True, blank=True, related_name='foods')
+
+    price = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -1699,3 +1701,97 @@ class UserMicroKitchenMapping(models.Model):
 # -------------------------------------------------------------
 # ------------------------------------------------------------
 # --------------------------------------------------------------------
+
+
+class Order(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name='orders'
+    )
+
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE,
+        related_name='orders'
+    )
+
+    order_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('patient', 'Patient Order'),
+            ('non_patient', 'Non Patient Order'),
+        ],
+        default='non_patient'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('placed', 'Placed'),
+            ('accepted', 'Accepted'),
+            ('preparing', 'Preparing'),
+            ('ready', 'Ready'),
+            ('picked_up', 'Picked Up'),
+            ('delivered', 'Delivered'),
+            ('cancelled', 'Cancelled'),
+        ],
+        default='placed'
+    )
+
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    delivery_address = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+
+    food = models.ForeignKey(
+        Food,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.PositiveIntegerField()
+
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name='cart'
+    )
+
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+
+    food = models.ForeignKey(
+        Food,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.PositiveIntegerField()

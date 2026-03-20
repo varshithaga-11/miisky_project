@@ -71,7 +71,8 @@ export const getFoodList = async (
   limit: number | "all" = 10,
   search?: string,
   meal_type?: string | number,
-  cuisine_type?: string | number
+  cuisine_type?: string | number,
+  micro_kitchen?: string | number
 ): Promise<PaginatedResponses<Food>> => {
   try {
     const params: Record<string, any> = { page };
@@ -79,12 +80,13 @@ export const getFoodList = async (
     if (search) params.search = search;
     if (meal_type) params.meal_type = meal_type;
     if (cuisine_type) params.cuisine_type = cuisine_type;
+    if (micro_kitchen) params.micro_kitchen = micro_kitchen;
 
     const isAll = limit === "all";
     const url = createApiUrl(isAll ? "api/food/all/" : "api/food/");
     const response = await axios.get<PaginatedResponses<Food> | Food[]>(url, {
       headers: await getAuthHeaders(),
-      params: isAll ? { search, meal_type, cuisine_type } : params,
+      params: isAll ? { search, meal_type, cuisine_type, micro_kitchen } : params,
     });
 
     if (isAll) {

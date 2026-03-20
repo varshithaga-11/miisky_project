@@ -484,15 +484,18 @@ class FoodViewSet(viewsets.ModelViewSet):
         ).all()
         meal_type = self.request.query_params.get('meal_type')
         cuisine_type = self.request.query_params.get('cuisine_type')
+        micro_kitchen = self.request.query_params.get('micro_kitchen')
         if meal_type:
             queryset = queryset.filter(meal_types=meal_type)
         if cuisine_type:
             queryset = queryset.filter(cuisine_types=cuisine_type)
+        if micro_kitchen:
+            queryset = queryset.filter(micro_kitchen=micro_kitchen)
         return queryset.distinct()
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'meal_types__name', 'cuisine_types__name']
+    search_fields = ['name', 'meal_types__name', 'cuisine_types__name', 'micro_kitchen__brand_name']
 
 
 class FoodNutritionViewSet(viewsets.ModelViewSet):
@@ -1711,3 +1714,109 @@ class UserMicroKitchenMappingViewSet(viewsets.ModelViewSet):
             )
         else:
             serializer.save()
+
+
+class CartViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CartSerializer
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['post'], url_path='add-item')
+    def add_item(self, request):
+        food_id = request.data.get('food_id')
+        kitchen_id = request.data.get('kitchen_id')
+        quantity = int(request.data.get('quantity', 1))
+
+        if not food_id or not kitchen_id:
+            return Response({"error": "food_id and kitchen_id required"}, status=400)
+
+        # Ensure user has a cart for this kitchen
+        cart, _ = Cart.objects.get_or_create(user=request.user, micro_kitchen_id=kitchen_id)
+        
+        # Check if item exists in cart
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, food_id=food_id, defaults={'quantity': quantity})
+        if not created:
+            cart_item.quantity += quantity
+            cart_item.save()
+
+        return Response({"message": "Item added to cart", "cart_id": cart.id})
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'micro_kitchen':
+            return Order.objects.filter(micro_kitchen__user=user).order_by('-created_at')
+        return Order.objects.filter(user=user).order_by('-created_at')
+
+    @action(detail=False, methods=['post'], url_path='place-order')
+    def place_order(self, request):
+        cart_id = request.data.get('cart_id')
+        delivery_address = request.data.get('delivery_address')
+
+        if not cart_id:
+            return Response({"error": "cart_id required"}, status=400)
+
+        try:
+            cart = Cart.objects.get(id=cart_id, user=request.user)
+            cart_items = cart.items.all()
+            
+            if not cart_items:
+                return Response({"error": "Cart is empty"}, status=400)
+
+            # Calculate total
+            total_amount = sum(item.food.price * item.quantity for item in cart_items if item.food.price)
+            
+            # Create Order
+            order = Order.objects.create(
+                user=request.user,
+                micro_kitchen=cart.micro_kitchen,
+                order_type='patient' if request.user.role == 'patient' else 'non_patient',
+                total_amount=total_amount,
+                delivery_address=delivery_address or (getattr(request.user, 'address', '')),
+                status='placed'
+            )
+
+            # Create OrderItems
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    food=item.food,
+                    quantity=item.quantity,
+                    price=item.food.price or 0,
+                    subtotal=(item.food.price or 0) * item.quantity
+                )
+
+            # Clear cart
+            cart.delete()
+
+            return Response({"message": "Order placed successfully", "order_id": order.id}, status=201)
+
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart not found"}, status=404)
+
+    @action(detail=True, methods=['patch'], url_path='update-status')
+    def update_order_status(self, request, pk=None):
+        order = self.get_object()
+        new_status = request.data.get('status')
+        
+        valid_statuses = [s[0] for s in Order._meta.get_field('status').choices]
+        if new_status not in valid_statuses:
+            return Response({"error": "Invalid status"}, status=400)
+
+        order.status = new_status
+        order.save()
+        return Response({"message": f"Order status updated to {new_status}"})
+
+
+class CartItemViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CartItemSerializer
+
+    def get_queryset(self):
+        return CartItem.objects.filter(cart__user=self.request.user)

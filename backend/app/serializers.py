@@ -1271,3 +1271,87 @@ class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
             }
         return None
 
+
+class CartItemSerializer(serializers.ModelSerializer):
+    food_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'cart', 'food', 'food_details', 'quantity']
+
+    def get_food_details(self, obj):
+        if obj.food:
+            return {
+                'id': obj.food.id,
+                'name': obj.food.name,
+                'image': obj.food.image.url if obj.food.image else None,
+                'price': obj.food.price,
+            }
+        return None
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'micro_kitchen', 'kitchen_details', 'items', 'created_at']
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+            }
+        return None
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    food_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'order', 'food', 'food_details', 'quantity', 'price', 'subtotal']
+
+    def get_food_details(self, obj):
+        if obj.food:
+            return {
+                'id': obj.food.id,
+                'name': obj.food.name,
+                'image': obj.food.image.url if obj.food.image else None,
+            }
+        return None
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    user_details = serializers.SerializerMethodField(read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
+            'order_type', 'status', 'total_amount', 'delivery_address',
+            'items', 'created_at'
+        ]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+                'mobile': obj.user.mobile,
+            }
+        return None
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+            }
+        return None
+
