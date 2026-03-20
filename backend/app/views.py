@@ -1494,6 +1494,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
         patient_id = self.request.query_params.get('user')
         plan_id = self.request.query_params.get('user_diet_plan')
         date_str = self.request.query_params.get('meal_date')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
 
         if user.role == "admin":
             pass
@@ -1518,6 +1520,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_diet_plan_id=plan_id)
         if date_str:
             queryset = queryset.filter(meal_date=date_str)
+        if start_date and end_date:
+            queryset = queryset.filter(meal_date__range=[start_date, end_date])
 
         return queryset.order_by('meal_date', 'meal_type__id')
 
