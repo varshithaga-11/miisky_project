@@ -5,6 +5,10 @@ import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, getUserMeal
 import type { MappedPatientResponse, UserDietPlan, UserMeal, MealType, Food, CuisineType } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiPlus, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiCheck } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
 const SetDailyMealsPage: React.FC = () => {
     const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -13,17 +17,21 @@ const SetDailyMealsPage: React.FC = () => {
     const [mealTypes, setMealTypes] = useState<MealType[]>([]);
     const [cuisines, setCuisines] = useState<CuisineType[]>([]);
     const [foods, setFoods] = useState<Food[]>([]);
-    
+    const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+
     // Selection Mode
     const [isRangeMode, setIsRangeMode] = useState(false);
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    
+
     // Daily Meals Data (Local structure to manage entries for the selected day)
     const [dailyEntries, setDailyEntries] = useState<Partial<UserMeal>[]>([]);
+    const [allMeals, setAllMeals] = useState<UserMeal[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [hoveredEvent, setHoveredEvent] = useState<UserMeal | null>(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
         const loadInitial = async () => {
@@ -55,14 +63,16 @@ const SetDailyMealsPage: React.FC = () => {
                     const plans = await getActivePlansForPatient(selectedPatient.user.id);
                     const currentPlan = plans[0] || null;
                     setActivePlan(currentPlan);
-                    
+
                     if (currentPlan) {
                         // Default Range to Plan End Date if available
                         if (currentPlan.end_date) {
                             setEndDate(currentPlan.end_date);
                         }
+
+                        // Load data for the calendar and current view
+                        loadAllScheduledMeals(selectedPatient.user.id);
                         
-                        // Fetch based on mode
                         if (isRangeMode) {
                             fetchAllMeals(selectedPatient.user.id);
                         } else {
@@ -70,6 +80,7 @@ const SetDailyMealsPage: React.FC = () => {
                         }
                     } else {
                         setDailyEntries([]);
+                        setAllMeals([]);
                     }
                 } catch (err) {
                     toast.error("Failed to load patient plans");
@@ -78,6 +89,13 @@ const SetDailyMealsPage: React.FC = () => {
             loadPatientData();
         }
     }, [selectedPatient, selectedDate, isRangeMode]);
+
+    const loadAllScheduledMeals = async (pid: number) => {
+        try {
+            const meals = await getUserMealsList(pid);
+            setAllMeals(meals);
+        } catch (err) {}
+    };
 
     const fetchDailyMeals = async (pid: number, date: string) => {
         try {
@@ -102,7 +120,7 @@ const SetDailyMealsPage: React.FC = () => {
             toast.warning("Patient must have an active diet plan");
             return;
         }
-        setDailyEntries([...dailyEntries, { 
+        setDailyEntries([...dailyEntries, {
             user: selectedPatient.user.id,
             user_diet_plan: activePlan.id,
             meal_date: specificDate || selectedDate,
@@ -123,7 +141,7 @@ const SetDailyMealsPage: React.FC = () => {
     };
 
     const handleSave = async (specificDate?: string) => {
-        const entriesToSave = specificDate 
+        const entriesToSave = specificDate
             ? dailyEntries.filter(e => e.meal_date === specificDate)
             : dailyEntries;
 
@@ -131,7 +149,7 @@ const SetDailyMealsPage: React.FC = () => {
             toast.warning(`Add at least one meal ${specificDate ? `for ${specificDate}` : 'template'} before saving`);
             return;
         }
-        
+
         // Basic validation
         const isValid = entriesToSave.every(e => e.meal_type && e.food && e.quantity);
         if (!isValid) {
@@ -143,8 +161,10 @@ const SetDailyMealsPage: React.FC = () => {
         try {
             await saveBulkMeals(entriesToSave as UserMeal[]);
             toast.success(`Successfully programmed ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? 'range' : 'daily'} schedule`);
-            
+
             // Refresh underlying data to show synced state
+            if (selectedPatient) loadAllScheduledMeals(selectedPatient.user.id);
+            
             if (isRangeMode) {
                 fetchAllMeals(selectedPatient!.user.id);
             } else {
@@ -180,7 +200,7 @@ const SetDailyMealsPage: React.FC = () => {
             try {
                 const res = await getFoodList(1, 100, foodSearch, "", selectedCuisineId);
                 setFoods(res.results);
-            } catch (err) {}
+            } catch (err) { }
         };
         fetchFilteredFoods();
     }, [foodSearch, selectedCuisineId]);
@@ -204,9 +224,15 @@ const SetDailyMealsPage: React.FC = () => {
                                     <button
                                         key={p.user.id}
                                         onClick={() => setSelectedPatient(p)}
-                                        className={`w-full p-4 rounded-2xl text-left transition-all ${selectedPatient?.user.id === p.user.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-50 dark:bg-white/[0.02] text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]'}`}
+                                        className={`w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 ${selectedPatient?.user.id === p.user.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-50 dark:bg-white/[0.02] text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]'}`}
                                     >
-                                        <p className="font-black text-sm">{p.user.first_name} {p.user.last_name}</p>
+                                        <div className={`size-10 rounded-xl flex items-center justify-center border ${selectedPatient?.user.id === p.user.id ? 'bg-white/20 border-white/30' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-white/5 shadow-sm'}`}>
+                                            <FiActivity size={18} className={selectedPatient?.user.id === p.user.id ? 'text-white' : 'text-indigo-500'} />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-sm">{p.user.first_name} {p.user.last_name}</p>
+                                            <p className={`text-[10px] font-bold uppercase tracking-wider ${selectedPatient?.user.id === p.user.id ? 'text-indigo-100' : 'text-gray-400'}`}>ID: #{p.user.id}</p>
+                                        </div>
                                     </button>
                                 ))}
                             </div>
@@ -257,13 +283,22 @@ const SetDailyMealsPage: React.FC = () => {
                                     <div className="flex flex-col md:flex-row items-center gap-6 bg-gray-50/50 dark:bg-gray-900/50 p-2 rounded-[32px] border border-gray-100 dark:border-white/10">
                                         {/* Mode Toggle */}
                                         <div className="flex p-1 bg-white dark:bg-gray-800 rounded-2xl shadow-inner">
-                                            <button 
+                                            <button
+                                                onClick={() => setViewMode("calendar")}
+                                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'calendar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+                                            >
+                                                <FiCalendar className="inline mr-2" /> Plan Overview
+                                            </button>
+                                        </div>
+
+                                        <div className="flex p-1 bg-white dark:bg-gray-800 rounded-2xl shadow-inner">
+                                            <button
                                                 onClick={() => setIsRangeMode(false)}
                                                 className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isRangeMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
                                             >
                                                 Day
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => setIsRangeMode(true)}
                                                 className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isRangeMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
                                             >
@@ -274,16 +309,16 @@ const SetDailyMealsPage: React.FC = () => {
                                         <div className="flex items-center gap-4 px-4">
                                             {isRangeMode ? (
                                                 <div className="flex items-center gap-3">
-                                                    <input 
-                                                        type="date" 
-                                                        value={startDate} 
+                                                    <input
+                                                        type="date"
+                                                        value={startDate}
                                                         onChange={(e) => setStartDate(e.target.value)}
                                                         className="bg-transparent border-none outline-none font-black text-[11px] text-gray-700 dark:text-gray-300 uppercase tracking-widest"
                                                     />
                                                     <span className="text-gray-300 font-bold">→</span>
-                                                    <input 
-                                                        type="date" 
-                                                        value={endDate} 
+                                                    <input
+                                                        type="date"
+                                                        value={endDate}
                                                         onChange={(e) => setEndDate(e.target.value)}
                                                         className="bg-transparent border-none outline-none font-black text-[11px] text-gray-700 dark:text-gray-300 uppercase tracking-widest"
                                                     />
@@ -291,9 +326,9 @@ const SetDailyMealsPage: React.FC = () => {
                                             ) : (
                                                 <div className="flex items-center gap-3">
                                                     <FiCalendar className="text-gray-400" />
-                                                    <input 
-                                                        type="date" 
-                                                        value={selectedDate} 
+                                                    <input
+                                                        type="date"
+                                                        value={selectedDate}
                                                         onChange={(e) => setSelectedDate(e.target.value)}
                                                         className="bg-transparent border-none outline-none font-black text-[11px] text-gray-700 dark:text-gray-300 uppercase tracking-widest"
                                                     />
@@ -303,8 +338,77 @@ const SetDailyMealsPage: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Hover Detail Card */}
+                                <AnimatePresence>
+                                    {hoveredEvent && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                            style={{ 
+                                                position: "fixed", 
+                                                left: mousePos.x + 20, 
+                                                top: mousePos.y + 20,
+                                                zIndex: 9999
+                                            }}
+                                            className="bg-white dark:bg-gray-800 border dark:border-white/10 rounded-2xl p-4 shadow-2xl w-64 pointer-events-none"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2 text-indigo-500 font-black uppercase tracking-widest text-[8px]">
+                                                <FiActivity size={14} />
+                                                {hoveredEvent.meal_type_details?.name}
+                                            </div>
+                                            <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2 italic">
+                                                {hoveredEvent.food_details?.name}
+                                            </h4>
+                                            <div className="flex justify-between items-center text-[10px] font-bold text-gray-400">
+                                                <span>Qty: {hoveredEvent.quantity}</span>
+                                                <span className="text-indigo-400 font-black uppercase text-[8px]">Programmed</span>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Calendar Mode View */}
+                                {viewMode === "calendar" && (
+                                    <div className="bg-white dark:bg-gray-800 p-8 rounded-[40px] border border-transparent dark:border-white/[0.05] shadow-xl overflow-hidden custom-calendar animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <FullCalendar
+                                            plugins={[dayGridPlugin, interactionPlugin]}
+                                            initialView="dayGridMonth"
+                                            headerToolbar={{
+                                                left: "prev,next",
+                                                center: "title",
+                                                right: "dayGridMonth"
+                                            }}
+                                            events={allMeals.map(m => ({
+                                                id: m.id?.toString(),
+                                                title: `${m.meal_type_details?.name || 'Meal'}: ${m.food_details?.name || 'Assigned'}`,
+                                                start: m.meal_date,
+                                                allDay: true,
+                                                extendedProps: { meal: m }
+                                            }))}
+                                            eventMouseEnter={(info) => {
+                                                setHoveredEvent(info.event.extendedProps.meal);
+                                                setMousePos({ x: info.jsEvent.clientX, y: info.jsEvent.clientY });
+                                            }}
+                                            eventMouseLeave={() => setHoveredEvent(null)}
+                                            eventClick={(info: any) => {
+                                                const date = info.event.startStr;
+                                                setSelectedDate(date);
+                                                setViewMode("list");
+                                                setIsRangeMode(false);
+                                                toast.info(`Jumping to ${date} for editing`);
+                                            }}
+                                            eventContent={(eventInfo) => (
+                                                <div className="bg-indigo-600 text-white px-2 py-1 rounded-lg text-[9px] font-bold uppercase truncate cursor-pointer shadow-md">
+                                                    {eventInfo.event.title}
+                                                </div>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+
                                 {/* Meal Slot Builder (Timeline View) */}
-                                {activePlan && (
+                                {viewMode === "list" && activePlan && (
                                     <div className="space-y-12">
                                         {datesToShow.map((dateStr) => {
                                             const dayEntries = dailyEntries.filter(e => e.meal_date === dateStr);
@@ -321,13 +425,13 @@ const SetDailyMealsPage: React.FC = () => {
                                                             {formattedDay}
                                                         </h3>
                                                         <div className="flex items-center gap-3">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleAddSlot(dateStr)}
                                                                 className="px-6 py-2 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm flex items-center gap-2"
                                                             >
                                                                 <FiPlus size={14} /> Add Meal
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleSave(dateStr)}
                                                                 disabled={saving}
                                                                 className="px-6 py-2 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100/50 dark:border-emerald-900/30 shadow-sm flex items-center gap-2 disabled:opacity-50"
@@ -351,7 +455,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                                                                             <div className="md:col-span-2">
                                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Meal Type</label>
-                                                                                <select 
+                                                                                <select
                                                                                     value={entry.meal_type}
                                                                                     onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
                                                                                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
@@ -363,7 +467,7 @@ const SetDailyMealsPage: React.FC = () => {
 
                                                                             <div className="md:col-span-3">
                                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Cuisine</label>
-                                                                                <select 
+                                                                                <select
                                                                                     value={entry.cuisine_type || ""}
                                                                                     onChange={(e) => {
                                                                                         const cid = e.target.value ? Number(e.target.value) : "";
@@ -379,7 +483,7 @@ const SetDailyMealsPage: React.FC = () => {
 
                                                                             <div className="md:col-span-4">
                                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Food Item</label>
-                                                                                <select 
+                                                                                <select
                                                                                     value={entry.food}
                                                                                     onChange={(e) => handleEntryUpdate(globalIdx, 'food', Number(e.target.value))}
                                                                                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
@@ -391,9 +495,9 @@ const SetDailyMealsPage: React.FC = () => {
 
                                                                             <div className="md:col-span-2">
                                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Quantity</label>
-                                                                                <input 
-                                                                                    type="number" 
-                                                                                    step="0.1" 
+                                                                                <input
+                                                                                    type="number"
+                                                                                    step="0.1"
                                                                                     value={entry.quantity || ''}
                                                                                     onChange={(e) => handleEntryUpdate(globalIdx, 'quantity', Number(e.target.value))}
                                                                                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
@@ -402,7 +506,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                                             </div>
 
                                                                             <div className="md:col-span-1 flex justify-center pb-2">
-                                                                                <button 
+                                                                                <button
                                                                                     onClick={() => handleRemoveSlot(globalIdx)}
                                                                                     className="p-3 text-red-400 hover:text-red-600 bg-red-50 dark:bg-red-900/10 rounded-xl transition-all"
                                                                                 >
@@ -410,10 +514,10 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                 </button>
                                                                             </div>
                                                                         </div>
-                                                                        
+
                                                                         <div className="mt-6">
-                                                                            <input 
-                                                                                type="text" 
+                                                                            <input
+                                                                                type="text"
                                                                                 placeholder="Personalized notes for this specific meal..."
                                                                                 value={entry.notes || ''}
                                                                                 onChange={(e) => handleEntryUpdate(globalIdx, 'notes', e.target.value)}
@@ -430,7 +534,7 @@ const SetDailyMealsPage: React.FC = () => {
                                         })}
 
                                         <div className="pt-12 flex justify-end">
-                                            <button 
+                                            <button
                                                 onClick={() => handleSave()}
                                                 disabled={saving || dailyEntries.length === 0}
                                                 className="px-12 py-5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-[28px] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-gray-400 dark:shadow-none hover:scale-105 transition-all flex items-center gap-4 disabled:opacity-50"
