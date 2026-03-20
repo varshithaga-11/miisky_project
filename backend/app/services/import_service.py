@@ -35,6 +35,8 @@ class ImportService:
             check_field = 'title'
         elif hasattr(Model, 'food_name'):
             check_field = 'food_name'
+        elif hasattr(Model, 'username'):
+            check_field = 'username'
         
         if check_field:
             if check_field == 'food_name':
@@ -58,6 +60,7 @@ class ImportService:
         NESTED_FIELD_MAP = {
             'country_name': 'country_name_input',
             'state_name': 'state_name_input',
+            'city_name': 'city_name_input',
             'health_parameter_name': 'health_parameter_name_input',
             'category_name': 'category_name_input',
             'food_name': 'food_name_input',
