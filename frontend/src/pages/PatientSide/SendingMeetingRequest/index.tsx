@@ -5,6 +5,7 @@ import { getMyActivePlan, createMeetingRequest, getMyMeetingRequests, MeetingReq
 import { toast, ToastContainer } from "react-toastify";
 import { FiVideo, FiClock, FiCalendar, FiSend, FiCheckCircle, FiInfo } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import DateTimePicker from "../../../components/form/datetimepicker";
 
 const SendingMeetingRequest: React.FC = () => {
     const [activePlan, setActivePlan] = useState<any>(null);
@@ -124,26 +125,39 @@ const SendingMeetingRequest: React.FC = () => {
                                 )}
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-6">
                                         <div>
-                                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-3 ml-2">Preferred Date</label>
-                                            <input 
-                                                type="date" 
+                                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-3 ml-2">Preferred Meeting Request (Date & Time)</label>
+                                            <DateTimePicker
+                                                id="meeting-datetime"
+                                                placeholder="Select date and time"
+                                                minDate="today"
+                                                className="h-16 rounded-[30px] p-6 bg-gray-50 dark:bg-gray-800 border-none text-sm font-bold focus:ring-4 focus:ring-indigo-500/10"
+                                                onChange={(selectedDates) => {
+                                                    if (Array.isArray(selectedDates) && selectedDates.length > 0) {
+                                                        const date = selectedDates[0] as Date;
+                                                        const yyyy = date.getFullYear();
+                                                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                                        const dd = String(date.getDate()).padStart(2, '0');
+                                                        setPreferredDate(`${yyyy}-${mm}-${dd}`);
+                                                        
+                                                        const hh = String(date.getHours()).padStart(2, '0');
+                                                        const min = String(date.getMinutes()).padStart(2, '0');
+                                                        setPreferredTime(`${hh}:${min}`);
+                                                    } else if (selectedDates instanceof Date) {
+                                                        const date = selectedDates;
+                                                        const yyyy = date.getFullYear();
+                                                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                                        const dd = String(date.getDate()).padStart(2, '0');
+                                                        setPreferredDate(`${yyyy}-${mm}-${dd}`);
+                                                        
+                                                        const hh = String(date.getHours()).padStart(2, '0');
+                                                        const min = String(date.getMinutes()).padStart(2, '0');
+                                                        setPreferredTime(`${hh}:${min}`);
+                                                    }
+                                                }}
+                                                defaultDate={preferredDate && preferredTime ? `${preferredDate}T${preferredTime}` : undefined}
                                                 required
-                                                min={new Date().toISOString().split('T')[0]}
-                                                value={preferredDate}
-                                                onChange={(e) => setPreferredDate(e.target.value)}
-                                                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-3xl p-5 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-3 ml-2">Time Slot</label>
-                                            <input 
-                                                type="time" 
-                                                required
-                                                value={preferredTime}
-                                                onChange={(e) => setPreferredTime(e.target.value)}
-                                                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-3xl p-5 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
                                             />
                                         </div>
                                     </div>

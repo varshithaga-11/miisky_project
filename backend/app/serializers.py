@@ -1100,7 +1100,7 @@ class MeetingRequestSerializer(serializers.ModelSerializer):
             'status', 'meeting_link', 'nutritionist_notes', 'scheduled_datetime',
             'created_on', 'updated_on'
         ]
-        read_only_fields = ['id', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'patient', 'created_on', 'updated_on']
 
     def get_patient_details(self, obj):
         if obj.patient:

@@ -5,6 +5,7 @@ import { getNutritionistMeetings, updateMeetingStatus, MeetingRequest } from "..
 import { toast, ToastContainer } from "react-toastify";
 import { FiVideo, FiCheck, FiX, FiClock, FiCalendar, FiUser, FiInfo, FiExternalLink } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import DateTimePicker from "../../../components/form/datetimepicker";
 
 const MeetingRequestsByPatients: React.FC = () => {
     const [meetings, setMeetings] = useState<MeetingRequest[]>([]);
@@ -36,6 +37,12 @@ const MeetingRequestsByPatients: React.FC = () => {
         if (!activeMeeting) return;
         if (!scheduledDateTime || !meetingLink) {
             toast.warning("Please provide both the meeting link and confirmed time");
+            return;
+        }
+
+        // Basic URL validation to ensure it starts with http/https
+        if (!meetingLink.toLowerCase().startsWith('http')) {
+            toast.warning("Meeting link must be a valid URL (starting with http:// or https://)");
             return;
         }
 
@@ -104,22 +111,10 @@ const MeetingRequestsByPatients: React.FC = () => {
 
             <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 lg:p-12">
                 <div className="max-w-7xl mx-auto space-y-12">
-                    
-                    {/* Header */}
-                    <div className="bg-emerald-600 rounded-[50px] p-10 lg:p-20 text-white shadow-2xl relative overflow-hidden transition-all hover:scale-[1.01]">
-                        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl animate-pulse"></div>
-                        <div className="z-10 relative">
-                            <h1 className="text-4xl lg:text-7xl font-black uppercase tracking-tighter leading-none mb-6">
-                                Patient <br/> Consults
-                            </h1>
-                            <p className="text-emerald-100 text-lg font-medium max-w-xl opacity-90 leading-relaxed italic">
-                                Orchestrate your consultations. Synchronize schedules and provide direct video links to your patients. 🎥
-                            </p>
-                        </div>
-                    </div>
+
 
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 items-start">
-                        
+
                         {/* Queue List */}
                         <div className="space-y-10">
                             <h3 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-4">
@@ -143,7 +138,7 @@ const MeetingRequestsByPatients: React.FC = () => {
                             ) : (
                                 <div className="space-y-6">
                                     {meetings.map((m, idx) => (
-                                        <motion.div 
+                                        <motion.div
                                             key={m.id}
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -222,7 +217,7 @@ const MeetingRequestsByPatients: React.FC = () => {
                         <div className="xl:sticky xl:top-[120px]">
                             <AnimatePresence mode="wait">
                                 {activeMeeting ? (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
@@ -246,19 +241,33 @@ const MeetingRequestsByPatients: React.FC = () => {
                                         <div className="space-y-8">
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 ml-2 italic">Session DateTime</label>
-                                                <input 
-                                                    type="datetime-local" 
-                                                    value={scheduledDateTime}
-                                                    onChange={(e) => setScheduledDateTime(e.target.value)}
+                                                <DateTimePicker
+                                                    id="scheduledDateTime"
+                                                    placeholder="Select confirmed date & time"
+                                                    onChange={(dates) => {
+                                                        if (dates.length > 0) {
+                                                            const d = dates[0];
+                                                            const yyyy = d.getFullYear();
+                                                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                                            const dd = String(d.getDate()).padStart(2, '0');
+                                                            const hh = String(d.getHours()).padStart(2, '0');
+                                                            const min = String(d.getMinutes()).padStart(2, '0');
+                                                            // Format as YYYY-MM-DDTHH:mm for the backend
+                                                            setScheduledDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
+                                                        }
+                                                    }}
+                                                    defaultDate={scheduledDateTime}
                                                     className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-3xl p-6 text-sm font-black italic focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
+                                                    timeFormat="12"
+                                                    required
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 ml-2 italic">Video Link (Meet/Zoom)</label>
                                                 <div className="relative">
                                                     <FiVideo className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500" />
-                                                    <input 
-                                                        type="url" 
+                                                    <input
+                                                        type="url"
                                                         value={meetingLink}
                                                         onChange={(e) => setMeetingLink(e.target.value)}
                                                         placeholder="https://meet.google.com/..."
@@ -268,7 +277,7 @@ const MeetingRequestsByPatients: React.FC = () => {
                                             </div>
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 ml-2 italic">Consultation Notes (Optional)</label>
-                                                <textarea 
+                                                <textarea
                                                     rows={4}
                                                     value={notes}
                                                     onChange={(e) => setNotes(e.target.value)}
@@ -278,13 +287,13 @@ const MeetingRequestsByPatients: React.FC = () => {
                                             </div>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <button 
+                                                <button
                                                     onClick={handleReject}
                                                     className="py-5 bg-rose-50 text-rose-600 rounded-[24px] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-rose-100 transition-all active:scale-95"
                                                 >
                                                     Decline
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={handleApprove}
                                                     className="py-5 bg-emerald-600 text-white rounded-[24px] font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-emerald-200 dark:shadow-none hover:bg-emerald-500 transition-all active:scale-95 flex items-center justify-center gap-3"
                                                 >
