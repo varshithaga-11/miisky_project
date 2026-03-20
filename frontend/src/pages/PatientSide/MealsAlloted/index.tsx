@@ -79,40 +79,40 @@ const MealsAllotedPage: React.FC = () => {
             <div className="min-h-screen bg-white dark:bg-gray-950 p-4 lg:p-12">
                 <div className="max-w-6xl mx-auto space-y-12">
                     {/* Hero Stats & Mode Toggle */}
-                    <div className="bg-indigo-600 rounded-[50px] p-8 lg:p-16 text-white shadow-2xl shadow-indigo-200/50 dark:shadow-none flex flex-col xl:flex-row justify-between items-center gap-12 relative overflow-hidden transition-all hover:scale-[1.01]">
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl animate-pulse"></div>
-                        <div className="z-10 flex-1">
-                            <h1 className="text-4xl lg:text-7xl font-black uppercase tracking-tighter leading-none mb-4">
-                                Fuel Your <br/> Journey
-                            </h1>
-                            <div className="flex flex-wrap items-center gap-6 mt-8">
-                                <div className="flex p-1 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                                    <button 
-                                        onClick={() => setViewMode("list")}
-                                        className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white/60 hover:text-white'}`}
-                                    >
-                                        <FiList size={14} /> Timeline
-                                    </button>
-                                    <button 
-                                        onClick={() => setViewMode("calendar")}
-                                        className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white/60 hover:text-white'}`}
-                                    >
-                                        <FiCalendar size={14} /> Calendar
-                                    </button>
-                                </div>
+                    <div className="bg-indigo-600 rounded-[40px] p-6 lg:p-10 text-white shadow-2xl shadow-indigo-200/50 dark:shadow-none flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden transition-all">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-12 -mt-12 blur-3xl"></div>
+                        
+                        <div className="z-10">
+                            <div className="flex p-1 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                                <button 
+                                    onClick={() => setViewMode("list")}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    <FiList size={14} /> Timeline
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode("calendar")}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    <FiCalendar size={14} /> Calendar
+                                </button>
                             </div>
                         </div>
                         
-                        <div className="flex gap-8 z-10">
-                            <div className="bg-white/10 backdrop-blur-xl p-6 rounded-[32px] border border-white/20 text-center min-w-[140px]">
-                                <FiActivity size={32} className="mx-auto mb-3 text-emerald-300" />
-                                <span className="block text-2xl font-black">{allMeals.filter(m => m.is_consumed).length}</span>
-                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Finished</span>
+                        <div className="flex gap-6 z-10">
+                            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/20">
+                                <FiActivity size={24} className="text-emerald-300" />
+                                <div className="text-left">
+                                    <span className="block text-xl font-black leading-none">{allMeals.filter(m => m.is_consumed).length}</span>
+                                    <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">Finished</span>
+                                </div>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-xl p-6 rounded-[32px] border border-white/20 text-center min-w-[140px]">
-                                <FiClock size={32} className="mx-auto mb-3 text-amber-300" />
-                                <span className="block text-2xl font-black">{allMeals.filter(m => !m.is_consumed).length}</span>
-                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upcoming</span>
+                            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/20">
+                                <FiClock size={24} className="text-amber-300" />
+                                <div className="text-left">
+                                    <span className="block text-xl font-black leading-none">{allMeals.filter(m => !m.is_consumed).length}</span>
+                                    <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">Upcoming</span>
+                                </div>
                             </div>
                         </div>
                     </div>

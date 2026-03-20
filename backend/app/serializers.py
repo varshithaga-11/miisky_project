@@ -713,9 +713,41 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
 
 
 class NutritionistProfileSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+    allotted_patients = serializers.SerializerMethodField()
+
     class Meta:
         model = NutritionistProfile
         fields = "__all__"
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                "id": obj.user.id,
+                "username": obj.user.username,
+                "first_name": obj.user.first_name,
+                "last_name": obj.user.last_name,
+                "email": obj.user.email,
+                "mobile": obj.user.mobile,
+                "photo": obj.user.photo.url if obj.user.photo else None,
+            }
+        return None
+
+    def get_allotted_patients(self, obj):
+        if obj.user:
+            from .models import UserNutritionistMapping
+            mappings = UserNutritionistMapping.objects.filter(nutritionist=obj.user, is_active=True)
+            return [
+                {
+                    "id": m.user.id,
+                    "username": m.user.username,
+                    "first_name": m.user.first_name,
+                    "last_name": m.user.last_name,
+                    "email": m.user.email,
+                }
+                for m in mappings
+            ]
+        return []
 
 
 class MicroKitchenProfileSerializer(serializers.ModelSerializer):

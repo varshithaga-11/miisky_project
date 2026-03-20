@@ -78,73 +78,6 @@ const adminNavItems: NavItem[] = [
       { name: "Fatty Acid Profile", path: "/master/food-fatty-acid-profile" },
     ],
   },
-  // {
-  //   icon: <FileText className="w-5 h-5" />,
-  //   name: "Client and Supplier Registration ",
-  //   subItems: [
-  //     { name: "Client", path: "/master/client" },
-  //     { name: "Supplier", path: "/master/supplier" },
-  //   ],
-  // },
-  // {
-  //   icon: <Newspaper className="w-5 h-5" />,
-  //   name: "Quotation creation",
-  //   subItems: [
-  //     { name: "client", path: "/master/quotation/client" },
-  //     { name: "supplier", path: "/master/quotation/supplier" },
-  //   ],
-  // },
-  // {
-  //   icon: <HelpCircle className="w-5 h-5" />,
-  //   name: "FAQ",
-  //   subItems: [
-  //     { name: "Categories", path: "/master/faqcategories" },
-  //     { name: "FAQs", path: "/master/faqs" },
-  //   ],
-  // },
-  // {
-  //   icon: <FolderKanban className="w-5 h-5" />,
-  //   name: "Services",
-  //   subItems: [
-  //     { name: "Service Categories", path: "/master/servicecategory" },
-  //     { name: "Services", path: "/master/services" },
-  //   ],
-  // },
-  // {
-  //   icon: <Images className="w-5 h-5" />,
-  //   name: "Products",
-  //   subItems: [
-  //     { name: "Product Categories", path: "/master/productcategory" },
-  //     { name: "Products", path: "/master/products" },
-  //   ],
-  // },
-  // {
-  //   icon: <Users className="w-5 h-5" />,
-  //   name: "Team",
-  //   subItems: [
-  //     { name: "Team Positions", path: "/master/teampositions" },
-  //     { name: "Team Members", path: "/master/teammembers" },
-  //   ],
-  // },
-  // {
-  //   icon: <MessageCircle className="w-5 h-5" />,
-  //   name: "Contact Us Requests",
-  //   path: "/master/contactus" 
-  // },
-  // {
-  //   icon: <Briefcase className="w-5 h-5" />,
-  //   name: "Career",
-  //   subItems: [
-  //     { name: "Departments", path: "/master/departments" },
-  //     { name: "Job Openings", path: "/master/jobopenings" },
-  //     { name: "Job Applications", path: "/master/jobapplications" },
-  //   ],
-  // },
-  // {
-  //   icon: <MapPin className="w-5 h-5" />,
-  //   name: "Locations",
-  //   path: "/master/locations",
-  // },
   {
     icon: <UserCog className="w-5 h-5" />,
     name: "User Management",
@@ -155,6 +88,13 @@ const adminNavItems: NavItem[] = [
     name: "Micro Kitchens",
     subItems: [
       { name: "Kitchen Information", path: "/master/micro-kitchen-information" },
+    ],
+  },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "Nutritionists",
+    subItems: [
+      { name: "Nutritionist Information", path: "/master/nutrition-information" },
     ],
   },
   {

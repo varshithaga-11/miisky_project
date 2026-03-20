@@ -1,6 +1,13 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
+export type HealthReportReview = {
+  id: number;
+  comments: string;
+  created_on: string;
+  nutritionist_name: string;
+};
+
 export type PatientHealthReport = {
   id: number;
   user: number;
@@ -8,6 +15,7 @@ export type PatientHealthReport = {
   report_file: string;
   report_type: string | null;
   uploaded_on: string;
+  reviews?: HealthReportReview[];
 };
 
 export const getMyHealthReports = async (): Promise<PatientHealthReport[]> => {

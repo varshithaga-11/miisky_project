@@ -164,6 +164,7 @@ class NutritionistProfileViewSet(viewsets.ModelViewSet):
     serializer_class = NutritionistProfileSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
+    pagination_class = Pagination
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):

@@ -3,7 +3,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyHealthReports, uploadHealthReport, deleteHealthReport, PatientHealthReport } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiInfo } from "react-icons/fi";
+import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiInfo, FiMessageSquare } from "react-icons/fi";
 
 const HealthReportUploadPage: React.FC = () => {
     const [reports, setReports] = useState<PatientHealthReport[]>([]);
@@ -171,39 +171,66 @@ const HealthReportUploadPage: React.FC = () => {
                                 </div>
                             ) : (
                                 reports.map((report) => (
-                                    <div key={report.id} className="bg-white dark:bg-gray-800 p-6 rounded-[32px] flex items-center gap-6 shadow-sm border border-transparent hover:border-blue-500/20 transition-all group">
-                                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600">
-                                            <FiFileText size={24} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-bold text-gray-900 dark:text-white line-clamp-1">{report.title}</h4>
-                                            <div className="flex items-center gap-3 mt-1">
-                                                <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-[10px] font-black text-gray-500 rounded uppercase tracking-wider">
-                                                    {report.report_type?.replace('_', ' ')}
-                                                </span>
-                                                <span className="text-[10px] font-bold text-gray-400">
-                                                    {new Date(report.uploaded_on).toLocaleDateString()}
-                                                </span>
+                                    <div key={report.id} className="bg-white dark:bg-gray-800 p-6 rounded-[32px] flex flex-col gap-5 shadow-sm border border-transparent hover:shadow-xl hover:border-blue-500/20 transition-all group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600">
+                                                <FiFileText size={24} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-gray-900 dark:text-white line-clamp-1">{report.title}</h4>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-[10px] font-black text-gray-500 rounded uppercase tracking-wider">
+                                                        {report.report_type?.replace('_', ' ')}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-gray-400">
+                                                        {new Date(report.uploaded_on).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <a 
+                                                    href={report.report_file} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="p-3 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:text-blue-500 rounded-xl transition-all"
+                                                    title="View File"
+                                                >
+                                                    <FiInfo size={18} />
+                                                </a>
+                                                <button 
+                                                    onClick={() => handleDelete(report.id)}
+                                                    className="p-3 bg-red-50/50 dark:bg-red-900/10 text-red-400 hover:text-red-600 rounded-xl transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <FiTrash2 size={18} />
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <a 
-                                                href={report.report_file} 
-                                                target="_blank" 
-                                                rel="noreferrer" 
-                                                className="p-3 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:text-blue-500 rounded-xl transition-all"
-                                                title="View File"
-                                            >
-                                                <FiInfo size={18} />
-                                            </a>
-                                            <button 
-                                                onClick={() => handleDelete(report.id)}
-                                                className="p-3 bg-red-50/50 dark:bg-red-900/10 text-red-400 hover:text-red-600 rounded-xl transition-all"
-                                                title="Delete"
-                                            >
-                                                <FiTrash2 size={18} />
-                                            </button>
-                                        </div>
+
+                                        {/* Nutritionist Comments Section */}
+                                        {report.reviews && report.reviews.length > 0 && (
+                                            <div className="bg-gray-50 dark:bg-gray-900/40 rounded-3xl p-5 space-y-4 border border-gray-100 dark:border-white/5">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <FiMessageSquare className="text-blue-500 size-4" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nutritionist Feedback</span>
+                                                </div>
+                                                {report.reviews.map((review) => (
+                                                    <div key={review.id} className="relative pl-4 border-l-2 border-blue-500/30">
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                                                {review.nutritionist_name}
+                                                            </span>
+                                                            <span className="text-[8px] font-bold text-gray-400">
+                                                                {new Date(review.created_on).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed italic">
+                                                            "{review.comments}"
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}

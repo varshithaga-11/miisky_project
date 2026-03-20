@@ -69,6 +69,7 @@ import MealsAllotedPage from "./pages/PatientSide/MealsAlloted/index";
 import SendingMeetingRequest from "./pages/PatientSide/SendingMeetingRequest/index";
 import MeetingRequestsByPatients from "./pages/NutritionSide/MeetingRequestsByPatients/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
+import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 
 
 import ClientPage from "./pages/registration/client";
@@ -101,6 +102,7 @@ export function appRoutes() {
           <Route path="master/supplier" element={<SupplierPage />} />
           <Route path="master/usermanagement" element={<UserManagementPage />} />
           <Route path="master/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
+          <Route path="master/nutrition-information" element={<NutritionInformationPage />} />
           <Route path="master/country" element={<CountryManagementPage />} />
           <Route path="master/state" element={<StateManagementPage />} />
           <Route path="master/city" element={<CityManagementPage />} />
