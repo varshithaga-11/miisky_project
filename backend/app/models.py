@@ -1633,3 +1633,61 @@ class NutritionistRating(models.Model):
 
     def __str__(self):
         return f"{self.patient} rated {self.nutritionist} - {self.rating}"
+
+
+
+
+
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+class UserMicroKitchenMapping(models.Model):
+    patient = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name='kitchen_requests'
+    )
+
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='suggested_kitchens'
+    )
+
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE,
+        related_name='patient_mappings'
+    )
+
+    diet_plan = models.ForeignKey(
+        UserDietPlan,
+        on_delete=models.CASCADE,
+        related_name='kitchen_mappings'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('suggested', 'Suggested by Nutritionist'),
+            ('accepted', 'Accepted by Patient'),
+            ('rejected', 'Rejected by Patient'),
+        ],
+        default='suggested'
+    )
+
+    suggested_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('patient', 'diet_plan', 'micro_kitchen')
+
+    def __str__(self):
+        return f"{self.patient} - {self.micro_kitchen} ({self.status})"

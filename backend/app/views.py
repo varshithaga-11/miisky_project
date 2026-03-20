@@ -1654,3 +1654,48 @@ class NutritionistRatingViewSet(viewsets.ModelViewSet):
             profile.save()
         except NutritionistProfile.DoesNotExist:
             pass
+
+
+class UserMicroKitchenMappingViewSet(viewsets.ModelViewSet):
+    queryset = UserMicroKitchenMapping.objects.all().select_related('patient', 'nutritionist', 'micro_kitchen', 'diet_plan')
+    serializer_class = UserMicroKitchenMappingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = self.queryset
+        
+        # Filtering
+        patient_id = self.request.query_params.get('patient')
+        if patient_id:
+            qs = qs.filter(patient_id=patient_id)
+            
+        diet_plan_id = self.request.query_params.get('diet_plan')
+        if diet_plan_id:
+            qs = qs.filter(diet_plan_id=diet_plan_id)
+
+        if user.role == 'admin':
+            return qs
+        if user.role == 'nutritionist':
+            return qs.filter(nutritionist=user)
+        if user.role == 'patient' or user.role == 'non_patient':
+            return qs.filter(patient=user)
+        
+        return qs.none()
+
+    def perform_create(self, serializer):
+        # When nutritionist creates a suggestion
+        serializer.save(nutritionist=self.request.user)
+
+    def perform_update(self, serializer):
+        # Automatically set responded_at when patient accepts/rejects
+        old_status = self.get_object().status
+        new_status = self.request.data.get('status')
+        
+        if old_status == 'suggested' and new_status in ['accepted', 'rejected']:
+            serializer.save(
+                responded_at=timezone.now(),
+                is_active=(new_status == 'accepted')
+            )
+        else:
+            serializer.save()

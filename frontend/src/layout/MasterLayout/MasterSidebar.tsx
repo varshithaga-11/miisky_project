@@ -140,6 +140,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/micro-kitchens",
   },
   {
+    icon: <CheckCircle className="w-5 h-5" />,
+    name: "Suggested Kitchens",
+    path: "/patient/suggested-kitchens",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Health Reports",
     path: "/patient/health-reports",
@@ -176,6 +181,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <Briefcase className="w-5 h-5" />,
     name: "Micro Kitchens",
     path: "/nutrition/micro-kitchens",
+  },
+  {
+    icon: <CheckCircle className="w-5 h-5" />,
+    name: "Allot Kitchen",
+    path: "/nutrition/allot-micro-kitchen",
   },
   {
     icon: <FileText className="w-5 h-5" />,

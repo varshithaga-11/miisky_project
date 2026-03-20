@@ -62,11 +62,13 @@ import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
 import PlansPage from "./pages/PatientSide/Plans/index";
 import SuggestedPlansPage from "./pages/PatientSide/SuggestedPlans/index";
 import ListOfMicroKitchenPage from "./pages/PatientSide/ListOfMicroKitchen/index";
+import AllotedMicroKitchenByNutritionPage from "./pages/PatientSide/AllotedMicroKitchenByNutrition/index";
 import HealthReportUploadPage from "./pages/PatientSide/HealthReportUpload/index";
 import MealsAllotedPage from "./pages/PatientSide/MealsAlloted/index";
 import SendingMeetingRequest from "./pages/PatientSide/SendingMeetingRequest/index";
 import MeetingRequestsByPatients from "./pages/NutritionSide/MeetingRequestsByPatients/index";
 import ListOfMicroKitchensPage from "./pages/NutritionSide/ListOfMicroKitchens/index";
+import AllotMicroKitchenToPatientsPage from "./pages/NutritionSide/AllotMicroKitchenToPatients/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 
@@ -127,7 +129,8 @@ export function appRoutes() {
           <Route path="patient/plans" element={<PlansPage />} />
           <Route path="patient/suggested-plans" element={<SuggestedPlansPage />} />
           <Route path="patient/micro-kitchens" element={<ListOfMicroKitchenPage />} />
-          <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
+          <Route path="patient/suggested-kitchens" element={<AllotedMicroKitchenByNutritionPage />} />
+         <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
@@ -138,6 +141,7 @@ export function appRoutes() {
           <Route path="nutrition/approved-plans" element={<ApprovesPlansByPatientsPage />} />
           <Route path="nutrition/meeting-requests" element={<MeetingRequestsByPatients />} />
           <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
+          <Route path="nutrition/allot-micro-kitchen" element={<AllotMicroKitchenToPatientsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />

@@ -23,6 +23,7 @@ router.register(r'usermeal', UserMealViewSet, basename='usermeal')
 router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
 router.register(r'meetingrequest', MeetingRequestViewSet, basename='meetingrequest')
 router.register(r'nutritionistrating', NutritionistRatingViewSet, basename='nutritionistrating')
+router.register(r'usermicrokitchenmapping', UserMicroKitchenMappingViewSet, basename='usermicrokitchenmapping')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)

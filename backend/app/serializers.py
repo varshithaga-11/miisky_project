@@ -1201,9 +1201,59 @@ class NutritionistRatingSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def create(self, validated_data):
-        request = self.context.get('request')
-        if request and request.user:
-            validated_data['patient'] = request.user
         return super().create(validated_data)
+
+
+class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
+    patient_details = serializers.SerializerMethodField(read_only=True)
+    nutritionist_details = serializers.SerializerMethodField(read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+    diet_plan_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = UserMicroKitchenMapping
+        fields = [
+            'id', 'patient', 'patient_details', 'nutritionist', 'nutritionist_details',
+            'micro_kitchen', 'kitchen_details', 'diet_plan', 'diet_plan_details',
+            'status', 'suggested_at', 'responded_at', 'is_active'
+        ]
+        read_only_fields = ['id', 'suggested_at', 'responded_at']
+
+    def get_patient_details(self, obj):
+        if obj.patient:
+            return {
+                'id': obj.patient.id,
+                'first_name': obj.patient.first_name or obj.patient.username,
+                'last_name': obj.patient.last_name,
+                'email': obj.patient.email,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+            }
+        return None
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+                'cuisine_type': obj.micro_kitchen.cuisine_type,
+            }
+        return None
+
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                'id': obj.diet_plan.id,
+                'plan_name': obj.diet_plan.diet_plan.title if obj.diet_plan.diet_plan else "Custom-Plan",
+                'start_date': obj.diet_plan.start_date,
+                'end_date': obj.diet_plan.end_date,
+            }
+        return None
 
