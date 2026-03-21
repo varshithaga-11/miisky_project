@@ -507,10 +507,11 @@ class FoodStepSerializer(serializers.ModelSerializer):
 
 class MicroKitchenFoodSerializer(serializers.ModelSerializer):
     food_details = serializers.SerializerMethodField(read_only=True)
+    micro_kitchen_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MicroKitchenFood
-        fields = ['id', 'micro_kitchen', 'food', 'food_details', 'is_available', 'price', 'preparation_time']
+        fields = ['id', 'micro_kitchen', 'micro_kitchen_details', 'food', 'food_details', 'is_available', 'price', 'preparation_time']
         read_only_fields = ['micro_kitchen']
 
     def get_food_details(self, obj):
@@ -522,6 +523,14 @@ class MicroKitchenFoodSerializer(serializers.ModelSerializer):
                 'image': obj.food.image.url if obj.food.image else None,
                 'meal_type_names': list(obj.food.meal_types.values_list('name', flat=True)) if hasattr(obj.food, 'meal_types') else [],
                 'cuisine_type_names': list(obj.food.cuisine_types.values_list('name', flat=True)) if hasattr(obj.food, 'cuisine_types') else [],
+            }
+        return None
+
+    def get_micro_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
             }
         return None
 

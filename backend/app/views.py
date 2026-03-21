@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Q
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -227,6 +228,24 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
         if not micro_kitchen_id:
             return Response({'error': 'micro_kitchen required'}, status=400)
         qs = self.queryset.filter(micro_kitchen_id=micro_kitchen_id, is_available=True)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='available', permission_classes=[AllowAny])
+    def available(self, request):
+        """Public: list all available MicroKitchenFood (is_available=True). Optional: micro_kitchen, search."""
+        qs = self.queryset.filter(is_available=True)
+        micro_kitchen_id = request.query_params.get('micro_kitchen')
+        search = request.query_params.get('search', '').strip()
+        if micro_kitchen_id:
+            qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+        qs = qs.filter(micro_kitchen__status='approved')
+        if search:
+            qs = qs.filter(
+                Q(food__name__icontains=search) |
+                Q(micro_kitchen__brand_name__icontains=search)
+            )
+        qs = qs.order_by('micro_kitchen__brand_name', 'food__name')
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
