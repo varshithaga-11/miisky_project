@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getFoodNameList, FoodName } from "../../AdminSide/FoodName/foodnameapi";
+import { getFoodList, Food } from "../../AdminSide/Food/foodapi";
 import { toast, ToastContainer } from "react-toastify";
 import { FiSearch, FiLayers, FiInfo } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 const NonPatientFoodsPage: React.FC = () => {
-    const [foods, setFoods] = useState<FoodName[]>([]);
+    const [foods, setFoods] = useState<Food[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
     const fetchFoods = async () => {
         setLoading(true);
         try {
-            const data = await getFoodNameList(1, "all", search);
+            const data = await getFoodList(1, "all", search, "", "", undefined, true);
             setFoods(data.results);
         } catch (error) {
             console.error(error);
@@ -87,9 +87,11 @@ const NonPatientFoodsPage: React.FC = () => {
                                     {food.name}
                                 </h4>
                                 <div className="flex items-center gap-2 mb-4">
-                                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{food.code || 'N/A'}</span>
+                                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">#{food.id}</span>
                                     <span className="w-1 h-1 rounded-full bg-gray-200"></span>
-                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest truncate">{food.food_group_name || 'Generic'}</span>
+                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest truncate">
+                                        {(food.meal_type_names || food.cuisine_type_names || [])?.join(', ') || 'Generic'}
+                                    </span>
                                 </div>
                                 
                                 <button className="w-full py-3 bg-gray-50 dark:bg-white/[0.03] rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-indigo-500 group-hover:bg-indigo-50 transition-all">

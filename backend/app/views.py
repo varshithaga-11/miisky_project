@@ -516,12 +516,18 @@ class FoodViewSet(viewsets.ModelViewSet):
         meal_type = self.request.query_params.get('meal_type')
         cuisine_type = self.request.query_params.get('cuisine_type')
         micro_kitchen = self.request.query_params.get('micro_kitchen')
+        available_only = self.request.query_params.get('available_only', '').lower() == 'true'
         if meal_type:
             queryset = queryset.filter(meal_types=meal_type)
         if cuisine_type:
             queryset = queryset.filter(cuisine_types=cuisine_type)
         if micro_kitchen:
             queryset = queryset.filter(micro_kitchen=micro_kitchen)
+        if available_only:
+            available_food_ids = MicroKitchenFood.objects.filter(
+                is_available=True
+            ).values_list('food_id', flat=True).distinct()
+            queryset = queryset.filter(id__in=available_food_ids)
         return queryset.distinct()
     permission_classes = [AllowAny]
     pagination_class = Pagination
