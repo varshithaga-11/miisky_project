@@ -767,6 +767,7 @@ class MicroKitchenProfileSerializer(serializers.ModelSerializer):
             'other_equipment', 'about_you', 'passion_for_cooking', 'health_info', 
             'constraints', 'photo_exterior', 'photo_entrance', 'photo_kitchen', 
             'photo_platform', 'latitude', 'longitude', 'status', 
+            'rating', 'total_reviews',
             'user_details', 'latest_inspection'
         ]
 
@@ -1254,10 +1255,14 @@ class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
 
     def get_kitchen_details(self, obj):
         if obj.micro_kitchen:
+            user = obj.micro_kitchen.user
             return {
                 'id': obj.micro_kitchen.id,
                 'brand_name': obj.micro_kitchen.brand_name,
                 'cuisine_type': obj.micro_kitchen.cuisine_type,
+                'photo_exterior': obj.micro_kitchen.photo_exterior.url if obj.micro_kitchen.photo_exterior else None,
+                'city': user.city.name if user and user.city else None,
+                'state': user.state.name if user and user.state else None,
             }
         return None
 
@@ -1268,6 +1273,36 @@ class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
                 'plan_name': obj.diet_plan.diet_plan.title if obj.diet_plan.diet_plan else "Custom-Plan",
                 'start_date': obj.diet_plan.start_date,
                 'end_date': obj.diet_plan.end_date,
+            }
+        return None
+
+
+class MicroKitchenRatingSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = MicroKitchenRating
+        fields = [
+            'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
+            'rating', 'review', 'order', 'created_at'
+        ]
+        read_only_fields = ['id', 'user', 'created_at']
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name or obj.user.username,
+                'last_name': obj.user.last_name,
+            }
+        return None
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
             }
         return None
 

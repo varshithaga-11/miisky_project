@@ -78,6 +78,7 @@ import SendingMeetingRequest from "./pages/PatientSide/SendingMeetingRequest/ind
 import MeetingRequestsByPatients from "./pages/NutritionSide/MeetingRequestsByPatients/index";
 import ListOfMicroKitchensPage from "./pages/NutritionSide/ListOfMicroKitchens/index";
 import AllotMicroKitchenToPatientsPage from "./pages/NutritionSide/AllotMicroKitchenToPatients/index";
+import ReviewsPage from "./pages/MicroKitchenSide/Reviews/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 
@@ -145,7 +146,7 @@ export function appRoutes() {
           <Route path="patient/orders" element={<OrdersPage />} />
           <Route path="microkitchen/orders" element={<KitchenOrdersPage />} />
           <Route path="patient/suggested-kitchens" element={<AllotedMicroKitchenByNutritionPage />} />
-         <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
+          <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
@@ -157,6 +158,7 @@ export function appRoutes() {
           <Route path="nutrition/meeting-requests" element={<MeetingRequestsByPatients />} />
           <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
           <Route path="nutrition/allot-micro-kitchen" element={<AllotMicroKitchenToPatientsPage />} />
+          <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />

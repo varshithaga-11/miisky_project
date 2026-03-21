@@ -7,6 +7,7 @@ Health Reports, Diet Plans, Meals, Meetings.
 See PROJECT_ROOT/WORKFLOW.md for full workflow and relationships.
 """
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
@@ -205,6 +206,10 @@ class MicroKitchenProfile(models.Model):
         ('rejected', 'Rejected'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+
+    # 🔹 Patient ratings (like NutritionistProfile)
+    rating = models.FloatField(default=0)
+    total_reviews = models.IntegerField(default=0)
 
 
 class MicroKitchenInspection(models.Model):
@@ -1640,7 +1645,43 @@ class NutritionistRating(models.Model):
 
 
 
+class MicroKitchenRating(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name='given_kitchen_ratings'
+    )
 
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name='received_ratings'
+    )
+
+    # Rating (1 to 5)
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+
+    # Optional review
+    review = models.TextField(null=True, blank=True)
+
+    # Optional: link to order
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ratings'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'micro_kitchen')
+
+    def __str__(self):
+        return f"{self.user} rated {self.micro_kitchen} - {self.rating}"
 
 # --------------------------------------------------------------
 # -------------------------------------------------------------

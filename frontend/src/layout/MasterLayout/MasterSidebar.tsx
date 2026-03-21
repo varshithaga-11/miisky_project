@@ -142,11 +142,11 @@ const patientNavItems: NavItem[] = [
     name: "Micro-Kitchens",
     path: "/patient/micro-kitchens",
   },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Discovery Kitchens",
-    path: "/patient/discover-kitchens",
-  },
+  // {
+  //   icon: <Briefcase className="w-5 h-5" />,
+  //   name: "Discovery Kitchens",
+  //   path: "/patient/discover-kitchens",
+  // },
   {
     icon: <Layers className="w-5 h-5" />,
     name: "Foods",
@@ -247,6 +247,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <Package className="w-5 h-5" />,
     name: "Manage Orders",
     path: "/microkitchen/orders",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Kitchen Reviews",
+    path: "/microkitchen/reviews",
   },
 ];
 

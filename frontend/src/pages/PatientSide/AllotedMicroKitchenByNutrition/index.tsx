@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyKitchenSuggestions, respondToKitchenSuggestion, UserMicroKitchenMapping } from "./api";
+import { getMyKitchenSuggestions, respondToKitchenSuggestion, rateMicroKitchen, getMyRatingForKitchen, UserMicroKitchenMapping } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiHome, FiCheckCircle, FiXCircle, FiClock, FiMapPin, FiCalendar } from "react-icons/fi";
+import { FiHome, FiCheckCircle, FiXCircle, FiClock, FiMapPin, FiCalendar, FiStar } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
 const AllotedMicroKitchenByNutritionPage: React.FC = () => {
     const [suggestions, setSuggestions] = useState<UserMicroKitchenMapping[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<number | null>(null);
+    const [ratingModal, setRatingModal] = useState<{ kitchen: UserMicroKitchenMapping } | null>(null);
+    const [ratingStars, setRatingStars] = useState(0);
+    const [ratingReview, setRatingReview] = useState("");
+    const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
     const fetchSuggestions = async () => {
         setLoading(true);
@@ -40,6 +44,42 @@ const AllotedMicroKitchenByNutritionPage: React.FC = () => {
             toast.error("Failed to submit response");
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const openRatingModal = async (kitchen: UserMicroKitchenMapping) => {
+        setRatingModal({ kitchen });
+        setRatingStars(0);
+        setRatingReview("");
+        if (kitchen.micro_kitchen) {
+            try {
+                const existing = await getMyRatingForKitchen(kitchen.micro_kitchen);
+                if (existing) {
+                    setRatingStars(existing.rating);
+                    setRatingReview(existing.review || "");
+                }
+            } catch {
+                // ignore
+            }
+        }
+    };
+
+    const submitRating = async () => {
+        if (!ratingModal || ratingStars < 1) {
+            toast.error("Please select a rating (1-5 stars)");
+            return;
+        }
+        setRatingSubmitting(true);
+        try {
+            await rateMicroKitchen(ratingModal.kitchen.micro_kitchen, ratingStars, ratingReview || undefined);
+            toast.success("Rating submitted!");
+            setRatingModal(null);
+            fetchSuggestions();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to submit rating");
+        } finally {
+            setRatingSubmitting(false);
         }
     };
 
@@ -133,10 +173,18 @@ const AllotedMicroKitchenByNutritionPage: React.FC = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="pt-4 flex items-center justify-between">
+                                        <div className="pt-4 flex items-center justify-between flex-wrap gap-3">
                                             <p className={`text-[10px] font-black uppercase tracking-widest ${suggestion.status === 'accepted' ? 'text-emerald-500' : 'text-rose-500'}`}>
                                                 Status: {suggestion.status} on {suggestion.responded_at ? new Date(suggestion.responded_at).toLocaleDateString() : 'N/A'}
                                             </p>
+                                            {suggestion.status === 'accepted' && (
+                                                <button
+                                                    onClick={() => openRatingModal(suggestion)}
+                                                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all text-[10px] font-black uppercase tracking-widest"
+                                                >
+                                                    <FiStar size={14} /> Rate Kitchen
+                                                </button>
+                                            )}
                                             {suggestion.status === 'rejected' && (
                                                 <button 
                                                     onClick={() => handleResponse(suggestion.id, 'accepted')}
@@ -153,6 +201,70 @@ const AllotedMicroKitchenByNutritionPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Rating Modal */}
+            <AnimatePresence>
+                {ratingModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                        onClick={() => !ratingSubmitting && setRatingModal(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-gray-800 rounded-[32px] p-8 w-full max-w-md shadow-2xl border border-gray-100 dark:border-white/5"
+                        >
+                            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2">
+                                Rate {ratingModal.kitchen.kitchen_details?.brand_name}
+                            </h3>
+                            <p className="text-gray-500 text-sm mb-6">How was your experience?</p>
+                            <div className="flex gap-2 mb-6">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => setRatingStars(s)}
+                                        className="p-2 rounded-xl transition-all hover:scale-110"
+                                    >
+                                        <FiStar
+                                            size={32}
+                                            className={s <= ratingStars ? "text-amber-500 fill-amber-500" : "text-gray-200 dark:text-gray-600"}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                            <textarea
+                                placeholder="Optional: Share your experience..."
+                                value={ratingReview}
+                                onChange={(e) => setRatingReview(e.target.value)}
+                                className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-400 text-sm mb-6 resize-none"
+                                rows={3}
+                            />
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => !ratingSubmitting && setRatingModal(null)}
+                                    disabled={ratingSubmitting}
+                                    className="flex-1 py-3 rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={submitRating}
+                                    disabled={ratingSubmitting || ratingStars < 1}
+                                    className="flex-1 py-3 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black uppercase tracking-wider hover:scale-[1.02] transition-all disabled:opacity-50"
+                                >
+                                    {ratingSubmitting ? "Submitting..." : "Submit"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

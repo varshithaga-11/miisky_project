@@ -1669,6 +1669,78 @@ class NutritionistRatingViewSet(viewsets.ModelViewSet):
             pass
 
 
+class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenRating.objects.all().select_related('user', 'micro_kitchen', 'order')
+    serializer_class = MicroKitchenRatingSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'], url_path='rate')
+    def rate(self, request):
+        """Create or update rating for a micro kitchen (upsert)."""
+        micro_kitchen_id = request.data.get('micro_kitchen_id')
+        rating_val = request.data.get('rating')
+        review_text = request.data.get('review', '')
+        if not micro_kitchen_id or rating_val is None:
+            return Response(
+                {'error': 'micro_kitchen_id and rating are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            rating_val = int(rating_val)
+            if rating_val < 1 or rating_val > 5:
+                raise ValueError('Rating must be 1-5')
+        except (ValueError, TypeError):
+            return Response({'error': 'Rating must be 1-5'}, status=status.HTTP_400_BAD_REQUEST)
+        obj, created = MicroKitchenRating.objects.update_or_create(
+            user=request.user,
+            micro_kitchen_id=micro_kitchen_id,
+            defaults={'rating': rating_val, 'review': review_text or None}
+        )
+        self._recalculate_kitchen_stats(obj.micro_kitchen)
+        return Response(self.get_serializer(obj).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = self.queryset
+        if user.role == 'admin':
+            pass
+        elif user.role == 'micro_kitchen':
+            qs = qs.filter(micro_kitchen__user=user)
+        elif user.role == 'nutritionist':
+            from .models import UserMicroKitchenMapping
+            kitchen_ids = UserMicroKitchenMapping.objects.filter(nutritionist=user).values_list('micro_kitchen_id', flat=True).distinct()
+            qs = qs.filter(micro_kitchen_id__in=kitchen_ids)
+        else:
+            qs = qs.filter(user=user)
+        micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+        if micro_kitchen_id:
+            qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+        return qs
+
+    def perform_create(self, serializer):
+        rating_obj = serializer.save(user=self.request.user)
+        self._recalculate_kitchen_stats(rating_obj.micro_kitchen)
+
+    def perform_update(self, serializer):
+        rating_obj = serializer.save()
+        self._recalculate_kitchen_stats(rating_obj.micro_kitchen)
+
+    def perform_destroy(self, instance):
+        kitchen = instance.micro_kitchen
+        instance.delete()
+        self._recalculate_kitchen_stats(kitchen)
+
+    def _recalculate_kitchen_stats(self, micro_kitchen):
+        from django.db.models import Avg, Count
+        stats = MicroKitchenRating.objects.filter(micro_kitchen=micro_kitchen).aggregate(
+            avg_rating=Avg('rating'),
+            total=Count('id')
+        )
+        micro_kitchen.rating = stats['avg_rating'] or 0
+        micro_kitchen.total_reviews = stats['total'] or 0
+        micro_kitchen.save()
+
+
 class UserMicroKitchenMappingViewSet(viewsets.ModelViewSet):
     queryset = UserMicroKitchenMapping.objects.all().select_related('patient', 'nutritionist', 'micro_kitchen', 'diet_plan')
     serializer_class = UserMicroKitchenMappingSerializer
