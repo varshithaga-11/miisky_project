@@ -1565,6 +1565,58 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('meal_date', 'meal_type__id')
 
+    @action(detail=False, methods=['get'], url_path='monthly')
+    def monthly_meals(self, request):
+        """Fetch all meals for a month in one call. For micro_kitchen: only meals of allotted patients.
+        Params: year, month. Optional: user (patient id)."""
+        user = request.user
+        year = request.query_params.get('year')
+        month = request.query_params.get('month')
+        if not year or not month:
+            return Response(
+                {"detail": "year and month are required (e.g. ?year=2025&month=3)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            y, m = int(year), int(month)
+            from datetime import date, timedelta
+            start_date = date(y, m, 1)
+            if m == 12:
+                end_date = date(y, 12, 31)
+            else:
+                end_date = date(y, m + 1, 1) - timedelta(days=1)
+        except (ValueError, TypeError):
+            return Response({"detail": "Invalid year or month"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Base queryset with date filter
+        queryset = UserMeal.objects.select_related(
+            'user', 'user_diet_plan', 'meal_type', 'food'
+        ).filter(meal_date__range=[start_date, end_date])
+
+        # Scope to logged-in user's role
+        if getattr(user, 'role', None) == 'micro_kitchen':
+            mapped_patient_ids = UserMicroKitchenMapping.objects.filter(
+                micro_kitchen__user=user,
+                status='accepted',
+                is_active=True
+            ).values_list('patient_id', flat=True)
+            queryset = queryset.filter(user_id__in=mapped_patient_ids)
+        elif getattr(user, 'role', None) == 'nutritionist':
+            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list('user_id', flat=True)
+            queryset = queryset.filter(user_diet_plan__user_id__in=mapped_patient_ids)
+        elif getattr(user, 'role', None) not in ('admin', 'Admin') and not getattr(user, 'is_staff', False):
+            queryset = queryset.filter(user=user)
+
+        patient_id = request.query_params.get('user')
+        if patient_id:
+            queryset = queryset.filter(user_id=patient_id)
+
+        queryset = queryset.order_by('meal_date', 'meal_type__id')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create_meals(self, request):
         """Allows nutritionist to set multiple meals at once. Uses update_or_create per (user, meal_date, meal_type)."""

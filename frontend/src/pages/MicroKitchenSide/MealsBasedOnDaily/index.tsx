@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter } from "react-icons/fi";
+import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-icons/gi";
 
@@ -57,6 +60,12 @@ const MealsBasedOnDailyPage: React.FC = () => {
     const [rangeType, setRangeType] = useState<string>("today");
     const [customStart, setCustomStart] = useState("");
     const [customEnd, setCustomEnd] = useState("");
+
+    // Calendar modal - monthly view of all meals
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [calendarMeals, setCalendarMeals] = useState<DailyMeal[]>([]);
+    const [calendarLoading, setCalendarLoading] = useState(false);
+    const lastFetchedMonthRef = useRef<string | null>(null);
 
     const fetchPatients = async () => {
         try {
@@ -114,6 +123,28 @@ const MealsBasedOnDailyPage: React.FC = () => {
         }
     };
 
+    const fetchCalendarMeals = useCallback(async (year: number, month: number, skipIfSame = false) => {
+        const key = `${year}-${month}`;
+        if (skipIfSame && lastFetchedMonthRef.current === key) return;
+
+        lastFetchedMonthRef.current = key;
+        setCalendarLoading(true);
+        try {
+            const params = new URLSearchParams();
+            params.append("year", String(year));
+            params.append("month", String(month));
+            if (selectedPatient !== "all") params.append("user", selectedPatient);
+            const url = createApiUrl(`api/usermeal/monthly/?${params.toString()}`);
+            const response = await axios.get(url, { headers: await getAuthHeaders() });
+            setCalendarMeals(Array.isArray(response.data) ? response.data : response.data?.results ?? []);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to load calendar meals");
+        } finally {
+            setCalendarLoading(false);
+        }
+    }, [selectedPatient]);
+
     useEffect(() => {
         fetchPatients();
     }, []);
@@ -164,6 +195,17 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                         <FiClock className="animate-pulse" /> Dispatch Window: {rangeType.replace('_', ' ')}
                                     </p>
                                 </div>
+                                <button
+                                    onClick={() => {
+                                        setShowCalendar(true);
+                                        const now = new Date();
+                                        fetchCalendarMeals(now.getFullYear(), now.getMonth() + 1);
+                                    }}
+                                    className="ml-2 p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                    title="Monthly calendar view"
+                                >
+                                    <FiCalendar size={22} />
+                                </button>
                             </div>
 
                             <div className="flex-1 max-w-xl w-full">
@@ -409,6 +451,70 @@ const MealsBasedOnDailyPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Calendar Modal - Monthly view of all meals */}
+            <AnimatePresence>
+                {showCalendar && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setShowCalendar(false)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-gray-800 rounded-[32px] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+                        >
+                            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/5">
+                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-3">
+                                    <FiCalendar className="text-indigo-500" size={24} /> Monthly Meals
+                                </h2>
+                                <button
+                                    onClick={() => setShowCalendar(false)}
+                                    className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                >
+                                    <FiX size={22} />
+                                </button>
+                            </div>
+                            <div className="p-6 overflow-auto flex-1 relative">
+                                {calendarLoading && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-800/80 z-10 rounded-b-[32px]">
+                                        <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                                        <p className="text-gray-400 font-bold text-sm">Loading meals...</p>
+                                    </div>
+                                )}
+                                <FullCalendar
+                                    plugins={[dayGridPlugin, interactionPlugin]}
+                                    initialView="dayGridMonth"
+                                    headerToolbar={{ left: "prev,next today", center: "title", right: "" }}
+                                    events={calendarMeals.map((m) => ({
+                                        id: String(m.id),
+                                        title: `${m.meal_type_details?.name || "Meal"}: ${m.food_details?.name || "—"} (${m.user_details?.first_name || ""})`,
+                                        start: m.meal_date,
+                                        allDay: true,
+                                    }))}
+                                    datesSet={(info) => {
+                                        const start = info.startStr?.split("T")[0];
+                                        if (start) {
+                                            const d = new Date(start);
+                                            fetchCalendarMeals(d.getFullYear(), d.getMonth() + 1, true);
+                                        }
+                                    }}
+                                    eventContent={(arg) => (
+                                        <div className="px-2 py-0.5 rounded-lg text-[10px] font-bold truncate bg-indigo-600 text-white">
+                                            {arg.event.title}
+                                        </div>
+                                    )}
+                                />
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
