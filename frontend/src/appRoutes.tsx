@@ -21,7 +21,7 @@ const Blank = lazy(() => import("./pages/Blank"));
 const KitchenMenuPage = lazy(() => import("./pages/NonPatient/KitchenMenu/index"));
 const CartPage = lazy(() => import("./pages/NonPatient/Cart/index"));
 const OrdersPage = lazy(() => import("./pages/NonPatient/Orders/index"));
-const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/Orders/index"));
+const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/SeparateOrders/index"));
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 import CountryManagementPage from "./pages/AdminSide/Country/index";

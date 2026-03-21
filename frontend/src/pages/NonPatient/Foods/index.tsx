@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getAvailableMicroKitchenFoods, getApprovedMicroKitchens, MicroKitchenFoodItem, MicroKitchenProfile } from "./api";
+import { addToCart } from "../orderapi";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
-import { FiSearch, FiLayers, FiInfo, FiMapPin } from "react-icons/fi";
+import { FiSearch, FiLayers, FiMapPin, FiShoppingCart, FiCheckCircle } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 const NonPatientFoodsPage: React.FC = () => {
@@ -13,6 +15,8 @@ const NonPatientFoodsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedKitchen, setSelectedKitchen] = useState<string>("all");
+    const [addingToCart, setAddingToCart] = useState<number | null>(null);
+    const [quantities, setQuantities] = useState<Record<number, number>>({});
 
     const fetchKitchens = async () => {
         try {
@@ -56,6 +60,26 @@ const NonPatientFoodsPage: React.FC = () => {
         return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
     };
 
+    const handleAddToCart = async (item: MicroKitchenFoodItem, quantity: number = 1, navigateToCart = false) => {
+        if (!item.micro_kitchen || !item.food) return;
+        setAddingToCart(item.id);
+        try {
+            await addToCart(item.micro_kitchen, item.food, quantity);
+            toast.success("Added to cart!");
+            if (navigateToCart) {
+                window.location.href = "/patient/cart";
+            }
+        } catch (err: any) {
+            if (err?.response?.status === 401) {
+                toast.error("Please login to add to cart");
+            } else {
+                toast.error("Failed to add to cart");
+            }
+        } finally {
+            setAddingToCart(null);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
             <PageMeta title="Available Foods" description="Explore foods from micro kitchens with prices" />
@@ -64,9 +88,25 @@ const NonPatientFoodsPage: React.FC = () => {
 
             <div className="px-4 md:px-8 pb-20">
                 <div className="flex flex-col gap-6 mb-10">
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Food Catalog</h1>
-                        <p className="text-gray-500 mt-1 font-medium">Browse available foods from micro kitchens with prices.</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Food Catalog</h1>
+                            <p className="text-gray-500 mt-1 font-medium">Browse available foods from micro kitchens with prices.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Link
+                                to="/patient/cart"
+                                className="px-5 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg"
+                            >
+                                <FiShoppingCart size={18} /> Cart
+                            </Link>
+                            <Link
+                                to="/patient/orders"
+                                className="px-5 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-all flex items-center gap-2"
+                            >
+                                <FiCheckCircle size={18} /> Orders
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -148,9 +188,39 @@ const NonPatientFoodsPage: React.FC = () => {
                                         <span className="text-[10px] font-bold text-gray-400">{item.preparation_time} min</span>
                                     )}
                                 </div>
-                                <button className="w-full py-3 bg-gray-50 dark:bg-white/[0.03] rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-indigo-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-all">
-                                    <FiInfo size={14} /> Details
-                                </button>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Qty</span>
+                                    <select
+                                        value={quantities[item.id] ?? 1}
+                                        onChange={(e) => setQuantities((q) => ({ ...q, [item.id]: Number(e.target.value) }))}
+                                        className="w-14 py-1.5 px-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs font-bold outline-none"
+                                    >
+                                        {[1, 2, 3, 4, 5].map((n) => (
+                                            <option key={n} value={n}>{n}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleAddToCart(item, quantities[item.id] ?? 1)}
+                                        disabled={addingToCart === item.id}
+                                        className="flex-1 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50"
+                                    >
+                                        {addingToCart === item.id ? (
+                                            <span className="animate-spin">⟳</span>
+                                        ) : (
+                                            <FiShoppingCart size={14} />
+                                        )}{" "}
+                                        Add to Cart
+                                    </button>
+                                    <button
+                                        onClick={() => handleAddToCart(item, quantities[item.id] ?? 1, true)}
+                                        disabled={addingToCart === item.id}
+                                        className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
+                                    >
+                                        <FiCheckCircle size={14} /> Book
+                                    </button>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
