@@ -56,7 +56,6 @@ export const saveBulkMeals = async (meals: UserMeal[]): Promise<any> => {
         food: m.food,
         quantity: m.quantity ?? 1,
         meal_date: m.meal_date,
-        ...(m.cuisine_type != null && { cuisine_type: m.cuisine_type }),
         ...(m.notes != null && m.notes !== "" && { notes: m.notes }),
     }));
     const url = createApiUrl("api/usermeal/bulk-create/");

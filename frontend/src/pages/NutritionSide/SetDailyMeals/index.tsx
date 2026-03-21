@@ -34,6 +34,7 @@ const SetDailyMealsPage: React.FC = () => {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const [foodSearch, setFoodSearch] = useState("");
+    const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
     const [selectedCuisineId, setSelectedCuisineId] = useState<number | "">("");
     const [showSaveButton, setShowSaveButton] = useState(false);
 
@@ -116,12 +117,12 @@ const SetDailyMealsPage: React.FC = () => {
     useEffect(() => {
         const fetchFilteredFoods = async () => {
             try {
-                const res = await getFoodList(1, 200, foodSearch, "", selectedCuisineId);
+                const res = await getFoodList(1, 200, foodSearch, selectedMealTypeId || "", selectedCuisineId || "");
                 setFoods(res.results);
             } catch (err) {}
         };
         fetchFilteredFoods();
-    }, [foodSearch, selectedCuisineId]);
+    }, [foodSearch, selectedMealTypeId, selectedCuisineId]);
 
     const getDatesInRange = (start: string, end: string) => {
         const dates: string[] = [];
@@ -164,8 +165,7 @@ const SetDailyMealsPage: React.FC = () => {
                 user: selectedPatient.user.id,
                 user_diet_plan: activePlan.id,
                 meal_date: dateStr,
-                meal_type: mealTypes[0]?.id,
-                cuisine_type: selectedCuisineId || undefined,
+                meal_type: selectedMealTypeId || mealTypes[0]?.id,
                 food: id,
                 quantity: 1
             };
@@ -279,6 +279,14 @@ const SetDailyMealsPage: React.FC = () => {
                                     />
                                 </div>
                                 <select
+                                    value={selectedMealTypeId}
+                                    onChange={(e) => setSelectedMealTypeId(e.target.value ? Number(e.target.value) : "")}
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none"
+                                >
+                                    <option value="">All meal types</option>
+                                    {mealTypes.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                                <select
                                     value={selectedCuisineId}
                                     onChange={(e) => setSelectedCuisineId(e.target.value ? Number(e.target.value) : "")}
                                     className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none"
@@ -303,9 +311,6 @@ const SetDailyMealsPage: React.FC = () => {
                                             <FiMenu className="text-gray-300 group-hover:text-indigo-400 flex-shrink-0" size={14} />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{food.name}</p>
-                                                {food.meal_type_names?.length ? (
-                                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider truncate">{food.meal_type_names.join(", ")}</p>
-                                                ) : null}
                                             </div>
                                             {food.nutrition?.calories ? (
                                                 <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-lg">{food.nutrition.calories} kcal</span>
