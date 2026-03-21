@@ -14,6 +14,7 @@ router.register(r'usermanagement', UserManagementViewSet, basename='usermanageme
 router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
 router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
 router.register(r'microkitchenprofile', MicroKitchenProfileViewSet, basename='microkitchenprofile')
+router.register(r'microkitchenfood', MicroKitchenFoodViewSet, basename='microkitchenfood')
 router.register(r'microkitcheninspection', MicroKitchenInspectionViewSet, basename='microkitcheninspection')
 router.register(r'deliveryprofile', DeliveryProfileViewSet, basename='deliveryprofile')
 router.register(r'usernutritionistmapping', UserNutritionistMappingViewSet, basename='usernutritionistmapping')

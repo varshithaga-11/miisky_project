@@ -581,6 +581,33 @@ class Food(models.Model):
         return self.name
 
 
+class MicroKitchenFood(models.Model):
+    """Junction: which foods a micro kitchen offers, with kitchen-specific price & availability."""
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE,
+        related_name='kitchen_foods'
+    )
+    food = models.ForeignKey(
+        Food,
+        on_delete=models.CASCADE,
+        related_name='kitchen_mappings'
+    )
+    is_available = models.BooleanField(default=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preparation_time = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Time in minutes"
+    )
+
+    class Meta:
+        unique_together = ('micro_kitchen', 'food')
+
+    def __str__(self):
+        return f"{self.micro_kitchen} - {self.food}"
+
+
 class FoodNutrition(models.Model):
     food = models.OneToOneField(Food, on_delete=models.SET_NULL,null=True,blank=True, related_name='nutrition')
 

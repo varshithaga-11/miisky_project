@@ -215,6 +215,37 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(obj).data)
 
 
+class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenFood.objects.all().select_related('micro_kitchen', 'food').prefetch_related('food__meal_types', 'food__cuisine_types')
+    serializer_class = MicroKitchenFoodSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='menu', permission_classes=[AllowAny])
+    def menu(self, request):
+        """Public: list available foods for a kitchen (for customer menu view)."""
+        micro_kitchen_id = request.query_params.get('micro_kitchen')
+        if not micro_kitchen_id:
+            return Response({'error': 'micro_kitchen required'}, status=400)
+        qs = self.queryset.filter(micro_kitchen_id=micro_kitchen_id, is_available=True)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return self.queryset
+        profile = MicroKitchenProfile.objects.filter(user=user).first()
+        if not profile:
+            return self.queryset.none()
+        return self.queryset.filter(micro_kitchen=profile)
+
+    def perform_create(self, serializer):
+        profile = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+        if not profile:
+            raise ValueError("Micro kitchen profile not found")
+        serializer.save(micro_kitchen=profile)
+
+
 class MicroKitchenInspectionViewSet(viewsets.ModelViewSet):
     queryset = MicroKitchenInspection.objects.all().order_by("-id")
     serializer_class = MicroKitchenInspectionSerializer
@@ -1841,8 +1872,16 @@ class OrderViewSet(viewsets.ModelViewSet):
             if not cart_items:
                 return Response({"error": "Cart is empty"}, status=400)
 
-            # Calculate total
-            total_amount = sum(item.food.price * item.quantity for item in cart_items if item.food.price)
+            # Get price from MicroKitchenFood if available, else Food
+            def get_price(item):
+                mcf = MicroKitchenFood.objects.filter(
+                    micro_kitchen=cart.micro_kitchen, food=item.food
+                ).first()
+                if mcf:
+                    return float(mcf.price)
+                return (item.food.price or 0) if item.food.price else 0
+
+            total_amount = sum(get_price(item) * item.quantity for item in cart_items)
             
             # Create Order
             order = Order.objects.create(
@@ -1856,12 +1895,13 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             # Create OrderItems
             for item in cart_items:
+                price = get_price(item)
                 OrderItem.objects.create(
                     order=order,
                     food=item.food,
                     quantity=item.quantity,
-                    price=item.food.price or 0,
-                    subtotal=(item.food.price or 0) * item.quantity
+                    price=price,
+                    subtotal=price * item.quantity
                 )
 
             # Clear cart

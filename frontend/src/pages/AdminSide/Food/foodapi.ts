@@ -151,6 +151,31 @@ export const updateFoodNutrition = async (id: number, data: Partial<FoodNutritio
   return response.data;
 };
 
+// Kitchen menu (available foods from MicroKitchenFood - respects is_available)
+export const getKitchenMenu = async (kitchenId: number): Promise<MicroKitchenFoodMenuItem[]> => {
+  const url = createApiUrl(`api/microkitchenfood/menu/?micro_kitchen=${kitchenId}`);
+  const response = await axios.get<MicroKitchenFoodMenuItem[]>(url, {
+    headers: await getAuthHeaders(),
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export interface MicroKitchenFoodMenuItem {
+  id: number;
+  food: number;
+  food_details?: {
+    id: number;
+    name: string;
+    description?: string;
+    image?: string | null;
+    meal_type_names?: string[];
+    cuisine_type_names?: string[];
+  };
+  price: string | number;
+  preparation_time?: number | null;
+  is_available: boolean;
+}
+
 // Cuisine Type
 export const getCuisineTypeList = async (
   page: number = 1,

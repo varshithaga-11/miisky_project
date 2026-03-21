@@ -249,6 +249,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/orders",
   },
   {
+    icon: <Layers className="w-5 h-5" />,
+    name: "Available Foods",
+    path: "/microkitchen/available-foods",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Kitchen Reviews",
     path: "/microkitchen/reviews",

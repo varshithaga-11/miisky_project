@@ -505,6 +505,27 @@ class FoodStepSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class MicroKitchenFoodSerializer(serializers.ModelSerializer):
+    food_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = MicroKitchenFood
+        fields = ['id', 'micro_kitchen', 'food', 'food_details', 'is_available', 'price', 'preparation_time']
+        read_only_fields = ['micro_kitchen']
+
+    def get_food_details(self, obj):
+        if obj.food:
+            return {
+                'id': obj.food.id,
+                'name': obj.food.name,
+                'description': obj.food.description,
+                'image': obj.food.image.url if obj.food.image else None,
+                'meal_type_names': list(obj.food.meal_types.values_list('name', flat=True)) if hasattr(obj.food, 'meal_types') else [],
+                'cuisine_type_names': list(obj.food.cuisine_types.values_list('name', flat=True)) if hasattr(obj.food, 'cuisine_types') else [],
+            }
+        return None
+
+
 class FoodSerializer(serializers.ModelSerializer):
     # Nested read — show full ingredient + step lists when retrieving a food
     ingredients = FoodIngredientSerializer(
@@ -1316,11 +1337,18 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     def get_food_details(self, obj):
         if obj.food:
+            price = obj.food.price
+            if obj.cart and obj.cart.micro_kitchen_id:
+                mcf = MicroKitchenFood.objects.filter(
+                    micro_kitchen_id=obj.cart.micro_kitchen_id, food=obj.food
+                ).first()
+                if mcf:
+                    price = float(mcf.price)
             return {
                 'id': obj.food.id,
                 'name': obj.food.name,
                 'image': obj.food.image.url if obj.food.image else None,
-                'price': obj.food.price,
+                'price': price,
             }
         return None
 

@@ -79,6 +79,7 @@ import MeetingRequestsByPatients from "./pages/NutritionSide/MeetingRequestsByPa
 import ListOfMicroKitchensPage from "./pages/NutritionSide/ListOfMicroKitchens/index";
 import AllotMicroKitchenToPatientsPage from "./pages/NutritionSide/AllotMicroKitchenToPatients/index";
 import ReviewsPage from "./pages/MicroKitchenSide/Reviews/index";
+import AvailableFoodsPage from "./pages/MicroKitchenSide/AvailableFoods/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 
@@ -159,6 +160,7 @@ export function appRoutes() {
           <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
           <Route path="nutrition/allot-micro-kitchen" element={<AllotMicroKitchenToPatientsPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
+          <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
