@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, getUserMealsList, saveBulkMeals, getMealTypeList, getCuisineTypeList, getFoodList } from "./api";
 import type { MappedPatientResponse, UserDietPlan, UserMeal, MealType, Food, CuisineType } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiPlus, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiCheck } from "react-icons/fi";
+import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
+
+const DRAG_TYPE = "food-item";
 
 const SetDailyMealsPage: React.FC = () => {
     const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -19,19 +21,21 @@ const SetDailyMealsPage: React.FC = () => {
     const [foods, setFoods] = useState<Food[]>([]);
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
-    // Selection Mode
     const [isRangeMode, setIsRangeMode] = useState(false);
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
-    // Daily Meals Data (Local structure to manage entries for the selected day)
     const [dailyEntries, setDailyEntries] = useState<Partial<UserMeal>[]>([]);
     const [allMeals, setAllMeals] = useState<UserMeal[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [hoveredEvent, setHoveredEvent] = useState<UserMeal | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+    const [foodSearch, setFoodSearch] = useState("");
+    const [selectedCuisineId, setSelectedCuisineId] = useState<number | "">("");
+    const [showSaveButton, setShowSaveButton] = useState(false);
 
     useEffect(() => {
         const loadInitial = async () => {
@@ -65,14 +69,8 @@ const SetDailyMealsPage: React.FC = () => {
                     setActivePlan(currentPlan);
 
                     if (currentPlan) {
-                        // Default Range to Plan End Date if available
-                        if (currentPlan.end_date) {
-                            setEndDate(currentPlan.end_date);
-                        }
-
-                        // Load data for the calendar and current view
+                        if (currentPlan.end_date) setEndDate(currentPlan.end_date);
                         loadAllScheduledMeals(selectedPatient.user.id);
-                        
                         if (isRangeMode) {
                             fetchAllMeals(selectedPatient.user.id);
                         } else {
@@ -115,71 +113,18 @@ const SetDailyMealsPage: React.FC = () => {
         }
     };
 
-    const handleAddSlot = (specificDate?: string) => {
-        if (!selectedPatient || !activePlan) {
-            toast.warning("Patient must have an active diet plan");
-            return;
-        }
-        setDailyEntries([...dailyEntries, {
-            user: selectedPatient.user.id,
-            user_diet_plan: activePlan.id,
-            meal_date: specificDate || selectedDate,
-            meal_type: mealTypes[0]?.id,
-            cuisine_type: Number(selectedCuisineId) || undefined,
-            quantity: 1
-        }]);
-    };
+    useEffect(() => {
+        const fetchFilteredFoods = async () => {
+            try {
+                const res = await getFoodList(1, 200, foodSearch, "", selectedCuisineId);
+                setFoods(res.results);
+            } catch (err) {}
+        };
+        fetchFilteredFoods();
+    }, [foodSearch, selectedCuisineId]);
 
-    const handleRemoveSlot = (index: number) => {
-        setDailyEntries(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const handleEntryUpdate = (index: number, field: keyof UserMeal, value: any) => {
-        const updated = [...dailyEntries];
-        updated[index] = { ...updated[index], [field]: value };
-        setDailyEntries(updated);
-    };
-
-    const handleSave = async (specificDate?: string) => {
-        const entriesToSave = specificDate
-            ? dailyEntries.filter(e => e.meal_date === specificDate)
-            : dailyEntries;
-
-        if (entriesToSave.length === 0) {
-            toast.warning(`Add at least one meal ${specificDate ? `for ${specificDate}` : 'template'} before saving`);
-            return;
-        }
-
-        // Basic validation
-        const isValid = entriesToSave.every(e => e.meal_type && e.food && e.quantity);
-        if (!isValid) {
-            toast.error("Please fill all fields for each slot");
-            return;
-        }
-
-        setSaving(true);
-        try {
-            await saveBulkMeals(entriesToSave as UserMeal[]);
-            toast.success(`Successfully programmed ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? 'range' : 'daily'} schedule`);
-
-            // Refresh underlying data to show synced state
-            if (selectedPatient) loadAllScheduledMeals(selectedPatient.user.id);
-            
-            if (isRangeMode) {
-                fetchAllMeals(selectedPatient!.user.id);
-            } else {
-                fetchDailyMeals(selectedPatient!.user.id, specificDate || selectedDate);
-            }
-        } catch (err) {
-            toast.error("Failed to sync schedule");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    // Helper to get array of dates in range
     const getDatesInRange = (start: string, end: string) => {
-        const dates = [];
+        const dates: string[] = [];
         let curr = new Date(start);
         let last = new Date(end);
         while (curr <= last) {
@@ -191,194 +136,275 @@ const SetDailyMealsPage: React.FC = () => {
 
     const datesToShow = isRangeMode ? getDatesInRange(startDate, endDate) : [selectedDate];
 
-    // Food filtering logic can be handled in-line or via a helper
-    const [foodSearch] = useState("");
-    const [selectedCuisineId, setSelectedCuisineId] = useState<number | "">("");
+    const filteredFoods = foods.filter(f =>
+        !foodSearch.trim() || f.name?.toLowerCase().includes(foodSearch.toLowerCase())
+    );
 
-    useEffect(() => {
-        const fetchFilteredFoods = async () => {
-            try {
-                const res = await getFoodList(1, 100, foodSearch, "", selectedCuisineId);
-                setFoods(res.results);
-            } catch (err) { }
-        };
-        fetchFilteredFoods();
-    }, [foodSearch, selectedCuisineId]);
+    const handleDragStart = (e: React.DragEvent, food: Food) => {
+        e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ id: food.id, name: food.name }));
+        e.dataTransfer.effectAllowed = "copy";
+        (e.target as HTMLElement).style.opacity = "0.5";
+    };
+
+    const handleDragEnd = (e: React.DragEvent) => {
+        (e.target as HTMLElement).style.opacity = "1";
+    };
+
+    const handleDropOnDay = (e: React.DragEvent, dateStr: string) => {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).classList.remove("ring-2", "ring-indigo-500", "bg-indigo-50/50", "dark:bg-indigo-900/20");
+
+        const raw = e.dataTransfer.getData(DRAG_TYPE);
+        if (!raw || !selectedPatient || !activePlan) return;
+        try {
+            const { id } = JSON.parse(raw);
+            if (!id) return;
+
+            const newEntry: Partial<UserMeal> = {
+                user: selectedPatient.user.id,
+                user_diet_plan: activePlan.id,
+                meal_date: dateStr,
+                meal_type: mealTypes[0]?.id,
+                cuisine_type: selectedCuisineId || undefined,
+                food: id,
+                quantity: 1
+            };
+            setDailyEntries(prev => [...prev, newEntry]);
+            setShowSaveButton(true);
+            toast.success(`Added to ${new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`);
+        } catch (_) {}
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        (e.currentTarget as HTMLElement).classList.add("ring-2", "ring-indigo-500", "bg-indigo-50/50", "dark:bg-indigo-900/20");
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        (e.currentTarget as HTMLElement).classList.remove("ring-2", "ring-indigo-500", "bg-indigo-50/50", "dark:bg-indigo-900/20");
+    };
+
+    const handleRemoveSlot = (index: number) => {
+        setDailyEntries(prev => prev.filter((_, i) => i !== index));
+        setShowSaveButton(true);
+    };
+
+    const handleEntryUpdate = (index: number, field: keyof UserMeal, value: any) => {
+        const updated = [...dailyEntries];
+        updated[index] = { ...updated[index], [field]: value };
+        setDailyEntries(updated);
+        setShowSaveButton(true);
+    };
+
+    const handleSave = async (specificDate?: string) => {
+        const entriesToSave = specificDate
+            ? dailyEntries.filter(e => e.meal_date === specificDate)
+            : dailyEntries;
+
+        if (entriesToSave.length === 0) {
+            toast.warning(`Add at least one meal ${specificDate ? `for ${specificDate}` : ''} before saving`);
+            return;
+        }
+
+        const isValid = entriesToSave.every(e => e.meal_type && e.food && e.quantity);
+        if (!isValid) {
+            toast.error("Please fill all fields for each slot");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            await saveBulkMeals(entriesToSave as UserMeal[]);
+            toast.success(`Successfully saved ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? 'range' : 'daily'} schedule`);
+            setShowSaveButton(false);
+            if (selectedPatient) loadAllScheduledMeals(selectedPatient.user.id);
+            if (isRangeMode) {
+                fetchAllMeals(selectedPatient!.user.id);
+            } else {
+                fetchDailyMeals(selectedPatient!.user.id, specificDate || selectedDate);
+            }
+        } catch (err) {
+            toast.error("Failed to save schedule");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50 pb-12">
+        <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50 pb-24">
             <PageMeta title="Patient Meal Scheduler" description="Personalize daily nutrition plans for your patients." />
             <PageBreadcrumb pageTitle="Daily Meal Optimization" />
             <ToastContainer position="bottom-right" />
 
-            <div className="px-4 md:px-8 max-w-7xl mx-auto space-y-8">
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                    {/* Patient Sidebar */}
-                    <div className="xl:col-span-1">
-                        <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05]">
-                            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest flex items-center gap-2">
-                                <FiUsers size={20} className="text-indigo-500" /> Patient List
+            <div className="px-4 md:px-8 max-w-[1600px] mx-auto space-y-6">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    {/* Patient selector - top bar */}
+                    <div className="xl:col-span-12">
+                        <div className="bg-white dark:bg-gray-800 rounded-[24px] p-4 shadow-sm border border-transparent dark:border-white/[0.05] flex flex-wrap items-center gap-4">
+                            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                <FiUsers size={18} className="text-indigo-500" /> Patient
                             </h3>
-                            <div className="space-y-3">
+                            <div className="flex flex-wrap gap-2">
                                 {patients.map(p => (
                                     <button
                                         key={p.user.id}
                                         onClick={() => setSelectedPatient(p)}
-                                        className={`w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 ${selectedPatient?.user.id === p.user.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-50 dark:bg-white/[0.02] text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]'}`}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${selectedPatient?.user.id === p.user.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 dark:bg-white/[0.02] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]'}`}
                                     >
-                                        <div className={`size-10 rounded-xl flex items-center justify-center border ${selectedPatient?.user.id === p.user.id ? 'bg-white/20 border-white/30' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-white/5 shadow-sm'}`}>
-                                            <FiActivity size={18} className={selectedPatient?.user.id === p.user.id ? 'text-white' : 'text-indigo-500'} />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-sm">{p.user.first_name} {p.user.last_name}</p>
-                                            <p className={`text-[10px] font-bold uppercase tracking-wider ${selectedPatient?.user.id === p.user.id ? 'text-indigo-100' : 'text-gray-400'}`}>ID: #{p.user.id}</p>
-                                        </div>
+                                        {p.user.first_name} {p.user.last_name}
                                     </button>
                                 ))}
                             </div>
                         </div>
                     </div>
 
-                    {/* Scheduler Main */}
-                    <div className="xl:col-span-3 space-y-8">
+                    {/* Food list - LEFT SIDEBAR */}
+                    <div className="xl:col-span-4 lg:col-span-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-[28px] p-5 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] sticky top-4">
+                            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2">
+                                <FiMenu className="text-indigo-500" size={16} /> Food Library
+                            </h3>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-4">Drag food onto a day to add</p>
+
+                            <div className="mb-4 space-y-2">
+                                <div className="relative">
+                                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search foods..."
+                                        value={foodSearch}
+                                        onChange={(e) => setFoodSearch(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                    />
+                                </div>
+                                <select
+                                    value={selectedCuisineId}
+                                    onChange={(e) => setSelectedCuisineId(e.target.value ? Number(e.target.value) : "")}
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none"
+                                >
+                                    <option value="">All cuisines</option>
+                                    {cuisines.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                                {filteredFoods.length === 0 ? (
+                                    <p className="text-gray-400 text-xs font-medium py-8 text-center">No foods found</p>
+                                ) : (
+                                    filteredFoods.map((food) => (
+                                        <div
+                                            key={food.id}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, food)}
+                                            onDragEnd={handleDragEnd}
+                                            className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-grab active:cursor-grabbing transition-all border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800/50 group"
+                                        >
+                                            <FiMenu className="text-gray-300 group-hover:text-indigo-400 flex-shrink-0" size={14} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{food.name}</p>
+                                                {food.meal_type_names?.length ? (
+                                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider truncate">{food.meal_type_names.join(", ")}</p>
+                                                ) : null}
+                                            </div>
+                                            {food.nutrition?.calories ? (
+                                                <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-lg">{food.nutrition.calories} kcal</span>
+                                            ) : null}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main content - Day drop zones */}
+                    <div className="xl:col-span-8 lg:col-span-8 space-y-6">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center p-20 bg-white dark:bg-gray-800 rounded-[40px] border border-transparent dark:border-white/[0.05]">
+                            <div className="flex flex-col items-center justify-center p-20 bg-white dark:bg-gray-800 rounded-[32px]">
                                 <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-                                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Fetching Optimization Data...</p>
+                                <p className="text-gray-400 font-bold uppercase text-xs">Loading...</p>
                             </div>
                         ) : !selectedPatient ? (
-                            <div className="flex flex-col items-center justify-center p-20 bg-white dark:bg-gray-800 rounded-[40px] border border-transparent dark:border-white/[0.05] shadow-xl shadow-gray-200/20">
-                                <div className="size-24 rounded-[32px] bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-300 mb-8 border border-gray-100 dark:border-white/5">
-                                    <FiUsers size={48} />
-                                </div>
-                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2">No Patients Allotted</h2>
-                                <p className="text-gray-400 font-medium text-sm text-center max-w-xs leading-relaxed">You haven't been assigned any patients yet, or they don't have active mappings.</p>
+                            <div className="flex flex-col items-center justify-center p-20 bg-white dark:bg-gray-800 rounded-[32px]">
+                                <FiUsers size={48} className="text-gray-300 mb-4" />
+                                <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2">No Patients Allotted</h2>
+                                <p className="text-gray-400 text-sm text-center">You haven't been assigned any patients yet.</p>
                             </div>
                         ) : selectedPatient && (
                             <>
-                                {/* Plan & Mode Picker */}
-                                <div className="bg-white dark:bg-gray-800 p-8 rounded-[40px] border border-transparent dark:border-white/[0.05] shadow-sm flex flex-col xl:flex-row justify-between items-center gap-8">
-                                    <div className="flex items-center gap-6">
-                                        <div className="size-16 rounded-[22px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 border border-indigo-100 dark:border-indigo-900/30">
-                                            <FiActivity size={32} />
+                                {/* Plan & controls */}
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-[28px] border border-transparent dark:border-white/[0.05] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="size-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500">
+                                            <FiActivity size={24} />
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-                                                {selectedPatient.user.first_name}'s Schedule
-                                            </h2>
+                                            <h2 className="text-xl font-black text-gray-900 dark:text-white">{selectedPatient.user.first_name}'s Schedule</h2>
                                             {activePlan ? (
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <FiCheckCircle className="text-emerald-500" size={12} />
-                                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Active Plan: {activePlan.diet_plan_details?.title}</p>
-                                                </div>
+                                                <p className="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1 mt-0.5">
+                                                    <FiCheckCircle size={10} /> {activePlan.diet_plan_details?.title}
+                                                </p>
                                             ) : (
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <FiInfo className="text-red-400" size={12} />
-                                                    <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest italic">No active diet plan</p>
-                                                </div>
+                                                <p className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1 mt-0.5">
+                                                    <FiInfo size={10} /> No active diet plan
+                                                </p>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center gap-6 bg-gray-50/50 dark:bg-gray-900/50 p-2 rounded-[32px] border border-gray-100 dark:border-white/10">
-                                        {/* Mode Toggle */}
-                                        <div className="flex p-1 bg-white dark:bg-gray-800 rounded-2xl shadow-inner">
-                                            <button
-                                                onClick={() => setViewMode("calendar")}
-                                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'calendar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-                                            >
-                                                <FiCalendar className="inline mr-2" /> Plan Overview
-                                            </button>
-                                        </div>
-
-                                        <div className="flex p-1 bg-white dark:bg-gray-800 rounded-2xl shadow-inner">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex p-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
                                             <button
                                                 onClick={() => setIsRangeMode(false)}
-                                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isRangeMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-                                            >
-                                                Day
-                                            </button>
+                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${!isRangeMode ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                                            >Day</button>
                                             <button
                                                 onClick={() => setIsRangeMode(true)}
-                                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isRangeMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-                                            >
-                                                Range
-                                            </button>
+                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${isRangeMode ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                                            >Range</button>
                                         </div>
-
-                                        <div className="flex items-center gap-4 px-4">
-                                            {isRangeMode ? (
-                                                <div className="flex items-center gap-3">
-                                                    <input
-                                                        type="date"
-                                                        value={startDate}
-                                                        onChange={(e) => setStartDate(e.target.value)}
-                                                        className="bg-transparent border-none outline-none font-black text-[11px] text-gray-700 dark:text-gray-300 uppercase tracking-widest"
-                                                    />
-                                                    <span className="text-gray-300 font-bold">→</span>
-                                                    <input
-                                                        type="date"
-                                                        value={endDate}
-                                                        onChange={(e) => setEndDate(e.target.value)}
-                                                        className="bg-transparent border-none outline-none font-black text-[11px] text-gray-700 dark:text-gray-300 uppercase tracking-widest"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-3">
-                                                    <FiCalendar className="text-gray-400" />
-                                                    <input
-                                                        type="date"
-                                                        value={selectedDate}
-                                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                                        className="bg-transparent border-none outline-none font-black text-[11px] text-gray-700 dark:text-gray-300 uppercase tracking-widest"
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
+                                        {isRangeMode ? (
+                                            <div className="flex items-center gap-2">
+                                                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none" />
+                                                <span className="text-gray-400">→</span>
+                                                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none" />
+                                            </div>
+                                        ) : (
+                                            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none" />
+                                        )}
+                                        <button
+                                            onClick={() => setViewMode("calendar")}
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ${viewMode === "calendar" ? "bg-indigo-600 text-white" : "bg-gray-50 dark:bg-gray-900/50 text-gray-600"}`}
+                                        >
+                                            <FiCalendar size={12} /> Overview
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Hover Detail Card */}
+                                {/* Hover event tooltip */}
                                 <AnimatePresence>
                                     {hoveredEvent && (
-                                        <motion.div 
-                                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                            style={{ 
-                                                position: "fixed", 
-                                                left: mousePos.x + 20, 
-                                                top: mousePos.y + 20,
-                                                zIndex: 9999
-                                            }}
-                                            className="bg-white dark:bg-gray-800 border dark:border-white/10 rounded-2xl p-4 shadow-2xl w-64 pointer-events-none"
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            style={{ position: "fixed", left: mousePos.x + 16, top: mousePos.y + 16, zIndex: 9999 }}
+                                            className="bg-white dark:bg-gray-800 border dark:border-white/10 rounded-xl p-3 shadow-2xl w-56 pointer-events-none"
                                         >
-                                            <div className="flex items-center gap-2 mb-2 text-indigo-500 font-black uppercase tracking-widest text-[8px]">
-                                                <FiActivity size={14} />
-                                                {hoveredEvent.meal_type_details?.name}
-                                            </div>
-                                            <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2 italic">
-                                                {hoveredEvent.food_details?.name}
-                                            </h4>
-                                            <div className="flex justify-between items-center text-[10px] font-bold text-gray-400">
-                                                <span>Qty: {hoveredEvent.quantity}</span>
-                                                <span className="text-indigo-400 font-black uppercase text-[8px]">Programmed</span>
-                                            </div>
+                                            <p className="text-[10px] font-black text-indigo-500 uppercase">{hoveredEvent.meal_type_details?.name}</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{hoveredEvent.food_details?.name}</p>
+                                            <p className="text-[10px] text-gray-400">Qty: {hoveredEvent.quantity}</p>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
 
-                                {/* Calendar Mode View */}
+                                {/* Calendar view */}
                                 {viewMode === "calendar" && (
-                                    <div className="bg-white dark:bg-gray-800 p-8 rounded-[40px] border border-transparent dark:border-white/[0.05] shadow-xl overflow-hidden custom-calendar animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="bg-white dark:bg-gray-800 p-6 rounded-[28px] overflow-hidden">
                                         <FullCalendar
                                             plugins={[dayGridPlugin, interactionPlugin]}
                                             initialView="dayGridMonth"
-                                            headerToolbar={{
-                                                left: "prev,next",
-                                                center: "title",
-                                                right: "dayGridMonth"
-                                            }}
+                                            headerToolbar={{ left: "prev,next", center: "title", right: "" }}
                                             events={allMeals.map(m => ({
                                                 id: m.id?.toString(),
                                                 title: `${m.meal_type_details?.name || 'Meal'}: ${m.food_details?.name || 'Assigned'}`,
@@ -391,164 +417,107 @@ const SetDailyMealsPage: React.FC = () => {
                                                 setMousePos({ x: info.jsEvent.clientX, y: info.jsEvent.clientY });
                                             }}
                                             eventMouseLeave={() => setHoveredEvent(null)}
-                                            dateClick={(info) => {
-                                                const date = info.dateStr;
-                                                setSelectedDate(date);
-                                                setViewMode("list");
-                                                setIsRangeMode(false);
-                                                toast.info(`Managing meals for ${date}`);
-                                            }}
-                                            eventClick={(info: any) => {
-                                                const date = info.event.startStr;
-                                                setSelectedDate(date);
-                                                setViewMode("list");
-                                                setIsRangeMode(false);
-                                                toast.info(`Jumping to ${date} for editing`);
-                                            }}
-                                            eventContent={(eventInfo) => (
-                                                <div className="bg-indigo-600 text-white px-2 py-1 rounded-lg text-[9px] font-bold uppercase truncate cursor-pointer shadow-md">
-                                                    {eventInfo.event.title}
-                                                </div>
+                                            dateClick={(info) => { setSelectedDate(info.dateStr); setViewMode("list"); toast.info(`Managing ${info.dateStr}`); }}
+                                            eventClick={(info: any) => { setSelectedDate(info.event.startStr?.split('T')[0] || selectedDate); setViewMode("list"); toast.info(`Editing ${info.event.startStr?.split('T')[0]}`); }}
+                                            eventContent={(e) => (
+                                                <div className="bg-indigo-600 text-white px-2 py-0.5 rounded text-[9px] font-bold truncate">{e.event.title}</div>
                                             )}
                                         />
                                     </div>
                                 )}
 
-                                {/* Meal Slot Builder (Timeline View) */}
+                                {/* List view - Day drop zones */}
                                 {viewMode === "list" && activePlan && (
-                                    <div className="space-y-12">
+                                    <div className="space-y-8">
                                         {datesToShow.map((dateStr) => {
                                             const dayEntries = dailyEntries.filter(e => e.meal_date === dateStr);
                                             const dateObj = new Date(dateStr);
-                                            const formattedDay = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
+                                            const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
 
                                             return (
-                                                <div key={dateStr} className="space-y-6">
-                                                    <div className="flex justify-between items-center px-4">
-                                                        <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-[10px] text-white shadow-lg shadow-indigo-500/30">
-                                                                {dateObj.getDate()}
+                                                <motion.div key={dateStr} layout className="space-y-4">
+                                                    <div
+                                                        onDrop={(e) => handleDropOnDay(e, dateStr)}
+                                                        onDragOver={handleDragOver}
+                                                        onDragLeave={handleDragLeave}
+                                                        className="min-h-[120px] rounded-[24px] border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/30 p-6 transition-all"
+                                                    >
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-lg">
+                                                                    {dateObj.getDate()}
+                                                                </div>
+                                                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">{formatted}</h3>
+                                                                <span className="text-[10px] text-gray-400 font-bold">Drop food here</span>
                                                             </div>
-                                                            {formattedDay}
-                                                        </h3>
-                                                        <div className="flex items-center gap-3">
-                                                            <button
-                                                                onClick={() => handleAddSlot(dateStr)}
-                                                                className="px-6 py-2 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm flex items-center gap-2"
-                                                            >
-                                                                <FiPlus size={14} /> Add Meal
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleSave(dateStr)}
-                                                                disabled={saving}
-                                                                className="px-6 py-2 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100/50 dark:border-emerald-900/30 shadow-sm flex items-center gap-2 disabled:opacity-50"
-                                                            >
-                                                                <FiCheck size={14} /> Sync Day
-                                                            </button>
                                                         </div>
-                                                    </div>
 
-                                                    <div className="space-y-4">
-                                                        {dayEntries.length === 0 ? (
-                                                            <div className="p-8 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-[32px] flex flex-col items-center justify-center text-gray-300">
-                                                                <p className="text-[10px] uppercase font-black tracking-widest">No meals scheduled</p>
-                                                            </div>
-                                                        ) : (
-                                                            dayEntries.map((entry) => {
-                                                                // Find global index for update/remove
-                                                                const globalIdx = dailyEntries.indexOf(entry);
-                                                                return (
-                                                                    <div key={globalIdx} className="bg-white dark:bg-gray-800 p-8 rounded-[32px] border border-transparent dark:border-white/[0.05] shadow-lg shadow-gray-200/20 dark:shadow-none transition-all hover:shadow-xl">
-                                                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                                                                            <div className="md:col-span-2">
-                                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Meal Type</label>
-                                                                                <select
-                                                                                    value={entry.meal_type}
-                                                                                    onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
-                                                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
-                                                                                >
-                                                                                    <option value="">Select Type</option>
-                                                                                    {mealTypes.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                                                                </select>
-                                                                            </div>
-
-                                                                            <div className="md:col-span-3">
-                                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Cuisine</label>
-                                                                                <select
-                                                                                    value={entry.cuisine_type || ""}
-                                                                                    onChange={(e) => {
-                                                                                        const cid = e.target.value ? Number(e.target.value) : "";
-                                                                                        handleEntryUpdate(globalIdx, 'cuisine_type', cid || null);
-                                                                                        setSelectedCuisineId(cid);
-                                                                                    }}
-                                                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
-                                                                                >
-                                                                                    <option value="">All Cuisines</option>
-                                                                                    {cuisines.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                                                </select>
-                                                                            </div>
-
-                                                                            <div className="md:col-span-4">
-                                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Food Item</label>
-                                                                                <select
-                                                                                    value={entry.food}
-                                                                                    onChange={(e) => handleEntryUpdate(globalIdx, 'food', Number(e.target.value))}
-                                                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
-                                                                                >
-                                                                                    <option value="">Search/Choose Food</option>
-                                                                                    {foods.map(f => <option key={f.id} value={f.id}>{f.name} {f.nutrition?.calories ? `(${f.nutrition.calories} kcal)` : ''}</option>)}
-                                                                                </select>
-                                                                            </div>
-
-                                                                            <div className="md:col-span-2">
-                                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Quantity</label>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    step="0.1"
-                                                                                    value={entry.quantity || ''}
-                                                                                    onChange={(e) => handleEntryUpdate(globalIdx, 'quantity', Number(e.target.value))}
-                                                                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none font-bold text-sm text-gray-700 dark:text-gray-300"
-                                                                                    placeholder="100.0"
-                                                                                />
-                                                                            </div>
-
-                                                                            <div className="md:col-span-1 flex justify-center pb-2">
-                                                                                <button
-                                                                                    onClick={() => handleRemoveSlot(globalIdx)}
-                                                                                    className="p-3 text-red-400 hover:text-red-600 bg-red-50 dark:bg-red-900/10 rounded-xl transition-all"
-                                                                                >
-                                                                                    <FiTrash2 size={20} />
+                                                        <div className="space-y-3">
+                                                            {dayEntries.length === 0 ? (
+                                                                <p className="text-gray-400 text-xs font-medium py-4 text-center">No meals yet — drag from the left</p>
+                                                            ) : (
+                                                                dayEntries.map((entry) => {
+                                                                    const globalIdx = dailyEntries.indexOf(entry);
+                                                                    return (
+                                                                        <motion.div
+                                                                            key={globalIdx}
+                                                                            layout
+                                                                            initial={{ opacity: 0, y: 8 }}
+                                                                            animate={{ opacity: 1, y: 0 }}
+                                                                            className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-white/5 shadow-sm"
+                                                                        >
+                                                                            <div className="flex flex-wrap gap-4 items-end">
+                                                                                <div className="flex-1 min-w-[120px]">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meal Type</label>
+                                                                                    <select
+                                                                                        value={entry.meal_type}
+                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                    >
+                                                                                        {mealTypes.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div className="flex-1 min-w-[140px]">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Food</label>
+                                                                                    <select
+                                                                                        value={entry.food}
+                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'food', Number(e.target.value))}
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                    >
+                                                                                        <option value="">Select</option>
+                                                                                        {foods.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div className="w-20">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qty</label>
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        step="0.1"
+                                                                                        value={entry.quantity ?? ''}
+                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'quantity', Number(e.target.value))}
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                    />
+                                                                                </div>
+                                                                                <button onClick={() => handleRemoveSlot(globalIdx)} className="p-2 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                                                                    <FiTrash2 size={18} />
                                                                                 </button>
                                                                             </div>
-                                                                        </div>
-
-                                                                        <div className="mt-6">
                                                                             <input
                                                                                 type="text"
-                                                                                placeholder="Personalized notes for this specific meal..."
+                                                                                placeholder="Notes (optional)"
                                                                                 value={entry.notes || ''}
                                                                                 onChange={(e) => handleEntryUpdate(globalIdx, 'notes', e.target.value)}
-                                                                                className="w-full bg-transparent border-b border-gray-100 dark:border-white/10 px-2 py-2 text-xs font-medium focus:border-indigo-500 outline-none transition-all dark:text-gray-400"
+                                                                                className="mt-3 w-full text-xs font-medium bg-transparent border-b border-gray-100 dark:border-white/5 px-2 py-1 outline-none focus:border-indigo-500"
                                                                             />
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })
-                                                        )}
+                                                                        </motion.div>
+                                                                    );
+                                                                })
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             );
                                         })}
-
-                                        <div className="pt-12 flex justify-end">
-                                            <button
-                                                onClick={() => handleSave()}
-                                                disabled={saving || dailyEntries.length === 0}
-                                                className="px-12 py-5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-[28px] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-gray-400 dark:shadow-none hover:scale-105 transition-all flex items-center gap-4 disabled:opacity-50"
-                                            >
-                                                {saving ? 'Syncing...' : `Save ${isRangeMode ? 'Range Plan' : 'Today\'s Schedule'}`} <FiSave size={18} />
-                                            </button>
-                                        </div>
                                     </div>
                                 )}
                             </>
@@ -556,6 +525,27 @@ const SetDailyMealsPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Floating Save Button - appears on hover / when there are unsaved changes */}
+            <AnimatePresence>
+                {(showSaveButton || dailyEntries.length > 0) && viewMode === "list" && activePlan && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 24 }}
+                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+                    >
+                        <button
+                            onClick={() => handleSave()}
+                            disabled={saving || dailyEntries.length === 0}
+                            className="group px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[20px] font-black uppercase tracking-widest text-sm shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/50 hover:scale-105 active:scale-100 transition-all flex items-center gap-3 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                        >
+                            <FiSave size={20} className="group-hover:rotate-12 transition-transform" />
+                            {saving ? "Saving..." : "Save Schedule"}
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

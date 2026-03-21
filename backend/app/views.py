@@ -1567,12 +1567,13 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create_meals(self, request):
-        """Allows nutritionist to set multiple meals at once."""
+        """Allows nutritionist to set multiple meals at once. Uses update_or_create per (user, meal_date, meal_type)."""
         data = request.data
         if not isinstance(data, list):
             return Response({"detail": "Expected a list of meal objects."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer = self.get_serializer(data=data, many=True)
+
+        # Use BulkUserMealSerializer (no UniqueTogetherValidator - we handle via update_or_create)
+        serializer = BulkUserMealSerializer(data=data, many=True)
         if serializer.is_valid():
             # Handle potential duplicates (unique_together: user, date, meal_type)
             # Efficiently batch create or update

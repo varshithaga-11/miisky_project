@@ -49,7 +49,17 @@ export const getUserMealsList = async (patientId: number): Promise<UserMeal[]> =
 };
 
 export const saveBulkMeals = async (meals: UserMeal[]): Promise<any> => {
+    const payload = meals.map((m) => ({
+        user: m.user,
+        user_diet_plan: m.user_diet_plan,
+        meal_type: m.meal_type,
+        food: m.food,
+        quantity: m.quantity ?? 1,
+        meal_date: m.meal_date,
+        ...(m.cuisine_type != null && { cuisine_type: m.cuisine_type }),
+        ...(m.notes != null && m.notes !== "" && { notes: m.notes }),
+    }));
     const url = createApiUrl("api/usermeal/bulk-create/");
-    const response = await axios.post(url, meals, { headers: await getAuthHeaders() });
+    const response = await axios.post(url, payload, { headers: await getAuthHeaders() });
     return response.data;
 };
