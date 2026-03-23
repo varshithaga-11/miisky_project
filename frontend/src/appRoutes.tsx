@@ -19,9 +19,9 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
 const KitchenMenuPage = lazy(() => import("./pages/NonPatient/KitchenMenu/index"));
-const CartPage = lazy(() => import("./pages/NonPatient/Cart/index"));
-const OrdersPage = lazy(() => import("./pages/NonPatient/Orders/index"));
 const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/SeparateOrders/index"));
+const PatientCartPage = lazy(() => import("./pages/PatientSide/Cart/index"));
+const PatientOrdersPage = lazy(() => import("./pages/PatientSide/Orders/index"));
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 import CountryManagementPage from "./pages/AdminSide/Country/index";
@@ -82,6 +82,7 @@ import ReviewsPage from "./pages/MicroKitchenSide/Reviews/index";
 import AvailableFoodsPage from "./pages/MicroKitchenSide/AvailableFoods/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
+import ProfileInformationPage from "./pages/ProfileInformation/index";
 
 
 
@@ -143,8 +144,8 @@ export function appRoutes() {
           <Route path="patient/micro-kitchens" element={<ListOfMicroKitchenPage />} />
           <Route path="patient/discover-kitchens" element={<NonPatientListOfMicroKitchenPage />} />
           <Route path="patient/kitchen/:kitchenId/menu" element={<KitchenMenuPage />} />
-          <Route path="patient/cart" element={<CartPage />} />
-          <Route path="patient/orders" element={<OrdersPage />} />
+          <Route path="patient/cart" element={<PatientCartPage />} />
+          <Route path="patient/orders" element={<PatientOrdersPage />} />
           <Route path="microkitchen/orders" element={<KitchenOrdersPage />} />
           <Route path="patient/suggested-kitchens" element={<AllotedMicroKitchenByNutritionPage />} />
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
@@ -170,6 +171,7 @@ export function appRoutes() {
 
           {/* Others Page */}
           <Route path="/profile" element={<UserProfiles />} />
+          <Route path="/profile-info" element={<ProfileInformationPage />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/blank" element={<Blank />} />
 

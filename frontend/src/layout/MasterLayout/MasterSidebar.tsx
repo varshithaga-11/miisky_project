@@ -114,6 +114,11 @@ const adminNavItems: NavItem[] = [
     name: "Mappings",
     subItems: [{ name: "User–Nutritionist Mapping", path: "/master/user-nutrition-mapping" }],
   },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
 ];
 
 const patientNavItems: NavItem[] = [
@@ -124,44 +129,42 @@ const patientNavItems: NavItem[] = [
   },
   {
     icon: <FileText className="w-5 h-5" />,
+    name: "Health Reports",
+    path: "/patient/health-reports",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
     name: "Nutritionist Allotted",
     path: "/patient/nutrition-allotted",
   },
   {
     icon: <Briefcase className="w-5 h-5" />,
-    name: "Diet Plans",
+    name: "Diet Plans(List)",
     path: "/patient/plans",
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Micro-Kitchens(List)",
+    path: "/patient/micro-kitchens",
   },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Suggested Plans",
     path: "/patient/suggested-plans",
   },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Micro-Kitchens",
-    path: "/patient/micro-kitchens",
-  },
+
   // {
   //   icon: <Briefcase className="w-5 h-5" />,
   //   name: "Discovery Kitchens",
   //   path: "/patient/discover-kitchens",
   // },
-  {
-    icon: <Layers className="w-5 h-5" />,
-    name: "Foods",
-    path: "/patient/foods",
-  },
+
   {
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Suggested Kitchens",
     path: "/patient/suggested-kitchens",
   },
-  {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Health Reports",
-    path: "/patient/health-reports",
-  },
+
   {
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Meals Allotted",
@@ -171,6 +174,26 @@ const patientNavItems: NavItem[] = [
     icon: <Video className="w-5 h-5" />,
     name: "Consultation",
     path: "/patient/meeting-request",
+  },
+  {
+    icon: <Layers className="w-5 h-5" />,
+    name: "Foods",
+    path: "/patient/foods",
+  },
+  {
+    icon: <ShoppingCart className="w-5 h-5" />,
+    name: "Cart",
+    path: "/patient/cart",
+  },
+  {
+    icon: <Package className="w-5 h-5" />,
+    name: "My Bookings",
+    path: "/patient/orders",
+  },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
   },
 ];
 
@@ -220,6 +243,11 @@ const nutritionistNavItems: NavItem[] = [
     name: "Meeting Requests",
     path: "/nutrition/meeting-requests",
   },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
 ];
 
 const microKitchenNavItems: NavItem[] = [
@@ -258,6 +286,11 @@ const microKitchenNavItems: NavItem[] = [
     name: "Kitchen Reviews",
     path: "/microkitchen/reviews",
   },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
 ];
 
 const supplyChainNavItems: NavItem[] = [
@@ -265,6 +298,11 @@ const supplyChainNavItems: NavItem[] = [
     icon: <FileText className="w-5 h-5" />,
     name: "Delivery Questionnaire",
     path: "/supplychain/delivery-questionnaire",
+  },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
   },
 ];
 
@@ -288,6 +326,11 @@ const nonPatientNavItems: NavItem[] = [
     icon: <Package className="w-5 h-5" />,
     name: "My Bookings",
     path: "/patient/orders",
+  },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
   },
 ];
 const MasterSidebar: React.FC = () => {

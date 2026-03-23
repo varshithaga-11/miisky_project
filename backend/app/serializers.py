@@ -174,49 +174,24 @@ class RefreshTokenSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    current_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-    new_password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
-    
+    """
+    Serializer for self-profile updates.
+    Allows users to update their personal details.
+    """
     class Meta:
         model = UserRegister
         fields = [
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'current_password',
-            'new_password'
+            'id', 'username', 'email', 'role',
+            'first_name', 'last_name', 'mobile', 'whatsapp',
+            'dob', 'gender', 'photo', 'address', 'city',
+            'zip_code', 'state', 'country', 'joined_date',
+            'is_active', 'created_on'
         ]
-        extra_kwargs = {
-            'current_password': {'write_only': True},
-            'new_password': {'write_only': True},
-        }
+        read_only_fields = ['id', 'username', 'email', 'role', 'joined_date', 'is_active', 'created_on']
     
-    def validate(self, attrs):
-        """Validate that the current password is correct"""
-        current_password = attrs.get('current_password')
-        if current_password and self.instance:
-            if not self.instance.check_password(current_password):
-                raise serializers.ValidationError({
-                    'current_password': 'Current password is incorrect.'
-                })
-        return attrs
-        
     def update(self, instance, validated_data):
-        # Remove password fields from validated_data
-        current_password = validated_data.pop('current_password', None)
-        new_password = validated_data.pop('new_password', None)
-        validated_data.pop('password_confirm', None)
-        
-        # Update regular fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        
-        # Update password only if new_password is provided
-        if new_password:
-            instance.set_password(new_password)
-        
         instance.save()
         return instance
 
