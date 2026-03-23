@@ -117,12 +117,24 @@ const ListOfMicroKitchenPage: React.FC = () => {
 
                                     <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-white/[0.05]">
                                         {/* Address */}
-                                        <div className="flex items-start gap-3 text-sm">
-                                            <div className="p-2 bg-blue-50 dark:bg-blue-900/10 rounded-xl mt-1">
+                                        <div 
+                                            className={`flex items-start gap-3 text-sm ${kitchen.latitude && kitchen.longitude ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map' : ''}`}
+                                            onClick={() => {
+                                                if (kitchen.latitude && kitchen.longitude) {
+                                                    window.open(`https://www.google.com/maps?q=${kitchen.latitude},${kitchen.longitude}`, "_blank");
+                                                }
+                                            }}
+                                        >
+                                            <div className="p-2 bg-blue-50 dark:bg-blue-900/10 rounded-xl mt-1 group-hover/map:bg-blue-100 dark:group-hover/map:bg-blue-900/20 transition-colors">
                                                 <FiMapPin className="text-blue-500" size={14} />
                                             </div>
                                             <div className="text-gray-600 dark:text-gray-400 font-medium">
-                                                <p className="line-clamp-1">{kitchen.user_details?.address || "Location on request"}</p>
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="line-clamp-1">{kitchen.user_details?.address || "Location on request"}</p>
+                                                    {kitchen.latitude && kitchen.longitude && (
+                                                        <span className="text-[9px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">Map</span>
+                                                    )}
+                                                </div>
                                                 <p className="text-[10px] text-gray-400 uppercase font-black tracking-tight mt-0.5">
                                                     {kitchen.user_details?.city}, {kitchen.user_details?.state}
                                                 </p>
