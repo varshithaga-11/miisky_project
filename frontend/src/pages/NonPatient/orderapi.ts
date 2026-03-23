@@ -128,3 +128,14 @@ export const rateMicroKitchen = async (kitchenId: number, orderId: number, ratin
   }, { headers: await getAuthHeaders() });
   return response.data;
 };
+
+export const getLoggedProfile = async () => {
+    const url = createApiUrl("api/profile/");
+    // Note: The ProfileViewSet uses get_queryset to filter to the current user.
+    // So api/profile/ usually returns a list with 1 item, or we can use a specific ID if we have it.
+    // However, our ProfileViewSet in views.py 1352:
+    // def get_queryset(self): return UserRegister.objects.filter(id=self.request.user.id)
+    // So GET api/profile/ returns [ { ... } ]
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data[0]; // Return the first (and only) item
+};

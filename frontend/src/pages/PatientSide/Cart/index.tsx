@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getMyCarts, placeOrder, deleteCartItem, Cart } from "../../NonPatient/orderapi";
+import { getMyCarts, placeOrder, deleteCartItem, Cart, getLoggedProfile } from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
@@ -27,8 +27,20 @@ const CartPage: React.FC = () => {
         }
     };
 
+    const fetchUserAddress = async () => {
+        try {
+            const profile = await getLoggedProfile();
+            if (profile?.address) {
+                setAddress(profile.address);
+            }
+        } catch (err) {
+            console.error("Failed to fetch user address", err);
+        }
+    };
+
     useEffect(() => {
         fetchCarts();
+        fetchUserAddress();
     }, []);
 
     const handleRemoveItem = async (itemId: number) => {
