@@ -73,6 +73,10 @@ class UserRegister(AbstractUser):
     state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
     country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
 
+    # Location (for nearest-microkitchen / geo queries; PointField-ready: use lat/lng for now)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
 
     joined_date = models.DateTimeField(null=True, blank=True)
 

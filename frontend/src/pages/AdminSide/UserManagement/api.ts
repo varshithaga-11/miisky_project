@@ -19,6 +19,8 @@ export interface UserRegister {
   zip_code?: string | null;
   state?: number | null;
   country?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   joined_date?: string | null; // ISO datetime
   created_on?: string;
   password?: string;

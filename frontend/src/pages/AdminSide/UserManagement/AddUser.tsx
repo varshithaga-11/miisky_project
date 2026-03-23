@@ -10,7 +10,8 @@ import { getCountryList, Country } from "../Country/countryapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCityList, City } from "../City/cityapi";
 import DatePicker2 from "../../../components/form/date-picker2";
-
+import { FiMapPin } from "react-icons/fi";
+import { MapLocationPicker } from "../../../components/common/MapLocationPicker";
 
 interface AddUserProps {
   onClose: () => void;
@@ -34,6 +35,11 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
   const [address, setAddress] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [joinedDate, setJoinedDate] = useState("");
+
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
 
   const [countryId, setCountryId] = useState<string>("");
   const [stateId, setStateId] = useState<string>("");
@@ -72,8 +78,58 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
     [cities]
   );
 
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude);
+        setLongitude(pos.coords.longitude);
+        toast.success("Location captured");
+        setLocationLoading(false);
+      },
+      () => {
+        toast.error("Could not get location. Check permissions.");
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleGetFromAddress = async () => {
+    const cityName = cities.find((c) => String(c.id) === cityId)?.name || "";
+    const stateName = states.find((s) => String(s.id) === stateId)?.name || "";
+    const countryName = countries.find((c) => String(c.id) === countryId)?.name || "";
+    const query = [address, cityName, stateName, countryName].filter(Boolean).join(", ");
+    if (!query.trim()) {
+      toast.error("Enter address or select city/state/country first");
+      return;
+    }
+    setLocationLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        { headers: { "User-Agent": "MiiskyApp/1.0" } }
+      );
+      const data = await res.json();
+      if (data?.[0]) {
+        setLatitude(parseFloat(data[0].lat));
+        setLongitude(parseFloat(data[0].lon));
+        toast.success("Coordinates from address");
+      } else {
+        toast.error("Address not found. Try a more complete address.");
+      }
+    } catch {
+      toast.error("Could not get coordinates");
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (password !== confirmPassword) {
@@ -106,6 +162,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       country: countryId ? Number(countryId) : null,
       state: stateId ? Number(stateId) : null,
       city: cityId ? Number(cityId) : null,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
       joined_date: joinedDate ? new Date(joinedDate).toISOString() : null,
     };
 
@@ -303,6 +361,82 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div>
             <Label htmlFor="zipCode">Zip Code</Label>
             <Input id="zipCode" type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} disabled={loading} />
+          </div>
+
+          <div>
+            <Label>Location (home / delivery)</Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Choose one: use your location, get from address, select from map, or enter manually.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={loading || locationLoading}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                <FiMapPin size={14} />
+                Use my location
+              </button>
+              <button
+                type="button"
+                onClick={handleGetFromAddress}
+                disabled={loading || locationLoading || (!address?.trim() && !cityId && !stateId && !countryId)}
+                className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                Get from address
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapPickerOpen(true)}
+                disabled={loading}
+                className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                Select from map
+              </button>
+            </div>
+            <MapLocationPicker
+              isOpen={mapPickerOpen}
+              onClose={() => setMapPickerOpen(false)}
+              onSelect={(lat, lng) => {
+                setLatitude(lat);
+                setLongitude(lng);
+                setMapPickerOpen(false);
+              }}
+              initialLat={latitude}
+              initialLng={longitude}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="latitude" className="text-xs">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  placeholder="e.g. 12.9716"
+                  value={latitude ?? ""}
+                  onChange={(e) => setLatitude(e.target.value ? parseFloat(e.target.value) : null)}
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Label htmlFor="longitude" className="text-xs">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  placeholder="e.g. 77.5946"
+                  value={longitude ?? ""}
+                  onChange={(e) => setLongitude(e.target.value ? parseFloat(e.target.value) : null)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            {(latitude != null || longitude != null) && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Saved: {latitude?.toFixed(5) ?? "—"}, {longitude?.toFixed(5) ?? "—"}
+              </p>
+            )}
           </div>
 
           <div>

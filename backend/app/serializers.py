@@ -80,6 +80,8 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'zip_code',
             'state',
             'country',
+            'latitude',
+            'longitude',
             'joined_date',
             'is_active',
             'created_on',
@@ -184,8 +186,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'role',
             'first_name', 'last_name', 'mobile', 'whatsapp',
             'dob', 'gender', 'photo', 'address', 'city',
-            'zip_code', 'state', 'country', 'joined_date',
-            'is_active', 'created_on'
+            'zip_code', 'state', 'country', 'latitude', 'longitude',
+            'joined_date', 'is_active', 'created_on'
         ]
         read_only_fields = ['id', 'username', 'email', 'role', 'joined_date', 'is_active', 'created_on']
     

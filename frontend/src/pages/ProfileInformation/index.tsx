@@ -8,14 +8,22 @@ import { motion } from "framer-motion";
 import InputField from "../../components/form/input/InputField";
 import TextArea from "../../components/form/input/TextArea";
 import { createApiUrl } from "../../access/access";
-
 import Label from "../../components/form/Label";
+import { MapLocationPicker } from "../../components/common/MapLocationPicker";
+import { getCountryList, Country } from "../AdminSide/Country/countryapi";
+import { getStateList, State } from "../AdminSide/State/stateapi";
+import { getCityList, City } from "../AdminSide/City/cityapi";
 
 const ProfileInformation: React.FC = () => {
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [photo, setPhoto] = useState<File | null>(null);
+    const [locationLoading, setLocationLoading] = useState(false);
+    const [mapPickerOpen, setMapPickerOpen] = useState(false);
+    const [countries, setCountries] = useState<Country[]>([]);
+    const [states, setStates] = useState<State[]>([]);
+    const [cities, setCities] = useState<City[]>([]);
 
     const fetchProfileData = async () => {
         setLoading(true);
@@ -34,6 +42,18 @@ const ProfileInformation: React.FC = () => {
         fetchProfileData();
     }, []);
 
+    useEffect(() => {
+        getCountryList(1, "all")
+            .then((res) => setCountries(res.results || []))
+            .catch(() => {});
+        getStateList(1, "all")
+            .then((res) => setStates(res.results || []))
+            .catch(() => {});
+        getCityList(1, "all")
+            .then((res) => setCities(res.results || []))
+            .catch(() => {});
+    }, []);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setProfile((prev: any) => ({ ...prev, [name]: value }));
@@ -41,6 +61,85 @@ const ProfileInformation: React.FC = () => {
 
     const handleTextAreaChange = (name: string, value: string) => {
         setProfile((prev: any) => ({ ...prev, [name]: value }));
+    };
+
+    const handleFieldChange = (name: string, value: any) => {
+        setProfile((prev: any) => ({ ...prev, [name]: value }));
+    };
+
+    const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+                { headers: { "User-Agent": "MiiskyApp/1.0" } }
+            );
+            const data = await res.json();
+            return data?.display_name || null;
+        } catch {
+            return null;
+        }
+    };
+
+    const handleLocationFromCoords = async (lat: number, lng: number) => {
+        handleFieldChange("latitude", lat);
+        handleFieldChange("longitude", lng);
+        const address = await reverseGeocode(lat, lng);
+        if (address) {
+            handleFieldChange("address", address);
+            toast.success("Location and address updated");
+        } else {
+            toast.success("Location captured (address could not be fetched)");
+        }
+    };
+
+    const handleUseMyLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+        setLocationLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                await handleLocationFromCoords(pos.coords.latitude, pos.coords.longitude);
+                setLocationLoading(false);
+            },
+            () => {
+                toast.error("Could not get location. Check permissions.");
+                setLocationLoading(false);
+            },
+            { enableHighAccuracy: true }
+        );
+    };
+
+    const handleGetFromAddress = async () => {
+        const addr = (profile?.address as string) || "";
+        const cityName = cities.find((c) => String(c.id) === String(profile?.city))?.name || "";
+        const stateName = states.find((s) => String(s.id) === String(profile?.state))?.name || "";
+        const countryName = countries.find((c) => String(c.id) === String(profile?.country))?.name || "";
+        const query = [addr, cityName, stateName, countryName].filter(Boolean).join(", ");
+        if (!query.trim()) {
+            toast.error("Enter address or select city/state/country first");
+            return;
+        }
+        setLocationLoading(true);
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+                { headers: { "User-Agent": "MiiskyApp/1.0" } }
+            );
+            const data = await res.json();
+            if (data?.[0]) {
+                handleFieldChange("latitude", parseFloat(data[0].lat));
+                handleFieldChange("longitude", parseFloat(data[0].lon));
+                toast.success("Coordinates from address");
+            } else {
+                toast.error("Address not found. Try a more complete address.");
+            }
+        } catch {
+            toast.error("Could not get coordinates");
+        } finally {
+            setLocationLoading(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +151,8 @@ const ProfileInformation: React.FC = () => {
             Object.keys(profile).forEach(key => {
                 const excludedFields = ['photo', 'city_details', 'state_details', 'country_details'];
                 if (!excludedFields.includes(key) && profile[key] !== null && profile[key] !== undefined) {
-                  formData.append(key, profile[key]);
+                    const val = profile[key];
+                    formData.append(key, typeof val === 'number' ? String(val) : val);
                 }
             });
             
@@ -277,6 +377,93 @@ const ProfileInformation: React.FC = () => {
                                                 ID: {profile.city || "N/A"} (City) | ID: {profile.state || "N/A"} (State)
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <div>
+                                        <Label>Location (home / delivery)</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 mt-1">
+                                            Choose one: use your location, get from address, select from map, or enter manually.
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <button
+                                                type="button"
+                                                onClick={handleUseMyLocation}
+                                                disabled={saving || locationLoading}
+                                                className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+                                            >
+                                                <FiMapPin size={14} />
+                                                Use my location
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleGetFromAddress}
+                                                disabled={
+                                                    saving ||
+                                                    locationLoading ||
+                                                    (!(profile?.address as string)?.trim() && !profile?.city && !profile?.state && !profile?.country)
+                                                }
+                                                className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+                                            >
+                                                Get from address
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMapPickerOpen(true)}
+                                                disabled={saving}
+                                                className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+                                            >
+                                                Select from map
+                                            </button>
+                                        </div>
+                                        <MapLocationPicker
+                                            isOpen={mapPickerOpen}
+                                            onClose={() => setMapPickerOpen(false)}
+                                            onSelect={async (lat, lng) => {
+                                                await handleLocationFromCoords(lat, lng);
+                                                setMapPickerOpen(false);
+                                            }}
+                                            initialLat={profile?.latitude}
+                                            initialLng={profile?.longitude}
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <Label htmlFor="latitude" className="text-xs">Latitude</Label>
+                                                <InputField
+                                                    name="latitude"
+                                                    type="number"
+                                                    step="any"
+                                                    value={profile?.latitude ?? ""}
+                                                    onChange={(e) =>
+                                                        handleFieldChange(
+                                                            "latitude",
+                                                            e.target.value ? parseFloat(e.target.value) : null
+                                                        )
+                                                    }
+                                                    placeholder="e.g. 12.9716"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="longitude" className="text-xs">Longitude</Label>
+                                                <InputField
+                                                    name="longitude"
+                                                    type="number"
+                                                    step="any"
+                                                    value={profile?.longitude ?? ""}
+                                                    onChange={(e) =>
+                                                        handleFieldChange(
+                                                            "longitude",
+                                                            e.target.value ? parseFloat(e.target.value) : null
+                                                        )
+                                                    }
+                                                    placeholder="e.g. 77.5946"
+                                                />
+                                            </div>
+                                        </div>
+                                        {(profile?.latitude != null || profile?.longitude != null) && (
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                                Saved: {(profile?.latitude as number)?.toFixed(5) ?? "—"}, {(profile?.longitude as number)?.toFixed(5) ?? "—"}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
