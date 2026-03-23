@@ -245,7 +245,7 @@ const microKitchenNavItems: NavItem[] = [
   },
   {
     icon: <Package className="w-5 h-5" />,
-    name: "Manage Orders",
+    name: "Manage Orders(From Non Patients)",
     path: "/microkitchen/orders",
   },
   {
