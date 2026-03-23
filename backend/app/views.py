@@ -1788,9 +1788,10 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
         micro_kitchen_id = request.data.get('micro_kitchen_id')
         rating_val = request.data.get('rating')
         review_text = request.data.get('review', '')
-        if not micro_kitchen_id or rating_val is None:
+        order_id = request.data.get('order')
+        if not micro_kitchen_id or rating_val is None or not order_id:
             return Response(
-                {'error': 'micro_kitchen_id and rating are required'},
+                {'error': 'micro_kitchen_id, rating and order are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
@@ -1801,8 +1802,8 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Rating must be 1-5'}, status=status.HTTP_400_BAD_REQUEST)
         obj, created = MicroKitchenRating.objects.update_or_create(
             user=request.user,
-            micro_kitchen_id=micro_kitchen_id,
-            defaults={'rating': rating_val, 'review': review_text or None}
+            order_id=order_id,
+            defaults={'rating': rating_val, 'review': review_text or None, 'micro_kitchen_id': micro_kitchen_id}
         )
         self._recalculate_kitchen_stats(obj.micro_kitchen)
         return Response(self.get_serializer(obj).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)

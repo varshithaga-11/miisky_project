@@ -40,6 +40,16 @@ export interface OrderItem {
   subtotal: number;
 }
 
+export interface MicroKitchenRating {
+  id: number;
+  user: number;
+  micro_kitchen: number;
+  rating: number;
+  review: string | null;
+  order: number;
+  created_at: string;
+}
+
 export interface Order {
   id: number;
   user: number;
@@ -59,6 +69,7 @@ export interface Order {
   total_amount: number;
   delivery_address: string;
   items: OrderItem[];
+  ratings?: MicroKitchenRating[];
   created_at: string;
 }
 
@@ -104,5 +115,16 @@ export const getMyOrders = async (): Promise<Order[]> => {
 export const updateOrderStatus = async (orderId: number, status: string) => {
   const url = createApiUrl(`api/order/${orderId}/update-status/`);
   const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const rateMicroKitchen = async (kitchenId: number, orderId: number, rating: number, review: string) => {
+  const url = createApiUrl("api/microkitchenrating/rate/");
+  const response = await axios.post(url, {
+    micro_kitchen_id: kitchenId,
+    order: orderId,
+    rating: rating,
+    review: review
+  }, { headers: await getAuthHeaders() });
   return response.data;
 };

@@ -1672,7 +1672,8 @@ class MicroKitchenRating(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'micro_kitchen')
+        # unique_together = ('user', 'micro_kitchen') # Replaced to allow per-order rating
+        unique_together = ('order',)
 
     def __str__(self):
         return f"{self.user} rated {self.micro_kitchen} - {self.rating}"
@@ -1870,3 +1871,9 @@ class CartItem(models.Model):
 
 
 
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------

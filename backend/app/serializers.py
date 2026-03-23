@@ -1400,13 +1400,14 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
+    ratings = MicroKitchenRatingSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
         fields = [
             'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
             'order_type', 'status', 'total_amount', 'delivery_address',
-            'items', 'created_at'
+            'items', 'ratings', 'created_at'
         ]
 
     def get_user_details(self, obj):
