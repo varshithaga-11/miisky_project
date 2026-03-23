@@ -20,6 +20,8 @@ export type MicroKitchenProfile = {
     state: string | null;
     country: string | null;
   } | null;
+  latitude?: number | null;
+  longitude?: number | null;
   latest_inspection: {
     overall_score: number | null;
     status: string;

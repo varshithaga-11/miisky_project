@@ -46,6 +46,7 @@ export type MicroKitchenProfile = {
   additional_photos?: any;
   latitude?: number | null;
   longitude?: number | null;
+  user_details?: { address?: string; city?: string; state?: string; country?: string };
   is_verified?: boolean;
 };
 

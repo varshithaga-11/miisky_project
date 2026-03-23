@@ -209,10 +209,33 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        validated = dict(serializer.validated_data)
         obj, _ = MicroKitchenProfile.objects.update_or_create(
             user=request.user,
-            defaults=serializer.validated_data
+            defaults=validated
         )
+        lat, lng = None, None
+        if 'latitude' in request.data:
+            v = request.data.get('latitude')
+            if v not in (None, ''):
+                try:
+                    lat = float(v)
+                except (TypeError, ValueError):
+                    pass
+        if 'longitude' in request.data:
+            v = request.data.get('longitude')
+            if v not in (None, ''):
+                try:
+                    lng = float(v)
+                except (TypeError, ValueError):
+                    pass
+        if lat is not None or lng is not None:
+            user = request.user
+            if lat is not None:
+                user.latitude = lat
+            if lng is not None:
+                user.longitude = lng
+            user.save()
         return Response(self.get_serializer(obj).data)
 
 

@@ -145,11 +145,26 @@ const AllotedMicroKitchenByNutritionPage: React.FC = () => {
                                                 <p className="text-xs font-black text-gray-900 dark:text-white uppercase truncate">{suggestion.diet_plan_details?.plan_name}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-start gap-3">
-                                            <FiMapPin className="text-gray-400 mt-1" size={14} />
-                                            <div>
+                                        <div
+                                            className={`flex items-start gap-3 ${suggestion.kitchen_details?.latitude != null && suggestion.kitchen_details?.longitude != null ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map" : ""}`}
+                                            onClick={() => {
+                                                const kd = suggestion.kitchen_details;
+                                                if (kd?.latitude != null && kd?.longitude != null) {
+                                                    window.open(`https://www.google.com/maps?q=${kd.latitude},${kd.longitude}`, "_blank");
+                                                }
+                                            }}
+                                        >
+                                            <FiMapPin className="text-gray-400 mt-1 group-hover/map:text-indigo-500" size={14} />
+                                            <div className="flex-1 min-w-0">
                                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Location</p>
-                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">{suggestion.kitchen_details?.city}, {suggestion.kitchen_details?.state}</p>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                                                    {[suggestion.kitchen_details?.city, suggestion.kitchen_details?.state].filter(Boolean).join(", ") || "Location on file"}
+                                                </p>
+                                                {suggestion.kitchen_details?.latitude != null && suggestion.kitchen_details?.longitude != null && (
+                                                    <span className="text-[9px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter mt-1 inline-block">
+                                                        View on Map
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

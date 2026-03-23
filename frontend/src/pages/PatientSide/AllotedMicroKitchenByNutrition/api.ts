@@ -33,6 +33,8 @@ export type UserMicroKitchenMapping = {
       photo_exterior?: string;
       city?: string;
       state?: string;
+      latitude?: number | null;
+      longitude?: number | null;
   };
   diet_plan_details?: {
       plan_name: string;

@@ -760,23 +760,31 @@ class NutritionistProfileSerializer(serializers.ModelSerializer):
 class MicroKitchenProfileSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     latest_inspection = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField(read_only=True)
+    longitude = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MicroKitchenProfile
         fields = [
-            'id', 'user', 'brand_name', 'kitchen_code', 'fssai_no', 'fssai_cert', 
-            'pan_no', 'gst_no', 'bank_name', 'acc_no', 'ifsc_code', 'kitchen_area', 
-            'platform_area', 'water_source', 'cuisine_type', 'meal_type', 
-            'lpg_cylinders', 'no_of_staff', 
-            'time_available', 'purification_type', 'has_pets', 'pet_details', 
-            'has_pests', 'pest_details', 'pest_control_frequency', 'has_hobs', 
-            'has_refrigerator', 'has_mixer', 'has_grinder', 'has_blender', 
-            'other_equipment', 'about_you', 'passion_for_cooking', 'health_info', 
-            'constraints', 'photo_exterior', 'photo_entrance', 'photo_kitchen', 
-            'photo_platform', 'latitude', 'longitude', 'status', 
-            'rating', 'total_reviews',
+            'id', 'user', 'brand_name', 'kitchen_code', 'fssai_no', 'fssai_cert',
+            'pan_no', 'gst_no', 'bank_name', 'acc_no', 'ifsc_code', 'kitchen_area',
+            'platform_area', 'water_source', 'cuisine_type', 'meal_type',
+            'lpg_cylinders', 'no_of_staff',
+            'time_available', 'purification_type', 'has_pets', 'pet_details',
+            'has_pests', 'pest_details', 'pest_control_frequency', 'has_hobs',
+            'has_refrigerator', 'has_mixer', 'has_grinder', 'has_blender',
+            'other_equipment', 'about_you', 'passion_for_cooking', 'health_info',
+            'constraints', 'photo_exterior', 'photo_entrance', 'photo_kitchen',
+            'photo_platform', 'latitude', 'longitude',
+            'status', 'rating', 'total_reviews',
             'user_details', 'latest_inspection'
         ]
+
+    def get_latitude(self, obj):
+        return obj.user.latitude if obj.user else None
+
+    def get_longitude(self, obj):
+        return obj.user.longitude if obj.user else None
 
     def get_user_details(self, obj):
         if obj.user:
@@ -1270,6 +1278,8 @@ class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
                 'photo_exterior': obj.micro_kitchen.photo_exterior.url if obj.micro_kitchen.photo_exterior else None,
                 'city': user.city.name if user and user.city else None,
                 'state': user.state.name if user and user.state else None,
+                'latitude': user.latitude if user else None,
+                'longitude': user.longitude if user else None,
             }
         return None
 

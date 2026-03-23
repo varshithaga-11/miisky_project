@@ -121,15 +121,27 @@ const ListOfMicroKitchensPage: React.FC = () => {
 
                                     <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-white/[0.05]">
                                         {/* Address */}
-                                        <div className="flex items-start gap-4 text-sm">
-                                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl mt-0.5">
-                                                <FiMapPin className="text-indigo-500" size={14} />
+                                        <div
+                                            className={`flex items-start gap-4 text-sm ${kitchen.latitude != null && kitchen.longitude != null ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map" : ""}`}
+                                            onClick={() => {
+                                                if (kitchen.latitude != null && kitchen.longitude != null) {
+                                                    window.open(`https://www.google.com/maps?q=${kitchen.latitude},${kitchen.longitude}`, "_blank");
+                                                }
+                                            }}
+                                        >
+                                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl mt-0.5 group-hover/map:bg-indigo-100 dark:group-hover/map:bg-indigo-900/20 transition-colors">
+                                                <FiMapPin className="text-indigo-500 group-hover/map:text-indigo-600" size={14} />
                                             </div>
-                                            <div className="text-gray-600 dark:text-gray-400 font-medium">
+                                            <div className="text-gray-600 dark:text-gray-400 font-medium flex-1 min-w-0">
                                                 <p className="line-clamp-1 italic text-xs">"{kitchen.user_details?.address || "Location on file"}"</p>
                                                 <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter mt-1">
-                                                    {kitchen.user_details?.city}, {kitchen.user_details?.state}
+                                                    {[kitchen.user_details?.city, kitchen.user_details?.state].filter(Boolean).join(", ") || "—"}
                                                 </p>
+                                                {kitchen.latitude != null && kitchen.longitude != null && (
+                                                    <span className="text-[9px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter mt-1 inline-block">
+                                                        View on Map
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 

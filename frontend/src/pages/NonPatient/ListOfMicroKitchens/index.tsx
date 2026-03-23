@@ -125,13 +125,29 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                                     </div>
 
                                     <div className="space-y-4 pt-4 border-t border-gray-50 dark:border-white/[0.05]">
-                                        <div className="flex items-start gap-4">
-                                            <div className="p-2.5 bg-gray-50 dark:bg-white/[0.03] rounded-2xl shadow-inner">
-                                                <FiMapPin className="text-gray-400" size={16} />
+                                        <div
+                                            className={`flex items-start gap-4 ${kitchen.latitude != null && kitchen.longitude != null ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map" : ""}`}
+                                            onClick={() => {
+                                                if (kitchen.latitude != null && kitchen.longitude != null) {
+                                                    window.open(`https://www.google.com/maps?q=${kitchen.latitude},${kitchen.longitude}`, "_blank");
+                                                }
+                                            }}
+                                        >
+                                            <div className="p-2.5 bg-gray-50 dark:bg-white/[0.03] rounded-2xl shadow-inner group-hover/map:bg-indigo-50 dark:group-hover/map:bg-indigo-900/20 transition-colors">
+                                                <FiMapPin className="text-gray-400 group-hover/map:text-indigo-500" size={16} />
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Serving Area</p>
-                                                <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{kitchen.user_details?.city}, {kitchen.user_details?.state}</p>
+                                                <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight line-clamp-1">
+                                                    {[kitchen.user_details?.address, kitchen.user_details?.city, kitchen.user_details?.state]
+                                                        .filter(Boolean)
+                                                        .join(", ") || "Location on request"}
+                                                </p>
+                                                {kitchen.latitude != null && kitchen.longitude != null && (
+                                                    <span className="text-[9px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter mt-1 inline-block">
+                                                        View on Map
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 

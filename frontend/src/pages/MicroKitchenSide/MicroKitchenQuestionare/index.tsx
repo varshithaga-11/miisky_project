@@ -7,12 +7,16 @@ import Label from "../../../components/form/Label";
 import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FiMapPin } from "react-icons/fi";
 import { getMyMicroKitchenProfile, MicroKitchenProfile, saveMyMicroKitchenProfile } from "./api";
+import { MapLocationPicker } from "../../../components/common/MapLocationPicker";
 
 export default function MicroKitchenQuestionarePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [data, setData] = useState<Partial<MicroKitchenProfile>>({});
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [data, setData] = useState<Partial<MicroKitchenProfile> & { user_details?: { address?: string; city?: string; state?: string; country?: string } }>({});
 
   useEffect(() => {
     (async () => {
@@ -30,6 +34,56 @@ export default function MicroKitchenQuestionarePage() {
   }, []);
 
   const setField = (key: keyof MicroKitchenProfile, value: any) => setData((p) => ({ ...p, [key]: value }));
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setField("latitude", pos.coords.latitude);
+        setField("longitude", pos.coords.longitude);
+        toast.success("Location captured");
+        setLocationLoading(false);
+      },
+      () => {
+        toast.error("Could not get location. Check permissions.");
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const handleGetFromAddress = async () => {
+    const ud = data.user_details;
+    const addr = ud?.address || "";
+    const query = [addr, ud?.city, ud?.state, ud?.country].filter(Boolean).join(", ");
+    if (!query.trim()) {
+      toast.error("Update your address in Profile first (Profile Settings)");
+      return;
+    }
+    setLocationLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        { headers: { "User-Agent": "MiiskyApp/1.0" } }
+      );
+      const result = await res.json();
+      if (result?.[0]) {
+        setField("latitude", parseFloat(result[0].lat));
+        setField("longitude", parseFloat(result[0].lon));
+        toast.success("Coordinates from address");
+      } else {
+        toast.error("Address not found. Try a more complete address in Profile.");
+      }
+    } catch {
+      toast.error("Could not get coordinates");
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   const onSave = async () => {
     setSaving(true);
@@ -245,14 +299,67 @@ export default function MicroKitchenQuestionarePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="latitude">Latitude</Label>
-              <Input id="latitude" type="number" value={data.latitude ?? ""} onChange={(e) => setField("latitude", e.target.value ? Number(e.target.value) : null)} />
+          <div>
+            <Label>Location (stored in your user profile)</Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 mt-1">
+              Use your location, get from address, select from map, or enter manually.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={saving || locationLoading}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                <FiMapPin size={14} />
+                Use my location
+              </button>
+              <button
+                type="button"
+                onClick={handleGetFromAddress}
+                disabled={
+                  saving ||
+                  locationLoading ||
+                  !(
+                    data.user_details?.address ||
+                    data.user_details?.city ||
+                    data.user_details?.state ||
+                    data.user_details?.country
+                  )
+                }
+                className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                Get from address
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapPickerOpen(true)}
+                disabled={saving}
+                className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                Select from map
+              </button>
             </div>
-            <div>
-              <Label htmlFor="longitude">Longitude</Label>
-              <Input id="longitude" type="number" value={data.longitude ?? ""} onChange={(e) => setField("longitude", e.target.value ? Number(e.target.value) : null)} />
+            <MapLocationPicker
+              isOpen={mapPickerOpen}
+              onClose={() => setMapPickerOpen(false)}
+              onSelect={(lat, lng) => {
+                setField("latitude", lat);
+                setField("longitude", lng);
+                setMapPickerOpen(false);
+              }}
+              initialLat={data.latitude ?? null}
+              initialLng={data.longitude ?? null}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="latitude" className="text-xs">Latitude</Label>
+                <Input id="latitude" type="number" step="any" value={data.latitude ?? ""} onChange={(e) => setField("latitude", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 12.9716" />
+              </div>
+              <div>
+                <Label htmlFor="longitude" className="text-xs">Longitude</Label>
+                <Input id="longitude" type="number" step="any" value={data.longitude ?? ""} onChange={(e) => setField("longitude", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 77.5946" />
+              </div>
             </div>
           </div>
 

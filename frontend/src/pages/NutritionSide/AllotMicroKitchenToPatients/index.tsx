@@ -7,7 +7,7 @@ import { getSuggestedPlansForPatient, UserDietPlan } from "../SuggestPlanToPatie
 import { suggestKitchen, getKitchenSuggestions, UserMicroKitchenMapping } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiUsers, FiHome, FiPlus, FiCheckCircle, FiClock, FiXCircle, FiTrendingUp } from "react-icons/fi";
+import { FiUsers, FiHome, FiPlus, FiCheckCircle, FiClock, FiXCircle, FiTrendingUp, FiMapPin } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
 const AllotMicroKitchenToPatientsPage: React.FC = () => {
@@ -231,7 +231,22 @@ const AllotMicroKitchenToPatientsPage: React.FC = () => {
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">{kitchen.cuisine_type}</p>
                                                                 <h4 className="text-lg font-black text-gray-900 dark:text-white truncate uppercase tracking-tighter">{kitchen.brand_name}</h4>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">{kitchen.user_details?.city}, {kitchen.user_details?.state}</p>
+                                                                <div
+                                                                    className={`mt-1 ${kitchen.latitude != null && kitchen.longitude != null ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-xl transition-colors group/loc inline-block" : ""}`}
+                                                                    onClick={() => {
+                                                                        if (kitchen.latitude != null && kitchen.longitude != null) {
+                                                                            window.open(`https://www.google.com/maps?q=${kitchen.latitude},${kitchen.longitude}`, "_blank");
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
+                                                                        <FiMapPin size={10} className={kitchen.latitude != null && kitchen.longitude != null ? "text-indigo-500" : ""} />
+                                                                        {[kitchen.user_details?.city, kitchen.user_details?.state].filter(Boolean).join(", ") || "Location on file"}
+                                                                        {kitchen.latitude != null && kitchen.longitude != null && (
+                                                                            <span className="text-[8px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 px-1 rounded font-black">Map</span>
+                                                                        )}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                             <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-inner">
                                                                 <FiHome size={20} />

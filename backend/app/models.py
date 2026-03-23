@@ -199,9 +199,7 @@ class MicroKitchenProfile(models.Model):
     photo_platform = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
     additional_photos = models.JSONField(null=True, blank=True)
 
-    # 🔹 Location
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    # Location: use user.latitude, user.longitude (UserRegister)
 
     # 🔹 Status
     STATUS_CHOICES = [
