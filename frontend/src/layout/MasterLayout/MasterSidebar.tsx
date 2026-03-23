@@ -240,7 +240,7 @@ const microKitchenNavItems: NavItem[] = [
   },
   {
     icon: <Truck className="w-5 h-5" />,
-    name: "Daily Prep",
+    name: "Daily Prep(From Patients)",
     path: "/microkitchen/daily-prep",
   },
   {

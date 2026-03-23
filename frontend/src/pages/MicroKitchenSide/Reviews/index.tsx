@@ -5,10 +5,12 @@ import { getMicroKitchenRatings, MicroKitchenRating } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiStar, FiMessageSquare, FiUser, FiCalendar, FiHome } from "react-icons/fi";
+import Select from "../../../components/form/Select";
 
 const ReviewsPage: React.FC = () => {
   const [ratings, setRatings] = useState<MicroKitchenRating[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userTypeFilter, setUserTypeFilter] = useState<string>("all");
 
   const fetchRatings = async () => {
     setLoading(true);
@@ -28,8 +30,15 @@ const ReviewsPage: React.FC = () => {
     fetchRatings();
   }, []);
 
+  // Apply Filter
+  const filteredRatings = ratings.filter((r) => {
+    if (userTypeFilter === "patient") return !r.order;
+    if (userTypeFilter === "non_patient") return !!r.order;
+    return true;
+  });
+
   // Group by kitchen
-  const byKitchen = ratings.reduce<Record<number, MicroKitchenRating[]>>((acc, r) => {
+  const byKitchen = filteredRatings.reduce<Record<number, MicroKitchenRating[]>>((acc, r) => {
     const id = r.micro_kitchen;
     if (!acc[id]) acc[id] = [];
     acc[id].push(r);
@@ -53,13 +62,29 @@ const ReviewsPage: React.FC = () => {
       <ToastContainer position="bottom-right" />
 
       <div className="px-4 md:px-8 pb-20">
-        <div className="mb-10">
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-            Patient Reviews
-          </h1>
-          <p className="text-gray-500 mt-1 font-medium italic">
-            See how patients rate the micro kitchens you suggested to them.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+              Kitchen Feedback
+            </h1>
+            <p className="text-gray-500 mt-1 font-medium italic">
+              See what users are saying about the kitchens you recommended.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 w-72">
+            <Select
+              value={userTypeFilter}
+              onChange={setUserTypeFilter}
+              options={[
+                { value: "all", label: "All Feedback" },
+                { value: "patient", label: "General Patient Ratings" },
+                { value: "non_patient", label: "Non-Patient (Orders)" },
+              ]}
+              placeholder="Filter by type"
+              className="w-full"
+            />
+          </div>
         </div>
 
         {loading ? (
@@ -95,16 +120,16 @@ const ReviewsPage: React.FC = () => {
                     <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20">
                       <FiHome className="text-indigo-500" size={24} />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
                         {group.kitchenName}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex">
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <div className="flex p-0.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                           {[1, 2, 3, 4, 5].map((s) => (
                             <FiStar
                               key={s}
-                              size={16}
+                              size={14}
                               className={
                                 s <= Math.round(group.avgRating)
                                   ? "text-amber-500 fill-amber-500"
@@ -113,9 +138,11 @@ const ReviewsPage: React.FC = () => {
                             />
                           ))}
                         </div>
-                        <span className="text-sm font-bold text-gray-500">
-                          {group.avgRating.toFixed(1)} · {group.ratings.length} review
-                          {group.ratings.length !== 1 ? "s" : ""}
+                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest bg-gray-50 dark:bg-gray-700/50 px-2 py-0.5 rounded-md">
+                          {group.avgRating.toFixed(1)} Rating
+                        </span>
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                          {group.ratings.length} verified review{group.ratings.length !== 1 ? "s" : ""}
                         </span>
                       </div>
                     </div>
@@ -149,6 +176,15 @@ const ReviewsPage: React.FC = () => {
                             <FiCalendar size={10} className="inline mr-1" />
                             {new Date(r.created_at).toLocaleDateString()}
                           </span>
+                          {r.order ? (
+                            <span className="ml-auto px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-[10px] font-black text-indigo-500 uppercase">
+                              Non-Patient (Order #{r.order})
+                            </span>
+                          ) : (
+                            <span className="ml-auto px-2 py-0.5 rounded-md bg-gray-50 dark:bg-gray-700 text-[10px] font-black text-gray-400 uppercase">
+                              General Patient Recommendation
+                            </span>
+                          )}
                         </div>
                         {r.review && (
                           <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm font-medium italic leading-relaxed">
