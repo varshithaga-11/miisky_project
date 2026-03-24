@@ -41,8 +41,15 @@ export const getUserDailyMeals = async (patientId: number, date: string): Promis
     return Array.isArray(data) ? data : data?.results ?? [];
 };
 
-export const getUserMealsList = async (patientId: number): Promise<UserMeal[]> => {
-    const url = createApiUrl(`api/usermeal/?user=${patientId}`);
+export const getUserMealsList = async (
+    patientId: number,
+    startDate?: string,
+    endDate?: string
+): Promise<UserMeal[]> => {
+    const params = new URLSearchParams({ user: String(patientId) });
+    if (startDate) params.append("start_date", startDate);
+    if (endDate) params.append("end_date", endDate);
+    const url = createApiUrl(`api/usermeal/?${params.toString()}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     const data = response.data;
     return Array.isArray(data) ? data : data?.results ?? [];

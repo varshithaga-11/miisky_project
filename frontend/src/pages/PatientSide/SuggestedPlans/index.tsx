@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage, FiHome, FiUpload } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -11,7 +11,6 @@ import {
 } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
-import DatePicker2 from "../../../components/form/date-picker2";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -20,9 +19,15 @@ const getMediaUrl = (path: string | undefined | null) => {
 };
 
 const ScreenshotPreview: React.FC<{ file: File }> = ({ file }) => {
-  const url = useMemo(() => URL.createObjectURL(file), [file]);
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
-  return <img src={url} alt="Payment screenshot preview" className="w-full max-h-48 object-cover object-top" />;
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const reader = new FileReader();
+    reader.onload = () => setPreviewUrl(reader.result as string);
+    reader.readAsDataURL(file);
+    return () => setPreviewUrl(null);
+  }, [file]);
+  if (!previewUrl) return <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded" />;
+  return <img src={previewUrl} alt="Payment screenshot preview" className="w-full max-h-48 object-cover object-top" />;
 };
 
 const SuggestedPlansPage: React.FC = () => {
@@ -31,7 +36,6 @@ const SuggestedPlansPage: React.FC = () => {
   const [approveModal, setApproveModal] = useState<UserDietPlan | null>(null);
   const [rejectModal, setRejectModal] = useState<UserDietPlan | null>(null);
   const [paymentModal, setPaymentModal] = useState<UserDietPlan | null>(null);
-  const [startDate, setStartDate] = useState("");
   const [rejectFeedback, setRejectFeedback] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -52,19 +56,13 @@ const SuggestedPlansPage: React.FC = () => {
     }
   };
 
-  const getMinStartDate = () => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  };
-
   const handleApprove = async () => {
     if (!approveModal) return;
     setSubmitting(true);
     try {
-      const updated = await approvePlan(approveModal.id, startDate || getMinStartDate());
+      const updated = await approvePlan(approveModal.id);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setApproveModal(null);
-      setStartDate("");
       toast.success("Plan approved. Please upload payment screenshot.");
       setPaymentModal(updated);
     } catch (err: any) {
@@ -182,10 +180,7 @@ const SuggestedPlansPage: React.FC = () => {
                       </div>
                       <div className="p-6 flex gap-3">
                         <button
-                          onClick={() => {
-                            setApproveModal(udp);
-                            setStartDate("");
-                          }}
+                          onClick={() => setApproveModal(udp)}
                           className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
                         >
                           <FiCheckCircle /> Approve
@@ -324,31 +319,14 @@ const SuggestedPlansPage: React.FC = () => {
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Approve Plan</h3>
             <p className="text-gray-500 text-sm mb-2">{approveModal.diet_plan_details?.title}</p>
             {approveModal.micro_kitchen_details && (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-4 flex items-center gap-1">
+              <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-6 flex items-center gap-1">
                 <FiHome size={14} /> {approveModal.micro_kitchen_details.brand_name}
               </p>
             )}
-            <div className="mb-6">
-              <DatePicker2
-                id="approve-start-date"
-                label="Preferred start date (optional – admin will confirm)"
-                value={startDate}
-                onChange={(date) => setStartDate(date)}
-                placeholder="Select date"
-                minDate={getMinStartDate()}
-              />
-              {approveModal.diet_plan_details?.no_of_days && (
-                <p className="text-xs text-gray-500 mt-2">
-                  End date will be automatically set to {approveModal.diet_plan_details.no_of_days} days from start.
-                </p>
-              )}
-            </div>
+            {!approveModal.micro_kitchen_details && <div className="mb-6" />}
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  setApproveModal(null);
-                  setStartDate("");
-                }}
+                onClick={() => setApproveModal(null)}
                 className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
               >
                 Cancel

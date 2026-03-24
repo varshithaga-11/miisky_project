@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import {
-  getPendingPaymentVerifications,
-  verifyPayment,
-  rejectPayment,
-  UserDietPlanPayment,
-} from "./api";
+import { getAllPaymentPlans, verifyPayment, rejectPayment, UserDietPlanPayment } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage } from "react-icons/fi";
@@ -19,20 +14,36 @@ const getMediaUrl = (path: string | undefined | null) => {
   return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
 };
 
+type FilterType = "all" | "uploaded" | "verified" | "suggested" | "payment_pending" | "active" | "completed" | "rejected";
+
+const FILTERS: { key: FilterType; label: string; status?: string; payment_status?: string }[] = [
+  { key: "all", label: "All" },
+  { key: "uploaded", label: "Pending Verification", payment_status: "uploaded" },
+  { key: "verified", label: "Verified", payment_status: "verified" },
+  { key: "suggested", label: "Suggested", status: "suggested" },
+  { key: "payment_pending", label: "Payment Pending", status: "payment_pending" },
+  { key: "active", label: "Active", status: "active" },
+  { key: "completed", label: "Completed", status: "completed" },
+  { key: "rejected", label: "Rejected", status: "rejected" },
+];
+
 const PatientPaymentVerificationPage: React.FC = () => {
   const [plans, setPlans] = useState<UserDietPlanPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [verifyModal, setVerifyModal] = useState<UserDietPlanPayment | null>(null);
   const [startDate, setStartDate] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
 
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const data = await getPendingPaymentVerifications();
+      const f = FILTERS.find((x) => x.key === filter);
+      const params = f?.status || f?.payment_status ? { status: f.status, payment_status: f.payment_status } : undefined;
+      const data = await getAllPaymentPlans(params);
       setPlans(data);
     } catch (error) {
-      toast.error("Failed to load payment verifications");
+      toast.error("Failed to load payment plans");
     } finally {
       setLoading(false);
     }
@@ -40,7 +51,7 @@ const PatientPaymentVerificationPage: React.FC = () => {
 
   useEffect(() => {
     fetchPlans();
-  }, []);
+  }, [filter]);
 
   const getMinStartDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -67,7 +78,7 @@ const PatientPaymentVerificationPage: React.FC = () => {
     setActionLoading(plan.id);
     try {
       await rejectPayment(plan.id);
-      setPlans((prev) => prev.filter((p) => p.id !== plan.id));
+      fetchPlans();
       toast.success("Payment rejected. Patient can re-upload.");
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Rejection failed");
@@ -86,19 +97,35 @@ const PatientPaymentVerificationPage: React.FC = () => {
       <ToastContainer position="bottom-right" />
 
       <div className="px-4 md:px-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-            Pending Verifications
-          </h1>
-          <p className="text-sm text-gray-500">
-            Verify payment screenshots and assign start dates to activate plans.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+              Patient Payment & Plans
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              View all plans suggested by nutritionists. Verify payments and assign start dates.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                filter === f.key
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-white/10"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-          <div>
-            Showing {plans.length} of {plans.length} entries
-          </div>
+          <div>Showing {plans.length} entries</div>
         </div>
 
         {loading ? (
@@ -110,12 +137,8 @@ const PatientPaymentVerificationPage: React.FC = () => {
         ) : plans.length === 0 ? (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] p-20 text-center">
             <FiCreditCard size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-xl font-black text-gray-400 uppercase tracking-tighter">
-              No Pending Verifications
-            </h3>
-            <p className="text-gray-500 mt-2">
-              All payment screenshots have been processed.
-            </p>
+            <h3 className="text-xl font-black text-gray-400 uppercase tracking-tighter">No plans found</h3>
+            <p className="text-gray-500 mt-2">No records match the selected filter.</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -125,8 +148,11 @@ const PatientPaymentVerificationPage: React.FC = () => {
                   <TableRow>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Patient</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Nutritionist</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Plan</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Kitchen</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Payment</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Screenshot</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
                   </TableRow>
@@ -143,6 +169,13 @@ const PatientPaymentVerificationPage: React.FC = () => {
                             {plan.user_details?.first_name} {plan.user_details?.last_name}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{plan.user_details?.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-white">
+                            {plan.nutritionist_details?.first_name} {plan.nutritionist_details?.last_name}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
@@ -170,6 +203,40 @@ const PatientPaymentVerificationPage: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-start text-theme-sm">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                            plan.status === "active"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : plan.status === "suggested"
+                                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                : plan.status === "payment_pending"
+                                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                  :                           plan.status === "completed"
+                                    ? "bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-400"
+                                    : plan.status === "rejected"
+                                      ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                                      : "bg-gray-100 text-gray-600 dark:bg-gray-700/30 dark:text-gray-500"
+                          }`}
+                        >
+                          {plan.status.replace("_", " ")}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                            plan.payment_status === "verified"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : plan.payment_status === "uploaded"
+                                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                : plan.payment_status === "failed"
+                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                                  : "bg-gray-100 text-gray-600 dark:bg-gray-700/30 dark:text-gray-500"
+                          }`}
+                        >
+                          {plan.payment_status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm">
                         {plan.payment_screenshot ? (
                           <a
                             href={getMediaUrl(plan.payment_screenshot)}
@@ -189,25 +256,29 @@ const PatientPaymentVerificationPage: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-start text-theme-sm">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setVerifyModal(plan);
-                              setStartDate(getMinStartDate());
-                            }}
-                            disabled={actionLoading !== null}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg"
-                          >
-                            <FiCheckCircle size={14} /> Verify
-                          </button>
-                          <button
-                            onClick={() => handleReject(plan)}
-                            disabled={actionLoading !== null}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
-                          >
-                            <FiXCircle size={14} />
-                          </button>
-                        </div>
+                        {plan.payment_status === "uploaded" ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setVerifyModal(plan);
+                                setStartDate(getMinStartDate());
+                              }}
+                              disabled={actionLoading !== null}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg"
+                            >
+                              <FiCheckCircle size={14} /> Verify
+                            </button>
+                            <button
+                              onClick={() => handleReject(plan)}
+                              disabled={actionLoading !== null}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                            >
+                              <FiXCircle size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

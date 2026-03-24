@@ -52,9 +52,10 @@ export const getMySuggestedPlans = async (): Promise<UserDietPlan[]> => {
   return Array.isArray(data) ? data : data?.results ?? [];
 };
 
-export const approvePlan = async (id: number, startDate: string): Promise<UserDietPlan> => {
+export const approvePlan = async (id: number, startDate?: string): Promise<UserDietPlan> => {
   const url = createApiUrl(`api/userdietplan/${id}/approve/`);
-  const response = await axios.post(url, { start_date: startDate }, { headers: await getAuthHeaders() });
+  const body = startDate ? { start_date: startDate } : {};
+  const response = await axios.post(url, body, { headers: await getAuthHeaders() });
   return response.data;
 };
 

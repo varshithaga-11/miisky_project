@@ -22,9 +22,9 @@ const SetDailyMealsPage: React.FC = () => {
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
     const [isRangeMode, setIsRangeMode] = useState(false);
-    const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
+    const [selectedDate, setSelectedDate] = useState<string>("");
 
     const [dailyEntries, setDailyEntries] = useState<Partial<UserMeal>[]>([]);
     const [allMeals, setAllMeals] = useState<UserMeal[]>([]);
@@ -70,14 +70,17 @@ const SetDailyMealsPage: React.FC = () => {
                     setActivePlan(currentPlan);
 
                     if (currentPlan) {
-                        if (currentPlan.end_date) setEndDate(currentPlan.end_date);
-                        loadAllScheduledMeals(selectedPatient.user.id);
-                        if (isRangeMode) {
-                            fetchAllMeals(selectedPatient.user.id);
-                        } else {
-                            fetchDailyMeals(selectedPatient.user.id, selectedDate);
-                        }
+                        const planStart = currentPlan.start_date || new Date().toISOString().split("T")[0];
+                        const planEnd = currentPlan.end_date || planStart;
+                        setStartDate(planStart);
+                        setEndDate(planEnd);
+                        const today = new Date().toISOString().split("T")[0];
+                        const inRange = today >= planStart && today <= planEnd;
+                        setSelectedDate(inRange ? today : planStart);
                     } else {
+                        setStartDate("");
+                        setEndDate("");
+                        setSelectedDate("");
                         setDailyEntries([]);
                         setAllMeals([]);
                     }
@@ -87,11 +90,24 @@ const SetDailyMealsPage: React.FC = () => {
             };
             loadPatientData();
         }
-    }, [selectedPatient, selectedDate, isRangeMode]);
+    }, [selectedPatient]);
 
-    const loadAllScheduledMeals = async (pid: number) => {
+    useEffect(() => {
+        if (selectedPatient && activePlan) {
+            const planStart = activePlan.start_date || "";
+            const planEnd = activePlan.end_date || "";
+            loadAllScheduledMeals(selectedPatient.user.id, planStart, planEnd);
+            if (isRangeMode) {
+                fetchAllMeals(selectedPatient.user.id, planStart, planEnd);
+            } else if (selectedDate) {
+                fetchDailyMeals(selectedPatient.user.id, selectedDate);
+            }
+        }
+    }, [selectedPatient, activePlan, selectedDate, isRangeMode]);
+
+    const loadAllScheduledMeals = async (pid: number, planStart?: string, planEnd?: string) => {
         try {
-            const meals = await getUserMealsList(pid);
+            const meals = await getUserMealsList(pid, planStart, planEnd);
             setAllMeals(meals);
         } catch (err) {}
     };
@@ -105,9 +121,9 @@ const SetDailyMealsPage: React.FC = () => {
         }
     };
 
-    const fetchAllMeals = async (pid: number) => {
+    const fetchAllMeals = async (pid: number, planStart?: string, planEnd?: string) => {
         try {
-            const meals = await getUserMealsList(pid);
+            const meals = await getUserMealsList(pid, planStart, planEnd);
             setDailyEntries(meals);
         } catch (err) {
             toast.error("Failed to load historical schedule");
@@ -129,13 +145,27 @@ const SetDailyMealsPage: React.FC = () => {
         let curr = new Date(start);
         let last = new Date(end);
         while (curr <= last) {
-            dates.push(curr.toISOString().split('T')[0]);
+            dates.push(curr.toISOString().split("T")[0]);
             curr.setDate(curr.getDate() + 1);
         }
         return dates;
     };
 
-    const datesToShow = isRangeMode ? getDatesInRange(startDate, endDate) : [selectedDate];
+    const planMinDate = activePlan?.start_date || "";
+    const planMaxDate = activePlan?.end_date || "";
+
+    const effectiveStart = planMinDate && startDate && startDate < planMinDate ? planMinDate : startDate;
+    const effectiveEnd = planMaxDate && endDate && endDate > planMaxDate ? planMaxDate : endDate;
+
+    const datesToShow: string[] = !activePlan
+        ? []
+        : isRangeMode
+          ? effectiveStart && effectiveEnd
+              ? getDatesInRange(effectiveStart, effectiveEnd)
+              : []
+          : selectedDate
+            ? [selectedDate]
+            : [];
 
     const filteredFoods = foods.filter(f =>
         !foodSearch.trim() || f.name?.toLowerCase().includes(foodSearch.toLowerCase())
@@ -216,13 +246,17 @@ const SetDailyMealsPage: React.FC = () => {
         setSaving(true);
         try {
             await saveBulkMeals(entriesToSave as UserMeal[]);
-            toast.success(`Successfully saved ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? 'range' : 'daily'} schedule`);
+            toast.success(`Successfully saved ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? "range" : "daily"} schedule`);
             setShowSaveButton(false);
-            if (selectedPatient) loadAllScheduledMeals(selectedPatient.user.id);
-            if (isRangeMode) {
-                fetchAllMeals(selectedPatient!.user.id);
-            } else {
-                fetchDailyMeals(selectedPatient!.user.id, specificDate || selectedDate);
+            if (selectedPatient && activePlan) {
+                const planStart = activePlan.start_date || "";
+                const planEnd = activePlan.end_date || "";
+                loadAllScheduledMeals(selectedPatient.user.id, planStart, planEnd);
+                if (isRangeMode) {
+                    fetchAllMeals(selectedPatient.user.id, planStart, planEnd);
+                } else {
+                    fetchDailyMeals(selectedPatient.user.id, specificDate || selectedDate);
+                }
             }
         } catch (err) {
             toast.error("Failed to save schedule");
@@ -348,6 +382,11 @@ const SetDailyMealsPage: React.FC = () => {
                                             {activePlan ? (
                                                 <p className="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1 mt-0.5">
                                                     <FiCheckCircle size={10} /> {activePlan.diet_plan_details?.title}
+                                                    {activePlan.start_date && activePlan.end_date && (
+                                                        <span className="text-gray-400 normal-case font-medium">
+                                                            ({activePlan.start_date} → {activePlan.end_date})
+                                                        </span>
+                                                    )}
                                                 </p>
                                             ) : (
                                                 <p className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1 mt-0.5">
@@ -370,12 +409,41 @@ const SetDailyMealsPage: React.FC = () => {
                                         </div>
                                         {isRangeMode ? (
                                             <div className="flex items-center gap-2">
-                                                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none" />
+                                                <input
+                                                    type="date"
+                                                    value={startDate}
+                                                    min={planMinDate}
+                                                    max={planMaxDate}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setStartDate(v);
+                                                        if (endDate && v > endDate) setEndDate(v);
+                                                    }}
+                                                    className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none"
+                                                />
                                                 <span className="text-gray-400">→</span>
-                                                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none" />
+                                                <input
+                                                    type="date"
+                                                    value={endDate}
+                                                    min={planMinDate}
+                                                    max={planMaxDate}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setEndDate(v);
+                                                        if (startDate && v < startDate) setStartDate(v);
+                                                    }}
+                                                    className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none"
+                                                />
                                             </div>
                                         ) : (
-                                            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none" />
+                                            <input
+                                                type="date"
+                                                value={selectedDate}
+                                                min={planMinDate}
+                                                max={planMaxDate}
+                                                onChange={(e) => setSelectedDate(e.target.value)}
+                                                className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none"
+                                            />
                                         )}
                                         <button
                                             onClick={() => setViewMode("calendar")}

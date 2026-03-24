@@ -34,10 +34,15 @@ export interface UserDietPlanPayment {
   approved_on: string | null;
 }
 
-export const getPendingPaymentVerifications = async (
-  paymentStatus = "uploaded"
-): Promise<UserDietPlanPayment[]> => {
-  const url = createApiUrl(`api/userdietplan/?payment_status=${paymentStatus}`);
+export const getAllPaymentPlans = async (params?: {
+  status?: string;
+  payment_status?: string;
+}): Promise<UserDietPlanPayment[]> => {
+  const search = new URLSearchParams();
+  if (params?.status) search.append("status", params.status);
+  if (params?.payment_status) search.append("payment_status", params.payment_status);
+  const query = search.toString();
+  const url = createApiUrl(query ? `api/userdietplan/?${query}` : "api/userdietplan/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   const data = response.data;
   return Array.isArray(data) ? data : data?.results ?? [];

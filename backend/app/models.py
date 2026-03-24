@@ -1573,7 +1573,8 @@ class UserDietPlan(models.Model):
         if start_date:
             self.start_date = start_date
             if self.diet_plan and self.diet_plan.no_of_days:
-                self.end_date = start_date + timedelta(days=self.diet_plan.no_of_days)
+                # no_of_days=2 means start + end (inclusive): 26th + 27th → end_date = 27th = start + 1 day
+                self.end_date = start_date + timedelta(days=self.diet_plan.no_of_days - 1)
 
         self.save()
 
@@ -1607,7 +1608,8 @@ class UserDietPlan(models.Model):
             self.start_date = now().date()
 
         if self.diet_plan and self.diet_plan.no_of_days and self.start_date:
-            self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days)
+            # no_of_days=2 means start + end (inclusive): 26th + 27th → end_date = 27th = start + 1 day
+            self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days - 1)
 
         self.save()
 
