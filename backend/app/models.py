@@ -738,6 +738,17 @@ class FoodStep(models.Model):
         ordering = ['step_number']
         unique_together = ['food', 'step_number']
 
+
+class PackagingMaterial(models.Model):
+    """
+    Types of packaging materials available (e.g., Plastic Box, Paper Bag, etc.)
+    """
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
 # --------------------------------------------------------------
 # -------------------------------------------------------------
 # ------------------------------------------------------------
@@ -1542,6 +1553,14 @@ class UserMeal(models.Model):
     consumed_at = models.DateTimeField(null=True, blank=True)
 
     notes = models.TextField(null=True, blank=True)
+
+    packaging_material = models.ForeignKey(
+        PackagingMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="user_meals"
+    )
 
     created_on = models.DateTimeField(auto_now_add=True)
 

@@ -31,6 +31,7 @@ router.register(r'order', OrderViewSet, basename='order')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)
+router.register(r'packagingmaterial', PackagingMaterialViewSet)
 router.register(r'cuisinetype',   CuisineTypeViewSet)
 router.register(r'food',          FoodViewSet, basename='food')
 router.register(r'ingredient',    IngredientViewSet)

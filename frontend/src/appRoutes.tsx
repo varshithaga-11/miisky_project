@@ -28,6 +28,7 @@ import CountryManagementPage from "./pages/AdminSide/Country/index";
 import StateManagementPage from "./pages/AdminSide/State/index";
 import CityManagementPage from "./pages/AdminSide/City/index";
 import MealTypeManagementPage from "./pages/AdminSide/MealType/index";
+import PackagingMaterialManagementPage from "./pages/AdminSide/PackagingMaterial/index";
 import CuisineTypeManagementPage from "./pages/AdminSide/CuisineType/index";
 import FoodManagementPage from "./pages/AdminSide/Food/index";
 import UnitManagementPage from "./pages/AdminSide/Unit/index";
@@ -111,6 +112,7 @@ export function appRoutes() {
           <Route path="master/state" element={<StateManagementPage />} />
           <Route path="master/city" element={<CityManagementPage />} />
           <Route path="master/meal-type" element={<MealTypeManagementPage />} />
+          <Route path="master/packaging-material" element={<PackagingMaterialManagementPage />} />
           <Route path="master/cuisine-type" element={<CuisineTypeManagementPage />} />
           <Route path="master/food" element={<FoodManagementPage />} />
           <Route path="master/unit" element={<UnitManagementPage />} />

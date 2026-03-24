@@ -510,6 +510,21 @@ class MealTypeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class PackagingMaterialViewSet(viewsets.ModelViewSet):
+    queryset = PackagingMaterial.objects.all()
+    serializer_class = PackagingMaterialSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description']
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_packagingmaterials(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class CuisineTypeViewSet(viewsets.ModelViewSet):
     queryset = CuisineType.objects.all()
     serializer_class = CuisineTypeSerializer

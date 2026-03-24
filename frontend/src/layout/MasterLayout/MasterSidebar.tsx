@@ -56,6 +56,7 @@ const adminNavItems: NavItem[] = [
     subItems: [
       { name: "Meal Type", path: "/master/meal-type" },
       { name: "Cuisine Type", path: "/master/cuisine-type" },
+      { name: "Packaging Material", path: "/master/packaging-material" },
       { name: "Foods", path: "/master/food" },
       { name: "Units", path: "/master/unit" },
       { name: "Ingredients", path: "/master/ingredient" },

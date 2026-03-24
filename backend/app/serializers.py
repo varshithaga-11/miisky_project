@@ -338,6 +338,20 @@ class MealTypeSerializer(serializers.ModelSerializer):
         return value
 
 
+class PackagingMaterialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PackagingMaterial
+        fields = "__all__"
+
+    def validate_name(self, value):
+        query = PackagingMaterial.objects.filter(name__iexact=value.strip())
+        if self.instance:
+            query = query.exclude(id=self.instance.id)
+        if query.exists():
+            raise serializers.ValidationError("A packaging material with this name already exists.")
+        return value
+
+
 class CuisineTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CuisineType
