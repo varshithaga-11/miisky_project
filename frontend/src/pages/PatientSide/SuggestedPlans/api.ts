@@ -18,6 +18,14 @@ export interface UserDietPlan {
     no_of_days: number | null;
     features: { id: number; feature: string; order: number }[];
   } | null;
+  micro_kitchen?: number | null;
+  micro_kitchen_details?: {
+    id: number;
+    brand_name: string;
+    cuisine_type: string | null;
+    time_available: string | null;
+    status: string;
+  } | null;
   review: number | null;
   review_details: { id: number; comments: string; created_on: string } | null;
   nutritionist_notes: string | null;
@@ -27,6 +35,8 @@ export interface UserDietPlan {
   amount_paid: string | null;
   transaction_id: string | null;
   payment_status: string;
+  payment_screenshot?: string | null;
+  payment_uploaded_on?: string | null;
   start_date: string | null;
   end_date: string | null;
   suggested_on: string;
@@ -54,16 +64,16 @@ export const rejectPlan = async (id: number, feedback?: string): Promise<UserDie
   return response.data;
 };
 
-export const confirmPayment = async (
+export const uploadPaymentScreenshot = async (
   id: number,
-  amount: string | number,
-  transactionId?: string
+  file: File
 ): Promise<UserDietPlan> => {
-  const url = createApiUrl(`api/userdietplan/${id}/confirm_payment/`);
-  const response = await axios.post(
-    url,
-    { amount, transaction_id: transactionId || "" },
-    { headers: await getAuthHeaders() }
-  );
+  const url = createApiUrl(`api/userdietplan/${id}/upload_payment/`);
+  const formData = new FormData();
+  formData.append("screenshot", file);
+  const { "Content-Type": _, ...headers } = (await getAuthHeaders()) as Record<string, string>;
+  const response = await axios.post(url, formData, {
+    headers: { ...headers },
+  });
   return response.data;
 };

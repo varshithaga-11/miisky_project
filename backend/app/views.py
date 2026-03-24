@@ -1460,7 +1460,7 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
 
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
-    queryset = UserDietPlan.objects.all().select_related('user', 'nutritionist', 'diet_plan', 'review').prefetch_related('diet_plan__features')
+    queryset = UserDietPlan.objects.all().select_related('user', 'nutritionist', 'diet_plan', 'review', 'micro_kitchen', 'micro_kitchen__user').prefetch_related('diet_plan__features')
     serializer_class = UserDietPlanSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1470,12 +1470,15 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
 
         patient_id = self.request.query_params.get('user')
         status_filter = self.request.query_params.get('status')
+        payment_status_filter = self.request.query_params.get('payment_status')
 
         if user.role == "admin":
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
+            if payment_status_filter:
+                queryset = queryset.filter(payment_status=payment_status_filter)
             return queryset.order_by('-suggested_on')
 
         if user.role == "nutritionist":
@@ -1513,22 +1516,22 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Patient approves plan, selects start_date. End date auto-calculated."""
+        """Patient approves plan. Optional start_date; admin assigns it when verifying payment."""
         udp = self.get_object()
         if udp.user_id != request.user.id:
             return Response({"detail": "Only the assigned patient can approve."}, status=status.HTTP_403_FORBIDDEN)
         if udp.status != 'suggested':
             return Response({"detail": f"Cannot approve: current status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        start_date = None
         start_date_str = request.data.get('start_date')
-        if not start_date_str:
-            return Response({"detail": "start_date is required."}, status=status.HTTP_400_BAD_REQUEST)
-        from datetime import datetime
-        try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return Response({"detail": "Invalid start_date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        if start_date < timezone.now().date():
-            return Response({"detail": "Start date cannot be in the past."}, status=status.HTTP_400_BAD_REQUEST)
+        if start_date_str:
+            from datetime import datetime
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({"detail": "Invalid start_date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+            if start_date < timezone.now().date():
+                return Response({"detail": "Start date cannot be in the past."}, status=status.HTTP_400_BAD_REQUEST)
         udp.approve(start_date=start_date)
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
@@ -1544,23 +1547,47 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
-    def confirm_payment(self, request, pk=None):
-        """Confirm payment success and activate plan."""
+    def upload_payment(self, request, pk=None):
+        """Patient uploads payment screenshot. Accepts multipart/form-data with 'screenshot' file."""
         udp = self.get_object()
         if udp.user_id != request.user.id:
-            return Response({"detail": "Only the assigned patient can confirm payment."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Only the assigned patient can upload payment."}, status=status.HTTP_403_FORBIDDEN)
         if udp.status != 'payment_pending':
-            return Response({"detail": f"Cannot confirm payment: status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
-        amount = request.data.get('amount')
-        transaction_id = request.data.get('transaction_id', '')
-        if not amount:
-            return Response({"detail": "amount is required."}, status=status.HTTP_400_BAD_REQUEST)
-        from decimal import Decimal
-        try:
-            amount = Decimal(str(amount))
-        except Exception:
-            return Response({"detail": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST)
-        udp.confirm_payment(amount=amount, transaction_id=transaction_id)
+            return Response({"detail": f"Cannot upload payment: status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        screenshot = request.FILES.get('screenshot') or request.FILES.get('payment_screenshot')
+        if not screenshot:
+            return Response({"detail": "Payment screenshot file is required."}, status=status.HTTP_400_BAD_REQUEST)
+        udp.upload_payment(screenshot=screenshot)
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def verify_payment(self, request, pk=None):
+        """Admin verifies payment and assigns start date. Activates plan."""
+        udp = self.get_object()
+        if request.user.role != 'admin':
+            return Response({"detail": "Only admin can verify payment."}, status=status.HTTP_403_FORBIDDEN)
+        if udp.payment_status != 'uploaded':
+            return Response({"detail": f"Cannot verify: payment status is {udp.payment_status}."}, status=status.HTTP_400_BAD_REQUEST)
+        start_date_str = request.data.get('start_date')
+        start_date = None
+        if start_date_str:
+            from datetime import datetime
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({"detail": "Invalid start_date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+            if start_date < timezone.now().date():
+                return Response({"detail": "Start date cannot be in the past."}, status=status.HTTP_400_BAD_REQUEST)
+        udp.verify_payment(admin_user=request.user, start_date=start_date)
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def reject_payment(self, request, pk=None):
+        """Admin rejects payment. Patient can re-upload screenshot."""
+        udp = self.get_object()
+        if request.user.role != 'admin':
+            return Response({"detail": "Only admin can reject payment."}, status=status.HTTP_403_FORBIDDEN)
+        udp.reject_payment()
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
 
@@ -1871,54 +1898,6 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
         micro_kitchen.rating = stats['avg_rating'] or 0
         micro_kitchen.total_reviews = stats['total'] or 0
         micro_kitchen.save()
-
-
-class UserMicroKitchenMappingViewSet(viewsets.ModelViewSet):
-    queryset = UserMicroKitchenMapping.objects.all().select_related('patient', 'nutritionist', 'micro_kitchen', 'diet_plan')
-    serializer_class = UserMicroKitchenMappingSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        qs = self.queryset
-        
-        # Filtering
-        patient_id = self.request.query_params.get('patient')
-        if patient_id:
-            qs = qs.filter(patient_id=patient_id)
-            
-        diet_plan_id = self.request.query_params.get('diet_plan')
-        if diet_plan_id:
-            qs = qs.filter(diet_plan_id=diet_plan_id)
-
-        if user.role == 'admin':
-            return qs
-        if user.role == 'nutritionist':
-            return qs.filter(nutritionist=user)
-        if user.role == 'micro_kitchen':
-            return qs.filter(micro_kitchen__user=user)
-        if user.role == 'patient' or user.role == 'non_patient':
-            return qs.filter(patient=user)
-        
-        return qs.none()
-
-    def perform_create(self, serializer):
-        # When nutritionist creates a suggestion
-        serializer.save(nutritionist=self.request.user)
-
-    def perform_update(self, serializer):
-        # Automatically set responded_at when patient accepts/rejects
-        old_status = self.get_object().status
-        new_status = self.request.data.get('status')
-        
-        if old_status == 'suggested' and new_status in ['accepted', 'rejected']:
-            serializer.save(
-                responded_at=timezone.now(),
-                is_active=(new_status == 'accepted')
-            )
-        else:
-            serializer.save()
-
 
 class CartViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

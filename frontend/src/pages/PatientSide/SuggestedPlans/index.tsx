@@ -1,15 +1,29 @@
-import React, { useEffect, useState } from "react";
-import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage } from "react-icons/fi";
+import React, { useEffect, useState, useMemo } from "react";
+import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage, FiHome, FiUpload } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
   getMySuggestedPlans,
   approvePlan,
   rejectPlan,
-  confirmPayment,
+  uploadPaymentScreenshot,
   UserDietPlan,
 } from "./api";
+import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
+import DatePicker2 from "../../../components/form/date-picker2";
+
+const getMediaUrl = (path: string | undefined | null) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
+
+const ScreenshotPreview: React.FC<{ file: File }> = ({ file }) => {
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return <img src={url} alt="Payment screenshot preview" className="w-full max-h-48 object-cover object-top" />;
+};
 
 const SuggestedPlansPage: React.FC = () => {
   const [plans, setPlans] = useState<UserDietPlan[]>([]);
@@ -19,7 +33,7 @@ const SuggestedPlansPage: React.FC = () => {
   const [paymentModal, setPaymentModal] = useState<UserDietPlan | null>(null);
   const [startDate, setStartDate] = useState("");
   const [rejectFeedback, setRejectFeedback] = useState("");
-  const [transactionId, setTransactionId] = useState("");
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -44,17 +58,14 @@ const SuggestedPlansPage: React.FC = () => {
   };
 
   const handleApprove = async () => {
-    if (!approveModal || !startDate) {
-      toast.warning("Please select a start date");
-      return;
-    }
+    if (!approveModal) return;
     setSubmitting(true);
     try {
-      const updated = await approvePlan(approveModal.id, startDate);
+      const updated = await approvePlan(approveModal.id, startDate || getMinStartDate());
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setApproveModal(null);
       setStartDate("");
-      toast.success("Plan approved. Please complete payment.");
+      toast.success("Plan approved. Please upload payment screenshot.");
       setPaymentModal(updated);
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Failed to approve");
@@ -79,26 +90,20 @@ const SuggestedPlansPage: React.FC = () => {
     }
   };
 
-  const handleConfirmPayment = async () => {
-    if (!paymentModal) return;
-    const amount = paymentModal.diet_plan_details?.final_amount;
-    if (!amount) {
-      toast.error("Invalid plan amount");
+  const handleUploadPayment = async () => {
+    if (!paymentModal || !screenshotFile) {
+      toast.warning("Please select a payment screenshot to upload");
       return;
     }
     setSubmitting(true);
     try {
-      const updated = await confirmPayment(
-        paymentModal.id,
-        amount,
-        transactionId || `TXN-${Date.now()}`
-      );
+      const updated = await uploadPaymentScreenshot(paymentModal.id, screenshotFile);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setPaymentModal(null);
-      setTransactionId("");
-      toast.success("Payment confirmed. Your plan is now active!");
+      setScreenshotFile(null);
+      toast.success("Payment screenshot uploaded. Admin will verify and activate your plan.");
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "Failed to confirm payment");
+      toast.error(err?.response?.data?.detail || "Failed to upload screenshot");
     } finally {
       setSubmitting(false);
     }
@@ -122,8 +127,8 @@ const SuggestedPlansPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
-      <PageMeta title="Suggested Plans" description="Plans suggested by your nutritionist" />
-      <PageBreadcrumb pageTitle="Suggested Plans" />
+      <PageMeta title="Suggested Plans & Kitchens" description="Plans and kitchens suggested by your nutritionist" />
+      <PageBreadcrumb pageTitle="Suggested Plans & Kitchens" />
       <ToastContainer position="bottom-right" />
 
       <div className="px-4 md:px-8 pb-12">
@@ -155,6 +160,11 @@ const SuggestedPlansPage: React.FC = () => {
                         <p className="text-sm text-gray-500 mt-1">
                           By {udp.nutritionist_details?.first_name} {udp.nutritionist_details?.last_name}
                         </p>
+                        {udp.micro_kitchen_details && (
+                          <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
+                            <FiHome size={14} /> Kitchen: {udp.micro_kitchen_details.brand_name}
+                          </p>
+                        )}
                         <p className="text-2xl font-black text-gray-900 dark:text-white mt-4">
                           ₹{udp.diet_plan_details?.final_amount}{" "}
                           <span className="text-sm font-normal text-gray-500">
@@ -174,7 +184,7 @@ const SuggestedPlansPage: React.FC = () => {
                         <button
                           onClick={() => {
                             setApproveModal(udp);
-                            setStartDate(getMinStartDate());
+                            setStartDate("");
                           }}
                           className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
                         >
@@ -222,11 +232,36 @@ const SuggestedPlansPage: React.FC = () => {
                         <p className="text-xl font-black text-gray-900 dark:text-white mt-4">
                           ₹{udp.diet_plan_details?.final_amount}
                         </p>
+                        {udp.payment_screenshot && (
+                          <div className="mt-4">
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Uploaded screenshot</p>
+                            <a
+                              href={getMediaUrl(udp.payment_screenshot)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 hover:ring-2 hover:ring-indigo-500"
+                            >
+                              <img
+                                src={getMediaUrl(udp.payment_screenshot)}
+                                alt="Payment screenshot"
+                                className="w-full h-32 object-cover object-top"
+                              />
+                            </a>
+                            {udp.payment_uploaded_on && (
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                Uploaded: {new Date(udp.payment_uploaded_on).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        )}
                         <button
-                          onClick={() => setPaymentModal(udp)}
+                          onClick={() => {
+                            setPaymentModal(udp);
+                            setScreenshotFile(null);
+                          }}
                           className="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2"
                         >
-                          <FiCreditCard /> Complete Payment
+                          <FiUpload /> {udp.payment_screenshot ? "Re-upload" : "Upload"} Payment Screenshot
                         </button>
                       </div>
                     ))}
@@ -252,6 +287,11 @@ const SuggestedPlansPage: React.FC = () => {
                           {udp.status.replace("_", " ")}
                         </span>
                       </div>
+                      {udp.micro_kitchen_details && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                          <FiHome size={12} /> {udp.micro_kitchen_details.brand_name}
+                        </p>
+                      )}
                       <p className="text-gray-500 text-sm mt-2">
                         {udp.start_date && udp.end_date && (
                           <>
@@ -282,17 +322,20 @@ const SuggestedPlansPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Approve Plan</h3>
-            <p className="text-gray-500 text-sm mb-6">{approveModal.diet_plan_details?.title}</p>
+            <p className="text-gray-500 text-sm mb-2">{approveModal.diet_plan_details?.title}</p>
+            {approveModal.micro_kitchen_details && (
+              <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-4 flex items-center gap-1">
+                <FiHome size={14} /> {approveModal.micro_kitchen_details.brand_name}
+              </p>
+            )}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Select start date *
-              </label>
-              <input
-                type="date"
+              <DatePicker2
+                id="approve-start-date"
+                label="Preferred start date (optional – admin will confirm)"
                 value={startDate}
-                min={getMinStartDate()}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                onChange={(date) => setStartDate(date)}
+                placeholder="Select date"
+                minDate={getMinStartDate()}
               />
               {approveModal.diet_plan_details?.no_of_days && (
                 <p className="text-xs text-gray-500 mt-2">
@@ -312,7 +355,7 @@ const SuggestedPlansPage: React.FC = () => {
               </button>
               <button
                 onClick={handleApprove}
-                disabled={submitting || !startDate}
+                disabled={submitting}
                 className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl font-bold"
               >
                 {submitting ? "..." : "Approve"}
@@ -362,46 +405,70 @@ const SuggestedPlansPage: React.FC = () => {
         </div>
       )}
 
-      {/* Payment Modal */}
+      {/* Payment Upload Modal */}
       {paymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
-            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Complete Payment</h3>
+            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Upload Payment Screenshot</h3>
             <p className="text-gray-500 text-sm mb-2">{paymentModal.diet_plan_details?.title}</p>
             <p className="text-2xl font-black text-gray-900 dark:text-white mb-6">
               ₹{paymentModal.diet_plan_details?.final_amount}
             </p>
+            {paymentModal.payment_screenshot && (
+              <div className="mb-6">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Currently uploaded</p>
+                <a
+                  href={getMediaUrl(paymentModal.payment_screenshot)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 hover:ring-2 hover:ring-indigo-500"
+                >
+                  <img
+                    src={getMediaUrl(paymentModal.payment_screenshot)}
+                    alt="Payment screenshot"
+                    className="w-full max-h-48 object-cover object-top"
+                  />
+                </a>
+              </div>
+            )}
             <div className="mb-6">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Transaction ID (optional)
+                Payment Screenshot * {paymentModal.payment_screenshot && "(re-upload to replace)"}
               </label>
               <input
-                type="text"
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                placeholder="e.g. TXN123456"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-600"
               />
+              {screenshotFile && (
+                <div className="mt-4">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Preview</p>
+                  <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10">
+                    <ScreenshotPreview file={screenshotFile} />
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-gray-500 mt-2">
-                For demo: click Confirm to simulate payment. In production, integrate with payment gateway.
+                Upload a screenshot of your payment. Admin will verify and activate your plan.
               </p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => {
                   setPaymentModal(null);
-                  setTransactionId("");
+                  setScreenshotFile(null);
                 }}
                 className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
               >
                 Cancel
               </button>
               <button
-                onClick={handleConfirmPayment}
-                disabled={submitting}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold"
+                onClick={handleUploadPayment}
+                disabled={submitting || !screenshotFile}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2"
               >
-                {submitting ? "..." : "Confirm Payment"}
+                {submitting ? "..." : <> <FiUpload /> Upload </>}
               </button>
             </div>
           </div>

@@ -12,18 +12,22 @@ import {
   UserDietPlan,
 } from "./api";
 import type { DietPlan } from "./api";
+import { getApprovedMicroKitchens } from "../ListOfMicroKitchens/api";
+import type { MicroKitchenProfile } from "../ListOfMicroKitchens/api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiFileText, FiSend, FiCheckCircle, FiPackage } from "react-icons/fi";
+import { FiUsers, FiFileText, FiSend, FiCheckCircle, FiPackage, FiHome } from "react-icons/fi";
 
 const SuggestPlanToPatientsPage: React.FC = () => {
   const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<MappedPatientResponse | null>(null);
   const [plans, setPlans] = useState<DietPlan[]>([]);
+  const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
   const [reviews, setReviews] = useState<NutritionistReview[]>([]);
   const [suggestedPlans, setSuggestedPlans] = useState<UserDietPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | "">("");
+  const [selectedKitchenId, setSelectedKitchenId] = useState<number | "">("");
   const [selectedReviewId, setSelectedReviewId] = useState<number | "">("");
   const [notes, setNotes] = useState("");
 
@@ -31,12 +35,14 @@ const SuggestPlanToPatientsPage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [patientsData, plansData] = await Promise.all([
+        const [patientsData, plansData, kitchensData] = await Promise.all([
           getMyPatients(),
           getDietPlanList(1, 100).then((r) => r.results),
+          getApprovedMicroKitchens().then((r) => r.results),
         ]);
         setPatients(patientsData);
         setPlans(plansData);
+        setKitchens(kitchensData);
         if (patientsData.length > 0 && !selectedPatient) {
           setSelectedPatient(patientsData[0]);
         }
@@ -76,23 +82,30 @@ const SuggestPlanToPatientsPage: React.FC = () => {
       toast.warning("Please select a diet plan");
       return;
     }
+    if (!selectedKitchenId) {
+      toast.warning("Please select a micro kitchen");
+      return;
+    }
     setSubmitting(true);
     try {
       const payload: {
         user: number;
         diet_plan: number;
+        micro_kitchen?: number;
         review?: number;
         nutritionist_notes?: string;
       } = {
         user: selectedPatient.user.id,
         diet_plan: Number(selectedPlanId),
+        micro_kitchen: Number(selectedKitchenId),
         nutritionist_notes: notes.trim() || undefined,
       };
       if (selectedReviewId) payload.review = Number(selectedReviewId);
       const created = await suggestPlanToPatient(payload);
-      toast.success("Plan suggested successfully");
+      toast.success("Plan and kitchen suggested successfully");
       setSuggestedPlans((prev) => [created, ...prev]);
       setSelectedPlanId("");
+      setSelectedKitchenId("");
       setSelectedReviewId("");
       setNotes("");
     } catch (err: any) {
@@ -117,8 +130,8 @@ const SuggestPlanToPatientsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
-      <PageMeta title="Suggest Plan to Patient" description="Suggest diet plans to your patients based on their documents and review" />
-      <PageBreadcrumb pageTitle="Suggest Plan to Patient" />
+      <PageMeta title="Suggest Plan & Kitchen" description="Suggest diet plan and micro kitchen to your patients in one step" />
+      <PageBreadcrumb pageTitle="Suggest Plan & Kitchen" />
       <ToastContainer position="bottom-right" />
 
       <div className="px-4 md:px-8 pb-12">
@@ -184,7 +197,7 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                     <h2 className="text-3xl font-black text-gray-900 dark:text-white">
                       {selectedPatient.user.first_name} {selectedPatient.user.last_name}
                     </h2>
-                    <p className="text-gray-500 font-medium">Suggest diet plan based on documents & review</p>
+                    <p className="text-gray-500 font-medium">Suggest diet plan and micro kitchen in one step</p>
                   </div>
                 </div>
 
@@ -192,7 +205,7 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                   {/* Suggest Form */}
                   <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05]">
                     <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                      <FiPackage className="text-blue-500" /> Suggest Plan
+                      <FiPackage className="text-blue-500" /> Suggest Plan & Kitchen
                     </h3>
                     <form onSubmit={handleSuggest} className="space-y-6">
                       <div>
@@ -207,6 +220,22 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                           {plans.filter((p) => p.is_active !== false).map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.title} ({p.code}) - ₹{p.final_amount} / {p.no_of_days} days
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Micro Kitchen *</label>
+                        <select
+                          value={selectedKitchenId}
+                          onChange={(e) => setSelectedKitchenId(e.target.value ? Number(e.target.value) : "")}
+                          required
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                        >
+                          <option value="">Select kitchen</option>
+                          {kitchens.map((k) => (
+                            <option key={k.id} value={k.id}>
+                              {k.brand_name} – {k.cuisine_type || "Kitchen"}
                             </option>
                           ))}
                         </select>
@@ -238,10 +267,10 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                       </div>
                       <button
                         type="submit"
-                        disabled={submitting || !selectedPlanId}
+                        disabled={submitting || !selectedPlanId || !selectedKitchenId}
                         className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3 transition-all"
                       >
-                        {submitting ? "Sending..." : "Suggest Plan"} <FiSend />
+                        {submitting ? "Sending..." : "Suggest Plan & Kitchen"} <FiSend />
                       </button>
                     </form>
                   </div>
@@ -270,6 +299,11 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                                 {udp.status.replace("_", " ")}
                               </span>
                             </div>
+                            {udp.micro_kitchen_details && (
+                              <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
+                                <FiHome size={12} /> {udp.micro_kitchen_details.brand_name}
+                              </p>
+                            )}
                             <p className="text-[11px] text-gray-500 mb-2">
                               Suggested: {new Date(udp.suggested_on).toLocaleDateString()}
                             </p>

@@ -4,7 +4,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getApprovedPlansForNutritionist } from "./api";
 import type { UserDietPlan } from "../SuggestPlanToPatients/api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiCheckCircle, FiClock, FiCalendar, FiUser, FiPackage, FiActivity, FiCreditCard } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiCalendar, FiUser, FiPackage, FiActivity, FiCreditCard, FiHome } from "react-icons/fi";
 
 const ApprovesPlansByPatientsPage: React.FC = () => {
     const [plans, setPlans] = useState<UserDietPlan[]>([]);
@@ -105,13 +105,20 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
                                 {/* Plan Details Grid */}
                                 <div className="grid grid-cols-2 gap-4 p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-[32px] border border-gray-100 dark:border-white/[0.03]">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1"><FiPackage size={10} /> Plan Model</p>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1"><FiPackage size={10} /> Plan</p>
                                         <p className="text-sm font-black text-gray-900 dark:text-white truncate">{udp.diet_plan_details?.title}</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1"><FiClock size={10} /> Duration</p>
                                         <p className="text-sm font-black text-gray-900 dark:text-white">{udp.diet_plan_details?.no_of_days} Days</p>
                                     </div>
+                                    {udp.micro_kitchen_details && (
+                                        <div className="space-y-1 col-span-2">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1"><FiHome size={10} /> Kitchen</p>
+                                            <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{udp.micro_kitchen_details.brand_name}</p>
+                                            <p className="text-[10px] text-gray-500">{udp.micro_kitchen_details.cuisine_type}</p>
+                                        </div>
+                                    )}
                                     <div className="space-y-1 col-span-1">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1"><FiCalendar size={10} /> Start Window</p>
                                         <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">{udp.start_date ? new Date(udp.start_date).toLocaleDateString() : 'TBD'}</p>

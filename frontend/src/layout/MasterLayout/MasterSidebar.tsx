@@ -94,6 +94,11 @@ const adminNavItems: NavItem[] = [
     ],
   },
   {
+    icon: <CheckCircle className="w-5 h-5" />,
+    name: "Payment Verification",
+    path: "/master/patient-payment-verification",
+  },
+  {
     icon: <Users className="w-5 h-5" />,
     name: "Nutritionists",
     subItems: [
@@ -148,21 +153,9 @@ const patientNavItems: NavItem[] = [
     path: "/patient/micro-kitchens",
   },
   {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Suggested Plans",
-    path: "/patient/suggested-plans",
-  },
-
-  // {
-  //   icon: <Briefcase className="w-5 h-5" />,
-  //   name: "Discovery Kitchens",
-  //   path: "/patient/discover-kitchens",
-  // },
-
-  {
     icon: <CheckCircle className="w-5 h-5" />,
-    name: "Suggested Kitchens",
-    path: "/patient/suggested-kitchens",
+    name: "Suggested Plans & Kitchens",
+    path: "/patient/suggested-plans",
   },
 
   {
@@ -219,18 +212,13 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/micro-kitchens",
   },
   {
-    icon: <CheckCircle className="w-5 h-5" />,
-    name: "Allot Kitchen",
-    path: "/nutrition/allot-micro-kitchen",
-  },
-  {
     icon: <FileText className="w-5 h-5" />,
     name: "Patient Documents",
     path: "/nutrition/uploaded-documents",
   },
   {
     icon: <FileText className="w-5 h-5" />,
-    name: "Suggest Plan",
+    name: "Suggest Plan & Kitchen",
     path: "/nutrition/suggest-plan",
   },
   {

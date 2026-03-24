@@ -1033,18 +1033,22 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     nutritionist_details = serializers.SerializerMethodField()
     review_details = serializers.SerializerMethodField()
+    micro_kitchen_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
         fields = [
             'id', 'user', 'user_details', 'nutritionist', 'nutritionist_details',
-            'diet_plan', 'diet_plan_details', 'review', 'review_details',
+            'diet_plan', 'diet_plan_details', 'micro_kitchen', 'micro_kitchen_details',
+            'review', 'review_details',
             'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
             'amount_paid', 'transaction_id', 'payment_status',
+            'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
+            'verified_by', 'verified_on',
             'start_date', 'end_date',
             'suggested_on', 'approved_on', 'created_on', 'updated_on'
         ]
-        read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on']
+        read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on', 'payment_uploaded_on', 'verified_on']
 
     def get_diet_plan_details(self, obj):
         if obj.diet_plan:
@@ -1090,6 +1094,20 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
                 'comments': obj.review.comments,
                 'created_on': obj.review.created_on,
                 'report_details': [{'id': r.id, 'title': r.title} for r in obj.review.reports.all()]
+            }
+        return None
+
+    def get_micro_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            user = obj.micro_kitchen.user
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+                'cuisine_type': obj.micro_kitchen.cuisine_type,
+                'latitude': getattr(user, 'latitude', None) if user else None,
+                'longitude': getattr(user, 'longitude', None) if user else None,
+                'time_available': obj.micro_kitchen.time_available,
+                'status': obj.micro_kitchen.status,
             }
         return None
 
@@ -1218,81 +1236,6 @@ class NutritionistRatingSerializer(serializers.ModelSerializer):
         return None
 
         return super().create(validated_data)
-
-
-class UserMicroKitchenMappingSerializer(serializers.ModelSerializer):
-    patient_details = serializers.SerializerMethodField(read_only=True)
-    patient_questionnaire = serializers.SerializerMethodField(read_only=True)
-    nutritionist_details = serializers.SerializerMethodField(read_only=True)
-    kitchen_details = serializers.SerializerMethodField(read_only=True)
-    diet_plan_details = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = UserMicroKitchenMapping
-        fields = [
-            'id', 'patient', 'patient_details', 'patient_questionnaire', 'nutritionist', 'nutritionist_details',
-            'micro_kitchen', 'kitchen_details', 'diet_plan', 'diet_plan_details',
-            'status', 'suggested_at', 'responded_at', 'is_active'
-        ]
-        read_only_fields = ['id', 'suggested_at', 'responded_at']
-
-    def get_patient_details(self, obj):
-        if obj.patient:
-            return {
-                'id': obj.patient.id,
-                'first_name': obj.patient.first_name or obj.patient.username,
-                'last_name': obj.patient.last_name,
-                'email': obj.patient.email,
-                'mobile': obj.patient.mobile,
-                'address': obj.patient.address,
-            }
-        return None
-
-    def get_patient_questionnaire(self, obj):
-        if obj.patient:
-            try:
-                # Local import to avoid circular dependency
-                from .serializers import UserQuestionnaireSerializer
-                q = obj.patient.userquestionnaire
-                return UserQuestionnaireSerializer(q).data
-            except:
-                return None
-        return None
-
-    def get_nutritionist_details(self, obj):
-        if obj.nutritionist:
-            return {
-                'id': obj.nutritionist.id,
-                'first_name': obj.nutritionist.first_name,
-                'last_name': obj.nutritionist.last_name,
-            }
-        return None
-
-    def get_kitchen_details(self, obj):
-        if obj.micro_kitchen:
-            user = obj.micro_kitchen.user
-            return {
-                'id': obj.micro_kitchen.id,
-                'brand_name': obj.micro_kitchen.brand_name,
-                'cuisine_type': obj.micro_kitchen.cuisine_type,
-                'photo_exterior': obj.micro_kitchen.photo_exterior.url if obj.micro_kitchen.photo_exterior else None,
-                'city': user.city.name if user and user.city else None,
-                'state': user.state.name if user and user.state else None,
-                'latitude': user.latitude if user else None,
-                'longitude': user.longitude if user else None,
-            }
-        return None
-
-    def get_diet_plan_details(self, obj):
-        if obj.diet_plan:
-            return {
-                'id': obj.diet_plan.id,
-                'plan_name': obj.diet_plan.diet_plan.title if obj.diet_plan.diet_plan else "Custom-Plan",
-                'start_date': obj.diet_plan.start_date,
-                'end_date': obj.diet_plan.end_date,
-            }
-        return None
-
 
 class MicroKitchenRatingSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)

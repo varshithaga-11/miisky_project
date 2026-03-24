@@ -3,8 +3,7 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import type { UserDietPlan } from "../SuggestPlanToPatients/api";
 
 export const getApprovedPlansForNutritionist = async (status?: string): Promise<UserDietPlan[]> => {
-    const query = status ? `?status=${status}` : "";
-    const url = createApiUrl(`api/userdietplan/${query}`);
+    const url = createApiUrl(status ? `api/userdietplan/?status=${status}` : "api/userdietplan/");
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     
     const data = response.data;

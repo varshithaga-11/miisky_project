@@ -29,6 +29,14 @@ export interface UserDietPlan {
     no_of_days: number | null;
     features: { id: number; feature: string; order: number }[];
   } | null;
+  micro_kitchen?: number | null;
+  micro_kitchen_details?: {
+    id: number;
+    brand_name: string;
+    cuisine_type: string | null;
+    time_available: string | null;
+    status: string;
+  } | null;
   review: number | null;
   review_details: { id: number; comments: string; created_on: string } | null;
   nutritionist_notes: string | null;
@@ -49,6 +57,7 @@ export interface UserDietPlan {
 export const suggestPlanToPatient = async (data: {
   user: number;
   diet_plan: number;
+  micro_kitchen?: number;
   review?: number;
   nutritionist_notes?: string;
 }): Promise<UserDietPlan> => {

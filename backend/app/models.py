@@ -1323,11 +1323,143 @@ from django.utils.timezone import now
 from datetime import timedelta
 
 
+# class UserDietPlan(models.Model):
+
+#     user = models.ForeignKey(
+#         UserRegister,
+#         on_delete=models.SET_NULL,null=True,blank=True,
+#         related_name="diet_plans"
+#     )
+
+#     nutritionist = models.ForeignKey(
+#         UserRegister,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="suggested_diet_plans"
+#     )
+
+#     diet_plan = models.ForeignKey(
+#         DietPlans,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True
+#     )
+
+#     review = models.ForeignKey(
+#         NutritionistReview,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="user_diet_plans"
+#     )
+
+#     # Nutritionist notes when suggesting (based on documents/review)
+#     nutritionist_notes = models.TextField(null=True, blank=True)
+
+#     # 🔥 FULL FLOW STATUS (covers everything)
+#     STATUS_CHOICES = [
+#         ('suggested', 'Suggested'),     # nutritionist suggested
+#         ('approved', 'Approved'),       # user accepted
+#         ('rejected', 'Rejected'),       # user rejected
+#         ('payment_pending', 'Payment Pending'),
+#         ('active', 'Active'),           # plan running
+#         ('completed', 'Completed'),
+#         ('stopped', 'Stopped'),
+#     ]
+
+#     status = models.CharField(
+#         max_length=20,
+#         choices=STATUS_CHOICES,
+#         default='suggested'
+#     )
+
+#     # 🔹 User response
+#     user_feedback = models.TextField(null=True, blank=True)
+#     decision_on = models.DateTimeField(null=True, blank=True)
+
+#     # 🔥 Payment Info (only used after approval)
+#     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+#     transaction_id = models.CharField(max_length=100, null=True, blank=True)
+
+#     PAYMENT_STATUS = [
+#         ('pending', 'Pending'),
+#         ('success', 'Success'),
+#         ('failed', 'Failed')
+#     ]
+
+#     payment_status = models.CharField(
+#         max_length=20,
+#         choices=PAYMENT_STATUS,
+#         default='pending'
+#     )
+
+#     # 🔹 Plan duration
+#     start_date = models.DateField(null=True, blank=True)
+#     end_date = models.DateField(null=True, blank=True)
+
+#     # 🔹 Tracking
+#     suggested_on = models.DateTimeField(auto_now_add=True)
+#     approved_on = models.DateTimeField(null=True, blank=True)
+
+#     created_on = models.DateTimeField(auto_now_add=True)
+#     updated_on = models.DateTimeField(auto_now=True)
+
+#     # 🔥 Business Logic
+#     def approve(self, start_date=None):
+#         """Patient approves plan and selects start date. End date auto-calculated from diet_plan.no_of_days."""
+#         self.status = 'payment_pending'
+#         self.approved_on = now()
+#         self.decision_on = now()
+#         if start_date:
+#             self.start_date = start_date
+#             if self.diet_plan and self.diet_plan.no_of_days:
+#                 self.end_date = start_date + timedelta(days=self.diet_plan.no_of_days)
+#         self.save()
+
+#     def reject(self, feedback=None):
+#         self.status = 'rejected'
+#         self.user_feedback = feedback
+#         self.decision_on = now()
+#         self.save()
+
+#     def confirm_payment(self, amount, transaction_id):
+#         """Called when payment succeeds. Activates plan."""
+#         self.amount_paid = amount
+#         self.transaction_id = transaction_id
+#         self.payment_status = 'success'
+#         self.status = 'active'
+#         if not self.start_date:
+#             self.start_date = now().date()
+#         if self.diet_plan and self.diet_plan.no_of_days and not self.end_date:
+#             self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days)
+#         self.save()
+
+#     def activate_plan(self):
+#         """Legacy: activate when payment already succeeded."""
+#         if self.payment_status == 'success':
+#             self.status = 'active'
+#             if not self.start_date:
+#                 self.start_date = now().date()
+#             if self.diet_plan and self.diet_plan.no_of_days and not self.end_date:
+#                 self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days)
+#             self.save()
+
+#     def __str__(self):
+#         return f"{self.user} - {self.diet_plan} ({self.status})"
+
+from django.db import models
+from django.utils.timezone import now
+from datetime import timedelta
+
+
 class UserDietPlan(models.Model):
 
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.SET_NULL,null=True,blank=True,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="diet_plans"
     )
 
@@ -1346,6 +1478,15 @@ class UserDietPlan(models.Model):
         blank=True
     )
 
+    # ✅ Single kitchen (as per your requirement)
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="diet_plan_users"
+    )
+
     review = models.ForeignKey(
         NutritionistReview,
         on_delete=models.SET_NULL,
@@ -1354,100 +1495,131 @@ class UserDietPlan(models.Model):
         related_name="user_diet_plans"
     )
 
-    # Nutritionist notes when suggesting (based on documents/review)
     nutritionist_notes = models.TextField(null=True, blank=True)
 
-    # 🔥 FULL FLOW STATUS (covers everything)
+    # 🔥 Plan Status
     STATUS_CHOICES = [
-        ('suggested', 'Suggested'),     # nutritionist suggested
-        ('approved', 'Approved'),       # user accepted
-        ('rejected', 'Rejected'),       # user rejected
+        ('suggested', 'Suggested'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
         ('payment_pending', 'Payment Pending'),
-        ('active', 'Active'),           # plan running
+        ('active', 'Active'),
         ('completed', 'Completed'),
         ('stopped', 'Stopped'),
     ]
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='suggested'
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='suggested')
 
     # 🔹 User response
     user_feedback = models.TextField(null=True, blank=True)
     decision_on = models.DateTimeField(null=True, blank=True)
 
-    # 🔥 Payment Info (only used after approval)
+    # 🔥 Payment Info
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     transaction_id = models.CharField(max_length=100, null=True, blank=True)
 
     PAYMENT_STATUS = [
         ('pending', 'Pending'),
-        ('success', 'Success'),
+        ('uploaded', 'Screenshot Uploaded'),
+        ('verified', 'Verified'),
         ('failed', 'Failed')
     ]
 
-    payment_status = models.CharField(
-        max_length=20,
-        choices=PAYMENT_STATUS,
-        default='pending'
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+
+    # 📸 Screenshot Upload
+    payment_screenshot = models.ImageField(
+        upload_to='payment_screenshots/',
+        null=True,
+        blank=True
     )
 
-    # 🔹 Plan duration
+    payment_uploaded_on = models.DateTimeField(null=True, blank=True)
+
+    # ✅ Admin Verification
+    is_payment_verified = models.BooleanField(default=False)
+
+    verified_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_payments'
+    )
+
+    verified_on = models.DateTimeField(null=True, blank=True)
+
+    # 📅 Plan duration
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
-    # 🔹 Tracking
+    # 🕒 Tracking
     suggested_on = models.DateTimeField(auto_now_add=True)
     approved_on = models.DateTimeField(null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
-    # 🔥 Business Logic
+    # =====================================================
+    # 🔥 BUSINESS LOGIC METHODS
+    # =====================================================
+
     def approve(self, start_date=None):
-        """Patient approves plan and selects start date. End date auto-calculated from diet_plan.no_of_days."""
+        """User approves the plan"""
         self.status = 'payment_pending'
         self.approved_on = now()
         self.decision_on = now()
+
         if start_date:
             self.start_date = start_date
             if self.diet_plan and self.diet_plan.no_of_days:
                 self.end_date = start_date + timedelta(days=self.diet_plan.no_of_days)
+
         self.save()
 
     def reject(self, feedback=None):
+        """User rejects the plan"""
         self.status = 'rejected'
         self.user_feedback = feedback
         self.decision_on = now()
         self.save()
 
-    def confirm_payment(self, amount, transaction_id):
-        """Called when payment succeeds. Activates plan."""
-        self.amount_paid = amount
-        self.transaction_id = transaction_id
-        self.payment_status = 'success'
-        self.status = 'active'
-        if not self.start_date:
-            self.start_date = now().date()
-        if self.diet_plan and self.diet_plan.no_of_days and not self.end_date:
-            self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days)
+    def upload_payment(self, screenshot):
+        """User uploads payment screenshot"""
+        self.payment_screenshot = screenshot
+        self.payment_uploaded_on = now()
+        self.payment_status = 'uploaded'
+        self.status = 'payment_pending'
         self.save()
 
-    def activate_plan(self):
-        """Legacy: activate when payment already succeeded."""
-        if self.payment_status == 'success':
-            self.status = 'active'
-            if not self.start_date:
-                self.start_date = now().date()
-            if self.diet_plan and self.diet_plan.no_of_days and not self.end_date:
-                self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days)
-            self.save()
+    def verify_payment(self, admin_user, start_date=None):
+        """Admin verifies payment, assigns start date, and activates plan"""
+        self.is_payment_verified = True
+        self.verified_by = admin_user
+        self.verified_on = now()
+
+        self.payment_status = 'verified'
+        self.status = 'active'
+
+        if start_date:
+            self.start_date = start_date
+        elif not self.start_date:
+            self.start_date = now().date()
+
+        if self.diet_plan and self.diet_plan.no_of_days and self.start_date:
+            self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days)
+
+        self.save()
+
+    def reject_payment(self):
+        """Admin rejects payment"""
+        self.payment_status = 'failed'
+        self.status = 'payment_pending'
+        self.is_payment_verified = False
+        self.save()
 
     def __str__(self):
         return f"{self.user} - {self.diet_plan} ({self.status})"
-
 
 # --------------------------------------------------------------
 # -------------------------------------------------------------
@@ -1686,53 +1858,53 @@ class MicroKitchenRating(models.Model):
 # --------------------------------------------------------------------
 
 
-class UserMicroKitchenMapping(models.Model):
-    patient = models.ForeignKey(
-        UserRegister,
-        on_delete=models.CASCADE,
-        related_name='kitchen_requests'
-    )
+# class UserMicroKitchenMapping(models.Model):
+#     patient = models.ForeignKey(
+#         UserRegister,
+#         on_delete=models.CASCADE,
+#         related_name='kitchen_requests'
+#     )
 
-    nutritionist = models.ForeignKey(
-        UserRegister,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='suggested_kitchens'
-    )
+#     nutritionist = models.ForeignKey(
+#         UserRegister,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name='suggested_kitchens'
+#     )
 
-    micro_kitchen = models.ForeignKey(
-        MicroKitchenProfile,
-        on_delete=models.CASCADE,
-        related_name='patient_mappings'
-    )
+#     micro_kitchen = models.ForeignKey(
+#         MicroKitchenProfile,
+#         on_delete=models.CASCADE,
+#         related_name='patient_mappings'
+#     )
 
-    diet_plan = models.ForeignKey(
-        UserDietPlan,
-        on_delete=models.CASCADE,
-        related_name='kitchen_mappings'
-    )
+#     diet_plan = models.ForeignKey(
+#         UserDietPlan,
+#         on_delete=models.CASCADE,
+#         related_name='kitchen_mappings'
+#     )
 
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ('suggested', 'Suggested by Nutritionist'),
-            ('accepted', 'Accepted by Patient'),
-            ('rejected', 'Rejected by Patient'),
-        ],
-        default='suggested'
-    )
+#     status = models.CharField(
+#         max_length=20,
+#         choices=[
+#             ('suggested', 'Suggested by Nutritionist'),
+#             ('accepted', 'Accepted by Patient'),
+#             ('rejected', 'Rejected by Patient'),
+#         ],
+#         default='suggested'
+#     )
 
-    suggested_at = models.DateTimeField(auto_now_add=True)
-    responded_at = models.DateTimeField(null=True, blank=True)
+#     suggested_at = models.DateTimeField(auto_now_add=True)
+#     responded_at = models.DateTimeField(null=True, blank=True)
 
-    is_active = models.BooleanField(default=False)
+#     is_active = models.BooleanField(default=False)
 
-    class Meta:
-        unique_together = ('patient', 'diet_plan', 'micro_kitchen')
+#     class Meta:
+#         unique_together = ('patient', 'diet_plan', 'micro_kitchen')
 
-    def __str__(self):
-        return f"{self.patient} - {self.micro_kitchen} ({self.status})"
+#     def __str__(self):
+#         return f"{self.patient} - {self.micro_kitchen} ({self.status})"
 
 
 # --------------------------------------------------------------
