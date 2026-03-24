@@ -1630,11 +1630,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
             ).values_list('user_id', flat=True)
             queryset = queryset.filter(user_diet_plan__user_id__in=mapped_patient_ids)
         elif user.role == "micro_kitchen":
-            # Identify patients mapped to this micro-kitchen
-            mapped_patient_ids = UserMicroKitchenMapping.objects.filter(
-                micro_kitchen__user=user, status='accepted', is_active=True
-            ).values_list('patient_id', flat=True)
-            queryset = queryset.filter(user_id__in=mapped_patient_ids)
+            # Meals from diet plans allotted to this kitchen
+            queryset = queryset.filter(user_diet_plan__micro_kitchen__user=user)
         else:
             queryset = queryset.filter(user=user)
 
@@ -1648,6 +1645,33 @@ class UserMealViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(meal_date__range=[start_date, end_date])
 
         return queryset.order_by('meal_date', 'meal_type__id')
+
+    @action(detail=False, methods=['get'], url_path='kitchen-patients')
+    def kitchen_patients(self, request):
+        """For micro_kitchen role: returns patients who have active diet plans assigned to this kitchen.
+        Used for the patient filter dropdown in MealsBasedOnDaily."""
+        user = request.user
+        if getattr(user, 'role', None) != 'micro_kitchen':
+            return Response({"detail": "Only micro kitchen users can access this."}, status=status.HTTP_403_FORBIDDEN)
+        from .models import UserDietPlan
+        plans = UserDietPlan.objects.filter(
+            micro_kitchen__user=user,
+            status__in=['active', 'payment_pending', 'approved']
+        ).select_related('user').order_by('user__first_name', 'user__last_name')
+        seen = set()
+        patients = []
+        for p in plans:
+            if p.user_id and p.user_id not in seen:
+                seen.add(p.user_id)
+                patients.append({
+                    'id': p.user.id,
+                    'patient_details': {
+                        'id': p.user.id,
+                        'first_name': p.user.first_name or '',
+                        'last_name': p.user.last_name or '',
+                    }
+                })
+        return Response(patients)
 
     @action(detail=False, methods=['get'], url_path='monthly')
     def monthly_meals(self, request):
@@ -1679,12 +1703,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
         # Scope to logged-in user's role
         if getattr(user, 'role', None) == 'micro_kitchen':
-            mapped_patient_ids = UserMicroKitchenMapping.objects.filter(
-                micro_kitchen__user=user,
-                status='accepted',
-                is_active=True
-            ).values_list('patient_id', flat=True)
-            queryset = queryset.filter(user_id__in=mapped_patient_ids)
+            queryset = queryset.filter(user_diet_plan__micro_kitchen__user=user)
         elif getattr(user, 'role', None) == 'nutritionist':
             mapped_patient_ids = UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
@@ -1882,8 +1901,8 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
         elif user.role == 'micro_kitchen':
             qs = qs.filter(micro_kitchen__user=user)
         elif user.role == 'nutritionist':
-            from .models import UserMicroKitchenMapping
-            kitchen_ids = UserMicroKitchenMapping.objects.filter(nutritionist=user).values_list('micro_kitchen_id', flat=True).distinct()
+            from .models import UserDietPlan
+            kitchen_ids = UserDietPlan.objects.filter(nutritionist=user).exclude(micro_kitchen__isnull=True).values_list('micro_kitchen_id', flat=True).distinct()
             qs = qs.filter(micro_kitchen_id__in=kitchen_ids)
         else:
             qs = qs.filter(user=user)

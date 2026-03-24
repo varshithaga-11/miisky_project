@@ -4,11 +4,12 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import axios from "axios";
-import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import { createApiUrl } from "../../../access/access";
+import { getKitchenPatients, getKitchenMeals, getKitchenMealsMonthly } from "./api";
+import type { DailyMeal, KitchenPatient } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX } from "react-icons/fi";
+import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-icons/gi";
 
@@ -16,42 +17,15 @@ import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-ico
 import DatePicker2 from "../../../components/form/date-picker2";
 import Select from "../../../components/form/Select";
 
-interface DailyMeal {
-    id: number;
-    user_details: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        mobile?: string;
-        address?: string;
-    };
-    meal_type_details: {
-        id: number;
-        name: string;
-    };
-    food_details: {
-        id: number;
-        name: string;
-        image?: string;
-    };
-    quantity: number;
-    meal_date: string;
-    is_consumed: boolean;
-    notes?: string;
-}
-
-interface PatientMapping {
-    id: number;
-    patient_details: {
-        id: number;
-        first_name: string;
-        last_name: string;
-    };
-}
+const getMediaUrl = (path: string | undefined | null) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
 
 const MealsBasedOnDailyPage: React.FC = () => {
     const [meals, setMeals] = useState<DailyMeal[]>([]);
-    const [patients, setPatients] = useState<PatientMapping[]>([]);
+    const [patients, setPatients] = useState<KitchenPatient[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     
@@ -69,52 +43,61 @@ const MealsBasedOnDailyPage: React.FC = () => {
 
     const fetchPatients = async () => {
         try {
-            const url = createApiUrl("api/usermicrokitchenmapping/?status=accepted");
-            const response = await axios.get(url, { headers: await getAuthHeaders() });
-            setPatients(response.data);
+            const data = await getKitchenPatients();
+            setPatients(data);
         } catch (error) {
             console.error(error);
+            toast.error("Failed to load patients");
         }
+    };
+
+    const getDateRange = () => {
+        const today = new Date().toISOString().split("T")[0];
+        const tomorrow = new Date(Date.now() + 864e5).toISOString().split("T")[0];
+        const d = new Date();
+        const day = d.getDay();
+        const startThisWeek = new Date(d);
+        startThisWeek.setDate(d.getDate() - day);
+        const endThisWeek = new Date(startThisWeek);
+        endThisWeek.setDate(startThisWeek.getDate() + 6);
+        const startNextWeek = new Date(startThisWeek);
+        startNextWeek.setDate(startThisWeek.getDate() + 7);
+        const endNextWeek = new Date(startNextWeek);
+        endNextWeek.setDate(startNextWeek.getDate() + 6);
+        return {
+            today,
+            tomorrow,
+            thisWeekStart: startThisWeek.toISOString().split("T")[0],
+            thisWeekEnd: endThisWeek.toISOString().split("T")[0],
+            nextWeekStart: startNextWeek.toISOString().split("T")[0],
+            nextWeekEnd: endNextWeek.toISOString().split("T")[0],
+        };
     };
 
     const fetchDailyMeals = async () => {
         setLoading(true);
         try {
-            let params = new URLSearchParams();
-            
-            if (selectedPatient !== "all") {
-                params.append("user", selectedPatient);
-            }
-
-            const today = new Date().toISOString().split('T')[0];
-            const tomorrowDate = new Date();
-            tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-            const tomorrow = tomorrowDate.toISOString().split('T')[0];
+            const range = getDateRange();
+            let params: { user?: string; meal_date?: string; start_date?: string; end_date?: string } = {};
+            if (selectedPatient !== "all") params.user = selectedPatient;
 
             if (rangeType === "today") {
-                params.append("meal_date", today);
+                params.meal_date = range.today;
             } else if (rangeType === "tomorrow") {
-                params.append("meal_date", tomorrow);
+                params.meal_date = range.tomorrow;
             } else if (rangeType === "this_week") {
-                const now = new Date();
-                const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-                const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
-                params.append("start_date", startOfWeek.toISOString().split('T')[0]);
-                params.append("end_date", endOfWeek.toISOString().split('T')[0]);
+                params.start_date = range.thisWeekStart;
+                params.end_date = range.thisWeekEnd;
             } else if (rangeType === "next_week") {
-                const now = new Date();
-                const startOfNextWeek = new Date(now.setDate(now.getDate() - now.getDay() + 7));
-                const endOfNextWeek = new Date(now.setDate(now.getDate() - now.getDay() + 13));
-                params.append("start_date", startOfNextWeek.toISOString().split('T')[0]);
-                params.append("end_date", endOfNextWeek.toISOString().split('T')[0]);
+                params.start_date = range.nextWeekStart;
+                params.end_date = range.nextWeekEnd;
             } else if (rangeType === "custom" && customStart && customEnd) {
-                params.append("start_date", customStart);
-                params.append("end_date", customEnd);
+                params.start_date = customStart;
+                params.end_date = customEnd;
             }
 
-            const url = createApiUrl(`api/usermeal/?${params.toString()}`);
-            const response = await axios.get(url, { headers: await getAuthHeaders() });
-            setMeals(response.data);
+            const data = await getKitchenMeals(params);
+            setMeals(data);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load prep schedule");
@@ -130,13 +113,8 @@ const MealsBasedOnDailyPage: React.FC = () => {
         lastFetchedMonthRef.current = key;
         setCalendarLoading(true);
         try {
-            const params = new URLSearchParams();
-            params.append("year", String(year));
-            params.append("month", String(month));
-            if (selectedPatient !== "all") params.append("user", selectedPatient);
-            const url = createApiUrl(`api/usermeal/monthly/?${params.toString()}`);
-            const response = await axios.get(url, { headers: await getAuthHeaders() });
-            setCalendarMeals(Array.isArray(response.data) ? response.data : response.data?.results ?? []);
+            const data = await getKitchenMealsMonthly(year, month, selectedPatient !== "all" ? selectedPatient : undefined);
+            setCalendarMeals(data);
         } catch (err) {
             console.error(err);
             toast.error("Failed to load calendar meals");
@@ -247,10 +225,10 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                 <Select 
                                     options={[
                                         { value: "all", label: "All Patients" },
-                                        ...patients.map(p => ({
+                                        ...patients.map((p) => ({
                                             value: String(p.patient_details.id),
-                                            label: `${p.patient_details.first_name} ${p.patient_details.last_name}`
-                                        }))
+                                            label: `${p.patient_details.first_name} ${p.patient_details.last_name}`,
+                                        })),
                                     ]}
                                     value={selectedPatient}
                                     onChange={(val) => setSelectedPatient(val)}
@@ -271,6 +249,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                         value={customStart}
                                         onChange={(date) => setCustomStart(date)}
                                         placeholder="Start Date"
+                                        minDate={new Date().toISOString().split("T")[0]}
                                     />
                                 </motion.div>
                             )}
@@ -288,6 +267,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                         value={customEnd}
                                         onChange={(date) => setCustomEnd(date)}
                                         placeholder="End Date"
+                                        minDate={customStart || new Date().toISOString().split("T")[0]}
                                     />
                                 </motion.div>
                             )}
@@ -387,7 +367,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                             <div className="flex gap-6">
                                                                 <div className="w-20 h-20 rounded-[30px] bg-gray-100 dark:bg-gray-950 overflow-hidden ring-8 ring-gray-50 dark:ring-white/5 relative">
                                                                     {m.food_details.image ? (
-                                                                        <img src={m.food_details.image} alt={m.food_details.name} className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-700" />
+                                                                        <img src={getMediaUrl(m.food_details.image)} alt={m.food_details.name} className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-700" />
                                                                     ) : (
                                                                         <div className="w-full h-full flex items-center justify-center text-indigo-500 bg-indigo-50 dark:bg-indigo-900/10">
                                                                              {getMealIcon(type)}
@@ -396,11 +376,17 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                                 </div>
                                                                 <div className="pt-2">
                                                                     <h4 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-tight mb-2 group-hover:text-indigo-600 transition-colors">{m.food_details.name}</h4>
-                                                                    <div className="flex items-center gap-3">
+                                                                    <div className="flex flex-wrap items-center gap-2">
                                                                         <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center gap-2">
                                                                             <FiHash className="text-indigo-500" size={12} />
                                                                             <span className="text-[10px] font-black text-indigo-600 uppercase">Quantity {m.quantity}</span>
                                                                         </div>
+                                                                        {m.packaging_material_details?.name && (
+                                                                            <div className="px-3 py-1 bg-gray-100 dark:bg-white/5 rounded-lg flex items-center gap-2">
+                                                                                <FiPackage className="text-gray-500" size={12} />
+                                                                                <span className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase">{m.packaging_material_details.name}</span>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>

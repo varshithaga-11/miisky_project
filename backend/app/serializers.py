@@ -1149,6 +1149,8 @@ class UserMealSerializer(serializers.ModelSerializer):
                 'id': obj.user.id,
                 'first_name': obj.user.first_name,
                 'last_name': obj.user.last_name,
+                'mobile': getattr(obj.user, 'mobile', None),
+                'address': getattr(obj.user, 'address', None),
             }
         return None
 
