@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FiXCircle, FiSearch, FiInfo, FiTrash2, FiClock, FiCheck, FiClipboard, FiUpload } from "react-icons/fi";
+import { FiXCircle, FiSearch, FiInfo, FiTrash2, FiClock, FiCheck, FiClipboard, FiUpload, FiImage } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
+import { createApiUrl } from "../../../access/access";
 import {
     getMicroKitchenList,
     updateMicroKitchenStatus,
@@ -14,6 +15,40 @@ import { toast, ToastContainer } from "react-toastify";
 import Button from "../../../components/ui/button/Button";
 
 type TabStatus = "all" | "draft" | "approved" | "rejected";
+
+const getMediaUrl = (path: string | undefined | null) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
+
+const InspectionMediaPreview: React.FC<{ file: File | null; onRemove?: () => void }> = ({ file, onRemove }) => {
+    const [url, setUrl] = useState<string | null>(null);
+    useEffect(() => {
+        if (file) {
+            const u = URL.createObjectURL(file);
+            setUrl(u);
+            return () => URL.revokeObjectURL(u);
+        }
+        setUrl(null);
+    }, [file]);
+    if (!file || !url) return null;
+    const isVideo = file.type.startsWith("video/");
+    return (
+        <div className="mt-2 relative inline-block">
+            {isVideo ? (
+                <video src={url} controls className="max-h-24 rounded-lg border border-gray-200 dark:border-gray-700" />
+            ) : (
+                <img src={url} alt="Preview" className="max-h-20 rounded-lg border border-gray-200 dark:border-gray-700 object-cover" />
+            )}
+            {onRemove && (
+                <button type="button" onClick={onRemove} className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full text-[10px] hover:bg-red-600">
+                    <FiXCircle size={12} />
+                </button>
+            )}
+        </div>
+    );
+};
 
 const MicroKitchenInformationPage: React.FC = () => {
     const [profiles, setProfiles] = useState<MicroKitchenProfile[]>([]);
@@ -359,22 +394,23 @@ const MicroKitchenInformationPage: React.FC = () => {
                                     { label: "Kitchen", url: viewingProfile.photo_kitchen },
                                     { label: "Platform", url: viewingProfile.photo_platform },
                                     { label: "FSSAI Cert", url: viewingProfile.fssai_cert },
-                                ].map((img, idx) => (
+                                ].map((img, idx) => {
+                                    const src = typeof img.url === "string" ? getMediaUrl(img.url) : null;
+                                    return (
                                     <div key={idx} className="group relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-white/[0.05]">
-                                        {img.url ? (
-                                            typeof img.url === "string" ? (
-                                                <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">New File Selected</div>
-                                            )
+                                        {src ? (
+                                            <img src={src} alt={img.label} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Image</div>
+                                            <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                                {typeof img.url === "object" && img.url ? "New File Selected" : "No Image"}
+                                            </div>
                                         )}
                                         <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 text-[10px] text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                                             {img.label}
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </section>
 
@@ -396,10 +432,44 @@ const MicroKitchenInformationPage: React.FC = () => {
                             <FiXCircle className="size-6 text-gray-400" />
                         </button>
 
-                        <div className="mb-8">
+                        <div className="mb-6">
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Kitchen Inspection</h3>
                             <p className="text-gray-500">Inspect profile for {isInspecting.brand_name}</p>
                         </div>
+
+                        {/* Kitchen's Uploaded Photos */}
+                        <section className="mb-8 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-white/[0.05]">
+                            <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-4 flex items-center gap-2"><FiImage size={14} /> Kitchen Photos (uploaded by owner)</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                {[
+                                    { label: "Exterior", url: typeof isInspecting.photo_exterior === "string" ? getMediaUrl(isInspecting.photo_exterior) : null, isDoc: false },
+                                    { label: "Entrance", url: typeof isInspecting.photo_entrance === "string" ? getMediaUrl(isInspecting.photo_entrance) : null, isDoc: false },
+                                    { label: "Kitchen", url: typeof isInspecting.photo_kitchen === "string" ? getMediaUrl(isInspecting.photo_kitchen) : null, isDoc: false },
+                                    { label: "Platform", url: typeof isInspecting.photo_platform === "string" ? getMediaUrl(isInspecting.photo_platform) : null, isDoc: false },
+                                    { label: "FSSAI Cert", url: typeof isInspecting.fssai_cert === "string" ? getMediaUrl(isInspecting.fssai_cert) : null, isDoc: true },
+                                ].map((img, idx) => (
+                                    <div key={idx} className="group relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                                        {img.url ? (
+                                            img.isDoc ? (
+                                                <a href={img.url} target="_blank" rel="noopener noreferrer" className="w-full h-full flex flex-col items-center justify-center gap-1 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                    <FiUpload className="size-8 text-gray-500" />
+                                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">View certificate</span>
+                                                </a>
+                                            ) : (
+                                                <a href={img.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                                                    <img src={img.url} alt={img.label} className="w-full h-full object-cover hover:opacity-90 transition-opacity" />
+                                                </a>
+                                            )
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No image</div>
+                                        )}
+                                        <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1.5 text-[10px] text-white font-medium">
+                                            {img.label}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
 
                         <form onSubmit={handleInspectionSubmit} className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -463,9 +533,9 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                     className="flex-1 h-1.5 bg-blue-100 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                                 />
                                                 
-                                                <label className={`cursor-pointer p-2 rounded-xl transition-colors flex items-center gap-2 ${
+                                                <label className={`cursor-pointer p-2 rounded-xl transition-colors flex items-center gap-2 shrink-0 ${
                                                     inspectionData[field.media as keyof MicroKitchenInspection] 
-                                                    ? "bg-green-100 text-green-700" 
+                                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" 
                                                     : "bg-gray-200 dark:bg-gray-700 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-600"
                                                 }`}>
                                                     <input
@@ -475,12 +545,17 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                         onChange={e => {
                                                             const file = e.target.files?.[0];
                                                             if (file) setInspectionData(prev => ({ ...prev, [field.media]: file }));
+                                                            e.target.value = "";
                                                         }}
                                                     />
                                                     <FiUpload size={14} />
                                                     {inspectionData[field.media as keyof MicroKitchenInspection] && <FiCheck size={12} />}
                                                 </label>
                                             </div>
+                                            <InspectionMediaPreview
+                                                file={inspectionData[field.media as keyof MicroKitchenInspection] instanceof File ? inspectionData[field.media as keyof MicroKitchenInspection] as File : null}
+                                                onRemove={() => setInspectionData(prev => ({ ...prev, [field.media]: null }))}
+                                            />
                                         </div>
                                     ))}
                                 </div>

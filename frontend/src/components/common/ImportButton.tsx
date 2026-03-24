@@ -23,7 +23,7 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
       '/master/food': { module: 'food', submenu: 'food' },
       '/master/ingredient': { module: 'food', submenu: 'ingredient' },
       '/master/unit': { module: 'food', submenu: 'unit' },
-      '/master/recipe': { module: 'food', submenu: 'recipe' },
+      '/master/recipe-creator': { module: 'food', submenu: 'recipe' },
       '/master/food-step': { module: 'food', submenu: 'food-step' },
       '/master/food-proximate': { module: 'food', submenu: 'foodproximate' },
       '/master/food-water-soluble-vitamins': { module: 'food', submenu: 'foodwatersolublevitamins' },

@@ -7,16 +7,97 @@ import Label from "../../../components/form/Label";
 import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiMapPin } from "react-icons/fi";
+import { FiMapPin, FiImage } from "react-icons/fi";
+import { createApiUrl } from "../../../access/access";
 import { getMyMicroKitchenProfile, MicroKitchenProfile, saveMyMicroKitchenProfile } from "./api";
 import { MapLocationPicker } from "../../../components/common/MapLocationPicker";
+
+const getMediaUrl = (path: string | undefined | null) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
+
+function PhotoUploadField({
+  label,
+  value,
+  onChange,
+  id,
+}: {
+  label: string;
+  value: File | string | null | undefined;
+  onChange: (file: File | null) => void;
+  id: string;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (value instanceof File) {
+      const url = URL.createObjectURL(value);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setPreviewUrl(null);
+  }, [value]);
+
+  const displaySrc = value instanceof File ? previewUrl : (typeof value === "string" && value ? getMediaUrl(value) : null);
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <div className="w-full sm:w-40 flex-shrink-0 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800/50 min-h-[100px] flex items-center justify-center">
+          {displaySrc ? (
+            <img
+              src={displaySrc}
+              alt={label}
+              className="w-full h-32 object-cover"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4">
+              <FiImage className="w-10 h-10 mb-1" />
+              <span className="text-xs">No image</span>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 w-full">
+          <input
+            id={id}
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              onChange(file);
+              e.target.value = "";
+            }}
+            className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-900/30 dark:file:text-indigo-400 file:font-medium hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/40"
+          />
+          {value instanceof File && (
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="mt-2 text-xs text-red-600 dark:text-red-400 hover:underline"
+            >
+              Remove new image
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MicroKitchenQuestionarePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
-  const [data, setData] = useState<Partial<MicroKitchenProfile> & { user_details?: { address?: string; city?: string; state?: string; country?: string } }>({});
+  const [data, setData] = useState<Partial<MicroKitchenProfile> & {
+    user_details?: { address?: string; city?: string; state?: string; country?: string; username?: string; first_name?: string; last_name?: string; email?: string; mobile?: string };
+    status?: string;
+    rating?: number;
+    total_reviews?: number;
+  }>({});
 
   useEffect(() => {
     (async () => {
@@ -108,6 +189,36 @@ export default function MicroKitchenQuestionarePage() {
         <div className="p-6 text-gray-600 dark:text-gray-300">Loading...</div>
       ) : (
         <div className="space-y-6 max-w-4xl">
+          {(data.status || data.rating != null || (data.total_reviews ?? 0) > 0) && (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 flex flex-wrap gap-4">
+              {data.status && (
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</span>
+                  <p className="font-semibold capitalize text-gray-900 dark:text-white">{data.status}</p>
+                </div>
+              )}
+              {data.rating != null && (
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rating</span>
+                  <p className="font-semibold text-gray-900 dark:text-white">{data.rating}</p>
+                </div>
+              )}
+              {(data.total_reviews ?? 0) > 0 && (
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total reviews</span>
+                  <p className="font-semibold text-gray-900 dark:text-white">{data.total_reviews}</p>
+                </div>
+              )}
+              {data.user_details && (
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">User</span>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {[data.user_details.first_name, data.user_details.last_name].filter(Boolean).join(" ") || data.user_details.username || "—"}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="brand_name">Brand name</Label>
@@ -279,24 +390,39 @@ export default function MicroKitchenQuestionarePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="fssai_cert">FSSAI certificate</Label>
-              <input id="fssai_cert" type="file" onChange={(e) => setField("fssai_cert", e.target.files?.[0] || null)} className="w-full text-sm" />
+              <div className="flex items-center gap-3">
+                {data.fssai_cert && typeof data.fssai_cert === "string" && (
+                  <a href={data.fssai_cert} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                    View current certificate
+                  </a>
+                )}
+                <input id="fssai_cert" type="file" onChange={(e) => setField("fssai_cert", e.target.files?.[0] || null)} className="w-full text-sm" />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="photo_exterior">Photo exterior</Label>
-              <input id="photo_exterior" type="file" accept="image/*" onChange={(e) => setField("photo_exterior", e.target.files?.[0] || null)} className="w-full text-sm" />
-            </div>
-            <div>
-              <Label htmlFor="photo_entrance">Photo entrance</Label>
-              <input id="photo_entrance" type="file" accept="image/*" onChange={(e) => setField("photo_entrance", e.target.files?.[0] || null)} className="w-full text-sm" />
-            </div>
-            <div>
-              <Label htmlFor="photo_kitchen">Photo kitchen</Label>
-              <input id="photo_kitchen" type="file" accept="image/*" onChange={(e) => setField("photo_kitchen", e.target.files?.[0] || null)} className="w-full text-sm" />
-            </div>
-            <div>
-              <Label htmlFor="photo_platform">Photo platform</Label>
-              <input id="photo_platform" type="file" accept="image/*" onChange={(e) => setField("photo_platform", e.target.files?.[0] || null)} className="w-full text-sm" />
-            </div>
+            <PhotoUploadField
+              label="Photo exterior"
+              id="photo_exterior"
+              value={data.photo_exterior}
+              onChange={(file) => setField("photo_exterior", file)}
+            />
+            <PhotoUploadField
+              label="Photo entrance"
+              id="photo_entrance"
+              value={data.photo_entrance}
+              onChange={(file) => setField("photo_entrance", file)}
+            />
+            <PhotoUploadField
+              label="Photo kitchen"
+              id="photo_kitchen"
+              value={data.photo_kitchen}
+              onChange={(file) => setField("photo_kitchen", file)}
+            />
+            <PhotoUploadField
+              label="Photo platform"
+              id="photo_platform"
+              value={data.photo_platform}
+              onChange={(file) => setField("photo_platform", file)}
+            />
           </div>
 
           <div>
