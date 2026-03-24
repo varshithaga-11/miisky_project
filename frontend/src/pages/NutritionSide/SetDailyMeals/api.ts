@@ -4,9 +4,10 @@ import { getMyPatients, MappedPatientResponse } from "../UploadedDocumentsByPati
 import { UserDietPlan } from "../SuggestPlanToPatients/api";
 import { MealType, getMealTypeList } from "../../AdminSide/MealType/mealtypeapi";
 import { Food, CuisineType, getCuisineTypeList, getFoodList } from "../../AdminSide/Food/foodapi";
+import { getPackagingMaterialList, PackagingMaterial } from "../../AdminSide/PackagingMaterial/api";
 
-export { getMyPatients, getMealTypeList, getCuisineTypeList, getFoodList };
-export type { MappedPatientResponse, UserDietPlan, MealType, Food, CuisineType };
+export { getMyPatients, getMealTypeList, getCuisineTypeList, getFoodList, getPackagingMaterialList };
+export type { MappedPatientResponse, UserDietPlan, MealType, Food, CuisineType, PackagingMaterial };
 
 export interface UserMeal {
     id?: number;
@@ -18,10 +19,12 @@ export interface UserMeal {
     quantity: number | null;
     meal_date: string;
     notes?: string;
+    packaging_material?: number | null;
     is_consumed?: boolean;
     meal_type_details?: { id: number; name: string };
     cuisine_type_details?: { id: number; name: string };
     food_details?: { id: number; name: string; image?: string };
+    packaging_material_details?: { id: number; name: string } | null;
 }
 
 export const getActivePlansForPatient = async (patientId: number): Promise<UserDietPlan[]> => {
@@ -64,6 +67,7 @@ export const saveBulkMeals = async (meals: UserMeal[]): Promise<any> => {
         quantity: m.quantity ?? 1,
         meal_date: m.meal_date,
         ...(m.notes != null && m.notes !== "" && { notes: m.notes }),
+        packaging_material: m.packaging_material ?? null,
     }));
     const url = createApiUrl("api/usermeal/bulk-create/");
     const response = await axios.post(url, payload, { headers: await getAuthHeaders() });

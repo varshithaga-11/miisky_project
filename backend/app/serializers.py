@@ -1130,6 +1130,7 @@ class UserMealSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     meal_type_details = serializers.SerializerMethodField()
     food_details = serializers.SerializerMethodField()
+    packaging_material_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMeal
@@ -1138,7 +1139,7 @@ class UserMealSerializer(serializers.ModelSerializer):
             'meal_type_details',
             'food', 'food_details',
             'quantity', 'meal_date', 'is_consumed', 'consumed_at', 
-            'notes', 'created_on'
+            'notes', 'packaging_material', 'packaging_material_details', 'created_on'
         ]
         read_only_fields = ['created_on']
 
@@ -1169,12 +1170,20 @@ class UserMealSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def get_packaging_material_details(self, obj):
+        if obj.packaging_material:
+            return {
+                'id': obj.packaging_material.id,
+                'name': obj.packaging_material.name,
+            }
+        return None
+
 
 class BulkUserMealSerializer(serializers.ModelSerializer):
     """Serializer for bulk create/update - no UniqueTogetherValidator (handled by update_or_create)."""
     class Meta:
         model = UserMeal
-        fields = ['user', 'user_diet_plan', 'meal_type', 'food', 'quantity', 'meal_date', 'notes']
+        fields = ['user', 'user_diet_plan', 'meal_type', 'food', 'quantity', 'meal_date', 'notes', 'packaging_material']
         validators = []  # Skip UniqueTogetherValidator - backend uses update_or_create
 
 

@@ -4,7 +4,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getMyMeals, markAsConsumed } from "./api";
 import type { UserMeal } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiClock, FiCheckCircle, FiActivity, FiCalendar, FiList } from "react-icons/fi";
+import { FiClock, FiCheckCircle, FiActivity, FiCalendar, FiList, FiPackage } from "react-icons/fi";
 import { GiBreadSlice, GiBowlOfRice, GiHamburger, GiCookingPot } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -146,8 +146,13 @@ const MealsAllotedPage: React.FC = () => {
                                         <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2 italic">
                                             {hoveredEvent.food_details?.name}
                                         </h4>
-                                        <div className="flex justify-between items-center text-[10px] font-bold text-gray-400">
+                                        <div className="flex flex-wrap justify-between items-center gap-2 text-[10px] font-bold text-gray-400">
                                             <span>Qty: {hoveredEvent.quantity}</span>
+                                            {hoveredEvent.packaging_material_details?.name && (
+                                                <span className="flex items-center gap-1 text-indigo-500">
+                                                    <FiPackage size={10} /> {hoveredEvent.packaging_material_details.name}
+                                                </span>
+                                            )}
                                             <span className={hoveredEvent.is_consumed ? 'text-emerald-500' : 'text-amber-500'}>
                                                 {hoveredEvent.is_consumed ? 'Consumed' : 'Pending'}
                                             </span>
@@ -266,6 +271,12 @@ const MealsAllotedPage: React.FC = () => {
                                                                 {meal.food_details?.nutrition?.calories && (
                                                                     <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-2xl text-[10px] font-bold text-gray-500 tracking-wider flex items-center gap-2">
                                                                         <span className="opacity-40 uppercase">E:</span> {meal.food_details.nutrition.calories} kcal
+                                                                    </div>
+                                                                )}
+                                                                {meal.packaging_material_details?.name && (
+                                                                    <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider flex items-center gap-2">
+                                                                        <FiPackage size={12} className="opacity-70" />
+                                                                        <span className="opacity-80">Packaging:</span> {meal.packaging_material_details.name}
                                                                     </div>
                                                                 )}
                                                             </div>

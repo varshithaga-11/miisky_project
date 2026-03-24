@@ -23,6 +23,8 @@ export interface UserMeal {
     is_consumed: boolean;
     consumed_at?: string;
     notes?: string;
+    packaging_material?: number | null;
+    packaging_material_details?: { id: number; name: string } | null;
 }
 
 export const getMyMeals = async (): Promise<UserMeal[]> => {

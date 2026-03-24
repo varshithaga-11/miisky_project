@@ -1607,7 +1607,7 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
 
 
 class UserMealViewSet(viewsets.ModelViewSet):
-    queryset = UserMeal.objects.all().select_related('user', 'user_diet_plan', 'meal_type', 'food')
+    queryset = UserMeal.objects.all().select_related('user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material')
     serializer_class = UserMealSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1674,7 +1674,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
         # Base queryset with date filter
         queryset = UserMeal.objects.select_related(
-            'user', 'user_diet_plan', 'meal_type', 'food'
+            'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material'
         ).filter(meal_date__range=[start_date, end_date])
 
         # Scope to logged-in user's role
@@ -1723,7 +1723,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
                         'food': item['food'],
                         'quantity': item.get('quantity'),
                         'user_diet_plan': item['user_diet_plan'],
-                        'notes': item.get('notes')
+                        'notes': item.get('notes'),
+                        'packaging_material_id': item.get('packaging_material'),
                     }
                 )
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)

@@ -4,10 +4,10 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, getUserMealsList, saveBulkMeals, getMealTypeList, getCuisineTypeList, getFoodList } from "./api";
+import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, getUserMealsList, saveBulkMeals, getMealTypeList, getCuisineTypeList, getFoodList, getPackagingMaterialList } from "./api";
 import type { MappedPatientResponse, UserDietPlan, UserMeal, MealType, Food, CuisineType } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch } from "react-icons/fi";
+import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DRAG_TYPE = "food-item";
@@ -37,20 +37,24 @@ const SetDailyMealsPage: React.FC = () => {
     const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
     const [selectedCuisineId, setSelectedCuisineId] = useState<number | "">("");
     const [showSaveButton, setShowSaveButton] = useState(false);
+    const [packagingMaterials, setPackagingMaterials] = useState<{ id: number; name: string }[]>([]);
+    const [selectedPackagingMaterialId, setSelectedPackagingMaterialId] = useState<number | "">("");
 
     useEffect(() => {
         const loadInitial = async () => {
             setLoading(true);
             try {
-                const [pts, mts, cuis] = await Promise.all([
+                const [pts, mts, cuis, pkgRes] = await Promise.all([
                     getMyPatients(),
                     getMealTypeList(1, "all").then((r: any) => r.results),
-                    getCuisineTypeList(1, "all").then((r: any) => r.results)
+                    getCuisineTypeList(1, "all").then((r: any) => r.results),
+                    getPackagingMaterialList(1, "all").then((r: any) => r.results ?? [])
                 ]);
                 const patientList = Array.isArray(pts) ? pts : (pts as any)?.results ?? [];
                 setPatients(patientList);
                 setMealTypes(mts);
                 setCuisines(cuis);
+                setPackagingMaterials(Array.isArray(pkgRes) ? pkgRes : []);
                 if (patientList.length > 0) setSelectedPatient(patientList[0]);
             } catch (err) {
                 toast.error("Failed to load setup data");
@@ -197,7 +201,8 @@ const SetDailyMealsPage: React.FC = () => {
                 meal_date: dateStr,
                 meal_type: selectedMealTypeId || mealTypes[0]?.id,
                 food: id,
-                quantity: 1
+                quantity: 1,
+                packaging_material: selectedPackagingMaterialId || null,
             };
             setDailyEntries(prev => [...prev, newEntry]);
             setShowSaveButton(true);
@@ -243,9 +248,14 @@ const SetDailyMealsPage: React.FC = () => {
             return;
         }
 
+        const mealsWithPackaging = entriesToSave.map((e) => ({
+            ...e,
+            packaging_material: selectedPackagingMaterialId || (e.packaging_material ?? null),
+        })) as UserMeal[];
+
         setSaving(true);
         try {
-            await saveBulkMeals(entriesToSave as UserMeal[]);
+            await saveBulkMeals(mealsWithPackaging);
             toast.success(`Successfully saved ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? "range" : "daily"} schedule`);
             setShowSaveButton(false);
             if (selectedPatient && activePlan) {
@@ -397,6 +407,20 @@ const SetDailyMealsPage: React.FC = () => {
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <FiPackage className="text-indigo-500" size={14} />
+                                            <select
+                                                value={selectedPackagingMaterialId}
+                                                onChange={(e) => setSelectedPackagingMaterialId(e.target.value ? Number(e.target.value) : "")}
+                                                className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none min-w-[140px]"
+                                                title="Packaging material for all meals"
+                                            >
+                                                <option value="">Packaging (all meals)</option>
+                                                {packagingMaterials.map((pm) => (
+                                                    <option key={pm.id} value={pm.id}>{pm.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                         <div className="flex p-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
                                             <button
                                                 onClick={() => setIsRangeMode(false)}
