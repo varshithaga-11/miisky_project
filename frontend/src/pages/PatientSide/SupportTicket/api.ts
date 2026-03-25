@@ -47,6 +47,15 @@ export type PaginatedResponse<T> = {
   results: T[];
 };
 
+export type TicketAttachment = {
+  id: number;
+  ticket: number;
+  uploaded_by: number | null;
+  file: string;
+  uploaded_at: string;
+  uploaded_by_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
+};
+
 export async function getTicketCategories(search = ""): Promise<TicketCategory[]> {
   const url = createApiUrl("api/ticketcategory/all/");
   const res = await axios.get(url, { headers: await getAuthHeaders(), params: search ? { search } : undefined });
@@ -99,4 +108,24 @@ export async function sendTicketMessage(payload: {
   const url = createApiUrl("api/ticketmessage/");
   const res = await axios.post(url, payload, { headers: await getAuthHeaders() });
   return res.data as TicketMessage;
+}
+
+export async function getTicketAttachments(ticketId: number): Promise<TicketAttachment[]> {
+  const url = createApiUrl("api/ticketattachment/");
+  const res = await axios.get(url, { headers: await getAuthHeaders(), params: { ticket: ticketId } });
+  return (res.data?.results ?? res.data) as TicketAttachment[];
+}
+
+export async function uploadTicketAttachment(ticketId: number, file: File): Promise<TicketAttachment> {
+  const url = createApiUrl("api/ticketattachment/");
+  const formData = new FormData();
+  formData.append("ticket", ticketId.toString());
+  formData.append("file", file);
+  
+  const headers = await getAuthHeaders();
+  // Overwrite the JSON content type with multipart for file uploads
+  headers["Content-Type"] = "multipart/form-data";
+
+  const res = await axios.post(url, formData, { headers });
+  return res.data as TicketAttachment;
 }

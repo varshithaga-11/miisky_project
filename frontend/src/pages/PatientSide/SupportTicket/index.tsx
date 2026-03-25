@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiMessageSquare, FiPlus, FiRefreshCw, FiSend, FiUser } from "react-icons/fi";
+import { FiMessageSquare, FiPlus, FiRefreshCw, FiSend, FiUser, FiPaperclip, FiFile, FiDownload, FiX } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -15,6 +15,9 @@ import {
   SupportTicketStatus,
   TicketCategory,
   TicketMessage,
+  TicketAttachment,
+  getTicketAttachments,
+  uploadTicketAttachment,
 } from "./api";
 import { getUserIdFromToken } from "../../../utils/auth";
 
@@ -45,13 +48,23 @@ const SupportTicketPage: React.FC = () => {
 
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
+  const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
   const [messageText, setMessageText] = useState("");
   const [statusFilter, setStatusFilter] = useState<SupportTicketStatus | "all">("all");
+  const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const filteredTickets = useMemo(() => {
-    if (statusFilter === "all") return tickets;
     return tickets.filter((t) => t.status === statusFilter);
   }, [tickets, statusFilter]);
+
+  const conversation = useMemo(() => {
+    const combined = [
+      ...messages.map((m) => ({ ...m, type: "message" as const, timestamp: new Date(m.created_at).getTime() })),
+      ...attachments.map((a) => ({ ...a, type: "attachment" as const, timestamp: new Date(a.uploaded_at).getTime() })),
+    ];
+    return combined.sort((a, b) => a.timestamp - b.timestamp);
+  }, [messages, attachments]);
 
   const loadCategories = async () => {
     try {
@@ -78,11 +91,15 @@ const SupportTicketPage: React.FC = () => {
 
   const loadMessages = async (ticketId: number) => {
     try {
-      const data = await getTicketMessages(ticketId);
-      setMessages(data);
+      const [msgData, attachData] = await Promise.all([
+        getTicketMessages(ticketId),
+        getTicketAttachments(ticketId)
+      ]);
+      setMessages(msgData);
+      setAttachments(attachData);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to load messages");
+      toast.error("Failed to load chat data");
     }
   };
 
@@ -129,15 +146,32 @@ const SupportTicketPage: React.FC = () => {
   const handleSendMessage = async () => {
     if (!activeTicket) return;
     const text = messageText.trim();
-    if (!text) return;
+    if (!text && !pendingFile) return;
+
+    setUploading(true);
     try {
-      const msg = await sendTicketMessage({ ticket: activeTicket.id, message: text, is_internal: false });
-      setMessages((prev) => [...prev, msg]);
-      setMessageText("");
+      if (pendingFile) {
+        const saved = await uploadTicketAttachment(activeTicket.id, pendingFile);
+        setAttachments((prev) => [...prev, saved]);
+        setPendingFile(null);
+      }
+      if (text) {
+        const msg = await sendTicketMessage({ ticket: activeTicket.id, message: text, is_internal: false });
+        setMessages((prev) => [...prev, msg]);
+        setMessageText("");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Failed to send message");
+      toast.error("Failed to send");
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setPendingFile(file);
+    e.target.value = "";
   };
 
   const getStatusBadge = (status: SupportTicketStatus) => {
@@ -242,49 +276,109 @@ const SupportTicketPage: React.FC = () => {
             ) : messages.length === 0 ? (
               <div className="text-center text-gray-500 py-10">No messages yet</div>
             ) : (
-              messages.map((m) => {
-                const isMe = m.sender === currentUserId;
-                return (
-                  <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-300 ${
-                        isMe
-                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none"
-                          : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
-                      }`}
-                    >
-                      <div className={`flex items-center gap-2 mb-1 text-[10px] font-medium uppercase tracking-wider ${isMe ? "text-blue-100" : "text-gray-500"}`}>
-                        {!isMe && <FiUser className="animate-pulse" />}
-                        <span>{isMe ? "You" : formatName(m.sender_details)}</span>
-                      </div>
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap">{m.message}</div>
-                      <div className={`mt-1.5 text-[9px] text-right font-medium ${isMe ? "text-blue-100/70" : "text-gray-400"}`}>
-                        {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+              conversation.map((item) => {
+                const isMe = (item.type === "message" ? (item as TicketMessage).sender : (item as TicketAttachment).uploaded_by) === currentUserId;
+                if (item.type === "message") {
+                  const m = item as TicketMessage;
+                  return (
+                    <div key={`msg-${m.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-300 ${
+                          isMe
+                            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none"
+                            : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
+                        }`}
+                      >
+                        <div className={`flex items-center gap-2 mb-1 text-[10px] font-medium uppercase tracking-wider ${isMe ? "text-blue-100" : "text-gray-500"}`}>
+                          {!isMe && <FiUser className="animate-pulse" />}
+                          <span>{isMe ? "You" : formatName(m.sender_details)}</span>
+                        </div>
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">{m.message}</div>
+                        <div className={`mt-1.5 text-[9px] text-right font-medium ${isMe ? "text-blue-100/70" : "text-gray-400"}`}>
+                          {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
+                  );
+                } else {
+                  const a = item as TicketAttachment;
+                  const fileName = a.file.split("/").pop() || "Attachment";
+                  return (
+                    <div key={`att-${a.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm border border-dashed transition-all ${
+                        isMe ? "bg-blue-50 border-blue-200 text-blue-800 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isMe ? "bg-blue-100 text-blue-600" : "bg-gray-200 text-gray-500"}`}>
+                            <FiFile className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold truncate">{fileName}</div>
+                            <div className="text-[10px] opacity-70">Shared by {isMe ? "you" : formatName(a.uploaded_by_details)}</div>
+                          </div>
+                          <a href={a.file} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                            <FiDownload className="w-4 h-4" />
+                          </a>
+                        </div>
+                        <div className="mt-2 flex justify-end">
+                           <span className="text-[9px] font-medium opacity-60">
+                             {a.uploaded_at ? new Date(a.uploaded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                           </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
               })
             )}
           </div>
 
           {activeTicket && (
-            <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] flex gap-2">
-              <input
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-              />
-              <Button onClick={handleSendMessage} className="inline-flex items-center gap-2">
-                <FiSend /> Send
-              </Button>
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] space-y-3">
+              {pendingFile && (
+                <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl max-w-xs transition-all animate-in fade-in slide-in-from-bottom-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                    <FiFile className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="text-xs font-bold text-blue-900 dark:text-blue-200 truncate">{pendingFile.name}</div>
+                    <div className="text-[10px] text-blue-600">Ready to send</div>
+                  </div>
+                  <button
+                    onClick={() => setPendingFile(null)}
+                    className="p-1.5 hover:bg-red-100 hover:text-red-600 text-gray-400 rounded-full transition-colors"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2 items-end">
+                <label className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${
+                  pendingFile ? "border-blue-500 bg-blue-50 text-blue-600" : "border-gray-200 hover:border-blue-400 text-gray-400 hover:text-blue-500"
+                }`}>
+                  <FiPaperclip className={uploading ? "animate-spin" : ""} />
+                  <input type="file" className="hidden" onChange={handleFileSelect} />
+                </label>
+                <div className="flex-1">
+                  <textarea
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    placeholder="Type your message..."
+                    className="w-full px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 resize-none max-h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                  />
+                </div>
+                <Button onClick={handleSendMessage} disabled={uploading} className="h-11 px-5 shadow-lg shadow-blue-500/20 active:scale-95">
+                  <FiSend />
+                </Button>
+              </div>
             </div>
           )}
         </div>
