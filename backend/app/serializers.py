@@ -60,6 +60,9 @@ class UserManagementSerializer(serializers.ModelSerializer):
     """
     password = serializers.CharField(write_only=True, required=False, allow_blank=True, style={'input_type': 'password'})
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True, style={'input_type': 'password'})
+    city_name = serializers.SerializerMethodField(read_only=True)
+    state_name = serializers.SerializerMethodField(read_only=True)
+    country_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserRegister
@@ -77,9 +80,12 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'photo',
             'address',
             'city',
+            'city_name',
             'zip_code',
             'state',
+            'state_name',
             'country',
+            'country_name',
             'latitude',
             'longitude',
             'joined_date',
@@ -89,7 +95,16 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'password',
             'password_confirm',
         ]
-        read_only_fields = ['created_on']
+        read_only_fields = ['created_on', 'city_name', 'state_name', 'country_name']
+
+    def get_city_name(self, obj):
+        return obj.city.name if obj.city else None
+
+    def get_state_name(self, obj):
+        return obj.state.name if obj.state else None
+
+    def get_country_name(self, obj):
+        return obj.country.name if obj.country else None
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -842,9 +857,39 @@ class DeliveryProfileSerializer(serializers.ModelSerializer):
 
 
 class UserNutritionistMappingSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    nutritionist_details = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = UserNutritionistMapping
-        fields = "__all__"
+        fields = [
+            'id', 'user', 'nutritionist', 'assigned_on', 'is_active',
+            'user_details', 'nutritionist_details',
+        ]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'username': obj.user.username,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+                'email': obj.user.email,
+                'mobile': obj.user.mobile,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'username': obj.nutritionist.username,
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+                'email': obj.nutritionist.email,
+                'mobile': obj.nutritionist.mobile,
+            }
+        return None
 
 
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────
@@ -1027,19 +1072,37 @@ class PatientHealthReportSerializer(serializers.ModelSerializer):
 
 class NutritionistReviewSerializer(serializers.ModelSerializer):
     report_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = NutritionistReview
         fields = [
-            'id', 'user', 'nutritionist', 'reports', 'report_details', 
-            'comments', 'created_on'
+            'id', 'user', 'nutritionist', 'nutritionist_details', 'reports', 'report_details',
+            'comments', 'created_on',
         ]
 
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+                'email': obj.nutritionist.email,
+            }
+        return None
+
     def get_report_details(self, obj):
-        return [
-            {"id": r.id, "title": r.title}
-            for r in obj.reports.all()
-        ]
+        out = []
+        for r in obj.reports.all().order_by('-uploaded_on'):
+            url = r.report_file.url if r.report_file else None
+            out.append({
+                'id': r.id,
+                'title': r.title,
+                'report_type': r.report_type,
+                'uploaded_on': r.uploaded_on,
+                'report_file': url,
+            })
+        return out
 
 
 class UserDietPlanSerializer(serializers.ModelSerializer):
@@ -1048,6 +1111,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
     nutritionist_details = serializers.SerializerMethodField()
     review_details = serializers.SerializerMethodField()
     micro_kitchen_details = serializers.SerializerMethodField()
+    verified_by_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserDietPlan
@@ -1058,11 +1122,11 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
             'amount_paid', 'transaction_id', 'payment_status',
             'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
-            'verified_by', 'verified_on',
+            'verified_by', 'verified_by_details', 'verified_on',
             'start_date', 'end_date',
             'suggested_on', 'approved_on', 'created_on', 'updated_on'
         ]
-        read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on', 'payment_uploaded_on', 'verified_on']
+        read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on', 'payment_uploaded_on', 'verified_on', 'verified_by_details']
 
     def get_diet_plan_details(self, obj):
         if obj.diet_plan:
@@ -1122,6 +1186,18 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
                 'longitude': getattr(user, 'longitude', None) if user else None,
                 'time_available': obj.micro_kitchen.time_available,
                 'status': obj.micro_kitchen.status,
+            }
+        return None
+
+    def get_verified_by_details(self, obj):
+        if obj.verified_by:
+            u = obj.verified_by
+            return {
+                'id': u.id,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'email': u.email,
+                'username': u.username,
             }
         return None
 
@@ -1382,4 +1458,158 @@ class OrderSerializer(serializers.ModelSerializer):
                 'brand_name': obj.micro_kitchen.brand_name,
             }
         return None
+
+
+class AdminPatientListSerializer(serializers.ModelSerializer):
+    """Summary row for admin patient directory (role=patient users)."""
+
+    has_questionnaire = serializers.SerializerMethodField()
+    health_reports_count = serializers.SerializerMethodField()
+    active_plan_title = serializers.SerializerMethodField()
+    active_plan_status = serializers.SerializerMethodField()
+    city_display = serializers.SerializerMethodField()
+    state_display = serializers.SerializerMethodField()
+    country_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserRegister
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'mobile',
+            'is_active', 'is_patient_mapped', 'created_on',
+            'has_questionnaire', 'health_reports_count',
+            'active_plan_title', 'active_plan_status',
+            'address', 'zip_code', 'city_display', 'state_display', 'country_display',
+        ]
+
+    def get_has_questionnaire(self, obj):
+        if hasattr(obj, '_has_q'):
+            return obj._has_q
+        return UserQuestionnaire.objects.filter(user=obj).exists()
+
+    def get_health_reports_count(self, obj):
+        if hasattr(obj, '_hr_count'):
+            return obj._hr_count
+        return obj.health_reports.count()
+
+    def _first_active_plan(self, obj):
+        plans = getattr(obj, '_active_diet_plans', None)
+        if plans:
+            return plans[0]
+        return UserDietPlan.objects.filter(user=obj, status='active').select_related('diet_plan').order_by('-id').first()
+
+    def get_active_plan_title(self, obj):
+        p = self._first_active_plan(obj)
+        if p and p.diet_plan:
+            return p.diet_plan.title
+        return None
+
+    def get_active_plan_status(self, obj):
+        p = self._first_active_plan(obj)
+        return p.status if p else None
+
+    def get_city_display(self, obj):
+        return obj.city.name if obj.city else None
+
+    def get_state_display(self, obj):
+        return obj.state.name if obj.state else None
+
+    def get_country_display(self, obj):
+        return obj.country.name if obj.country else None
+
+
+class AdminPatientDetailSerializer(serializers.ModelSerializer):
+    """
+    Full patient dossier for admin: questionnaire, health reports, nutritionist reviews,
+    diet plans, active plan, and allotted meals (food + packaging material).
+    """
+
+    questionnaire = serializers.SerializerMethodField()
+    health_reports = serializers.SerializerMethodField()
+    nutritionist_reviews = serializers.SerializerMethodField()
+    assigned_nutritionist = serializers.SerializerMethodField()
+    diet_plans = serializers.SerializerMethodField()
+    active_diet_plan = serializers.SerializerMethodField()
+    meals_for_active_plan = serializers.SerializerMethodField()
+    city_display = serializers.SerializerMethodField()
+    state_display = serializers.SerializerMethodField()
+    country_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserRegister
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'mobile', 'whatsapp',
+            'dob', 'gender', 'photo', 'address', 'zip_code', 'city', 'city_display',
+            'state', 'state_display', 'country', 'country_display',
+            'latitude', 'longitude', 'joined_date', 'is_active', 'is_patient_mapped', 'created_on',
+            'questionnaire', 'health_reports', 'nutritionist_reviews', 'assigned_nutritionist',
+            'diet_plans', 'active_diet_plan', 'meals_for_active_plan',
+        ]
+
+    def get_questionnaire(self, obj):
+        q = UserQuestionnaire.objects.filter(user=obj).first()
+        if not q:
+            return None
+        return UserQuestionnaireSerializer(q).data
+
+    def get_health_reports(self, obj):
+        qs = PatientHealthReport.objects.filter(user=obj).order_by('-uploaded_on')
+        return PatientHealthReportSerializer(qs, many=True).data
+
+    def get_nutritionist_reviews(self, obj):
+        qs = NutritionistReview.objects.filter(user=obj).select_related('nutritionist').prefetch_related(
+            'reports'
+        ).order_by('-created_on')
+        return NutritionistReviewSerializer(qs, many=True).data
+
+    def get_assigned_nutritionist(self, obj):
+        m = UserNutritionistMapping.objects.select_related('nutritionist').filter(
+            user=obj, is_active=True
+        ).first()
+        if not m:
+            return None
+        n = m.nutritionist
+        return {
+            'mapping_id': m.id,
+            'assigned_on': m.assigned_on,
+            'nutritionist': {
+                'id': n.id,
+                'username': n.username,
+                'first_name': n.first_name,
+                'last_name': n.last_name,
+                'email': n.email,
+                'mobile': n.mobile,
+            },
+        }
+
+    def get_diet_plans(self, obj):
+        qs = UserDietPlan.objects.filter(user=obj).select_related(
+            'nutritionist', 'diet_plan', 'micro_kitchen', 'review'
+        ).prefetch_related('diet_plan__features').order_by('-suggested_on')
+        return UserDietPlanSerializer(qs, many=True).data
+
+    def get_active_diet_plan(self, obj):
+        p = UserDietPlan.objects.filter(user=obj, status='active').select_related(
+            'nutritionist', 'diet_plan', 'micro_kitchen', 'review'
+        ).prefetch_related('diet_plan__features').first()
+        if not p:
+            return None
+        return UserDietPlanSerializer(p).data
+
+    def get_meals_for_active_plan(self, obj):
+        p = UserDietPlan.objects.filter(user=obj, status='active').first()
+        if not p:
+            return []
+        meals = UserMeal.objects.filter(user_diet_plan=p).select_related(
+            'meal_type', 'food', 'packaging_material'
+        ).order_by('meal_date', 'meal_type_id')
+        return UserMealSerializer(meals, many=True).data
+
+    def get_city_display(self, obj):
+        return obj.city.name if obj.city else None
+
+    def get_state_display(self, obj):
+        return obj.state.name if obj.state else None
+
+    def get_country_display(self, obj):
+        return obj.country.name if obj.country else None
 

@@ -4,7 +4,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 from django.http import FileResponse, HttpResponse
@@ -48,6 +48,14 @@ class Pagination(PageNumberPagination):
 
 
 # Create your views here.
+class IsAdminRole(BasePermission):
+    """Allow only authenticated users with role='admin'."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        return bool(u and u.is_authenticated and getattr(u, 'role', None) == 'admin')
+
+
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]  
     
@@ -122,6 +130,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     Admin CRUD for UserRegister model.
     Supports search on username/email/name/mobile and optional filter by created_by.
     Accepts multipart/form-data for photo upload.
+    Optional query param: role (e.g. role=patient) to restrict list.
     """
     queryset = UserRegister.objects.all().order_by('-id')
     serializer_class = UserManagementSerializer
@@ -130,6 +139,13 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile', 'whatsapp', 'city__name', 'state__name', 'country__name']
     permission_classes = [AllowAny]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        qs = UserRegister.objects.all().order_by('-id').select_related('city', 'state', 'country')
+        role = self.request.query_params.get('role')
+        if role:
+            qs = qs.filter(role=role.strip())
+        return qs
 
     # NOTE: UserRegister currently has no created_by field.
     # We intentionally do not filter by created_by, so list shows all users.
@@ -142,6 +158,23 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
     serializer_class = UserQuestionnaireSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
+
+    def get_queryset(self):
+        qs = UserQuestionnaire.objects.select_related('user').all()
+        u = self.request.user
+        patient_id = self.request.query_params.get('user')
+        if getattr(u, 'role', None) == 'admin':
+            if patient_id:
+                return qs.filter(user_id=patient_id)
+            return qs
+        if getattr(u, 'role', None) in ('patient', 'non_patient'):
+            return qs.filter(user=u)
+        if getattr(u, 'role', None) == 'nutritionist':
+            mapped_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=u, is_active=True
+            ).values_list('user_id', flat=True)
+            return qs.filter(user_id__in=mapped_ids)
+        return qs.none()
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):
@@ -166,6 +199,18 @@ class NutritionistProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
     pagination_class = Pagination
+
+    def get_queryset(self):
+        qs = NutritionistProfile.objects.select_related('user').all()
+        u = self.request.user
+        uid = self.request.query_params.get('user')
+        if getattr(u, 'role', None) == 'admin':
+            if uid:
+                return qs.filter(user_id=uid)
+            return qs
+        if getattr(u, 'role', None) == 'nutritionist':
+            return qs.filter(user=u)
+        return qs.none()
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):
@@ -335,6 +380,20 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
     serializer_class = UserNutritionistMappingSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
+
+    def get_queryset(self):
+        qs = UserNutritionistMapping.objects.select_related("user", "nutritionist").all()
+        u = self.request.user
+        patient_id = self.request.query_params.get('user')
+        if getattr(u, 'role', None) == 'admin':
+            if patient_id:
+                return qs.filter(user_id=patient_id)
+            return qs
+        if getattr(u, 'role', None) == 'nutritionist':
+            return qs.filter(nutritionist=u)
+        if getattr(u, 'role', None) in ('patient', 'non_patient'):
+            return qs.filter(user=u)
+        return qs.none()
 
     def perform_create(self, serializer):
         mapping = serializer.save()
@@ -1475,7 +1534,9 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
 
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
-    queryset = UserDietPlan.objects.all().select_related('user', 'nutritionist', 'diet_plan', 'review', 'micro_kitchen', 'micro_kitchen__user').prefetch_related('diet_plan__features')
+    queryset = UserDietPlan.objects.all().select_related(
+        'user', 'nutritionist', 'diet_plan', 'review', 'micro_kitchen', 'micro_kitchen__user', 'verified_by'
+    ).prefetch_related('diet_plan__features')
     serializer_class = UserDietPlanSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1563,16 +1624,30 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def upload_payment(self, request, pk=None):
-        """Patient uploads payment screenshot. Accepts multipart/form-data with 'screenshot' file."""
+        """Patient uploads payment screenshot. Accepts multipart/form-data with 'screenshot' file, 
+        plus amount_paid and transaction_id."""
         udp = self.get_object()
         if udp.user_id != request.user.id:
             return Response({"detail": "Only the assigned patient can upload payment."}, status=status.HTTP_403_FORBIDDEN)
         if udp.status != 'payment_pending':
             return Response({"detail": f"Cannot upload payment: status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        
         screenshot = request.FILES.get('screenshot') or request.FILES.get('payment_screenshot')
         if not screenshot:
             return Response({"detail": "Payment screenshot file is required."}, status=status.HTTP_400_BAD_REQUEST)
-        udp.upload_payment(screenshot=screenshot)
+        
+        amount_paid = request.data.get('amount_paid')
+        transaction_id = request.data.get('transaction_id')
+        
+        # Convert empty strings to None
+        if amount_paid == "": amount_paid = None
+        if transaction_id == "": transaction_id = None
+        
+        udp.upload_payment(
+            screenshot=screenshot, 
+            amount_paid=amount_paid, 
+            transaction_id=transaction_id
+        )
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -2047,3 +2122,38 @@ class CartItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return CartItem.objects.filter(cart__user=self.request.user)
+
+
+class AdminPatientOverviewViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin-only: paginated list of users with role=patient (summary columns);
+    retrieve returns nested questionnaire, health reports, nutritionist reviews,
+    diet plans, active plan, and UserMeal rows (food + packaging material).
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
+
+    def get_queryset(self):
+        from django.db.models import Count, Exists, OuterRef, Prefetch
+
+        qs = UserRegister.objects.filter(role='patient').select_related('city', 'state', 'country')
+        if self.action == 'list':
+            qs = qs.annotate(
+                _hr_count=Count('health_reports', distinct=True),
+                _has_q=Exists(UserQuestionnaire.objects.filter(user_id=OuterRef('pk'))),
+            ).prefetch_related(
+                Prefetch(
+                    'diet_plans',
+                    queryset=UserDietPlan.objects.filter(status='active').select_related('diet_plan').order_by('-id'),
+                    to_attr='_active_diet_plans',
+                )
+            )
+        return qs.order_by('-id')
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return AdminPatientDetailSerializer
+        return AdminPatientListSerializer

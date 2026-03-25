@@ -16,6 +16,7 @@ import {
   Truck,
   ShoppingCart,
   Package,
+  ClipboardList,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -86,6 +87,11 @@ const adminNavItems: NavItem[] = [
     icon: <UserCog className="w-5 h-5" />,
     name: "User Management",
     path: "/admin/usermanagement",
+  },
+  {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "Patients Overview",
+    path: "/admin/patients-overview",
   },
   {
     icon: <Briefcase className="w-5 h-5" />,

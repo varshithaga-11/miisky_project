@@ -39,6 +39,8 @@ const SuggestedPlansPage: React.FC = () => {
   const [rejectFeedback, setRejectFeedback] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [amountPaid, setAmountPaid] = useState("");
+  const [transactionId, setTransactionId] = useState("");
 
   useEffect(() => {
     fetchPlans();
@@ -95,10 +97,12 @@ const SuggestedPlansPage: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      const updated = await uploadPaymentScreenshot(paymentModal.id, screenshotFile);
+      const updated = await uploadPaymentScreenshot(paymentModal.id, screenshotFile, amountPaid, transactionId);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setPaymentModal(null);
       setScreenshotFile(null);
+      setAmountPaid("");
+      setTransactionId("");
       toast.success("Payment screenshot uploaded. Admin will verify and activate your plan.");
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Failed to upload screenshot");
@@ -253,6 +257,8 @@ const SuggestedPlansPage: React.FC = () => {
                           onClick={() => {
                             setPaymentModal(udp);
                             setScreenshotFile(null);
+                            setAmountPaid(udp.amount_paid || "");
+                            setTransactionId(udp.transaction_id || "");
                           }}
                           className="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2"
                         >
@@ -409,16 +415,46 @@ const SuggestedPlansPage: React.FC = () => {
                 </a>
               </div>
             )}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Payment Screenshot * {paymentModal.payment_screenshot && "(re-upload to replace)"}
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-600"
-              />
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Amount Paid (₹)
+                </label>
+                <input
+                  type="number"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  placeholder="e.g. 500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Transaction ID
+                </label>
+                <input
+                  type="text"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  placeholder="UTR / Transaction Ref"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Payment Screenshot * {paymentModal.payment_screenshot && "(re-upload to replace)"}
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-600"
+                />
+              </div>
+            </div>
               {screenshotFile && (
                 <div className="mt-4">
                   <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Preview</p>
@@ -430,28 +466,30 @@ const SuggestedPlansPage: React.FC = () => {
               <p className="text-xs text-gray-500 mt-2">
                 Upload a screenshot of your payment. Admin will verify and activate your plan.
               </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setPaymentModal(null);
-                  setScreenshotFile(null);
-                }}
-                className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUploadPayment}
-                disabled={submitting || !screenshotFile}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2"
-              >
-                {submitting ? "..." : <> <FiUpload /> Upload </>}
-              </button>
+              
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => {
+                    setPaymentModal(null);
+                    setScreenshotFile(null);
+                    setAmountPaid("");
+                    setTransactionId("");
+                  }}
+                  className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUploadPayment}
+                  disabled={submitting || !screenshotFile}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  {submitting ? "..." : <> <FiUpload /> Upload </>}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };

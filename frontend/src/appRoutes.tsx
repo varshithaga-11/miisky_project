@@ -83,6 +83,7 @@ import AvailableFoodsPage from "./pages/MicroKitchenSide/AvailableFoods/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
+import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
 
 // Website Pages
@@ -164,6 +165,7 @@ export function appRoutes() {
           <Route path="admin/food-fatty-acid-profile" element={<FoodFattyAcidProfileManagementPage />} />
           <Route path="admin/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
           <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
+          <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
