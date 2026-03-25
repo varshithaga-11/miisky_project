@@ -343,6 +343,35 @@ const nonPatientNavItems: NavItem[] = [
     path: "/profile-info",
   },
 ];
+
+const masterNavItems: NavItem[] = [
+  {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "Dashboard",
+    path: "/master/dashboard",
+  },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "User Management",
+    path: "/master/user-management",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Reports",
+    path: "/master/reports",
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Contact Us",
+    path: "/master/contact-us",
+  },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
+];
+
 const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
@@ -355,6 +384,7 @@ const MasterSidebar: React.FC = () => {
 
   const navItems = useMemo<NavItem[]>(() => {
     const role = getUserRoleFromToken();
+    if (role === "master") return masterNavItems;
     if (role === "patient") return patientNavItems;
     if (role === "non_patient") return nonPatientNavItems;
     if (role === "nutritionist") return nutritionistNavItems;

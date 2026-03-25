@@ -2,6 +2,7 @@ import { jwtDecode } from "jwt-decode";
 
 export type AppRole =
   | "admin"
+  | "master"
   | "nutritionist"
   | "patient"
   | "supply_chain"
