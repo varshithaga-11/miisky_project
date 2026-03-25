@@ -85,32 +85,35 @@ import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/ind
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
+import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
+import SupportTicketRequestsPage from "./pages/AdminSide/SupportTicketRequests";
+import PatientSupportTicketPage from "./pages/PatientSide/SupportTicket";
 
 // Website Pages
-const WebsiteLayout = lazy(() => import("./website/layout"));
-const WebsiteHome = lazy(() => import("./website/page"));
-const WebsiteAbout = lazy(() => import("./website/about/page"));
-const WebsiteBlog = lazy(() => import("./website/blog/page"));
-const WebsiteBlog2 = lazy(() => import("./website/blog-2/page"));
-const WebsiteBlogDetails = lazy(() => import("./website/blog-details/page"));
-const WebsiteContact = lazy(() => import("./website/contact/page"));
-const WebsiteDepartments = lazy(() => import("./website/departments/page"));
-const WebsiteDepartmentDetails = lazy(() => import("./website/department-details/page"));
-const WebsiteDepartmentDetails2 = lazy(() => import("./website/department-details-2/page"));
-const WebsiteDepartmentDetails3 = lazy(() => import("./website/department-details-3/page"));
-const WebsiteDepartmentDetails4 = lazy(() => import("./website/department-details-4/page"));
-const WebsiteDepartmentDetails5 = lazy(() => import("./website/department-details-5/page"));
-const WebsiteDepartmentDetails6 = lazy(() => import("./website/department-details-6/page"));
-const WebsiteDoctors = lazy(() => import("./website/doctors/page"));
-const WebsiteDoctorDetails = lazy(() => import("./website/doctor-details/page"));
-const WebsitePortfolio = lazy(() => import("./website/portfolio/page"));
-const WebsitePortfolio2 = lazy(() => import("./website/portfolio-2/page"));
-const WebsitePricing = lazy(() => import("./website/pricing/page"));
-const WebsiteLogin = lazy(() => import("./website/login/page"));
-const WebsiteRegister = lazy(() => import("./website/register/page"));
-const WebsiteIndex2 = lazy(() => import("./website/index-2/page"));
-const WebsiteIndex3 = lazy(() => import("./website/index-3/page"));
-const WebsiteError = lazy(() => import("./website/error/page"));
+const WebsiteLayout = lazy(() => import("./Website/layout"));
+const WebsiteHome = lazy(() => import("./Website/page"));
+const WebsiteAbout = lazy(() => import("./Website/about/page"));
+const WebsiteBlog = lazy(() => import("./Website/blog/page"));
+const WebsiteBlog2 = lazy(() => import("./Website/blog-2/page"));
+const WebsiteBlogDetails = lazy(() => import("./Website/blog-details/page"));
+const WebsiteContact = lazy(() => import("./Website/contact/page"));
+const WebsiteDepartments = lazy(() => import("./Website/departments/page"));
+const WebsiteDepartmentDetails = lazy(() => import("./Website/department-details/page"));
+const WebsiteDepartmentDetails2 = lazy(() => import("./Website/department-details-2/page"));
+const WebsiteDepartmentDetails3 = lazy(() => import("./Website/department-details-3/page"));
+const WebsiteDepartmentDetails4 = lazy(() => import("./Website/department-details-4/page"));
+const WebsiteDepartmentDetails5 = lazy(() => import("./Website/department-details-5/page"));
+const WebsiteDepartmentDetails6 = lazy(() => import("./Website/department-details-6/page"));
+const WebsiteDoctors = lazy(() => import("./Website/doctors/page"));
+const WebsiteDoctorDetails = lazy(() => import("./Website/doctor-details/page"));
+const WebsitePortfolio = lazy(() => import("./Website/portfolio/page"));
+const WebsitePortfolio2 = lazy(() => import("./Website/portfolio-2/page"));
+const WebsitePricing = lazy(() => import("./Website/pricing/page"));
+const WebsiteLogin = lazy(() => import("./Website/login/page"));
+const WebsiteRegister = lazy(() => import("./Website/register/page"));
+const WebsiteIndex2 = lazy(() => import("./Website/index-2/page"));
+const WebsiteIndex3 = lazy(() => import("./Website/index-3/page"));
+const WebsiteError = lazy(() => import("./Website/error/page"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -166,6 +169,8 @@ export function appRoutes() {
           <Route path="admin/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
           <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
           <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
+          <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
+          <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
@@ -181,6 +186,7 @@ export function appRoutes() {
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />
+          <Route path="patient/support-tickets" element={<PatientSupportTicketPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />

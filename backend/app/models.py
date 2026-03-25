@@ -1887,6 +1887,7 @@ class CartItem(models.Model):
 
 # ------------------------------------------------------------
 # --------------------------------------------------------------------
+
 class Notification(models.Model):
     user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True, related_name="notifications")
     title = models.CharField(max_length=255)
@@ -1897,3 +1898,142 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.title} → {self.user.username}"
     
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+# 🔹 CATEGORY MODEL
+class TicketCategory(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+# 🔹 MAIN SUPPORT TICKET
+class SupportTicket(models.Model):
+
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    ]
+
+    USER_TYPE_CHOICES = [
+        ('patient', 'Patient'),
+        ('nutritionist', 'Nutritionist'),
+        ('kitchen', 'Kitchen'),
+    ]
+
+    created_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="created_tickets"
+    )
+
+    assigned_to = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_tickets"
+    )
+
+    category = models.ForeignKey(
+        TicketCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tickets"
+    )
+
+    user_type = models.CharField(
+        max_length=20,
+        choices=USER_TYPE_CHOICES
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='open'
+    )
+
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='medium'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"#{self.id} - {self.title} ({self.status})"
+
+
+# 🔹 TICKET CONVERSATION (CHAT)
+class TicketMessage(models.Model):
+
+    ticket = models.ForeignKey(
+        SupportTicket,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="messages"
+    )
+
+    sender = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True
+    )
+
+    message = models.TextField()
+
+    is_internal = models.BooleanField(default=False)
+    # True → only admin/support can see
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Ticket #{self.ticket.id} - {self.sender}"
+
+
+# 🔹 ATTACHMENTS
+class TicketAttachment(models.Model):
+
+    ticket = models.ForeignKey(
+        SupportTicket,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="attachments"
+    )
+
+    uploaded_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True
+    )
+
+    file = models.FileField(upload_to="support_attachments/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Attachment for Ticket #{self.ticket.id}"
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------

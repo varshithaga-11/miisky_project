@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Package,
   ClipboardList,
+  HelpCircle,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -89,6 +90,7 @@ const adminNavItems: NavItem[] = [
     path: "/admin/usermanagement",
   },
   {
+
     icon: <ClipboardList className="w-5 h-5" />,
     name: "Patients Overview",
     path: "/admin/patients-overview",
@@ -96,41 +98,48 @@ const adminNavItems: NavItem[] = [
   {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Micro Kitchens",
-    path: "/admin/micro-kitchen-information"
-  },
-  {
-    icon: <Users className="w-5 h-5" />,
-    name: "Nutritionists",
-    path: "/admin/nutrition-information",
+    subItems: [
+      { name: "Kitchen Information", path: "/admin/micro-kitchen-information" },
+    ],
   },
   {
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Payment Verification",
     path: "/admin/patient-payment-verification",
   },
-
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "Nutritionists",
+    subItems: [
+      { name: "Nutritionist Information", path: "/admin/nutrition-information" },
+    ],
+  },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Health Monitoring",
     subItems: [
       { name: "Health Parameters", path: "/admin/health-parameter" },
       { name: "Normal Ranges", path: "/admin/normal-range" },
+      { name: "Diet Plans", path: "/admin/diet-plan" },
     ],
   },
   {
     icon: <FileText className="w-5 h-5" />,
-    name: "Diet Plans",
-    path: "/admin/diet-plan",
-  },
-  {
-    icon: <FileText className="w-5 h-5" />,
     name: "Mappings",
-    path: "/admin/user-nutrition-mapping",
+    subItems: [{ name: "User–Nutritionist Mapping", path: "/admin/user-nutrition-mapping" }],
   },
   {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
+  },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support",
+    subItems: [
+      { name: "Ticket Categories", path: "/admin/ticket-category" },
+      { name: "Support Ticket Requests", path: "/admin/support-ticket-requests" },
+    ],
   },
 ];
 
@@ -195,6 +204,11 @@ const patientNavItems: NavItem[] = [
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
+  },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support Tickets",
+    path: "/patient/support-tickets",
   },
 ];
 

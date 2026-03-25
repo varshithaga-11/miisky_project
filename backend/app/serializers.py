@@ -1813,3 +1813,76 @@ class AdminNutritionistDetailSerializer(serializers.ModelSerializer):
 
     def get_country_display(self, obj):
         return obj.country.name if obj.country else None
+
+
+# ── Support Tickets ───────────────────────────────────────────────────────────
+
+class UserSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRegister
+        fields = ["id", "username", "first_name", "last_name"]
+
+
+class TicketCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketCategory
+        fields = ["id", "name"]
+
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    created_by_details = UserSummarySerializer(source="created_by", read_only=True)
+    assigned_to_details = UserSummarySerializer(source="assigned_to", read_only=True)
+    category_details = TicketCategorySerializer(source="category", read_only=True)
+
+    class Meta:
+        model = SupportTicket
+        fields = [
+            "id",
+            "created_by",
+            "created_by_details",
+            "assigned_to",
+            "assigned_to_details",
+            "category",
+            "category_details",
+            "user_type",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_by", "created_at", "updated_at"]
+
+
+class TicketMessageSerializer(serializers.ModelSerializer):
+    sender_details = UserSummarySerializer(source="sender", read_only=True)
+
+    class Meta:
+        model = TicketMessage
+        fields = [
+            "id",
+            "ticket",
+            "sender",
+            "sender_details",
+            "message",
+            "is_internal",
+            "created_at",
+        ]
+        read_only_fields = ["sender", "created_at"]
+
+
+class TicketAttachmentSerializer(serializers.ModelSerializer):
+    uploaded_by_details = UserSummarySerializer(source="uploaded_by", read_only=True)
+
+    class Meta:
+        model = TicketAttachment
+        fields = [
+            "id",
+            "ticket",
+            "uploaded_by",
+            "uploaded_by_details",
+            "file",
+            "uploaded_at",
+        ]
+        read_only_fields = ["uploaded_by", "uploaded_at"]

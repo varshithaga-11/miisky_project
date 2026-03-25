@@ -20,6 +20,7 @@ from .serializers import *
 
 import os
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 
@@ -2429,3 +2430,150 @@ class AdminNutritionistOverviewViewSet(viewsets.ReadOnlyModelViewSet):
         # We can use a simpler serializer for the list if needed, or stick to a basic one.
         # UserManagementSerializer is fine for summary list.
         return UserManagementSerializer
+
+
+# ── Support Tickets ───────────────────────────────────────────────────────────
+
+class TicketCategoryViewSet(viewsets.ModelViewSet):
+    queryset = TicketCategory.objects.all().order_by("name")
+    serializer_class = TicketCategorySerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    def get_permissions(self):
+        # Everyone authenticated can read categories (for ticket creation).
+        if self.action in ["list", "retrieve", "list_all"]:
+            return [IsAuthenticated()]
+        # Only admin can manage categories.
+        return [IsAuthenticated(), IsAdminRole()]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def list_all(self, request):
+        qs = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class SupportTicketViewSet(viewsets.ModelViewSet):
+    serializer_class = SupportTicketSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["title", "description", "created_by__username", "created_by__first_name", "created_by__last_name"]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        u = self.request.user
+        qs = SupportTicket.objects.all().select_related("created_by", "assigned_to", "category").order_by("-id")
+
+        status_param = self.request.query_params.get("status")
+        user_type_param = self.request.query_params.get("user_type")
+        mine = self.request.query_params.get("mine")
+
+        if getattr(u, "role", None) != "admin":
+            qs = qs.filter(created_by=u)
+        else:
+            if mine in ["1", "true", "True", "yes", "y"]:
+                qs = qs.filter(created_by=u)
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        if user_type_param:
+            qs = qs.filter(user_type=user_type_param)
+        return qs
+
+    def perform_create(self, serializer):
+        u = self.request.user
+
+        role = getattr(u, "role", None)
+        if role == "patient" or role == "non_patient":
+            user_type = "patient"
+        elif role == "nutritionist":
+            user_type = "nutritionist"
+        elif role == "micro_kitchen":
+            user_type = "kitchen"
+        else:
+            # Admin creating on behalf; accept incoming user_type if valid, else default to patient.
+            user_type = self.request.data.get("user_type") or "patient"
+
+        assigned_to = serializer.validated_data.get("assigned_to", None)
+        if getattr(u, "role", None) != "admin":
+            assigned_to = None
+
+        serializer.save(created_by=u, user_type=user_type, assigned_to=assigned_to)
+
+    def perform_update(self, serializer):
+        u = self.request.user
+        if getattr(u, "role", None) != "admin":
+            # Non-admins can only update limited fields
+            allowed = {"title", "description", "priority"}
+            incoming = set(serializer.validated_data.keys())
+            if not incoming.issubset(allowed):
+                raise PermissionDenied("You are not allowed to update these fields.")
+        serializer.save()
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def list_all(self, request):
+        qs = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class TicketMessageViewSet(viewsets.ModelViewSet):
+    serializer_class = TicketMessageSerializer
+    pagination_class = Pagination
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["message", "sender__username", "sender__first_name", "sender__last_name"]
+
+    def get_queryset(self):
+        u = self.request.user
+        qs = TicketMessage.objects.all().select_related(
+            "ticket", "sender", "ticket__created_by", "ticket__assigned_to", "ticket__category"
+        ).order_by("created_at")
+
+        ticket_id = self.request.query_params.get("ticket")
+        if ticket_id:
+            qs = qs.filter(ticket_id=ticket_id)
+
+        if getattr(u, "role", None) != "admin":
+            qs = qs.filter(ticket__created_by=u, is_internal=False)
+        return qs
+
+    def perform_create(self, serializer):
+        u = self.request.user
+        ticket = serializer.validated_data.get("ticket")
+
+        # Only admin can post internal notes; also enforce ticket access.
+        is_internal = bool(serializer.validated_data.get("is_internal", False))
+        if getattr(u, "role", None) != "admin":
+            is_internal = False
+            if not ticket or ticket.created_by_id != u.id:
+                raise PermissionDenied("Not allowed to post on this ticket.")
+
+        serializer.save(sender=u, is_internal=is_internal)
+
+
+class TicketAttachmentViewSet(viewsets.ModelViewSet):
+    serializer_class = TicketAttachmentSerializer
+    pagination_class = Pagination
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_queryset(self):
+        u = self.request.user
+        qs = TicketAttachment.objects.all().select_related("ticket", "uploaded_by", "ticket__created_by").order_by("-id")
+        ticket_id = self.request.query_params.get("ticket")
+        if ticket_id:
+            qs = qs.filter(ticket_id=ticket_id)
+        if getattr(u, "role", None) != "admin":
+            qs = qs.filter(ticket__created_by=u)
+        return qs
+
+    def perform_create(self, serializer):
+        u = self.request.user
+        ticket = serializer.validated_data.get("ticket")
+        if getattr(u, "role", None) != "admin":
+            if not ticket or ticket.created_by_id != u.id:
+                raise PermissionDenied("Not allowed to upload for this ticket.")
+        serializer.save(uploaded_by=u)

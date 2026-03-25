@@ -34,6 +34,12 @@ router.register(r'cart', CartViewSet, basename='cart')
 router.register(r'cart-item', CartItemViewSet, basename='cart-item')
 router.register(r'order', OrderViewSet, basename='order')
 
+# Support Ticket routes
+router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
+router.register(r'supportticket', SupportTicketViewSet, basename='supportticket')
+router.register(r'ticketmessage', TicketMessageViewSet, basename='ticketmessage')
+router.register(r'ticketattachment', TicketAttachmentViewSet, basename='ticketattachment')
+
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)
 router.register(r'packagingmaterial', PackagingMaterialViewSet)
