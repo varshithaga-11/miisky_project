@@ -2210,6 +2210,25 @@ class AdminMicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
         return qs.order_by('-suggested_on')
 
 
+class MicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Allows a Micro-Kitchen to view patients currently allotted to them via diet plans.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = AdminMicroKitchenPatientSlotSerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, 'role', None) != 'micro_kitchen':
+            return UserDietPlan.objects.none()
+
+        return UserDietPlan.objects.filter(
+            micro_kitchen__user=user,
+            status__in=['active', 'approved', 'payment_pending']
+        ).select_related('user', 'diet_plan', 'micro_kitchen').order_by('-id')
+
+
 # ---- Admin MicroKitchen panels (NO pagination) -----------------------------
 
 class AdminMicroKitchenPatientsNoPaginationView(APIView):

@@ -1,5 +1,8 @@
-import React from "react";
-import { FiClock, FiInfo, FiCheck } from "react-icons/fi";
+import React, { useState } from "react";
+import { FiClock, FiInfo, FiCheck, FiList, FiCalendar, FiUser, FiPackage, FiHash } from "react-icons/fi";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 import { InfoRow, InfoSection, EmptyState } from "../PatientOverview/PatientDataViews";
 import { createApiUrl } from "../../../access/access";
 
@@ -306,66 +309,177 @@ export function DisplayKitchenFoods({ items }: { items: any[] }) {
 }
 
 export function DisplayKitchenDailyPrep({ items }: { items: any[] }) {
-  if (!items || items.length === 0) return <EmptyState message="No meals scheduled for today's prep." />;
+  const [viewType, setViewType] = useState<"list" | "calendar">("list");
+  const [filterType, setFilterType] = useState<"today" | "tomorrow" | "thisWeek" | "all">("today");
+
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
   
-  const today = new Date().toISOString().split('T', 1)[0];
-  const todayMeals = items.filter(m => m.meal_date === today);
-  const displayItems = todayMeals.length > 0 ? todayMeals : items.slice(0, 20);
+  const getWeekRange = () => {
+    const curr = new Date();
+    const first = curr.getDate() - curr.getDay();
+    const last = first + 6;
+    return {
+       start: new Date(curr.setDate(first)).toISOString().split('T')[0],
+       end: new Date(curr.setDate(last)).toISOString().split('T')[0]
+    };
+  };
+  const weekRange = getWeekRange();
+
+  const filteredItems = items.filter(m => {
+    if (filterType === "today") return m.meal_date === today;
+    if (filterType === "tomorrow") return m.meal_date === tomorrow;
+    if (filterType === "thisWeek") return m.meal_date >= weekRange.start && m.meal_date <= weekRange.end;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-           <div className="px-4 py-1.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20">
-              {todayMeals.length > 0 ? "Today's Dispatch" : "Upcoming Strategy"}
-           </div>
-           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">{displayItems.length} Units</span>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {displayItems.map((m: any) => (
-          <div key={m.id} className="group rounded-[30px] border border-gray-100 dark:border-white/[0.05] p-6 bg-white/80 dark:bg-gray-800/40 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-indigo-600 font-black text-4xl italic">
-               {m.meal_type_details?.name?.[0]}
-            </div>
-            
-            <div className="flex items-start gap-4 mb-5">
-               <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
-                  <FiClock size={24} />
-               </div>
-               <div>
-                  <div className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter group-hover:text-indigo-600 transition-colors">{m.meal_type_details?.name}</div>
-                  <div className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-0.5">{m.meal_date}</div>
-               </div>
-            </div>
-
-            <div className="space-y-4">
-               <div>
-                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 leading-tight">{m.food_details?.name}</div>
-                  <div className="flex flex-wrap items-center gap-2">
-                     <span className="text-[9px] font-black bg-indigo-600 text-white px-2.5 py-1 rounded-lg uppercase">Quantity {m.quantity}</span>
-                     {m.packaging_material_details?.name && (
-                        <span className="text-[9px] font-black bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2.5 py-1 rounded-lg uppercase">📦 {m.packaging_material_details.name}</span>
-                     )}
-                  </div>
-               </div>
-
-               <div className="pt-5 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-xs font-black text-gray-500">
-                        {m.user_details?.first_name?.[0]}{m.user_details?.last_name?.[0]}
-                     </div>
-                     <div>
-                        <div className="text-xs font-black text-gray-900 dark:text-white uppercase">{m.user_details?.first_name} {m.user_details?.last_name}</div>
-                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Residential Delivery</div>
-                     </div>
-                  </div>
-               </div>
-            </div>
+       {/* High-Performance Controls */}
+       <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/60 dark:bg-white/[0.02] p-4 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-sm backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-2">
+             {[
+               { id: "today", label: "Today" },
+               { id: "tomorrow", label: "Tomorrow" },
+               { id: "thisWeek", label: "This Week" },
+               { id: "all", label: "See All" }
+             ].map(f => (
+                <button
+                   key={f.id}
+                   onClick={() => setFilterType(f.id as any)}
+                   className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                     filterType === f.id 
+                     ? "bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 scale-105" 
+                     : "bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent"
+                   }`}
+                >
+                   {f.label}
+                </button>
+             ))}
           </div>
-        ))}
-      </div>
+          
+          <div className="flex bg-gray-100 dark:bg-gray-950 p-1.5 rounded-2xl self-end md:self-auto border border-gray-200 dark:border-white/5">
+             <button 
+                onClick={() => setViewType("list")}
+                className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${
+                   viewType === 'list' 
+                   ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm" 
+                   : "text-gray-400 hover:text-gray-600"
+                }`}
+             >
+                <FiList size={16} /> List
+             </button>
+             <button 
+                onClick={() => setViewType("calendar")}
+                className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${
+                   viewType === 'calendar' 
+                   ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm" 
+                   : "text-gray-400 hover:text-gray-600"
+                }`}
+             >
+                <FiCalendar size={16} /> Grid
+             </button>
+          </div>
+       </div>
+
+       {filteredItems.length === 0 ? (
+          <div className="py-20">
+             <EmptyState message={`No preparation tasks found for ${filterType === 'all' ? 'this history' : filterType}.`} />
+          </div>
+       ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+             {viewType === "list" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+                   {filteredItems.map(m => <MealCard key={m.id} m={m} />)}
+                </div>
+             ) : (
+                <div className="bg-white dark:bg-gray-900/50 p-8 rounded-[40px] border border-gray-100 dark:border-white/5 shadow-2xl relative">
+                   <FullCalendar
+                      plugins={[dayGridPlugin, interactionPlugin]}
+                      initialView="dayGridMonth"
+                      headerToolbar={{ left: "prev,next today", center: "title", right: "" }}
+                      events={filteredItems.map(m => ({
+                         id: String(m.id),
+                         title: `${m.meal_type_details?.name}: ${m.food_details?.name}`,
+                         start: m.meal_date,
+                         allDay: true,
+                         backgroundColor: '#4f46e5',
+                         borderColor: 'transparent',
+                         extendedProps: { m }
+                      }))}
+                      eventContent={(arg) => (
+                         <div 
+                            title={`${arg.event.title}\nPatient: ${arg.event.extendedProps.m.user_details?.first_name} ${arg.event.extendedProps.m.user_details?.last_name}\nQty: ${arg.event.extendedProps.m.quantity}`}
+                            className="px-2 py-1 rounded-lg text-[9px] font-black uppercase overflow-hidden truncate transition-all hover:bg-amber-500 cursor-pointer"
+                         >
+                            {arg.event.title}
+                         </div>
+                      )}
+                      height="auto"
+                   />
+                </div>
+             )}
+          </div>
+       )}
     </div>
   );
+}
+
+function MealCard({ m }: { m: any }) {
+   return (
+      <div className="group rounded-[40px] border border-gray-100 dark:border-white/[0.05] p-8 bg-white/80 dark:bg-gray-800/40 shadow-sm hover:shadow-2xl hover:border-indigo-400 hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden">
+         {/* Detail Overlay on hover */}
+         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity text-indigo-600 font-black text-6xl italic transform rotate-6 scale-150 pointer-events-none">
+            {m.meal_type_details?.name?.[0]}
+         </div>
+         
+         <div className="flex items-start gap-6 mb-6 relative z-10">
+            <div className="w-16 h-16 rounded-[22px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 shadow-inner group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+               <FiClock size={28} />
+            </div>
+            <div className="min-w-0">
+               <div className="text-[10px] font-black text-indigo-400 dark:text-indigo-400 uppercase tracking-[0.2em] mb-1">{m.meal_date}</div>
+               <div className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter group-hover:text-indigo-600 transition-colors truncate">
+                  {m.meal_type_details?.name}
+               </div>
+            </div>
+         </div>
+
+         <div className="space-y-5 relative z-10">
+            <div className="p-4 rounded-3xl bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+               <div className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 leading-tight">{m.food_details?.name}</div>
+               <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-600/20">
+                     <FiHash size={12} />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Qty {m.quantity}</span>
+                  </div>
+                  {m.packaging_material_details?.name && (
+                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 rounded-xl text-gray-600 dark:text-gray-300">
+                        <FiPackage size={12} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{m.packaging_material_details.name}</span>
+                     </div>
+                  )}
+               </div>
+            </div>
+
+            <div className="pt-5 border-t border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+               <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-gray-900 dark:bg-white/10 flex items-center justify-center text-white group-hover:bg-indigo-600 transition-colors shadow-lg">
+                     <FiUser size={18} />
+                  </div>
+                  <div className="min-w-0">
+                     <div className="text-sm font-black text-gray-900 dark:text-white uppercase truncate">{m.user_details?.first_name} {m.user_details?.last_name}</div>
+                     <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Logistics Destination</div>
+                  </div>
+               </div>
+               
+               {m.food_details?.image && (
+                  <div className="hidden sm:block w-16 h-16 rounded-2xl overflow-hidden shadow-md ring-4 ring-gray-100 dark:ring-white/5 transform group-hover:rotate-6 transition-transform">
+                     <img src={getMediaUrl(m.food_details.image)} alt="" className="w-full h-full object-cover" />
+                  </div>
+               )}
+            </div>
+         </div>
+      </div>
+   );
 }

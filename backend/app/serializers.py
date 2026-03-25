@@ -1665,3 +1665,74 @@ class AdminPatientDetailSerializer(serializers.ModelSerializer):
     def get_country_display(self, obj):
         return obj.country.name if obj.country else None
 
+
+class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
+    """
+    Shows information for a patient slot/allotment in kitchen logistics.
+    """
+    patient_details = serializers.SerializerMethodField()
+    diet_plan_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
+    patient_questionnaire = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            'id', 'status', 'suggested_on', 'approved_on', 'start_date', 'end_date',
+            'patient_details', 'diet_plan_details', 'nutritionist_details',
+            'patient_questionnaire', 'nutritionist_notes'
+        ]
+
+    def get_patient_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+                'email': obj.user.email,
+                'mobile': obj.user.mobile,
+                'address': obj.user.address,
+            }
+        return None
+
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                'id': obj.diet_plan.id,
+                'plan_name': obj.diet_plan.title,
+                'no_of_days': obj.diet_plan.no_of_days,
+                'start_date': obj.start_date,
+                'end_date': obj.end_date,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'id': obj.nutritionist.id,
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+            }
+        return None
+
+    def get_patient_questionnaire(self, obj):
+        q = UserQuestionnaire.objects.filter(user=obj.user).first()
+        if q:
+            return {
+                'age': q.age,
+                'weight_kg': q.weight_kg,
+                'work_type': q.work_type,
+                'food_allergy': q.food_allergy,
+                'food_allergy_details': q.food_allergy_details,
+                'diet_pattern': q.diet_pattern,
+                'food_source': q.food_source,
+                'has_diabetes': q.has_diabetes,
+                'has_bp': q.has_bp,
+                'has_cardiac_issues': q.has_cardiac_issues,
+                'health_conditions': q.health_conditions,
+                'food_preferences': q.food_preferences,
+                'consumes_egg': q.consumes_egg,
+                'consumes_dairy': q.consumes_dairy,
+            }
+        return None
+

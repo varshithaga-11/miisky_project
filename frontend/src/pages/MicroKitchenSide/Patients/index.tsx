@@ -40,17 +40,20 @@ interface PatientAllotted {
     };
     patient_questionnaire: any;
     nutritionist_details: {
+        id: number;
         first_name: string;
         last_name: string;
     };
     diet_plan_details: {
+        id: number;
         plan_name: string;
+        no_of_days?: number;
         start_date: string;
         end_date: string;
     };
     status: string;
-    suggested_at: string;
-    responded_at: string;
+    suggested_on: string;
+    approved_on: string;
 }
 
 const MicroKitchenPatientsPage: React.FC = () => {
@@ -67,9 +70,10 @@ const MicroKitchenPatientsPage: React.FC = () => {
     const fetchAllotments = async () => {
         setLoading(true);
         try {
-            const url = createApiUrl("api/usermicrokitchenmapping/?status=accepted");
+            const url = createApiUrl("api/micro-kitchen-patients/");
             const response = await axios.get(url, { headers: await getAuthHeaders() });
-            setAllotments(response.data);
+            // API is paginated, so take results
+            setAllotments(response.data.results || []);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load allotted patients");
@@ -205,7 +209,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             </h2>
                                             <div className="flex items-center gap-4 mt-3">
                                                 <span className="px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100/50">Active Allotment</span>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Since {new Date(selectedPatient.suggested_at).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Since {new Date(selectedPatient.suggested_on).toLocaleDateString()}</span>
                                             </div>
                                         </div>
                                     </div>
