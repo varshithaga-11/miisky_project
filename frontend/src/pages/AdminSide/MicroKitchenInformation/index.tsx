@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FiXCircle, FiSearch, FiInfo, FiTrash2, FiClock, FiCheck, FiClipboard, FiUpload, FiImage } from "react-icons/fi";
+import { FiXCircle, FiSearch, FiInfo, FiTrash2, FiClock, FiCheck, FiClipboard, FiUpload, FiImage, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
@@ -8,20 +8,14 @@ import {
     updateMicroKitchenStatus,
     deleteMicroKitchen,
     saveMicroKitchenInspection,
-    getMicroKitchenPatientsNoPagination,
-    getMicroKitchenInspectionsNoPagination,
-    getMicroKitchenReviewsNoPagination,
-    getMicroKitchenOrdersNoPagination,
-    getMicroKitchenAvailableFoodsNoPagination,
     MicroKitchenProfile,
     MicroKitchenInspection
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import Button from "../../../components/ui/button/Button";
+import { MicroKitchenDetailModal } from "./MicroKitchenDetailModal";
 
 type TabStatus = "all" | "draft" | "approved" | "rejected";
-
-type QuickPanel = "questionnaire" | "patients" | "inspections" | "reviews" | "orders" | "availableFoods";
 
 const getMediaUrl = (path: string | undefined | null) => {
     if (!path) return "";
@@ -56,6 +50,7 @@ const InspectionMediaPreview: React.FC<{ file: File | null; onRemove?: () => voi
         </div>
     );
 };
+
 
 const MicroKitchenInformationPage: React.FC = () => {
     const [profiles, setProfiles] = useState<MicroKitchenProfile[]>([]);
@@ -98,11 +93,6 @@ const MicroKitchenInformationPage: React.FC = () => {
         recommendation: '',
     });
 
-    const [quickPanel, setQuickPanel] = useState<QuickPanel>("questionnaire");
-    const [quickLoading, setQuickLoading] = useState(false);
-    const [quickError, setQuickError] = useState<string | null>(null);
-    const [quickData, setQuickData] = useState<any>(null);
-
     const fetchData = useCallback(async (page: number, search: string, status: TabStatus) => {
         setLoading(true);
         try {
@@ -123,44 +113,6 @@ const MicroKitchenInformationPage: React.FC = () => {
 
     const openViewingProfile = (p: MicroKitchenProfile) => {
         setViewingProfile(p);
-        setQuickPanel("questionnaire");
-        setQuickLoading(false);
-        setQuickError(null);
-        setQuickData(null);
-    };
-
-    const loadQuickPanel = async (panel: QuickPanel) => {
-        if (!viewingProfile) return;
-        const kitchenId = viewingProfile.id;
-        setQuickPanel(panel);
-        setQuickLoading(true);
-        setQuickError(null);
-        setQuickData(null);
-        try {
-            if (panel === "patients") {
-                const res = await getMicroKitchenPatientsNoPagination(kitchenId);
-                setQuickData(res);
-            } else if (panel === "inspections") {
-                const res = await getMicroKitchenInspectionsNoPagination(kitchenId);
-                setQuickData(res);
-            } else if (panel === "reviews") {
-                const res = await getMicroKitchenReviewsNoPagination(kitchenId);
-                setQuickData(res);
-            } else if (panel === "orders") {
-                const res = await getMicroKitchenOrdersNoPagination(kitchenId);
-                setQuickData(res);
-            } else if (panel === "availableFoods") {
-                const res = await getMicroKitchenAvailableFoodsNoPagination(kitchenId);
-                setQuickData(res);
-            } else {
-                setQuickData(null);
-            }
-        } catch (err: any) {
-            console.error(err);
-            setQuickError(err?.response?.data?.detail || err?.message || "Failed to load");
-        } finally {
-            setQuickLoading(false);
-        }
     };
 
     // Reset page on tab change
@@ -315,7 +267,7 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                     className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
                                                     title="Quick View"
                                                 >
-                                                    <FiInfo className="size-4" />
+                                                    <FiEye className="size-4" />
                                                 </button>
                                                 {p.status === 'draft' && (
                                                     <button
@@ -378,332 +330,13 @@ const MicroKitchenInformationPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Quick View Modal */}
+            {/* Detail Modal */}
             {viewingProfile && (
-                <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl relative">
-                        <button
-                            onClick={() => setViewingProfile(null)}
-                            className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        >
-                            <FiXCircle className="size-6 text-gray-400" />
-                        </button>
-
-                        <div className="flex justify-between items-start mb-8 mr-10">
-                            <div>
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{viewingProfile.brand_name || "Unnamed Kitchen"}</h3>
-                                <p className="text-gray-500">Code: {viewingProfile.kitchen_code || "N/A"}</p>
-                            </div>
-                            <div className="text-right">
-                                {getStatusBadge(viewingProfile.status)}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 pb-8 border-b border-gray-100 dark:border-white/[0.05]">
-                            <section className="space-y-4">
-                                <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold flex items-center gap-2"><FiInfo /> Basic Info</h4>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between"><span className="text-gray-500">Owner:</span> <span className="font-medium">{viewingProfile.user_details?.first_name} {viewingProfile.user_details?.last_name}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Email:</span> <span className="font-medium text-xs truncate max-w-[150px]">{viewingProfile.user_details?.email}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Mobile:</span> <span className="font-medium">{viewingProfile.user_details?.mobile}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Cuisine:</span> <span className="font-medium">{viewingProfile.cuisine_type}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Meal Type:</span> <span className="font-medium">{viewingProfile.meal_type}</span></div>
-                                </div>
-                            </section>
-
-                            <section className="space-y-4">
-                                <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold flex items-center gap-2"><FiCheck /> Compliance</h4>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between"><span className="text-gray-500">FSSAI No:</span> <span className="font-medium">{viewingProfile.fssai_no || "N/A"}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">PAN No:</span> <span className="font-medium">{viewingProfile.pan_no || "N/A"}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">GST No:</span> <span className="font-medium">{viewingProfile.gst_no || "N/A"}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Area:</span> <span className="font-medium">{viewingProfile.kitchen_area} sq.ft</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Platform:</span> <span className="font-medium">{viewingProfile.platform_area} sq.ft</span></div>
-                                </div>
-                            </section>
-
-                            <section className="space-y-4">
-                                <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold flex items-center gap-2"><FiClock /> Operations</h4>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between"><span className="text-gray-500">LPG Cylinders:</span> <span className="font-medium">{viewingProfile.lpg_cylinders}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Staff Count:</span> <span className="font-medium">{viewingProfile.no_of_staff}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Water Source:</span> <span className="font-medium">{viewingProfile.water_source}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">Purification:</span> <span className="font-medium uppercase">{viewingProfile.purification_type}</span></div>
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* Images Section */}
-                        <section className="mb-8">
-                            <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-4 flex items-center gap-2">Kitchen Photos & Certificates</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {[
-                                    { label: "Exterior", url: viewingProfile.photo_exterior },
-                                    { label: "Entrance", url: viewingProfile.photo_entrance },
-                                    { label: "Kitchen", url: viewingProfile.photo_kitchen },
-                                    { label: "Platform", url: viewingProfile.photo_platform },
-                                    { label: "FSSAI Cert", url: viewingProfile.fssai_cert },
-                                ].map((img, idx) => {
-                                    const src = typeof img.url === "string" ? getMediaUrl(img.url) : null;
-                                    return (
-                                    <div key={idx} className="group relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-white/[0.05]">
-                                        {src ? (
-                                            <img src={src} alt={img.label} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                                                {typeof img.url === "object" && img.url ? "New File Selected" : "No Image"}
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 text-[10px] text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {img.label}
-                                        </div>
-                                    </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-
-                        {/* Extra Panels (Patients, Inspection, Reviews, Orders, Foods) */}
-                        <div className="mb-8 pb-6 border-b border-gray-100 dark:border-white/[0.05]">
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                {([
-                                    ["questionnaire", "Questionnaire"],
-                                    ["patients", "Patients & Daily slots"],
-                                    ["inspections", "Inspection reports"],
-                                    ["reviews", "Reviews"],
-                                    ["orders", "Orders"],
-                                    ["availableFoods", "Food available (price)"],
-                                ] as Array<[QuickPanel, string]>).map(([key, label]) => (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => loadQuickPanel(key)}
-                                        className={`px-3 py-2 text-sm rounded-xl border transition-colors ${
-                                            quickPanel === key
-                                                ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                                                : "border-gray-200 hover:border-blue-300 bg-white/70 dark:bg-gray-800/40 text-gray-600 dark:text-gray-300"
-                                        }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {quickError && (
-                                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
-                                    {quickError}
-                                </div>
-                            )}
-
-                            {quickLoading && <div className="text-sm text-gray-500 mb-2">Loading...</div>}
-
-                            {!quickLoading && quickPanel === "questionnaire" && (
-                                <div className="space-y-4">
-                                    <div className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30">
-                                        <div className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-2">
-                                            Kitchen questionnaire
-                                        </div>
-                                        <div className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
-                                            <div><span className="text-gray-500">About you:</span> {viewingProfile.about_you || "—"}</div>
-                                            <div className="mt-2"><span className="text-gray-500">Passion:</span> {viewingProfile.passion_for_cooking || "—"}</div>
-                                            <div className="mt-2"><span className="text-gray-500">Health info:</span> {viewingProfile.health_info || "—"}</div>
-                                            <div className="mt-2"><span className="text-gray-500">Constraints:</span> {viewingProfile.constraints || "—"}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {!quickLoading && quickPanel === "patients" && Array.isArray(quickData) && (
-                                <div className="space-y-3">
-                                    {quickData.length === 0 ? (
-                                        <div className="text-sm text-gray-500">No patients assigned to this kitchen.</div>
-                                    ) : (
-                                        quickData.map((x: any) => (
-                                            <div key={x.id} className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div>
-                                                        <div className="font-semibold text-gray-900 dark:text-white">
-                                                            {[x.patient_details?.first_name, x.patient_details?.last_name].filter(Boolean).join(" ") || "Patient"}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 mt-1">
-                                                            Plan: {x.diet_plan_title || "—"} · {x.status}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right text-xs text-gray-500">
-                                                        <div>Start: {x.start_date || "—"}</div>
-                                                        <div>End: {x.end_date || "—"}</div>
-                                                    </div>
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-2">
-                                                    Meal days preview: {(x.meal_dates || []).slice(0, 8).join(", ")}
-                                                    {(x.meal_dates || []).length > 8 ? "…" : ""}
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-
-                            {!quickLoading && quickPanel === "inspections" && Array.isArray(quickData) && (
-                                <div className="space-y-3">
-                                    {quickData.length === 0 ? (
-                                        <div className="text-sm text-gray-500">No inspection history found.</div>
-                                    ) : (
-                                        quickData.map((ins: any) => {
-                                            const mediaItems: Array<{ label: string; key: string }> = [
-                                                { label: "External cleanliness media", key: "external_cleanliness_media" },
-                                                { label: "Interior cleanliness media", key: "interior_cleanliness_media" },
-                                                { label: "Platform adequacy media", key: "kitchen_platform_adequacy_media" },
-                                                { label: "Platform neatness media", key: "kitchen_platform_neatness_media" },
-                                                { label: "Safety media", key: "safety_media" },
-                                                { label: "Pure water media", key: "pure_water_media" },
-                                                { label: "Storage facilities media", key: "storage_facilities_media" },
-                                                { label: "Packing space media", key: "packing_space_media" },
-                                                { label: "Kitchen size media", key: "kitchen_size_media" },
-                                                { label: "Chef discussion media", key: "discussion_with_chef_media" },
-                                                { label: "Other observations media", key: "other_observations_media" },
-                                                { label: "Support staff media", key: "support_staff_media" },
-                                            ];
-
-                                            return (
-                                                <div key={ins.id} className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30">
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div>
-                                                            <div className="font-semibold text-gray-900 dark:text-white">
-                                                                {ins.mc_code || "MC"} · {ins.inspection_date}
-                                                            </div>
-                                                            <div className="text-xs text-gray-500 mt-1">
-                                                                Status: {ins.status || "draft"} · Overall score: {ins.overall_score ?? "—"}
-                                                            </div>
-                                                            <div className="text-[11px] text-gray-500 mt-1">
-                                                                Inspector: {ins.inspector ?? "—"} · Updated: {ins.updated_on ? new Date(ins.updated_on).toLocaleDateString() : "—"}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">External cleanliness: {ins.external_cleanliness ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Interior cleanliness: {ins.interior_cleanliness ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Platform adequacy: {ins.kitchen_platform_adequacy ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Platform neatness: {ins.kitchen_platform_neatness ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Safety: {ins.safety ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Pure water: {ins.pure_water ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Storage facilities: {ins.storage_facilities ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Packing space: {ins.packing_space ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Kitchen size: {ins.kitchen_size ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Chef discussion: {ins.discussion_with_chef ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Other observations: {ins.other_observations ?? "—"}</div>
-                                                        <div className="rounded-lg bg-white/60 dark:bg-gray-900/30 border border-gray-100 dark:border-white/[0.05] p-2">Support staff: {ins.support_staff ?? "—"}</div>
-                                                    </div>
-
-                                                    <div className="mt-3 text-xs text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
-                                                        <div>Notes: {ins.notes || "—"}</div>
-                                                        <div className="mt-1">Recommendation: {ins.recommendation || "—"}</div>
-                                                    </div>
-
-                                                    <div className="mt-3 space-y-1 text-xs">
-                                                        {mediaItems.map((mi) => {
-                                                            const v = ins[mi.key];
-                                                            if (!v) return null;
-                                                            return (
-                                                                <div key={mi.key}>
-                                                                    <a
-                                                                        className="text-blue-600 hover:underline"
-                                                                        href={getMediaUrl(v)}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                    >
-                                                                        {mi.label}
-                                                                    </a>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                        {mediaItems.every((mi) => !ins[mi.key]) ? (
-                                                            <div className="text-gray-500">No media attached.</div>
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            )}
-
-                            {!quickLoading && quickPanel === "reviews" && Array.isArray(quickData) && (
-                                <div className="space-y-3">
-                                    {quickData.length === 0 ? (
-                                        <div className="text-sm text-gray-500">No reviews yet.</div>
-                                    ) : (
-                                        quickData.map((r: any) => (
-                                            <div key={r.id} className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div>
-                                                        <div className="font-semibold text-gray-900 dark:text-white">
-                                                            {[r.user_details?.first_name, r.user_details?.last_name].filter(Boolean).join(" ") || "User"}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 mt-1">
-                                                            Rating: {r.rating} · Order: {r.order || "—"} · {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap mt-2">{r.review || "—"}</div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-
-                            {!quickLoading && quickPanel === "orders" && Array.isArray(quickData) && (
-                                <div className="space-y-3">
-                                    {quickData.length === 0 ? (
-                                        <div className="text-sm text-gray-500">No orders found.</div>
-                                    ) : (
-                                        quickData.map((o: any) => (
-                                            <div key={o.id} className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div>
-                                                        <div className="font-semibold text-gray-900 dark:text-white">Order #{o.id}</div>
-                                                        <div className="text-xs text-gray-500 mt-1">
-                                                            Status: {o.status} · Type: {o.order_type} · {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 mt-1">Address: {o.delivery_address || "—"}</div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-sm font-semibold text-gray-900 dark:text-white">₹ {o.total_amount ?? 0}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-
-                            {!quickLoading && quickPanel === "availableFoods" && Array.isArray(quickData) && (
-                                <div className="space-y-3">
-                                    {quickData.length === 0 ? (
-                                        <div className="text-sm text-gray-500">No foods available.</div>
-                                    ) : (
-                                        quickData.map((f: any) => (
-                                            <div key={f.id} className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30 flex items-start justify-between gap-3">
-                                                <div>
-                                                    <div className="font-semibold text-gray-900 dark:text-white">{f.food_details?.name || "Food"}</div>
-                                                    <div className="text-xs text-gray-500 mt-1">
-                                                        Prep: {f.preparation_time || "—"} · Available: {f.is_available ? "Yes" : "No"}
-                                                    </div>
-                                                </div>
-                                                <div className="text-right text-sm font-semibold text-gray-900 dark:text-white">₹ {f.price ?? 0}</div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button variant="outline" onClick={() => setViewingProfile(null)}>Close</Button>
-                        </div>
-                    </div>
-                </div>
+                <MicroKitchenDetailModal 
+                    kitchen={viewingProfile} 
+                    open={!!viewingProfile} 
+                    onClose={() => setViewingProfile(null)} 
+                />
             )}
 
             {/* Inspection & Verification Modal */}
