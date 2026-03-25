@@ -5,6 +5,7 @@ import { lazy, Suspense } from "react";
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
 const MasterDashboard = lazy(() => import("./pages/Dashboard/index"));
+const AdminDashboard = lazy(() => import("./pages/Dashboard/admindashboard"));
 // const AdminPage = lazy(() => import("./pages/Master/Adminpage"));
 // const CompanyList = lazy(() => import("./pages/Master/Companypage"));
 const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
@@ -129,39 +130,40 @@ export function appRoutes() {
         {/* Dashboard Layout */}
         <Route element={<MasterLayout />}>
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
-          <Route path="master/usermanagement" element={<UserManagementPage />} />
-          <Route path="master/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
-          <Route path="master/nutrition-information" element={<NutritionInformationPage />} />
-          <Route path="master/country" element={<CountryManagementPage />} />
-          <Route path="master/state" element={<StateManagementPage />} />
-          <Route path="master/city" element={<CityManagementPage />} />
-          <Route path="master/meal-type" element={<MealTypeManagementPage />} />
-          <Route path="master/packaging-material" element={<PackagingMaterialManagementPage />} />
-          <Route path="master/cuisine-type" element={<CuisineTypeManagementPage />} />
-          <Route path="master/food" element={<FoodManagementPage />} />
-          <Route path="master/unit" element={<UnitManagementPage />} />
-          <Route path="master/ingredient" element={<IngredientManagementPage />} />
-          <Route path="master/food-ingredient" element={<FoodIngredientManagementPage />} />
-          <Route path="master/food-step" element={<FoodStepManagementPage />} />
-          <Route path="master/recipe-creator" element={<RecipeManagementPage />} />
-          <Route path="master/health-parameter" element={<HealthParameterManagementPage />} />
-          <Route path="master/normal-range" element={<NormalRangeManagementPage />} />
-          <Route path="master/diet-plan" element={<DietPlanManagementPage />} />
-          <Route path="master/food-group" element={<FoodGroupManagementPage />} />
-          <Route path="master/food-name" element={<FoodNameManagementPage />} />
-          <Route path="master/food-proximate" element={<FoodProximateManagementPage />} />
-          <Route path="master/food-water-soluble-vitamins" element={<FoodWaterSolubleVitaminsManagementPage />} />
-          <Route path="master/food-fat-soluble-vitamins" element={<FoodFatSolubleVitaminsManagementPage />} />
-          <Route path="master/food-carotenoids" element={<FoodCarotenoidsManagementPage />} />
-          <Route path="master/food-minerals" element={<FoodMineralsManagementPage />} />
-          <Route path="master/food-sugars" element={<FoodSugarsManagementPage />} />
-          <Route path="master/food-amino-acids" element={<FoodAminoAcidsManagementPage />} />
-          <Route path="master/food-organic-acids" element={<FoodOrganicAcidsManagementPage />} />
-          <Route path="master/food-polyphenols" element={<FoodPolyphenolsManagementPage />} />
-          <Route path="master/food-phytochemicals" element={<FoodPhytochemicalsManagementPage />} />
-          <Route path="master/food-fatty-acid-profile" element={<FoodFattyAcidProfileManagementPage />} />
-          <Route path="master/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
-          <Route path="master/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
+          <Route path="admin/dashboard" element={<AdminDashboard />} />
+          <Route path="admin/usermanagement" element={<UserManagementPage />} />
+          <Route path="admin/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
+          <Route path="admin/nutrition-information" element={<NutritionInformationPage />} />
+          <Route path="admin/country" element={<CountryManagementPage />} />
+          <Route path="admin/state" element={<StateManagementPage />} />
+          <Route path="admin/city" element={<CityManagementPage />} />
+          <Route path="admin/meal-type" element={<MealTypeManagementPage />} />
+          <Route path="admin/packaging-material" element={<PackagingMaterialManagementPage />} />
+          <Route path="admin/cuisine-type" element={<CuisineTypeManagementPage />} />
+          <Route path="admin/food" element={<FoodManagementPage />} />
+          <Route path="admin/unit" element={<UnitManagementPage />} />
+          <Route path="admin/ingredient" element={<IngredientManagementPage />} />
+          <Route path="admin/food-ingredient" element={<FoodIngredientManagementPage />} />
+          <Route path="admin/food-step" element={<FoodStepManagementPage />} />
+          <Route path="admin/recipe-creator" element={<RecipeManagementPage />} />
+          <Route path="admin/health-parameter" element={<HealthParameterManagementPage />} />
+          <Route path="admin/normal-range" element={<NormalRangeManagementPage />} />
+          <Route path="admin/diet-plan" element={<DietPlanManagementPage />} />
+          <Route path="admin/food-group" element={<FoodGroupManagementPage />} />
+          <Route path="admin/food-name" element={<FoodNameManagementPage />} />
+          <Route path="admin/food-proximate" element={<FoodProximateManagementPage />} />
+          <Route path="admin/food-water-soluble-vitamins" element={<FoodWaterSolubleVitaminsManagementPage />} />
+          <Route path="admin/food-fat-soluble-vitamins" element={<FoodFatSolubleVitaminsManagementPage />} />
+          <Route path="admin/food-carotenoids" element={<FoodCarotenoidsManagementPage />} />
+          <Route path="admin/food-minerals" element={<FoodMineralsManagementPage />} />
+          <Route path="admin/food-sugars" element={<FoodSugarsManagementPage />} />
+          <Route path="admin/food-amino-acids" element={<FoodAminoAcidsManagementPage />} />
+          <Route path="admin/food-organic-acids" element={<FoodOrganicAcidsManagementPage />} />
+          <Route path="admin/food-polyphenols" element={<FoodPolyphenolsManagementPage />} />
+          <Route path="admin/food-phytochemicals" element={<FoodPhytochemicalsManagementPage />} />
+          <Route path="admin/food-fatty-acid-profile" element={<FoodFattyAcidProfileManagementPage />} />
+          <Route path="admin/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
+          <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
