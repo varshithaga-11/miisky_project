@@ -78,6 +78,31 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
     [cities]
   );
 
+  const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        { headers: { "User-Agent": "MiiskyApp/1.0" } }
+      );
+      const data = await res.json();
+      return data?.display_name || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleLocationFromCoords = async (lat: number, lng: number) => {
+    setLatitude(lat);
+    setLongitude(lng);
+    const resolved = await reverseGeocode(lat, lng);
+    if (resolved) {
+      setAddress(resolved);
+      toast.success("Location and address updated");
+    } else {
+      toast.success("Location captured (address could not be fetched)");
+    }
+  };
+
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser");
@@ -85,10 +110,8 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
     }
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude);
-        setLongitude(pos.coords.longitude);
-        toast.success("Location captured");
+      async (pos) => {
+        await handleLocationFromCoords(pos.coords.latitude, pos.coords.longitude);
         setLocationLoading(false);
       },
       () => {
@@ -366,7 +389,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
           <div>
             <Label>Location (home / delivery)</Label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-              Choose one: use your location, get from address, select from map, or enter manually.
+              Choose one: use your location, get from address, select from map (search city or area in the map), or enter coordinates manually.
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
               <button
@@ -398,10 +421,8 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
             <MapLocationPicker
               isOpen={mapPickerOpen}
               onClose={() => setMapPickerOpen(false)}
-              onSelect={(lat, lng) => {
-                setLatitude(lat);
-                setLongitude(lng);
-                setMapPickerOpen(false);
+              onSelect={async (lat, lng) => {
+                await handleLocationFromCoords(lat, lng);
               }}
               initialLat={latitude}
               initialLng={longitude}
