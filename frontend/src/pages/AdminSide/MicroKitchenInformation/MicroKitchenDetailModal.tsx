@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
-import { FiArrowLeft, FiX, FiInfo, FiUsers, FiClipboard, FiStar, FiShoppingCart, FiMenu } from "react-icons/fi";
+import React, { useCallback, useEffect, useState } from "react";
+import { 
+  FiArrowLeft, FiX, FiInfo, FiUsers, FiClipboard, FiStar, FiShoppingCart, FiMenu, FiTruck 
+} from "react-icons/fi";
 import {
   getMicroKitchenPatientsNoPagination,
   getMicroKitchenInspectionsNoPagination,
   getMicroKitchenReviewsNoPagination,
   getMicroKitchenOrdersNoPagination,
   getMicroKitchenAvailableFoodsNoPagination,
+  getMicroKitchenDailyMealsNoPagination,
   MicroKitchenProfile,
 } from "./api";
 import {
@@ -15,11 +18,13 @@ import {
   DisplayKitchenReviews,
   DisplayKitchenOrders,
   DisplayKitchenFoods,
+  DisplayKitchenDailyPrep,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
   | "info"
   | "patients"
+  | "prep"
   | "inspections"
   | "reviews"
   | "orders"
@@ -28,6 +33,7 @@ export type KitchenDataView =
 const VIEW_TITLES: Record<KitchenDataView, string> = {
   info: "Kitchen Information & Questionnaire",
   patients: "Allotted Patients & Slots",
+  prep: "Today's Daily Prep Schedule",
   inspections: "Compliance & Inspections",
   reviews: "Patient Reviews",
   orders: "Micro Kitchen Orders",
@@ -37,6 +43,7 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
 const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "info", description: "Kitchen basics, owner info, questionnaire", icon: <FiInfo /> },
   { key: "patients", description: "Currently allotted patients and meal slots", icon: <FiUsers /> },
+  { key: "prep", description: "Today's dispatch, packaging and prep logistics", icon: <FiTruck /> },
   { key: "inspections", description: "Detailed inspection reports and compliance", icon: <FiClipboard /> },
   { key: "reviews", description: "Ratings and feedback from patients", icon: <FiStar /> },
   { key: "orders", description: "Order history for this kitchen", icon: <FiShoppingCart /> },
@@ -97,6 +104,9 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
           case "foods":
             setPayload(await getMicroKitchenAvailableFoodsNoPagination(id));
             break;
+          case "prep":
+            setPayload(await getMicroKitchenDailyMealsNoPagination(id));
+            break;
           default:
             break;
         }
@@ -131,7 +141,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
               </button>
             )}
             <h2 className="text-xl font-black bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent truncate">
-              {screen === "hub" ? "Kitchen detail hub" : VIEW_TITLES[screen]}
+              {screen === "hub" ? "Kitchen detail hub" : VIEW_TITLES[screen as KitchenDataView]}
             </h2>
             <p className="text-sm text-gray-500 mt-1 truncate">
               {kitchen.brand_name} · <span className="text-gray-400 font-mono text-xs">{kitchen.kitchen_code}</span>
@@ -192,6 +202,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                   {screen === "reviews" && <DisplayKitchenReviews items={payload} />}
                   {screen === "orders" && <DisplayKitchenOrders items={payload} />}
                   {screen === "foods" && <DisplayKitchenFoods items={payload} />}
+                  {screen === "prep" && <DisplayKitchenDailyPrep items={payload} />}
                 </>
               )}
             </div>
@@ -211,4 +222,4 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   );
 }
 
-import React from "react";
+

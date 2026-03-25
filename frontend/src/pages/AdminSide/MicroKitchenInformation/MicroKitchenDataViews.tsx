@@ -304,3 +304,68 @@ export function DisplayKitchenFoods({ items }: { items: any[] }) {
     </div>
   );
 }
+
+export function DisplayKitchenDailyPrep({ items }: { items: any[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No meals scheduled for today's prep." />;
+  
+  const today = new Date().toISOString().split('T', 1)[0];
+  const todayMeals = items.filter(m => m.meal_date === today);
+  const displayItems = todayMeals.length > 0 ? todayMeals : items.slice(0, 20);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+           <div className="px-4 py-1.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20">
+              {todayMeals.length > 0 ? "Today's Dispatch" : "Upcoming Strategy"}
+           </div>
+           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">{displayItems.length} Units</span>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {displayItems.map((m: any) => (
+          <div key={m.id} className="group rounded-[30px] border border-gray-100 dark:border-white/[0.05] p-6 bg-white/80 dark:bg-gray-800/40 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-indigo-600 font-black text-4xl italic">
+               {m.meal_type_details?.name?.[0]}
+            </div>
+            
+            <div className="flex items-start gap-4 mb-5">
+               <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                  <FiClock size={24} />
+               </div>
+               <div>
+                  <div className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter group-hover:text-indigo-600 transition-colors">{m.meal_type_details?.name}</div>
+                  <div className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-0.5">{m.meal_date}</div>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <div>
+                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 leading-tight">{m.food_details?.name}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                     <span className="text-[9px] font-black bg-indigo-600 text-white px-2.5 py-1 rounded-lg uppercase">Quantity {m.quantity}</span>
+                     {m.packaging_material_details?.name && (
+                        <span className="text-[9px] font-black bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2.5 py-1 rounded-lg uppercase">📦 {m.packaging_material_details.name}</span>
+                     )}
+                  </div>
+               </div>
+
+               <div className="pt-5 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-xs font-black text-gray-500">
+                        {m.user_details?.first_name?.[0]}{m.user_details?.last_name?.[0]}
+                     </div>
+                     <div>
+                        <div className="text-xs font-black text-gray-900 dark:text-white uppercase">{m.user_details?.first_name} {m.user_details?.last_name}</div>
+                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Residential Delivery</div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

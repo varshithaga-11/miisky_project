@@ -92,6 +92,11 @@ urlpatterns = [
         views.AdminMicroKitchenFoodsNoPaginationView.as_view(),
         name="admin-microkitchen-foods-nopaginate",
     ),
+    path(
+        "admin-microkitchen-meals-nopaginate/",
+        views.AdminMicroKitchenMealsNoPaginationView.as_view(),
+        name="admin-microkitchen-meals-nopaginate",
+    ),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),

@@ -241,3 +241,12 @@ export const getMicroKitchenAvailableFoodsNoPagination = async (microKitchenId: 
   });
   return response.data;
 };
+
+export const getMicroKitchenDailyMealsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-meals-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};

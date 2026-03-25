@@ -2296,3 +2296,22 @@ class AdminMicroKitchenFoodsNoPaginationView(APIView):
         )
         serializer = MicroKitchenFoodSerializer(qs, many=True)
         return Response(serializer.data)
+
+
+class AdminMicroKitchenMealsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        # Filter UserMeal objects related to diet plans of this micro_kitchen
+        qs = UserMeal.objects.filter(
+            user_diet_plan__micro_kitchen_id=micro_kitchen_id
+        ).select_related(
+            "user", "user_diet_plan", "meal_type", "food", "packaging_material"
+        ).order_by("meal_date", "meal_type__id")
+
+        serializer = UserMealSerializer(qs, many=True)
+        return Response(serializer.data)
