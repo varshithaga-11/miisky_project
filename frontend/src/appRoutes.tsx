@@ -84,7 +84,31 @@ import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/ind
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
 
-
+// Website Pages
+const WebsiteLayout = lazy(() => import("./website/layout"));
+const WebsiteHome = lazy(() => import("./website/page"));
+const WebsiteAbout = lazy(() => import("./website/about/page"));
+const WebsiteBlog = lazy(() => import("./website/blog/page"));
+const WebsiteBlog2 = lazy(() => import("./website/blog-2/page"));
+const WebsiteBlogDetails = lazy(() => import("./website/blog-details/page"));
+const WebsiteContact = lazy(() => import("./website/contact/page"));
+const WebsiteDepartments = lazy(() => import("./website/departments/page"));
+const WebsiteDepartmentDetails = lazy(() => import("./website/department-details/page"));
+const WebsiteDepartmentDetails2 = lazy(() => import("./website/department-details-2/page"));
+const WebsiteDepartmentDetails3 = lazy(() => import("./website/department-details-3/page"));
+const WebsiteDepartmentDetails4 = lazy(() => import("./website/department-details-4/page"));
+const WebsiteDepartmentDetails5 = lazy(() => import("./website/department-details-5/page"));
+const WebsiteDepartmentDetails6 = lazy(() => import("./website/department-details-6/page"));
+const WebsiteDoctors = lazy(() => import("./website/doctors/page"));
+const WebsiteDoctorDetails = lazy(() => import("./website/doctor-details/page"));
+const WebsitePortfolio = lazy(() => import("./website/portfolio/page"));
+const WebsitePortfolio2 = lazy(() => import("./website/portfolio-2/page"));
+const WebsitePricing = lazy(() => import("./website/pricing/page"));
+const WebsiteLogin = lazy(() => import("./website/login/page"));
+const WebsiteRegister = lazy(() => import("./website/register/page"));
+const WebsiteIndex2 = lazy(() => import("./website/index-2/page"));
+const WebsiteIndex3 = lazy(() => import("./website/index-3/page"));
+const WebsiteError = lazy(() => import("./website/error/page"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -193,8 +217,34 @@ export function appRoutes() {
 
         </Route>
 
+        {/* Website Routes */}
+        <Route path="/website" element={<WebsiteLayout />}>
+          <Route index element={<WebsiteHome />} />
+          <Route path="about" element={<WebsiteAbout />} />
+          <Route path="blog" element={<WebsiteBlog />} />
+          <Route path="blog-2" element={<WebsiteBlog2 />} />
+          <Route path="blog-details" element={<WebsiteBlogDetails />} />
+          <Route path="contact" element={<WebsiteContact />} />
+          <Route path="departments" element={<WebsiteDepartments />} />
+          <Route path="department-details" element={<WebsiteDepartmentDetails />} />
+          <Route path="department-details-2" element={<WebsiteDepartmentDetails2 />} />
+          <Route path="department-details-3" element={<WebsiteDepartmentDetails3 />} />
+          <Route path="department-details-4" element={<WebsiteDepartmentDetails4 />} />
+          <Route path="department-details-5" element={<WebsiteDepartmentDetails5 />} />
+          <Route path="department-details-6" element={<WebsiteDepartmentDetails6 />} />
+          <Route path="doctors" element={<WebsiteDoctors />} />
+          <Route path="doctor-details" element={<WebsiteDoctorDetails />} />
+          <Route path="portfolio" element={<WebsitePortfolio />} />
+          <Route path="portfolio-2" element={<WebsitePortfolio2 />} />
+          <Route path="pricing" element={<WebsitePricing />} />
+          <Route path="login" element={<WebsiteLogin />} />
+          <Route path="register" element={<WebsiteRegister />} />
+          <Route path="index-2" element={<WebsiteIndex2 />} />
+          <Route path="index-3" element={<WebsiteIndex3 />} />
+          <Route path="error" element={<WebsiteError />} />
+        </Route>
 
-        {/* Admin Management */}
+
         {/* Create Admin */}
 
         {/* Tables */}

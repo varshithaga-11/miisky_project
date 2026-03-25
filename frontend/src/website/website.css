@@ -1,0 +1,19 @@
+/* Website Global Styles */
+/* These CSS files are served from public/website/assets/css/ */
+
+@import url("/website/assets/css/animate.css");
+@import url("/website/assets/css/bootstrap.css");
+@import url("/website/assets/css/font-awesome-all.css");
+@import url("/website/assets/css/elpath.css");
+@import url("/website/assets/css/flaticon.css");
+@import url("/website/assets/css/rtl.css");
+@import url("/website/assets/css/style.css");
+@import url("/website/assets/css/color.css");
+@import url("/website/assets/css/responsive.css");
+
+/* Additional global styles for website */
+body {
+  font-family: 'Source Sans Pro', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

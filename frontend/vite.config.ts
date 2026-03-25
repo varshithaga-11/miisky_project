@@ -15,8 +15,22 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      '@': '/src',
+      '@website': '/src/website',
+    },
+  },
   define: {
     // Global API URL variable
     __API_URL__: '"http://127.0.0.1:8000/"',
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+        website: './website.html',
+      },
+    },
   },
 });
