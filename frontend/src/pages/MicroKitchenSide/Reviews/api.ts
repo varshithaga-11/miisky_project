@@ -8,6 +8,7 @@ export type MicroKitchenRating = {
     id: number;
     first_name: string;
     last_name: string;
+    mobile: string;
   };
   micro_kitchen: number;
   kitchen_details?: {
@@ -17,6 +18,7 @@ export type MicroKitchenRating = {
   rating: number;
   review: string | null;
   order: number | null;
+  order_type: "patient" | "non_patient" | "general";
   created_at: string;
 };
 

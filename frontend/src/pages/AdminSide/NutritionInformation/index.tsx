@@ -4,7 +4,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getAdminNutritionistList } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import {
-    FiUser, FiSearch, FiStar, FiPhone, FiMail, 
+    FiUser, FiSearch, FiPhone, FiMail, 
     FiChevronRight, FiBriefcase, FiCheckCircle, FiClock
 } from "react-icons/fi";
 import Button from "../../../components/ui/button/Button";

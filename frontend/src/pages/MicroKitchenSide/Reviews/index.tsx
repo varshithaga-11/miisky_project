@@ -32,8 +32,8 @@ const ReviewsPage: React.FC = () => {
 
   // Apply Filter
   const filteredRatings = ratings.filter((r) => {
-    if (userTypeFilter === "patient") return !r.order;
-    if (userTypeFilter === "non_patient") return !!r.order;
+    if (userTypeFilter === "patient") return r.order_type === "patient" || r.order_type === "general";
+    if (userTypeFilter === "non_patient") return r.order_type === "non_patient";
     return true;
   });
 
@@ -176,13 +176,17 @@ const ReviewsPage: React.FC = () => {
                             <FiCalendar size={10} className="inline mr-1" />
                             {new Date(r.created_at).toLocaleDateString()}
                           </span>
-                          {r.order ? (
+                          {r.order_type === "non_patient" ? (
                             <span className="ml-auto px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-[10px] font-black text-indigo-500 uppercase">
                               Non-Patient (Order #{r.order})
                             </span>
+                          ) : r.order_type === "patient" ? (
+                            <span className="ml-auto px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-[10px] font-black text-blue-500 uppercase">
+                              Patient Order (Order #{r.order})
+                            </span>
                           ) : (
                             <span className="ml-auto px-2 py-0.5 rounded-md bg-gray-50 dark:bg-gray-700 text-[10px] font-black text-gray-400 uppercase">
-                              General Patient Recommendation
+                              General Recommendation
                             </span>
                           )}
                         </div>

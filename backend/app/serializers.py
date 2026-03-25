@@ -1393,12 +1393,13 @@ class NutritionistRatingSerializer(serializers.ModelSerializer):
 class MicroKitchenRatingSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
+    order_type = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MicroKitchenRating
         fields = [
             'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
-            'rating', 'review', 'order', 'created_at'
+            'rating', 'review', 'order', 'order_type', 'created_at'
         ]
         read_only_fields = ['id', 'user', 'created_at']
 
@@ -1408,6 +1409,7 @@ class MicroKitchenRatingSerializer(serializers.ModelSerializer):
                 'id': obj.user.id,
                 'first_name': obj.user.first_name or obj.user.username,
                 'last_name': obj.user.last_name,
+                'mobile': obj.user.mobile,
             }
         return None
 
@@ -1418,6 +1420,11 @@ class MicroKitchenRatingSerializer(serializers.ModelSerializer):
                 'brand_name': obj.micro_kitchen.brand_name,
             }
         return None
+
+    def get_order_type(self, obj):
+        if obj.order:
+            return obj.order.order_type
+        return 'general'
 
 
 class CartItemSerializer(serializers.ModelSerializer):
