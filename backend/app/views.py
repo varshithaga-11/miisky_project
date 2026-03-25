@@ -319,11 +319,17 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        qs = self.queryset
         if user.role == 'admin':
-            return self.queryset
+            # Optional admin filter: list foods only for one kitchen
+            micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+            if micro_kitchen_id:
+                qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+            return qs
         profile = MicroKitchenProfile.objects.filter(user=user).first()
         if not profile:
             return self.queryset.none()
+        # Micro-kitchen users only see their own menu
         return self.queryset.filter(micro_kitchen=profile)
 
     def perform_create(self, serializer):
@@ -342,11 +348,18 @@ class MicroKitchenInspectionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff or user.role == 'Admin':
-            return MicroKitchenInspection.objects.all().order_by("-id")
-        
+        if user.is_staff or user.role == 'admin':
+            qs = MicroKitchenInspection.objects.all().order_by("-id")
+            micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+            if micro_kitchen_id:
+                qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+            return qs
+
         # Micro kitchen users only see their own inspections
-        return MicroKitchenInspection.objects.filter(micro_kitchen__user=user).order_by("-id")
+        if user.role == 'micro_kitchen':
+            return MicroKitchenInspection.objects.filter(micro_kitchen__user=user).order_by("-id")
+
+        return MicroKitchenInspection.objects.none()
 
     def perform_create(self, serializer):
         serializer.save(inspector=self.request.user if self.request.user.is_authenticated else None)
@@ -2043,8 +2056,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if user.role == 'admin':
+            qs = Order.objects.all().order_by('-created_at')
+            micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+            if micro_kitchen_id:
+                qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+            return qs
+
         if user.role == 'micro_kitchen':
             return Order.objects.filter(micro_kitchen__user=user).order_by('-created_at')
+
         return Order.objects.filter(user=user).order_by('-created_at')
 
     @action(detail=False, methods=['post'], url_path='place-order')
@@ -2157,3 +2178,121 @@ class AdminPatientOverviewViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == 'retrieve':
             return AdminPatientDetailSerializer
         return AdminPatientListSerializer
+
+
+class AdminMicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin-only: list patients assigned to a specific micro kitchen (daily slots).
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    serializer_class = AdminMicroKitchenPatientSlotSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['user__username', 'user__email', 'user__first_name', 'user__last_name']
+
+    def get_queryset(self):
+        micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+        status_param = self.request.query_params.get('status')
+
+        if not micro_kitchen_id:
+            return UserDietPlan.objects.none()
+
+        qs = UserDietPlan.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
+            'user', 'diet_plan'
+        )
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        else:
+            qs = qs.filter(status__in=['active', 'payment_pending', 'approved'])
+
+        return qs.order_by('-suggested_on')
+
+
+# ---- Admin MicroKitchen panels (NO pagination) -----------------------------
+
+class AdminMicroKitchenPatientsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        status_param = request.query_params.get("status")
+
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = UserDietPlan.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
+            "user", "diet_plan"
+        )
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        else:
+            qs = qs.filter(status__in=["active", "payment_pending", "approved"])
+
+        qs = qs.order_by("-suggested_on")
+        serializer = AdminMicroKitchenPatientSlotSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenInspectionsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = MicroKitchenInspection.objects.filter(micro_kitchen_id=micro_kitchen_id).order_by("-id")
+        serializer = MicroKitchenInspectionSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenReviewsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = MicroKitchenRating.objects.filter(micro_kitchen_id=micro_kitchen_id).order_by("-id")
+        serializer = MicroKitchenRatingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenOrdersNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = Order.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related("user", "micro_kitchen").order_by(
+            "-created_at"
+        )
+        serializer = OrderSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenFoodsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = (
+            MicroKitchenFood.objects.filter(
+                micro_kitchen_id=micro_kitchen_id,
+                is_available=True,
+            )
+            .select_related("micro_kitchen", "food")
+            .prefetch_related("food__meal_types", "food__cuisine_types")
+            .order_by("micro_kitchen__brand_name", "food__name")
+        )
+        serializer = MicroKitchenFoodSerializer(qs, many=True)
+        return Response(serializer.data)

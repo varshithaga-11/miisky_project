@@ -13,6 +13,7 @@ router.register(r'city', CityViewSet, basename='city')
 router.register(r'usermanagement', UserManagementViewSet, basename='usermanagement')
 router.register(r'admin-patients', AdminPatientOverviewViewSet, basename='admin-patients')
 router.register(r'adminpatients', AdminPatientOverviewViewSet, basename='adminpatients')
+router.register(r'admin-microkitchen-patients', AdminMicroKitchenPatientsViewSet, basename='admin-microkitchen-patients')
 router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
 router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
 router.register(r'microkitchenprofile', MicroKitchenProfileViewSet, basename='microkitchenprofile')
@@ -65,6 +66,32 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # Admin micro-kitchen panels (no pagination for modal display)
+    path(
+        "admin-microkitchen-patients-nopaginate/",
+        views.AdminMicroKitchenPatientsNoPaginationView.as_view(),
+        name="admin-microkitchen-patients-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-inspections-nopaginate/",
+        views.AdminMicroKitchenInspectionsNoPaginationView.as_view(),
+        name="admin-microkitchen-inspections-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-reviews-nopaginate/",
+        views.AdminMicroKitchenReviewsNoPaginationView.as_view(),
+        name="admin-microkitchen-reviews-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-orders-nopaginate/",
+        views.AdminMicroKitchenOrdersNoPaginationView.as_view(),
+        name="admin-microkitchen-orders-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-foods-nopaginate/",
+        views.AdminMicroKitchenFoodsNoPaginationView.as_view(),
+        name="admin-microkitchen-foods-nopaginate",
+    ),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),

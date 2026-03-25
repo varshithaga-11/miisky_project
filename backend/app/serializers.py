@@ -850,6 +850,58 @@ class MicroKitchenInspectionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
+    """
+    Admin-only view for: patients assigned to a specific micro-kitchen,
+    including their plan start/end and meal dates (daily slots).
+    """
+    patient_details = serializers.SerializerMethodField(read_only=True)
+    meal_dates = serializers.SerializerMethodField(read_only=True)
+    diet_plan_title = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            'id',
+            'status',
+            'start_date',
+            'end_date',
+            'diet_plan_title',
+            'patient_details',
+            'meal_dates',
+        ]
+
+    def get_patient_details(self, obj):
+        u = getattr(obj, 'user', None)
+        if not u:
+            return None
+        return {
+            'id': u.id,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
+            'email': u.email,
+            'mobile': u.mobile,
+        }
+
+    def get_diet_plan_title(self, obj):
+        if getattr(obj, 'diet_plan', None):
+            return obj.diet_plan.title
+        return None
+
+    def get_meal_dates(self, obj):
+        # Distinct meal dates from UserMeal for this plan.
+        qs = (
+            UserMeal.objects
+            .filter(user_diet_plan=obj)
+            .values_list('meal_date', flat=True)
+            .distinct()
+            .order_by('meal_date')
+        )
+        # Return only a reasonable preview window.
+        dates = list(qs)
+        return dates[:31]
+
+
 class DeliveryProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryProfile

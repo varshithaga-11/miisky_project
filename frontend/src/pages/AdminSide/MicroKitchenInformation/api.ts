@@ -132,3 +132,112 @@ export const saveMicroKitchenInspection = async (inspection: FormData): Promise<
   });
   return response.data;
 };
+
+export type PaginatedResponse<T> = {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+};
+
+export type MicroKitchenFoodRow = {
+  id: number;
+  micro_kitchen: number;
+  food: number | null;
+  is_available: boolean;
+  price: number | string | null;
+  preparation_time?: string | null;
+  food_details?: { id?: number; name?: string; description?: string; image?: string | null } | null;
+};
+
+export const getMicroKitchenPatients = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-patients/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, limit: 50, page: 1 },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenPatientsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-patients-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenInspections = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/microkitcheninspection/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, limit: 20, page: 1 },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenInspectionsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-inspections-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenReviews = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/microkitchenrating/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, limit: 50, page: 1 },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenReviewsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-reviews-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenOrders = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/order/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, limit: 50, page: 1 },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenOrdersNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-orders-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenAvailableFoods = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/microkitchenfood/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, limit: 100, page: 1 },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenAvailableFoodsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-foods-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
