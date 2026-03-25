@@ -2334,3 +2334,98 @@ class AdminMicroKitchenMealsNoPaginationView(APIView):
 
         serializer = UserMealSerializer(qs, many=True)
         return Response(serializer.data)
+
+# ---- Admin Nutritionist panels (NO pagination) -----------------------------
+
+class AdminNutritionistPatientsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        mappings = UserNutritionistMapping.objects.filter(
+            nutritionist_id=nutritionist_id, is_active=True
+        ).select_related("user")
+        
+        results = []
+        for m in mappings:
+            p = m.user
+            results.append({
+                "id": p.id,
+                "first_name": p.first_name,
+                "last_name": p.last_name,
+                "email": p.email,
+                "mobile": p.mobile,
+                "assigned_on": m.assigned_on,
+            })
+        return Response(results)
+
+
+class AdminNutritionistDietPlansNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        qs = UserDietPlan.objects.filter(nutritionist_id=nutritionist_id).select_related(
+            "user", "diet_plan", "micro_kitchen"
+        ).order_by("-suggested_on")
+        serializer = UserDietPlanSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminNutritionistMealsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        qs = UserMeal.objects.filter(
+            user_diet_plan__nutritionist_id=nutritionist_id
+        ).select_related(
+            "user", "user_diet_plan", "meal_type", "food", "packaging_material"
+        ).order_by("-meal_date", "meal_type__id")
+        serializer = UserMealSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminNutritionistMeetingsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        qs = MeetingRequest.objects.filter(
+            nutritionist_id=nutritionist_id
+        ).select_related("patient").order_by("-created_on")
+        serializer = MeetingRequestSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminNutritionistOverviewViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin-only: list users with role=nutritionist; 
+    retrieve returns full nutritionist dossier.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
+
+    def get_queryset(self):
+        return UserRegister.objects.filter(role='nutritionist').order_by('-id')
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return AdminNutritionistDetailSerializer
+        # We can use a simpler serializer for the list if needed, or stick to a basic one.
+        # UserManagementSerializer is fine for summary list.
+        return UserManagementSerializer

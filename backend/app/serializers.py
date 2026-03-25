@@ -1736,3 +1736,73 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             }
         return None
 
+
+class AdminNutritionistDetailSerializer(serializers.ModelSerializer):
+    """
+    Detailed dossier for admin: profile info, assigned patients, suggested plans,
+    meals allotted, and meeting requests.
+    """
+    profile = serializers.SerializerMethodField()
+    assigned_patients = serializers.SerializerMethodField()
+    suggested_plans = serializers.SerializerMethodField()
+    meals_allotted = serializers.SerializerMethodField()
+    meeting_requests = serializers.SerializerMethodField()
+
+    city_display = serializers.SerializerMethodField()
+    state_display = serializers.SerializerMethodField()
+    country_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserRegister
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'mobile',
+            'whatsapp', 'dob', 'gender', 'photo', 'address', 'zip_code',
+            'city', 'city_display', 'state', 'state_display', 'country', 'country_display',
+            'joined_date', 'is_active', 'created_on',
+            'profile', 'assigned_patients', 'suggested_plans', 'meals_allotted', 'meeting_requests',
+        ]
+
+    def get_profile(self, obj):
+        try:
+            from .models import NutritionistProfile
+            profile = NutritionistProfile.objects.filter(user=obj).first()
+            if profile:
+                return NutritionistProfileSerializer(profile).data
+        except:
+            pass
+        return None
+
+    def get_assigned_patients(self, obj):
+        mappings = UserNutritionistMapping.objects.filter(nutritionist=obj, is_active=True).select_related('user')
+        return [
+            {
+                'id': m.user.id,
+                'first_name': m.user.first_name,
+                'last_name': m.user.last_name,
+                'email': m.user.email,
+                'mobile': m.user.mobile,
+                'assigned_on': m.assigned_on,
+            } for m in mappings
+        ]
+
+    def get_suggested_plans(self, obj):
+        plans = UserDietPlan.objects.filter(nutritionist=obj).select_related('user', 'diet_plan', 'micro_kitchen')
+        return UserDietPlanSerializer(plans, many=True).data
+
+    def get_meals_allotted(self, obj):
+        # All meals created by this nutritionist (linked via user_diet_plan)
+        meals = UserMeal.objects.filter(user_diet_plan__nutritionist=obj).select_related('user', 'food', 'meal_type')
+        return UserMealSerializer(meals, many=True).data
+
+    def get_meeting_requests(self, obj):
+        meetings = MeetingRequest.objects.filter(nutritionist=obj).select_related('patient')
+        return MeetingRequestSerializer(meetings, many=True).data
+
+    def get_city_display(self, obj):
+        return obj.city.name if obj.city else None
+
+    def get_state_display(self, obj):
+        return obj.state.name if obj.state else None
+
+    def get_country_display(self, obj):
+        return obj.country.name if obj.country else None

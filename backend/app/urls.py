@@ -14,6 +14,7 @@ router.register(r'usermanagement', UserManagementViewSet, basename='usermanageme
 router.register(r'admin-patients', AdminPatientOverviewViewSet, basename='admin-patients')
 router.register(r'adminpatients', AdminPatientOverviewViewSet, basename='adminpatients')
 router.register(r'admin-microkitchen-patients', AdminMicroKitchenPatientsViewSet, basename='admin-microkitchen-patients')
+router.register(r'admin-nutritionists', AdminNutritionistOverviewViewSet, basename='admin-nutritionists')
 router.register(r'micro-kitchen-patients', MicroKitchenPatientsViewSet, basename='micro-kitchen-patients')
 router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
 router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
@@ -97,6 +98,27 @@ urlpatterns = [
         "admin-microkitchen-meals-nopaginate/",
         views.AdminMicroKitchenMealsNoPaginationView.as_view(),
         name="admin-microkitchen-meals-nopaginate",
+    ),
+    # Admin nutritionist panels (no pagination for modal display)
+    path(
+        "admin-nutritionist-patients-nopaginate/",
+        views.AdminNutritionistPatientsNoPaginationView.as_view(),
+        name="admin-nutritionist-patients-nopaginate",
+    ),
+    path(
+        "admin-nutritionist-dietplans-nopaginate/",
+        views.AdminNutritionistDietPlansNoPaginationView.as_view(),
+        name="admin-nutritionist-dietplans-nopaginate",
+    ),
+    path(
+        "admin-nutritionist-meals-nopaginate/",
+        views.AdminNutritionistMealsNoPaginationView.as_view(),
+        name="admin-nutritionist-meals-nopaginate",
+    ),
+    path(
+        "admin-nutritionist-meetings-nopaginate/",
+        views.AdminNutritionistMeetingsNoPaginationView.as_view(),
+        name="admin-nutritionist-meetings-nopaginate",
     ),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
