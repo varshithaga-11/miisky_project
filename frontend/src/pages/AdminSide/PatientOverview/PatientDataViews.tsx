@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { resolveMediaUrl } from "./api";
+import { motion, AnimatePresence } from "framer-motion";
 
 /** Definition list row */
 export function InfoRow({ label, value }: { label: string; value: ReactNode }) {
@@ -293,8 +294,8 @@ export function DisplayNutritionistMapping({ items }: { items: MappingRow[] }) {
             <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Mapping #{m.id}</span>
             <span
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${m.is_active
-                  ? "bg-emerald-200/80 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200"
-                  : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                ? "bg-emerald-200/80 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200"
+                : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                 }`}
             >
               {m.is_active ? "Active" : "Inactive"}
@@ -460,8 +461,8 @@ export function DisplayDietPlans({ items }: { items: DietPlanRow[] }) {
             </span>
             <span
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${p.status === "active"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
-                  : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
+                : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
                 }`}
             >
               {p.status || "—"}
@@ -599,6 +600,8 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
     return new Date();
   });
 
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
 
@@ -673,9 +676,11 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
             return (
               <div
                 key={key}
-                className={`min-h-[100px] rounded-xl border p-1.5 flex flex-col ${dayMeals.length
-                    ? "border-cyan-300/80 bg-white/90 dark:bg-cyan-950/20 dark:border-cyan-800/70 shadow-sm"
-                    : "border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/30"
+                onMouseEnter={() => setHoveredDate(key)}
+                onMouseLeave={() => setHoveredDate(null)}
+                className={`relative min-h-[100px] rounded-xl border p-1.5 flex flex-col transition-all duration-200 ${dayMeals.length
+                  ? "border-cyan-300/80 bg-white/90 dark:bg-cyan-950/20 dark:border-cyan-800/70 shadow-sm hover:shadow-lg hover:border-cyan-400 hover:-translate-y-1 hover:z-30 cursor-default"
+                  : "border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/30"
                   } ${isToday ? "ring-2 ring-cyan-400 dark:ring-cyan-600" : ""}`}
               >
                 <div
@@ -685,7 +690,7 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
                   {dayNum}
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-1 max-h-[88px] sm:max-h-[100px]">
-                  {dayMeals.map((m) => (
+                  {dayMeals.slice(0, 3).map((m) => (
                     <div
                       key={m.id}
                       className="rounded-md bg-gradient-to-r from-cyan-100/90 to-teal-50 dark:from-cyan-900/40 dark:to-teal-900/20 border border-cyan-200/60 dark:border-cyan-800/50 px-1.5 py-1 text-[10px] leading-tight"
@@ -694,22 +699,67 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
                         {m.meal_type_details?.name || "Meal"}
                       </div>
                       <div className="text-gray-700 dark:text-gray-300 truncate">{m.food_details?.name || "—"}</div>
-                      {m.packaging_material_details?.name && (
-                        <div className="text-cyan-800 dark:text-cyan-300/90 truncate">📦 {m.packaging_material_details.name}</div>
-                      )}
-                      {m.quantity != null && (
-                        <div className="text-gray-500 dark:text-gray-500">Qty {m.quantity}</div>
-                      )}
                     </div>
                   ))}
+                  {dayMeals.length > 3 && (
+                    <div className="text-[9px] text-cyan-600 dark:text-cyan-400 font-bold text-center">
+                      +{dayMeals.length - 3} more
+                    </div>
+                  )}
                 </div>
+
+                <AnimatePresence>
+                  {hoveredDate === key && dayMeals.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-cyan-200 dark:border-cyan-800 p-4 pointer-events-none"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-black text-cyan-600 dark:text-cyan-400 text-xs uppercase tracking-widest">
+                          {MONTH_NAMES[month]} {dayNum} Plan
+                        </h4>
+                        <div className="h-1 w-12 bg-cyan-100 dark:bg-cyan-900 rounded-full" />
+                      </div>
+                      <div className="space-y-4">
+                        {dayMeals.map((m) => (
+                          <div key={m.id} className="relative pl-4 border-l-2 border-cyan-500/30 hover:border-cyan-500 transition-colors">
+                            <div className="text-[10px] font-black text-cyan-600/70 dark:text-cyan-400/70 uppercase tracking-tighter mb-0.5">
+                              {m.meal_type_details?.name || "Meal"}
+                            </div>
+                            <div className="text-sm text-gray-900 dark:text-white font-bold leading-tight">
+                              {m.food_details?.name || "—"}
+                            </div>
+                            {(m.packaging_material_details?.name || m.quantity != null) && (
+                              <div className="mt-1.5 flex flex-wrap gap-2">
+                                {m.packaging_material_details?.name && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-cyan-50 dark:bg-cyan-900/30 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">
+                                    📦 {m.packaging_material_details.name}
+                                  </span>
+                                )}
+                                {m.quantity != null && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                                    qty: {m.quantity}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Arrow */}
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-800 border-b border-r border-cyan-200 dark:border-cyan-800 rotate-45" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+      {/* <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
         <div className="bg-gray-50 dark:bg-gray-800/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
           All meals (list)
         </div>
@@ -739,7 +789,7 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
