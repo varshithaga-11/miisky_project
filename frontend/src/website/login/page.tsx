@@ -160,12 +160,12 @@ export default function LoginPage() {
                   </div>
 
                   {/* Register link */}
-                  <p style={{ textAlign: "center", fontSize: "14px", margin: 0 }}>
+                  {/* <p style={{ textAlign: "center", fontSize: "14px", margin: 0 }}>
                     Don&apos;t have an account?{" "}
                     <Link to="/website/register" style={{ color: "#f5821f", fontWeight: 600 }}>
                       Create one
                     </Link>
-                  </p>
+                  </p> */}
                 </form>
               </div>
             </div>
