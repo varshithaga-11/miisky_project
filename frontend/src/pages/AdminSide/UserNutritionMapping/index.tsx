@@ -43,7 +43,7 @@ const UserNutritionMappingPage: React.FC = () => {
     () => users.filter((u) => u.role === "patient" && !u.is_patient_mapped),
     [users]
   );
-  
+
   const nutritionists = useMemo(
     () => users.filter((u) => u.role === "nutritionist"),
     [users]
@@ -85,7 +85,7 @@ const UserNutritionMappingPage: React.FC = () => {
     const lower = searchTerm.toLowerCase();
     return groupedMappings.filter(g => {
       const nutName = `${g.nutritionist.first_name || ""} ${g.nutritionist.last_name || ""} ${g.nutritionist.username}`.toLowerCase();
-      const patientMatch = g.patients.some(p => 
+      const patientMatch = g.patients.some(p =>
         `${p.first_name || ""} ${p.last_name || ""} ${p.username}`.toLowerCase().includes(lower)
       );
       return nutName.includes(lower) || patientMatch;

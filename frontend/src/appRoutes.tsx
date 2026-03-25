@@ -88,6 +88,9 @@ import ProfileInformationPage from "./pages/ProfileInformation/index";
 import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
 import SupportTicketRequestsPage from "./pages/AdminSide/SupportTicketRequests";
 import PatientSupportTicketPage from "./pages/PatientSide/SupportTicket";
+import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
+import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
+
 
 // Website Pages
 const WebsiteLayout = lazy(() => import("./Website/layout"));
@@ -196,12 +199,14 @@ export function appRoutes() {
           <Route path="nutrition/approved-plans" element={<ApprovesPlansByPatientsPage />} />
           <Route path="nutrition/meeting-requests" element={<MeetingRequestsByPatients />} />
           <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
+          <Route path="nutrition/support-tickets" element={<NutritionSupportTicketPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
+          <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 
 

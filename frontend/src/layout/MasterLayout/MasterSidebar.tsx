@@ -258,6 +258,11 @@ const nutritionistNavItems: NavItem[] = [
     name: "Profile",
     path: "/profile-info",
   },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support Tickets",
+    path: "/nutrition/support-tickets",
+  },
 ];
 
 const microKitchenNavItems: NavItem[] = [
@@ -300,6 +305,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
+  },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support Tickets",
+    path: "/microkitchen/support-tickets",
   },
 ];
 
