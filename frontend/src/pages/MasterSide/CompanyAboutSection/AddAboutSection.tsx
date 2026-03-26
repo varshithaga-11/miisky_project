@@ -43,8 +43,10 @@ const AddAboutSection: React.FC<Props> = ({ onSuccess, onClose }) => {
       toast.success("Section added!");
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error("Failed to add section");
+    } catch (error: any) {
+      console.error(error.response?.data);
+      const msg = error.response?.data ? JSON.stringify(error.response.data) : "Failed to add section";
+      toast.error(msg.substring(0, 100));
     } finally {
       setLoading(false);
     }

@@ -24,9 +24,10 @@ const EditAboutSection: React.FC<Props> = ({ section, onSuccess, onClose }) => {
       const data = new FormData();
       Object.keys(formData).forEach((key) => {
         const val = (formData as any)[key];
+        const skipKeys = ["id", "created_at", "updated_at", "image"];
         if (key === "bullet_points") {
           data.append(key, JSON.stringify(val));
-        } else if (val !== undefined && val !== null && key !== "image") { // Don't send the old image string as a file
+        } else if (val !== undefined && val !== null && !skipKeys.includes(key)) {
           data.append(key, val.toString());
         }
       });
@@ -36,8 +37,10 @@ const EditAboutSection: React.FC<Props> = ({ section, onSuccess, onClose }) => {
       toast.success("Section updated!");
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error("Failed to update section");
+    } catch (error: any) {
+      console.error(error.response?.data);
+      const msg = error.response?.data ? JSON.stringify(error.response.data) : "Failed to update section";
+      toast.error(msg.substring(0, 100)); // Truncate so it fits in a toast
     } finally {
       setLoading(false);
     }
