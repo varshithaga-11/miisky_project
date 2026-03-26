@@ -4,65 +4,7 @@ One serializer per model, with nested read serializers where needed.
 """
 
 from rest_framework import serializers
-from .models import (
-    CompanyInfo,
-    HeroBanner,
-    NavigationMenu,
-    MedicalDeviceCategory,
-    MedicalDevice,
-    DeviceFeature,
-    ResearchPaper,
-    HealthFoodCategory,
-    HealthFoodProduct,
-    HealthFoodConceptCategory,
-    HealthFoodConceptArticle,
-    WorkflowSection,
-    WorkflowStep,
-    BlogCategory,
-    BlogTag,
-    BlogPost,
-    BlogComment,
-    ReportType,
-    WebsiteReport,
-    CallbackRequest,
-    ContactInquiry,
-    NewsletterSubscriber,
-    Testimonial,
-    FAQCategory,
-    FAQ,
-    TeamMember,
-    JobListing,
-    JobApplication,
-    GalleryCategory,
-    GalleryItem,
-    Partner,
-    VisionMission,
-    AIChatbotConfig,
-    StatCounter,
-    MobileAppInfo,
-    ValueProposition,
-    # --- New models ---
-    Product,
-    Service,
-    GSTInfo,
-    Presentation,
-    PresentationDownloadLog,
-    WorkflowSubCategory,
-    MyHealthFeature,
-    NutritionistPortalFeature,
-    MicroKitchenPortalFeature,
-    SupplyChainPortalFeature,
-    AIChatSession,
-    UserSuggestion,
-    # --- Final gap models ---
-    WorkflowSubItem,
-    GSTLeader,
-    GSTClient,
-    # --- Legal / About / Patents ---
-    LegalPage,
-    CompanyAboutSection,
-    Patent,
-)
+from .models import *
 
 
 # ===========================================================================

@@ -10,65 +10,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.utils import timezone
 
-from .models import (
-    CompanyInfo, HeroBanner, NavigationMenu,
-    MedicalDeviceCategory, MedicalDevice, DeviceFeature, ResearchPaper,
-    HealthFoodCategory, HealthFoodProduct,
-    HealthFoodConceptCategory, HealthFoodConceptArticle,
-    WorkflowSection, WorkflowStep,
-    BlogCategory, BlogTag, BlogPost, BlogComment,
-    ReportType, WebsiteReport,
-    CallbackRequest, ContactInquiry, NewsletterSubscriber,
-    Testimonial, FAQCategory, FAQ,
-    TeamMember, JobListing, JobApplication,
-    GalleryCategory, GalleryItem,
-    Partner, VisionMission, AIChatbotConfig,
-    StatCounter, MobileAppInfo, ValueProposition,
-    # --- New models ---
-    Product, Service, GSTInfo,
-    Presentation, PresentationDownloadLog,
-    WorkflowSubCategory,
-    MyHealthFeature, NutritionistPortalFeature,
-    MicroKitchenPortalFeature, SupplyChainPortalFeature,
-    AIChatSession, UserSuggestion,
-    # --- Legal / About / Patents ---
-    WorkflowSubItem, GSTLeader, GSTClient,
-    LegalPage, CompanyAboutSection, Patent,
-)
-from .serializers import (
-    CompanyInfoSerializer, HeroBannerSerializer, NavigationMenuSerializer,
-    MedicalDeviceCategorySerializer, MedicalDeviceSerializer,
-    MedicalDeviceWriteSerializer, DeviceFeatureSerializer, ResearchPaperSerializer,
-    HealthFoodCategorySerializer, HealthFoodProductSerializer,
-    HealthFoodProductWriteSerializer,
-    HealthFoodConceptCategorySerializer, HealthFoodConceptArticleSerializer,
-    HealthFoodConceptArticleListSerializer,
-    WorkflowSectionSerializer, WorkflowSectionWriteSerializer, WorkflowStepSerializer,
-    BlogCategorySerializer, BlogTagSerializer, BlogPostSerializer,
-    BlogPostListSerializer, BlogCommentSerializer,
-    ReportTypeSerializer, WebsiteReportSerializer,
-    CallbackRequestSerializer, CallbackRequestAdminSerializer,
-    ContactInquirySerializer, ContactInquiryAdminSerializer,
-    NewsletterSubscriberSerializer, TestimonialSerializer,
-    FAQCategorySerializer, FAQSerializer, TeamMemberSerializer,
-    JobListingSerializer, JobApplicationSerializer, JobApplicationAdminSerializer,
-    GalleryCategorySerializer, GalleryItemSerializer,
-    PartnerSerializer, VisionMissionSerializer, AIChatbotConfigSerializer,
-    StatCounterSerializer, MobileAppInfoSerializer, ValuePropositionSerializer,
-    # --- New serializers ---
-    ProductSerializer, ServiceSerializer, GSTInfoSerializer,
-    PresentationSerializer, PresentationDownloadLogSerializer,
-    WorkflowSubCategorySerializer,
-    MyHealthFeatureSerializer, NutritionistPortalFeatureSerializer,
-    MicroKitchenPortalFeatureSerializer, SupplyChainPortalFeatureSerializer,
-    AIChatSessionSerializer,
-    UserSuggestionSerializer, UserSuggestionAdminSerializer,
-    # --- Final gap serializers ---
-    WorkflowSubItemSerializer,
-    GSTLeaderSerializer, GSTClientSerializer,
-    # --- Legal / About / Patents ---
-    LegalPageSerializer, CompanyAboutSectionSerializer, PatentSerializer,
-)
+from .models import *
+from .serializers import *
 
 
 def _bool(val):

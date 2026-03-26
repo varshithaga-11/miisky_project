@@ -1261,9 +1261,6 @@ class UserNutritionistMapping(models.Model):
 
 
 
-
-
-
 # --------------------------------------------------------------
 # -------------------------------------------------------------
 # ------------------------------------------------------------
@@ -1350,6 +1347,14 @@ class UserDietPlan(models.Model):
         null=True,
         blank=True,
         related_name="suggested_diet_plans"
+    )
+
+    original_nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="originally_assigned_plans",
     )
 
     diet_plan = models.ForeignKey(
@@ -2037,3 +2042,61 @@ class TicketAttachment(models.Model):
 
 # ------------------------------------------------------------
 # --------------------------------------------------------------------
+
+
+
+class NutritionistReassignment(models.Model):
+    """Audit log for every time a patient's nutritionist changes."""
+
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="reassignments",
+    )
+    previous_nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reassigned_from",
+    )
+    new_nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reassigned_to",
+    )
+
+    REASON_CHOICES = [
+        ("nutritionist_left", "Nutritionist Left"),
+        ("patient_request", "Patient Request"),
+        ("admin_decision", "Admin Decision"),
+        ("nutritionist_on_leave", "Nutritionist On Leave"),
+        ("other", "Other"),
+    ]
+    reason = models.CharField(max_length=50, choices=REASON_CHOICES)
+    notes = models.TextField(null=True, blank=True)
+
+    reassigned_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="performed_reassignments",
+    )
+    reassigned_on = models.DateTimeField(auto_now_add=True)
+
+    # Diet plan active at time of reassignment (context)
+    active_diet_plan = models.ForeignKey(
+        "UserDietPlan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"{self.user}: {self.previous_nutritionist} → {self.new_nutritionist} ({self.reason})"
+
+
+
