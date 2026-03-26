@@ -91,8 +91,8 @@ const SuggestedPlansPage: React.FC = () => {
   };
 
   const handleUploadPayment = async () => {
-    if (!paymentModal || !screenshotFile) {
-      toast.warning("Please select a payment screenshot to upload");
+    if (!paymentModal || !screenshotFile || !transactionId || !amountPaid) {
+      toast.warning("Please fill in the amount, transaction ID, and upload a screenshot");
       return;
     }
     setSubmitting(true);
@@ -257,7 +257,7 @@ const SuggestedPlansPage: React.FC = () => {
                           onClick={() => {
                             setPaymentModal(udp);
                             setScreenshotFile(null);
-                            setAmountPaid(udp.amount_paid || "");
+                            setAmountPaid(udp.diet_plan_details?.final_amount || "");
                             setTransactionId(udp.transaction_id || "");
                           }}
                           className="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2"
