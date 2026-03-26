@@ -206,6 +206,36 @@ export function DisplayKitchenInspections({ items }: { items: any[] }) {
             ))}
           </div>
 
+          <div className="mt-4">
+            <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">Inspection Media</div>
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {[
+                { k: 'external_cleanliness_media', l: 'Ext' },
+                { k: 'interior_cleanliness_media', l: 'Int' },
+                { k: 'kitchen_platform_adequacy_media', l: 'Plt Adeq' },
+                { k: 'kitchen_platform_neatness_media', l: 'Plt Neat' },
+                { k: 'safety_media', l: 'Safe' },
+                { k: 'pure_water_media', l: 'H2O' },
+                { k: 'storage_facilities_media', l: 'Store' },
+                { k: 'packing_space_media', l: 'Pack' },
+                { k: 'kitchen_size_media', l: 'Size' },
+                { k: 'discussion_with_chef_media', l: 'Chef' },
+                { k: 'other_observations_media', l: 'Other' },
+                { k: 'support_staff_media', l: 'Staff' },
+              ].map((m, idx) => {
+                const url = ins[m.k];
+                if (!url) return null;
+                const src = getMediaUrl(url);
+                return (
+                  <a key={idx} href={src} target="_blank" rel="noopener noreferrer" className="relative group aspect-square rounded-lg overflow-hidden border border-gray-100 dark:border-white/10 hover:border-blue-500 transition-colors">
+                    <img src={src} className="w-full h-full object-cover group-hover:opacity-100 transition-opacity" alt={m.l} />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/60 text-[8px] text-white p-0.5 text-center truncate">{m.l}</div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
           {(ins.notes || ins.recommendation) && (
             <div className="mt-4 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 text-sm italic text-gray-700 dark:text-gray-300">
               {ins.notes && <p>&quot; {ins.notes} &quot;</p>}

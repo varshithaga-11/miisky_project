@@ -8,12 +8,14 @@ import {
     updateMicroKitchenStatus,
     deleteMicroKitchen,
     saveMicroKitchenInspection,
+    getMicroKitchenInspectionsNoPagination,
     MicroKitchenProfile,
     MicroKitchenInspection
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import Button from "../../../components/ui/button/Button";
 import { MicroKitchenDetailModal } from "./MicroKitchenDetailModal";
+import { DisplayKitchenInspections } from "./MicroKitchenDataViews";
 
 type TabStatus = "all" | "draft" | "approved" | "rejected";
 
@@ -61,6 +63,8 @@ const MicroKitchenInformationPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabStatus>("all");
     const [viewingProfile, setViewingProfile] = useState<MicroKitchenProfile | null>(null);
     const [isInspecting, setIsInspecting] = useState<MicroKitchenProfile | null>(null);
+    const [previousInspections, setPreviousInspections] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const [inspectionData, setInspectionData] = useState<Partial<MicroKitchenInspection>>({
         status: 'draft',
         mc_code: '',
@@ -274,18 +278,27 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                 >
                                                     <FiEye className="size-4" />
                                                 </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        setIsInspecting(p);
+                                                        setInspectionData(prev => ({ ...prev, mc_code: p.kitchen_code || "" }));
+                                                        setLoadingHistory(true);
+                                                        try {
+                                                            const history = await getMicroKitchenInspectionsNoPagination(p.id);
+                                                            setPreviousInspections(history);
+                                                        } catch (err) {
+                                                            console.error("Failed to load inspection history", err);
+                                                        } finally {
+                                                            setLoadingHistory(false);
+                                                        }
+                                                    }}
+                                                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Inspect & Verify"
+                                                >
+                                                    <FiClipboard className="size-4" />
+                                                </button>
                                                 {p.status === 'draft' && (
                                                     <>
-                                                        <button
-                                                            onClick={() => {
-                                                                setIsInspecting(p);
-                                                                setInspectionData(prev => ({ ...prev, mc_code: p.kitchen_code || "" }));
-                                                            }}
-                                                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Inspect & Verify"
-                                                        >
-                                                            <FiClipboard className="size-4" />
-                                                        </button>
                                                         <button
                                                             onClick={() => handleUpdateStatus(p.id, 'approved')}
                                                             className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg transition-colors"
@@ -301,15 +314,6 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                             <FiXCircle className="size-4" />
                                                         </button>
                                                     </>
-                                                )}
-                                                {p.status !== 'draft' && (
-                                                    <button
-                                                        onClick={() => handleUpdateStatus(p.id, 'draft')}
-                                                        className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                                                        title="Back to Draft"
-                                                    >
-                                                        <FiClock className="size-4" />
-                                                    </button>
                                                 )}
                                                 <button
                                                     onClick={() => handleDelete(p.id)}
@@ -408,6 +412,24 @@ const MicroKitchenInformationPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                        </section>
+
+                        {/* Recent Inspection Records */}
+                        <section className="mb-10 space-y-4">
+                            <h4 className="text-xs uppercase tracking-wider text-amber-600 font-bold flex items-center gap-2">
+                                <FiClipboard className="size-4" /> Previous Inspection History
+                            </h4>
+                            {loadingHistory ? (
+                                <div className="p-4 text-xs text-gray-400 animate-pulse">Loading history...</div>
+                            ) : previousInspections.length > 0 ? (
+                                <div className="max-h-60 overflow-y-auto pr-2 space-y-4">
+                                    <DisplayKitchenInspections items={previousInspections} />
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 text-xs text-gray-400 text-center uppercase tracking-widest font-black italic">
+                                    No previous records found
+                                </div>
+                            )}
                         </section>
 
                         <form onSubmit={handleInspectionSubmit} className="space-y-8">
