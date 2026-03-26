@@ -98,21 +98,17 @@ const adminNavItems: NavItem[] = [
   {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Micro Kitchens",
-    subItems: [
-      { name: "Kitchen Information", path: "/admin/micro-kitchen-information" },
-    ],
+    path: "/admin/micro-kitchen-information",
+  },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "Nutritionists",
+    path: "/admin/nutrition-information",
   },
   {
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Payment Verification",
     path: "/admin/patient-payment-verification",
-  },
-  {
-    icon: <Users className="w-5 h-5" />,
-    name: "Nutritionists",
-    subItems: [
-      { name: "Nutritionist Information", path: "/admin/nutrition-information" },
-    ],
   },
   {
     icon: <FileText className="w-5 h-5" />,
