@@ -9,6 +9,7 @@ import type { MappedPatientResponse, UserDietPlan, UserMeal, MealType, Food, Cui
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { jwtDecode } from "jwt-decode";
 
 const DRAG_TYPE = "food-item";
 
@@ -39,6 +40,17 @@ const SetDailyMealsPage: React.FC = () => {
     const [showSaveButton, setShowSaveButton] = useState(false);
     const [packagingMaterials, setPackagingMaterials] = useState<{ id: number; name: string }[]>([]);
     const [selectedPackagingMaterialId, setSelectedPackagingMaterialId] = useState<number | "">("");
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem("access");
+        if (token) {
+            try {
+                const decoded: any = jwtDecode(token);
+                setCurrentUserId(decoded.user_id || decoded.sub || null);
+            } catch (err) {}
+        }
+    }, []);
 
     useEffect(() => {
         const loadInitial = async () => {
@@ -248,10 +260,36 @@ const SetDailyMealsPage: React.FC = () => {
             return;
         }
 
-        const mealsWithPackaging = entriesToSave.map((e) => ({
+        let mealsWithPackaging = entriesToSave.map((e) => ({
             ...e,
             packaging_material: selectedPackagingMaterialId || (e.packaging_material ?? null),
         })) as UserMeal[];
+
+        // Reassignment Restriction Check: Filter out restricted meals from the save payload
+        if (activePlan?.nutritionist_effective_from && currentUserId) {
+            const effectiveDate = activePlan.nutritionist_effective_from;
+            const isNewNutritionist = currentUserId === activePlan.nutritionist;
+            const isOriginalNutritionist = currentUserId === activePlan.original_nutritionist;
+
+            const authorizedMeals = mealsWithPackaging.filter(meal => {
+                if (isNewNutritionist && meal.meal_date < effectiveDate) return false;
+                if (isOriginalNutritionist && meal.meal_date >= effectiveDate) return false;
+                return true;
+            });
+
+            // If the user SPECIFICALLY requested to save a date range where they have NO authority, notify them
+            if (authorizedMeals.length === 0 && mealsWithPackaging.length > 0) {
+                 toast.error(`You cannot edit meals for these dates based on the effective date (${effectiveDate})`);
+                 return;
+            }
+
+            mealsWithPackaging = authorizedMeals;
+        }
+
+        if (mealsWithPackaging.length === 0) {
+             toast.warning(`No meals found to save.`);
+             return;
+        }
 
         setSaving(true);
         try {
@@ -406,7 +444,34 @@ const SetDailyMealsPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-wrap items-center gap-3">
+                                    {/* Reassignment Info Banner */}
+                                    {selectedPatient?.reassignment_details && (
+                                        <div className="w-full mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl flex items-start gap-3">
+                                            <FiInfo className="text-amber-500 mt-1 flex-shrink-0" size={18} />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                                                    Nutritionist Reassigned
+                                                </p>
+                                                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                                    Reason: <span className="font-bold">{selectedPatient.reassignment_details.reason}</span>
+                                                    {selectedPatient.reassignment_details.notes && (
+                                                        <> — <span className="italic">{selectedPatient.reassignment_details.notes}</span></>
+                                                    )}
+                                                </p>
+                                                <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase mt-2">
+                                                    Switch Date: {selectedPatient.reassignment_details.effective_from}
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 mt-1">
+                                                    {currentUserId === activePlan?.nutritionist 
+                                                        ? "You are the new nutritionist. You can edit meals from this date onwards."
+                                                        : "You were the prior nutritionist. You can edit meals before this date."
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center gap-3 mt-4 w-full">
                                         <div className="flex items-center gap-2">
                                             <FiPackage className="text-indigo-500" size={14} />
                                             <select
@@ -531,14 +596,33 @@ const SetDailyMealsPage: React.FC = () => {
                                             const dateObj = new Date(dateStr);
                                             const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
 
+                                            const isReadOnly = (() => {
+                                                if (!activePlan?.nutritionist_effective_from || !currentUserId) return false;
+                                                const effectiveDate = activePlan.nutritionist_effective_from;
+                                                if (currentUserId === activePlan.nutritionist) {
+                                                    return dateStr < effectiveDate;
+                                                }
+                                                if (currentUserId === activePlan.original_nutritionist) {
+                                                    return dateStr >= effectiveDate;
+                                                }
+                                                return false;
+                                            })();
+
                                             return (
-                                                <motion.div key={dateStr} layout className="space-y-4">
+                                                <motion.div key={dateStr} layout className={`space-y-4 ${isReadOnly ? 'opacity-70 grayscale-[0.3]' : ''}`}>
                                                     <div
-                                                        onDrop={(e) => handleDropOnDay(e, dateStr)}
-                                                        onDragOver={handleDragOver}
-                                                        onDragLeave={handleDragLeave}
-                                                        className="min-h-[120px] rounded-[24px] border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/30 p-6 transition-all"
+                                                        onDrop={isReadOnly ? undefined : (e) => handleDropOnDay(e, dateStr)}
+                                                        onDragOver={isReadOnly ? undefined : handleDragOver}
+                                                        onDragLeave={isReadOnly ? undefined : handleDragLeave}
+                                                        className={`min-h-[120px] rounded-[24px] border-2 border-dashed ${isReadOnly ? 'border-gray-200 dark:border-white/5 bg-gray-100/50 dark:bg-transparent' : 'border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/30'} p-6 transition-all relative`}
                                                     >
+                                                        {isReadOnly && (
+                                                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-none rounded-[24px]">
+                                                                <span className="bg-gray-900/80 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full flex items-center gap-2">
+                                                                    <FiInfo size={12} /> Restricted
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                         <div className="flex items-center justify-between mb-4">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-lg">
@@ -568,8 +652,9 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meal Type</label>
                                                                                     <select
                                                                                         value={entry.meal_type}
+                                                                                        disabled={isReadOnly}
                                                                                         onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                                                                     >
                                                                                         {mealTypes.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                                                                     </select>
@@ -578,8 +663,9 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Food</label>
                                                                                     <select
                                                                                         value={entry.food}
+                                                                                        disabled={isReadOnly}
                                                                                         onChange={(e) => handleEntryUpdate(globalIdx, 'food', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                                                                     >
                                                                                         <option value="">Select</option>
                                                                                         {foods.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
@@ -591,22 +677,28 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                         type="number"
                                                                                         step="0.1"
                                                                                         value={entry.quantity ?? ''}
+                                                                                        disabled={isReadOnly}
                                                                                         onChange={(e) => handleEntryUpdate(globalIdx, 'quantity', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                                                                     />
                                                                                 </div>
                                                                                 <div className="w-32">
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Packaging</label>
                                                                                     <select
                                                                                         value={entry.packaging_material || ""}
+                                                                                        disabled={isReadOnly}
                                                                                         onChange={(e) => handleEntryUpdate(globalIdx, 'packaging_material', e.target.value ? Number(e.target.value) : null)}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                                                                     >
                                                                                         <option value="">None</option>
                                                                                         {packagingMaterials.map(pm => <option key={pm.id} value={pm.id}>{pm.name}</option>)}
                                                                                     </select>
                                                                                 </div>
-                                                                                <button onClick={() => handleRemoveSlot(globalIdx)} className="p-2 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                                                                <button 
+                                                                                    onClick={() => handleRemoveSlot(globalIdx)} 
+                                                                                    disabled={isReadOnly}
+                                                                                    className="p-2 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                                >
                                                                                     <FiTrash2 size={18} />
                                                                                 </button>
                                                                             </div>
@@ -614,8 +706,9 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                 type="text"
                                                                                 placeholder="Notes (optional)"
                                                                                 value={entry.notes || ''}
+                                                                                disabled={isReadOnly}
                                                                                 onChange={(e) => handleEntryUpdate(globalIdx, 'notes', e.target.value)}
-                                                                                className="mt-3 w-full text-xs font-medium bg-transparent border-b border-gray-100 dark:border-white/5 px-2 py-1 outline-none focus:border-indigo-500"
+                                                                                className="mt-3 w-full text-xs font-medium bg-transparent border-b border-gray-100 dark:border-white/5 px-2 py-1 outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                             />
                                                                         </motion.div>
                                                                     );

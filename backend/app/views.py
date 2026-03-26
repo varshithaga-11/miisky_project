@@ -437,20 +437,56 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="my-patients")
     def my_patients(self, request):
-        qs = UserNutritionistMapping.objects.select_related("user").filter(
+        # 1. Patients where current user is active nutritionist
+        mapped_qs = UserNutritionistMapping.objects.select_related("user").filter(
             nutritionist=request.user, is_active=True
         )
+        
+        # 2. Patients where current user was original nutritionist on an active plan
+        # This allows the "former" nutritionist to still see the patient they were working with
+        was_original_qs = UserDietPlan.objects.filter(
+            original_nutritionist=request.user, status='active'
+        ).select_related('user')
+        
+        # Build set of patient IDs to avoid duplicates
+        patient_map = {} # user_id -> {'mapping': mapping, 'diet_plan': diet_plan}
+        
+        for m in mapped_qs:
+            patient_map[m.user.id] = {'user': m.user, 'mapping_id': m.id, 'assigned_on': m.assigned_on}
+            
+        for dp in was_original_qs:
+            if dp.user.id not in patient_map:
+                patient_map[dp.user.id] = {'user': dp.user, 'mapping_id': None, 'assigned_on': dp.created_on}
+
         results = []
-        for mapping in qs:
-            patient = mapping.user
+        for pid, data in patient_map.items():
+            patient = data['user']
+            
+            # Fetch active reassignment info if any
+            reassignment = NutritionistReassignment.objects.filter(
+                user=patient, 
+                active_diet_plan__status='active'
+            ).order_by('-reassigned_on').first()
+            
+            reassignment_data = None
+            if reassignment:
+                reassignment_data = {
+                    "previous_nutritionist": reassignment.previous_nutritionist.username if reassignment.previous_nutritionist else None,
+                    "new_nutritionist": reassignment.new_nutritionist.username if reassignment.new_nutritionist else None,
+                    "reason": reassignment.reason,
+                    "notes": reassignment.notes,
+                    "effective_from": reassignment.effective_from,
+                }
+
             try:
                 q = patient.userquestionnaire
             except UserQuestionnaire.DoesNotExist:
                 q = None
+                
             results.append(
                 {
-                    "mapping_id": mapping.id,
-                    "assigned_on": mapping.assigned_on,
+                    "mapping_id": data['mapping_id'],
+                    "assigned_on": data['assigned_on'],
                     "user": {
                         "id": patient.id,
                         "username": patient.username,
@@ -466,6 +502,7 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                         "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
                     },
                     "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
+                    "reassignment_details": reassignment_data,
                 }
             )
         return Response(results)

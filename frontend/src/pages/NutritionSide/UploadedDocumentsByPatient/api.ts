@@ -42,8 +42,15 @@ export type NutritionistReview = {
 
 export type MappedPatientResponse = {
     user: Patient;
-    mapping_id: number;
+    mapping_id: number | null;
     assigned_on: string;
+    reassignment_details?: {
+        previous_nutritionist: string | null;
+        new_nutritionist: string | null;
+        reason: string;
+        notes: string | null;
+        effective_from: string;
+    } | null;
 };
 
 export const getMyPatients = async (): Promise<MappedPatientResponse[]> => {

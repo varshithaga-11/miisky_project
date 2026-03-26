@@ -48,6 +48,8 @@ export interface UserDietPlan {
   payment_status: string;
   start_date: string | null;
   end_date: string | null;
+  original_nutritionist?: number | null;
+  nutritionist_effective_from?: string | null;
   suggested_on: string;
   approved_on: string | null;
   created_on: string;
