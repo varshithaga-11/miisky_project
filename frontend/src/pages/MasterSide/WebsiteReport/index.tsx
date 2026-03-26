@@ -52,9 +52,9 @@ const WebsiteReportPage: React.FC = () => {
   };
 
   const statusColors: Record<string, string> = {
-    new: "bg-blue-100 text-blue-700 border-blue-200",
-    in_progress: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    completed: "bg-green-100 text-green-700 border-green-200",
+    pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    generated: "bg-green-100 text-green-700 border-green-200",
+    failed: "bg-red-100 text-red-700 border-red-200",
   };
 
   return (
@@ -127,12 +127,12 @@ const WebsiteReportPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-5">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-extrabold border leading-none transition-all ${
-                          statusColors[report.status || "new"] || statusColors.new
+                          statusColors[report.status || "pending"] || statusColors.pending
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
-                             report.status === "completed" ? "bg-green-500" : report.status === "in_progress" ? "bg-yellow-500" : "bg-blue-500"
+                             report.status === "generated" ? "bg-green-500" : report.status === "failed" ? "bg-red-500" : "bg-yellow-500"
                           }`}></span>
-                          {(report.status || "new").toUpperCase()}
+                          {(report.status || "pending").toUpperCase()}
                         </span>
                       </td>
                       <td className="px-6 py-5 text-center">
@@ -172,7 +172,7 @@ const WebsiteReportPage: React.FC = () => {
 
       {editingId && (
         <EditWebsiteReport 
-          id={editingId} 
+          reportId={editingId} 
           onSuccess={() => fetchReports()} 
           onClose={() => setEditingId(null)} 
           reportTypes={reportTypes}

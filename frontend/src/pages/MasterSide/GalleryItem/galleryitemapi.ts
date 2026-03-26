@@ -1,14 +1,22 @@
 import axios from "axios";
-import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import { createApiUrl, getAuthHeaders, getAuthHeadersFile } from "../../../access/access";
 
 export interface GalleryItem {
   id?: number;
   category?: number;
+  category_name?: string;
   title: string;
-  image: string;
   description?: string;
+  media_type?: 'image' | 'video';
+  image?: File | string | null;
+  image_url?: string;
+  video_url?: string;
+  thumbnail?: File | string | null;
+  thumbnail_url?: string;
   position?: number;
+  is_featured?: boolean;
   is_active?: boolean;
+  created_at?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -22,9 +30,10 @@ export interface PaginatedResponse<T> {
 
 export const createGalleryItem = async (data: FormData | GalleryItem) => {
   const url = createApiUrl("api/website/galleryitem/");
-  const response = await axios.post(url, data, {
-    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
-  });
+  const isFormData = data instanceof FormData;
+  const headers = isFormData ? await getAuthHeadersFile() : await getAuthHeaders();
+  
+  const response = await axios.post(url, data, { headers });
   return response.data;
 };
 
@@ -54,9 +63,10 @@ export const getGalleryItemById = async (id: number) => {
 
 export const updateGalleryItem = async (id: number, data: FormData | Partial<GalleryItem>) => {
   const url = createApiUrl(`api/website/galleryitem/${id}/`);
-  const response = await axios.patch(url, data, {
-    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
-  });
+  const isFormData = data instanceof FormData;
+  const headers = isFormData ? await getAuthHeadersFile() : await getAuthHeaders();
+
+  const response = await axios.patch(url, data, { headers });
   return response.data;
 };
 
