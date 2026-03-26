@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.utils import timezone
+from django.db.models import Q
 from .pagination import WebsitePagination
 
 
@@ -243,13 +244,22 @@ class BlogCommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = BlogComment.objects.all()
-        if self.request.user and self.request.user.is_staff:
-            pass  # admin sees all
-        else:
+        # Authenticated users (staff/master) see all comments; public users only approved ones.
+        if not self.request.user.is_authenticated:
             qs = qs.filter(is_approved=True)
-        blog_post = self.request.query_params.get('blog_post')
+
+        params = self.request.query_params
+        blog_post = params.get('blog_post')
         if blog_post:
             qs = qs.filter(blog_post=blog_post)
+        
+        search = params.get('search')
+        if search:
+            qs = qs.filter(
+                Q(name__icontains=search) | 
+                Q(comment__icontains=search) |
+                Q(email__icontains=search)
+            )
         return qs
 
     @action(detail=True, methods=['patch'], url_path='approve', permission_classes=[IsAuthenticated])

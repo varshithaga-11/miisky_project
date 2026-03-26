@@ -93,7 +93,7 @@ class BlogCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogComment
         fields = '__all__'
-        read_only_fields = ['is_approved', 'created_at']
+        read_only_fields = ['created_at']
 
 
 class BlogPostSerializer(serializers.ModelSerializer):
