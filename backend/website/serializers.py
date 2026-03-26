@@ -179,11 +179,25 @@ class DepartmentSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class TeamMemberSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer(read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    photo_url = serializers.SerializerMethodField()
+    photo = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = TeamMember
-        fields = '__all__'
+        fields = [
+            'id', 'name', 'designation', 'department', 'department_name',
+            'bio', 'qualification', 'experience_years', 'photo', 'photo_url',
+            'linkedin_url', 'email', 'phone', 'position', 'is_active', 'created_at'
+        ]
+
+    def get_photo_url(self, obj):
+        if obj.photo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.photo.url)
+            return obj.photo.url
+        return None
 
 
 # ===========================================================================
@@ -228,10 +242,35 @@ class GalleryCategorySerializer(serializers.ModelSerializer):
 
 class GalleryItemSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
+    image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    image = serializers.ImageField(write_only=True, required=False)
+    thumbnail = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = GalleryItem
-        fields = '__all__'
+        fields = [
+            'id', 'category', 'category_name', 'title', 'description', 
+            'media_type', 'image', 'image_url', 'video_url', 
+            'thumbnail', 'thumbnail_url', 'position', 'is_featured', 
+            'is_active', 'created_at'
+        ]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.thumbnail.url)
+            return obj.thumbnail.url
+        return None
 
 
 # ===========================================================================

@@ -1,15 +1,17 @@
 import axios from "axios";
-import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import { createApiUrl, getAuthHeaders, getAuthHeadersFile } from "../../../access/access";
 
 export interface TeamMember {
   id?: number;
   name: string;
   designation: string;
   department?: number;
+  department_name?: string;
   bio?: string;
   qualification?: string;
   experience_years?: number;
-  photo?: string;
+  photo?: File | string | null;
+  photo_url?: string;
   linkedin_url?: string;
   email?: string;
   phone?: string;
@@ -29,9 +31,10 @@ export interface PaginatedResponse<T> {
 
 export const createTeamMember = async (data: FormData | TeamMember) => {
   const url = createApiUrl("api/website/teammember/");
-  const response = await axios.post(url, data, {
-    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
-  });
+  const isFormData = data instanceof FormData;
+  const headers = isFormData ? await getAuthHeadersFile() : await getAuthHeaders();
+  
+  const response = await axios.post(url, data, { headers });
   return response.data;
 };
 
@@ -61,9 +64,10 @@ export const getTeamMemberById = async (id: number) => {
 
 export const updateTeamMember = async (id: number, data: FormData | Partial<TeamMember>) => {
   const url = createApiUrl(`api/website/teammember/${id}/`);
-  const response = await axios.patch(url, data, {
-    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
-  });
+  const isFormData = data instanceof FormData;
+  const headers = isFormData ? await getAuthHeadersFile() : await getAuthHeaders();
+
+  const response = await axios.patch(url, data, { headers });
   return response.data;
 };
 
