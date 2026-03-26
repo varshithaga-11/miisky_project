@@ -19,6 +19,13 @@ export type AllotedPatient = {
     is_patient_mapped?: boolean;
   };
   questionnaire: any | null;
+  reassignment_details?: {
+    previous_nutritionist: string;
+    new_nutritionist: string;
+    reason: string;
+    notes: string | null;
+    effective_from: string;
+  } | null;
 };
 
 export const getMyAllotedPatients = async (): Promise<AllotedPatient[]> => {

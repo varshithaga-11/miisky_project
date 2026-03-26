@@ -126,11 +126,27 @@ const AllottedPatientsPage: React.FC = () => {
                               <UserCircleIcon className="h-6 w-6" />
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="truncate font-semibold text-gray-900 dark:text-white">
-                                {p.user.first_name || p.user.last_name
-                                  ? `${p.user.first_name || ""} ${p.user.last_name || ""}`
-                                  : p.user.username}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="truncate font-semibold text-gray-900 dark:text-white">
+                                  {p.user.first_name || p.user.last_name
+                                    ? `${p.user.first_name || ""} ${p.user.last_name || ""}`
+                                    : p.user.username}
+                                </span>
+                                {p.mapping_id ? (
+                                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-emerald-100 dark:border-emerald-500/20">
+                                    Active
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 dark:bg-white/[0.05] text-gray-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-gray-100 dark:border-white/[0.05]">
+                                    Reassigned
+                                  </div>
+                                )}
+                                {p.reassignment_details && (
+                                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-50 dark:bg-brand-500/10 text-brand-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-brand-100 dark:border-brand-500/20">
+                                    <FiInfo size={10} /> {p.reassignment_details.reason.replace('_', ' ')}
+                                  </div>
+                                )}
+                              </div>
                               <span className="truncate text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">
                                 @{p.user.username}
                               </span>
@@ -303,6 +319,33 @@ const AllottedPatientsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-6">
+                                            {p.reassignment_details && (
+                                              <div className="mb-6 p-4 bg-brand-50/50 dark:bg-brand-500/5 rounded-2xl border border-brand-100/50 dark:border-brand-500/10">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                  <FiInfo className="text-brand-500" size={14} />
+                                                  <span className="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest leading-none">Reassignment Details</span>
+                                                </div>
+                                                <div className="space-y-2">
+                                                   <div className="flex justify-between text-[9px]">
+                                                      <span className="text-gray-400 font-bold uppercase tracking-tighter">Effective From</span>
+                                                      <span className="text-brand-600 dark:text-brand-400 font-black">{p.reassignment_details.effective_from}</span>
+                                                   </div>
+                                                   <div className="flex justify-between text-[9px]">
+                                                      <span className="text-gray-400 font-bold uppercase tracking-tighter">Previous</span>
+                                                      <span className="text-gray-700 dark:text-gray-300 font-bold">@{p.reassignment_details.previous_nutritionist}</span>
+                                                   </div>
+                                                   <div className="flex justify-between text-[9px]">
+                                                      <span className="text-gray-400 font-bold uppercase tracking-tighter">New</span>
+                                                      <span className="text-gray-700 dark:text-gray-300 font-bold">@{p.reassignment_details.new_nutritionist}</span>
+                                                   </div>
+                                                   <div className="flex justify-between text-[9px]">
+                                                      <span className="text-gray-400 font-bold uppercase tracking-tighter">Reason</span>
+                                                      <span className="text-gray-700 dark:text-gray-300 font-black uppercase">{p.reassignment_details.reason.replace('_', ' ')}</span>
+                                                   </div>
+                                                </div>
+                                              </div>
+                                            )}
+
                                            <div>
                                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Food Intake</span>
                                               <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-gray-100 dark:border-white/5">
