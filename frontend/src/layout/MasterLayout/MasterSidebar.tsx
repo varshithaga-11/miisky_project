@@ -90,6 +90,11 @@ const adminNavItems: NavItem[] = [
     path: "/admin/usermanagement",
   },
   {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Mappings",
+    path: "/admin/user-nutrition-mapping",
+  },
+  {
 
     icon: <ClipboardList className="w-5 h-5" />,
     name: "Patients Overview",
@@ -120,16 +125,6 @@ const adminNavItems: NavItem[] = [
     ],
   },
   {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Mappings",
-    subItems: [{ name: "User–Nutritionist Mapping", path: "/admin/user-nutrition-mapping" }],
-  },
-  {
-    icon: <UserCog className="w-5 h-5" />,
-    name: "Profile",
-    path: "/profile-info",
-  },
-  {
     icon: <HelpCircle className="w-5 h-5" />,
     name: "Support",
     subItems: [
@@ -137,6 +132,12 @@ const adminNavItems: NavItem[] = [
       { name: "Support Ticket Requests", path: "/admin/support-ticket-requests" },
     ],
   },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
+
 ];
 
 const patientNavItems: NavItem[] = [
