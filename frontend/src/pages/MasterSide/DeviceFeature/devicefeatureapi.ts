@@ -3,9 +3,11 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
 export interface DeviceFeature {
   id?: number;
-  device?: number;
-  feature: string;
-  position?: number;
+  device: number;
+  title: string;       // Matches backend 'title'
+  description?: string; // Matches backend 'description'
+  icon_class?: string;
+  position: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -17,7 +19,7 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
-export const createDeviceFeature = async (data: DeviceFeature) => {
+export const createDeviceFeature = async (data: Partial<DeviceFeature>) => {
   const url = createApiUrl("api/website/devicefeature/");
   const response = await axios.post(url, data, {
     headers: await getAuthHeaders(),
