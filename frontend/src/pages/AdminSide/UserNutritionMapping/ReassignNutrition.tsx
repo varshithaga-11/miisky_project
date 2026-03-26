@@ -9,6 +9,7 @@ import {
   SimpleUser,
   UserNutritionMapping,
 } from "./api";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   onClose: () => void;
@@ -222,15 +223,12 @@ const ReassignNutrition: React.FC<Props> = ({
                   />
                 </div>
               )}
-              <div>
-                <Label>Effective from (meals assigned from this date)</Label>
-                <input
-                  type="date"
-                  value={effectiveFrom}
-                  onChange={(e) => setEffectiveFrom(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-2 text-sm"
-                />
-              </div>
+              <DatePicker2
+                id="effectiveFrom"
+                label="Effective from (meals assigned from this date)"
+                value={effectiveFrom}
+                onChange={(val) => setEffectiveFrom(val)}
+              />
             </>
           )}
 

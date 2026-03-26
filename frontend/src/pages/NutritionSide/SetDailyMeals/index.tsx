@@ -595,6 +595,17 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                         className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
                                                                                     />
                                                                                 </div>
+                                                                                <div className="w-32">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Packaging</label>
+                                                                                    <select
+                                                                                        value={entry.packaging_material || ""}
+                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'packaging_material', e.target.value ? Number(e.target.value) : null)}
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold"
+                                                                                    >
+                                                                                        <option value="">None</option>
+                                                                                        {packagingMaterials.map(pm => <option key={pm.id} value={pm.id}>{pm.name}</option>)}
+                                                                                    </select>
+                                                                                </div>
                                                                                 <button onClick={() => handleRemoveSlot(globalIdx)} className="p-2 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                                                                                     <FiTrash2 size={18} />
                                                                                 </button>
