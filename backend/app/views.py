@@ -1690,12 +1690,20 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return queryset.order_by('-suggested_on')
 
         if user.role == "nutritionist":
-            # Identify patients mapped to this nutritionist
-            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+            # Identify patients mapped to this nutritionist (active)
+            mapped_patient_ids = list(UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
-            ).values_list('user_id', flat=True)
+            ).values_list('user_id', flat=True))
             
-            queryset = queryset.filter(user_id__in=mapped_patient_ids)
+            # Also include patients where this nutritionist is the original_nutritionist (reassigned)
+            # This is crucial for them to see the plan and edit dates prior to the switch.
+            was_original_patient_ids = list(UserDietPlan.objects.filter(
+                original_nutritionist=user, status='active'
+            ).values_list('user_id', flat=True))
+            
+            all_relevant_patient_ids = list(set(mapped_patient_ids + was_original_patient_ids))
+            
+            queryset = queryset.filter(user_id__in=all_relevant_patient_ids)
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
@@ -1831,11 +1839,19 @@ class UserMealViewSet(viewsets.ModelViewSet):
         if user.role == "admin":
             pass
         elif user.role == "nutritionist":
-            # Identify patients mapped to this nutritionist
-            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+            # Active mappings
+            mapped_patient_ids = list(UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
-            ).values_list('user_id', flat=True)
-            queryset = queryset.filter(user_diet_plan__user_id__in=mapped_patient_ids)
+            ).values_list('user_id', flat=True))
+            
+            # Reassigned but formerly original mappings
+            was_original_patient_ids = list(UserDietPlan.objects.filter(
+                original_nutritionist=user, status='active'
+            ).values_list('user_id', flat=True))
+            
+            all_relevant_patient_ids = list(set(mapped_patient_ids + was_original_patient_ids))
+            
+            queryset = queryset.filter(user_diet_plan__user_id__in=all_relevant_patient_ids)
         elif user.role == "micro_kitchen":
             # Meals from diet plans allotted to this kitchen
             queryset = queryset.filter(user_diet_plan__micro_kitchen__user=user)

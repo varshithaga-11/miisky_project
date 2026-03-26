@@ -1447,7 +1447,7 @@ class UserDietPlan(models.Model):
     end_date = models.DateField(null=True, blank=True)
 
     # From this date the current `nutritionist` owns meal workflow (set on nutritionist reassignment)
-    #for example if plan is from 26th to 28th of march and meals are set on 26th and teh admin changes teh nutrition starting from 28th then 26th and 27th meals are set by the previous nutritionist and 28th meal and future dates is set by the new nutritionist
+    #for example if plan is from 26th to 28th of march and meals are set on 26th and the admin changes the nutrition starting from 28th then 26th and 27th meals are set by the previous nutritionist and 28th meal and future dates are set by the new nutritionist
     nutritionist_effective_from = models.DateField(null=True, blank=True)
 
     # 🕒 Tracking
