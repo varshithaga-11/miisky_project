@@ -639,3 +639,37 @@ class PatentViewSet(viewsets.ModelViewSet):
         elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
         return qs.order_by('-filing_date')
+
+
+# ===========================================================================
+# 22. DASHBOARD STATS
+# ===========================================================================
+
+from rest_framework.views import APIView
+
+class DashboardStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        stats = {
+            "hero_banners": HeroBanner.objects.count(),
+            "blog_posts": BlogPost.objects.count(),
+            "blog_comments": {
+                "total": BlogComment.objects.count(),
+                "pending": BlogComment.objects.filter(is_approved=False).count()
+            },
+            "medical_devices": MedicalDevice.objects.count(),
+            "team_members": TeamMember.objects.count(),
+            "gallery_items": GalleryItem.objects.count(),
+            "job_applications": {
+                "total": JobApplication.objects.count(),
+                "pending": JobApplication.objects.filter(status='pending').count()
+            },
+            "website_reports": {
+                "total": WebsiteReport.objects.count(),
+                "pending": WebsiteReport.objects.filter(status='pending').count()
+            },
+            "partners": Partner.objects.count(),
+            "patents": Patent.objects.count(),
+        }
+        return Response(stats)

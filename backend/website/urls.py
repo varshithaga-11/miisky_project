@@ -56,5 +56,6 @@ router.register(r'legalpage', views.LegalPageViewSet, basename='legalpage')
 router.register(r'patent', views.PatentViewSet, basename='patent')
 
 urlpatterns = [
+    path('dashboard-stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
     path('', include(router.urls)),
 ]
