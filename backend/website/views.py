@@ -46,15 +46,19 @@ class HeroBannerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = HeroBanner.objects.all()
-        page = self.request.query_params.get('page')
+        target_page = self.request.query_params.get('target_page')
         is_active = self.request.query_params.get('is_active')
-        if page:
-            qs = qs.filter(page=page)
+        
+        if target_page:
+            qs = qs.filter(page=target_page)
+            
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+            
+        return qs.order_by('position')
 
 
 # ===========================================================================
@@ -71,10 +75,11 @@ class MedicalDeviceCategoryViewSet(viewsets.ModelViewSet):
         qs = MedicalDeviceCategory.objects.all()
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('position')
 
 
 class MedicalDeviceViewSet(viewsets.ModelViewSet):
@@ -105,10 +110,11 @@ class MedicalDeviceViewSet(viewsets.ModelViewSet):
             qs = qs.filter(primary_technology=params['primary_technology'])
         is_active = params.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('position')
 
     @action(detail=True, methods=['get'], url_path='features')
     def features(self, request, pk=None):
@@ -168,10 +174,11 @@ class BlogCategoryViewSet(viewsets.ModelViewSet):
         qs = BlogCategory.objects.all()
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('position')
 
 
 class BlogTagViewSet(viewsets.ModelViewSet):
@@ -207,8 +214,9 @@ class BlogPostViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_featured=_bool(p['is_featured']))
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
         return qs
 
@@ -320,10 +328,11 @@ class TestimonialViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_featured=_bool(p['is_featured']))
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('position')
 
 
 # ===========================================================================
@@ -361,10 +370,11 @@ class FAQViewSet(viewsets.ModelViewSet):
             qs = qs.filter(category=p['category'])
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('category', 'position')
 
 
 # ===========================================================================
@@ -435,10 +445,11 @@ class JobListingViewSet(viewsets.ModelViewSet):
             qs = qs.filter(job_type=p['job_type'])
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('-created_at')
 
 
 class JobApplicationViewSet(viewsets.ModelViewSet):
@@ -489,10 +500,11 @@ class GalleryCategoryViewSet(viewsets.ModelViewSet):
         qs = GalleryCategory.objects.all()
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('position')
 
 
 class GalleryItemViewSet(viewsets.ModelViewSet):
@@ -512,10 +524,11 @@ class GalleryItemViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_featured=_bool(p['is_featured']))
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('category', 'position')
 
 
 # ===========================================================================
@@ -537,10 +550,11 @@ class PartnerViewSet(viewsets.ModelViewSet):
             qs = qs.filter(partner_type=p['partner_type'])
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('position')
 
 
 # ===========================================================================
@@ -558,11 +572,14 @@ class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
         p = self.request.query_params
         if p.get('section_type'):
             qs = qs.filter(section_type=p['section_type'])
+            
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
+            
         return qs
 
 
@@ -579,8 +596,9 @@ class LegalPageViewSet(viewsets.ModelViewSet):
         qs = LegalPage.objects.all()
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
         return qs
 
@@ -606,7 +624,8 @@ class PatentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(status=p['status'])
         is_active = p.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
-        return qs
+        return qs.order_by('-filing_date')

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import { createApiUrl, getAuthHeaders, getAuthHeadersFile } from "../../../access/access";
 
 export interface CompanyAboutSection {
   id?: number;
@@ -30,17 +30,19 @@ export const getAboutSectionList = async (page: number = 1, limit: number = 10) 
 
 export const createAboutSection = async (data: FormData | CompanyAboutSection) => {
   const url = createApiUrl("api/website/companyaboutsection/");
-  const response = await axios.post(url, data, {
-    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
-  });
+  const isFormData = data instanceof FormData;
+  const headers = isFormData ? await getAuthHeadersFile() : await getAuthHeaders();
+
+  const response = await axios.post(url, data, { headers });
   return response.data;
 };
 
 export const updateAboutSection = async (id: number, data: FormData | Partial<CompanyAboutSection>) => {
   const url = createApiUrl(`api/website/companyaboutsection/${id}/`);
-  const response = await axios.patch(url, data, {
-    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
-  });
+  const isFormData = data instanceof FormData;
+  const headers = isFormData ? await getAuthHeadersFile() : await getAuthHeaders();
+
+  const response = await axios.patch(url, data, { headers });
   return response.data;
 };
 

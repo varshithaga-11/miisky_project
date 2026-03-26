@@ -79,7 +79,13 @@ const HeroBannerPage: React.FC = () => {
                 banners.map((banner) => (
                   <tr key={banner.id} className="hover:bg-blue-50/20 transition-colors group">
                     <td className="px-6 py-4">
-                      {banner.background_image ? <img src={banner.background_image} alt="" className="w-16 h-8 object-cover rounded shadow-sm" /> : <div className="w-16 h-8 bg-gray-100 rounded" />}
+                      {banner.background_image_url ? (
+                        <img src={banner.background_image_url} alt="" className="w-16 h-8 object-cover rounded shadow-sm ring-1 ring-gray-100" />
+                      ) : (
+                        <div className="w-16 h-8 bg-gray-100 rounded flex items-center justify-center">
+                          <span className="text-[10px] text-gray-400 font-bold">N/A</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 border-l border-gray-50">
                       <div className="font-semibold text-gray-900">{banner.title || "No Title"}</div>

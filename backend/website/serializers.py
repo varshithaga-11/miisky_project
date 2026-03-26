@@ -22,9 +22,15 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class HeroBannerSerializer(serializers.ModelSerializer):
+    # This ensures the API returns the full URL string in responses
+    background_image_url = serializers.ImageField(source='background_image', read_only=True)
+    # This allows the frontend to upload a file WITHOUT any string validation issues
+    background_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
+
     class Meta:
         model = HeroBanner
         fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
 
 
 

@@ -36,14 +36,14 @@ class CompanyInfo(models.Model):
     """
     name = models.CharField(max_length=200, default="Miisky Technovation Private Limited")
     tagline = models.CharField(max_length=300, blank=True, null=True)
-    logo = models.ImageField(upload_to='website/company/', null=True, blank=True)
-    favicon = models.ImageField(upload_to='website/company/', null=True, blank=True)
+    logo = models.CharField(max_length=255, null=True, blank=True)
+    favicon = models.CharField(max_length=255, null=True, blank=True)
 
     # Contact
     phone_primary = models.CharField(max_length=20, blank=True, null=True)
     phone_secondary = models.CharField(max_length=20, blank=True, null=True)
-    email_support = models.EmailField(blank=True, null=True)
-    email_general = models.EmailField(blank=True, null=True)
+    email_support = models.CharField(max_length=200, blank=True, null=True)
+    email_general = models.CharField(max_length=200, blank=True, null=True)
     whatsapp_number = models.CharField(max_length=20, blank=True, null=True)
 
     # Address
@@ -53,15 +53,15 @@ class CompanyInfo(models.Model):
     state = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=100, default='India')
-    google_maps_url = models.URLField(blank=True, null=True)
-    google_maps_embed_url = models.URLField(blank=True, null=True)
+    google_maps_url = models.CharField(max_length=500, blank=True, null=True)
+    google_maps_embed_url = models.CharField(max_length=1000, blank=True, null=True)
 
     # Social Media
-    facebook_url = models.URLField(blank=True, null=True)
-    twitter_url = models.URLField(blank=True, null=True)
-    instagram_url = models.URLField(blank=True, null=True)
-    linkedin_url = models.URLField(blank=True, null=True)
-    youtube_url = models.URLField(blank=True, null=True)
+    facebook_url = models.CharField(max_length=300, blank=True, null=True)
+    twitter_url = models.CharField(max_length=300, blank=True, null=True)
+    instagram_url = models.CharField(max_length=300, blank=True, null=True)
+    linkedin_url = models.CharField(max_length=300, blank=True, null=True)
+    youtube_url = models.CharField(max_length=300, blank=True, null=True)
 
     # SEO
     meta_title = models.CharField(max_length=200, blank=True, null=True)
@@ -104,12 +104,12 @@ class HeroBanner(models.Model):
         ('about', 'About Us'),
     ]
 
-    page = models.CharField(max_length=50, choices=PAGE_CHOICES, default='home')
+    page = models.CharField(max_length=100, default='home')
     title = models.CharField(max_length=300, blank=True, null=True)
     subtitle = models.CharField(max_length=500, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     background_image = models.ImageField(upload_to='website/banners/', null=True, blank=True)
-    background_video_url = models.URLField(blank=True, null=True)
+    background_video_url = models.CharField(max_length=500, blank=True, null=True)
     background_color = models.CharField(max_length=20, blank=True, null=True)  # hex code
 
     cta_text = models.CharField(max_length=100, blank=True, null=True)   # Call to action button text
@@ -178,7 +178,7 @@ class MedicalDevice(models.Model):
     description = models.TextField(blank=True, null=True)
 
     # Technology
-    primary_technology = models.CharField(max_length=20, choices=TECHNOLOGY_CHOICES, blank=True, null=True)
+    primary_technology = models.CharField(max_length=100, blank=True, null=True)
     is_non_invasive = models.BooleanField(default=True)
     is_continuous_monitoring = models.BooleanField(default=False)
     connectivity = models.CharField(max_length=100, blank=True, null=True)
@@ -196,15 +196,15 @@ class MedicalDevice(models.Model):
     # e.g. ["Malaria", "Typhoid", "Tuberculosis", "UTI", "Yellow Fever"]
 
     # Media
-    image = models.ImageField(upload_to='website/devices/', null=True, blank=True)
-    thumbnail = models.ImageField(upload_to='website/devices/thumbnails/', null=True, blank=True)
+    image = models.CharField(max_length=255, null=True, blank=True)
+    thumbnail = models.CharField(max_length=255, null=True, blank=True)
     video_url = models.URLField(blank=True, null=True)
 
     # Documents
-    presentation_file = models.FileField(upload_to='website/devices/presentations/', null=True, blank=True)
-    brochure_file = models.FileField(upload_to='website/devices/brochures/', null=True, blank=True)
-    research_paper_file = models.FileField(upload_to='website/devices/research/', null=True, blank=True)
-    patent_document = models.FileField(upload_to='website/devices/patents/', null=True, blank=True)
+    presentation_file = models.CharField(max_length=255, null=True, blank=True)
+    brochure_file = models.CharField(max_length=255, null=True, blank=True)
+    research_paper_file = models.CharField(max_length=255, null=True, blank=True)
+    patent_document = models.CharField(max_length=255, null=True, blank=True)
     patent_number = models.CharField(max_length=100, blank=True, null=True)
 
     # Specifications
@@ -263,8 +263,8 @@ class ResearchPaper(models.Model):
     published_date = models.DateField(blank=True, null=True)
     journal_conference = models.CharField(max_length=300, blank=True, null=True)
     abstract = models.TextField(blank=True, null=True)
-    document = models.FileField(upload_to='website/research/', null=True, blank=True)
-    external_url = models.URLField(blank=True, null=True)
+    document = models.CharField(max_length=255, null=True, blank=True)
+    external_url = models.CharField(max_length=500, blank=True, null=True)
     device = models.ForeignKey(
         MedicalDevice, on_delete=models.SET_NULL, null=True, blank=True, related_name='research_papers'
     )
@@ -286,7 +286,7 @@ class BlogCategory(models.Model):
     name = models.CharField(max_length=150)
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='website/blog_categories/', null=True, blank=True)
+    image = models.CharField(max_length=255, null=True, blank=True)
     icon = models.CharField(max_length=100, null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
@@ -342,11 +342,11 @@ class BlogPost(models.Model):
     excerpt = models.TextField(blank=True, null=True)
     content = models.TextField()
 
-    cover_image = models.ImageField(upload_to='website/blog/', null=True, blank=True)
+    cover_image = models.CharField(max_length=255, null=True, blank=True)
     cover_image_alt = models.CharField(max_length=200, blank=True, null=True)
 
     author_name = models.CharField(max_length=200, blank=True, null=True)
-    author_image = models.ImageField(upload_to='website/blog/authors/', null=True, blank=True)
+    author_image = models.CharField(max_length=255, null=True, blank=True)
     author_bio = models.TextField(blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
@@ -410,7 +410,7 @@ class ReportType(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     icon_class = models.CharField(max_length=100, blank=True, null=True)
-    report_template = models.FileField(upload_to='website/report_templates/', null=True, blank=True)
+    report_template = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     position = models.PositiveIntegerField(default=1)
 
@@ -447,7 +447,7 @@ class WebsiteReport(models.Model):
     date_to = models.DateField(null=True, blank=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    generated_file = models.FileField(upload_to='website/generated_reports/', null=True, blank=True)
+    generated_file = models.CharField(max_length=255, null=True, blank=True)
 
     # Forward/share options
     forwarded_to_email = models.EmailField(blank=True, null=True)
@@ -550,7 +550,7 @@ class Department(models.Model):
     name = models.CharField(max_length=150, unique=True)
     description = models.TextField(blank=True, null=True)
     head_name = models.CharField(max_length=200, blank=True, null=True)
-    head_email = models.EmailField(blank=True, null=True)
+    head_email = models.CharField(max_length=150, blank=True, null=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
 
@@ -582,9 +582,9 @@ class TeamMember(models.Model):
     bio = models.TextField(blank=True, null=True)
     qualification = models.CharField(max_length=300, blank=True, null=True)
     experience_years = models.PositiveIntegerField(null=True, blank=True)
-    photo = models.ImageField(upload_to='website/team/', null=True, blank=True)
-    linkedin_url = models.URLField(blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
+    photo = models.CharField(max_length=255, null=True, blank=True)
+    linkedin_url = models.CharField(max_length=300, blank=True, null=True)
+    email = models.CharField(max_length=150, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
@@ -666,12 +666,12 @@ class JobApplication(models.Model):
 
     job = models.ForeignKey(JobListing, on_delete=models.CASCADE, related_name='applications')
     applicant_name = models.CharField(max_length=200)
-    email = models.EmailField()
+    email = models.CharField(max_length=150)
     phone = models.CharField(max_length=20)
-    resume = models.FileField(upload_to='website/careers/resumes/')
+    resume = models.CharField(max_length=255, null=True, blank=True)
     cover_letter = models.TextField(blank=True, null=True)
-    portfolio_url = models.URLField(blank=True, null=True)
-    linkedin_url = models.URLField(blank=True, null=True)
+    portfolio_url = models.CharField(max_length=500, blank=True, null=True)
+    linkedin_url = models.CharField(max_length=500, blank=True, null=True)
     current_ctc = models.CharField(max_length=100, blank=True, null=True)
     expected_ctc = models.CharField(max_length=100, blank=True, null=True)
     notice_period = models.CharField(max_length=100, blank=True, null=True)
@@ -733,9 +733,9 @@ class GalleryItem(models.Model):
     title = models.CharField(max_length=300, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     media_type = models.CharField(max_length=10, choices=MEDIA_TYPE_CHOICES, default='image')
-    image = models.ImageField(upload_to='website/gallery/', null=True, blank=True)
+    image = models.CharField(max_length=255, null=True, blank=True)
     video_url = models.URLField(blank=True, null=True)
-    thumbnail = models.ImageField(upload_to='website/gallery/thumbnails/', null=True, blank=True)
+    thumbnail = models.CharField(max_length=255, null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -767,9 +767,9 @@ class Partner(models.Model):
     ]
 
     name = models.CharField(max_length=300)
-    logo = models.ImageField(upload_to='website/partners/', null=True, blank=True)
+    logo = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    website_url = models.URLField(blank=True, null=True)
+    website_url = models.CharField(max_length=500, blank=True, null=True)
     partner_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='other')
     collaboration_details = models.TextField(blank=True, null=True)
     since_year = models.PositiveIntegerField(null=True, blank=True)
@@ -813,7 +813,7 @@ class CompanyAboutSection(models.Model):
     # For Promoter/Entity specific info
     entity_name = models.CharField(max_length=300, blank=True, null=True)
     entity_description = models.TextField(blank=True, null=True)
-    entity_website = models.URLField(blank=True, null=True)
+    entity_website = models.CharField(max_length=500, blank=True, null=True)
 
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
@@ -903,8 +903,7 @@ class Patent(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='filed')
     
     patent_document = models.FileField(upload_to='website/patents/', null=True, blank=True)
-    external_link = models.URLField(blank=True, null=True)
-    
+    external_link = models.CharField(max_length=500, blank=True, null=True)
     technology_area = models.CharField(max_length=200, blank=True, null=True)
     
     device = models.ForeignKey(MedicalDevice, on_delete=models.SET_NULL, null=True, blank=True, related_name='patents')
