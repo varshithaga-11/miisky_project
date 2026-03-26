@@ -1609,15 +1609,35 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
             return queryset
             
         if user.role == "nutritionist":
-            # Identify patients mapped to this nutritionist
-            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+            from django.db.models import Q
+            from .models import UserDietPlan, UserNutritionistMapping
+            
+            # 1. Patients where they are currently active
+            active_patient_ids = UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
             ).values_list('user_id', flat=True)
             
-            # Start with reports for ALL mapped patients
-            queryset = queryset.filter(user_id__in=mapped_patient_ids)
+            # 2. Patients where they were the original nutritionist (reassigned)
+            reassigned_plans = UserDietPlan.objects.filter(
+                original_nutritionist=user, status='active'
+            ).select_related('user')
             
-            # Refine to specific patient if requested
+            # Combine logic
+            # Query for reports where:
+            # - Patient is in active_patient_ids (Full access)
+            # - OR Patient is in reassigned_plans AND uploaded_on < nutritionist_effective_from
+            
+            condition = Q(user_id__in=active_patient_ids)
+            
+            for plan in reassigned_plans:
+                if plan.nutritionist_effective_from:
+                    condition |= Q(user_id=plan.user_id, uploaded_on__lt=plan.nutritionist_effective_from)
+                else:
+                    # If no effective date set yet, original nutritionist can see everything until it is set
+                    condition |= Q(user_id=plan.user_id)
+            
+            queryset = queryset.filter(condition)
+            
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             
@@ -1648,8 +1668,22 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
             return queryset
             
         if user.role == "nutritionist":
-            # Nutritionists see reviews they gave
-            queryset = queryset.filter(nutritionist=user)
+            from django.db.models import Q
+            from .models import UserNutritionistMapping
+            
+            # 1. Identify patients currently mapped to this nutritionist
+            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list('user_id', flat=True)
+            
+            # 2. Nutritionists can see:
+            # - Any review they gave personally (even if patient is reassigned)
+            # - ANY review for a patient they are currently managing (to see history)
+            
+            queryset = queryset.filter(
+                Q(nutritionist=user) | Q(user_id__in=mapped_patient_ids)
+            )
+            
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             return queryset
