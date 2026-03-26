@@ -361,24 +361,68 @@ const masterNavItems: NavItem[] = [
     path: "/master/dashboard",
   },
   {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Company Management",
+    subItems: [
+      { name: "Company Info", path: "/master/companyinfo" },
+      { name: "About Sections", path: "/master/companyaboutsection" },
+      { name: "Hero Banners", path: "/master/herobanner" },
+      { name: "Legal Pages", path: "/master/legalpage" },
+    ],
+  },
+  {
+    icon: <Package className="w-5 h-5" />,
+    name: "Medical Devices",
+    subItems: [
+      { name: "Device Categories", path: "/master/medicaldevicecategory" },
+      { name: "Devices", path: "/master/medicaldevice" },
+      { name: "Device Features", path: "/master/devicefeature" },
+      { name: "Research Papers", path: "/master/researchpaper" },
+      { name: "Patents", path: "/master/patent" },
+    ],
+  },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Blog Management",
+    subItems: [
+      { name: "Blog Categories", path: "/master/blogcategory" },
+      { name: "Blog Tags", path: "/master/blogtag" },
+      { name: "Blog Posts", path: "/master/blogpost" },
+      { name: "Blog Comments", path: "/master/blogcomment" },
+    ],
+  },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Content Management",
+    subItems: [
+      { name: "FAQ Categories", path: "/master/faqcategory" },
+      { name: "FAQs", path: "/master/faq" },
+      { name: "Report Types", path: "/master/reporttype" },
+      { name: "Website Reports", path: "/master/websitereport" },
+    ],
+  },
+  {
     icon: <Users className="w-5 h-5" />,
-    name: "User Management",
-    path: "/master/user-management",
+    name: "Team & Careers",
+    subItems: [
+      { name: "Departments", path: "/master/department" },
+      { name: "Team Members", path: "/master/teammember" },
+      { name: "Job Listings", path: "/master/joblisting" },
+      { name: "Job Applications", path: "/master/jobapplication" },
+    ],
   },
   {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Reports",
-    path: "/master/reports",
+    icon: <Layers className="w-5 h-5" />,
+    name: "Gallery & Media",
+    subItems: [
+      { name: "Gallery Categories", path: "/master/gallerycategory" },
+      { name: "Gallery Items", path: "/master/galleryitem" },
+    ],
   },
   {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Contact Us",
-    path: "/master/contact-us",
-  },
-  {
-    icon: <UserCog className="w-5 h-5" />,
-    name: "Profile",
-    path: "/profile-info",
+    icon: <Truck className="w-5 h-5" />,
+    name: "Partners",
+    path: "/master/partner",
   },
 ];
 

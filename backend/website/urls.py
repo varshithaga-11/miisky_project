@@ -49,6 +49,11 @@ router.register(r'galleryitem', views.GalleryItemViewSet, basename='galleryitem'
 # Partners
 router.register(r'partner', views.PartnerViewSet, basename='partner')
 
+# Additional Content
+router.register(r'companyaboutsection', views.CompanyAboutSectionViewSet, basename='companyaboutsection')
+router.register(r'legalpage', views.LegalPageViewSet, basename='legalpage')
+router.register(r'patent', views.PatentViewSet, basename='patent')
+
 urlpatterns = [
     path('', include(router.urls)),
 ]

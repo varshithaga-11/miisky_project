@@ -517,3 +517,69 @@ class PartnerViewSet(viewsets.ModelViewSet):
         else:
             qs = qs.filter(is_active=True)
         return qs
+
+
+# ===========================================================================
+# 19. ABOUT SECTION (DETAILED)
+# ===========================================================================
+
+class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
+    serializer_class = CompanyAboutSectionSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    ordering = ['position']
+
+    def get_queryset(self):
+        qs = CompanyAboutSection.objects.all()
+        p = self.request.query_params
+        if p.get('section_type'):
+            qs = qs.filter(section_type=p['section_type'])
+        is_active = p.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=_bool(is_active))
+        else:
+            qs = qs.filter(is_active=True)
+        return qs
+
+
+# ===========================================================================
+# 20. LEGAL PAGES
+# ===========================================================================
+
+class LegalPageViewSet(viewsets.ModelViewSet):
+    serializer_class = LegalPageSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        qs = LegalPage.objects.all()
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=_bool(is_active))
+        else:
+            qs = qs.filter(is_active=True)
+        return qs
+
+
+# ===========================================================================
+# 21. PATENTS
+# ===========================================================================
+
+class PatentViewSet(viewsets.ModelViewSet):
+    serializer_class = PatentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'patent_number', 'inventors', 'abstract']
+    ordering = ['-filing_date']
+
+    def get_queryset(self):
+        qs = Patent.objects.select_related('device')
+        p = self.request.query_params
+        if p.get('device'):
+            qs = qs.filter(device=p['device'])
+        if p.get('status'):
+            qs = qs.filter(status=p['status'])
+        is_active = p.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=_bool(is_active))
+        else:
+            qs = qs.filter(is_active=True)
+        return qs

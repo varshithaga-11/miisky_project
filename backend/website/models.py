@@ -783,3 +783,139 @@ class Partner(models.Model):
         return self.name
 
 
+# ===========================================================================
+# 19. ABOUT SECTION (DETAILED)
+# ===========================================================================
+
+class CompanyAboutSection(models.Model):
+    """
+    Detailed sections for the About Us page.
+    """
+    SECTION_CHOICES = [
+        ('quality_statement', 'Quality Statement'),
+        ('service_concept', 'Service Concept'),
+        ('social_commitment', 'Social Commitment / CSR'),
+        ('company_overview', 'Company Overview'),
+        ('promoter_intro', 'Promoter Introduction'),
+        ('milestone', 'Milestone / Achievement'),
+        ('other', 'Other'),
+    ]
+
+    section_type = models.CharField(max_length=30, choices=SECTION_CHOICES)
+    title = models.CharField(max_length=300)
+    subtitle = models.CharField(max_length=300, blank=True, null=True)
+    content = models.TextField()
+    bullet_points = models.JSONField(blank=True, null=True)  # List of strings
+    icon_class = models.CharField(max_length=100, blank=True, null=True)
+    image = models.ImageField(upload_to='website/about/sections/', null=True, blank=True)
+    
+    # For Promoter/Entity specific info
+    entity_name = models.CharField(max_length=300, blank=True, null=True)
+    entity_description = models.TextField(blank=True, null=True)
+    entity_website = models.URLField(blank=True, null=True)
+
+    position = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['position']
+        verbose_name = "Company About Section"
+        verbose_name_plural = "Company About Sections"
+
+    def __str__(self):
+        return f"{self.get_section_type_display()} – {self.title}"
+
+
+# ===========================================================================
+# 20. LEGAL PAGES
+# ===========================================================================
+
+class LegalPage(models.Model):
+    """
+    Legal content: Privacy Policy, Terms, etc.
+    """
+    PAGE_TYPE_CHOICES = [
+        ('privacy_policy', 'Privacy Policy'),
+        ('terms_of_service', 'Terms of Service'),
+        ('cookie_policy', 'Cookie Policy'),
+        ('disclaimer', 'Disclaimer'),
+        ('refund_policy', 'Refund & Cancellation Policy'),
+        ('other', 'Other'),
+    ]
+
+    page_type = models.CharField(max_length=30, choices=PAGE_TYPE_CHOICES, unique=True)
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
+    content = models.TextField()
+    
+    version = models.CharField(max_length=20, blank=True, null=True)
+    effective_date = models.DateField(blank=True, null=True)
+    last_updated = models.DateField(blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = "Legal Page"
+        verbose_name_plural = "Legal Pages"
+
+    def __str__(self):
+        return self.title
+
+
+# ===========================================================================
+# 21. PATENTS
+# ===========================================================================
+
+class Patent(models.Model):
+    """
+    Patents for Miisky technologies and inventions.
+    """
+    STATUS_CHOICES = [
+        ('filed', 'Filed'),
+        ('pending', 'Pending'),
+        ('granted', 'Granted'),
+        ('expired', 'Expired'),
+        ('rejected', 'Rejected'),
+    ]
+
+    title = models.CharField(max_length=400)
+    patent_number = models.CharField(max_length=100, blank=True, null=True)
+    application_number = models.CharField(max_length=100, blank=True, null=True)
+    inventors = models.CharField(max_length=500, blank=True, null=True)
+    abstract = models.TextField(blank=True, null=True)
+    
+    filing_date = models.DateField(blank=True, null=True)
+    grant_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+    
+    jurisdiction = models.CharField(max_length=100, blank=True, null=True)  # e.g. "India", "USA", "WIPO"
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='filed')
+    
+    patent_document = models.FileField(upload_to='website/patents/', null=True, blank=True)
+    external_link = models.URLField(blank=True, null=True)
+    
+    technology_area = models.CharField(max_length=200, blank=True, null=True)
+    
+    device = models.ForeignKey(MedicalDevice, on_delete=models.SET_NULL, null=True, blank=True, related_name='patents')
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-filing_date']
+
+    def __str__(self):
+        return self.title
+
+

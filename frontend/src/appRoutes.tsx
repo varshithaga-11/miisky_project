@@ -93,9 +93,30 @@ import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicke
 
 // Master Side Pages
 import MasterDashboard from "./pages/MasterSide/Dashboard/index";
-import MasterUserManagement from "./pages/MasterSide/UserManagement/index";
-import MasterContactUs from "./pages/MasterSide/ContactUs/index";
-import MasterReports from "./pages/MasterSide/Reports/index";
+import CompanyInfoPage from "./pages/MasterSide/CompanyInfo/index";
+import HeroBannerPage from "./pages/MasterSide/HeroBanner/index";
+import MedicalDeviceCategoryPage from "./pages/MasterSide/MedicalDeviceCategory/index";
+import MedicalDevicePage from "./pages/MasterSide/MedicalDevice/index";
+import DeviceFeaturePage from "./pages/MasterSide/DeviceFeature/index";
+import ResearchPaperPage from "./pages/MasterSide/ResearchPaper/index";
+import BlogCategoryPage from "./pages/MasterSide/BlogCategory/index";
+import BlogTagPage from "./pages/MasterSide/BlogTag/index";
+import BlogPostPage from "./pages/MasterSide/BlogPost/index";
+import BlogCommentPage from "./pages/MasterSide/BlogComment/index";
+import FAQCategoryPage from "./pages/MasterSide/FAQCategory/index";
+import FAQPage from "./pages/MasterSide/FAQ/index";
+import ReportTypePage from "./pages/MasterSide/ReportType/index";
+import WebsiteReportPage from "./pages/MasterSide/WebsiteReport/index";
+import DepartmentPage from "./pages/MasterSide/Department/index";
+import TeamMemberPage from "./pages/MasterSide/TeamMember/index";
+import JobListingPage from "./pages/MasterSide/JobListing/index";
+import JobApplicationPage from "./pages/MasterSide/JobApplication/index";
+import GalleryCategoryPage from "./pages/MasterSide/GalleryCategory/index";
+import GalleryItemPage from "./pages/MasterSide/GalleryItem/index";
+import PartnerPage from "./pages/MasterSide/Partner/index";
+import LegalPageList from "./pages/MasterSide/LegalPage/index";
+import CompanyAboutSectionList from "./pages/MasterSide/CompanyAboutSection/index";
+import PatentList from "./pages/MasterSide/Patent/index";
 
 // Website Pages
 const WebsiteLayout = lazy(() => import("./Website/layout"));
@@ -141,11 +162,35 @@ export function appRoutes() {
       <Routes>
         {/* Dashboard Layout */}
         <Route element={<MasterLayout />}>
-          <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="master/dashboard" element={<MasterDashboard />} />
-          <Route path="master/user-management" element={<MasterUserManagement />} />
-          <Route path="master/contact-us" element={<MasterContactUs />} />
-          <Route path="master/reports" element={<MasterReports />} />
+          
+          {/* Master Management Routes */}
+          <Route path="master/companyinfo" element={<CompanyInfoPage />} />
+          <Route path="master/herobanner" element={<HeroBannerPage />} />
+          <Route path="master/medicaldevicecategory" element={<MedicalDeviceCategoryPage />} />
+          <Route path="master/medicaldevice" element={<MedicalDevicePage />} />
+          <Route path="master/devicefeature" element={<DeviceFeaturePage />} />
+          <Route path="master/researchpaper" element={<ResearchPaperPage />} />
+          <Route path="master/blogcategory" element={<BlogCategoryPage />} />
+          <Route path="master/blogtag" element={<BlogTagPage />} />
+          <Route path="master/blogpost" element={<BlogPostPage />} />
+          <Route path="master/blogcomment" element={<BlogCommentPage />} />
+          <Route path="master/faqcategory" element={<FAQCategoryPage />} />
+          <Route path="master/faq" element={<FAQPage />} />
+          <Route path="master/reporttype" element={<ReportTypePage />} />
+          <Route path="master/websitereport" element={<WebsiteReportPage />} />
+          <Route path="master/department" element={<DepartmentPage />} />
+          <Route path="master/teammember" element={<TeamMemberPage />} />
+          <Route path="master/joblisting" element={<JobListingPage />} />
+          <Route path="master/jobapplication" element={<JobApplicationPage />} />
+          <Route path="master/gallerycategory" element={<GalleryCategoryPage />} />
+          <Route path="master/galleryitem" element={<GalleryItemPage />} />
+          <Route path="master/partner" element={<PartnerPage />} />
+          <Route path="master/legalpage" element={<LegalPageList />} />
+          <Route path="master/companyaboutsection" element={<CompanyAboutSectionList />} />
+          <Route path="master/patent" element={<PatentList />} />
+
+          <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />
           <Route path="admin/usermanagement" element={<UserManagementPage />} />
           <Route path="admin/micro-kitchen-information" element={<MicroKitchenInformationPage />} />

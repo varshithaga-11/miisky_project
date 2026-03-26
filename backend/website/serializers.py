@@ -236,3 +236,23 @@ class PartnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Partner
         fields = '__all__'
+
+
+class CompanyAboutSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyAboutSection
+        fields = '__all__'
+
+
+class LegalPageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LegalPage
+        fields = '__all__'
+
+
+class PatentSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+
+    class Meta:
+        model = Patent
+        fields = '__all__'
