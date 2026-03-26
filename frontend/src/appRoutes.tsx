@@ -117,6 +117,7 @@ import PartnerPage from "./pages/MasterSide/Partner/index";
 import LegalPageList from "./pages/MasterSide/LegalPage/index";
 import CompanyAboutSectionList from "./pages/MasterSide/CompanyAboutSection/index";
 import PatentList from "./pages/MasterSide/Patent/index";
+import TestimonialPage from "./pages/MasterSide/Testimonial/index";
 
 // Website Pages
 const WebsiteLayout = lazy(() => import("./Website/layout"));
@@ -189,6 +190,7 @@ export function appRoutes() {
           <Route path="master/legalpage" element={<LegalPageList />} />
           <Route path="master/companyaboutsection" element={<CompanyAboutSectionList />} />
           <Route path="master/patent" element={<PatentList />} />
+          <Route path="master/testimonial" element={<TestimonialPage />} />
 
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />

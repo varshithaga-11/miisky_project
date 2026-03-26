@@ -140,7 +140,7 @@ class MedicalDeviceCategory(models.Model):
     """
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
-    icon = models.ImageField(upload_to='website/device_categories/', null=True, blank=True)
+    icon = models.CharField(max_length=255, null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
 
@@ -287,6 +287,7 @@ class BlogCategory(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='website/blog_categories/', null=True, blank=True)
+    icon = models.CharField(max_length=100, null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
 

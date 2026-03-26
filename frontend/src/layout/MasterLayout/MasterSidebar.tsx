@@ -397,6 +397,7 @@ const masterNavItems: NavItem[] = [
     subItems: [
       { name: "FAQ Categories", path: "/master/faqcategory" },
       { name: "FAQs", path: "/master/faq" },
+      { name: "Testimonials", path: "/master/testimonial" },
       { name: "Report Types", path: "/master/reporttype" },
       { name: "Website Reports", path: "/master/websitereport" },
     ],

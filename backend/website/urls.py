@@ -27,6 +27,7 @@ router.register(r'blogcomment', views.BlogCommentViewSet, basename='blogcomment'
 # Reports
 router.register(r'reporttype', views.ReportTypeViewSet, basename='reporttype')
 router.register(r'websitereport', views.WebsiteReportViewSet, basename='websitereport')
+router.register(r'testimonial', views.TestimonialViewSet, basename='testimonial')
 
 # Forms / Submissions
 

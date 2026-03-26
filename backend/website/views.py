@@ -9,6 +9,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.utils import timezone
+from .pagination import WebsitePagination
+
 
 from .models import *
 from .serializers import *
@@ -27,6 +29,7 @@ class CompanyInfoViewSet(viewsets.ModelViewSet):
     queryset = CompanyInfo.objects.all()
     serializer_class = CompanyInfoSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
 
 
 # ===========================================================================
@@ -36,6 +39,7 @@ class CompanyInfoViewSet(viewsets.ModelViewSet):
 class HeroBannerViewSet(viewsets.ModelViewSet):
     serializer_class = HeroBannerSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['position']
     ordering = ['position']
@@ -60,6 +64,7 @@ class HeroBannerViewSet(viewsets.ModelViewSet):
 class MedicalDeviceCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = MedicalDeviceCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -74,6 +79,7 @@ class MedicalDeviceCategoryViewSet(viewsets.ModelViewSet):
 
 class MedicalDeviceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description', 'short_description']
     ordering_fields = ['position', 'name', 'price']
@@ -121,6 +127,7 @@ class MedicalDeviceViewSet(viewsets.ModelViewSet):
 class DeviceFeatureViewSet(viewsets.ModelViewSet):
     serializer_class = DeviceFeatureSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['device', 'position']
 
     def get_queryset(self):
@@ -134,6 +141,7 @@ class DeviceFeatureViewSet(viewsets.ModelViewSet):
 class ResearchPaperViewSet(viewsets.ModelViewSet):
     serializer_class = ResearchPaperSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'authors', 'abstract']
     ordering = ['-published_date']
@@ -153,6 +161,7 @@ class ResearchPaperViewSet(viewsets.ModelViewSet):
 class BlogCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = BlogCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -169,12 +178,14 @@ class BlogTagViewSet(viewsets.ModelViewSet):
     queryset = BlogTag.objects.all()
     serializer_class = BlogTagSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
 
 class BlogPostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'excerpt', 'content', 'author_name']
     ordering_fields = ['published_at', 'views_count', 'likes_count']
@@ -219,6 +230,7 @@ class BlogPostViewSet(viewsets.ModelViewSet):
 class BlogCommentViewSet(viewsets.ModelViewSet):
     serializer_class = BlogCommentSerializer
     permission_classes = [AllowAny]
+    pagination_class = WebsitePagination
     ordering = ['-created_at']
 
     def get_queryset(self):
@@ -247,6 +259,7 @@ class BlogCommentViewSet(viewsets.ModelViewSet):
 class ReportTypeViewSet(viewsets.ModelViewSet):
     serializer_class = ReportTypeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -262,6 +275,7 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
 class WebsiteReportViewSet(viewsets.ModelViewSet):
     serializer_class = WebsiteReportSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['requested_by_name', 'requested_by_email']
     ordering = ['-created_at']
@@ -294,6 +308,7 @@ class WebsiteReportViewSet(viewsets.ModelViewSet):
 class TestimonialViewSet(viewsets.ModelViewSet):
     serializer_class = TestimonialSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -318,6 +333,7 @@ class TestimonialViewSet(viewsets.ModelViewSet):
 class FAQCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = FAQCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -333,6 +349,7 @@ class FAQCategoryViewSet(viewsets.ModelViewSet):
 class FAQViewSet(viewsets.ModelViewSet):
     serializer_class = FAQSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['question', 'answer']
     ordering = ['category', 'position']
@@ -357,6 +374,7 @@ class FAQViewSet(viewsets.ModelViewSet):
 class DepartmentViewSet(viewsets.ModelViewSet):
     serializer_class = DepartmentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering = ['position']
@@ -378,6 +396,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 class TeamMemberViewSet(viewsets.ModelViewSet):
     serializer_class = TeamMemberSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'designation', 'bio']
     ordering = ['position']
@@ -402,6 +421,7 @@ class TeamMemberViewSet(viewsets.ModelViewSet):
 class JobListingViewSet(viewsets.ModelViewSet):
     serializer_class = JobListingSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'job_description', 'requirements']
     ordering = ['-created_at']
@@ -423,6 +443,7 @@ class JobListingViewSet(viewsets.ModelViewSet):
 
 class JobApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['applicant_name', 'email', 'phone']
     ordering = ['-applied_at']
@@ -461,6 +482,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 class GalleryCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = GalleryCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -476,6 +498,7 @@ class GalleryCategoryViewSet(viewsets.ModelViewSet):
 class GalleryItemViewSet(viewsets.ModelViewSet):
     serializer_class = GalleryItemSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['category', 'position']
 
     def get_queryset(self):
@@ -502,6 +525,7 @@ class GalleryItemViewSet(viewsets.ModelViewSet):
 class PartnerViewSet(viewsets.ModelViewSet):
     serializer_class = PartnerSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering = ['position']
@@ -526,6 +550,7 @@ class PartnerViewSet(viewsets.ModelViewSet):
 class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
     serializer_class = CompanyAboutSectionSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     ordering = ['position']
 
     def get_queryset(self):
@@ -548,6 +573,7 @@ class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
 class LegalPageViewSet(viewsets.ModelViewSet):
     serializer_class = LegalPageSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
 
     def get_queryset(self):
         qs = LegalPage.objects.all()
@@ -566,6 +592,7 @@ class LegalPageViewSet(viewsets.ModelViewSet):
 class PatentViewSet(viewsets.ModelViewSet):
     serializer_class = PatentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'patent_number', 'inventors', 'abstract']
     ordering = ['-filing_date']

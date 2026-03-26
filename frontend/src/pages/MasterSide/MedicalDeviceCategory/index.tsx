@@ -65,7 +65,8 @@ const MedicalDeviceCategoryPage: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-100/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-left font-semibold text-gray-500 uppercase text-xs tracking-wider">Name</th>
+                <th className="px-6 py-4 text-left font-semibold text-gray-500 uppercase text-xs tracking-wider">Icon</th>
+                <th className="px-6 py-4 text-left font-semibold text-gray-500 uppercase text-xs tracking-wider border-x border-gray-50">Name</th>
                 <th className="px-6 py-4 text-left font-semibold text-gray-500 uppercase text-xs tracking-wider border-x border-gray-50">Position</th>
                 <th className="px-6 py-4 text-left font-semibold text-gray-500 uppercase text-xs tracking-wider">Status</th>
                 <th className="px-6 py-4 text-right font-semibold text-gray-500 uppercase text-xs tracking-wider">Actions</th>
@@ -73,13 +74,24 @@ const MedicalDeviceCategoryPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">Loading categories...</td></tr>
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">Loading categories...</td></tr>
               ) : categories.length === 0 ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">No categories found.</td></tr>
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No categories found.</td></tr>
               ) : (
                 categories.map((cat) => (
                   <tr key={cat.id} className="hover:bg-blue-50/20 transition-colors group">
-                    <td className="px-6 py-4 font-semibold text-gray-900">{cat.name}</td>
+                    <td className="px-6 py-4">
+                      {cat.icon ? (
+                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-mono text-[10px] break-all p-1 text-center">
+                          {cat.icon}
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 font-bold text-[10px] uppercase">
+                          No Sign
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-900 border-x border-gray-50">{cat.name}</td>
                     <td className="px-6 py-4 text-gray-600 border-x border-gray-50">{cat.position}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${cat.is_active ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
