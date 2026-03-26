@@ -142,16 +142,18 @@ const MicroKitchenInformationPage: React.FC = () => {
         }
     };
 
-    const handleInspectionSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleInspectionSubmit = async (e?: React.FormEvent, nextStatus?: string) => {
+        if (e) e.preventDefault();
         if (!isInspecting) return;
 
         const formData = new FormData();
         formData.append('micro_kitchen', isInspecting.id.toString());
-        
+        // Set inspection record status to submitted if we are approving/rejecting
+        formData.append('status', nextStatus ? 'submitted' : 'draft');
+
         // Append all fields to FormData
         Object.entries(inspectionData).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
+            if (key !== 'status' && value !== undefined && value !== null) {
                 if (value instanceof File) {
                     formData.append(key, value);
                 } else {
@@ -162,12 +164,15 @@ const MicroKitchenInformationPage: React.FC = () => {
 
         try {
             await saveMicroKitchenInspection(formData);
-            toast.success("Inspection record saved");
+            if (nextStatus) {
+                await updateMicroKitchenStatus(isInspecting.id, nextStatus);
+            }
+            toast.success(nextStatus ? `Inspection saved and profile ${nextStatus}` : "Inspection record saved");
             setIsInspecting(null);
             fetchData(currentPage, searchTerm, activeTab);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to save inspection");
+            toast.error("Failed to complete inspection process");
         }
     };
 
@@ -270,16 +275,32 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                     <FiEye className="size-4" />
                                                 </button>
                                                 {p.status === 'draft' && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setIsInspecting(p);
-                                                            setInspectionData(prev => ({ ...prev, mc_code: p.kitchen_code || "" }));
-                                                        }}
-                                                        className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Inspect & Verify"
-                                                    >
-                                                        <FiClipboard className="size-4" />
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => {
+                                                                setIsInspecting(p);
+                                                                setInspectionData(prev => ({ ...prev, mc_code: p.kitchen_code || "" }));
+                                                            }}
+                                                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Inspect & Verify"
+                                                        >
+                                                            <FiClipboard className="size-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleUpdateStatus(p.id, 'approved')}
+                                                            className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg transition-colors"
+                                                            title="Directly Approve"
+                                                        >
+                                                            <FiCheck className="size-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleUpdateStatus(p.id, 'rejected')}
+                                                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Directly Reject"
+                                                        >
+                                                            <FiXCircle className="size-4" />
+                                                        </button>
+                                                    </>
                                                 )}
                                                 {p.status !== 'draft' && (
                                                     <button
@@ -332,10 +353,10 @@ const MicroKitchenInformationPage: React.FC = () => {
 
             {/* Detail Modal */}
             {viewingProfile && (
-                <MicroKitchenDetailModal 
-                    kitchen={viewingProfile} 
-                    open={!!viewingProfile} 
-                    onClose={() => setViewingProfile(null)} 
+                <MicroKitchenDetailModal
+                    kitchen={viewingProfile}
+                    open={!!viewingProfile}
+                    onClose={() => setViewingProfile(null)}
                 />
             )}
 
@@ -439,7 +460,7 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-4">
                                                 <input
                                                     type="range"
@@ -450,12 +471,11 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                     onChange={e => setInspectionData(prev => ({ ...prev, [field.key]: parseInt(e.target.value) }))}
                                                     className="flex-1 h-1.5 bg-blue-100 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                                 />
-                                                
-                                                <label className={`cursor-pointer p-2 rounded-xl transition-colors flex items-center gap-2 shrink-0 ${
-                                                    inspectionData[field.media as keyof MicroKitchenInspection] 
-                                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" 
+
+                                                <label className={`cursor-pointer p-2 rounded-xl transition-colors flex items-center gap-2 shrink-0 ${inspectionData[field.media as keyof MicroKitchenInspection]
+                                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                                                     : "bg-gray-200 dark:bg-gray-700 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-600"
-                                                }`}>
+                                                    }`}>
                                                     <input
                                                         type="file"
                                                         className="hidden"
@@ -504,10 +524,31 @@ const MicroKitchenInformationPage: React.FC = () => {
 
                             {/* Status is always saved as `draft` (dropdown removed). */}
 
-                            <div className="flex justify-end gap-3 pt-4">
+                            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t dark:border-white/[0.05]">
                                 <Button variant="outline" type="button" onClick={() => setIsInspecting(null)}>Cancel</Button>
-                                <Button variant="primary" type="submit" className="px-8">
-                                    Complete Inspection
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    onClick={() => handleInspectionSubmit()}
+                                    className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                                >
+                                    Save as Draft
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    type="button"
+                                    onClick={() => handleInspectionSubmit(undefined, 'rejected')}
+                                    className="bg-red-500 hover:bg-red-600 border-red-500"
+                                >
+                                    Reject Kitchen
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    type="button"
+                                    onClick={() => handleInspectionSubmit(undefined, 'approved')}
+                                    className="bg-green-600 hover:bg-green-700 border-green-600 px-8"
+                                >
+                                    Approve & Verify
                                 </Button>
                             </div>
                         </form>

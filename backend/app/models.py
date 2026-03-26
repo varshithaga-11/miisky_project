@@ -92,19 +92,19 @@ class UserRegister(AbstractUser):
 class NutritionistProfile(models.Model):
     user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True)
 
-    qualification = models.CharField(max_length=100, null=True, blank=True)
-    years_of_experience=models.CharField(max_length=100, null=True, blank=True)
+    qualification = models.CharField(max_length=255, null=True, blank=True)
+    years_of_experience=models.CharField(max_length=255, null=True, blank=True)
     experience = models.TextField(null=True, blank=True)
-    license_number = models.CharField(max_length=100, null=True, blank=True)
-    specializations=models.CharField(max_length=100, null=True, blank=True)
-    certifications=models.CharField(max_length=100, null=True, blank=True)
-    education=models.CharField(max_length=100, null=True, blank=True)
-    languages=models.CharField(max_length=100, null=True, blank=True)
-    social_media_links_website_links=models.CharField(max_length=100, null=True, blank=True)
+    license_number = models.CharField(max_length=255, null=True, blank=True)
+    specializations=models.CharField(max_length=255, null=True, blank=True)
+    certifications=models.CharField(max_length=255, null=True, blank=True)
+    education=models.CharField(max_length=255, null=True, blank=True)
+    languages=models.CharField(max_length=255, null=True, blank=True)
+    social_media_links_website_links=models.CharField(max_length=255, null=True, blank=True)
     rating = models.FloatField(default=0)
     total_reviews = models.IntegerField(default=0)
     available_modes = models.CharField(
-        max_length=100, 
+        max_length=255, 
         help_text="Comma-separated modes: video,audio, chat, in_person",
         null=True, 
         blank=True
@@ -1348,7 +1348,7 @@ class UserDietPlan(models.Model):
         blank=True,
         related_name="suggested_diet_plans"
     )
-
+    #previous nutritionist
     original_nutritionist = models.ForeignKey(
         UserRegister,
         on_delete=models.SET_NULL,
@@ -1371,6 +1371,13 @@ class UserDietPlan(models.Model):
         null=True,
         blank=True,
         related_name="diet_plan_users"
+    )
+    #previous micro kitchen
+    original_micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="originally_assigned_plans"
     )
 
     review = models.ForeignKey(
@@ -1438,6 +1445,9 @@ class UserDietPlan(models.Model):
     # 📅 Plan duration
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+
+    # From this date the current `nutritionist` owns meal workflow (set on nutritionist reassignment)
+    nutritionist_effective_from = models.DateField(null=True, blank=True)
 
     # 🕒 Tracking
     suggested_on = models.DateTimeField(auto_now_add=True)
@@ -2087,6 +2097,9 @@ class NutritionistReassignment(models.Model):
     )
     reassigned_on = models.DateTimeField(auto_now_add=True)
 
+    # From which date the new nutritionist takes over meals (mirrors MicroKitchenReassignment)
+    effective_from = models.DateField(null=True, blank=True)
+
     # Diet plan active at time of reassignment (context)
     active_diet_plan = models.ForeignKey(
         "UserDietPlan",
@@ -2100,3 +2113,53 @@ class NutritionistReassignment(models.Model):
 
 
 
+class MicroKitchenReassignment(models.Model):
+    """Audit log every time a patient's kitchen changes mid-plan."""
+
+    user_diet_plan = models.ForeignKey(
+        'UserDietPlan',
+        on_delete=models.CASCADE,
+        related_name="kitchen_reassignments"
+    )
+    previous_kitchen = models.ForeignKey(
+        'MicroKitchenProfile',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="reassigned_from"
+    )
+    new_kitchen = models.ForeignKey(
+        'MicroKitchenProfile',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="reassigned_to"
+    )
+
+    REASON_CHOICES = [
+        ('kitchen_closed', 'Kitchen Closed'),
+        ('kitchen_suspended', 'Kitchen Suspended'),
+        ('patient_request', 'Patient Request'),
+        ('admin_decision', 'Admin Decision'),
+        ('quality_issue', 'Quality Issue'),
+    ]
+    reason = models.CharField(max_length=50, choices=REASON_CHOICES)
+    notes = models.TextField(null=True, blank=True)
+
+    reassigned_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="performed_kitchen_reassignments"
+    )
+    reassigned_on = models.DateTimeField(auto_now_add=True)
+
+    # Which date the new kitchen takes over from
+    effective_from = models.DateField()
+
+
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# --------------------------------------------------------------------

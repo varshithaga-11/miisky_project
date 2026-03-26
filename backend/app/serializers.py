@@ -944,6 +944,30 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
         return None
 
 
+class ReassignNutritionistSerializer(serializers.Serializer):
+    """Payload for POST usernutritionistmapping/reassign/ (admin only)."""
+
+    user = serializers.PrimaryKeyRelatedField(queryset=UserRegister.objects.all())
+    new_nutritionist = serializers.PrimaryKeyRelatedField(queryset=UserRegister.objects.all())
+    reason = serializers.ChoiceField(choices=NutritionistReassignment.REASON_CHOICES)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+    effective_from = serializers.DateField(required=False, allow_null=True)
+
+    def validate_new_nutritionist(self, value):
+        if getattr(value, "role", None) != "nutritionist":
+            raise serializers.ValidationError("Selected user must have role nutritionist.")
+        return value
+
+    def validate(self, attrs):
+        if attrs.get("reason") == "other":
+            notes = (attrs.get("notes") or "").strip()
+            if not notes:
+                raise serializers.ValidationError(
+                    {"notes": 'Notes are required when reason is "other".'}
+                )
+        return attrs
+
+
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────
 
 class FoodGroupSerializer(serializers.ModelSerializer):
@@ -1169,13 +1193,13 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
         model = UserDietPlan
         fields = [
             'id', 'user', 'user_details', 'nutritionist', 'nutritionist_details',
-            'diet_plan', 'diet_plan_details', 'micro_kitchen', 'micro_kitchen_details',
+            'original_nutritionist', 'diet_plan', 'diet_plan_details', 'micro_kitchen', 'micro_kitchen_details',
             'review', 'review_details',
             'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
             'amount_paid', 'transaction_id', 'payment_status',
             'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
             'verified_by', 'verified_by_details', 'verified_on',
-            'start_date', 'end_date',
+            'start_date', 'end_date', 'nutritionist_effective_from',
             'suggested_on', 'approved_on', 'created_on', 'updated_on'
         ]
         read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on', 'payment_uploaded_on', 'verified_on', 'verified_by_details']

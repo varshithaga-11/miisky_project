@@ -56,3 +56,29 @@ export const getAllUserNutritionMappings = async (): Promise<UserNutritionMappin
   return response.data;
 };
 
+export const REASSIGN_REASONS = [
+  { value: "nutritionist_left", label: "Nutritionist left" },
+  { value: "patient_request", label: "Patient request" },
+  { value: "admin_decision", label: "Admin decision" },
+  { value: "nutritionist_on_leave", label: "Nutritionist on leave" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type ReassignReason = (typeof REASSIGN_REASONS)[number]["value"];
+
+export type ReassignNutritionistPayload = {
+  user: number;
+  new_nutritionist: number;
+  reason: ReassignReason;
+  notes?: string;
+  effective_from?: string;
+};
+
+export const reassignNutritionist = async (payload: ReassignNutritionistPayload) => {
+  const url = createApiUrl("api/usernutritionistmapping/reassign/");
+  const response = await axios.post(url, payload, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data as UserNutritionMapping;
+};
+

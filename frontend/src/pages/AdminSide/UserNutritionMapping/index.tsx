@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiSearch, FiUserPlus } from "react-icons/fi";
+import { FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
@@ -13,12 +13,14 @@ import {
 } from "./api";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import AssignNutritionistModal from "./AssignNutritionistModal";
+import ReassignNutrition from "./ReassignNutrition";
 
 const UserNutritionMappingPage: React.FC = () => {
   const [users, setUsers] = useState<SimpleUser[]>([]);
   const [mappings, setMappings] = useState<UserNutritionMapping[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReassignOpen, setIsReassignOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchData = async () => {
@@ -97,6 +99,11 @@ const UserNutritionMappingPage: React.FC = () => {
     fetchData();
   };
 
+  const handleReassignSuccess = () => {
+    setIsReassignOpen(false);
+    fetchData();
+  };
+
   return (
     <>
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
@@ -116,6 +123,10 @@ const UserNutritionMappingPage: React.FC = () => {
             <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           </div>
           <div className="flex items-center gap-4">
+            <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsReassignOpen(true)}>
+              <FiRefreshCw />
+              Reassign nutritionist
+            </Button>
             <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsModalOpen(true)}>
               <FiUserPlus />
               Assign Nutritionist
@@ -245,6 +256,16 @@ const UserNutritionMappingPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isReassignOpen && (
+        <ReassignNutrition
+          onClose={() => setIsReassignOpen(false)}
+          onSuccess={handleReassignSuccess}
+          users={users}
+          mappings={mappings}
+          nutritionists={nutritionists}
+        />
+      )}
 
       {isModalOpen && (
         <AssignNutritionistModal

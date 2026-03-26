@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Q
+from django.db import transaction
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -498,6 +499,86 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                 "profile": NutritionistProfileSerializer(profile).data if profile else None,
             }
         )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="reassign",
+        permission_classes=[IsAuthenticated, IsAdminRole],
+    )
+    def reassign(self, request):
+        serializer = ReassignNutritionistSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        patient = serializer.validated_data["user"]
+        new_nutritionist = serializer.validated_data["new_nutritionist"]
+        reason = serializer.validated_data["reason"]
+        notes_raw = serializer.validated_data.get("notes") or ""
+        notes = notes_raw.strip() or None
+        effective_from = serializer.validated_data.get("effective_from")
+        if effective_from is None:
+            effective_from = timezone.now().date()
+
+        old_mapping = (
+            UserNutritionistMapping.objects.select_related("nutritionist")
+            .filter(user=patient, is_active=True)
+            .first()
+        )
+        if not old_mapping:
+            return Response(
+                {"detail": "No active nutritionist mapping for this patient."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        previous_nutritionist = old_mapping.nutritionist
+        if previous_nutritionist and previous_nutritionist.pk == new_nutritionist.pk:
+            return Response(
+                {"detail": "New nutritionist must be different from the current one."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        active_plan = (
+            UserDietPlan.objects.filter(user=patient, status="active")
+            .order_by("-id")
+            .first()
+        )
+
+        with transaction.atomic():
+            if active_plan:
+                prev_plan_nutritionist = active_plan.nutritionist
+                active_plan.original_nutritionist = prev_plan_nutritionist
+                active_plan.nutritionist = new_nutritionist
+                active_plan.nutritionist_effective_from = effective_from
+                active_plan.save(
+                    update_fields=[
+                        "original_nutritionist",
+                        "nutritionist",
+                        "nutritionist_effective_from",
+                    ]
+                )
+
+            NutritionistReassignment.objects.create(
+                user=patient,
+                previous_nutritionist=previous_nutritionist,
+                new_nutritionist=new_nutritionist,
+                reason=reason,
+                notes=notes,
+                reassigned_by=request.user,
+                active_diet_plan=active_plan,
+                effective_from=effective_from,
+            )
+
+            new_mapping = UserNutritionistMapping(
+                user=patient,
+                nutritionist=new_nutritionist,
+                is_active=True,
+            )
+            new_mapping.save()
+
+        out = UserNutritionistMappingSerializer(
+            UserNutritionistMapping.objects.select_related("user", "nutritionist").get(
+                pk=new_mapping.pk
+            )
+        )
+        return Response(out.data, status=status.HTTP_201_CREATED)
 
 
 class CountryViewSet(viewsets.ModelViewSet):
