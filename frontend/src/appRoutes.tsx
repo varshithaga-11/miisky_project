@@ -98,30 +98,30 @@ import MasterContactUs from "./pages/MasterSide/ContactUs/index";
 import MasterReports from "./pages/MasterSide/Reports/index";
 
 // Website Pages
-const WebsiteLayout = lazy(() => import("./website/layout"));
-const WebsiteHome = lazy(() => import("./website/page"));
-const WebsiteAbout = lazy(() => import("./website/about/page"));
-const WebsiteBlog = lazy(() => import("./website/blog/page"));
-const WebsiteBlog2 = lazy(() => import("./website/blog-2/page"));
-const WebsiteBlogDetails = lazy(() => import("./website/blog-details/page"));
-const WebsiteContact = lazy(() => import("./website/contact/page"));
-const WebsiteDepartments = lazy(() => import("./website/departments/page"));
-const WebsiteDepartmentDetails = lazy(() => import("./website/department-details/page"));
-const WebsiteDepartmentDetails2 = lazy(() => import("./website/department-details-2/page"));
-const WebsiteDepartmentDetails3 = lazy(() => import("./website/department-details-3/page"));
-const WebsiteDepartmentDetails4 = lazy(() => import("./website/department-details-4/page"));
-const WebsiteDepartmentDetails5 = lazy(() => import("./website/department-details-5/page"));
-const WebsiteDepartmentDetails6 = lazy(() => import("./website/department-details-6/page"));
-const WebsiteDoctors = lazy(() => import("./website/doctors/page"));
-const WebsiteDoctorDetails = lazy(() => import("./website/doctor-details/page"));
-const WebsitePortfolio = lazy(() => import("./website/portfolio/page"));
-const WebsitePortfolio2 = lazy(() => import("./website/portfolio-2/page"));
-const WebsitePricing = lazy(() => import("./website/pricing/page"));
-const WebsiteLogin = lazy(() => import("./website/login/page"));
-// const WebsiteRegister = lazy(() => import("./website/register/page"));
-const WebsiteIndex2 = lazy(() => import("./website/index-2/page"));
-const WebsiteIndex3 = lazy(() => import("./website/index-3/page"));
-const WebsiteError = lazy(() => import("./website/error/page"));
+const WebsiteLayout = lazy(() => import("./Website/layout"));
+const WebsiteHome = lazy(() => import("./Website/page"));
+const WebsiteAbout = lazy(() => import("./Website/about/page"));
+const WebsiteBlog = lazy(() => import("./Website/blog/page"));
+const WebsiteBlog2 = lazy(() => import("./Website/blog-2/page"));
+const WebsiteBlogDetails = lazy(() => import("./Website/blog-details/page"));
+const WebsiteContact = lazy(() => import("./Website/contact/page"));
+const WebsiteDepartments = lazy(() => import("./Website/departments/page"));
+const WebsiteDepartmentDetails = lazy(() => import("./Website/department-details/page"));
+const WebsiteDepartmentDetails2 = lazy(() => import("./Website/department-details-2/page"));
+const WebsiteDepartmentDetails3 = lazy(() => import("./Website/department-details-3/page"));
+const WebsiteDepartmentDetails4 = lazy(() => import("./Website/department-details-4/page"));
+const WebsiteDepartmentDetails5 = lazy(() => import("./Website/department-details-5/page"));
+const WebsiteDepartmentDetails6 = lazy(() => import("./Website/department-details-6/page"));
+const WebsiteDoctors = lazy(() => import("./Website/doctors/page"));
+const WebsiteDoctorDetails = lazy(() => import("./Website/doctor-details/page"));
+const WebsitePortfolio = lazy(() => import("./Website/portfolio/page"));
+const WebsitePortfolio2 = lazy(() => import("./Website/portfolio-2/page"));
+const WebsitePricing = lazy(() => import("./Website/pricing/page"));
+const WebsiteLogin = lazy(() => import("./Website/login/page"));
+// const WebsiteRegister = lazy(() => import("./Website/register/page"));
+const WebsiteIndex2 = lazy(() => import("./Website/index-2/page"));
+const WebsiteIndex3 = lazy(() => import("./Website/index-3/page"));
+const WebsiteError = lazy(() => import("./Website/error/page"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
