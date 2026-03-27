@@ -886,6 +886,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'last_name': u.last_name,
             'email': u.email,
             'mobile': u.mobile,
+            'address': u.address,
         }
 
     def get_diet_plan_details(self, obj):
@@ -1008,6 +1009,26 @@ class ReassignMicroKitchenSerializer(serializers.Serializer):
     reason = serializers.ChoiceField(choices=MicroKitchenReassignment.REASON_CHOICES)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
     effective_from = serializers.DateField(required=False, allow_null=True)
+
+
+class NutritionistReassignmentSerializer(serializers.ModelSerializer):
+    previous_nutritionist_name = serializers.CharField(source="previous_nutritionist.username", read_only=True)
+    new_nutritionist_name = serializers.CharField(source="new_nutritionist.username", read_only=True)
+    reassigned_by_name = serializers.CharField(source="reassigned_by.username", read_only=True)
+
+    class Meta:
+        model = NutritionistReassignment
+        fields = "__all__"
+
+
+class MicroKitchenReassignmentSerializer(serializers.ModelSerializer):
+    previous_kitchen_name = serializers.CharField(source="previous_kitchen.brand_name", read_only=True)
+    new_kitchen_name = serializers.CharField(source="new_kitchen.brand_name", read_only=True)
+    reassigned_by_name = serializers.CharField(source="reassigned_by.username", read_only=True)
+
+    class Meta:
+        model = MicroKitchenReassignment
+        fields = "__all__"
 
 
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────

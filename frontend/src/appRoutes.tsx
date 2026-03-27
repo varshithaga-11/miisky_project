@@ -4,7 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
-const AdminDashboard = lazy(() => import("./pages/Dashboard/admindashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminSide/Dashboard/index"));
 // const AdminPage = lazy(() => import("./pages/Master/Adminpage"));
 // const CompanyList = lazy(() => import("./pages/Master/Companypage"));
 const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
@@ -89,6 +89,10 @@ import SupportTicketRequestsPage from "./pages/AdminSide/SupportTicketRequests";
 import PatientSupportTicketPage from "./pages/PatientSide/SupportTicket";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
+import PatientDashboardPage from "./pages/PatientSide/Dashboard/index";
+import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
+import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
+import NonPatientDashboardPage from "./pages/NonPatient/Dashboard/index";
 
 
 // Master Side Pages
@@ -194,6 +198,10 @@ export function appRoutes() {
 
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />
+          <Route path="patient/dashboard" element={<PatientDashboardPage />} />
+          <Route path="nutrition/dashboard" element={<NutritionDashboardPage />} />
+          <Route path="microkitchen/dashboard" element={<MicroKitchenDashboardPage />} />
+          <Route path="non-patient/dashboard" element={<NonPatientDashboardPage />} />
           <Route path="admin/usermanagement" element={<UserManagementPage />} />
           <Route path="admin/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
           <Route path="admin/nutrition-information" element={<NutritionInformationPage />} />

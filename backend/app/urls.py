@@ -74,6 +74,11 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path("dashboard-counts/admin/", views.AdminDashboardCountsView.as_view(), name="dashboard-counts-admin"),
+    path("dashboard-counts/patient/", views.PatientDashboardCountsView.as_view(), name="dashboard-counts-patient"),
+    path("dashboard-counts/nutrition/", views.NutritionDashboardCountsView.as_view(), name="dashboard-counts-nutrition"),
+    path("dashboard-counts/microkitchen/", views.MicroKitchenDashboardCountsView.as_view(), name="dashboard-counts-microkitchen"),
+    path("dashboard-counts/non-patient/", views.NonPatientDashboardCountsView.as_view(), name="dashboard-counts-non-patient"),
     # Admin micro-kitchen panels (no pagination for modal display)
     path(
         "admin-microkitchen-patients-nopaginate/",

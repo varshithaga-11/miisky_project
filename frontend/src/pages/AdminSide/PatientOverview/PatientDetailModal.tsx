@@ -9,6 +9,8 @@ import {
   fetchNutritionistReviewsForPatient,
   fetchUserDietPlansForPatient,
   fetchUserMealsForPatient,
+  fetchNutritionistHistoryForPatient,
+  fetchKitchenHistoryForPatient,
   PatientUserRow,
 } from "./api";
 import {
@@ -20,6 +22,8 @@ import {
   DisplayReviews,
   DisplayDietPlans,
   DisplayMeals,
+  DisplayNutritionistHistory,
+  DisplayKitchenHistory,
   type UserDetailRecord,
   type HealthReportRow,
   type MappingRow,
@@ -34,6 +38,8 @@ export type DataView =
   | "questionnaire"
   | "healthReports"
   | "nutritionistMapping"
+  | "nutritionistHistory"
+  | "kitchenHistory"
   | "nutritionistProfile"
   | "reviews"
   | "dietPlans"
@@ -44,6 +50,8 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   questionnaire: "Health questionnaire",
   healthReports: "Health reports",
   nutritionistMapping: "Nutritionist assignment",
+  nutritionistHistory: "Nutritionist change history",
+  kitchenHistory: "Kitchen change history",
   nutritionistProfile: "Nutritionist profile",
   reviews: "Nutritionist reviews",
   dietPlans: "Diet plans",
@@ -54,8 +62,10 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "profile", description: "Account & contact from User Management" },
   { key: "questionnaire", description: "Lifestyle & intake questionnaire" },
   { key: "healthReports", description: "Uploaded lab reports & files" },
-  { key: "nutritionistMapping", description: "Which nutritionist is assigned" },
-  { key: "nutritionistProfile", description: "Professional profile of assigned nutritionist" },
+  { key: "nutritionistMapping", description: "Which nutritionist is currently assigned" },
+  { key: "nutritionistHistory", description: "Audit trail of nutritionist reassignments" },
+  { key: "kitchenHistory", description: "Audit trail of micro-kitchen reassignments" },
+  { key: "nutritionistProfile", description: "Professional profile of active nutritionist" },
   { key: "reviews", description: "Comments on health documents" },
   { key: "dietPlans", description: "Suggested and active diet plans" },
   { key: "meals", description: "Planned meals, foods, packaging" },
@@ -126,6 +136,14 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             setPayload(maps);
             const first = Array.isArray(maps) && maps.length ? (maps[0] as MappingRow) : null;
             setNutritionistUserId(typeof first?.nutritionist === "number" ? first.nutritionist : null);
+            break;
+          }
+          case "nutritionistHistory": {
+            setPayload(await fetchNutritionistHistoryForPatient(id));
+            break;
+          }
+          case "kitchenHistory": {
+            setPayload(await fetchKitchenHistoryForPatient(id));
             break;
           }
           case "nutritionistProfile": {
@@ -251,6 +269,12 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
               )}
               {!loading && !error && screen === "nutritionistMapping" && Array.isArray(payload) && (
                 <DisplayNutritionistMapping items={payload as MappingRow[]} />
+              )}
+              {!loading && !error && screen === "nutritionistHistory" && Array.isArray(payload) && (
+                <DisplayNutritionistHistory items={payload} />
+              )}
+              {!loading && !error && screen === "kitchenHistory" && Array.isArray(payload) && (
+                <DisplayKitchenHistory items={payload} />
               )}
               {!loading && !error && screen === "nutritionistProfile" && Array.isArray(payload) && (
                 <DisplayNutritionistProfile items={payload as Record<string, unknown>[]} />

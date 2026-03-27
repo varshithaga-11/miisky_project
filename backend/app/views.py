@@ -118,6 +118,103 @@ class RefreshTokenView(APIView):
             return Response({"status":"failed","message":message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class AdminDashboardCountsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from website.models import Patent
+
+        return Response({
+            "countries": Country.objects.count(),
+            "states": State.objects.count(),
+            "cities": City.objects.count(),
+            "users": UserRegister.objects.count(),
+            "patients": UserRegister.objects.filter(role="patient").count(),
+            "nutritionists": NutritionistProfile.objects.count(),
+            "microKitchens": MicroKitchenProfile.objects.count(),
+            "allottedPatients": UserNutritionistMapping.objects.count(),
+            "patents": Patent.objects.count(),
+            "supportTickets": SupportTicket.objects.count(),
+            "healthParameters": HealthParameter.objects.count(),
+        })
+
+
+class PatientDashboardCountsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "questionnaire": UserQuestionnaire.objects.filter(user=user).count(),
+            "healthReports": PatientHealthReport.objects.filter(user=user).count(),
+            "nutritionistAllotted": UserNutritionistMapping.objects.filter(user=user, is_active=True).count(),
+            "dietPlans": UserDietPlan.objects.filter(user=user).count(),
+            "microKitchens": MicroKitchenProfile.objects.filter(status="approved").count(),
+            "suggestedPlans": UserDietPlan.objects.filter(user=user, status="suggested").count(),
+            "mealsAllotted": UserMeal.objects.filter(user=user).count(),
+            "consultations": MeetingRequest.objects.filter(patient=user).count(),
+            "foods": MicroKitchenFood.objects.filter(is_available=True).count(),
+            "cartItems": CartItem.objects.filter(cart__user=user).count(),
+            "bookings": Order.objects.filter(user=user).count(),
+            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+        })
+
+
+class NutritionDashboardCountsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        mapped_ids = UserNutritionistMapping.objects.filter(
+            nutritionist=user, is_active=True
+        ).values_list("user_id", flat=True)
+
+        return Response({
+            "questionnaire": NutritionistProfile.objects.filter(user=user).count(),
+            "allottedPatients": UserNutritionistMapping.objects.filter(nutritionist=user, is_active=True).count(),
+            "mealOptimizer": UserMeal.objects.filter(user_id__in=mapped_ids).count(),
+            "microKitchens": MicroKitchenProfile.objects.filter(status="approved").count(),
+            "patientDocuments": PatientHealthReport.objects.filter(user_id__in=mapped_ids).count(),
+            "suggestedPlans": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
+            "approvedPlans": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
+            "meetingRequests": MeetingRequest.objects.filter(nutritionist=user).count(),
+            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+        })
+
+
+class MicroKitchenDashboardCountsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        kitchen = MicroKitchenProfile.objects.filter(user=user).first()
+        kitchen_id = kitchen.id if kitchen else None
+
+        return Response({
+            "questionnaire": 1 if kitchen_id else 0,
+            "inspectionReports": MicroKitchenInspection.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
+            "patients": UserDietPlan.objects.filter(micro_kitchen_id=kitchen_id, status="active").count() if kitchen_id else 0,
+            "dailyPrep": UserMeal.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
+            "orders": Order.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
+            "availableFoods": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=True).count() if kitchen_id else 0,
+            "kitchenReviews": MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
+            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+        })
+
+
+class NonPatientDashboardCountsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "foods": MicroKitchenFood.objects.filter(is_available=True).count(),
+            "microKitchens": MicroKitchenProfile.objects.filter(status="approved").count(),
+            "cartItems": CartItem.objects.filter(cart__user=user).count(),
+            "bookings": Order.objects.filter(user=user).count(),
+        })
+
+
 class ProfileView(viewsets.ModelViewSet):
     # permission_classes = [IsAuthenticated]
     queryset = UserRegister.objects.all()
@@ -628,6 +725,19 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
             )
         )
         return Response(out.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["get"], url_path="history")
+    def history(self, request):
+        patient_id = request.query_params.get('user')
+        if not patient_id:
+            return Response({"detail": "User ID is required."}, status=400)
+        
+        history = NutritionistReassignment.objects.filter(user_id=patient_id).select_related(
+            "previous_nutritionist", "new_nutritionist", "reassigned_by", "active_diet_plan"
+        ).order_by("-reassigned_on")
+        
+        serializer = NutritionistReassignmentSerializer(history, many=True)
+        return Response(serializer.data)
 
 
 class CountryViewSet(viewsets.ModelViewSet):
@@ -1718,6 +1828,19 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
     ).prefetch_related('diet_plan__features')
     serializer_class = UserDietPlanSerializer
     permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=["get"], url_path="kitchen-history")
+    def kitchen_history(self, request):
+        patient_id = request.query_params.get('user')
+        if not patient_id:
+            return Response({"detail": "User ID is required."}, status=400)
+        
+        history = MicroKitchenReassignment.objects.filter(user_diet_plan__user_id=patient_id).select_related(
+            "user_diet_plan", "previous_kitchen", "new_kitchen", "reassigned_by"
+        ).order_by("-reassigned_on")
+        
+        serializer = MicroKitchenReassignmentSerializer(history, many=True)
+        return Response(serializer.data)
 
     def get_queryset(self):
         user = self.request.user

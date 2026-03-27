@@ -111,6 +111,20 @@ export const fetchNutritionistMappingsForPatient = async (patientUserId: number)
   return unwrapResults(data);
 };
 
+/** Nutritionist reassignment history */
+export const fetchNutritionistHistoryForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  return getJson<unknown[]>("api/usernutritionistmapping/history/", {
+    user: patientUserId,
+  });
+};
+
+/** Micro Kitchen reassignment history */
+export const fetchKitchenHistoryForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  return getJson<unknown[]>("api/userdietplan/kitchen-history/", {
+    user: patientUserId,
+  });
+};
+
 /** NutritionistProfile model — pass nutritionist's UserRegister id as `user` */
 export const fetchNutritionistProfileByUserId = async (nutritionistUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/nutritionistprofile/", {

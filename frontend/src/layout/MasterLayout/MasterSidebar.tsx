@@ -142,6 +142,11 @@ const adminNavItems: NavItem[] = [
 
 const patientNavItems: NavItem[] = [
   {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "Dashboard",
+    path: "/patient/dashboard",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
     path: "/patient/questionnaire",
@@ -211,6 +216,11 @@ const patientNavItems: NavItem[] = [
 
 const nutritionistNavItems: NavItem[] = [
   {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "Dashboard",
+    path: "/nutrition/dashboard",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
     path: "/nutrition/questionnaire",
@@ -263,6 +273,11 @@ const nutritionistNavItems: NavItem[] = [
 ];
 
 const microKitchenNavItems: NavItem[] = [
+  {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "Dashboard",
+    path: "/microkitchen/dashboard",
+  },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
@@ -324,6 +339,11 @@ const supplyChainNavItems: NavItem[] = [
 ];
 
 const nonPatientNavItems: NavItem[] = [
+  {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "Dashboard",
+    path: "/non-patient/dashboard",
+  },
   {
     icon: <Layers className="w-5 h-5" />,
     name: "Foods",

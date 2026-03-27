@@ -435,9 +435,9 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                               <h4 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 {udp.diet_plan_details?.title || "Plan"}
                                 <span className="text-blue-600 dark:text-blue-400 font-black">
-                                  ₹{udp.amount_paid || udp.diet_plan_details?.final_amount || "0"}
-                                </span>
-                              </h4>
+                                  ₹{udp.diet_plan_details?.final_amount || udp.amount_paid || "0"}
+                              </span>
+                            </h4>
                               <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
                                 {udp.status.replace("_", " ")}
                               </span>

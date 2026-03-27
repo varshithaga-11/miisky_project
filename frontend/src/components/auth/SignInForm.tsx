@@ -36,16 +36,25 @@ export default function SignInForm() {
 
       if (result.success) {
         toast.success('Login successful! Redirecting...');
-        // Redirect to dashboard after successful login
-        if (result.userRole === 'master') {
-          setTimeout(() => {
-            navigate("master/master-dashboard");
-          }, 1000);
-        } else {
-          setTimeout(() => {
-            navigate("admin/dashboard");
-          }, 1000);
+        // Redirect to dashboard after successful login based on role
+        const role = result.userRole;
+        let targetPath = "admin/dashboard";
+
+        if (role === 'master') {
+          targetPath = "master/master-dashboard";
+        } else if (role === 'patient') {
+          targetPath = "patient/dashboard";
+        } else if (role === 'nutritionist') {
+          targetPath = "nutrition/dashboard";
+        } else if (role === 'micro_kitchen') {
+          targetPath = "microkitchen/dashboard";
+        } else if (role === 'non_patient') {
+          targetPath = "non-patient/dashboard";
         }
+
+        setTimeout(() => {
+          navigate(targetPath);
+        }, 1000);
       } else {
         toast.error(result.error)
       }

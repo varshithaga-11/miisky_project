@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { 
-    FiUser, FiMail, FiPhone, FiBookOpen, FiAward, 
-    FiBriefcase, FiCheck, FiUsers, FiFileText, FiClock, FiVideo,
+    FiUser, FiBriefcase, FiCheck, FiFileText, FiClock, FiVideo,
     FiList, FiCalendar, FiHash, FiPackage
 } from "react-icons/fi";
 import FullCalendar from "@fullcalendar/react";

@@ -602,6 +602,118 @@ export function DisplayMeals({ meals }: { meals: MealRow[] }) {
   return <MealsCalendarView meals={meals} />;
 }
 
+export function DisplayNutritionistHistory({ items }: { items: any[] }) {
+  if (!items.length) return <EmptyState message="No nutritionist reassignment history found." />;
+  return (
+    <div className="space-y-4">
+      {items.map((h) => (
+        <div key={h.id} className="relative pl-8 pb-8 last:pb-0">
+          <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-indigo-100 dark:bg-indigo-900/40" />
+          <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-indigo-500 flex items-center justify-center z-10 shadow-sm">
+             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+          </div>
+          <div className="rounded-2xl border border-indigo-100 dark:border-indigo-950 bg-white dark:bg-indigo-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+               <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
+               <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-900/60 uppercase">Audit Log #{h.id}</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm mb-4">
+               <div className="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
+                  <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Previous</div>
+                  <div className="font-bold text-slate-900 dark:text-white truncate">{h.previous_nutritionist_name || '—'}</div>
+               </div>
+               <div className="text-indigo-500 flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase">To</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="9 5l7 7-7 7" /></svg>
+               </div>
+               <div className="flex-1 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/40 text-center">
+                  <div className="text-[10px] text-indigo-400 uppercase font-bold mb-1">New Assignment</div>
+                  <div className="font-bold text-indigo-900 dark:text-indigo-200 truncate">{h.new_nutritionist_name || '—'}</div>
+               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+               <div className="space-y-1">
+                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Reason:</span>
+                  <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.reason?.replace(/_/g, ' ') || '—'}</p>
+               </div>
+               <div className="space-y-1">
+                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Effective From:</span>
+                  <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.effective_from || 'Immediate'}</p>
+               </div>
+            </div>
+            {h.notes && (
+               <div className="mt-4 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20">
+                  <span className="text-[10px] font-black text-amber-600/70 uppercase tracking-widest block mb-1">Internal Notes</span>
+                  <p className="text-xs text-amber-800 dark:text-amber-200 italic">"{h.notes}"</p>
+               </div>
+            )}
+            <div className="mt-4 pt-3 border-t border-gray-50 dark:border-gray-900 text-[10px] text-gray-400 flex justify-between">
+               <span>Authorized by: {h.reassigned_by_name || 'System'}</span>
+               <span>Audit verified</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenHistory({ items }: { items: any[] }) {
+  if (!items.length) return <EmptyState message="No micro-kitchen reassignment history found." />;
+  return (
+    <div className="space-y-4">
+      {items.map((h) => (
+        <div key={h.id} className="relative pl-8 pb-8 last:pb-0">
+          <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-amber-100 dark:bg-amber-900/40" />
+          <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-amber-500 flex items-center justify-center z-10 shadow-sm">
+             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+          </div>
+          <div className="rounded-2xl border border-amber-100 dark:border-amber-950 bg-white dark:bg-amber-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+               <span className="text-xs font-black text-amber-600 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
+               <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold border border-amber-100 dark:border-amber-900/60 uppercase">Kitchen Log #{h.id}</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm mb-4">
+               <div className="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
+                  <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Original Kitchen</div>
+                  <div className="font-bold text-slate-900 dark:text-white truncate">{h.previous_kitchen_name || '—'}</div>
+               </div>
+               <div className="text-amber-500 flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase">Switch</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+               </div>
+               <div className="flex-1 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 text-center">
+                  <div className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-bold mb-1">Target Kitchen</div>
+                  <div className="font-bold text-amber-900 dark:text-amber-200 truncate">{h.new_kitchen_name || '—'}</div>
+               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+               <div className="space-y-1">
+                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Reason:</span>
+                  <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.reason?.replace(/_/g, ' ') || '—'}</p>
+               </div>
+               <div className="space-y-1">
+                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Takes Effect From:</span>
+                  <p className="text-gray-900 dark:text-gray-200 font-semibold font-mono tracking-tight">{h.effective_from || '—'}</p>
+               </div>
+            </div>
+            {h.notes && (
+               <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Administrative Notes</span>
+                  <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{h.notes}"</p>
+               </div>
+            )}
+            <div className="mt-4 pt-3 border-t border-gray-50 dark:border-gray-900 text-[10px] text-gray-400 flex justify-between">
+               <span>Switched by: {h.reassigned_by_name || 'System'}</span>
+               <span className="font-bold text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Kitchen Verified</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MealsCalendarView({ meals }: { meals: MealRow[] }) {
   const byDate = useMemo(() => {
     const m = new Map<string, MealRow[]>();
