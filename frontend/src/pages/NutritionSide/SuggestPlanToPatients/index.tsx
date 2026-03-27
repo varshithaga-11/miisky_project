@@ -450,6 +450,21 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                             <p className="text-[11px] text-gray-500 mb-2">
                               Suggested: {new Date(udp.suggested_on).toLocaleDateString()}
                             </p>
+                            {udp.original_micro_kitchen_details && (
+                              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
+                                <p className="text-[10px] font-black text-amber-500 uppercase flex items-center gap-1 mb-1">
+                                  <FiHome size={12} /> Kitchen Reassigned
+                                </p>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase line-through">{udp.original_micro_kitchen_details.brand_name}</span>
+                                  <span className="text-gray-300">→</span>
+                                  <span className="text-[10px] font-black text-indigo-500 uppercase">{udp.micro_kitchen_details?.brand_name}</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
+                                  Effective: {udp.micro_kitchen_effective_from || 'N/A'}
+                                </p>
+                              </div>
+                            )}
                             {udp.nutritionist_notes && (
                               <p className="text-sm text-gray-600 dark:text-gray-400 italic line-clamp-2">{udp.nutritionist_notes}</p>
                             )}

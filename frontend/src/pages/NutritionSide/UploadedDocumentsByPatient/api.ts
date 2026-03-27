@@ -44,6 +44,11 @@ export type MappedPatientResponse = {
     user: Patient;
     mapping_id: number | null;
     assigned_on: string;
+    active_kitchen?: {
+        current_kitchen: string | null;
+        original_kitchen: string | null;
+        effective_from: string | null;
+    } | null;
     reassignment_details?: {
         previous_nutritionist: string | null;
         new_nutritionist: string | null;

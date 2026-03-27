@@ -24,7 +24,7 @@ import type {
     CuisineType,
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage } from "react-icons/fi";
+import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage, FiMapPin } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 
@@ -352,6 +352,11 @@ const SetDailyMealsPage: React.FC = () => {
                                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${selectedPatient?.user.id === p.user.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 dark:bg-white/[0.02] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]'}`}
                                     >
                                         {p.user.first_name} {p.user.last_name}
+                                        {p.active_kitchen?.current_kitchen && (
+                                            <span className={`ml-2 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${selectedPatient?.user.id === p.user.id ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-500'}`}>
+                                                {p.active_kitchen.current_kitchen}
+                                            </span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
@@ -447,8 +452,13 @@ const SetDailyMealsPage: React.FC = () => {
                                             {activePlan ? (
                                                 <p className="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1 mt-0.5">
                                                     <FiCheckCircle size={10} /> {activePlan.diet_plan_details?.title}
+                                                    {activePlan.micro_kitchen_details?.brand_name && (
+                                                        <span className="text-indigo-500 ml-2 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                            <FiMapPin size={10} /> {activePlan.micro_kitchen_details.brand_name}
+                                                        </span>
+                                                    )}
                                                     {activePlan.start_date && activePlan.end_date && (
-                                                        <span className="text-gray-400 normal-case font-medium">
+                                                        <span className="text-gray-400 normal-case font-medium ml-1">
                                                             ({activePlan.start_date} → {activePlan.end_date})
                                                         </span>
                                                     )}
@@ -647,6 +657,19 @@ const SetDailyMealsPage: React.FC = () => {
                                                                 </div>
                                                                 <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">{formatted}</h3>
                                                                 <span className="text-[10px] text-gray-400 font-bold">Drop food here</span>
+                                                                {activePlan && (
+                                                                    <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-indigo-100 dark:border-indigo-500/20">
+                                                                        <FiMapPin size={10} /> 
+                                                                        {(() => {
+                                                                            const dayStr = dateStr;
+                                                                            const switchDate = activePlan.micro_kitchen_effective_from;
+                                                                            if (switchDate && dayStr < switchDate && activePlan.original_micro_kitchen_details) {
+                                                                                return activePlan.original_micro_kitchen_details.brand_name;
+                                                                            }
+                                                                            return activePlan.micro_kitchen_details?.brand_name || 'No Kitchen';
+                                                                        })()}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
 

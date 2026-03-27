@@ -175,6 +175,13 @@ const SuggestedPlansPage: React.FC = () => {
                             <FiHome size={14} /> Kitchen: {udp.micro_kitchen_details.brand_name}
                           </p>
                         )}
+                        {udp.original_micro_kitchen_details && (
+                          <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100/50">
+                             <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
+                               <FiHome size={10} /> Reassigned from: {udp.original_micro_kitchen_details.brand_name}
+                             </p>
+                          </div>
+                        )}
                         <p className="text-2xl font-black text-gray-900 dark:text-white mt-4">
                           ₹{udp.diet_plan_details?.final_amount}{" "}
                           <span className="text-sm font-normal text-gray-500">
@@ -309,6 +316,21 @@ const SuggestedPlansPage: React.FC = () => {
                           </>
                         )}
                       </p>
+                      {udp.original_micro_kitchen_details && (
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 bg-amber-50/50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-200/50">
+                          <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1 mb-2">
+                            <FiHome size={12} /> Kitchen Updated
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase line-through truncate max-w-[80px]">{udp.original_micro_kitchen_details.brand_name}</span>
+                            <span className="text-gray-300">→</span>
+                            <span className="text-[10px] font-black text-indigo-500 uppercase truncate max-w-[80px]">{udp.micro_kitchen_details?.brand_name}</span>
+                          </div>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">
+                            Effective: {udp.micro_kitchen_effective_from || 'Scheduled'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -26,6 +26,15 @@ export interface UserDietPlan {
     time_available: string | null;
     status: string;
   } | null;
+  original_micro_kitchen?: number | null;
+  original_micro_kitchen_details?: {
+    id: number;
+    brand_name: string;
+    cuisine_type: string | null;
+    time_available: string | null;
+    status: string;
+  } | null;
+  micro_kitchen_effective_from?: string | null;
   review: number | null;
   review_details: { id: number; comments: string; created_on: string } | null;
   nutritionist_notes: string | null;
