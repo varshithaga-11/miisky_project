@@ -406,6 +406,13 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Residential Allotment</p>
                                                                     </div>
                                                                 </div>
+                                                                {m.micro_kitchen_details?.brand_name && (
+                                                                    <div className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                                                        <p className="text-[9px] font-black uppercase text-amber-700 dark:text-amber-300">
+                                                                            Kitchen: {m.micro_kitchen_details.brand_name}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
                                                                 <button className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-indigo-500 transition-colors">
                                                                     <FiInfo size={18} />
                                                                 </button>

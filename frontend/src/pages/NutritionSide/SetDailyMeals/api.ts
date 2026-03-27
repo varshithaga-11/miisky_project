@@ -5,9 +5,22 @@ import { UserDietPlan } from "../SuggestPlanToPatients/api";
 import { MealType, getMealTypeList } from "../../AdminSide/MealType/mealtypeapi";
 import { Food, CuisineType, getCuisineTypeList, getFoodList } from "../../AdminSide/Food/foodapi";
 import { getPackagingMaterialList, PackagingMaterial } from "../../AdminSide/PackagingMaterial/api";
+import {
+    getApprovedMicroKitchens,
+    MicroKitchenProfile,
+} from "../ListOfMicroKitchens/api";
 
 export { getMyPatients, getMealTypeList, getCuisineTypeList, getFoodList, getPackagingMaterialList };
-export type { MappedPatientResponse, UserDietPlan, MealType, Food, CuisineType, PackagingMaterial };
+export { getApprovedMicroKitchens };
+export type {
+    MappedPatientResponse,
+    UserDietPlan,
+    MealType,
+    Food,
+    CuisineType,
+    PackagingMaterial,
+    MicroKitchenProfile,
+};
 
 export interface UserMeal {
     id?: number;
@@ -25,7 +38,35 @@ export interface UserMeal {
     cuisine_type_details?: { id: number; name: string };
     food_details?: { id: number; name: string; image?: string };
     packaging_material_details?: { id: number; name: string } | null;
+    micro_kitchen?: number | null;
+    micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
 }
+
+export interface ReassignMicroKitchenPayload {
+    new_micro_kitchen: number;
+    reason:
+        | "kitchen_closed"
+        | "kitchen_suspended"
+        | "patient_request"
+        | "admin_decision"
+        | "quality_issue";
+    notes?: string;
+    effective_from?: string | null;
+}
+
+export const REASSIGN_MICRO_KITCHEN_REASONS = [
+    { value: "kitchen_closed", label: "Kitchen closed" },
+    { value: "kitchen_suspended", label: "Kitchen suspended" },
+    { value: "patient_request", label: "Patient request" },
+    { value: "admin_decision", label: "Admin decision" },
+    { value: "quality_issue", label: "Quality issue" },
+] as const;
+
+export const reassignMicroKitchen = async (planId: number, payload: ReassignMicroKitchenPayload) => {
+    const url = createApiUrl(`api/userdietplan/${planId}/reassign-micro-kitchen/`);
+    const response = await axios.post(url, payload, { headers: await getAuthHeaders() });
+    return response.data;
+};
 
 export const getActivePlansForPatient = async (patientId: number): Promise<UserDietPlan[]> => {
     // We only want active or approved (payment succeeded/active)

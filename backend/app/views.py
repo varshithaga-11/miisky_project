@@ -1701,7 +1701,8 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
     queryset = UserDietPlan.objects.all().select_related(
-        'user', 'nutritionist', 'diet_plan', 'review', 'micro_kitchen', 'micro_kitchen__user', 'verified_by'
+        'user', 'nutritionist', 'diet_plan', 'review', 'micro_kitchen', 'micro_kitchen__user',
+        'original_micro_kitchen', 'original_micro_kitchen__user', 'verified_by',
     ).prefetch_related('diet_plan__features')
     serializer_class = UserDietPlanSerializer
     permission_classes = [IsAuthenticated]
@@ -1854,9 +1855,132 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         udp.reject_payment()
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='reassign-micro-kitchen')
+    def reassign_micro_kitchen(self, request, pk=None):
+        """Nutritionist or admin: change kitchen from effective_from; pins past meals to old kitchen, deletes future meals."""
+        plan = self.get_object()
+        role = getattr(request.user, 'role', None)
+        if role not in ('nutritionist', 'admin'):
+            return Response(
+                {"detail": "Only nutritionist or admin can reassign micro kitchen."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = ReassignMicroKitchenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_kitchen = serializer.validated_data['new_micro_kitchen']
+        reason = serializer.validated_data['reason']
+        notes_raw = serializer.validated_data.get('notes') or ''
+        notes = notes_raw.strip() or None
+        effective_from = serializer.validated_data.get('effective_from')
+        if effective_from is None:
+            effective_from = timezone.now().date()
+
+        # Enforce the handoff date within plan duration, so ownership split is deterministic.
+        if plan.start_date and effective_from < plan.start_date:
+            return Response(
+                {"detail": "effective_from cannot be before the plan start_date."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if plan.end_date and effective_from > plan.end_date:
+            return Response(
+                {"detail": "effective_from cannot be after the plan end_date."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new_kitchen.status != 'approved':
+            return Response(
+                {"detail": "New kitchen must be approved before assignment."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        previous = plan.micro_kitchen
+        if previous and new_kitchen.pk == previous.pk:
+            return Response(
+                {"detail": "New kitchen must be different from the current kitchen."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if plan.status not in ('active', 'approved', 'payment_pending'):
+            return Response(
+                {"detail": f"Cannot reassign kitchen for plan status {plan.status}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if role == 'nutritionist':
+            patient = plan.user
+            pid = patient.pk if patient else None
+            allowed = (
+                (pid and UserNutritionistMapping.objects.filter(
+                    nutritionist=request.user, user_id=pid, is_active=True
+                ).exists())
+                or (plan.nutritionist_id == request.user.id)
+                or (plan.original_nutritionist_id == request.user.id)
+            )
+            if not allowed:
+                return Response(
+                    {"detail": "You cannot reassign kitchen for this patient/plan."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        with transaction.atomic():
+            update_fields = ['micro_kitchen', 'micro_kitchen_effective_from']
+            if not plan.original_micro_kitchen_id and previous is not None:
+                plan.original_micro_kitchen = previous
+                update_fields.append('original_micro_kitchen')
+
+            if previous:
+                UserMeal.objects.filter(
+                    user_diet_plan=plan,
+                    meal_date__lt=effective_from,
+                ).update(micro_kitchen=previous)
+
+            UserMeal.objects.filter(
+                user_diet_plan=plan,
+                meal_date__gte=effective_from,
+            ).delete()
+
+            plan.micro_kitchen = new_kitchen
+            plan.micro_kitchen_effective_from = effective_from
+            plan.save(update_fields=update_fields)
+
+            MicroKitchenReassignment.objects.create(
+                user_diet_plan=plan,
+                previous_kitchen=previous,
+                new_kitchen=new_kitchen,
+                reason=reason,
+                notes=notes,
+                reassigned_by=request.user,
+                effective_from=effective_from,
+            )
+
+            if plan.user_id:
+                Notification.objects.create(
+                    user_id=plan.user_id,
+                    title="Your kitchen has been updated",
+                    body=(
+                        f"From {effective_from} onward, meals will be prepared by a new kitchen. "
+                        "Your nutritionist will update remaining meal slots."
+                    ),
+                )
+            if plan.nutritionist_id:
+                Notification.objects.create(
+                    user_id=plan.nutritionist_id,
+                    title="Action required: reassign meals",
+                    body=(
+                        f"Kitchen changed for patient (user id {plan.user_id}). "
+                        f"Please reassign meals from {effective_from}."
+                    ),
+                )
+
+        plan.refresh_from_db()
+        return Response(self.get_serializer(plan).data, status=status.HTTP_200_OK)
+
 
 class UserMealViewSet(viewsets.ModelViewSet):
-    queryset = UserMeal.objects.all().select_related('user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material')
+    queryset = UserMeal.objects.all().select_related(
+        'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material', 'micro_kitchen'
+    )
     serializer_class = UserMealSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1887,8 +2011,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
             
             queryset = queryset.filter(user_diet_plan__user_id__in=all_relevant_patient_ids)
         elif user.role == "micro_kitchen":
-            # Meals from diet plans allotted to this kitchen
-            queryset = queryset.filter(user_diet_plan__micro_kitchen__user=user)
+            # Meals scheduled for this kitchen (per-slot; supports mid-plan reassignment)
+            queryset = queryset.filter(micro_kitchen__user=user)
         else:
             queryset = queryset.filter(user=user)
 
@@ -1903,6 +2027,11 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('meal_date', 'meal_type__id')
 
+    def perform_create(self, serializer):
+        udp = serializer.validated_data.get('user_diet_plan')
+        mk = getattr(udp, 'micro_kitchen', None) if udp else None
+        serializer.save(micro_kitchen=mk)
+
     @action(detail=False, methods=['get'], url_path='kitchen-patients')
     def kitchen_patients(self, request):
         """For micro_kitchen role: returns patients who have active diet plans assigned to this kitchen.
@@ -1910,24 +2039,25 @@ class UserMealViewSet(viewsets.ModelViewSet):
         user = request.user
         if getattr(user, 'role', None) != 'micro_kitchen':
             return Response({"detail": "Only micro kitchen users can access this."}, status=status.HTTP_403_FORBIDDEN)
-        from .models import UserDietPlan
-        plans = UserDietPlan.objects.filter(
-            micro_kitchen__user=user,
-            status__in=['active', 'payment_pending', 'approved']
-        ).select_related('user').order_by('user__first_name', 'user__last_name')
-        seen = set()
+        mk = MicroKitchenProfile.objects.filter(user=user).first()
+        if not mk:
+            return Response([])
+        meal_user_ids = UserMeal.objects.filter(micro_kitchen=mk).values_list('user_id', flat=True).distinct()
+        plan_user_ids = UserDietPlan.objects.filter(
+            micro_kitchen=mk,
+            status__in=['active', 'payment_pending', 'approved'],
+        ).values_list('user_id', flat=True).distinct()
+        all_ids = sorted(set(meal_user_ids) | set(plan_user_ids))
         patients = []
-        for p in plans:
-            if p.user_id and p.user_id not in seen:
-                seen.add(p.user_id)
-                patients.append({
-                    'id': p.user.id,
-                    'patient_details': {
-                        'id': p.user.id,
-                        'first_name': p.user.first_name or '',
-                        'last_name': p.user.last_name or '',
-                    }
-                })
+        for u in UserRegister.objects.filter(id__in=all_ids).order_by('first_name', 'last_name'):
+            patients.append({
+                'id': u.id,
+                'patient_details': {
+                    'id': u.id,
+                    'first_name': u.first_name or '',
+                    'last_name': u.last_name or '',
+                },
+            })
         return Response(patients)
 
     @action(detail=False, methods=['get'], url_path='monthly')
@@ -1955,12 +2085,12 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
         # Base queryset with date filter
         queryset = UserMeal.objects.select_related(
-            'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material'
+            'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material', 'micro_kitchen'
         ).filter(meal_date__range=[start_date, end_date])
 
         # Scope to logged-in user's role
         if getattr(user, 'role', None) == 'micro_kitchen':
-            queryset = queryset.filter(user_diet_plan__micro_kitchen__user=user)
+            queryset = queryset.filter(micro_kitchen__user=user)
         elif getattr(user, 'role', None) == 'nutritionist':
             mapped_patient_ids = UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
@@ -1991,6 +2121,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
             # Efficiently batch create or update
             meals_to_create = []
             for item in serializer.validated_data:
+                udp = item['user_diet_plan']
+                mk = getattr(udp, 'micro_kitchen', None)
                 UserMeal.objects.update_or_create(
                     user=item['user'],
                     meal_date=item['meal_date'],
@@ -1998,9 +2130,10 @@ class UserMealViewSet(viewsets.ModelViewSet):
                     defaults={
                         'food': item['food'],
                         'quantity': item.get('quantity'),
-                        'user_diet_plan': item['user_diet_plan'],
+                        'user_diet_plan': udp,
                         'notes': item.get('notes'),
                         'packaging_material_id': item.get('packaging_material'),
+                        'micro_kitchen': mk,
                     }
                 )
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
@@ -2494,11 +2627,10 @@ class AdminMicroKitchenMealsNoPaginationView(APIView):
         if not micro_kitchen_id:
             return Response([])
 
-        # Filter UserMeal objects related to diet plans of this micro_kitchen
         qs = UserMeal.objects.filter(
-            user_diet_plan__micro_kitchen_id=micro_kitchen_id
+            micro_kitchen_id=micro_kitchen_id
         ).select_related(
-            "user", "user_diet_plan", "meal_type", "food", "packaging_material"
+            "user", "user_diet_plan", "meal_type", "food", "packaging_material", "micro_kitchen"
         ).order_by("meal_date", "meal_type__id")
 
         serializer = UserMealSerializer(qs, many=True)

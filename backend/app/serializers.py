@@ -968,6 +968,15 @@ class ReassignNutritionistSerializer(serializers.Serializer):
         return attrs
 
 
+class ReassignMicroKitchenSerializer(serializers.Serializer):
+    """Payload for POST userdietplan/{id}/reassign-micro-kitchen/ (nutritionist or admin)."""
+
+    new_micro_kitchen = serializers.PrimaryKeyRelatedField(queryset=MicroKitchenProfile.objects.all())
+    reason = serializers.ChoiceField(choices=MicroKitchenReassignment.REASON_CHOICES)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+    effective_from = serializers.DateField(required=False, allow_null=True)
+
+
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────
 
 class FoodGroupSerializer(serializers.ModelSerializer):
@@ -1187,6 +1196,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
     nutritionist_details = serializers.SerializerMethodField()
     review_details = serializers.SerializerMethodField()
     micro_kitchen_details = serializers.SerializerMethodField()
+    original_micro_kitchen_details = serializers.SerializerMethodField()
     verified_by_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -1194,6 +1204,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'user_details', 'nutritionist', 'nutritionist_details',
             'original_nutritionist', 'diet_plan', 'diet_plan_details', 'micro_kitchen', 'micro_kitchen_details',
+            'original_micro_kitchen', 'original_micro_kitchen_details', 'micro_kitchen_effective_from',
             'review', 'review_details',
             'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
             'amount_paid', 'transaction_id', 'payment_status',
@@ -1265,6 +1276,20 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def get_original_micro_kitchen_details(self, obj):
+        if obj.original_micro_kitchen:
+            user = obj.original_micro_kitchen.user
+            return {
+                'id': obj.original_micro_kitchen.id,
+                'brand_name': obj.original_micro_kitchen.brand_name,
+                'cuisine_type': obj.original_micro_kitchen.cuisine_type,
+                'latitude': getattr(user, 'latitude', None) if user else None,
+                'longitude': getattr(user, 'longitude', None) if user else None,
+                'time_available': obj.original_micro_kitchen.time_available,
+                'status': obj.original_micro_kitchen.status,
+            }
+        return None
+
     def get_verified_by_details(self, obj):
         if obj.verified_by:
             u = obj.verified_by
@@ -1283,15 +1308,17 @@ class UserMealSerializer(serializers.ModelSerializer):
     meal_type_details = serializers.SerializerMethodField()
     food_details = serializers.SerializerMethodField()
     packaging_material_details = serializers.SerializerMethodField()
+    micro_kitchen_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMeal
         fields = [
-            'id', 'user', 'user_details', 'user_diet_plan', 'meal_type', 
+            'id', 'user', 'user_details', 'user_diet_plan', 'meal_type',
             'meal_type_details',
             'food', 'food_details',
-            'quantity', 'meal_date', 'is_consumed', 'consumed_at', 
-            'notes', 'packaging_material', 'packaging_material_details', 'created_on'
+            'quantity', 'meal_date', 'is_consumed', 'consumed_at',
+            'notes', 'packaging_material', 'packaging_material_details',
+            'micro_kitchen', 'micro_kitchen_details', 'created_on'
         ]
         read_only_fields = ['created_on']
 
@@ -1329,6 +1356,18 @@ class UserMealSerializer(serializers.ModelSerializer):
             return {
                 'id': obj.packaging_material.id,
                 'name': obj.packaging_material.name,
+            }
+        return None
+
+    def get_micro_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            u = obj.micro_kitchen.user
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+                'latitude': getattr(u, 'latitude', None) if u else None,
+                'longitude': getattr(u, 'longitude', None) if u else None,
+                'status': obj.micro_kitchen.status,
             }
         return None
 

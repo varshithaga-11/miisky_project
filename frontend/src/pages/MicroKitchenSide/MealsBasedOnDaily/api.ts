@@ -24,6 +24,12 @@ export interface DailyMeal {
     is_consumed: boolean;
     notes?: string;
     packaging_material_details?: { id: number; name: string } | null;
+    micro_kitchen?: number | null;
+    micro_kitchen_details?: {
+        id: number;
+        brand_name?: string | null;
+        status?: string;
+    } | null;
 }
 
 export interface KitchenPatient {

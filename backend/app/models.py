@@ -1450,6 +1450,10 @@ class UserDietPlan(models.Model):
     #for example if plan is from 26th to 28th of march and meals are set on 26th and the admin changes the nutrition starting from 28th then 26th and 27th meals are set by the previous nutritionist and 28th meal and future dates are set by the new nutritionist
     nutritionist_effective_from = models.DateField(null=True, blank=True)
 
+    #for example if plan is from 26th to 28th of march and meals are set on 26th and the nutritionist assigns a new micro kitchen starting from 28th then 26th and 27th meals are set by the previous micro kitchen and 28th meal and future dates are set by the new micro kitchen
+
+    micro_kitchen_effective_from = models.DateField(null=True, blank=True)
+
     # 🕒 Tracking
     suggested_on = models.DateTimeField(auto_now_add=True)
     approved_on = models.DateTimeField(null=True, blank=True)
@@ -1580,12 +1584,22 @@ class UserMeal(models.Model):
         related_name="user_meals"
     )
 
+    # Kitchen responsible for this meal slot (differs from plan.micro_kitchen after mid-plan reassignment).
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scheduled_user_meals",
+    )
+
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'meal_date', 'meal_type')
         indexes = [
             models.Index(fields=['user', 'meal_date']),
+            models.Index(fields=['micro_kitchen', 'meal_date']),
         ]
 
     def __str__(self):

@@ -4,8 +4,25 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyPatients, getActivePlansForPatient, getUserDailyMeals, getUserMealsList, saveBulkMeals, getMealTypeList, getCuisineTypeList, getFoodList, getPackagingMaterialList } from "./api";
-import type { MappedPatientResponse, UserDietPlan, UserMeal, MealType, Food, CuisineType } from "./api";
+import {
+    getMyPatients,
+    getActivePlansForPatient,
+    getUserDailyMeals,
+    getUserMealsList,
+    saveBulkMeals,
+    getMealTypeList,
+    getCuisineTypeList,
+    getFoodList,
+    getPackagingMaterialList,
+} from "./api";
+import type {
+    MappedPatientResponse,
+    UserDietPlan,
+    UserMeal,
+    MealType,
+    Food,
+    CuisineType,
+} from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
@@ -60,7 +77,7 @@ const SetDailyMealsPage: React.FC = () => {
                     getMyPatients(),
                     getMealTypeList(1, "all").then((r: any) => r.results),
                     getCuisineTypeList(1, "all").then((r: any) => r.results),
-                    getPackagingMaterialList(1, "all").then((r: any) => r.results ?? [])
+                    getPackagingMaterialList(1, "all").then((r: any) => r.results ?? []),
                 ]);
                 const patientList = Array.isArray(pts) ? pts : (pts as any)?.results ?? [];
                 setPatients(patientList);

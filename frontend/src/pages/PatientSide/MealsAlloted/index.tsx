@@ -279,7 +279,37 @@ const MealsAllotedPage: React.FC = () => {
                                                                         <span className="opacity-80">Packaging:</span> {meal.packaging_material_details.name}
                                                                     </div>
                                                                 )}
+                                                                {meal.micro_kitchen_details?.brand_name && (
+                                                                    <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-[10px] font-bold text-amber-700 dark:text-amber-300 tracking-wider flex items-center gap-2">
+                                                                        <span className="opacity-80">Kitchen:</span> {meal.micro_kitchen_details.brand_name}
+                                                                    </div>
+                                                                )}
                                                             </div>
+                                                            {(() => {
+                                                                const dateMeals = groupedByDate[dateStr];
+                                                                const sortedById = [...dateMeals].sort((a, b) => a.id - b.id);
+                                                                const idx = sortedById.findIndex((x) => x.id === meal.id);
+                                                                if (idx === -1) return null;
+                                                                if (idx === 0) {
+                                                                    const prevDate = sortedDates[sortedDates.indexOf(dateStr) + 1];
+                                                                    const prevDateMeals = prevDate ? groupedByDate[prevDate] : [];
+                                                                    const prevKitchen = prevDateMeals[0]?.micro_kitchen;
+                                                                    if (
+                                                                        meal.micro_kitchen &&
+                                                                        prevKitchen &&
+                                                                        meal.micro_kitchen !== prevKitchen
+                                                                    ) {
+                                                                        return (
+                                                                            <div className="mb-6 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-800/40">
+                                                                                <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                                                                                    Kitchen switched from this date
+                                                                                </p>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                }
+                                                                return null;
+                                                            })()}
                                                             {!meal.is_consumed && (
                                                                 <button 
                                                                     onClick={() => handleMarkConsumed(meal.id)}
