@@ -33,83 +33,80 @@ const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans">
-      <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl relative border border-gray-100">
-        <div className="mb-6 border-b pb-4">
-          <h2 className="text-2xl font-extrabold text-gray-800 tracking-tight uppercase tracking-widest text-lg">Define Device Sector</h2>
-          <p className="text-gray-500 text-xs mt-1 font-bold uppercase tracking-wider">Categorize advanced diagnostic and therapeutic hardware.</p>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">New Sector</h2>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-5">
-            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">Sector Technical Name</label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Sector Name</label>
             <input
               type="text"
               required
               placeholder="e.g. Radiological Diagnostics"
               value={formData.name || ""}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-gray-700"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
             />
           </div>
 
-          <div className="mb-5">
-            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">Sector Signature (Icon URL/Class)</label>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Icon signature</label>
             <input
               type="text"
               placeholder="Lucide icon name or image link"
               value={formData.icon || ""}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
 
-          <div className="mb-5">
-            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">Operational Scope</label>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Operational Scope</label>
             <textarea
               placeholder="Define the utility and scope of this category..."
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               rows={3}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div>
-              <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">Hierarchal Rank</label>
-              <input
-                type="number"
-                value={formData.position || 0}
-                onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-center focus:ring-2 focus:ring-blue-500/20 outline-none font-bold"
-              />
-            </div>
-            <div className="flex flex-col justify-end pb-1">
-              <label className="flex items-center cursor-pointer group h-[42px]">
-                <input
-                  type="checkbox"
-                  checked={formData.is_active || false}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
-                />
-                <span className="ml-3 text-xs font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Visible</span>
-              </label>
-            </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Hierarchal Rank</label>
+            <input
+              type="number"
+              value={formData.position || 0}
+              onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
           </div>
 
-          <div className="flex gap-4 pt-6 border-t">
+          <div className="flex items-center group cursor-pointer inline-flex mt-4">
+            <input
+              type="checkbox"
+              id="med_cat_active"
+              checked={formData.is_active || false}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+            />
+            <label htmlFor="med_cat_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Visible</label>
+          </div>
+
+          <div className="flex gap-4 mt-8">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gray-900 text-white font-bold py-3.5 rounded-xl disabled:opacity-50 hover:bg-black active:scale-[0.98] transition-all shadow-xl"
+              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
               {loading ? "Establishing..." : "Save Sector"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border-2 border-gray-100 text-gray-400 font-bold py-3.5 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all text-xs uppercase tracking-widest"
+              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
             >
               Cancel
             </button>

@@ -19,11 +19,11 @@ export interface CompanyAboutSection {
   updated_at?: string;
 }
 
-export const getAboutSectionList = async (page: number = 1, limit: number = 10) => {
+export const getAboutSectionList = async (page: number = 1, limit: number = 10, search: string = "") => {
   const url = createApiUrl("api/website/companyaboutsection/");
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { page, limit },
+    params: { page, limit, search },
   });
   return response.data;
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { FiX, FiSave } from "react-icons/fi";
+import { FiSave } from "react-icons/fi";
 import { getTestimonialById, updateTestimonial, Testimonial } from "./testimonialapi";
 
 interface EditTestimonialProps {
@@ -78,16 +78,13 @@ const EditTestimonial: React.FC<EditTestimonialProps> = ({ id, onSuccess, onClos
   if (loading) return null;
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-xl font-bold text-gray-800">Edit Testimonial</h2>
-          <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-gray-600">
-            <FiX className="text-xl" />
-          </button>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Testimonial</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[80vh]">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Name *</label>
@@ -137,10 +134,12 @@ const EditTestimonial: React.FC<EditTestimonialProps> = ({ id, onSuccess, onClos
             </div>
           </div>
 
-          <div className="flex gap-3 mt-8">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
+          <div className="flex gap-4 mt-8">
+            <button type="submit" disabled={isSubmitting} className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest flex items-center justify-center gap-2">
               <FiSave /> {isSubmitting ? "Updating..." : "Update Testimonial"}
+            </button>
+            <button type="button" onClick={onClose} className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest">
+              Cancel
             </button>
           </div>
         </form>

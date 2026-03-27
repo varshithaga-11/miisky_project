@@ -31,6 +31,8 @@ class CompanyInfoViewSet(viewsets.ModelViewSet):
     serializer_class = CompanyInfoSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'tagline', 'email_support', 'city', 'state']
 
 
 # ===========================================================================
@@ -41,7 +43,8 @@ class HeroBannerViewSet(viewsets.ModelViewSet):
     serializer_class = HeroBannerSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'subtitle', 'call_to_action_text']
     ordering_fields = ['position']
     ordering = ['position']
 
@@ -70,6 +73,8 @@ class MedicalDeviceCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = MedicalDeviceCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
     ordering = ['position']
 
     def get_queryset(self):
@@ -135,6 +140,8 @@ class DeviceFeatureViewSet(viewsets.ModelViewSet):
     serializer_class = DeviceFeatureSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'description']
     ordering = ['device', 'position']
 
     def get_queryset(self):
@@ -169,6 +176,8 @@ class BlogCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = BlogCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
     ordering = ['position']
 
     def get_queryset(self):
@@ -240,6 +249,8 @@ class BlogCommentViewSet(viewsets.ModelViewSet):
     serializer_class = BlogCommentSerializer
     permission_classes = [AllowAny]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'comment', 'email']
     ordering = ['-created_at']
 
     def get_queryset(self):
@@ -253,13 +264,6 @@ class BlogCommentViewSet(viewsets.ModelViewSet):
         if blog_post:
             qs = qs.filter(blog_post=blog_post)
         
-        search = params.get('search')
-        if search:
-            qs = qs.filter(
-                Q(name__icontains=search) | 
-                Q(comment__icontains=search) |
-                Q(email__icontains=search)
-            )
         return qs
 
     @action(detail=True, methods=['patch'], url_path='approve', permission_classes=[IsAuthenticated])
@@ -278,6 +282,8 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
     serializer_class = ReportTypeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
     ordering = ['position']
 
     def get_queryset(self):
@@ -327,6 +333,8 @@ class TestimonialViewSet(viewsets.ModelViewSet):
     serializer_class = TestimonialSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'designation', 'organization', 'testimonial_text']
     ordering = ['position']
 
     def get_queryset(self):
@@ -353,14 +361,17 @@ class FAQCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = FAQCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
     ordering = ['position']
 
     def get_queryset(self):
         qs = FAQCategory.objects.all()
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
-            qs = qs.filter(is_active=_bool(is_active))
-        else:
+            if is_active.lower() != 'all':
+                qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
         return qs
 
@@ -504,6 +515,8 @@ class GalleryCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = GalleryCategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
     ordering = ['position']
 
     def get_queryset(self):
@@ -521,6 +534,8 @@ class GalleryItemViewSet(viewsets.ModelViewSet):
     serializer_class = GalleryItemSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'description']
     ordering = ['category', 'position']
 
     def get_queryset(self):
@@ -575,6 +590,8 @@ class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
     serializer_class = CompanyAboutSectionSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'subtitle', 'content']
     ordering = ['position']
 
     def get_queryset(self):
@@ -601,6 +618,8 @@ class LegalPageViewSet(viewsets.ModelViewSet):
     serializer_class = LegalPageSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'content', 'page_type']
 
     def get_queryset(self):
         qs = LegalPage.objects.all()

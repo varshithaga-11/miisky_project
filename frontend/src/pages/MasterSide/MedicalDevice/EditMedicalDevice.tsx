@@ -45,13 +45,10 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
-        <div className="flex justify-between items-center mb-6 border-b pb-4">
-          <h2 className="text-2xl font-bold text-gray-800">Edit Medical Device</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Medical Device</h2>
         </div>
 
         {fetching ? (
@@ -146,7 +143,7 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
               />
             </div>
 
-            <div className="space-y-3 pt-6">
+            <div className="md:col-span-2 space-y-4 mt-4">
               <label className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
@@ -178,18 +175,18 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
               </label>
             </div>
 
-            <div className="md:col-span-2 flex gap-4 mt-6">
+            <div className="md:col-span-2 flex gap-4 mt-8">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-lg disabled:opacity-50 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg"
+                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
               >
                 {loading ? "Processing..." : "Save Changes"}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 border border-gray-300 text-gray-600 font-bold py-3.5 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all"
+                className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
               >
                 Cancel
               </button>

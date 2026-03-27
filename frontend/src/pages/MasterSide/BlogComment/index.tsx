@@ -121,8 +121,9 @@ const BlogCommentPage: React.FC = () => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Author</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Email</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Context / Post</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Contributor</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Statement</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
@@ -130,11 +131,11 @@ const BlogCommentPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && comments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
                 </TableRow>
               ) : comments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No comments found</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No comments found</TableCell>
                 </TableRow>
               ) : (
                 comments.map((comment, index) => (
@@ -142,11 +143,25 @@ const BlogCommentPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-semibold text-gray-900 text-theme-sm dark:text-white">
-                        {comment.name}
+                    <TableCell className="px-5 py-4 text-start">
+                        <div className="text-theme-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tighter">
+                            {posts.find(p => p.id === comment.blog_post)?.title || "Unknown Cluster"}
+                        </div>
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start text-gray-600 text-theme-sm dark:text-gray-400">
-                        {comment.email}
+                    <TableCell className="px-5 py-4 text-start">
+                        <div>
+                            <div className="font-bold text-gray-900 text-theme-sm dark:text-white uppercase tracking-tight">
+                                {comment.name}
+                            </div>
+                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                {comment.email}
+                            </div>
+                        </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <div className="text-gray-600 text-sm dark:text-gray-400 line-clamp-2 italic max-w-sm">
+                            "{comment.comment}"
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${

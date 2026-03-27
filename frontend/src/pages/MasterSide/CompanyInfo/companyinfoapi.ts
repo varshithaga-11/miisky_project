@@ -50,11 +50,11 @@ export const createCompanyInfo = async (data: FormData | CompanyInfo) => {
   return response.data;
 };
 
-export const getCompanyInfoList = async (page: number = 1, limit: number = 10) => {
+export const getCompanyInfoList = async (page: number = 1, limit: number = 10, search: string = "") => {
   const url = createApiUrl("api/website/companyinfo/");
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { page, limit },
+    params: { page, limit, search },
   });
   return response.data;
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiEdit } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getCompanyInfoList, deleteCompanyInfo, CompanyInfo } from "./companyinfoapi";
 import AddCompanyInfo from "./AddCompanyInfo";
 import EditCompanyInfo from "./EditCompanyInfo";
@@ -18,13 +18,14 @@ const CompanyInfoPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getCompanyInfoList(currentPage, pageSize);
+      const data = await getCompanyInfoList(currentPage, pageSize, search);
       setCompanies(data.results);
       setTotalItems(data.count);
       setTotalPages(data.total_pages);
@@ -33,7 +34,7 @@ const CompanyInfoPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, search]);
 
   useEffect(() => {
     fetchCompanies();
@@ -57,6 +58,17 @@ const CompanyInfoPage: React.FC = () => {
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search companies..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 outline-none"
+            />
+          </div>
+
           <div className="flex items-center gap-6">
             <Button 
                 size="sm" 
