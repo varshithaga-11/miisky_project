@@ -2118,12 +2118,12 @@ class UserMealViewSet(viewsets.ModelViewSet):
         serializer = BulkUserMealSerializer(data=data, many=True)
         if serializer.is_valid():
             # Handle potential duplicates (unique_together: user, date, meal_type)
-            # Efficiently batch create or update
-            meals_to_create = []
             for item in serializer.validated_data:
                 udp = item['user_diet_plan']
-                mk = getattr(udp, 'micro_kitchen', None)
-                UserMeal.objects.update_or_create(
+                plan_mk = getattr(udp, 'micro_kitchen', None)
+                effective_from = getattr(udp, 'micro_kitchen_effective_from', None)
+
+                meal_obj, created = UserMeal.objects.get_or_create(
                     user=item['user'],
                     meal_date=item['meal_date'],
                     meal_type=item['meal_type'],
@@ -2133,9 +2133,29 @@ class UserMealViewSet(viewsets.ModelViewSet):
                         'user_diet_plan': udp,
                         'notes': item.get('notes'),
                         'packaging_material_id': item.get('packaging_material'),
-                        'micro_kitchen': mk,
+                        'micro_kitchen': plan_mk,
                     }
                 )
+
+                if created:
+                    continue
+
+                meal_obj.food = item['food']
+                meal_obj.quantity = item.get('quantity')
+                meal_obj.user_diet_plan = udp
+                meal_obj.notes = item.get('notes')
+                meal_obj.packaging_material_id = item.get('packaging_material')
+
+                # Critical rule:
+                # - before effective_from => keep existing micro_kitchen (historical ownership)
+                # - from effective_from onwards => align with current plan micro_kitchen
+                if effective_from and meal_obj.meal_date >= effective_from:
+                    meal_obj.micro_kitchen = plan_mk
+                elif not meal_obj.micro_kitchen_id:
+                    # Backfill missing kitchen on old records without rewriting valid history
+                    meal_obj.micro_kitchen = plan_mk
+
+                meal_obj.save()
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

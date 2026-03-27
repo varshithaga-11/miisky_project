@@ -432,8 +432,11 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                             className="bg-white dark:bg-gray-800 p-6 rounded-[32px] border border-transparent dark:border-white/[0.05] shadow-sm"
                           >
                             <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-bold text-gray-900 dark:text-white">
+                              <h4 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 {udp.diet_plan_details?.title || "Plan"}
+                                <span className="text-blue-600 dark:text-blue-400 font-black">
+                                  ₹{udp.amount_paid || udp.diet_plan_details?.final_amount || "0"}
+                                </span>
                               </h4>
                               <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
                                 {udp.status.replace("_", " ")}
