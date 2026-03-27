@@ -91,13 +91,21 @@ const SuggestedPlansPage: React.FC = () => {
   };
 
   const handleUploadPayment = async () => {
-    if (!paymentModal || !screenshotFile || !transactionId || !amountPaid) {
+    const resolvedAmount =
+      amountPaid || paymentModal?.diet_plan_details?.final_amount || "";
+
+    if (!paymentModal || !screenshotFile || !transactionId || !resolvedAmount) {
       toast.warning("Please fill in the amount, transaction ID, and upload a screenshot");
       return;
     }
     setSubmitting(true);
     try {
-      const updated = await uploadPaymentScreenshot(paymentModal.id, screenshotFile, amountPaid, transactionId);
+      const updated = await uploadPaymentScreenshot(
+        paymentModal.id,
+        screenshotFile,
+        resolvedAmount,
+        transactionId
+      );
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setPaymentModal(null);
       setScreenshotFile(null);
@@ -423,9 +431,8 @@ const SuggestedPlansPage: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={amountPaid}
+                  value={amountPaid || paymentModal?.diet_plan_details?.final_amount || ""}
                   onChange={(e) => setAmountPaid(e.target.value)}
-                  placeholder="e.g. 500"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
                 />
               </div>

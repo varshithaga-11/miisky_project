@@ -2118,14 +2118,51 @@ class UserMealViewSet(viewsets.ModelViewSet):
         serializer = BulkUserMealSerializer(data=data, many=True)
         if serializer.is_valid():
             # Handle potential duplicates (unique_together: user, date, meal_type)
+            reassignment_cache = {}
+
+            def resolve_kitchen_id_for_date(plan, meal_date):
+                """
+                Resolve the kitchen that owns a meal_date using reassignment history.
+                Ensures dates before effective_from stay with previous kitchen.
+                """
+                if not plan:
+                    return None
+
+                plan_id = plan.id
+                if plan_id not in reassignment_cache:
+                    rows = list(
+                        plan.kitchen_reassignments.order_by('effective_from', 'id').values(
+                            'effective_from', 'previous_kitchen_id', 'new_kitchen_id'
+                        )
+                    )
+                    reassignment_cache[plan_id] = rows
+
+                rows = reassignment_cache[plan_id]
+                if not rows:
+                    return getattr(plan, 'micro_kitchen_id', None)
+
+                current_kitchen_id = (
+                    rows[0].get('previous_kitchen_id')
+                    or getattr(plan, 'original_micro_kitchen_id', None)
+                    or getattr(plan, 'micro_kitchen_id', None)
+                )
+
+                for r in rows:
+                    if meal_date >= r['effective_from']:
+                        current_kitchen_id = r.get('new_kitchen_id') or current_kitchen_id
+                    else:
+                        break
+
+                return current_kitchen_id
+
             for item in serializer.validated_data:
                 udp = item['user_diet_plan']
-                plan_mk = getattr(udp, 'micro_kitchen', None)
-                effective_from = getattr(udp, 'micro_kitchen_effective_from', None)
+                meal_date = item['meal_date']
+                target_kitchen_id = resolve_kitchen_id_for_date(udp, meal_date)
 
                 meal_obj, created = UserMeal.objects.get_or_create(
                     user=item['user'],
-                    meal_date=item['meal_date'],
+                    meal_date=meal_date,
                     meal_type=item['meal_type'],
                     defaults={
                         'food': item['food'],
@@ -2133,7 +2170,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                         'user_diet_plan': udp,
                         'notes': item.get('notes'),
                         'packaging_material_id': item.get('packaging_material'),
-                        'micro_kitchen': plan_mk,
+                        'micro_kitchen_id': target_kitchen_id,
                     }
                 )
 
@@ -2145,15 +2182,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
                 meal_obj.user_diet_plan = udp
                 meal_obj.notes = item.get('notes')
                 meal_obj.packaging_material_id = item.get('packaging_material')
-
-                # Critical rule:
-                # - before effective_from => keep existing micro_kitchen (historical ownership)
-                # - from effective_from onwards => align with current plan micro_kitchen
-                if effective_from and meal_obj.meal_date >= effective_from:
-                    meal_obj.micro_kitchen = plan_mk
-                elif not meal_obj.micro_kitchen_id:
-                    # Backfill missing kitchen on old records without rewriting valid history
-                    meal_obj.micro_kitchen = plan_mk
+                # Always align with resolved historical owner for that date.
+                meal_obj.micro_kitchen_id = target_kitchen_id
 
                 meal_obj.save()
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
