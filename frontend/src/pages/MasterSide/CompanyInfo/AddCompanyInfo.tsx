@@ -52,11 +52,11 @@ const AddCompanyInfo: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
-        <div className="mb-8 border-b pb-6">
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">System Identity Configuration</h2>
-          <p className="text-gray-500 mt-2">Define primary institutional markers, connectivity endpoints, and SEO parameters.</p>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">System Identity Configuration</h2>
+          <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest font-bold">Define primary institutional markers, connectivity endpoints, and SEO parameters.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-10">
@@ -220,18 +220,18 @@ const AddCompanyInfo: React.FC<Props> = ({ onSuccess, onClose }) => {
           </section>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-10 border-t">
+          <div className="flex gap-4 pt-8 mt-8 border-t border-gray-100">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.1em]"
+              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
               {loading ? "Persisting Identification..." : "Secure Identity Settings"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-8 border-2 border-gray-100 py-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 active:scale-95 transition-all uppercase tracking-widest text-sm"
+              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
             >
               Yield
             </button>

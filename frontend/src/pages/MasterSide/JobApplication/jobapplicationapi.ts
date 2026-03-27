@@ -36,7 +36,7 @@ export const getJobApplicationList = async (
   page: number = 1,
   limit: number = 10,
   search?: string
-) => {
+): Promise<PaginatedResponse<JobApplication>> => {
   const url = createApiUrl("api/website/jobapplication/");
   const params: any = { page, limit };
   if (search) params.search = search;

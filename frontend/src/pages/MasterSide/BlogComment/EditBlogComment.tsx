@@ -41,85 +41,94 @@ const EditBlogComment: React.FC<Props> = ({ id, onSuccess, onClose, posts }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-4">Edit Blog Comment</h2>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Comment</h2>
+        </div>
+        
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Blog Post</label>
-            <select
-              value={formData.blog_post || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, blog_post: parseInt(e.target.value) })
-              }
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Select Post</option>
-              {posts.map((post) => (
-                <option key={post.id} value={post.id}>
-                  {post.title}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Author Name</label>
-            <input
-              type="text"
-              value={formData.name || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Content</label>
-            <textarea
-              value={formData.comment || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, comment: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-              rows={3}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="flex items-center">
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Blog Post</label>
+              <select
+                value={formData.blog_post || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, blog_post: parseInt(e.target.value) })
+                }
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              >
+                <option value="">Select Post</option>
+                {posts.map((post) => (
+                  <option key={post.id} value={post.id}>
+                    {post.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Author Name</label>
+              <input
+                type="text"
+                value={formData.name || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Email</label>
+              <input
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Content</label>
+              <textarea
+                value={formData.comment || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, comment: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center gap-3 py-2">
               <input
                 type="checkbox"
+                id="is_approved"
                 checked={formData.is_approved || false}
                 onChange={(e) =>
                   setFormData({ ...formData, is_approved: e.target.checked })
                 }
-                className="rounded"
+                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
               />
-              <span className="ml-2">Approve</span>
-            </label>
+              <label htmlFor="is_approved" className="text-sm font-bold text-gray-700 uppercase tracking-wide cursor-pointer select-none">Approve</label>
+            </div>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex gap-4 mt-8">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+              className="flex-1 bg-blue-600 text-white font-black py-3 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
-              {loading ? "Saving..." : "Update"}
+              {loading ? "Saving..." : "Update Comment"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border py-2 rounded"
+              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-3 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
             >
               Cancel
             </button>

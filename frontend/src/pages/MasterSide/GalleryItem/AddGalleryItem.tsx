@@ -62,94 +62,93 @@ const AddGalleryItem: React.FC<Props> = ({ onSuccess, onClose, categories }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 font-sans">
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
       <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
         <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Batch <span className="text-blue-600">Ingestion</span></h2>
-          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2 leading-none">Mass upload of visual assets to the gallery matrix.</p>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Batch Ingestion</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 text-left">
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Category Assignment</label>
-            <select
-              required
-              value={formData.category || ""}
-              onChange={(e) => setFormData({ ...formData, category: parseInt(e.target.value) || undefined })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-bold uppercase"
-            >
-              <option value="">Select Target Category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Global Title (Optional)</label>
-            <input
-              type="text"
-              placeholder="Defaults to filename if empty..."
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-semibold"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Visual Assets (Multiple)</label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              required
-              onChange={(e) => setSelectedFiles(e.target.files)}
-              className="block w-full text-[10px] text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 cursor-pointer border border-dashed border-gray-200 p-4 rounded-xl"
-            />
-            {selectedFiles && (
-              <p className="text-[10px] font-bold text-blue-600 mt-2 uppercase tracking-tight">
-                {selectedFiles.length} files staged for transmission
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-5">
             <div>
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Starting Pos</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Category Assignment</label>
+              <select
+                required
+                value={formData.category || ""}
+                onChange={(e) => setFormData({ ...formData, category: parseInt(e.target.value) || undefined })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+              >
+                <option value="">Select Target Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Global Title (Optional)</label>
+              <input
+                type="text"
+                placeholder="Defaults to filename if empty..."
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Visual Assets (Multiple)</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                required
+                onChange={(e) => setSelectedFiles(e.target.files)}
+                className="w-full border border-dashed border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-bold text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+              />
+              {selectedFiles && (
+                <p className="text-sm font-bold text-blue-600 mt-2 uppercase tracking-wide">
+                  {selectedFiles.length} files staged
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Starting Pos</label>
               <input
                 type="number"
                 value={formData.position}
                 onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 1 })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-semibold"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
-            <div className="flex items-center pt-4">
-              <label className="flex items-center group cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
-                />
-                <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Visible</span>
-              </label>
+
+            <div className="flex items-center group cursor-pointer inline-flex">
+              <input
+                type="checkbox"
+                id="add_gal_item_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+              />
+              <label htmlFor="add_gal_item_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Visible</label>
             </div>
           </div>
 
-          <div className="flex gap-4 pt-6 border-t mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-8 py-4 rounded-xl border border-gray-200 text-gray-400 text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-all focus:ring-0"
-            >
-              Cancel
-            </button>
+          <div className="flex gap-4 mt-8">
             <button
               type="submit"
               disabled={loading}
-              className="flex-[2] px-8 py-4 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
               {loading ? "Processing..." : "Start Ingestion"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
+            >
+              Cancel
             </button>
           </div>
         </form>

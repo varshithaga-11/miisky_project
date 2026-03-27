@@ -35,7 +35,7 @@ const AddWebsiteReport: React.FC<Props> = ({ onSuccess, onClose, reportTypes }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 font-sans">
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans">
       <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
         <div className="mb-8 border-b pb-6 text-center">
           <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Register Report</h2>

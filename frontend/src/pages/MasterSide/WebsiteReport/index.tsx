@@ -1,14 +1,24 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiEdit2, FiSearch } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getWebsiteReportList, deleteWebsiteReport, WebsiteReport } from "./websitereportapi";
 import { getReportTypeList } from "../ReportType/reporttypeapi";
 import AddWebsiteReport from "./AddWebsiteReport";
 import EditWebsiteReport from "./EditWebsiteReport";
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import PageMeta from "../../../components/common/PageMeta";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import Button from "../../../components/ui/button/Button";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 
 const WebsiteReportPage: React.FC = () => {
   const [reports, setReports] = useState<WebsiteReport[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -17,14 +27,16 @@ const WebsiteReportPage: React.FC = () => {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getWebsiteReportList(1, 100, search);
+      const data = await getWebsiteReportList(currentPage, pageSize, search);
       setReports(data.results);
+      setTotalItems(data.count);
+      setTotalPages(data.total_pages);
     } catch (error) {
       toast.error("Failed to load reports");
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [currentPage, pageSize, search]);
 
   const fetchReportTypes = useCallback(async () => {
     try {
@@ -52,115 +64,164 @@ const WebsiteReportPage: React.FC = () => {
   };
 
   const statusColors: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    generated: "bg-green-100 text-green-700 border-green-200",
-    failed: "bg-red-100 text-red-700 border-red-200",
+    pending: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    generated: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    failed: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
 
   return (
-    <div className="p-8 bg-[#F8FAFC] min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">System Feedback & Reports</h1>
-            <p className="text-gray-500 mt-1">Monitor and respond to website issues reported by users.</p>
-          </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-[0_4px_12px_rgba(37,99,235,0.2)]"
-          >
-            <FiPlus strokeWidth={3} /> Log New Report
-          </button>
-        </div>
+    <>
+      <PageMeta title="System Feedback & Reports" description="Monitor and respond to website issues reported by users" />
+      <PageBreadcrumb pageTitle="Website Reports" />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-50 bg-white flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search reports by requester name or email..." 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-gray-700 transition-all outline-none placeholder:text-gray-400" 
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
+
+          <div className="flex items-center gap-6">
+            <Button 
+                size="sm" 
+                className="inline-flex items-center gap-2"
+                onClick={() => setIsAddModalOpen(true)}
+            >
+              <FiPlus /> Log New Report
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Show:</Label>
+              <Select
+                value={String(pageSize)}
+                onChange={(val) => { setPageSize(Number(val)); setCurrentPage(1); }}
+                options={[
+                  { value: "5", label: "5" },
+                  { value: "10", label: "10" },
+                  { value: "25", label: "25" },
+                  { value: "50", label: "50" },
+                ]}
+                className="w-20"
               />
+              <span className="text-sm text-gray-400 whitespace-nowrap">entries</span>
             </div>
           </div>
+        </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100">
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Report Identity</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type / Source</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Current Status</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Management</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loading && reports.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-16 text-center text-gray-400 italic">Synchronizing reports database...</td>
-                  </tr>
-                ) : reports.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center opacity-40">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                          <FiSearch size={32} />
-                        </div>
-                        <p className="text-xl font-bold text-gray-400">No active reports</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  reports.map((report) => (
-                    <tr key={report.id} className="group hover:bg-blue-50/30 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{report.requested_by_name}</div>
-                        <div className="text-xs text-gray-500 font-medium lowercase tracking-tight">{report.requested_by_email}</div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
-                          {reportTypes.find(t => t.id === report.report_type)?.name || "External Log"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-extrabold border leading-none transition-all ${
-                          statusColors[report.status || "pending"] || statusColors.pending
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                             report.status === "generated" ? "bg-green-500" : report.status === "failed" ? "bg-red-500" : "bg-yellow-500"
-                          }`}></span>
-                          {(report.status || "pending").toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 text-center">
-                        <div className="flex justify-center gap-2">
-                          <button 
-                            onClick={() => setEditingId(report.id!)} 
-                            className="w-9 h-9 flex items-center justify-center rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-50"
-                            title="Edit Report"
-                          >
-                            <FiEdit2 size={16} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(report.id!)} 
-                            className="w-9 h-9 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-50"
-                            title="Remove Permanently"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+           <div>
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
         </div>
       </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Report Identity</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Type / Source</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {loading && reports.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Synchronizing reports matrix...</TableCell>
+                </TableRow>
+              ) : reports.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No reports detected</TableCell>
+                </TableRow>
+              ) : (
+                reports.map((report, index) => (
+                  <TableRow key={report.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <div>
+                           <div className="font-bold text-gray-900 text-theme-sm dark:text-white uppercase tracking-tight truncate max-w-[200px]">
+                              {report.requested_by_name}
+                           </div>
+                           <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                              {report.requested_by_email}
+                           </div>
+                        </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                         <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100 uppercase dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800">
+                           {reportTypes.find(t => t.id === report.report_type)?.name || "External Log"}
+                         </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none ${
+                          statusColors[report.status || "pending"] || statusColors.pending
+                        }`}>
+                            {report.status || "pending"}
+                        </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
+                        <div className="flex items-center gap-3">
+                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(report.id!)}><FiEdit /></button>
+                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(report.id!)}><FiTrash2 /></button>
+                        </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? 'bg-blue-600 text-white border border-blue-600'
+                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Next
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       {isAddModalOpen && (
         <AddWebsiteReport 
@@ -178,8 +239,9 @@ const WebsiteReportPage: React.FC = () => {
           reportTypes={reportTypes}
         />
       )}
-    </div>
+    </>
   );
 };
 
 export default WebsiteReportPage;
+

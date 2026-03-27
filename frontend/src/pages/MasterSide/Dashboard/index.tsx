@@ -145,7 +145,7 @@ const MasterDashboard: React.FC = () => {
                 <div className="flex flex-col h-full justify-between relative z-10 text-left">
                     <div>
                         <div className={`w-10 h-10 rounded-xl bg-${card.color}-50 text-${card.color}-600 flex items-center justify-center mb-4 transition-all group-hover:bg-blue-600 group-hover:text-white`}>
-                            {React.cloneElement(card.icon as React.ReactElement, { size: 18 })}
+                            {React.cloneElement(card.icon as React.ReactElement, { size: 18 } as any)}
                         </div>
                         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">{card.label}</h3>
                         <p className="text-3xl font-black text-gray-900 tracking-tighter transition-colors group-hover:text-blue-600">{card.value}</p>

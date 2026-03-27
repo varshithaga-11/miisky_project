@@ -23,7 +23,16 @@ export interface Patent {
   updated_at?: string;
 }
 
-export const getPatentList = async (page: number = 1, limit: number = 10, search: string = "") => {
+export interface PaginatedResponse<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+}
+
+export const getPatentList = async (page: number = 1, limit: number = 10, search: string = ""): Promise<PaginatedResponse<Patent>> => {
   const url = createApiUrl("api/website/patent/");
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),

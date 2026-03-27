@@ -54,7 +54,7 @@ const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-blue-900/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-[2rem] p-10 w-full max-w-3xl max-h-screen overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
         <h2 className="text-4xl font-black text-blue-900 mb-8 tracking-tighter">New Patent Application</h2>
         <form onSubmit={handleSubmit} className="space-y-6 font-sans">

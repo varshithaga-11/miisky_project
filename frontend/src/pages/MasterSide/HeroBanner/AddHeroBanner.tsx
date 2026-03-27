@@ -72,7 +72,7 @@ const AddHeroBanner: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 font-sans text-gray-800 text-left">
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-gray-800 text-left">
       <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="mb-8 border-b pb-6 text-center">
           <h2 className="text-3xl font-black tracking-tighter uppercase italic text-blue-600">Add Hero Banner</h2>

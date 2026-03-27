@@ -40,110 +40,120 @@ const EditCompanyInfo: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-4">Edit Company Info</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Company Name</label>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Company Details</h2>
+        </div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Company Name</label>
             <input
               type="text"
               value={formData.name || ""}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-lg"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Tagline</label>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Tagline</label>
             <input
               type="text"
               value={formData.tagline || ""}
               onChange={(e) =>
                 setFormData({ ...formData, tagline: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Email (Support)</label>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Email (Support)</label>
             <input
               type="email"
               value={formData.email_support || ""}
               onChange={(e) =>
                 setFormData({ ...formData, email_support: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Phone</label>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Phone</label>
             <input
               type="tel"
               value={formData.phone_primary || ""}
               onChange={(e) =>
                 setFormData({ ...formData, phone_primary: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Address</label>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Address</label>
             <input
               type="text"
               value={formData.address_line1 || ""}
               onChange={(e) =>
                 setFormData({ ...formData, address_line1: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">City</label>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">City</label>
             <input
               type="text"
               value={formData.city || ""}
               onChange={(e) =>
                 setFormData({ ...formData, city: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">State</label>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">State</label>
             <input
               type="text"
               value={formData.state || ""}
               onChange={(e) =>
                 setFormData({ ...formData, state: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Pincode</label>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Pincode</label>
             <input
               type="text"
               value={formData.pincode || ""}
               onChange={(e) =>
                 setFormData({ ...formData, pincode: e.target.value })
               }
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
-          <div className="flex gap-2">
+
+          <div className="md:col-span-2 flex gap-4 mt-8">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
-              {loading ? "Saving..." : "Update"}
+              {loading ? "Revising..." : "Update Details"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border py-2 rounded"
+              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
             >
               Cancel
             </button>

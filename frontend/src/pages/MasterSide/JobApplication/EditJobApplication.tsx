@@ -52,79 +52,69 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">Edit Job Application</h2>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Application</h2>
+        </div>
         
         {fetching ? (
-          <div className="py-10 text-center text-gray-500 font-medium">Loading data...</div>
+          <div className="py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs animate-pulse font-mono">Retrieving Profile...</div>
         ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="mb-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Job Listing</label>
               <select
                 required
                 value={formData.job || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, job: parseInt(e.target.value) || undefined })
-                }
+                onChange={(e) => setFormData({ ...formData, job: parseInt(e.target.value) || undefined })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               >
                 <option value="">Select Job</option>
                 {jobListings.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title}
-                  </option>
+                  <option key={job.id} value={job.id}>{job.title}</option>
                 ))}
               </select>
             </div>
 
-            <div className="mb-5">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Applicant Name</label>
               <input
                 type="text"
                 required
                 value={formData.applicant_name || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, applicant_name: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                onChange={(e) => setFormData({ ...formData, applicant_name: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
               />
             </div>
 
-            <div className="mb-5">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Email</label>
               <input
                 type="email"
                 required
                 value={formData.email || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
 
-            <div className="mb-5">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Phone</label>
               <input
                 type="tel"
                 value={formData.phone || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
 
-            <div className="mb-5">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Status</label>
               <select
                 value={formData.status || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-blue-600"
               >
                 <option value="applied">Applied</option>
                 <option value="reviewing">Reviewing</option>
@@ -133,30 +123,28 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
               </select>
             </div>
 
-            <div className="mb-6">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Cover Letter</label>
               <textarea
                 value={formData.cover_letter || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, cover_letter: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, cover_letter: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 rows={3}
               />
             </div>
 
-            <div className="flex gap-3 mt-8">
+            <div className="flex gap-4 mt-8">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-lg disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-md mt-2"
+                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
               >
-                {loading ? "Saving..." : "Update Application"}
+                {loading ? "Saving Progress..." : "Update Profile"}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 border border-gray-300 text-gray-600 font-bold py-2.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all mt-2"
+                className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
               >
                 Cancel
               </button>

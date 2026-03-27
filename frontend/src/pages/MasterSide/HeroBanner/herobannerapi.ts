@@ -20,12 +20,20 @@ export interface HeroBanner {
   created_at: string;
   updated_at: string;
 }
+export interface PaginatedResponse<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+}
 
 export const getHeroBannerList = async (
   page: number = 1,
   limit: number = 10,
   search: string = ""
-) => {
+): Promise<PaginatedResponse<HeroBanner>> => {
   const url = createApiUrl("api/website/herobanner/");
   const params: any = { page, limit };
   if (search) params.search = search;

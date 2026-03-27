@@ -29,40 +29,45 @@ const AddBlogTag: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl relative">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">New Blog Tag</h2>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">New Tag</h2>
+        </div>
+        
         <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Tag Label</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">#</span>
-              <input
-                type="text"
-                required
-                value={formData.name || ""}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium"
-                placeholder="innovation"
-              />
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Tag Label</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">#</span>
+                <input
+                  type="text"
+                  required
+                  value={formData.name || ""}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-lg"
+                  placeholder="innovation"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-100"
-            >
-              {loading ? "Creating..." : "Create Tag"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-600 font-bold py-3 rounded-lg hover:bg-gray-50 active:scale-95 transition-all"
-            >
-              Cancel
-            </button>
+            <div className="flex gap-4 mt-8">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
+              >
+                {loading ? "Creating..." : "Create Tag"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </form>
       </div>

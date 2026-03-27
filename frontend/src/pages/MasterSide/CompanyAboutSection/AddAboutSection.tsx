@@ -53,111 +53,124 @@ const AddAboutSection: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-all focus-within:backdrop-blur-none">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-screen overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-        <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Add About Section</h2>
-        <form onSubmit={handleSubmit} className="space-y-6 font-sans">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Section Category</label>
-              <select
-                required
-                value={formData.section_type}
-                onChange={(e) => setFormData({ ...formData, section_type: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-all font-bold text-gray-700"
-              >
-                <option value="company_overview">Company Overview</option>
-                <option value="quality_statement">Quality Statement</option>
-                <option value="service_concept">Service Concept</option>
-                <option value="social_commitment">Social Commitment / CSR</option>
-                <option value="promoter_intro">Promoter Introduction</option>
-                <option value="milestone">Milestone / Achievement</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Display Title</label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-all font-bold text-gray-700"
-              />
-            </div>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
+        <div className="mb-8 border-b pb-6 text-center">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Add About Section</h2>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Section Category</label>
+            <select
+              required
+              value={formData.section_type}
+              onChange={(e) => setFormData({ ...formData, section_type: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+            >
+              <option value="company_overview">Company Overview</option>
+              <option value="quality_statement">Quality Statement</option>
+              <option value="service_concept">Service Concept</option>
+              <option value="social_commitment">Social Commitment / CSR</option>
+              <option value="promoter_intro">Promoter Introduction</option>
+              <option value="milestone">Milestone / Achievement</option>
+              <option value="other">Other</option>
+            </select>
           </div>
 
           <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Subtitle / Hook</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Display Title</label>
             <input
               type="text"
-              value={formData.subtitle}
+              required
+              value={formData.title || ""}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Subtitle / Hook</label>
+            <input
+              type="text"
+              value={formData.subtitle || ""}
               onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-              className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-all font-bold text-gray-700 placeholder:text-gray-300"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300"
               placeholder="E.g. Innovation in every step..."
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Detailed Narrative Content</label>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Detailed Narrative Content</label>
             <textarea
               required
               rows={6}
-              value={formData.content}
+              value={formData.content || ""}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-all font-bold text-gray-700 leading-relaxed"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-serif leading-relaxed"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Visual Icon (Class)</label>
-              <input
-                type="text"
-                value={formData.icon_class}
-                onChange={(e) => setFormData({ ...formData, icon_class: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-all font-bold text-gray-700"
-                placeholder="E.g. bi bi-star"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Sort Position</label>
-              <input
-                type="number"
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-all font-bold text-gray-700"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Visual Icon (Class)</label>
+            <input
+              type="text"
+              value={formData.icon_class || ""}
+              onChange={(e) => setFormData({ ...formData, icon_class: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              placeholder="E.g. bi bi-star"
+            />
           </div>
 
           <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Feature Image (Optional)</label>
-            <div className="relative group overflow-hidden bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 hover:border-indigo-400 transition-all">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Sort Position</label>
+            <input
+              type="number"
+              value={formData.position || 0}
+              onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Feature Image (Optional)</label>
+            <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-all">
               <input 
                 type="file" 
                 onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
-              <div className="px-4 py-6 text-center text-sm font-bold text-gray-400 uppercase tracking-tighter transition group-hover:text-indigo-600">
+              <div className="px-4 py-4 text-center text-sm font-bold text-gray-500 uppercase tracking-wide transition group-hover:text-blue-600">
                 {imageFile ? imageFile.name : "Choose or drag image here"}
               </div>
             </div>
           </div>
 
-          <div className="pt-4 flex gap-4">
+          <div className="md:col-span-2 flex items-center">
+            <div className="flex items-center group cursor-pointer inline-flex">
+              <input
+                type="checkbox"
+                id="add_about_active"
+                checked={formData.is_active || false}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+              />
+              <label htmlFor="add_about_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Live on Website</label>
+            </div>
+          </div>
+
+          <div className="md:col-span-2 flex gap-4 mt-8">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-indigo-600 text-white font-black uppercase tracking-widest text-sm py-4 rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
+              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
-              {loading ? "Authoring..." : "Publish Section"}
+              {loading ? "Publishing..." : "Publish Section"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-white border border-gray-100 text-gray-400 font-black uppercase tracking-widest text-sm py-4 rounded-2xl hover:bg-gray-50 active:scale-95 transition-all"
+              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
             >
               Discard
             </button>

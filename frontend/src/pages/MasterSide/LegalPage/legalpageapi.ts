@@ -15,11 +15,18 @@ export interface LegalPage {
   updated_at?: string;
 }
 
-export const getLegalPageList = async (page: number = 1, limit: number = 10) => {
+export const getLegalPageList = async (
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+) => {
   const url = createApiUrl("api/website/legalpage/");
+  const params: any = { page, limit };
+  if (search) params.search = search;
+
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { page, limit },
+    params,
   });
   return response.data;
 };

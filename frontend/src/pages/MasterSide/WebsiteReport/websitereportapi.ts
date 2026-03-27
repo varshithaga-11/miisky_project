@@ -32,7 +32,7 @@ export const getWebsiteReportList = async (
   page: number = 1,
   limit: number = 10,
   search?: string
-) => {
+): Promise<PaginatedResponse<WebsiteReport>> => {
   const url = createApiUrl("api/website/websitereport/");
   const params: any = { page, limit };
   if (search) params.search = search;
