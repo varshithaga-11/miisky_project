@@ -13,6 +13,15 @@ export interface AdminDashboardStats {
   patents: number;
   supportTickets: number;
   healthParameters: number;
+  mealTypes: number;
+  cuisineTypes: number;
+  packaging: number;
+  recipes: number;
+  foodGroups: number;
+  foodNames: number;
+  nutrients: number;
+  dietPlans: number;
+  verifications: number;
 }
 
 export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => {

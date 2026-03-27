@@ -136,6 +136,15 @@ class AdminDashboardCountsView(APIView):
             "patents": Patent.objects.count(),
             "supportTickets": SupportTicket.objects.count(),
             "healthParameters": HealthParameter.objects.count(),
+            "mealTypes":     MealType.objects.count(),
+            "cuisineTypes":  CuisineType.objects.count(),
+            "packaging":      PackagingMaterial.objects.count(),
+            "recipes":       Food.objects.count(),
+            "foodGroups":    FoodGroup.objects.count(),
+            "foodNames":     FoodName.objects.count(),
+            "nutrients":     FoodProximate.objects.count(),
+            "dietPlans":     DietPlans.objects.count(),
+            "verifications":  UserDietPlan.objects.filter(status='payment_pending').count(),
         })
 
 
@@ -212,6 +221,7 @@ class NonPatientDashboardCountsView(APIView):
             "microKitchens": MicroKitchenProfile.objects.filter(status="approved").count(),
             "cartItems": CartItem.objects.filter(cart__user=user).count(),
             "bookings": Order.objects.filter(user=user).count(),
+            "supportTickets": SupportTicket.objects.filter(user=user).count(),
         })
 
 

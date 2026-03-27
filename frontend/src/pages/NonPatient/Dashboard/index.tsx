@@ -9,6 +9,7 @@ import {
   TrendingUp,
   LucideIcon,
   ShoppingBag,
+  HelpCircle,
 } from "lucide-react";
 import { getNonPatientDashboardStats, NonPatientDashboardStats } from "./api";
 
@@ -32,6 +33,7 @@ const nonPatientMenus: DashboardMenuItem[] = [
   
   // Account
   { label: "Profile", path: "/profile-info", icon: UserCog, color: "slate", category: "Account" },
+  { label: "Support", path: "/non-patient/support-tickets", icon: HelpCircle, statKey: "supportTickets", color: "orange", category: "Account" },
 ];
 
 export default function NonPatientDashboard() {

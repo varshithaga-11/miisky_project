@@ -6,6 +6,7 @@ export interface NonPatientDashboardStats {
   microKitchens: number;
   cartItems: number;
   bookings: number;
+  supportTickets: number;
 }
 
 export const getNonPatientDashboardStats = async (): Promise<NonPatientDashboardStats> => {
