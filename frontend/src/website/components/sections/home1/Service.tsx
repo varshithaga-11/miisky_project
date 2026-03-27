@@ -5,8 +5,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import type { Department } from "../../../utils/types";
-import { MOCK_DEPARTMENTS, DEPARTMENT_SLUGS } from "../../../utils/mockData";
+import { useEffect, useState } from "react";
+import { getDepartments } from "@/utils/api";
+import type { Department } from "@/Website/utils/types";
+import { MOCK_DEPARTMENTS, DEPARTMENT_SLUGS } from "@/Website/utils/mockData";
 
 const swiperOptions = {
   modules: [Autoplay, Pagination, Navigation],
@@ -35,7 +37,47 @@ interface ServiceProps {
   departments?: Department[];
 }
 
-export default function Service({ departments = MOCK_DEPARTMENTS }: ServiceProps) {
+export default function Service({ departments }: ServiceProps) {
+  const [departmentsList, setDepartmentsList] = useState<Department[]>(departments || MOCK_DEPARTMENTS);
+  const [loading, setLoading] = useState(!departments);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (departments) {
+      setDepartmentsList(departments);
+      setLoading(false);
+      return;
+    }
+
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true);
+        const response = await getDepartments();
+        const data = response.data;
+
+        // Handle both array and paginated responses
+        const depts = Array.isArray(data) ? data : data.results || data;
+        const formattedDepts = depts.map((dept: any) => ({
+          id: dept.id,
+          name: dept.name || "Department",
+          icon: dept.icon || "icon-18",
+          image: dept.image_url || dept.image || "/website/assets/images/service/service-1.jpg",
+          description: dept.description || "",
+        }));
+
+        setDepartmentsList(formattedDepts.length > 0 ? formattedDepts : MOCK_DEPARTMENTS);
+        setError(null);
+      } catch (err) {
+        console.warn("Failed to fetch departments, using mock data:", err);
+        setDepartmentsList(MOCK_DEPARTMENTS);
+        setError(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, [departments]);
   return (
     <section className="service-section p_relative">
       <div
@@ -57,7 +99,7 @@ export default function Service({ departments = MOCK_DEPARTMENTS }: ServiceProps
         </div>
 
         <Swiper {...swiperOptions} className="three-item-carousel owl-theme nav-style-one">
-          {departments.map((dept) => (
+          {departmentsList.map((dept) => (
             <SwiperSlide key={dept.id}>
               <div className="service-block-one">
                 <div className="inner-box">

@@ -1,13 +1,19 @@
-import Layout from "../components/layout/Layout";
+import { useEffect } from "react";
+import { useLayout } from "../context/LayoutContext";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import ModalVideo from "../components/elements/VideoPopup";
 import Cta from "../components/sections/home2/Cta";
-export default function Departments_Details() {
+export default function BlogStandardPage() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("Blog Standard");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Blog Standard">
                 <section className="sidebar-page-container pt_120 pb_120">
                     <div className="auto-container">
                         <div className="row clearfix">
@@ -147,7 +153,6 @@ export default function Departments_Details() {
                     </div>
                 </section>
                 <Cta/>
-            </Layout>
         </div>
     )
 }

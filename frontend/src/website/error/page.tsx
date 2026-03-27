@@ -1,10 +1,17 @@
-import Layout from "../components/layout/Layout";
+import { useEffect } from "react";
+import { useLayout } from "../context/LayoutContext";
 import { Link } from "react-router-dom";
 
-export default function Portfolio_Page() {
+export default function ErrorPage() {
+  const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+
+  useEffect(() => {
+    setHeaderStyle(3);
+    setBreadcrumbTitle("Page Not Found");
+  }, [setHeaderStyle, setBreadcrumbTitle]);
+
   return (
     <div className="boxed_wrapper">
-      <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Page Not Found">
         <section className="error-section centred pt_130 pb_150">
             <div className="auto-container">
                 <div className="content-box">
@@ -14,7 +21,6 @@ export default function Portfolio_Page() {
                 </div>
             </div>
         </section>
-      </Layout>
     </div>
   );
 }

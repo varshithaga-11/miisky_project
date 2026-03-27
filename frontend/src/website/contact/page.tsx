@@ -1,13 +1,20 @@
-import Layout from "../components/layout/Layout";
+import { useEffect } from "react";
+import { useLayout } from "../context/LayoutContext";
 import ContactForm from "../components/elements/ContactForm";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import GoogleMapSection from "../components/sections/home1/GoogleMap";
+
 export default function ContactPage() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("Contact Us");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Contact Us">
                 <section className="contact-info-two centred">
                     <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-43.png)" }}></div>
                     <div className="auto-container">
@@ -53,7 +60,6 @@ export default function ContactPage() {
                     </div>
                 </section>
                 <GoogleMapSection />
-            </Layout>
         </div>
-    )
+    );
 }

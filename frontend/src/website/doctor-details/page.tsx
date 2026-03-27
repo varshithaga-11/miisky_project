@@ -1,12 +1,46 @@
-import Layout from "../components/layout/Layout";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Image from "../components/Image";
+import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
 import ProgressBar from "../components/elements/ProgressBar";
+import { getTeamMemberById } from "../../utils/api";
+import { MOCK_DOCTORS } from "../utils/mockData";
 
-export default function Doctors_Details() {
+export default function DoctorsDetails() {
+  const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+  const { id } = useParams<{ id: string }>();
+  const [doctor, setDoctor] = useState<any>(MOCK_DOCTORS[0] || {});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setHeaderStyle(3);
+    setBreadcrumbTitle("Doctor Details");
+  }, [setHeaderStyle, setBreadcrumbTitle]);
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        if (id) {
+          const response = await getTeamMemberById(parseInt(id));
+          setDoctor(response.data || MOCK_DOCTORS[0]);
+        } else {
+          setDoctor(MOCK_DOCTORS[0]);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch doctor:', err);
+        setDoctor(MOCK_DOCTORS[0]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoctor();
+  }, [id]);
+
+  if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
+
   return (
     <div className="boxed_wrapper">
-      <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Doctors Details">
         <section className="team-details pt_120 pb_120">
           <div className="auto-container">
             <div className="team-details-content mb_100">
@@ -15,8 +49,8 @@ export default function Doctors_Details() {
                 <div className="col-lg-6 col-md-12 col-sm-12 image-column">
                   <figure className="image-box">
                     <Image
-                      src="/website/assets/images/team/team-7.jpg"
-                      alt="Doctor Image"
+                      src={doctor.profile_image || "/website/assets/images/team/team-7.jpg"}
+                      alt={doctor.name}
                       width={633}
                       height={701}
                       priority
@@ -27,30 +61,11 @@ export default function Doctors_Details() {
                 {/* Doctor Info */}
                 <div className="col-lg-6 col-md-12 col-sm-12 content-column">
                   <div className="content-box">
-                    <h2>Guy Hawkins</h2>
-                    <span className="designation">Cataract surgery</span>
-                    <p>
-                      Medical research is an important aspect of the field, as
-                      it allows for the development of new drugs, treatments,
-                      and technologies. Advances in medical research have led to
-                      significant improvements in healthcare and increased life
-                      expectancy in many parts of the world.
-                    </p>
-                    <p>
-                      Medical professionals include doctors, nurses,
-                      pharmacists, and other healthcare workers who work
-                      together to provide patient care. They may work in
-                      hospitals, clinics, private practices, or other healthcare
-                      settings. In summary, medical science is a complex and
-                      interdisciplinary field that plays a critical role in
-                      maintaining and improving human health.
-                    </p>
-                    <p>
-                      Its practitioners use a range of techniques and
-                      technologies to diagnose and treat illnesses and injuries,
-                      and medical research is an essential component of
-                      advancing healthcare.
-                    </p>
+                    <h2>{doctor.name || "Medical Professional"}</h2>
+                    <span className="designation">{doctor.title || doctor.specialization || "Healthcare Expert"}</span>
+                    <p>{doctor.biography || doctor.description || "Professional medical expertise and dedication to patient care"}</p>
+                    <p>Medical professionals include doctors, nurses, pharmacists, and other healthcare workers who work together to provide patient care. They may work in hospitals, clinics, private practices, or other healthcare settings.</p>
+                    <p>Their practitioners use a range of techniques and technologies to diagnose and treat illnesses and injuries, and medical research is an essential component of advancing healthcare.</p>
                   </div>
                 </div>
               </div>
@@ -68,21 +83,21 @@ export default function Doctors_Details() {
                           <i className="icon-51"></i>
                         </div>
                         <span>Education :</span>
-                        Yale-New Haven Hos
+                        {doctor.education || "Advanced Medical Education"}
                       </li>
                       <li>
                         <div className="icon-box">
                           <i className="icon-52"></i>
                         </div>
                         <span>Board certification :</span>
-                        American Board of Surgery - Certified in Surgery
+                        {doctor.certification || "Board Certified"}
                       </li>
                       <li>
                         <div className="icon-box">
                           <i className="icon-53"></i>
                         </div>
                         <span>Field of expertise :</span>
-                        Surgical Critical Care
+                        {doctor.specialization || "General Medicine"}
                       </li>
                       <li>
                         <div className="icon-box">
@@ -94,7 +109,7 @@ export default function Doctors_Details() {
                           />
                         </div>
                         <span>Years of practice :</span>
-                        25+
+                        {doctor.years_of_experience || "20+"}
                       </li>
                     </ul>
 
@@ -102,7 +117,7 @@ export default function Doctors_Details() {
                     <h3>My Skills</h3>
                     <div className="progress-inner">
                       <ProgressBar label="Empathy" percent={90} />
-                      <ProgressBar label="Neurology" percent={95} />
+                      <ProgressBar label={doctor.specialization || "Expertise"} percent={95} />
                     </div>
                   </div>
                 </div>
@@ -113,25 +128,25 @@ export default function Doctors_Details() {
                     <h3>Working Hours</h3>
                     <ul className="schedule-list clearfix">
                       <li>
-                        Sunday <span>02 pm to 06 pm</span>
+                        Monday <span>{doctor.monday_hours || "09 am to 05 pm"}</span>
                       </li>
                       <li>
-                        Monday <span>03 pm to 07 pm</span>
+                        Tuesday <span>{doctor.tuesday_hours || "09 am to 05 pm"}</span>
                       </li>
                       <li>
-                        Tuesday <span>02 pm to 06 pm</span>
+                        Wednesday <span>{doctor.wednesday_hours || "09 am to 05 pm"}</span>
                       </li>
                       <li>
-                        Wednesday <span>02 pm to 06 pm</span>
+                        Thursday <span>{doctor.thursday_hours || "09 am to 05 pm"}</span>
                       </li>
                       <li>
-                        Thursday <span>04 pm to 06 pm</span>
+                        Friday <span>{doctor.friday_hours || "09 am to 05 pm"}</span>
                       </li>
                       <li>
-                        Friday <span>03 pm to 08 pm</span>
+                        Saturday <span>{doctor.saturday_hours || "10 am to 02 pm"}</span>
                       </li>
                       <li>
-                        Saturday <span>Closed</span>
+                        Sunday <span>{doctor.sunday_hours || "Closed"}</span>
                       </li>
                     </ul>
                   </div>
@@ -214,7 +229,6 @@ export default function Doctors_Details() {
         </section>
 
         <Cta />
-      </Layout>
     </div>
   );
 }

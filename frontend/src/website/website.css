@@ -17,3 +17,84 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Force navigation visibility and prevent wrapping */
+.main-header #navbarSupportedContent,
+.main-header #navbarSupportedContentSticky,
+.main-header #navbarSupportedContent3,
+.main-header #navbarSupportedContent3Sticky {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.main-header .header-lower .outer-box {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 20px !important;
+}
+
+.main-header .logo-box {
+  flex-shrink: 0 !important;
+  margin-right: 20px !important;
+}
+
+.main-header .menu-area {
+  flex-grow: 1 !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.main-header .navigation {
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.main-header .navigation > li {
+  margin: 0px 10px !important; /* Balanced margin */
+  position: relative !important;
+}
+
+.main-header .navigation > li > a {
+  font-size: 14px !important; /* Slightly smaller font to ensure fit */
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+.main-header .menu-right-content {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important; /* Smaller gap */
+  margin-left: 10px !important;
+}
+
+/* Ensure no overlap with the support box */
+.main-header .support-box {
+  padding-left: 35px !important; /* Save space on the icon side */
+  margin-right: 10px !important;
+  flex-shrink: 0 !important;
+  min-width: 170px !important; /* Ensure enough space for the number */
+}
+
+.main-header .support-box h6 {
+  font-size: 15px !important;
+  white-space: nowrap !important; /* Keep on one line */
+}
+
+.main-header .btn-box {
+  flex-shrink: 0 !important;
+}
+
+@media only screen and (max-width: 991px) {
+  .main-header #navbarSupportedContent,
+  .main-header #navbarSupportedContentSticky,
+  .main-header #navbarSupportedContent3,
+  .main-header #navbarSupportedContent3Sticky {
+    display: none !important;
+  }
+}

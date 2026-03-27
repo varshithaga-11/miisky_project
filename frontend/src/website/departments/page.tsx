@@ -1,149 +1,72 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalVideo from "../components/elements/VideoPopup";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
-import Layout from "../components/layout/Layout";
+import { useLayout } from "../context/LayoutContext";
+import { getDepartments } from "../../utils/api";
+import { MOCK_DEPARTMENTS } from "../utils/mockData";
 import Video from "../components/sections/home3/Video";
 import Cta from "../components/sections/home2/Cta";
-export default function Departments_Page() {
 
+export default function DepartmentsPage() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [activeTab, setActiveTab] = useState(1);
+    const [departments, setDepartments] = useState(MOCK_DEPARTMENTS);
+    const [loading, setLoading] = useState(true);
 
-    const tabs = [
-        { id: 1, title: "Modern Technology" },
-        { id: 2, title: "Success of Treatments" },
-        { id: 3, title: "Certified Doctors" },
-    ];
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("Our Departments");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
 
-    const tabContent = [
-        {
-        id: 1,
-        videoImg: "/website/assets/images/resource/video-1.jpg",
-        heading: "Modern Technology",
-        text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
-        list: [
-            "Your Health is Our Top Priority",
-            "Compassionate Care, Innovative Treatments",
-            "We Treat You Like Family",
-            "Leading the Way in Medical Excellence",
-        ],
-        },
-        {
-        id: 2,
-        videoImg: "/website/assets/images/resource/video-1.jpg",
-        heading: "Success of Treatments",
-        text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
-        list: [
-            "Your Health is Our Top Priority",
-            "Compassionate Care, Innovative Treatments",
-            "We Treat You Like Family",
-            "Leading the Way in Medical Excellence",
-        ],
-        },
-        {
-        id: 3,
-        videoImg: "/website/assets/images/resource/video-1.jpg",
-        heading: "Certified Doctors",
-        text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
-        list: [
-            "Your Health is Our Top Priority",
-            "Compassionate Care, Innovative Treatments",
-            "We Treat You Like Family",
-            "Leading the Way in Medical Excellence",
-        ],
-        },
-    ];
+    useEffect(() => {
+        const fetchDepts = async () => {
+            try {
+                setLoading(true);
+                const response = await getDepartments();
+                const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+                setDepartments(data.length > 0 ? data : MOCK_DEPARTMENTS);
+                if (data.length > 0) setActiveTab(data[0].id);
+            } catch (err) {
+                console.warn('Failed to fetch departments:', err);
+                setDepartments(MOCK_DEPARTMENTS);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDepts();
+    }, []);
+
+    const tabs = departments.map((dept: any) => ({ 
+        id: dept.id, 
+        title: dept.name || "Department" 
+    }));
+
+    if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Our Departments">
                 <section className="service-page-section p_relative">
                     <div className="auto-container">
                         <div className="row clearfix">
-                             <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-1.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-18"></i></div>
-                                                <h3><Link to="/website/department-details">Cardiology</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
+                            {departments.map((dept: any) => (
+                                <div key={dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block">
+                                    <div className="service-block-one">
+                                        <div className="inner-box">
+                                            <figure className="image-box">
+                                                <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
+                                            </figure>
+                                            <div className="lower-content">
+                                                <div className="inner">
+                                                    <div className="icon-box"><i className={dept.icon || "icon-18"}></i></div>
+                                                    <h3><Link to={`/website/department-details?id=${dept.id}`}>{dept.name}</Link></h3>
+                                                    <p>{dept.description?.substring(0, 60)}...</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-2.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-19"></i></div>
-                                                <h3><Link to="/website/department-details-2">Dental</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-3.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-20"></i></div>
-                                                <h3><Link to="/website/department-details-3">Gastroenterology</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-1.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-28"></i></div>
-                                                <h3><Link to="/website/department-details-4">Neurology</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-2.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-29"></i></div>
-                                                <h3><Link to="/website/department-details-5">Orthopaedics</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-3.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-37"></i></div>
-                                                <h3><Link to="/website/department-details-6">Dental Caring</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </section>
@@ -177,7 +100,7 @@ export default function Departments_Page() {
 
                         {/* Tabs Content */}
                         <div className="tabs-content">
-                            {tabContent.map((content) => (
+                            {departments.map((content: any) => (
                             <div
                                 key={content.id}
                                 className={`tab ${activeTab === content.id ? "active-tab" : ""}`}
@@ -202,14 +125,16 @@ export default function Departments_Page() {
                                     <div className="content-block-two">
                                         <div className="content-box ml_40">
                                         <div className="text-box">
-                                            <h3>{content.heading}</h3>
-                                            <p>{content.text}</p>
+                                            <h3>{content.name}</h3>
+                                            <p>{content.description}</p>
                                         </div>
-                                        <ul className="list-style-one clearfix">
-                                            {content.list.map((item, index) => (
-                                            <li key={index}>{item}</li>
-                                            ))}
-                                        </ul>
+                                        {content.list && content.list.length > 0 && (
+                                            <ul className="list-style-one clearfix">
+                                                {content.list.map((item: any, index: number) => (
+                                                <li key={index}>{item}</li>
+                                                ))}
+                                            </ul>
+                                        )}
                                         <div className="btn-box">
                                             <Link to="/website/departments" className="theme-btn btn-two">
                                             <span>See All Services</span>
@@ -268,7 +193,6 @@ export default function Departments_Page() {
                     </div>
                 </section>
                 <Cta/>
-            </Layout>
         </div>
-    )
+    );
 }

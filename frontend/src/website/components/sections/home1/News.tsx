@@ -5,14 +5,59 @@ import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import type { BlogPost } from '../../../utils/types';
-import { MOCK_BLOG_POSTS } from '../../../utils/mockData';
+import { useEffect, useState } from "react";
+import { getBlogPosts } from "@/utils/api";
+import type { BlogPost } from '@/Website/utils/types';
+import { MOCK_BLOG_POSTS } from '@/Website/utils/mockData';
 
 interface NewsProps {
   posts?: BlogPost[];
 }
 
-export default function News({ posts = MOCK_BLOG_POSTS }: NewsProps) {
+export default function News({ posts }: NewsProps) {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(posts || MOCK_BLOG_POSTS);
+  const [loading, setLoading] = useState(!posts);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (posts) {
+      setBlogPosts(posts);
+      setLoading(false);
+      return;
+    }
+
+    const fetchBlogPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await getBlogPosts();
+        const data = response.data;
+
+        // Handle both array and paginated responses
+        const blogData = Array.isArray(data) ? data : data.results || data;
+        const formattedPosts = blogData.map((post: any) => ({
+          id: post.id,
+          title: post.title || "Untitled",
+          slug: post.slug || `post-${post.id}`,
+          excerpt: post.excerpt || post.content?.substring(0, 150) || "",
+          image: post.featured_image_url || post.featured_image || "/website/assets/images/news/news-1.jpg",
+          author: post.author?.name || post.author || "Admin",
+          category: post.category?.name || post.category || "General",
+          published_at: post.published_at || new Date().toISOString(),
+        }));
+
+        setBlogPosts(formattedPosts.length > 0 ? formattedPosts : MOCK_BLOG_POSTS);
+        setError(null);
+      } catch (err) {
+        console.warn("Failed to fetch blog posts, using mock data:", err);
+        setBlogPosts(MOCK_BLOG_POSTS);
+        setError(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlogPosts();
+  }, [posts]);
   return (
     <section className="news-section sec-pad">
       <div className="auto-container">
@@ -40,7 +85,7 @@ export default function News({ posts = MOCK_BLOG_POSTS }: NewsProps) {
             1199: { slidesPerView: 3 },
           }}
         >
-          {posts.map((post) => (
+          {blogPosts.map((post) => (
             <SwiperSlide key={post.id}>
               <div className="news-block-one">
                 <div className="inner-box">

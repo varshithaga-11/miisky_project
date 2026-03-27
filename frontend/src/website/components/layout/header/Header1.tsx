@@ -53,6 +53,11 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <li>
                   <Link to="/website"><i className="fab fa-instagram"></i></Link>
                 </li>
+                <li style={{ marginLeft: "20px", borderLeft: "1px solid rgba(255,255,255,0.2)", paddingLeft: "20px" }}>
+                   <button onClick={logout} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '12px', padding: 0, textTransform: 'uppercase' }}>
+                     <i className="fas fa-sign-out-alt" style={{ marginRight: '8px' }}></i>Logout
+                   </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -70,11 +75,12 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               </div>
               <div className="menu-area">
                 <div className="mobile-nav-toggler" onClick={handleMobileMenu}>
-                  <i className="icon-bar"></i>
-                  <i className="icon-bar"></i>
-                  <i className="icon-bar"></i>
+                  <i className="icon-bar" style={{ backgroundColor: "#111" }}></i>
+                  <i className="icon-bar" style={{ backgroundColor: "#111" }}></i>
+                  <i className="icon-bar" style={{ backgroundColor: "#111" }}></i>
                 </div>
 
+                {/* Desktop nav simplified */}
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent">
                     <ul className="navigation clearfix">
@@ -95,21 +101,31 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
                           <li><Link to="/website/department-details-2">Dental</Link></li>
-                          <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                          <li><Link to="/website/department-details-4">Neurology</Link></li>
-                          <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Pages</Link>
+                        <Link to="/website/medical-devices">Products</Link>
+                        <ul>
+                          <li><Link to="/website/medical-devices">Medical Devices</Link></li>
+                          <li><Link to="/website/device-categories">Device Categories</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website/research">Innovation</Link>
+                        <ul>
+                          <li><Link to="/website/research">Research Papers</Link></li>
+                          <li><Link to="/website/patents">Patents</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website">Support</Link>
                         <ul>
                           <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
+                          <li><Link to="/website/careers">Careers</Link></li>
+                          <li><Link to="/website/faq">FAQ</Link></li>
+                          <li><Link to="/website/gallery">Gallery</Link></li>
+                          <li><Link to="/website/partners">Our Partners</Link></li>
                           <li><Link to="/website/pricing">Pricing</Link></li>
-                          <li><Link to="/website/error">Not Found</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -142,22 +158,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <Link to="/website" className="theme-btn btn-one">
                     <span>Appointment</span>
                   </Link>
-                  <button
-                    onClick={logout}
-                    style={{
-                      marginLeft: "12px",
-                      padding: "8px 16px",
-                      backgroundColor: "#f5821f",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Logout
-                  </button>
                 </div>
               </div>
             </div>
@@ -202,21 +202,31 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
                           <li><Link to="/website/department-details-2">Dental</Link></li>
-                          <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                          <li><Link to="/website/department-details-4">Neurology</Link></li>
-                          <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Pages</Link>
+                        <Link to="/website/medical-devices">Products</Link>
+                        <ul>
+                          <li><Link to="/website/medical-devices">Medical Devices</Link></li>
+                          <li><Link to="/website/device-categories">Device Categories</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website/research">Innovation</Link>
+                        <ul>
+                          <li><Link to="/website/research">Research Papers</Link></li>
+                          <li><Link to="/website/patents">Patents</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website">Support</Link>
                         <ul>
                           <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
+                          <li><Link to="/website/careers">Careers</Link></li>
+                          <li><Link to="/website/faq">FAQ</Link></li>
+                          <li><Link to="/website/gallery">Gallery</Link></li>
+                          <li><Link to="/website/partners">Our Partners</Link></li>
                           <li><Link to="/website/pricing">Pricing</Link></li>
-                          <li><Link to="/website/error">Not Found</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -249,22 +259,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <Link to="/website" className="theme-btn btn-one">
                     <span>Appointment</span>
                   </Link>
-                  <button
-                    onClick={logout}
-                    style={{
-                      marginLeft: "12px",
-                      padding: "8px 16px",
-                      backgroundColor: "#f5821f",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Logout
-                  </button>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
-
-import Layout from "./components/layout/Layout";
+import { useEffect } from "react";
+import { useLayout } from "./context/LayoutContext";
 import About from "./components/sections/home1/About";
 import About_Two from "./components/sections/home1/About_Two";
 import Appointment from "./components/sections/home1/Appointment";
@@ -14,22 +14,27 @@ import Working from "./components/sections/home1/Working";
 import GoogleMapSection from "./components/sections/home1/GoogleMap";
 
 export default function HomePage() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+
+    useEffect(() => {
+        setHeaderStyle(1);
+        setBreadcrumbTitle(undefined);
+    }, [setHeaderStyle, setBreadcrumbTitle]);
+
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={1} footerStyle={1}>
-                <Banner/>
-                <Contact_Info/>
-                <About/>
-                <Service/>
-                <Chooseus/>
-                <Appointment/>
-                <Working/>
-                <About_Two/>
-                <Team/>
-                <Portfolio/>
-                <News/>
-                <GoogleMapSection/>
-            </Layout>
+            <Banner/>
+            <Contact_Info/>
+            <About/>
+            <Service/>
+            <Chooseus/>
+            <Appointment/>
+            <Working/>
+            <About_Two/>
+            <Team/>
+            <Portfolio/>
+            <News/>
+            <GoogleMapSection/>
         </div>
-    )
+    );
 }

@@ -1,16 +1,43 @@
+import { useState, useEffect } from "react";
 import CountUp from "react-countup";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
-import Layout from "../components/layout/Layout";
+import { useLayout } from "../context/LayoutContext";
 import Working from "../components/sections/home2/Working";
 import Clients from "../components/sections/home3/Clients";
 import Team from "../components/sections/home1/Team";
 import Cta from "../components/sections/home2/Cta";
+import { getDepartments } from "../../utils/api";
+import { MOCK_DEPARTMENTS } from "../../Website/utils/mockData";
+
 export default function About_Page() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+    const [departments, setDepartments] = useState(MOCK_DEPARTMENTS);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("About Us");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
+
+    useEffect(() => {
+        const fetchDepts = async () => {
+            try {
+                const response = await getDepartments();
+                const items = Array.isArray(response.data) ? response.data : response.data.results || [];
+                setDepartments(items.length > 0 ? items : MOCK_DEPARTMENTS);
+            } catch (err) {
+                console.warn('Failed to fetch departments:', err);
+                setDepartments(MOCK_DEPARTMENTS);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDepts();
+    }, []);
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="About Us">
                 <section className="about-section about-page p_relative pb_50">
                     <div className="auto-container">
                         <div className="upper-content mb_80">
@@ -81,48 +108,26 @@ export default function About_Page() {
                             <p>Medical care is the practice of providing diagnosis, treatment, and preventive care for various <br />illnesses, injuries, and diseases. It</p>
                         </div>
                         <div className="row clearfix">
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-1.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-18"></i></div>
-                                                <h3><Link to="/website/department-details">Cardiology</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
+                            {loading ? (
+                                <div style={{padding: '40px', textAlign: 'center', width: '100%'}}>Loading departments...</div>
+                            ) : (
+                                departments.slice(0, 3).map((dept: any) => (
+                                    <div key={dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block">
+                                        <div className="service-block-one">
+                                            <div className="inner-box">
+                                                <figure className="image-box"><Image src={dept.image_url || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority /></figure>
+                                                <div className="lower-content">
+                                                    <div className="inner">
+                                                        <div className="icon-box"><i className="icon-18"></i></div>
+                                                        <h3><Link to="/website/departments">{dept.name}</Link></h3>
+                                                        <p>{dept.description || "Professional healthcare services for your well-being."}</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-2.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-19"></i></div>
-                                                <h3><Link to="/website/department-details-2">Dental</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                <div className="service-block-one">
-                                    <div className="inner-box">
-                                        <figure className="image-box"><Image src="/website/assets/images/service/service-3.jpg" alt="Image" width={416} height={358} priority /></figure>
-                                        <div className="lower-content">
-                                            <div className="inner">
-                                                <div className="icon-box"><i className="icon-20"></i></div>
-                                                <h3><Link to="/website/department-details-3">Gastroenterology</Link></h3>
-                                                <p>Cardiologists are healthcare professionals.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </section>
@@ -266,7 +271,6 @@ export default function About_Page() {
                 <Clients/>
                 <Team/>
                 <Cta/>
-            </Layout>
         </div>
-    )
+    );
 }

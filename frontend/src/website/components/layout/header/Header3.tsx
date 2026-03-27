@@ -16,8 +16,6 @@ export default function Header3({
   scroll,
   isMobileMenu,
   handleMobileMenu,
-  handlePopup,
-  isSidebar,
   handleSidebar,
 }: Header3Props) {
   const logout = () => {
@@ -58,6 +56,7 @@ export default function Header3({
                 </div>
 
                 {/* ✅ Desktop nav forced to show */}
+                {/* Simplified Desktop nav */}
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent3">
                     <ul className="navigation clearfix">
@@ -78,21 +77,31 @@ export default function Header3({
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
                           <li><Link to="/website/department-details-2">Dental</Link></li>
-                          <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                          <li><Link to="/website/department-details-4">Neurology</Link></li>
-                          <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Pages</Link>
+                        <Link to="/website/medical-devices">Products</Link>
                         <ul>
-                          <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
+                          <li><Link to="/website/medical-devices">Medical Devices</Link></li>
+                          <li><Link to="/website/device-categories">Device Categories</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website/research">Innovation</Link>
+                        <ul>
+                          <li><Link to="/website/research">Research</Link></li>
+                          <li><Link to="/website/patents">Patents</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website">Support</Link>
+                        <ul>
+                          <li><Link to="/website/doctors">Doctors</Link></li>
+                          <li><Link to="/website/careers">Careers</Link></li>
+                          <li><Link to="/website/faq">FAQ</Link></li>
+                          <li><Link to="/website/gallery">Gallery</Link></li>
+                          <li><Link to="/website/partners">Partners</Link></li>
                           <li><Link to="/website/pricing">Pricing</Link></li>
-                          <li><Link to="/website/error">Not Found</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -119,15 +128,27 @@ export default function Header3({
                   <button
                     onClick={logout}
                     style={{
-                      marginLeft: "12px",
-                      padding: "8px 16px",
-                      backgroundColor: "#f5821f",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
+                      marginLeft: "15px",
+                      padding: "10px 24px",
+                      borderColor: "#0646ac",
+                      borderStyle: "solid",
+                      borderWidth: "1.5px",
+                      color: "#0646ac",
+                      backgroundColor: "transparent",
+                      borderRadius: "30px",
                       cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: 600,
+                      fontSize: "13.5px",
+                      fontWeight: 700,
+                      transition: "all 0.3s ease",
+                      textTransform: "uppercase"
+                    }}
+                    onMouseOver={(e) => {
+                      (e.target as HTMLButtonElement).style.backgroundColor = "#0646ac";
+                      (e.target as HTMLButtonElement).style.color = "white";
+                    }}
+                    onMouseOut={(e) => {
+                      (e.target as HTMLButtonElement).style.backgroundColor = "transparent";
+                      (e.target as HTMLButtonElement).style.color = "#0646ac";
                     }}
                   >
                     Logout
@@ -182,21 +203,31 @@ export default function Header3({
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
                           <li><Link to="/website/department-details-2">Dental</Link></li>
-                          <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                          <li><Link to="/website/department-details-4">Neurology</Link></li>
-                          <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Pages</Link>
+                        <Link to="/website/medical-devices">Products</Link>
                         <ul>
-                          <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
+                          <li><Link to="/website/medical-devices">Medical Devices</Link></li>
+                          <li><Link to="/website/device-categories">Device Categories</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website/research">Innovation</Link>
+                        <ul>
+                          <li><Link to="/website/research">Research</Link></li>
+                          <li><Link to="/website/patents">Patents</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/website">Support</Link>
+                        <ul>
+                          <li><Link to="/website/doctors">Doctors</Link></li>
+                          <li><Link to="/website/careers">Careers</Link></li>
+                          <li><Link to="/website/faq">FAQ</Link></li>
+                          <li><Link to="/website/gallery">Gallery</Link></li>
+                          <li><Link to="/website/partners">Partners</Link></li>
                           <li><Link to="/website/pricing">Pricing</Link></li>
-                          <li><Link to="/website/error">Not Found</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">

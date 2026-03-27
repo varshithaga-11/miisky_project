@@ -1,132 +1,77 @@
-import Layout from "../components/layout/Layout";
+import { useEffect, useState } from "react";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
+import { useLayout } from "../context/LayoutContext";
+import { getBlogPosts } from "../../utils/api";
+import { MOCK_BLOG_POSTS } from "../utils/mockData";
 import Cta from "../components/sections/home2/Cta";
-export default function Departments_Details() {
+
+export default function BlogPage() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+    const [posts, setPosts] = useState(MOCK_BLOG_POSTS);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("Blog Grid");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                setLoading(true);
+                const response = await getBlogPosts();
+                const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+                setPosts(data.length > 0 ? data : MOCK_BLOG_POSTS);
+            } catch (err) {
+                console.warn('Failed to fetch blog posts:', err);
+                setPosts(MOCK_BLOG_POSTS);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPosts();
+    }, []);
+
+    if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Blog Grid">
                 <section className="sidebar-page-container pt_120 pb_120">
                     <div className="auto-container">
                         <div className="row clearfix">
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="blog-grid-content">
                                     <div className="row clearfix">
-                                        <div className="col-lg-6 col-md-6 col-sm-12 news-block">
-                                            <div className="news-block-one">
-                                                <div className="inner-box">
-                                                    <figure className="image-box"><Link to="/website/blog-details"><Image src="/website/assets/images/news/news-1.jpg" alt="Image" width={416} height={287} priority /></Link></figure>
-                                                    <div className="lower-content">
-                                                        <span className="comment-box">2Comment</span>
-                                                        <h3><Link to="/website/blog-details">Prepare to Speak with Your Eye Specialist.</Link></h3>
-                                                        <ul className="post-info clearfix">
-                                                            <li><i className="icon-59"></i>March 6, 2023</li>
-                                                            <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                        </ul>
-                                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
-                                                        <div className="link">
-                                                            <Link to="/website/blog-details">Read More</Link>
+                                        {posts.map((post: any) => (
+                                            <div key={post.id} className="col-lg-6 col-md-6 col-sm-12 news-block">
+                                                <div className="news-block-one">
+                                                    <div className="inner-box">
+                                                        <figure className="image-box">
+                                                            <Link to={`/website/blog-details?slug=${post.slug || post.id}`}>
+                                                                <Image src={post.featured_image || post.image || "/website/assets/images/news/news-1.jpg"} alt={post.title} width={416} height={287} priority />
+                                                            </Link>
+                                                        </figure>
+                                                        <div className="lower-content">
+                                                            <span className="comment-box">{post.comment_count || 0} Comment</span>
+                                                            <h3>
+                                                                <Link to={`/website/blog-details?slug=${post.slug || post.id}`}>
+                                                                    {post.title || "Untitled"}
+                                                                </Link>
+                                                            </h3>
+                                                            <ul className="post-info clearfix">
+                                                                <li><i className="icon-59"></i>{new Date(post.published_at || new Date()).toLocaleDateString()}</li>
+                                                                <li><i className="icon-60"></i><Link to={`/website/blog-details?slug=${post.slug || post.id}`}>{post.author || "Admin"}</Link></li>
+                                                            </ul>
+                                                            <p>{post.excerpt || post.content?.substring(0, 100) || "..."}</p>
+                                                            <div className="link">
+                                                                <Link to={`/website/blog-details?slug=${post.slug || post.id}`}>Read More</Link>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="col-lg-6 col-md-6 col-sm-12 news-block">
-                                            <div className="news-block-one">
-                                                <div className="inner-box">
-                                                    <figure className="image-box"><Link to="/website/blog-details"><Image src="/website/assets/images/news/news-2.jpg" alt="Image" width={416} height={287} priority /></Link></figure>
-                                                    <div className="lower-content">
-                                                        <span className="comment-box">5Comment</span>
-                                                        <h3><Link to="/website/blog-details">Prepare to Speak with Your Eye Specialist.</Link></h3>
-                                                        <ul className="post-info clearfix">
-                                                            <li><i className="icon-59"></i>March 5, 2023</li>
-                                                            <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                        </ul>
-                                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
-                                                        <div className="link">
-                                                            <Link to="/website/blog-details">Read More</Link>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-lg-6 col-md-6 col-sm-12 news-block">
-                                            <div className="news-block-one">
-                                                <div className="inner-box">
-                                                    <figure className="image-box"><Link to="/website/blog-details"><Image src="/website/assets/images/news/news-3.jpg" alt="Image" width={416} height={287} priority /></Link></figure>
-                                                    <div className="lower-content">
-                                                        <span className="comment-box">0Comment</span>
-                                                        <h3><Link to="/website/blog-details">Transforming Health Equity: Addressing</Link></h3>
-                                                        <ul className="post-info clearfix">
-                                                            <li><i className="icon-59"></i>March 4, 2023</li>
-                                                            <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                        </ul>
-                                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
-                                                        <div className="link">
-                                                            <Link to="/website/blog-details">Read More</Link>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-lg-6 col-md-6 col-sm-12 news-block">
-                                            <div className="news-block-one">
-                                                <div className="inner-box">
-                                                    <figure className="image-box"><Link to="/website/blog-details"><Image src="/website/assets/images/news/news-4.jpg" alt="Image" width={416} height={287} priority /></Link></figure>
-                                                    <div className="lower-content">
-                                                        <span className="comment-box">3Comment</span>
-                                                        <h3><Link to="/website/blog-details">From Healthcare Provider to Healthcare Partner</Link></h3>
-                                                        <ul className="post-info clearfix">
-                                                            <li><i className="icon-59"></i>March 3, 2023</li>
-                                                            <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                        </ul>
-                                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
-                                                        <div className="link">
-                                                            <Link to="/website/blog-details">Read More</Link>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-lg-6 col-md-6 col-sm-12 news-block">
-                                            <div className="news-block-one">
-                                                <div className="inner-box">
-                                                    <figure className="image-box"><Link to="/website/blog-details"><Image src="/website/assets/images/news/news-5.jpg" alt="Image" width={416} height={287} priority /></Link></figure>
-                                                    <div className="lower-content">
-                                                        <span className="comment-box">7Comment</span>
-                                                        <h3><Link to="/website/blog-details">Prepare to Speak with Your Eye Specialist.</Link></h3>
-                                                        <ul className="post-info clearfix">
-                                                            <li><i className="icon-59"></i>March 2, 2023</li>
-                                                            <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                        </ul>
-                                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
-                                                        <div className="link">
-                                                            <Link to="/website/blog-details">Read More</Link>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-lg-6 col-md-6 col-sm-12 news-block">
-                                            <div className="news-block-one">
-                                                <div className="inner-box">
-                                                    <figure className="image-box"><Link to="/website/blog-details"><Image src="/website/assets/images/news/news-6.jpg" alt="Image" width={416} height={287} priority /></Link></figure>
-                                                    <div className="lower-content">
-                                                        <span className="comment-box">1Comment</span>
-                                                        <h3><Link to="/website/blog-details">Unlocking the Secrets of the Human Body</Link></h3>
-                                                        <ul className="post-info clearfix">
-                                                            <li><i className="icon-59"></i>March 1, 2023</li>
-                                                            <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                        </ul>
-                                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
-                                                        <div className="link">
-                                                            <Link to="/website/blog-details">Read More</Link>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        ))}
                                     </div>
                                     <div className="pagination-wrapper centred">
                                         <ul className="pagination clearfix">
@@ -208,7 +153,6 @@ export default function Departments_Details() {
                     </div>
                 </section>
                 <Cta/>
-            </Layout>
         </div>
-    )
+    );
 }

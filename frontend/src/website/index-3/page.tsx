@@ -1,5 +1,6 @@
 
-import Layout from "../components/layout/Layout";
+import { useEffect } from "react";
+import { useLayout } from "../context/LayoutContext";
 import Portfolio from "../components/sections/home1/Portfolio";
 import About from "../components/sections/home3/About";
 import Banner from "../components/sections/home3/Banner";
@@ -13,11 +14,15 @@ import Service from "../components/sections/home3/Service";
 import Subscribe from "../components/sections/home3/Subscribe";
 import Testimonial from "../components/sections/home3/Testimonial";
 import Video from "../components/sections/home3/Video";
-export default function Home_Two() {
+export default function Home_Three() {
+    const { setHeaderStyle } = useLayout();
+
+    useEffect(() => {
+        setHeaderStyle(3);
+    }, [setHeaderStyle]);
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1}>
                 <Banner/>
                 <Service/>
                 <About/>
@@ -31,7 +36,6 @@ export default function Home_Two() {
                 <Download/>
                 <News/>
                 <Subscribe/>
-            </Layout>
         </div>
     )
 }

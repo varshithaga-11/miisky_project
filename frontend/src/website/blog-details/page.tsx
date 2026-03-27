@@ -1,12 +1,60 @@
-import Layout from "../components/layout/Layout";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
+import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
-export default function Departments_Details() {
+import { getBlogPostById, getBlogPosts } from "../../utils/api";
+import { MOCK_BLOG_POSTS } from "../utils/mockData";
+
+export default function BlogDetails() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+    const { id } = useParams<{ id: string }>();
+    const [post, setPost] = useState<any>(MOCK_BLOG_POSTS[0] || {});
+    const [latestPosts, setLatestPosts] = useState<any[]>(MOCK_BLOG_POSTS.slice(0, 3));
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("Blog Details");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
+
+    useEffect(() => {
+        const fetchPost = async () => {
+            try {
+                if (id) {
+                    const response = await getBlogPostById(parseInt(id));
+                    setPost(response.data || MOCK_BLOG_POSTS[0]);
+                } else {
+                    setPost(MOCK_BLOG_POSTS[0]);
+                }
+            } catch (err) {
+                console.warn('Failed to fetch blog post:', err);
+                setPost(MOCK_BLOG_POSTS[0]);
+            }
+        };
+
+        const fetchLatestPosts = async () => {
+            try {
+                const response = await getBlogPosts();
+                const posts = Array.isArray(response.data) ? response.data : response.data.results || [];
+                setLatestPosts(posts.slice(0, 3).length > 0 ? posts.slice(0, 3) : MOCK_BLOG_POSTS.slice(0, 3));
+            } catch (err) {
+                console.warn('Failed to fetch latest posts:', err);
+                setLatestPosts(MOCK_BLOG_POSTS.slice(0, 3));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPost();
+        fetchLatestPosts();
+    }, [id]);
+
+    if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Blog Details">
                 <section className="sidebar-page-container pt_120 pb_120">
                     <div className="auto-container">
                         <div className="row clearfix">
@@ -14,59 +62,64 @@ export default function Departments_Details() {
                                 <div className="blog-details-content">
                                     <div className="news-block-one">
                                         <div className="inner-box">
-                                            <figure className="image-box"><Image src="/website/assets/images/news/news-7.jpg" alt="Image" width={856} height={425} priority /></figure>
+                                            <figure className="image-box"><Image src={post.featured_image || "/website/assets/images/news/news-7.jpg"} alt={post.title} width={856} height={425} priority /></figure>
                                             <div className="lower-content">
-                                                <span className="comment-box">2Comment</span>
-                                                <h3>Prepare to Speak with Your Eye Specialist.</h3>
+                                                <span className="comment-box">{post.comment_count || 0} Comments</span>
+                                                <h3>{post.title || "Blog Post"}</h3>
                                                 <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 6, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
+                                                    <li><i className="icon-59"></i>{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Date"}</li>
+                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">{post.author || "Author"}</Link></li>
                                                 </ul>
-                                                <p>Medical care is the practice of providing diagnosis, treatment, and preventive care for various illnesses, injuries, and diseases. It involves a wide range of healthcare professionals such as doctors, nurses, pharmacists, therapists, and many more, who work together to provide the best possible care for patients. Medical care encompasses various aspects of healthcare, including primary care, specialty care, urgent care, emergency care, and long-term care. Primary care is often the first point of contact for patients seeking medical attention and includes routine check-ups, screenings, and preventive care. Specialty care focuses on specific medical conditions or diseases, such as cardiology, oncology, or neurology. Urgent care provides immediate medical attention for non-life-threatening conditions, while emergency care is reserved for life-threatening situations. Medical care also involves the use of advanced medical technologies and treatments such as surgeries, imaging tests, laboratory tests, and medications. Medical research and development continually improve the effectiveness of treatments and the quality of care provided to patients. In addition to treating illnesses and injuries, medical care also emphasizes the importance of preventive care, such as regular check-ups, vaccinations, and lifestyle modifications, to help patients maintain optimal health and well-being. Overall, medical care plays a crucial role in promoting and maintaining good health and quality of life for individuals, families, and communities. It is essential for people to have access to high-quality medical care, regardless of their socioeconomic status or geographical location.</p>
-                                                <blockquote>
-                                                    <h2>How Pauloag&apos;s Conversion Optimization Techniques Inform His Design Work</h2>
-                                                    <span className="designation">Jane Cooper</span>
-                                                </blockquote>
-                                                <p>In addition to treating illnesses and injuries, medical care also emphasizes the importance of preventive care, such as regular check-ups, vaccinations, and lifestyle modifications, to help patients maintain optimal health and well-being.teh Overall, medical care plays a crucial role in promoting and maintaining good health and quality of life for individuals, shfamilies, and communities. It is essential for people to have access to high-quality medical care, regardless of their socioeconomic status or geographical location.</p>
+                                                <p>{post.content || post.description || "No content available"}</p>
+                                                {post.additional_content && (
+                                                    <>
+                                                        <blockquote>
+                                                            <h2>{post.quote_title || "Featured Quote"}</h2>
+                                                            <span className="designation">{post.quote_author || "Author"}</span>
+                                                        </blockquote>
+                                                        <p>{post.additional_content}</p>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                     <div className="post-share-option mb_60">
                                         <ul className="post-tags clearfix">
                                             <li><h4>Tags:</h4></li>
-                                            <li><Link to="/website/blog-details">Medical</Link></li>
-                                            <li><Link to="/website/blog-details">Surgery</Link></li>
-                                            <li><Link to="/website/blog-details">Doctors</Link></li>
+                                            {post.tags && typeof post.tags === 'string' ? (
+                                                post.tags.split(',').map((tag: string, index: number) => (
+                                                    <li key={index}><Link to="/website/blog">{tag.trim()}</Link></li>
+                                                ))
+                                            ) : (
+                                                <>
+                                                    <li><Link to="/website/blog">Medical</Link></li>
+                                                    <li><Link to="/website/blog">Healthcare</Link></li>
+                                                </>
+                                            )}
                                         </ul>
                                         <ul className="post-share clearfix">
                                             <li><h4>Share:</h4></li>
-                                            <li><Link to="/website/blog-details"><i className="fab fa-facebook-f"></i></Link></li>
-                                            <li><Link to="/website/blog-details"><i className="fab fa-dribbble"></i></Link></li>
-                                            <li><Link to="/website/blog-details"><i className="fab fa-twitter"></i></Link></li>
+                                            <li><Link to="/website/blog"><i className="fab fa-facebook-f"></i></Link></li>
+                                            <li><Link to="/website/blog"><i className="fab fa-twitter"></i></Link></li>
+                                            <li><Link to="/website/blog"><i className="fab fa-linkedin"></i></Link></li>
                                         </ul>
                                     </div>
                                     <div className="author-box mb_60">
-                                        <figure className="author-thumb"><Image src="/website/assets/images/news/author-1.jpg" alt="Image" width={172} height={172} priority /></figure>
-                                        <h3>Jane Cooper</h3>
-                                        <p>In addition to treating illnesses and injuries, medical care also emphasizes the importance of preventive care, such as regular check-ups, vaccinations, and lifestyle modifications, to help patients maintain optimal health and well-being.</p>
+                                        <figure className="author-thumb"><Image src={post.author_image || "/website/assets/images/news/author-1.jpg"} alt={post.author} width={172} height={172} priority /></figure>
+                                        <h3>{post.author || "Author"}</h3>
+                                        <p>{post.author_bio || "Professional healthcare expert with years of experience"}</p>
                                         <ul className="social-links clearfix">
-                                            <li><Link to="/website/blog-details"><i className="fab fa-facebook-f"></i></Link></li>
-                                            <li><Link to="/website/blog-details"><i className="fab fa-dribbble"></i></Link></li>
-                                            <li><Link to="/website/blog-details"><i className="fab fa-twitter"></i></Link></li>
+                                            <li><Link to="/website/blog"><i className="fab fa-facebook-f"></i></Link></li>
+                                            <li><Link to="/website/blog"><i className="fab fa-twitter"></i></Link></li>
+                                            <li><Link to="/website/blog"><i className="fab fa-linkedin"></i></Link></li>
                                         </ul>
                                     </div>
                                     <div className="comment-box mb_60">
-                                        <h3>Comments(02)</h3>
+                                        <h3>Comments({post.comment_count || 0})</h3>
                                         <div className="comment">
-                                            <figure className="thumb-box"><Image src="/website/assets/images/news/comment-1.jpg" alt="Image" width={88} height={86} priority /></figure>
-                                            <h4>Farrel Collins<span>March 19, 2022</span></h4>
-                                            <p>Cum amet sagittis convallis lacus arcu. Ultricies tempor diam facilisi erat dictum. Egestas eu vitae suspendisse nunc quis nisi egestas lorem. Purus lacus, fames commodo velit gravida lacus, sed turpis. Consequat, faucibus nec egestas nisl convallis.</p>
-                                            <Link to="/website/blog-details" className="reply-btn"><i className="icon-58"></i></Link>
-                                        </div>
-                                        <div className="comment replay-comment">
-                                            <figure className="thumb-box"><Image src="/website/assets/images/news/comment-2.jpg" alt="Image" width={88} height={86} priority /></figure>
-                                            <h4>Jane Cooper<span>March 19, 2022</span></h4>
-                                            <p>Cum amet sagittis convallis lacus arcu. Ultricies tempor diam facilisi erat dictum. Egestas eu vitae suspendisse nunc quis nisi egestas lorem. Purus lacus, fames commodo velit gravida lacus, sed turpis. Consequat.</p>
+                                            <figure className="thumb-box"><Image src="/website/assets/images/news/comment-1.jpg" alt="Commenter" width={88} height={86} priority /></figure>
+                                            <h4>Reader Comment<span>Today</span></h4>
+                                            <p>Thank you for sharing this valuable information. This post has helped me understand the topic better and I appreciate your professional insights.</p>
                                             <Link to="/website/blog-details" className="reply-btn"><i className="icon-58"></i></Link>
                                         </div>
                                     </div>
@@ -95,7 +148,7 @@ export default function Departments_Details() {
                                 <div className="blog-sidebar">
                                     <div className="search-widget mb_40">
                                         <h3>Search Here</h3>
-                                        <form method="post" action="/website/blog-details">
+                                        <form method="post" action="/website/blog">
                                             <div className="form-group">
                                                 <input type="search" name="search-field" placeholder="keywords" required/>
                                                 <button type="submit"><Image src="/website/assets/images/icons/icon-22.svg" alt="Icon" width={20} height={20} priority /></button>
@@ -108,12 +161,12 @@ export default function Departments_Details() {
                                         </div>
                                         <div className="widget-content">
                                             <ul className="category-list clearfix">
-                                                <li><Link to="/website/blog-details">Cardiology</Link></li>
-                                                <li><Link to="/website/blog-details">Dental</Link></li>
-                                                <li><Link to="/website/blog-details">Gastroenterology</Link></li>
-                                                <li><Link to="/website/blog-details">Neurology</Link></li>
-                                                <li><Link to="/website/blog-details">Orthopaedics</Link></li>
-                                                <li><Link to="/website/blog-details">Dental Caring</Link></li>
+                                                <li><Link to="/website/blog">Cardiology</Link></li>
+                                                <li><Link to="/website/blog">Dental</Link></li>
+                                                <li><Link to="/website/blog">Gastroenterology</Link></li>
+                                                <li><Link to="/website/blog">Neurology</Link></li>
+                                                <li><Link to="/website/blog">Orthopaedics</Link></li>
+                                                <li><Link to="/website/blog">General Health</Link></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -122,30 +175,16 @@ export default function Departments_Details() {
                                             <h3>Latest News</h3>
                                         </div>
                                         <div className="post-inner">
-                                            <div className="post">
-                                                <figure className="post-thumb"><Link to="/website/blog-details"><Image src="/website/assets/images/news/post-1.jpg" alt="Image" width={100} height={101} priority /></Link></figure>
-                                                <h3><Link to="/website/blog-details">Prepare to Speak with Your Eye Specialist.</Link></h3>
-                                                <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 6, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                </ul>
-                                            </div>
-                                            <div className="post">
-                                                <figure className="post-thumb"><Link to="/website/blog-details"><Image src="/website/assets/images/news/post-2.jpg" alt="Image" width={100} height={101} priority /></Link></figure>
-                                                <h3><Link to="/website/blog-details">From Diagnosis to Cure: The Role.</Link></h3>
-                                                <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 5, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                </ul>
-                                            </div>
-                                            <div className="post">
-                                                <figure className="post-thumb"><Link to="/website/blog-details"><Image src="/website/assets/images/news/post-3.jpg" alt="Image" width={100} height={101} priority /></Link></figure>
-                                                <h3><Link to="/website/blog-details">Empowering Patients in through</Link></h3>
-                                                <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 4, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                </ul>
-                                            </div>
+                                            {latestPosts.map((latestPost: any) => (
+                                                <div key={latestPost.id} className="post">
+                                                    <figure className="post-thumb"><Link to={`/website/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
+                                                    <h3><Link to={`/website/blog-details/${latestPost.id}`}>{latestPost.title}</Link></h3>
+                                                    <ul className="post-info clearfix">
+                                                        <li><i className="icon-59"></i>{latestPost.created_at ? new Date(latestPost.created_at).toLocaleDateString() : "Date"}</li>
+                                                        <li><i className="icon-60"></i><Link to="/website/blog">{latestPost.author || "Author"}</Link></li>
+                                                    </ul>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="consulting-widget">
@@ -160,7 +199,6 @@ export default function Departments_Details() {
                     </div>
                 </section>
                 <Cta/>
-            </Layout>
         </div>
-    )
+    );
 }

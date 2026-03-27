@@ -1,5 +1,6 @@
 
-import Layout from "../components/layout/Layout";
+import { useEffect } from "react";
+import { useLayout } from "../context/LayoutContext";
 import Working from "../components/sections/home2/Working";
 import About from "../components/sections/home2/About";
 import AboutTwo from "../components/sections/home2/About_Two";
@@ -10,10 +11,14 @@ import Portfolio from "../components/sections/home2/Portfolio";
 import News from "../components/sections/home1/News";
 import Cta from "../components/sections/home2/Cta";
 export default function Home_Two() {
+    const { setHeaderStyle } = useLayout();
+
+    useEffect(() => {
+        setHeaderStyle(2);
+    }, [setHeaderStyle]);
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={2} footerStyle={1}>
                 <Banner/>
                 <About/>
                 <Service/>
@@ -23,7 +28,6 @@ export default function Home_Two() {
                 <Portfolio/>
                 <News/>
                 <Cta/>
-            </Layout>
         </div>
     )
 }

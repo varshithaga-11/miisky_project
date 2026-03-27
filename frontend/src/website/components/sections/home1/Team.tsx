@@ -1,16 +1,61 @@
 import Image from "../../Image";
 import { Link } from "react-router-dom";
-import type { Doctor } from "../../../utils/types";
-import { MOCK_DOCTORS } from "../../../utils/mockData";
+import { useEffect, useState } from "react";
+import { getTeamMembers } from "@/utils/api";
+import type { Doctor } from "@/Website/utils/types";
+import { MOCK_DOCTORS } from "@/Website/utils/mockData";
 
 interface TeamProps {
   /** Pass real API doctors here; falls back to mock data */
   doctors?: Doctor[];
 }
 
-export default function Team({ doctors = MOCK_DOCTORS }: TeamProps) {
+export default function Team({ doctors }: TeamProps) {
+  const [teamMembers, setTeamMembers] = useState<Doctor[]>(doctors || MOCK_DOCTORS);
+  const [loading, setLoading] = useState(!doctors);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (doctors) {
+      setTeamMembers(doctors);
+      setLoading(false);
+      return;
+    }
+
+    const fetchTeamMembers = async () => {
+      try {
+        setLoading(true);
+        const response = await getTeamMembers();
+        const data = response.data;
+
+        // Handle both array and paginated responses
+        const members = Array.isArray(data) ? data : data.results || data;
+        const formattedMembers = members.map((member: any) => ({
+          id: member.id,
+          name: member.name || "Unknown",
+          specialty: member.designation || "Specialist",
+          department: member.department?.name || "Medical",
+          image: member.image_url || member.image || "/website/assets/images/team/team-1.jpg",
+          bio: member.bio || "",
+          available: member.available !== false,
+        }));
+
+        setTeamMembers(formattedMembers.length > 0 ? formattedMembers : MOCK_DOCTORS);
+        setError(null);
+      } catch (err) {
+        console.warn("Failed to fetch team members, using mock data:", err);
+        setTeamMembers(MOCK_DOCTORS);
+        setError(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeamMembers();
+  }, [doctors]);
+
   // Only show first 3 on the homepage
-  const featured = doctors.slice(0, 3);
+  const featured = teamMembers.slice(0, 3);
 
   return (
     <section className="team-section sec-pad centred">

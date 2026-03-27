@@ -1,19 +1,24 @@
-import { useState } from "react";
-import Layout from "../components/layout/Layout";
+import { useEffect, useState } from "react";
+import { useLayout } from "../context/LayoutContext";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import Cta from "../components/sections/home2/Cta";
 import Appointment from "../components/sections/home1/Appointment";
 
-export default function Portfolio_Page() {
+export default function Pricing_Page() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [activeIndex, setActiveIndex] = useState<number | null>(0);
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle("Pricing");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
 
     const toggleAccordion = (index: number) => {
         setActiveIndex(activeIndex === index ? null : index);
     };
   return (
     <div className="boxed_wrapper">
-      <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Pricing">
         <section className="pricing-section pt_120 pb_90">
             <div className="auto-container">
                 <div className="row clearfix">
@@ -197,7 +202,6 @@ export default function Portfolio_Page() {
               </div>
             </section>
         <Cta />
-      </Layout>
     </div>
   );
 }

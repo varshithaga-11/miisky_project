@@ -1,12 +1,55 @@
-import Layout from "../components/layout/Layout";
+import { useState, useEffect } from "react";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
+import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
-export default function Departments_Details() {
+import { getDepartmentById, getDepartments } from "../../utils/api";
+import { MOCK_DEPARTMENTS } from "../utils/mockData";
+
+export default function DepartmentDetails() {
+    const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+    const [department, setDepartment] = useState<any>(MOCK_DEPARTMENTS[0] || {});
+    const [departments, setDepartments] = useState<any[]>(MOCK_DEPARTMENTS);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setHeaderStyle(3);
+        setBreadcrumbTitle(department.name || "Department Details");
+    }, [setHeaderStyle, setBreadcrumbTitle, department.name]);
+
+    useEffect(() => {
+        const fetchDepartment = async () => {
+            try {
+                // Fetch specific department (ID 1 for Cardiology)
+                const response = await getDepartmentById(1);
+                setDepartment(response.data || MOCK_DEPARTMENTS[0]);
+            } catch (err) {
+                console.warn('Failed to fetch department:', err);
+                setDepartment(MOCK_DEPARTMENTS[0]);
+            }
+        };
+
+        const fetchAllDepartments = async () => {
+            try {
+                const response = await getDepartments();
+                const items = Array.isArray(response.data) ? response.data : response.data.results || [];
+                setDepartments(items.length > 0 ? items : MOCK_DEPARTMENTS);
+            } catch (err) {
+                console.warn('Failed to fetch departments:', err);
+                setDepartments(MOCK_DEPARTMENTS);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDepartment();
+        fetchAllDepartments();
+    }, []);
+
+    if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
     return (
         <div className="boxed_wrapper">
-            <Layout headerStyle={3} footerStyle={1} breadcrumbTitle="Cardiology">
                 <section className="service-details pt_120 pb_110">
                     <div className="auto-container">
                         <div className="row clearfix">
@@ -19,12 +62,9 @@ export default function Departments_Details() {
                                         </div>
                                         <div className="widget-content">
                                             <ul className="category-list clearfix">
-                                                <li><Link to="/website/department-details" className="current">Cardiology</Link></li>
-                                                <li><Link to="/website/department-details-2">Dental</Link></li>
-                                                <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                                                <li><Link to="/website/department-details-4">Neurology</Link></li>
-                                                <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                                                <li><Link to="/website/department-details-6">Dental Caring</Link></li>
+                                                {departments.map((dept: any, idx: number) => (
+                                                    <li key={dept.id}><Link to={idx === 0 ? "/website/department-details" : `/website/department-details-${idx + 1}`} className={department.id === dept.id ? "current" : ""}>{dept.name}</Link></li>
+                                                ))}
                                             </ul>
                                         </div>
                                     </div>
@@ -47,10 +87,9 @@ export default function Departments_Details() {
                                                     <div className="select-box">
                                                         <select className="selectmenu">
                                                             <option>I&apos;m interested in *</option>
-                                                            <option>Heart Health</option>
-                                                            <option>Cardiology</option>
-                                                            <option>Dental</option>
-                                                            <option>Gastroenterology</option>
+                                                            {departments.map((dept: any) => (
+                                                                <option key={dept.id}>{dept.name}</option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -85,23 +124,23 @@ export default function Departments_Details() {
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="service-details-content">
                                     <div className="content-one mb_40">
-                                        <figure className="image-box mb_60"><Image src="/website/assets/images/service/service-4.jpg" alt="Image" width={856} height={525} priority /></figure>
+                                        <figure className="image-box mb_60"><Image src={department.image_url || "/website/assets/images/service/service-4.jpg"} alt={department.name} width={856} height={525} priority /></figure>
                                         <div className="text-box">
-                                            <h2>Cardiology</h2>
-                                            <p>Cardiology is the study of the heart and its functions, as well as the diagnosis and treatment of heart diseases and conditions. It encompasses a wide range of disciplines, including cardiovascular physiology, electrophysiology, and interventional cardiology.<br />Cardiologists are medical professionals who specialize in the diagnosis and treatment of heart-related conditions. They may use a variety of tests and procedures to evaluate the heart&apos;s function, including electrocardiograms ECGs, echocardiograms, stress tests, and cardiac catheterization.<br />Common heart conditions treated by cardiologists include coronary artery disease, heart failure, arrhythmias, and congenital heart defects. Treatment options may include medication, lifestyle changes, surgery, or other procedures such as angioplasty or cardiac ablation.</p>
-                                            <p>Preventative cardiology is an important aspect of the field, as it focuses on reducing the risk of heart disease through lifestyle changes such as exercise, healthy diet, and smoking cessation.</p>
-                                            <p>In summary, cardiology is a branch of medicine focused on the heart and its function, and includes the diagnosis and treatment of a variety of heart-related conditions. Cardiologists may use a variety of tests and procedures to evaluate the heart, and treatment options may include medication, lifestyle changes, surgery, or other procedures. Preventative cardiology is also an important aspect of the field, aimed at reducing the risk of heart disease.</p>
-                                            <h3>Quis autem vel eum iure reprehenderit qui in voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur</h3>
+                                            <h2>{department.name || "Department"}</h2>
+                                            <p>{department.description || department.details || "Department information and services available."}</p>
+                                            <p>Professional medical services and expertise in this specialized field.</p>
+                                            {department.additional_info && <p>{department.additional_info}</p>}
+                                            <h3>{department.highlight || "Quality Healthcare Services"}</h3>
                                         </div>
                                     </div>
                                     <div className="content-two">
-                                        <figure className="image-box mb_30"><Image src="/website/assets/images/service/service-5.jpg" alt="Image" width={856} height={525} priority /></figure>
-                                        <p>Cardiologists are medical professionals who specialize in the diagnosis and treatment of heart-related conditions. They may use a variety of tests and procedures to evaluate the heart&apos;s function, including electrocardiograms ECGs, echocardiograms, stress tests, and cardiac catheterization. Common heart conditions treated by cardiologists include coronary artery disease, heart failure, arrhythmias, and congenital heart defects. Treatment options may include medication, lifestyle changes, surgery, or other procedures such as angioplasty or cardiac ablation.</p>
+                                        <figure className="image-box mb_30"><Image src={department.secondary_image_url || "/website/assets/images/service/service-5.jpg"} alt={department.name} width={856} height={525} priority /></figure>
+                                        <p>{department.extended_description || "Advanced medical treatments and care supported by our expert team."}</p>
                                         <ul className="list-style-one clearfix">
-                                            <li>25-30% estimated savings in implementation when using Mobile Health Clinics</li>
-                                            <li>Activate Mobile Health Clinics in just weeks</li>
-                                            <li>Flexible, on-demand access to care services</li>
-                                            <li>Supports referrals to provider networks and care management programs</li>
+                                            <li>Professional medical expertise and care</li>
+                                            <li>State-of-the-art facilities and equipment</li>
+                                            <li>Comprehensive patient support and treatment</li>
+                                            <li>Dedicated healthcare professionals on staff</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -110,7 +149,6 @@ export default function Departments_Details() {
                     </div>
                 </section>
                 <Cta/>
-            </Layout>
         </div>
-    )
+    );
 }
