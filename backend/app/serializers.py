@@ -857,9 +857,9 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
     """
     patient_details = serializers.SerializerMethodField(read_only=True)
     meal_dates = serializers.SerializerMethodField(read_only=True)
-    diet_plan_title = serializers.SerializerMethodField(read_only=True)
-    current_kitchen_name = serializers.CharField(source='micro_kitchen.brand_name', read_only=True)
-    original_kitchen_name = serializers.CharField(source='original_micro_kitchen.brand_name', read_only=True)
+    diet_plan_details = serializers.SerializerMethodField(read_only=True)
+    micro_kitchen_details = serializers.SerializerMethodField(read_only=True)
+    original_micro_kitchen_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserDietPlan
@@ -868,11 +868,11 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'status',
             'start_date',
             'end_date',
-            'diet_plan_title',
+            'diet_plan_details',
             'patient_details',
             'meal_dates',
-            'current_kitchen_name',
-            'original_kitchen_name',
+            'micro_kitchen_details',
+            'original_micro_kitchen_details',
             'micro_kitchen_effective_from',
         ]
 
@@ -888,9 +888,23 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'mobile': u.mobile,
         }
 
-    def get_diet_plan_title(self, obj):
-        if getattr(obj, 'diet_plan', None):
-            return obj.diet_plan.title
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                'id': obj.diet_plan.id,
+                'title': obj.diet_plan.title,
+                'code': obj.diet_plan.code,
+            }
+        return None
+
+    def get_micro_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {'id': obj.micro_kitchen.id, 'brand_name': obj.micro_kitchen.brand_name}
+        return None
+
+    def get_original_micro_kitchen_details(self, obj):
+        if obj.original_micro_kitchen:
+            return {'id': obj.original_micro_kitchen.id, 'brand_name': obj.original_micro_kitchen.brand_name}
         return None
 
     def get_meal_dates(self, obj):
@@ -916,12 +930,13 @@ class DeliveryProfileSerializer(serializers.ModelSerializer):
 class UserNutritionistMappingSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     nutritionist_details = serializers.SerializerMethodField(read_only=True)
+    reassignment_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserNutritionistMapping
         fields = [
             'id', 'user', 'nutritionist', 'assigned_on', 'is_active',
-            'user_details', 'nutritionist_details',
+            'user_details', 'nutritionist_details', 'reassignment_details',
         ]
 
     def get_user_details(self, obj):
@@ -945,6 +960,19 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
                 'last_name': obj.nutritionist.last_name,
                 'email': obj.nutritionist.email,
                 'mobile': obj.nutritionist.mobile,
+            }
+        return None
+
+    def get_reassignment_details(self, obj):
+        reassign = NutritionistReassignment.objects.filter(new_mapping=obj).first()
+        if reassign:
+            prev_n = reassign.previous_nutritionist
+            return {
+                "previous_nutritionist": f"{prev_n.first_name} {prev_n.last_name}".strip() or prev_n.username if prev_n else "System",
+                "new_nutritionist": f"{reassign.new_nutritionist.first_name} {reassign.new_nutritionist.last_name}".strip() or reassign.new_nutritionist.username,
+                "reason": reassign.reason,
+                "notes": reassign.notes,
+                "effective_from": reassign.effective_from.strftime("%Y-%m-%d"),
             }
         return None
 
@@ -1597,6 +1625,8 @@ class AdminPatientListSerializer(serializers.ModelSerializer):
     city_display = serializers.SerializerMethodField()
     state_display = serializers.SerializerMethodField()
     country_display = serializers.SerializerMethodField()
+    active_kitchen_name = serializers.SerializerMethodField()
+    active_nutritionist_name = serializers.SerializerMethodField()
 
     class Meta:
         model = UserRegister
@@ -1605,6 +1635,7 @@ class AdminPatientListSerializer(serializers.ModelSerializer):
             'is_active', 'is_patient_mapped', 'created_on',
             'has_questionnaire', 'health_reports_count',
             'active_plan_title', 'active_plan_status',
+            'active_kitchen_name', 'active_nutritionist_name',
             'address', 'zip_code', 'city_display', 'state_display', 'country_display',
         ]
 
@@ -1633,6 +1664,18 @@ class AdminPatientListSerializer(serializers.ModelSerializer):
     def get_active_plan_status(self, obj):
         p = self._first_active_plan(obj)
         return p.status if p else None
+
+    def get_active_kitchen_name(self, obj):
+        p = self._first_active_plan(obj)
+        if p and p.micro_kitchen:
+            return p.micro_kitchen.brand_name
+        return None
+
+    def get_active_nutritionist_name(self, obj):
+        p = self._first_active_plan(obj)
+        if p and p.nutritionist:
+            return f"{p.nutritionist.first_name} {p.nutritionist.last_name}".strip() or p.nutritionist.username
+        return None
 
     def get_city_display(self, obj):
         return obj.city.name if obj.city else None

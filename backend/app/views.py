@@ -603,23 +603,24 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                     ]
                 )
 
-            NutritionistReassignment.objects.create(
-                user=patient,
-                previous_nutritionist=previous_nutritionist,
-                new_nutritionist=new_nutritionist,
-                reason=reason,
-                notes=notes,
-                reassigned_by=request.user,
-                active_diet_plan=active_plan,
-                effective_from=effective_from,
-            )
-
             new_mapping = UserNutritionistMapping(
                 user=patient,
                 nutritionist=new_nutritionist,
                 is_active=True,
             )
             new_mapping.save()
+
+            NutritionistReassignment.objects.create(
+                user=patient,
+                previous_nutritionist=previous_nutritionist,
+                new_nutritionist=new_nutritionist,
+                new_mapping=new_mapping,
+                reason=reason,
+                notes=notes,
+                reassigned_by=request.user,
+                active_diet_plan=active_plan,
+                effective_from=effective_from,
+            )
 
         out = UserNutritionistMappingSerializer(
             UserNutritionistMapping.objects.select_related("user", "nutritionist").get(

@@ -38,6 +38,10 @@ export interface PatientUserRow {
   state?: number | null;
   country?: number | null;
   address?: string | null;
+  active_plan_title?: string | null;
+  active_plan_status?: string | null;
+  active_kitchen_name?: string | null;
+  active_nutritionist_name?: string | null;
 }
 
 async function getJson<T>(path: string, params?: Record<string, string | number>): Promise<T> {

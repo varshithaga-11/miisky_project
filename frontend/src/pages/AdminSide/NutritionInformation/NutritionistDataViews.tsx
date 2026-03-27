@@ -110,21 +110,37 @@ export function DisplayNutritionistPatients({ items }: { items: any[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((p) => (
                 <div key={p.id} className="p-5 rounded-[24px] bg-white border border-gray-100 dark:bg-gray-800/30 dark:border-white/5 shadow-sm hover:shadow-xl transition-all">
-                    <div className="flex items-center gap-4 mb-3">
-                        <div className="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 font-bold">
-                            {p.first_name?.[0]}{p.last_name?.[0]}
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex items-center gap-4">
+                            <div className="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 font-bold shrink-0">
+                                {p.first_name?.[0]}{p.last_name?.[0]}
+                            </div>
+                            <div className="min-w-0">
+                                <div className="font-black text-gray-900 dark:text-gray-100 uppercase tracking-tighter italic truncate">{p.first_name} {p.last_name}</div>
+                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{p.email}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="font-black text-gray-900 dark:text-gray-100 uppercase tracking-tighter italic">{p.first_name} {p.last_name}</div>
-                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.email}</div>
-                        </div>
+                        {p.reassignment_details && (
+                            <div className="flex flex-col items-end shrink-0">
+                                <span className="text-[8px] font-black text-amber-500 uppercase tracking-tighter italic">Reassigned</span>
+                                <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400">{p.reassignment_details.effective_from}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex items-center justify-between pt-3 border-t dark:border-white/5">
-                        <div className="flex flex-col">
-                            <span className="text-[8px] font-black text-gray-400 uppercase">Assigned On</span>
-                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{new Date(p.assigned_on).toLocaleDateString()}</span>
+                    <div className="flex flex-col gap-3 pt-3 border-t dark:border-white/5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-gray-400 uppercase">Assigned On</span>
+                                <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{new Date(p.assigned_on).toLocaleDateString()}</span>
+                            </div>
+                            <div className="size-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
                         </div>
-                        <div className="size-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                        {p.reassignment_details && (
+                             <div className="px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 text-[9px]">
+                                 <span className="text-gray-500 uppercase font-medium">From:</span>{" "}
+                                 <span className="text-amber-700 dark:text-amber-400 font-black uppercase tracking-tighter line-through decoration-amber-300 ml-1">{p.reassignment_details.previous_nutritionist}</span>
+                             </div>
+                        )}
                     </div>
                 </div>
             ))}

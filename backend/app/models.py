@@ -2092,6 +2092,13 @@ class NutritionistReassignment(models.Model):
         blank=True,
         related_name="reassigned_to",
     )
+    new_mapping = models.ForeignKey(
+        "UserNutritionistMapping",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reassignment_event",
+    )
 
     REASON_CHOICES = [
         ("nutritionist_left", "Nutritionist Left"),

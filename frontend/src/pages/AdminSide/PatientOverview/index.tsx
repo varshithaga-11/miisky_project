@@ -115,7 +115,13 @@ const PatientOverviewPage: React.FC = () => {
                       Mobile
                     </TableCell>
                     <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Mapped
+                      Dietitian
+                    </TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Kitchen
+                    </TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Plan Status
                     </TableCell>
                     <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
                       Action
@@ -146,12 +152,19 @@ const PatientOverviewPage: React.FC = () => {
                           <div className="text-xs text-gray-500">{r.email}</div>
                         </TableCell>
                         <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">{r.mobile || "—"}</TableCell>
+                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                          {r.active_nutritionist_name || (r.is_patient_mapped ? "Mapped" : "—")}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                          {r.active_kitchen_name || "—"}
+                        </TableCell>
                         <TableCell className="px-5 py-4 text-sm">
-                          {r.is_patient_mapped ? (
-                            <span className="text-green-600 dark:text-green-400">Yes</span>
-                          ) : (
-                            <span className="text-gray-400">No</span>
-                          )}
+                          {r.active_plan_title ? (
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900 dark:text-white leading-tight">{r.active_plan_title}</span>
+                              <span className="text-[10px] text-emerald-500 font-bold uppercase">{r.active_plan_status}</span>
+                            </div>
+                          ) : "—"}
                         </TableCell>
                         <TableCell className="px-5 py-4">
                           <button

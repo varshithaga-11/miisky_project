@@ -137,10 +137,18 @@ export function DisplayKitchenPatients({ items }: { items: any[] }) {
                 <span>ID: {x.user}</span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-[10px] font-black text-gray-400 uppercase">Period</div>
+            <div className="text-right flex flex-col items-end">
+              <div className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Period</div>
               <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.start_date || "—"}</div>
               <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.end_date || "—"}</div>
+              
+              {x.original_micro_kitchen_details && (
+                <div className="mt-2 text-right">
+                  <div className="text-[8px] font-black text-amber-500 uppercase tracking-tighter italic">Kitchen Switched</div>
+                  <div className="text-[10px] text-gray-400 line-through decoration-amber-400/50">{x.original_micro_kitchen_details.brand_name}</div>
+                  <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Effect: {x.micro_kitchen_effective_from || 'N/A'}</div>
+                </div>
+              )}
             </div>
           </div>
           <div className="pt-3 border-t border-gray-100 dark:border-white/5">

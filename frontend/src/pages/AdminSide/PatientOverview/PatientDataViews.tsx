@@ -273,6 +273,13 @@ export type MappingRow = {
   is_active?: boolean;
   user_details?: PersonSummary | null;
   nutritionist_details?: PersonSummary | null;
+  reassignment_details?: {
+    previous_nutritionist: string | null;
+    new_nutritionist: string | null;
+    reason: string;
+    notes: string | null;
+    effective_from: string;
+  } | null;
 };
 
 function formatPersonName(p?: PersonSummary | null): string {
@@ -321,8 +328,15 @@ export function DisplayNutritionistMapping({ items }: { items: MappingRow[] }) {
               {/* <div className="text-xs text-gray-400 mt-2">User ID: {m.nutritionist ?? "—"}</div> */}
             </div>
           </div>
-          <div className="mt-4 text-xs text-gray-500">
-            Assigned on: <span className="text-gray-700 dark:text-gray-300">{m.assigned_on ?? "—"}</span>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 border-t border-emerald-100 dark:border-emerald-900/40 pt-3">
+            <div>Assigned on: <span className="text-gray-700 dark:text-gray-300 font-medium">{m.assigned_on ?? "—"}</span></div>
+            {m.reassignment_details && (
+              <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg border border-amber-100 dark:border-amber-900/40">
+                <span className="text-amber-600 dark:text-amber-400 font-bold uppercase tracking-tighter">Switched from: {m.reassignment_details.previous_nutritionist || "Unknown"}</span>
+                <span className="text-gray-400">·</span>
+                <span className="text-gray-600 dark:text-gray-300">Effective: {m.reassignment_details.effective_from}</span>
+              </div>
+            )}
           </div>
         </li>
       ))}
@@ -430,6 +444,8 @@ export type DietPlanRow = Record<string, unknown> & {
   diet_plan_details?: { title?: string; code?: string; no_of_days?: number };
   nutritionist_details?: { first_name?: string; last_name?: string; email?: string };
   micro_kitchen_details?: { brand_name?: string };
+  original_micro_kitchen_details?: { brand_name?: string };
+  micro_kitchen_effective_from?: string | null;
   start_date?: string | null;
   end_date?: string | null;
   payment_status?: string;
@@ -476,7 +492,14 @@ export function DisplayDietPlans({ items }: { items: DietPlanRow[] }) {
             </div>
             <div>
               <span className="text-gray-500">Micro kitchen · </span>
-              {p.micro_kitchen_details?.brand_name || "—"}
+              <span className="font-semibold text-gray-900 dark:text-white">{p.micro_kitchen_details?.brand_name || "—"}</span>
+              {p.original_micro_kitchen_details && (
+                <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 text-[10px]">
+                  <span className="text-gray-400 line-through tracking-wider uppercase font-medium">{p.original_micro_kitchen_details.brand_name}</span>
+                  <span className="text-amber-500 font-black">→</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-black uppercase">Switch on {p.micro_kitchen_effective_from || 'N/A'}</span>
+                </span>
+              )}
             </div>
             <div>
               <span className="text-gray-500">Plan dates · </span>
