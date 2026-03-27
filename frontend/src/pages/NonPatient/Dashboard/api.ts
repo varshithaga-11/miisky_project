@@ -7,6 +7,8 @@ export interface NonPatientDashboardStats {
   cartItems: number;
   bookings: number;
   supportTickets: number;
+  ordersPending: number;
+  ordersCompleted: number;
 }
 
 export const getNonPatientDashboardStats = async (): Promise<NonPatientDashboardStats> => {

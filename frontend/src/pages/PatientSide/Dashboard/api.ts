@@ -14,6 +14,10 @@ export interface PatientDashboardStats {
   cartItems: number;
   bookings: number;
   supportTickets: number;
+  plansPaymentPending: number;
+  plansActive: number;
+  plansCompleted: number;
+  consultationsPending: number;
 }
 
 export const getPatientDashboardStats = async (): Promise<PatientDashboardStats> => {

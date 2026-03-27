@@ -145,6 +145,13 @@ class AdminDashboardCountsView(APIView):
             "nutrients":     FoodProximate.objects.count(),
             "dietPlans":     DietPlans.objects.count(),
             "verifications":  UserDietPlan.objects.filter(status='payment_pending').count(),
+            # Status Counts for Activity Section
+            "ticketsOpen": SupportTicket.objects.filter(status='open').count(),
+            "ticketsInProgress": SupportTicket.objects.filter(status='in_progress').count(),
+            "ticketsResolved": SupportTicket.objects.filter(status='resolved').count(),
+            "plansPaymentPending": UserDietPlan.objects.filter(status='payment_pending').count(),
+            "plansActive": UserDietPlan.objects.filter(status='active').count(),
+            "plansCompleted": UserDietPlan.objects.filter(status='completed').count(),
         })
 
 
@@ -165,7 +172,12 @@ class PatientDashboardCountsView(APIView):
             "foods": MicroKitchenFood.objects.filter(is_available=True).count(),
             "cartItems": CartItem.objects.filter(cart__user=user).count(),
             "bookings": Order.objects.filter(user=user).count(),
-            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+            "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
+            # Status based analytics
+            "plansPaymentPending": UserDietPlan.objects.filter(user=user, status='payment_pending').count(),
+            "plansActive": UserDietPlan.objects.filter(user=user, status='active').count(),
+            "plansCompleted": UserDietPlan.objects.filter(user=user, status='completed').count(),
+            "consultationsPending": MeetingRequest.objects.filter(patient=user, status='pending').count(),
         })
 
 
@@ -187,7 +199,12 @@ class NutritionDashboardCountsView(APIView):
             "suggestedPlans": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
             "approvedPlans": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
             "meetingRequests": MeetingRequest.objects.filter(nutritionist=user).count(),
-            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+            "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
+            # Status based analytics
+            "plansSuggested": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
+            "plansApproved": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
+            "meetingsPending": MeetingRequest.objects.filter(nutritionist=user, status="pending").count(),
+            "meetingsResolved": MeetingRequest.objects.filter(nutritionist=user, status="resolved").count(),
         })
 
 
@@ -207,7 +224,12 @@ class MicroKitchenDashboardCountsView(APIView):
             "orders": Order.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
             "availableFoods": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=True).count() if kitchen_id else 0,
             "kitchenReviews": MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
-            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+            "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
+            # Order & Food Status
+            "ordersPending": Order.objects.filter(micro_kitchen_id=kitchen_id, status="pending").count() if kitchen_id else 0,
+            "ordersCompleted": Order.objects.filter(micro_kitchen_id=kitchen_id, status="delivered").count() if kitchen_id else 0,
+            "foodsAvailable": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=True).count() if kitchen_id else 0,
+            "foodsOutOfStock": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=False).count() if kitchen_id else 0,
         })
 
 
@@ -221,7 +243,10 @@ class NonPatientDashboardCountsView(APIView):
             "microKitchens": MicroKitchenProfile.objects.filter(status="approved").count(),
             "cartItems": CartItem.objects.filter(cart__user=user).count(),
             "bookings": Order.objects.filter(user=user).count(),
-            "supportTickets": SupportTicket.objects.filter(user=user).count(),
+            "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
+            # Status based analytics
+            "ordersPending": Order.objects.filter(user=user, status="pending").count(),
+            "ordersCompleted": Order.objects.filter(user=user, status="delivered").count(),
         })
 
 

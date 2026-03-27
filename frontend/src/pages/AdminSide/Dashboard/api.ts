@@ -22,6 +22,12 @@ export interface AdminDashboardStats {
   nutrients: number;
   dietPlans: number;
   verifications: number;
+  ticketsOpen: number;
+  ticketsInProgress: number;
+  ticketsResolved: number;
+  plansPaymentPending: number;
+  plansActive: number;
+  plansCompleted: number;
 }
 
 export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => {

@@ -10,6 +10,10 @@ export interface MicroKitchenDashboardStats {
   availableFoods: number;
   kitchenReviews: number;
   supportTickets: number;
+  ordersPending: number;
+  ordersCompleted: number;
+  foodsAvailable: number;
+  foodsOutOfStock: number;
 }
 
 export const getMicroKitchenDashboardStats = async (): Promise<MicroKitchenDashboardStats> => {

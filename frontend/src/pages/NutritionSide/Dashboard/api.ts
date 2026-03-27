@@ -11,6 +11,10 @@ export interface NutritionDashboardStats {
   approvedPlans: number;
   meetingRequests: number;
   supportTickets: number;
+  plansSuggested: number;
+  plansApproved: number;
+  meetingsPending: number;
+  meetingsResolved: number;
 }
 
 export const getNutritionDashboardStats = async (): Promise<NutritionDashboardStats> => {
