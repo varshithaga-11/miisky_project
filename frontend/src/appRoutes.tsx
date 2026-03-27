@@ -148,6 +148,14 @@ const WebsiteLogin = lazy(() => import("./Website/login/page"));
 const WebsiteIndex2 = lazy(() => import("./Website/index-2/page"));
 const WebsiteIndex3 = lazy(() => import("./Website/index-3/page"));
 const WebsiteError = lazy(() => import("./Website/error/page"));
+const WebsiteFAQ = lazy(() => import("./Website/faq/page"));
+const WebsiteCareers = lazy(() => import("./Website/careers/page"));
+const WebsiteMedicalDevices = lazy(() => import("./Website/medical-devices/page"));
+const WebsiteDeviceCategories = lazy(() => import("./Website/device-categories/page"));
+const WebsiteResearch = lazy(() => import("./Website/research/page"));
+const WebsitePatents = lazy(() => import("./Website/patents/page"));
+const WebsiteGallery = lazy(() => import("./Website/gallery/page"));
+const WebsitePartners = lazy(() => import("./Website/partners/page"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -301,8 +309,9 @@ export function appRoutes() {
           <Route index element={<WebsiteHome />} />
           <Route path="about" element={<WebsiteAbout />} />
           <Route path="blog" element={<WebsiteBlog />} />
-          <Route path="blog-2" element={<WebsiteBlog2 />} />
+          <Route path="blog-standard" element={<WebsiteBlog2 />} />
           <Route path="blog-details" element={<WebsiteBlogDetails />} />
+          <Route path="blog-details/:id" element={<WebsiteBlogDetails />} />
           <Route path="contact" element={<WebsiteContact />} />
           <Route path="departments" element={<WebsiteDepartments />} />
           <Route path="department-details" element={<WebsiteDepartmentDetails />} />
@@ -321,6 +330,14 @@ export function appRoutes() {
           <Route path="index-2" element={<WebsiteIndex2 />} />
           <Route path="index-3" element={<WebsiteIndex3 />} />
           <Route path="error" element={<WebsiteError />} />
+          <Route path="faq" element={<WebsiteFAQ />} />
+          <Route path="careers" element={<WebsiteCareers />} />
+          <Route path="medical-devices" element={<WebsiteMedicalDevices />} />
+          <Route path="device-categories" element={<WebsiteDeviceCategories />} />
+          <Route path="research" element={<WebsiteResearch />} />
+          <Route path="patents" element={<WebsitePatents />} />
+          <Route path="gallery" element={<WebsiteGallery />} />
+          <Route path="partners" element={<WebsitePartners />} />
         </Route>
 
 

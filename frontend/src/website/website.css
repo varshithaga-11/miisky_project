@@ -26,6 +26,15 @@ body {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  overflow: visible !important; /* Prevent clipping of dropdowns */
+}
+
+/* Ensure all parents allow dropdowns to overflow */
+.main-header .header-lower,
+.main-header .outer-box,
+.main-header .menu-area,
+.main-header .main-menu {
+  overflow: visible !important;
 }
 
 .main-header .header-lower .outer-box {
@@ -88,6 +97,54 @@ body {
 
 .main-header .btn-box {
   flex-shrink: 0 !important;
+}
+
+/* Ensure dropdowns are visible on hover */
+.main-header .navigation li.dropdown > ul {
+  display: block !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  transition: all 0.3s ease !important;
+  position: absolute !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  z-index: 1000 !important;
+  padding: 10px 0 !important;
+  top: 100% !important;
+  left: 0 !important;
+  min-width: 220px !important;
+  border-top: 3px solid #0646ac !important;
+}
+
+.main-header .navigation li.dropdown:hover > ul {
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 0px !important;
+}
+
+/* Dropdown link styles */
+.main-header .navigation li ul li {
+  margin: 0 !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+.main-header .navigation li ul li a {
+  padding: 10px 20px !important;
+  display: block !important;
+  color: #111 !important;
+  text-transform: capitalize !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.main-header .navigation li ul li a:hover {
+  color: #0646ac !important;
+  background-color: #f8f9fa !important;
+}
+
+.page-wrapper {
+  overflow: visible !important;
 }
 
 @media only screen and (max-width: 991px) {

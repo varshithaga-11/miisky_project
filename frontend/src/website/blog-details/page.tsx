@@ -62,15 +62,15 @@ export default function BlogDetails() {
                                 <div className="blog-details-content">
                                     <div className="news-block-one">
                                         <div className="inner-box">
-                                            <figure className="image-box"><Image src={post.featured_image || "/website/assets/images/news/news-7.jpg"} alt={post.title} width={856} height={425} priority /></figure>
+                                            <figure className="image-box"><Image src={post.featured_image || post.image || "/website/assets/images/news/news-7.jpg"} alt={post.title} width={856} height={425} priority /></figure>
                                             <div className="lower-content">
                                                 <span className="comment-box">{post.comment_count || 0} Comments</span>
                                                 <h3>{post.title || "Blog Post"}</h3>
                                                 <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Date"}</li>
+                                                    <li><i className="icon-59"></i>{post.created_at || post.published_at ? new Date(post.created_at || post.published_at).toLocaleDateString() : "Date"}</li>
                                                     <li><i className="icon-60"></i><Link to="/website/blog-details">{post.author || "Author"}</Link></li>
                                                 </ul>
-                                                <p>{post.content || post.description || "No content available"}</p>
+                                                <p>{post.content || post.description || post.excerpt || "No content available"}</p>
                                                 {post.additional_content && (
                                                     <>
                                                         <blockquote>
@@ -177,10 +177,10 @@ export default function BlogDetails() {
                                         <div className="post-inner">
                                             {latestPosts.map((latestPost: any) => (
                                                 <div key={latestPost.id} className="post">
-                                                    <figure className="post-thumb"><Link to={`/website/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
+                                                    <figure className="post-thumb"><Link to={`/website/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || latestPost.image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
                                                     <h3><Link to={`/website/blog-details/${latestPost.id}`}>{latestPost.title}</Link></h3>
                                                     <ul className="post-info clearfix">
-                                                        <li><i className="icon-59"></i>{latestPost.created_at ? new Date(latestPost.created_at).toLocaleDateString() : "Date"}</li>
+                                                        <li><i className="icon-59"></i>{latestPost.created_at || latestPost.published_at ? new Date(latestPost.created_at || latestPost.published_at).toLocaleDateString() : "Date"}</li>
                                                         <li><i className="icon-60"></i><Link to="/website/blog">{latestPost.author || "Author"}</Link></li>
                                                     </ul>
                                                 </div>

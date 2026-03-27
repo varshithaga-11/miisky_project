@@ -48,24 +48,24 @@ export default function BlogPage() {
                                                 <div className="news-block-one">
                                                     <div className="inner-box">
                                                         <figure className="image-box">
-                                                            <Link to={`/website/blog-details?slug=${post.slug || post.id}`}>
+                                                            <Link to={`/website/blog-details/${post.id}`}>
                                                                 <Image src={post.featured_image || post.image || "/website/assets/images/news/news-1.jpg"} alt={post.title} width={416} height={287} priority />
                                                             </Link>
                                                         </figure>
                                                         <div className="lower-content">
                                                             <span className="comment-box">{post.comment_count || 0} Comment</span>
                                                             <h3>
-                                                                <Link to={`/website/blog-details?slug=${post.slug || post.id}`}>
+                                                                <Link to={`/website/blog-details/${post.id}`}>
                                                                     {post.title || "Untitled"}
                                                                 </Link>
                                                             </h3>
                                                             <ul className="post-info clearfix">
-                                                                <li><i className="icon-59"></i>{new Date(post.published_at || new Date()).toLocaleDateString()}</li>
-                                                                <li><i className="icon-60"></i><Link to={`/website/blog-details?slug=${post.slug || post.id}`}>{post.author || "Admin"}</Link></li>
+                                                                <li><i className="icon-59"></i>{new Date(post.published_at || post.created_at || new Date()).toLocaleDateString()}</li>
+                                                                <li><i className="icon-60"></i><Link to={`/website/blog-details/${post.id}`}>{post.author || "Admin"}</Link></li>
                                                             </ul>
-                                                            <p>{post.excerpt || post.content?.substring(0, 100) || "..."}</p>
+                                                            <p>{post.excerpt || (post.content && post.content.substring(0, 100)) || "..."}</p>
                                                             <div className="link">
-                                                                <Link to={`/website/blog-details?slug=${post.slug || post.id}`}>Read More</Link>
+                                                                <Link to={`/website/blog-details/${post.id}`}>Read More</Link>
                                                             </div>
                                                         </div>
                                                     </div>
