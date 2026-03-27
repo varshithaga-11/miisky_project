@@ -54,6 +54,9 @@ interface PatientAllotted {
     status: string;
     suggested_on: string;
     approved_on: string;
+    current_kitchen_name?: string;
+    original_kitchen_name?: string | null;
+    micro_kitchen_effective_from?: string | null;
 }
 
 const MicroKitchenPatientsPage: React.FC = () => {
@@ -210,6 +213,11 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <div className="flex items-center gap-4 mt-3">
                                                 <span className="px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100/50">Active Allotment</span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Since {new Date(selectedPatient.suggested_on).toLocaleDateString()}</span>
+                                                {selectedPatient.original_kitchen_name && (
+                                                    <span className="px-4 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-100/50">
+                                                        Switched from {selectedPatient.original_kitchen_name} on {selectedPatient.micro_kitchen_effective_from}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

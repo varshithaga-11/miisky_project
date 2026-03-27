@@ -483,10 +483,21 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
             except UserQuestionnaire.DoesNotExist:
                 q = None
                 
+            # Fetch active diet plan and kitchen info
+            active_plan = UserDietPlan.objects.filter(user=patient, status='active').select_related('micro_kitchen', 'original_micro_kitchen').first()
+            kitchen_data = None
+            if active_plan:
+                kitchen_data = {
+                    "current_kitchen": active_plan.micro_kitchen.brand_name if active_plan.micro_kitchen else None,
+                    "original_kitchen": active_plan.original_micro_kitchen.brand_name if active_plan.original_micro_kitchen else None,
+                    "effective_from": active_plan.micro_kitchen_effective_from,
+                }
+
             results.append(
                 {
                     "mapping_id": data['mapping_id'],
                     "assigned_on": data['assigned_on'],
+                    "active_kitchen": kitchen_data,
                     "user": {
                         "id": patient.id,
                         "username": patient.username,
@@ -2575,10 +2586,11 @@ class MicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
         if getattr(user, 'role', None) != 'micro_kitchen':
             return UserDietPlan.objects.none()
 
+        from django.db.models import Q
         return UserDietPlan.objects.filter(
-            micro_kitchen__user=user,
+            Q(micro_kitchen__user=user) | Q(original_micro_kitchen__user=user),
             status__in=['active', 'approved', 'payment_pending']
-        ).select_related('user', 'diet_plan', 'micro_kitchen').order_by('-id')
+        ).select_related('user', 'diet_plan', 'micro_kitchen', 'original_micro_kitchen').order_by('-id')
 
 
 # ---- Admin MicroKitchen panels (NO pagination) -----------------------------

@@ -858,6 +858,8 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
     patient_details = serializers.SerializerMethodField(read_only=True)
     meal_dates = serializers.SerializerMethodField(read_only=True)
     diet_plan_title = serializers.SerializerMethodField(read_only=True)
+    current_kitchen_name = serializers.CharField(source='micro_kitchen.brand_name', read_only=True)
+    original_kitchen_name = serializers.CharField(source='original_micro_kitchen.brand_name', read_only=True)
 
     class Meta:
         model = UserDietPlan
@@ -869,6 +871,9 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'diet_plan_title',
             'patient_details',
             'meal_dates',
+            'current_kitchen_name',
+            'original_kitchen_name',
+            'micro_kitchen_effective_from',
         ]
 
     def get_patient_details(self, obj):

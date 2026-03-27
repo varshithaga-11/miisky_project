@@ -149,6 +149,18 @@ const AllottedPatientsPage: React.FC = () => {
                               </div>
                               <span className="truncate text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">
                                 @{p.user.username}
+                                {p.active_kitchen && (
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                    <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-indigo-100 dark:border-indigo-500/20">
+                                      <FiMapPin size={10} /> {p.active_kitchen.current_kitchen || 'No Kitchen'}
+                                    </div>
+                                    {p.active_kitchen.original_kitchen && (
+                                      <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-50 dark:bg-white/[0.05] text-gray-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-gray-100 dark:border-white/[0.05]">
+                                        Prev: {p.active_kitchen.original_kitchen} (Until: {p.active_kitchen.effective_from})
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </span>
                             </div>
                           </div>

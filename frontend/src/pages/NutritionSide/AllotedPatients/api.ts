@@ -19,6 +19,11 @@ export type AllotedPatient = {
     is_patient_mapped?: boolean;
   };
   questionnaire: any | null;
+  active_kitchen?: {
+    current_kitchen: string | null;
+    original_kitchen: string | null;
+    effective_from: string | null;
+  } | null;
   reassignment_details?: {
     previous_nutritionist: string;
     new_nutritionist: string;
