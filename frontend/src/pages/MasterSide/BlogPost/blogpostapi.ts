@@ -10,7 +10,9 @@ export interface BlogPost {
   content: string;
   read_time?: string;
   author_name?: string;
+  author_image?: any;
   featured_image?: string;
+  image?: any;
   published_at?: string;
   position?: number;
   views_count?: number;

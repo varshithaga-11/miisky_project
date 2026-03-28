@@ -333,9 +333,10 @@ class BlogPost(models.Model):
 
     cover_image = models.CharField(max_length=255, null=True, blank=True)
     cover_image_alt = models.CharField(max_length=200, blank=True, null=True)
+    image = models.ImageField(upload_to='website/blog_images/', null=True, blank=True)
 
     author_name = models.CharField(max_length=200, blank=True, null=True)
-    author_image = models.CharField(max_length=255, null=True, blank=True)
+    author_image = models.ImageField(upload_to='website/authors/', null=True, blank=True)
     author_bio = models.TextField(blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')

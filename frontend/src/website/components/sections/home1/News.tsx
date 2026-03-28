@@ -39,7 +39,7 @@ export default function News({ posts }: NewsProps) {
           title: post.title || "Untitled",
           slug: post.slug || `post-${post.id}`,
           excerpt: post.excerpt || post.content?.substring(0, 150) || "",
-          image: post.featured_image_url || post.featured_image || "/website/assets/images/news/news-1.jpg",
+          image: post.image || post.featured_image_url || post.featured_image || "/website/assets/images/news/news-1.jpg",
           author: post.author?.name || post.author || "Admin",
           category: post.category?.name || post.category || "General",
           published_at: post.published_at || new Date().toISOString(),
