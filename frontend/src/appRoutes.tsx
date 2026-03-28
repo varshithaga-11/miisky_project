@@ -101,6 +101,8 @@ import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index"
 import NonPatientDashboardPage from "./pages/NonPatient/Dashboard/index";
 import NutritionKitchenReassignment from "./pages/AdminSide/NutritionKitchenReassignment/index";
 import OrderManagementPage from "./pages/AdminSide/OrderManagement/index";
+import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
+import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
 
 
 // Master Side Pages
@@ -192,7 +194,7 @@ export function appRoutes() {
         {/* Dashboard Layout */}
         <Route element={<MasterLayout />}>
           <Route path="master/dashboard" element={<MasterDashboard />} />
-          
+
           {/* Master Management Routes */}
           <Route path="master/companyinfo" element={<CompanyInfoPage />} />
           <Route path="master/herobanner" element={<HeroBannerPage />} />
@@ -238,6 +240,7 @@ export function appRoutes() {
           <Route path="admin/packaging-material" element={<PackagingMaterialManagementPage />} />
           <Route path="admin/cuisine-type" element={<CuisineTypeManagementPage />} />
           <Route path="admin/food" element={<FoodManagementPage />} />
+          <Route path="nutrition/food" element={<ListOfFoods />} />
           <Route path="admin/unit" element={<UnitManagementPage />} />
           <Route path="admin/ingredient" element={<IngredientManagementPage />} />
           <Route path="admin/food-ingredient" element={<FoodIngredientManagementPage />} />
@@ -268,6 +271,7 @@ export function appRoutes() {
           <Route path="admin/notifications" element={<AdminNotificationsPage />} />
           <Route path="admin/reassignment-logs" element={<NutritionKitchenReassignment />} />
           <Route path="admin/all-orders" element={<OrderManagementPage />} />
+          <Route path="nutrition/reference/ranges" element={<ReferenceLibraryPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />

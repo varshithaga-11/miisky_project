@@ -19,6 +19,7 @@ import {
   ClipboardList,
   HelpCircle,
   Bell,
+  BookOpen,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -288,6 +289,14 @@ const nutritionistNavItems: NavItem[] = [
     icon: <Video className="w-5 h-5" />,
     name: "Meeting Requests",
     path: "/nutrition/meeting-requests",
+  },
+  {
+    icon: <BookOpen className="w-5 h-5" />,
+    name: "Reference Library",
+    subItems: [
+      { name: "Normal Ranges", path: "/nutrition/reference/ranges" },
+      { name: "Foods", path: "/nutrition/food" },
+    ],
   },
   {
     icon: <UserCog className="w-5 h-5" />,
