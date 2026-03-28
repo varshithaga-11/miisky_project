@@ -100,6 +100,7 @@ import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
 import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
 import NonPatientDashboardPage from "./pages/NonPatient/Dashboard/index";
 import NutritionKitchenReassignment from "./pages/AdminSide/NutritionKitchenReassignment/index";
+import OrderManagementPage from "./pages/AdminSide/OrderManagement/index";
 
 
 // Master Side Pages
@@ -262,6 +263,7 @@ export function appRoutes() {
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
           <Route path="admin/notifications" element={<AdminNotificationsPage />} />
           <Route path="admin/reassignment-logs" element={<NutritionKitchenReassignment />} />
+          <Route path="admin/all-orders" element={<OrderManagementPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />

@@ -139,6 +139,8 @@ urlpatterns = [
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),
     # path('userlist/', UserListView.as_view(), name='user_list'),
+    path("admin/all-orders/", views.AdminAllOrdersView.as_view(), name="admin-all-orders"),
+    path("admin/kitchen-payouts/", views.AdminKitchenPayoutsView.as_view(), name="admin-kitchen-payouts"),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
     path('login/', LoginView.as_view(), name='login'),

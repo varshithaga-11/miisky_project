@@ -324,6 +324,67 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     # We intentionally do not filter by created_by, so list shows all users.
 
 
+class AdminAllOrdersView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        search = request.query_params.get('search', '').strip()
+        
+        # We'll pull from both Order (non-patient/general) and UserDietPlan (patient plans)
+        # to give a comprehensive view, or just Order if that's the primary tracking.
+        # For now, let's focus on the 'Order' model as it's the most "standard" order.
+        qs = Order.objects.all().select_related('user', 'micro_kitchen', 'delivery_slab').order_by('-created_at')
+        
+        if search:
+            qs = qs.filter(
+                Q(id__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(micro_kitchen__brand_name__icontains=search) |
+                Q(status__icontains=search)
+            )
+
+        paginator = Pagination()
+        paginated_qs = paginator.paginate_queryset(qs, request)
+        
+        results = []
+        for o in paginated_qs:
+            results.append({
+                "id": o.id,
+                "order_id": f"ORD-{o.id:05d}",
+                "patient_name": f"{o.user.first_name} {o.user.last_name}" if o.user else "Unknown Guest",
+                "kitchen_name": o.micro_kitchen.brand_name if o.micro_kitchen else "Not Assigned",
+                "amount": float(o.final_amount),
+                "status": o.status,
+                "created_at": o.created_at,
+            })
+            
+        return paginator.get_paginated_response(results)
+
+
+class AdminKitchenPayoutsView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        # Placeholder for kitchen payout calculation logic
+        # Typically involves summing delivered orders for each kitchen
+        kitchens = MicroKitchenProfile.objects.all()
+        results = []
+        for k in kitchens:
+            total_sales = Order.objects.filter(micro_kitchen=k, status='delivered').aggregate(total=models.Sum('total_amount'))['total'] or 0
+            results.append({
+                "id": k.id,
+                "kitchen_name": k.brand_name,
+                "total_sales": float(total_sales),
+                "commission_due": float(total_sales) * 0.1, # Example 10%
+                "payout_status": "Pending"
+            })
+        
+        paginator = Pagination()
+        paginated_data = paginator.paginate_queryset(results, request)
+        return paginator.get_paginated_response(paginated_data)
+
+
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
 
 class UserQuestionnaireViewSet(viewsets.ModelViewSet):

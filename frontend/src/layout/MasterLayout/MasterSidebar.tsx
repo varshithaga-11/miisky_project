@@ -127,6 +127,14 @@ const adminNavItems: NavItem[] = [
     path: "/admin/patient-payment-verification",
   },
   {
+    icon: <ShoppingCart className="w-5 h-5" />,
+    name: "Orders Management",
+    subItems: [
+      { name: "All Orders", path: "/admin/all-orders" },
+      { name: "Kitchen Payouts", path: "/admin/payouts" },
+    ],
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Health Monitoring",
     subItems: [
