@@ -22,7 +22,7 @@ export default function Testimonial() {
           <span className="sub-title mb_5">Testimonial</span>
           <h2>
             What Our Patient&apos;s Say About <br />
-            Medicinsk
+            Miisky
           </h2>
           <p>
             Medical care is the practice of providing diagnosis, treatment, and

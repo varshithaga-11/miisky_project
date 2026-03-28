@@ -69,7 +69,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               <div className="logo-box">
                 <figure className="logo">
                   <Link to="/website">
-                    <Image src="/website/assets/images/logo.png" alt="Logo Image" width={203} height={40} priority />
+                    <Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={203} height={40} priority />
                   </Link>
                 </figure>
               </div>
@@ -171,7 +171,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               <div className="logo-box">
                 <figure className="logo">
                   <Link to="/website">
-                    <Image src="/website/assets/images/logo.png" alt="Logo Image" width={203} height={40} priority />
+                    <Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={203} height={40} priority />
                   </Link>
                 </figure>
               </div>

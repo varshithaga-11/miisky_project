@@ -29,7 +29,7 @@ const SidebarPopup: React.FC<SidebarPopupProps> = ({ isOpen, onClose }) => {
                 {/* Logo */}
                 <div className="logo">
                   <Link to="/website">
-                    <img src="/website/assets/images/logo.png" alt="Logo" />
+                    <img src="/website/assets/images/logo-miisky.png" alt="Logo" />
                   </Link>
                 </div>
 

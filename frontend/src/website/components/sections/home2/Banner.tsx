@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function Banner() {
   return (
         <section className="banner-style-two p_relative">
-            <span className="big-text">medicinsk</span>
+            <span className="big-text">miisky</span>
             <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/banner/banner-1.jpg)" }}></div>
             <div className="pattern-layer">
                 <div className="pattern-1" style={{ backgroundImage: "url(/website/assets/images/shape/shape-25.png)" }}></div>

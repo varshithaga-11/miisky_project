@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import { getPatents } from "../../utils/api";
 
@@ -48,7 +49,7 @@ export default function PatentsPage() {
                                             </div>
                                             <h3 className="mb_15" style={{ fontSize: '26px', fontWeight: 700 }}>{patent.title}</h3>
                                             <p className="mb_20" style={{ color: '#555', fontSize: '16px' }}>{patent.abstract || patent.description || "Cutting edge innovation securing our position as leaders in medical technology."}</p>
-                                            <div className="status-box">
+                                            <div className="status-box d-flex align-items-center justify-content-between">
                                                 <span 
                                                     style={{ 
                                                         backgroundColor: patent.status === 'GRANTED' ? '#e1f9eb' : '#fff4e5', 
@@ -61,6 +62,9 @@ export default function PatentsPage() {
                                                 >
                                                     {patent.status || "FILING"}
                                                 </span>
+                                                <Link to={`/website/patents/${patent.id}`} style={{ color: '#0646ac', fontWeight: 700, fontSize: '14px' }}>
+                                                    View Details <i className="fas fa-arrow-right ml_5"></i>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>

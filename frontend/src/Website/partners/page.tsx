@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLayout } from "../context/LayoutContext";
+import { Link } from "react-router-dom";
 import Image from "../components/Image";
 import { getPartners } from "../../utils/api";
 
@@ -40,12 +41,17 @@ export default function PartnersPage() {
                     <div className="row clearfix">
                         {partners.map((partner) => (
                             <div key={partner.id} className="col-lg-3 col-md-4 col-sm-6 partner-block mb_40">
-                                <div className="partner-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '15px', backgroundColor: '#fff', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 5px 15px rgba(0,0,0,0.03)' }}>
+                                <div className="partner-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '15px', backgroundColor: '#fff', height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.3s ease', boxShadow: '0 5px 15px rgba(0,0,0,0.03)' }}>
                                     <div className="inner-box" style={{ textAlign: 'center' }}>
                                         <figure className="image-box" style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Image src={partner.logo_url || "/website/assets/images/clients/clients-1.png"} alt={partner.name || "Partner Logo"} width={160} height={80} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                                         </figure>
                                         <h5 className="mt_15" style={{ fontSize: '15px', color: '#111', fontWeight: 600 }}>{partner.name}</h5>
+                                    </div>
+                                    <div className="btn-box">
+                                        <Link to={`/website/partners/${partner.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                            <span>View Details</span>
+                                        </Link>
                                     </div>
                                     <style dangerouslySetInnerHTML={{ __html: `
                                         .partner-block-one:hover { border-color: #0646ac !important; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(6, 70, 172, 0.1) !important; }

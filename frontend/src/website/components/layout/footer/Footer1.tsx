@@ -22,7 +22,7 @@ export default function Footer1() {
                                         <h3>About Us</h3>
                                     </div>
                                     <div className="widget-content">
-                                        <p>To provide accessible and equitable healthcare for all individuals, regardless of their  or socioeconomic status.</p>
+                                        <p>Simplifying health through innovative medical technology and accessible care for everyone.</p>
                                         <ul className="social-links clearfix">
                                             <li><Link to="/website"><i className="fab fa-facebook-f"></i></Link></li>
                                             <li><Link to="/website"><i className="fab fa-dribbble"></i></Link></li>
@@ -38,11 +38,11 @@ export default function Footer1() {
                                     </div>
                                     <div className="widget-content">
                                         <ul className="links-list clearfix">
-                                            <li><Link to="/website/about">About</Link></li>
-                                            <li><Link to="/website">Surgery</Link></li>
-                                            <li><Link to="/website">Medications</Link></li>
-                                            <li><Link to="/website">Chemotherapy</Link></li>
-                                            <li><Link to="/website">Physical therapy</Link></li>
+                                            <li><Link to="/website/about" onClick={() => window.scrollTo(0, 0)}>About</Link></li>
+                                            <li><Link to="/website/medical-devices" onClick={() => window.scrollTo(0, 0)}>Products</Link></li>
+                                            <li><Link to="/website/research" onClick={() => window.scrollTo(0, 0)}>Innovation</Link></li>
+                                            <li><Link to="/website/gallery" onClick={() => window.scrollTo(0, 0)}>Our Gallery</Link></li>
+                                            <li><Link to="/website/partners" onClick={() => window.scrollTo(0, 0)}>Our Partners</Link></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -54,11 +54,11 @@ export default function Footer1() {
                                     </div>
                                     <div className="widget-content">
                                         <ul className="links-list clearfix">
-                                            <li><Link to="/website">Primary care</Link></li>
-                                            <li><Link to="/website">Specialty care</Link></li>
-                                            <li><Link to="/website">Emergency care</Link></li>
-                                            <li><Link to="/website">Diagnostic services</Link></li>
-                                            <li><Link to="/website">Rehabilitation services</Link></li>
+                                            <li><Link to="/website/medical-devices" onClick={() => window.scrollTo(0, 0)}>Medical Devices</Link></li>
+                                            <li><Link to="/website/research" onClick={() => window.scrollTo(0, 0)}>Research Papers</Link></li>
+                                            <li><Link to="/website/patents" onClick={() => window.scrollTo(0, 0)}>Patents</Link></li>
+                                            <li><Link to="/website/careers" onClick={() => window.scrollTo(0, 0)}>Careers</Link></li>
+                                            <li><Link to="/website/faq" onClick={() => window.scrollTo(0, 0)}>FAQ Support</Link></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -79,14 +79,16 @@ export default function Footer1() {
                             </div>
                         </div>
                         <div className="footer-menu mt_60">
-                            <figure className="logo-box"><Link to="/website"><Image src="/website/assets/images/logo.png" alt="Footer Logo" width={203} height={40} priority /></Link></figure>
+                            <figure className="logo-box"><Link to="/website" onClick={() => window.scrollTo(0, 0)}><Image src="/website/assets/images/logo-miisky.png" alt="Footer Logo" width={203} height={40} priority /></Link></figure>
                             <ul className="menu-list clearfix">
-                                <li><Link to="/website">Home</Link></li>
-                                <li><Link to="/website/about">About Us</Link></li>
-                                <li><Link to="/website/departments">Departments</Link></li>
-                                <li><Link to="/website/portfolio">Portfolio</Link></li>
-                                <li><Link to="/website/blog">Blog</Link></li>
-                                <li><Link to="/website/contact">Contact</Link></li>
+                                <li><Link to="/website" onClick={() => window.scrollTo(0, 0)}>Home</Link></li>
+                                <li><Link to="/website/about" onClick={() => window.scrollTo(0, 0)}>About</Link></li>
+                                <li><Link to="/website/departments" onClick={() => window.scrollTo(0, 0)}>Departments</Link></li>
+                                <li><Link to="/website/medical-devices" onClick={() => window.scrollTo(0, 0)}>Products</Link></li>
+                                <li><Link to="/website/research" onClick={() => window.scrollTo(0, 0)}>Innovation</Link></li>
+                                <li><Link to="/website/faq" onClick={() => window.scrollTo(0, 0)}>Support</Link></li>
+                                <li><Link to="/website/blog" onClick={() => window.scrollTo(0, 0)}>Blog</Link></li>
+                                <li><Link to="/website/contact" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
                             </ul>
                         </div>
                     </div>
@@ -94,7 +96,7 @@ export default function Footer1() {
                 <div className="footer-bottom centred">
                     <div className="auto-container">
                         <div className="copyright">
-                            <p><Link to="/website">Medicinsk</Link> &copy; {new Date().getFullYear()} All Right Reserved</p>
+                            <p><Link to="/website" onClick={() => window.scrollTo(0, 0)}>Miisky</Link> &copy; {new Date().getFullYear()} All Right Reserved</p>
                         </div>
                     </div>
                 </div>

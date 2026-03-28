@@ -38,7 +38,7 @@ export default function Header3({
                 <figure className="logo">
                   <Link to="/website">
                     <Image
-                      src="/website/assets/images/logo.png"
+                      src="/website/assets/images/logo-miisky.png"
                       alt="Logo Image"
                       width={203}
                       height={40}
@@ -167,7 +167,7 @@ export default function Header3({
                 <figure className="logo">
                   <Link to="/website">
                     <Image
-                      src="/website/assets/images/logo.png"
+                      src="/website/assets/images/logo-miisky.png"
                       alt="Logo Image"
                       width={203}
                       height={40}

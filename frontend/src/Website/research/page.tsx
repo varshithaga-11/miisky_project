@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import { getResearchPapers } from "../../utils/api";
 
@@ -52,9 +53,9 @@ export default function InnovationPage() {
                                             <h3 className="mb_15" style={{ fontSize: '24px', fontWeight: 700 }}>{paper.title}</h3>
                                             <p className="mb_20" style={{ color: '#555', fontSize: '16px' }}>{paper.abstract ? paper.abstract.substring(0, 200) + "..." : "Cutting edge research findings from our dedicated innovation team."}</p>
                                             <div className="btn-box">
-                                                <a href={paper.document_url || "#"} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
-                                                    <span>Read Full Paper</span>
-                                                </a>
+                                                <Link to={`/website/research/${paper.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                                    <span>View Details</span>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>

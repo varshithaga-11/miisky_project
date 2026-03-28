@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLayout } from "../context/LayoutContext";
+import { Link } from "react-router-dom";
 import Image from "../components/Image";
 import { getGalleryItems, getGalleryCategories } from "../../utils/api";
 
@@ -74,15 +75,16 @@ export default function GalleryPage() {
                         {filteredItems.map((item) => (
                             <div key={item.id} className="col-lg-4 col-md-6 col-sm-12 gallery-block mb_30">
                                 <div className="gallery-block-one" style={{ position: 'relative', overflow: 'hidden', borderRadius: '15px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 5px 20px rgba(0,0,0,0.08)' }}>
-                                    <div className="inner-box" style={{ height: '100%' }}>
-                                        <figure className="image-box" style={{ height: '100%', marginBottom: 0 }}>
-                                            <Image src={item.image_url || "/website/assets/images/project/project-1.jpg"} alt={item.title} width={400} height={350} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </figure>
-                                        <div className="overlay-box" style={{ position: 'absolute', left: 0, bottom: '-100%', width: '100%', padding: '25px', backgroundColor: 'rgba(6, 70, 172, 0.95)', transition: 'all 0.4s ease', display: 'flex', flexDirection: 'column', color: '#fff' }}>
-                                            <h4 style={{ color: '#fff', fontSize: '20px', marginBottom: '5px' }}>{item.title}</h4>
-                                            <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>{categories.find(c => c.id === item.category_id)?.name || "Project"}</p>
-                                        </div>
-                                    </div>
+                                        <Link to={`/website/gallery/${item.id}`} className="inner-box" style={{ height: '100%', display: 'block' }}>
+                                            <figure className="image-box" style={{ height: '100%', marginBottom: 0 }}>
+                                                <Image src={item.image_url || "/website/assets/images/project/project-1.jpg"} alt={item.title} width={400} height={350} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            </figure>
+                                            <div className="overlay-box" style={{ position: 'absolute', left: 0, bottom: '-100%', width: '100%', padding: '25px', backgroundColor: 'rgba(6, 70, 172, 0.95)', transition: 'all 0.4s ease', display: 'flex', flexDirection: 'column', color: '#fff' }}>
+                                                <h4 style={{ color: '#fff', fontSize: '20px', marginBottom: '5px' }}>{item.title}</h4>
+                                                <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>{categories.find(c => c.id === item.category_id)?.name || "Project"}</p>
+                                                <span className="mt_10" style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>VIEW DETAILS <i className="fas fa-arrow-right ml_5"></i></span>
+                                            </div>
+                                        </Link>
                                     <style dangerouslySetInnerHTML={{ __html: `
                                         .gallery-block-one:hover .overlay-box { bottom: 0 !important; }
                                     ` }} />

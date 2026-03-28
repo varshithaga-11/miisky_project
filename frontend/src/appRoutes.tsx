@@ -149,13 +149,19 @@ const WebsiteLogin = lazy(() => import("./Website/login/page"));
 // const WebsiteIndex3 = lazy(() => import("./Website/index-3/page"));
 const WebsiteError = lazy(() => import("./Website/error/page"));
 const WebsiteFAQ = lazy(() => import("./Website/faq/page"));
+const WebsiteCareerDetails = lazy(() => import("./Website/career-details/page"));
 const WebsiteCareers = lazy(() => import("./Website/careers/page"));
 const WebsiteMedicalDevices = lazy(() => import("./Website/medical-devices/page"));
+const WebsiteMedicalDeviceDetails = lazy(() => import("./Website/medical-device-details/page"));
 const WebsiteDeviceCategories = lazy(() => import("./Website/device-categories/page"));
 const WebsiteResearch = lazy(() => import("./Website/research/page"));
+const WebsiteResearchDetails = lazy(() => import("./Website/research-details/page"));
 const WebsitePatents = lazy(() => import("./Website/patents/page"));
+const WebsitePatentDetails = lazy(() => import("./Website/patent-details/page"));
 const WebsiteGallery = lazy(() => import("./Website/gallery/page"));
+const WebsiteGalleryDetails = lazy(() => import("./Website/gallery-details/page"));
 const WebsitePartners = lazy(() => import("./Website/partners/page"));
+const WebsitePartnerDetails = lazy(() => import("./Website/partner-details/page"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -322,6 +328,7 @@ export function appRoutes() {
           <Route path="department-details-6" element={<WebsiteDepartmentDetails6 />} /> */}
           <Route path="doctors" element={<WebsiteDoctors />} />
           <Route path="doctor-details" element={<WebsiteDoctorDetails />} />
+          <Route path="doctor-details/:id" element={<WebsiteDoctorDetails />} />
           <Route path="portfolio" element={<WebsitePortfolio />} />
           {/* <Route path="portfolio-2" element={<WebsitePortfolio2 />} /> */}
           <Route path="pricing" element={<WebsitePricing />} />
@@ -332,12 +339,18 @@ export function appRoutes() {
           <Route path="error" element={<WebsiteError />} />
           <Route path="faq" element={<WebsiteFAQ />} />
           <Route path="careers" element={<WebsiteCareers />} />
+          <Route path="careers/:id" element={<WebsiteCareerDetails />} />
           <Route path="medical-devices" element={<WebsiteMedicalDevices />} />
+          <Route path="medical-devices/:id" element={<WebsiteMedicalDeviceDetails />} />
           <Route path="device-categories" element={<WebsiteDeviceCategories />} />
           <Route path="research" element={<WebsiteResearch />} />
+          <Route path="research/:id" element={<WebsiteResearchDetails />} />
           <Route path="patents" element={<WebsitePatents />} />
+          <Route path="patents/:id" element={<WebsitePatentDetails />} />
           <Route path="gallery" element={<WebsiteGallery />} />
+          <Route path="gallery/:id" element={<WebsiteGalleryDetails />} />
           <Route path="partners" element={<WebsitePartners />} />
+          <Route path="partners/:id" element={<WebsitePartnerDetails />} />
         </Route>
 
 
