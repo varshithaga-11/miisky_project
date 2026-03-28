@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { getMyCarts, placeOrder, deleteCartItem, Cart, getLoggedProfile } from "../../NonPatient/orderapi";
+import React, { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
+    getMyCarts,
+    placeOrder,
+    deleteCartItem,
+    Cart,
+    getLoggedProfile,
+    getCartCheckoutPreview,
+    CheckoutPreview,
+} from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
@@ -8,11 +17,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../../components/ui/button/Button";
 import Label from "../../../components/form/Label";
 
+const CHECKOUT_WARNING_COPY: Record<string, string> = {
+    no_slabs: "This kitchen has no delivery slabs yet — delivery shows ₹0 until they add distance rates.",
+    no_customer_coordinates:
+        "Add latitude & longitude under Profile so we can calculate distance and delivery charge.",
+    no_kitchen_coordinates: "Kitchen GPS is not set — delivery charge is ₹0 until the kitchen adds their location.",
+    no_kitchen: "Kitchen information is incomplete.",
+    nearest_slab_applied:
+        "Your distance did not fall exactly in one band; the nearest slab rate was used (same as at checkout).",
+};
+
 const CartPage: React.FC = () => {
     const [carts, setCarts] = useState<Cart[]>([]);
     const [loading, setLoading] = useState(true);
     const [placing, setPlacing] = useState<number | null>(null);
     const [address, setAddress] = useState("");
+    const [checkoutByCartId, setCheckoutByCartId] = useState<
+        Record<number, CheckoutPreview | null | undefined>
+    >({});
 
     const fetchCarts = async () => {
         setLoading(true);
@@ -42,6 +64,40 @@ const CartPage: React.FC = () => {
         fetchCarts();
         fetchUserAddress();
     }, []);
+
+    const cartIdsKey = useMemo(() => carts.map((c) => c.id).join(","), [carts]);
+
+    useEffect(() => {
+        if (!carts.length) {
+            setCheckoutByCartId({});
+            return;
+        }
+        let cancelled = false;
+        const loading: Record<number, CheckoutPreview | null | undefined> = {};
+        carts.forEach((c) => {
+            loading[c.id] = undefined;
+        });
+        setCheckoutByCartId(loading);
+
+        (async () => {
+            const updates: Record<number, CheckoutPreview | null> = {};
+            await Promise.all(
+                carts.map(async (c) => {
+                    try {
+                        updates[c.id] = await getCartCheckoutPreview(c.id);
+                    } catch {
+                        updates[c.id] = null;
+                    }
+                })
+            );
+            if (!cancelled) {
+                setCheckoutByCartId((prev) => ({ ...prev, ...updates }));
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [cartIdsKey]);
 
     const handleRemoveItem = async (itemId: number) => {
         try {
@@ -117,8 +173,15 @@ const CartPage: React.FC = () => {
                                             <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{cart.kitchen_details?.brand_name || "Micro Kitchen"}</h2>
                                         </div>
                                         <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20">
-                                            <p className="text-[10px] font-black text-white/70 uppercase tracking-widest leading-none mb-1">Total Amount</p>
-                                            <p className="text-xl font-black text-white tracking-tighter leading-none">₹{calculateTotal(cart.items)}</p>
+                                            <p className="text-[10px] font-black text-white/70 uppercase tracking-widest leading-none mb-1">
+                                                {checkoutByCartId[cart.id] ? "Total (food + delivery)" : "Food subtotal"}
+                                            </p>
+                                            <p className="text-xl font-black text-white tracking-tighter leading-none">
+                                                ₹
+                                                {checkoutByCartId[cart.id]
+                                                    ? Number(checkoutByCartId[cart.id]!.final_amount).toFixed(2)
+                                                    : calculateTotal(cart.items)}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -155,6 +218,67 @@ const CartPage: React.FC = () => {
                                         <div className="bg-gray-50/50 dark:bg-white/[0.02] p-8 border-l border-gray-100 dark:border-white/5">
                                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Fulfillment Details</h4>
                                             <div className="space-y-6">
+                                                <div className="rounded-3xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40 p-5 space-y-3">
+                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Order summary</p>
+                                                    {checkoutByCartId[cart.id] === undefined ? (
+                                                        <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                                                            <FiLoader className="animate-spin text-indigo-500" />
+                                                            Calculating delivery…
+                                                        </div>
+                                                    ) : checkoutByCartId[cart.id] === null ? (
+                                                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                                                            Could not load pricing preview. You can still place the order; totals match at checkout.
+                                                        </p>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex justify-between text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                                <span>Food subtotal</span>
+                                                                <span>₹{Number(checkoutByCartId[cart.id]!.food_subtotal).toFixed(2)}</span>
+                                                            </div>
+                                                            {checkoutByCartId[cart.id]!.delivery_distance_km != null && (
+                                                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                                    Straight-line distance ~{" "}
+                                                                    <span className="font-mono font-bold">
+                                                                        {Number(checkoutByCartId[cart.id]!.delivery_distance_km).toFixed(2)} km
+                                                                    </span>
+                                                                </p>
+                                                            )}
+                                                            <div className="flex justify-between text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                                <span>Delivery charge</span>
+                                                                <span>₹{Number(checkoutByCartId[cart.id]!.delivery_charge).toFixed(2)}</span>
+                                                            </div>
+                                                            {checkoutByCartId[cart.id]!.delivery_slab && (
+                                                                <p className="text-[10px] text-gray-400">
+                                                                    Slab: {checkoutByCartId[cart.id]!.delivery_slab!.min_km}–
+                                                                    {checkoutByCartId[cart.id]!.delivery_slab!.max_km} km (₹
+                                                                    {checkoutByCartId[cart.id]!.delivery_slab!.charge})
+                                                                </p>
+                                                            )}
+                                                            <div className="flex justify-between text-base font-black text-indigo-600 dark:text-indigo-400 pt-2 border-t border-gray-100 dark:border-white/10">
+                                                                <span>Total to pay</span>
+                                                                <span>₹{Number(checkoutByCartId[cart.id]!.final_amount).toFixed(2)}</span>
+                                                            </div>
+                                                            {checkoutByCartId[cart.id]!.warnings?.map((w) =>
+                                                                CHECKOUT_WARNING_COPY[w] ? (
+                                                                    <p
+                                                                        key={w}
+                                                                        className="text-[10px] text-amber-800 dark:text-amber-300/90 leading-snug"
+                                                                    >
+                                                                        {CHECKOUT_WARNING_COPY[w]}
+                                                                    </p>
+                                                                ) : null
+                                                            )}
+                                                            {checkoutByCartId[cart.id]!.warnings?.includes("no_customer_coordinates") && (
+                                                                <Link
+                                                                    to="/profile-info"
+                                                                    className="inline-block text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                                >
+                                                                    Open Profile → add map coordinates
+                                                                </Link>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                                 <div className="space-y-3">
                                                     <Label className="flex items-center gap-2"><FiMapPin className="text-indigo-500" /> Delivery Address</Label>
                                                     <textarea 
@@ -170,9 +294,9 @@ const CartPage: React.FC = () => {
                                                     onClick={() => handlePlaceOrder(cart.id)}
                                                 >
                                                     {placing === cart.id ? <FiLoader className="animate-spin" /> : <FiCheckCircle size={20} />}
-                                                    {placing === cart.id ? "Processing..." : "Place Final Order"}
+                                                    {placing === cart.id ? "Processing..." : "Confirm & book order"}
                                                 </Button>
-                                                <p className="text-[10px] text-gray-400 text-center font-bold italic tracking-wide">Secure checkout powered by Miisky Culinary Network</p>
+                                                <p className="text-[10px] text-gray-400 text-center font-bold italic tracking-wide">Review totals above, then confirm. Powered by Miisky.</p>
                                             </div>
                                         </div>
                                     </div>

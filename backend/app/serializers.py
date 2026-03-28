@@ -1609,37 +1609,93 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return None
 
 
+class DeliveryChargeSlabSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryChargeSlab
+        fields = ['id', 'micro_kitchen', 'min_km', 'max_km', 'charge']
+        extra_kwargs = {
+            # Micro-kitchen users omit this; viewset sets it in perform_create.
+            'micro_kitchen': {'required': False, 'allow_null': True},
+        }
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        role = getattr(user, 'role', None)
+        if self.instance is None and role == 'admin' and attrs.get('micro_kitchen') is None:
+            raise serializers.ValidationError(
+                {'micro_kitchen': 'This field is required when creating as admin.'}
+            )
+
+        min_km = attrs.get('min_km')
+        max_km = attrs.get('max_km')
+        if self.instance:
+            if min_km is None:
+                min_km = self.instance.min_km
+            if max_km is None:
+                max_km = self.instance.max_km
+        if min_km is not None and max_km is not None and min_km > max_km:
+            raise serializers.ValidationError({'min_km': 'Must be less than or equal to max_km.'})
+        return attrs
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     ratings = MicroKitchenRatingSerializer(many=True, read_only=True)
+    delivery_slab_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
         fields = [
             'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
-            'order_type', 'status', 'total_amount', 'delivery_address',
-            'items', 'ratings', 'created_at'
+            'order_type', 'status',
+            'total_amount', 'delivery_distance_km', 'delivery_charge', 'delivery_slab',
+            'delivery_slab_details', 'final_amount',
+            'delivery_address',
+            'items', 'ratings', 'created_at',
         ]
 
     def get_user_details(self, obj):
         if obj.user:
+            u = obj.user
+            lat = getattr(u, 'latitude', None)
+            lng = getattr(u, 'longitude', None)
             return {
-                'id': obj.user.id,
-                'first_name': obj.user.first_name,
-                'last_name': obj.user.last_name,
-                'mobile': obj.user.mobile,
+                'id': u.id,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'mobile': u.mobile,
+                'latitude': float(lat) if lat is not None else None,
+                'longitude': float(lng) if lng is not None else None,
             }
         return None
 
     def get_kitchen_details(self, obj):
         if obj.micro_kitchen:
+            mk = obj.micro_kitchen
+            ku = getattr(mk, 'user', None)
+            lat = getattr(ku, 'latitude', None) if ku else None
+            lng = getattr(ku, 'longitude', None) if ku else None
             return {
-                'id': obj.micro_kitchen.id,
-                'brand_name': obj.micro_kitchen.brand_name,
+                'id': mk.id,
+                'brand_name': mk.brand_name,
+                'latitude': float(lat) if lat is not None else None,
+                'longitude': float(lng) if lng is not None else None,
             }
         return None
+
+    def get_delivery_slab_details(self, obj):
+        s = getattr(obj, 'delivery_slab', None)
+        if not s:
+            return None
+        return {
+            'id': s.id,
+            'min_km': str(s.min_km),
+            'max_km': str(s.max_km),
+            'charge': str(s.charge),
+        }
 
 
 class AdminPatientListSerializer(serializers.ModelSerializer):

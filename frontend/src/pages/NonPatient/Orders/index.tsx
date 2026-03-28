@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { getMyOrders, Order, rateMicroKitchen } from "../orderapi";
+import { Link } from "react-router-dom";
+import { getMyOrders, Order, rateMicroKitchen, getLoggedProfile } from "../orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
 import { FiPackage, FiClock, FiMapPin, FiCheckCircle, FiLoader, FiCalendar, FiBox, FiStar, FiMessageSquare } from "react-icons/fi";
+import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
+import { coordsFromFields, distanceKmBetween } from "../../../components/orders/orderGeo";
 import { motion, AnimatePresence } from "framer-motion";
 
 const RatingModal: React.FC<{
@@ -107,6 +110,8 @@ const OrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [profile, setProfile] = useState<{ latitude?: unknown; longitude?: unknown } | null>(null);
+    const [profileLoaded, setProfileLoaded] = useState(false);
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -124,6 +129,22 @@ const OrdersPage: React.FC = () => {
     useEffect(() => {
         fetchOrders();
     }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const p = await getLoggedProfile();
+                setProfile(p ?? null);
+            } catch {
+                setProfile(null);
+            } finally {
+                setProfileLoaded(true);
+            }
+        })();
+    }, []);
+
+    const profileCoords = coordsFromFields(profile?.latitude, profile?.longitude);
+    const missingProfileCoords = profileLoaded && !profileCoords;
 
     const getStatusStyles = (status: string) => {
         switch (status) {
@@ -146,6 +167,29 @@ const OrdersPage: React.FC = () => {
                     <p className="text-gray-500 mt-1 font-medium italic">Track the real-time status of your personalized meal bookings.</p>
                 </div>
 
+                {missingProfileCoords && (
+                    <div className="mb-8 rounded-[32px] border border-amber-200/80 bg-amber-50/90 dark:bg-amber-950/30 dark:border-amber-500/30 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                            <FiMapPin className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={22} />
+                            <div>
+                                <p className="text-sm font-black text-amber-900 dark:text-amber-200 uppercase tracking-tight">Add your location for delivery pricing</p>
+                                <p className="text-xs text-amber-800/90 dark:text-amber-300/90 mt-1 leading-relaxed">
+                                    Your profile does not have latitude and longitude yet. Add them under{" "}
+                                    <strong>Profile</strong> so we can measure distance to the micro kitchen and apply delivery
+                                    charges from your kitchen&apos;s slabs. You can still order; once coordinates are saved,
+                                    checkout will include distance-based delivery.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            to="/profile-info"
+                            className="shrink-0 inline-flex items-center justify-center rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3 transition-colors"
+                        >
+                            Open profile
+                        </Link>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-gray-800 rounded-[60px] shadow-sm border border-gray-100 dark:border-white/5">
                         <FiLoader className="animate-spin text-indigo-500 mb-6" size={48} />
@@ -164,6 +208,22 @@ const OrdersPage: React.FC = () => {
                         <AnimatePresence>
                             {orders.map((order, idx) => {
                                 const userRating = order.ratings && order.ratings.length > 0 ? order.ratings[0] : null;
+                                const customerCoords =
+                                    profileCoords ??
+                                    coordsFromFields(order.user_details?.latitude, order.user_details?.longitude);
+                                const kitchenCoords = coordsFromFields(
+                                    order.kitchen_details?.latitude,
+                                    order.kitchen_details?.longitude
+                                );
+                                const liveKm = distanceKmBetween(customerCoords, kitchenCoords);
+                                let geoNote: string | null = null;
+                                if (!kitchenCoords) {
+                                    geoNote =
+                                        "Kitchen coordinates are not on file — distance-based delivery may show ₹0 until the kitchen sets its location.";
+                                } else if (!customerCoords) {
+                                    geoNote =
+                                        "Your account has no coordinates — add latitude/longitude under Profile to see live distance and to get delivery charges on future orders.";
+                                }
                                 return (
                                     <motion.div 
                                         key={order.id}
@@ -194,15 +254,28 @@ const OrdersPage: React.FC = () => {
                                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiCalendar /> Order Date</p>
                                                         <p className="text-xs font-black text-gray-900 dark:text-white">{new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                     </div>
-                                                    <div className="bg-gray-100 shadow-inner dark:bg-white/[0.03] p-5 rounded-3xl">
-                                                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiCheckCircle /> Total amount</p>
-                                                        <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">₹{order.total_amount}</p>
+                                                    <div className="bg-gray-100 shadow-inner dark:bg-white/[0.03] p-5 rounded-3xl md:col-span-1">
+                                                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiCheckCircle /> Order total</p>
+                                                        <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">₹{Number(order.final_amount ?? order.total_amount).toFixed(2)}</p>
+                                                        <p className="text-[9px] text-gray-400 mt-1">Incl. delivery where applicable</p>
                                                     </div>
                                                     <div className="col-span-2 bg-gray-50/50 dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-50 dark:border-white/5">
                                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiMapPin /> Delivery Location</p>
                                                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate">{order.delivery_address}</p>
                                                     </div>
                                                 </div>
+
+                                                <OrderDeliverySummary
+                                                    order={order}
+                                                    className="mt-2"
+                                                    liveDistanceKm={liveKm}
+                                                    liveDistanceLabel={
+                                                        profileCoords
+                                                            ? "Straight-line distance (your profile ↔ kitchen)"
+                                                            : "Straight-line distance (account ↔ kitchen)"
+                                                    }
+                                                    geoNote={geoNote}
+                                                />
 
                                                 {/* Order Items Gallery & Existing Rating */}
                                                 <div className="space-y-6">
