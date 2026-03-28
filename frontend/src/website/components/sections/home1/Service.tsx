@@ -39,8 +39,8 @@ interface ServiceProps {
 
 export default function Service({ departments }: ServiceProps) {
   const [departmentsList, setDepartmentsList] = useState<Department[]>(departments || MOCK_DEPARTMENTS);
-  const [loading, setLoading] = useState(!departments);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(!departments);
+  const [, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (departments) {

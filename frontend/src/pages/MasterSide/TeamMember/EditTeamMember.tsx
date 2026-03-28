@@ -168,6 +168,18 @@ const EditTeamMember: React.FC<Props> = ({ id, onSuccess, onClose, departments }
               </label>
             </div>
 
+            <div className="flex items-center">
+              <label className="flex items-center group cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.is_doctor || false}
+                  onChange={(e) => setFormData({ ...formData, is_doctor: e.target.checked })}
+                  className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
+                />
+                <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Specialist Identity (Doctor)</span>
+              </label>
+            </div>
+
             <div className="md:col-span-2 flex gap-4 pt-6 border-t mt-4">
               <button
                 type="button"

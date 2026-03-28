@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
-import { getJobListingList, deleteJobListing, JobListing } from "./joblistingapi";
-import { getDepartmentList } from "../Department/departmentapi";
-import AddJobListing from "./AddJobListing";
-import EditJobListing from "./EditJobListing";
+import { getWorkflowStepList, deleteWorkflowStep, WorkflowStep } from "./workflowstepapi";
+import AddWorkflowStep from "./AddWorkflowStep";
+import EditWorkflowStep from "./EditWorkflowStep";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -12,9 +11,8 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 
-const JobListingPage: React.FC = () => {
-  const [listings, setListings] = useState<JobListing[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
+const WorkflowStepPage: React.FC = () => {
+  const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -24,50 +22,39 @@ const JobListingPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const fetchListings = useCallback(async () => {
+  const fetchSteps = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getJobListingList(currentPage, pageSize, search);
-      setListings(data.results);
-      setTotalItems(data.count);
-      setTotalPages(data.total_pages);
+      const data = await getWorkflowStepList(currentPage, pageSize, search);
+      setSteps(data.results || []);
+      setTotalItems(data.count || 0);
+      setTotalPages(data.total_pages || 0);
     } catch (error) {
-      console.error("Error fetching job listings:", error);
-      toast.error("Failed to load job listings");
+      toast.error("Failed to load workflow steps");
     } finally {
       setLoading(false);
     }
   }, [currentPage, pageSize, search]);
 
-  const fetchDepartments = useCallback(async () => {
-    try {
-      const data = await getDepartmentList(1, 100);
-      setDepartments(data.results);
-    } catch (error) {
-      console.error("Failed to fetch departments", error);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchListings();
-    fetchDepartments();
-  }, [fetchListings, fetchDepartments]);
+    fetchSteps();
+  }, [fetchSteps]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this job listing?")) return;
+    if (!window.confirm("Archiving this step will stop it from appearing on the website. Continue?")) return;
     try {
-      await deleteJobListing(id);
-      toast.success("Job listing deleted!");
-      fetchListings();
-    } catch (error: any) {
-      toast.error("Failed to delete");
+      await deleteWorkflowStep(id);
+      toast.success("Step archived!");
+      fetchSteps();
+    } catch (error) {
+      toast.error("Failed to delete step");
     }
   };
 
   return (
     <>
-      <PageMeta title="Job Listing Management" description="Manage job vacancies efficiently" />
-      <PageBreadcrumb pageTitle="Job Listings" />
+      <PageMeta title="Workflow Management" description="Manage clinical process flow" />
+      <PageBreadcrumb pageTitle="Workflow Steps" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -75,7 +62,7 @@ const JobListingPage: React.FC = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search job titles..."
+              placeholder="Search steps..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
@@ -88,7 +75,7 @@ const JobListingPage: React.FC = () => {
                 className="inline-flex items-center gap-2"
                 onClick={() => setIsAddModalOpen(true)}
             >
-              <FiPlus /> Add Job
+              <FiPlus /> Add Multiple Steps
             </Button>
             
             <div className="flex items-center gap-2">
@@ -121,51 +108,44 @@ const JobListingPage: React.FC = () => {
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Job Title</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Department</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Job Type</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"># Order</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Step Details</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {loading && listings.length === 0 ? (
+              {loading && steps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading listings...</TableCell>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
                 </TableRow>
-              ) : listings.length === 0 ? (
+              ) : steps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No job listings found</TableCell>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No steps found</TableCell>
                 </TableRow>
               ) : (
-                listings.map((job, index) => (
-                  <TableRow key={job.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                        {(currentPage - 1) * pageSize + index + 1}
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-bold text-gray-900 text-theme-sm dark:text-white">
-                        {job.title}
+                steps.map((step) => (
+                  <TableRow key={step.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start font-bold text-gray-900 text-theme-sm dark:text-white/90">
+                        {step.position}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                         <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 uppercase dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-                           {(job as any).department_name || (typeof job.department === 'object' ? (job.department as any)?.name : departments.find(d => d.id === job.department)?.name) || "-"}
-                         </span>
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start text-gray-500 dark:text-gray-400 uppercase text-xs font-bold">
-                        {job.job_type?.replace("_", " ")}
+                        <div className="max-w-md">
+                          <div className="font-bold text-gray-900 line-clamp-1 dark:text-white">{step.title}</div>
+                          <div className="text-xs text-gray-500 line-clamp-1">{step.description}</div>
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            job.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
+                            step.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
                         }`}>
-                            {job.is_active ? "Active" : "Inactive"}
+                            {step.is_active ? "Active" : "Inactive"}
                         </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                         <div className="flex items-center gap-3">
-                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(job.id!)}><FiEdit /></button>
-                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(job.id!)}><FiTrash2 /></button>
+                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(step.id!)}><FiEdit /></button>
+                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(step.id!)}><FiTrash2 /></button>
                         </div>
                     </TableCell>
                   </TableRow>
@@ -178,7 +158,7 @@ const JobListingPage: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
-           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
@@ -216,18 +196,16 @@ const JobListingPage: React.FC = () => {
       )}
 
       {isAddModalOpen && (
-        <AddJobListing 
-          departments={departments}
-          onSuccess={() => fetchListings()} 
+        <AddWorkflowStep 
+          onSuccess={() => fetchSteps()} 
           onClose={() => setIsAddModalOpen(false)} 
         />
       )}
 
       {editingId && (
-        <EditJobListing 
+        <EditWorkflowStep 
           id={editingId} 
-          departments={departments}
-          onSuccess={() => fetchListings()} 
+          onSuccess={() => fetchSteps()} 
           onClose={() => setEditingId(null)} 
         />
       )}
@@ -235,5 +213,4 @@ const JobListingPage: React.FC = () => {
   );
 };
 
-export default JobListingPage;
-
+export default WorkflowStepPage;

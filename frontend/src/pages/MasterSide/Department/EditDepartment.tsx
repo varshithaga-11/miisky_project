@@ -20,6 +20,7 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
   const [head_name, setHeadName] = useState("");
   const [head_email, setHeadEmail] = useState("");
   const [position, setPosition] = useState(1);
+  const [icon_class, setIconClass] = useState("");
   const [is_active, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +34,7 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
           setHeadName(data.head_name || "");
           setHeadEmail(data.head_email || "");
           setPosition(data.position || 1);
+          setIconClass(data.icon_class || "");
           setIsActive(data.is_active !== false);
         } catch (error: any) {
           console.error("Error fetching department:", error);
@@ -59,6 +61,7 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
         head_name: head_name || undefined,
         head_email: head_email || undefined,
         position,
+        icon_class,
         is_active,
       };
 
@@ -144,6 +147,19 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
                 onChange={(e) => setPosition(parseInt(e.target.value))}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 min="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Icon Class
+              </label>
+              <input
+                type="text"
+                value={icon_class}
+                onChange={(e) => setIconClass(e.target.value)}
+                placeholder="e.g. icon-18, icon-22"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
 

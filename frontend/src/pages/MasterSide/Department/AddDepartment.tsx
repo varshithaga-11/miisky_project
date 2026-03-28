@@ -13,6 +13,7 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
   const [head_name, setHeadName] = useState("");
   const [head_email, setHeadEmail] = useState("");
   const [position, setPosition] = useState(1);
+  const [icon_class, setIconClass] = useState("icon-18");
   const [is_active, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +33,7 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
         head_name: head_name || undefined,
         head_email: head_email || undefined,
         position,
+        icon_class,
         is_active,
       };
 
@@ -115,6 +117,19 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
                 onChange={(e) => setPosition(parseInt(e.target.value))}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 min="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Icon Class
+              </label>
+              <input
+                type="text"
+                value={icon_class}
+                onChange={(e) => setIconClass(e.target.value)}
+                placeholder="e.g. icon-18, icon-22"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
 

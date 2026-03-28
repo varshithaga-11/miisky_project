@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
-import { getJobListingList, deleteJobListing, JobListing } from "./joblistingapi";
-import { getDepartmentList } from "../Department/departmentapi";
-import AddJobListing from "./AddJobListing";
-import EditJobListing from "./EditJobListing";
+import { getPricingPlanList, deletePricingPlan, PricingPlan } from "./pricingplanapi";
+import AddPricingPlan from "./AddPricingPlan";
+import EditPricingPlan from "./EditPricingPlan";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -12,9 +11,8 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 
-const JobListingPage: React.FC = () => {
-  const [listings, setListings] = useState<JobListing[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
+const PricingPlanPage: React.FC = () => {
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -24,50 +22,39 @@ const JobListingPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const fetchListings = useCallback(async () => {
+  const fetchPlans = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getJobListingList(currentPage, pageSize, search);
-      setListings(data.results);
-      setTotalItems(data.count);
-      setTotalPages(data.total_pages);
+      const data = await getPricingPlanList(currentPage, pageSize, search);
+      setPlans(data.results || []);
+      setTotalItems(data.count || 0);
+      setTotalPages(data.total_pages || 0);
     } catch (error) {
-      console.error("Error fetching job listings:", error);
-      toast.error("Failed to load job listings");
+      toast.error("Failed to load pricing plans");
     } finally {
       setLoading(false);
     }
   }, [currentPage, pageSize, search]);
 
-  const fetchDepartments = useCallback(async () => {
-    try {
-      const data = await getDepartmentList(1, 100);
-      setDepartments(data.results);
-    } catch (error) {
-      console.error("Failed to fetch departments", error);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchListings();
-    fetchDepartments();
-  }, [fetchListings, fetchDepartments]);
+    fetchPlans();
+  }, [fetchPlans]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this job listing?")) return;
+    if (!window.confirm("Archive this pricing plan? It will no longer be visible on the public site.")) return;
     try {
-      await deleteJobListing(id);
-      toast.success("Job listing deleted!");
-      fetchListings();
-    } catch (error: any) {
-      toast.error("Failed to delete");
+      await deletePricingPlan(id);
+      toast.success("Plan archived!");
+      fetchPlans();
+    } catch (error) {
+      toast.error("Failed to delete plan");
     }
   };
 
   return (
     <>
-      <PageMeta title="Job Listing Management" description="Manage job vacancies efficiently" />
-      <PageBreadcrumb pageTitle="Job Listings" />
+      <PageMeta title="Pricing Management" description="Manage subscription tiers" />
+      <PageBreadcrumb pageTitle="Pricing Plans" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -75,7 +62,7 @@ const JobListingPage: React.FC = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search job titles..."
+              placeholder="Search plans..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
@@ -88,7 +75,7 @@ const JobListingPage: React.FC = () => {
                 className="inline-flex items-center gap-2"
                 onClick={() => setIsAddModalOpen(true)}
             >
-              <FiPlus /> Add Job
+              <FiPlus /> Add Plan
             </Button>
             
             <div className="flex items-center gap-2">
@@ -122,50 +109,76 @@ const JobListingPage: React.FC = () => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Job Title</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Department</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Job Type</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Plan Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Pricing (Monthly/Yearly)</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Features</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {loading && listings.length === 0 ? (
+              {loading && plans.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading listings...</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
                 </TableRow>
-              ) : listings.length === 0 ? (
+              ) : plans.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No job listings found</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No plans found</TableCell>
                 </TableRow>
               ) : (
-                listings.map((job, index) => (
-                  <TableRow key={job.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                plans.map((plan, index) => (
+                  <TableRow key={plan.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-bold text-gray-900 text-theme-sm dark:text-white">
-                        {job.title}
+                    <TableCell className="px-5 py-4 text-start">
+                        <div className="flex flex-col">
+                          <div className="font-bold text-gray-900 dark:text-white">{plan.name}</div>
+                          <div className="text-[10px] font-black uppercase text-blue-600 tracking-wider font-sans">{plan.plan_category}</div>
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                         <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 uppercase dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-                           {(job as any).department_name || (typeof job.department === 'object' ? (job.department as any)?.name : departments.find(d => d.id === job.department)?.name) || "-"}
-                         </span>
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start text-gray-500 dark:text-gray-400 uppercase text-xs font-bold">
-                        {job.job_type?.replace("_", " ")}
+                        <div className="flex flex-col gap-0.5">
+                          <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                             ${plan.price_monthly} <span className="text-[10px] text-gray-400 font-normal">/ mo</span>
+                          </div>
+                          {plan.price_yearly && (
+                            <div className="text-[10px] font-bold text-green-600">
+                               ${plan.price_yearly} <span className="text-gray-400 font-normal">/ yr</span>
+                            </div>
+                          )}
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            job.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
-                        }`}>
-                            {job.is_active ? "Active" : "Inactive"}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {plan.features.slice(0, 2).map((feature, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-gray-50 text-[10px] font-medium text-gray-500 rounded border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                              {feature}
+                            </span>
+                          ))}
+                          {plan.features.length > 2 && (
+                            <span className="text-[10px] text-gray-400 font-bold">+{plan.features.length - 2} more</span>
+                          )}
+                        </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <div className="flex flex-col gap-1.5">
+                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold text-center inline-block max-w-fit ${
+                               plan.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
+                           }`}>
+                               {plan.is_active ? "LIVE" : "DRAFT"}
+                           </span>
+                           {plan.is_featured && (
+                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-center inline-block max-w-fit bg-blue-50 text-blue-600 border border-blue-100">
+                                FEATURED
+                             </span>
+                           )}
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                         <div className="flex items-center gap-3">
-                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(job.id!)}><FiEdit /></button>
-                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(job.id!)}><FiTrash2 /></button>
+                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(plan.id!)}><FiEdit /></button>
+                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(plan.id!)}><FiTrash2 /></button>
                         </div>
                     </TableCell>
                   </TableRow>
@@ -178,7 +191,7 @@ const JobListingPage: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
-           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
@@ -216,18 +229,16 @@ const JobListingPage: React.FC = () => {
       )}
 
       {isAddModalOpen && (
-        <AddJobListing 
-          departments={departments}
-          onSuccess={() => fetchListings()} 
+        <AddPricingPlan 
+          onSuccess={() => fetchPlans()} 
           onClose={() => setIsAddModalOpen(false)} 
         />
       )}
 
       {editingId && (
-        <EditJobListing 
+        <EditPricingPlan 
           id={editingId} 
-          departments={departments}
-          onSuccess={() => fetchListings()} 
+          onSuccess={() => fetchPlans()} 
           onClose={() => setEditingId(null)} 
         />
       )}
@@ -235,5 +246,4 @@ const JobListingPage: React.FC = () => {
   );
 };
 
-export default JobListingPage;
-
+export default PricingPlanPage;

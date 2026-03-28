@@ -125,6 +125,8 @@ import LegalPageList from "./pages/MasterSide/LegalPage/index";
 import CompanyAboutSectionList from "./pages/MasterSide/CompanyAboutSection/index";
 import PatentList from "./pages/MasterSide/Patent/index";
 import TestimonialPage from "./pages/MasterSide/Testimonial/index";
+import WorkflowStepPage from "./pages/MasterSide/WorkflowStep/index";
+import PricingPlanPage from "./pages/MasterSide/PricingPlan/index";
 
 // Website Pages
 const WebsiteLayout = lazy(() => import("./Website/layout"));
@@ -212,6 +214,8 @@ export function appRoutes() {
           <Route path="master/companyaboutsection" element={<CompanyAboutSectionList />} />
           <Route path="master/patent" element={<PatentList />} />
           <Route path="master/testimonial" element={<TestimonialPage />} />
+          <Route path="master/workflowstep" element={<WorkflowStepPage />} />
+          <Route path="master/pricingplan" element={<PricingPlanPage />} />
 
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />

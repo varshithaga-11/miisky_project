@@ -22,6 +22,7 @@ const AddTeamMember: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
     qualification: "",
     experience_years: 0,
     position: 1,
+    is_doctor: false,
     is_active: true,
   });
 
@@ -157,6 +158,18 @@ const AddTeamMember: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
                 className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
               />
               <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Visible Manifest</span>
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <label className="flex items-center group cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_doctor || false}
+                onChange={(e) => setFormData({ ...formData, is_doctor: e.target.checked })}
+                className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
+              />
+              <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Specialist Identity (Doctor)</span>
             </label>
           </div>
 

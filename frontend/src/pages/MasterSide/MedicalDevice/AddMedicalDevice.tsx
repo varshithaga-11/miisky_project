@@ -13,6 +13,7 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
   const [formData, setFormData] = useState<Partial<MedicalDevice>>({
     name: "",
     description: "",
+    long_description: "",
     short_description: "",
     category: undefined,
     primary_technology: "",

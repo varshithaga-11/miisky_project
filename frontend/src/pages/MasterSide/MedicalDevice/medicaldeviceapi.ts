@@ -8,6 +8,7 @@ export interface MedicalDevice {
   slug?: string;
   short_description?: string;
   description?: string;
+  long_description?: string;
   primary_technology?: string;
   is_non_invasive?: boolean;
   is_continuous_monitoring?: boolean;

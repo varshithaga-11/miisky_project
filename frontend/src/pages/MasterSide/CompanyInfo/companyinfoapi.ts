@@ -29,6 +29,15 @@ export interface CompanyInfo {
   meta_description?: string;
   meta_keywords?: string;
   working_hours?: string;
+  // New Stats Fields
+  years_experience?: number;
+  doctors_count?: string;
+  services_count?: string;
+  satisfied_patients?: string;
+  // New Mission/Vision Fields (JSON lists)
+  our_specialities?: string[];
+  our_vision?: string[];
+  mission_statement?: string;
   created_at?: string;
   updated_at?: string;
 }

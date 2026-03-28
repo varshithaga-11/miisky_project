@@ -1,17 +1,15 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
-export interface Department {
+export interface WorkflowStep {
   id?: number;
-  name: string;
-  description?: string;
-  head_name?: string;
-  head_email?: string;
-  position?: number;
+  title: string;
+  description: string;
+  position: number;
   icon_class?: string;
-  is_active?: boolean;
+  image?: string;
+  is_active: boolean;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -23,24 +21,21 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
-export const createDepartment = async (data: Department) => {
-  const url = createApiUrl("api/website/department/");
+export const createWorkflowStep = async (data: WorkflowStep) => {
+  const url = createApiUrl("api/website/workflowstep/");
   const response = await axios.post(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;
 };
 
-export const getDepartmentList = async (
+export const getWorkflowStepList = async (
   page: number = 1,
   limit: number = 10,
   search?: string
 ) => {
-  const url = createApiUrl("api/website/department/");
-  const params: any = {
-    page,
-    limit,
-  };
+  const url = createApiUrl("api/website/workflowstep/");
+  const params: any = { page, limit };
   if (search) params.search = search;
 
   const response = await axios.get(url, {
@@ -50,24 +45,24 @@ export const getDepartmentList = async (
   return response.data;
 };
 
-export const getDepartmentById = async (id: number) => {
-  const url = createApiUrl(`api/website/department/${id}/`);
+export const getWorkflowStepById = async (id: number) => {
+  const url = createApiUrl(`api/website/workflowstep/${id}/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
   });
   return response.data;
 };
 
-export const updateDepartment = async (id: number, data: Partial<Department>) => {
-  const url = createApiUrl(`api/website/department/${id}/`);
+export const updateWorkflowStep = async (id: number, data: Partial<WorkflowStep>) => {
+  const url = createApiUrl(`api/website/workflowstep/${id}/`);
   const response = await axios.patch(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;
 };
 
-export const deleteDepartment = async (id: number) => {
-  const url = createApiUrl(`api/website/department/${id}/`);
+export const deleteWorkflowStep = async (id: number) => {
+  const url = createApiUrl(`api/website/workflowstep/${id}/`);
   await axios.delete(url, {
     headers: await getAuthHeaders(),
   });

@@ -34,6 +34,13 @@ const AddCompanyInfo: React.FC<Props> = ({ onSuccess, onClose }) => {
     meta_description: "",
     meta_keywords: "",
     working_hours: "",
+    years_experience: 30,
+    doctors_count: "180+",
+    services_count: "200+",
+    satisfied_patients: "10k+",
+    our_specialities: ["Preventive care", "Diagnostic testing", "Mental health services"],
+    our_vision: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"],
+    mission_statement: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

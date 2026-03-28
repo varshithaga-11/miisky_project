@@ -209,7 +209,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class JobListingSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer(read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
 
     class Meta:
         model = JobListing

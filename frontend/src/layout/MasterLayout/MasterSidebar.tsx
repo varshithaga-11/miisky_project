@@ -400,6 +400,7 @@ const masterNavItems: NavItem[] = [
       { name: "About Sections", path: "/master/companyaboutsection" },
       { name: "Hero Banners", path: "/master/herobanner" },
       { name: "Legal Pages", path: "/master/legalpage" },
+      { name: "Workflow Steps", path: "/master/workflowstep" },
     ],
   },
   {
@@ -430,6 +431,7 @@ const masterNavItems: NavItem[] = [
       { name: "FAQ Categories", path: "/master/faqcategory" },
       { name: "FAQs", path: "/master/faq" },
       { name: "Testimonials", path: "/master/testimonial" },
+      { name: "Pricing Plans", path: "/master/pricingplan" },
       { name: "Report Types", path: "/master/reporttype" },
       { name: "Website Reports", path: "/master/websitereport" },
     ],

@@ -16,6 +16,7 @@ export interface TeamMember {
   email?: string;
   phone?: string;
   position?: number;
+  is_doctor?: boolean;
   is_active?: boolean;
   created_at?: string;
 }
