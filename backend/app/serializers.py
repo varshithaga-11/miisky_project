@@ -865,6 +865,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
         model = UserDietPlan
         fields = [
             'id',
+            'user',
             'status',
             'start_date',
             'end_date',
@@ -880,6 +881,8 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
         u = getattr(obj, 'user', None)
         if not u:
             return None
+        lat = getattr(u, 'latitude', None)
+        lng = getattr(u, 'longitude', None)
         return {
             'id': u.id,
             'username': u.username,
@@ -888,8 +891,8 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'email': u.email,
             'mobile': u.mobile,
             'address': u.address,
-            'latitude': getattr(u, 'latitude', None),
-            'longitude': getattr(u, 'longitude', None),
+            'latitude': float(lat) if lat is not None else None,
+            'longitude': float(lng) if lng is not None else None,
         }
 
     def get_diet_plan_details(self, obj):

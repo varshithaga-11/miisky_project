@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiClock, FiInfo, FiCheck, FiList, FiCalendar, FiUser, FiPackage, FiHash, FiNavigation2 } from "react-icons/fi";
-import { haversineKm } from "../../../utils/haversineKm";
+import { haversineKm, parseGeoCoord } from "../../../utils/haversineKm";
+import { fetchUserById } from "../PatientOverview/api";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -124,21 +125,12 @@ function distanceFromKitchen(
   patientLat: unknown,
   patientLng: unknown
 ): number | null {
-  const klat = kitchen?.latitude;
-  const klng = kitchen?.longitude;
-  if (
-    klat == null ||
-    klng == null ||
-    patientLat == null ||
-    patientLng == null ||
-    Number.isNaN(Number(klat)) ||
-    Number.isNaN(Number(klng)) ||
-    Number.isNaN(Number(patientLat)) ||
-    Number.isNaN(Number(patientLng))
-  ) {
-    return null;
-  }
-  return haversineKm(Number(klat), Number(klng), Number(patientLat), Number(patientLng));
+  const klat = parseGeoCoord(kitchen?.latitude);
+  const klng = parseGeoCoord(kitchen?.longitude);
+  const plat = parseGeoCoord(patientLat);
+  const plng = parseGeoCoord(patientLng);
+  if (klat === null || klng === null || plat === null || plng === null) return null;
+  return haversineKm(klat, klng, plat, plng);
 }
 
 export function DisplayKitchenPatients({
@@ -148,12 +140,68 @@ export function DisplayKitchenPatients({
   items: any[];
   kitchen?: { latitude?: number | null; longitude?: number | null; brand_name?: string | null };
 }) {
+  const [resolvedPatientCoords, setResolvedPatientCoords] = useState<
+    Record<number, { latitude: number; longitude: number }>
+  >({});
+  const [coordsLoading, setCoordsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!items?.length) {
+      setResolvedPatientCoords({});
+      return;
+    }
+
+    const userIdsNeedingFetch = new Set<number>();
+    for (const x of items) {
+      const pd = x.patient_details || x.user_details;
+      const uid = typeof pd?.id === "number" ? pd.id : typeof x.user === "number" ? x.user : null;
+      if (uid === null) continue;
+      const inlineOk =
+        parseGeoCoord(pd?.latitude) !== null && parseGeoCoord(pd?.longitude) !== null;
+      if (!inlineOk) userIdsNeedingFetch.add(uid);
+    }
+
+    if (userIdsNeedingFetch.size === 0) {
+      setResolvedPatientCoords({});
+      return;
+    }
+
+    let cancelled = false;
+    setCoordsLoading(true);
+    const ids = [...userIdsNeedingFetch];
+    Promise.all(
+      ids.map(async (id) => {
+        try {
+          const u = await fetchUserById(id);
+          const latitude = parseGeoCoord(u.latitude);
+          const longitude = parseGeoCoord(u.longitude);
+          if (latitude !== null && longitude !== null) return [id, { latitude, longitude }] as const;
+        } catch {
+          /* ignore */
+        }
+        return [id, null] as const;
+      })
+    )
+      .then((rows) => {
+        if (cancelled) return;
+        const next: Record<number, { latitude: number; longitude: number }> = {};
+        for (const [id, pair] of rows) {
+          if (pair) next[id] = pair;
+        }
+        setResolvedPatientCoords(next);
+      })
+      .finally(() => {
+        if (!cancelled) setCoordsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
+
   if (!items || items.length === 0) return <EmptyState message="No patients assigned to this kitchen." />;
   const kitchenCoordsOk =
-    kitchen?.latitude != null &&
-    kitchen?.longitude != null &&
-    !Number.isNaN(Number(kitchen.latitude)) &&
-    !Number.isNaN(Number(kitchen.longitude));
+    parseGeoCoord(kitchen?.latitude) !== null && parseGeoCoord(kitchen?.longitude) !== null;
 
   return (
     <div className="space-y-4">
@@ -162,10 +210,18 @@ export function DisplayKitchenPatients({
           This kitchen has no latitude/longitude on file. Set location on the kitchen account to see straight-line distances to patients.
         </p>
       )}
+      {coordsLoading && kitchenCoordsOk && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">Loading patient coordinates…</p>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map((x: any) => {
           const pd = x.patient_details || x.user_details;
-          const km = distanceFromKitchen(kitchen, pd?.latitude, pd?.longitude);
+          const patientUserId =
+            typeof pd?.id === "number" ? pd.id : typeof x.user === "number" ? x.user : null;
+          const resolved = patientUserId != null ? resolvedPatientCoords[patientUserId] : undefined;
+          const plat = parseGeoCoord(pd?.latitude) ?? resolved?.latitude;
+          const plng = parseGeoCoord(pd?.longitude) ?? resolved?.longitude;
+          const km = distanceFromKitchen(kitchen, plat, plng);
           return (
         <div key={x.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between gap-3 mb-3">

@@ -1,3 +1,11 @@
+/** Normalize API values (number, numeric string, null) for lat/lng. */
+export function parseGeoCoord(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "string" && v.trim() === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 /** Great-circle distance on Earth (km), WGS84 sphere approximation. */
 export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
