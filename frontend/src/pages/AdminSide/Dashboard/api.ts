@@ -7,6 +7,7 @@ export interface AdminDashboardStats {
   cities: number;
   users: number;
   patients: number;
+  nonPatients: number;
   nutritionists: number;
   microKitchens: number;
   allottedPatients: number;
