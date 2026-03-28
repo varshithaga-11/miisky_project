@@ -89,6 +89,9 @@ import ProfileInformationPage from "./pages/ProfileInformation/index";
 import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
 import SupportTicketRequestsPage from "./pages/AdminSide/SupportTicketRequests";
 import PatientSupportTicketPage from "./pages/PatientSide/SupportTicket";
+import AdminNotificationsPage from "./pages/AdminSide/Notifications/index";
+import NutritionNotificationsPage from "./pages/NutritionSide/Notification/index";
+import PatientNotificationsPage from "./pages/PatientSide/Notification/index";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
 import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
@@ -256,6 +259,7 @@ export function appRoutes() {
           <Route path="admin/non-patient-information" element={<NonPatientInformationPage />} />
           <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
+          <Route path="admin/notifications" element={<AdminNotificationsPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
@@ -273,6 +277,7 @@ export function appRoutes() {
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />
           <Route path="patient/support-tickets" element={<PatientSupportTicketPage />} />
+          <Route path="patient/notifications" element={<PatientNotificationsPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
@@ -283,6 +288,7 @@ export function appRoutes() {
           <Route path="nutrition/meeting-requests" element={<MeetingRequestsByPatients />} />
           <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
           <Route path="nutrition/support-tickets" element={<NutritionSupportTicketPage />} />
+          <Route path="nutrition/notifications" element={<NutritionNotificationsPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />

@@ -38,6 +38,7 @@ router.register(r'deliverychargeslab', DeliveryChargeSlabViewSet, basename='deli
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
 router.register(r'supportticket', SupportTicketViewSet, basename='supportticket')
+router.register(r'notifications', NotificationViewSet, basename='notifications')
 router.register(r'ticketmessage', TicketMessageViewSet, basename='ticketmessage')
 router.register(r'ticketattachment', TicketAttachmentViewSet, basename='ticketattachment')
 

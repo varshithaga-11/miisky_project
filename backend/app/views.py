@@ -1,7 +1,9 @@
+from datetime import date, datetime, timedelta
+
 from django.shortcuts import render
 from django.db.models import Q
 from django.db import transaction
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, mixins
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
@@ -49,6 +51,36 @@ class Pagination(PageNumberPagination):
             "results": data,
         })
 
+
+class NotificationPagination(PageNumberPagination):
+    """Pagination for notifications list; allows larger page sizes than global Pagination."""
+
+    page_query_param = "page"
+    page_size_query_param = "limit"
+    page_size = 10
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        current_page = self.page.number
+        total_pages = self.page.paginator.num_pages
+        next_page = self.page.next_page_number() if self.page.has_next() else None
+        previous_page = self.page.previous_page_number() if self.page.has_previous() else None
+        return Response({
+            "count": self.page.paginator.count,
+            "next": next_page,
+            "previous": previous_page,
+            "current_page": current_page,
+            "total_pages": total_pages,
+            "results": data,
+        })
+
+
+
+def _notification_user_display(user):
+    if not user:
+        return "Someone"
+    name = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip()
+    return name or getattr(user, "username", None) or "Someone"
 
 
 # Create your views here.
@@ -2397,8 +2429,16 @@ class MeetingRequestViewSet(viewsets.ModelViewSet):
         return self.queryset.none()
 
     def perform_create(self, serializer):
-        # Always set the patient as the current user
-        serializer.save(patient=self.request.user)
+        meeting = serializer.save(patient=self.request.user)
+        patient_name = _notification_user_display(meeting.patient)
+        Notification.objects.create(
+            user_id=meeting.nutritionist_id,
+            title="New consultation request",
+            body=(
+                f"{patient_name} sent a new consultation request. "
+                f"Preferred date: {meeting.preferred_date}."
+            ),
+        )
 
     @action(detail=True, methods=['patch'], url_path='update-status')
     def update_meeting_status(self, request, pk=None):
@@ -2424,6 +2464,15 @@ class MeetingRequestViewSet(viewsets.ModelViewSet):
             if not link or not dt:
                 return Response({"detail": "meeting_link and scheduled_datetime are required for approval."}, status=status.HTTP_400_BAD_REQUEST)
             meeting.approve(meeting_link=link, scheduled_datetime=dt)
+            if meeting.patient_id:
+                Notification.objects.create(
+                    user_id=meeting.patient_id,
+                    title="Consultation approved",
+                    body=(
+                        "Your consultation has been approved. Open Consultation to view the "
+                        "meeting link and scheduled time."
+                    ),
+                )
         elif new_status == 'rejected':
             note = request.data.get('nutritionist_notes')
             meeting.reject(note=note)
@@ -3237,7 +3286,15 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
         if getattr(u, "role", None) != "admin":
             assigned_to = None
 
-        serializer.save(created_by=u, user_type=user_type, assigned_to=assigned_to)
+        ticket = serializer.save(created_by=u, user_type=user_type, assigned_to=assigned_to)
+        creator_label = _notification_user_display(ticket.created_by)
+        title_preview = (ticket.title or "Support ticket").strip()[:200]
+        for admin in UserRegister.objects.filter(role="admin", is_active=True):
+            Notification.objects.create(
+                user_id=admin.id,
+                title="New support ticket",
+                body=f"{creator_label} created ticket #{ticket.id}: {title_preview}",
+            )
 
     def perform_update(self, serializer):
         u = self.request.user
@@ -3314,3 +3371,109 @@ class TicketAttachmentViewSet(viewsets.ModelViewSet):
             if not ticket or ticket.created_by_id != u.id:
                 raise PermissionDenied("Not allowed to upload for this ticket.")
         serializer.save(uploaded_by=u)
+
+
+class NotificationViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    Current user's notifications: filters (is_read, period, custom dates), pagination, counts.
+    """
+
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = NotificationPagination
+
+    def get_queryset(self):
+        qs = Notification.objects.filter(user=self.request.user)
+        params = self.request.query_params
+        is_read = params.get("is_read")
+        if is_read and str(is_read).lower() != "all":
+            if str(is_read).lower() == "true":
+                qs = qs.filter(is_read=True)
+            elif str(is_read).lower() == "false":
+                qs = qs.filter(is_read=False)
+
+        period = (params.get("period") or "").strip()
+        start_s = params.get("start_date")
+        end_s = params.get("end_date")
+        today = timezone.now().date()
+        start_d = end_d = None
+
+        try:
+            if period == "today":
+                start_d = end_d = today
+            elif period == "this_week":
+                start_d = today - timedelta(days=today.weekday())
+                end_d = today
+            elif period == "this_month":
+                start_d = today.replace(day=1)
+                end_d = today
+            elif period == "last_month":
+                first_this = today.replace(day=1)
+                last_prev = first_this - timedelta(days=1)
+                start_d = last_prev.replace(day=1)
+                end_d = last_prev
+            elif period == "this_quarter":
+                quarter_start_month = 3 * ((today.month - 1) // 3) + 1
+                start_d = date(today.year, quarter_start_month, 1)
+                end_d = today
+            elif period == "this_year":
+                start_d = date(today.year, 1, 1)
+                end_d = today
+            elif period == "custom" and start_s and end_s:
+                start_d = datetime.strptime(str(start_s), "%Y-%m-%d").date()
+                end_d = datetime.strptime(str(end_s), "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            start_d = end_d = None
+
+        if start_d and end_d:
+            qs = qs.filter(created_at__date__gte=start_d, created_at__date__lte=end_d)
+
+        return qs.order_by("-created_at")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        limit = request.query_params.get("limit")
+
+        total_count = queryset.count()
+        read_count = queryset.filter(is_read=True).count()
+        unread_count = queryset.filter(is_read=False).count()
+        counts = {"total": total_count, "read": read_count, "unread": unread_count}
+
+        if limit and str(limit).lower() == "all":
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({"counts": counts, "results": serializer.data})
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            paginated_response = self.get_paginated_response(serializer.data)
+            paginated_response.data["counts"] = counts
+            return paginated_response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"counts": counts, "results": serializer.data})
+
+    @action(detail=False, methods=["post"], url_path="mark_all_read")
+    def mark_all_read(self, request):
+        updated_count = Notification.objects.filter(
+            user=request.user,
+            is_read=False,
+        ).update(is_read=True)
+        return Response(
+            {
+                "message": f"Marked {updated_count} notifications as read",
+                "updated_count": updated_count,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="mark_as_read")
+    def mark_as_read(self, request, pk=None):
+        notification = self.get_object()
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save(update_fields=["is_read"])
+        return Response({"message": "Notification marked as read"})

@@ -18,6 +18,7 @@ import {
   Package,
   ClipboardList,
   HelpCircle,
+  Bell,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -138,6 +139,11 @@ const adminNavItems: NavItem[] = [
     ],
   },
   {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/admin/notifications",
+  },
+  {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
@@ -217,6 +223,11 @@ const patientNavItems: NavItem[] = [
     name: "Support Tickets",
     path: "/patient/support-tickets",
   },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/patient/notifications",
+  },
 ];
 
 const nutritionistNavItems: NavItem[] = [
@@ -274,6 +285,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <HelpCircle className="w-5 h-5" />,
     name: "Support Tickets",
     path: "/nutrition/support-tickets",
+  },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/nutrition/notifications",
   },
 ];
 
