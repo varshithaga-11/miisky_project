@@ -39,8 +39,8 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                 <Link to="/website">Home</Link>
                 <ul style={{ display: activeDropdown === 1 ? "block" : "none" }}>
                   <li><Link to="/website">Home Page One</Link></li>
-                  <li><Link to="/website/index-2">Home Page Two</Link></li>
-                  <li><Link to="/website/index-3">Home Page Three</Link></li>
+                  {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
+                  <li><Link to="/website/index-3">Home Page Three</Link></li> */}
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 1 ? "open" : ""}`} onClick={() => toggleDropdown(1)}>
                   <span className="fa fa-angle-right" />
@@ -56,11 +56,11 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                 <ul style={{ display: activeDropdown === 2 ? "block" : "none" }}>
                   <li><Link to="/website/departments">Our Departments</Link></li>
                   <li><Link to="/website/department-details">Cardiology</Link></li>
-                  <li><Link to="/website/department-details-2">Dental</Link></li>
+                  {/* <li><Link to="/website/department-details-2">Dental</Link></li>
                   <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
                   <li><Link to="/website/department-details-4">Neurology</Link></li>
                   <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                  <li><Link to="/website/department-details-6">Modern Laboratory</Link></li>
+                  <li><Link to="/website/department-details-6">Modern Laboratory</Link></li> */}
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 2 ? "open" : ""}`} onClick={() => toggleDropdown(2)}>
                   <span className="fa fa-angle-right" />
@@ -74,7 +74,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                   <li><Link to="/website/doctors">Our Doctors</Link></li>
                   <li><Link to="/website/doctor-details">Doctor Details</Link></li>
                   <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                  <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
+                  {/* <li><Link to="/website/portfolio-2">Portfolio Two</Link></li> */}
                   <li><Link to="/website/pricing">Pricing</Link></li>
                   <li><Link to="/website/error">Page Not Found</Link></li>
                 </ul>
@@ -88,7 +88,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                 <Link to="/website">Blog</Link>
                 <ul style={{ display: activeDropdown === 4 ? "block" : "none" }}>
                   <li><Link to="/website/blog">Blog Grid</Link></li>
-                  <li><Link to="/website/blog-2">Blog Standard</Link></li>
+                  {/* <li><Link to="/website/blog-2">Blog Standard</Link></li> */}
                   <li><Link to="/website/blog-details">Blog Details</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 4 ? "open" : ""}`} onClick={() => toggleDropdown(4)}>

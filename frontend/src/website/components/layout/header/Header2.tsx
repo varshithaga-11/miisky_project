@@ -73,8 +73,8 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website">Home</Link>
                         <ul>
                           <li><Link to="/website">Home Page One</Link></li>
-                          <li><Link to="/website/index-2">Home Page Two</Link></li>
-                          <li><Link to="/website/index-3">Home Page Three</Link></li>
+                          {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
+                          <li><Link to="/website/index-3">Home Page Three</Link></li> */}
                         </ul>
                       </li>
                       <li>
@@ -85,11 +85,11 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <ul>
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
-                          <li><Link to="/website/department-details-2">Dental</Link></li>
+                          {/* <li><Link to="/website/department-details-2">Dental</Link></li>
                           <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
                           <li><Link to="/website/department-details-4">Neurology</Link></li>
                           <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li>
+                          <li><Link to="/website/department-details-6">Laboratory</Link></li> */}
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -107,7 +107,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website/blog">Blog</Link>
                         <ul>
                           <li><Link to="/website/blog">Blog Grid</Link></li>
-                          <li><Link to="/website/blog-standard">Blog Standard</Link></li>
+                          {/* <li><Link to="/website/blog-standard">Blog Standard</Link></li> */}
                           <li><Link to="/website/blog-details">Blog Details</Link></li>
                         </ul>
                       </li>
@@ -176,8 +176,8 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website">Home</Link>
                         <ul>
                           <li><Link to="/website">Home Page One</Link></li>
-                          <li><Link to="/website/index-2">Home Page Two</Link></li>
-                          <li><Link to="/website/index-3">Home Page Three</Link></li>
+                          {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
+                          <li><Link to="/website/index-3">Home Page Three</Link></li> */}
                         </ul>
                       </li>
                       <li>
@@ -188,11 +188,11 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <ul>
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
-                          <li><Link to="/website/department-details-2">Dental</Link></li>
+                          {/* <li><Link to="/website/department-details-2">Dental</Link></li>
                           <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
                           <li><Link to="/website/department-details-4">Neurology</Link></li>
                           <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li>
+                          <li><Link to="/website/department-details-6">Laboratory</Link></li> */}
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -201,7 +201,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/website/doctors">Our Doctors</Link></li>
                           <li><Link to="/website/doctor-details">Doctor Details</Link></li>
                           <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
+                          {/* <li><Link to="/website/portfolio-2">Portfolio Two</Link></li> */}
                           <li><Link to="/website/pricing">Pricing</Link></li>
                           <li><Link to="/website/error">Not Found</Link></li>
                         </ul>
@@ -210,7 +210,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website/blog">Blog</Link>
                         <ul>
                           <li><Link to="/website/blog">Blog Grid</Link></li>
-                          <li><Link to="/website/blog-standard">Blog Standard</Link></li>
+                          {/* <li><Link to="/website/blog-standard">Blog Standard</Link></li> */}
                           <li><Link to="/website/blog-details">Blog Details</Link></li>
                         </ul>
                       </li>

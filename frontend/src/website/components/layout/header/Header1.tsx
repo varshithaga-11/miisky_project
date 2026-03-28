@@ -88,8 +88,8 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website">Home</Link>
                         <ul>
                           <li><Link to="/website">Home Page One</Link></li>
-                          <li><Link to="/website/index-2">Home Page Two</Link></li>
-                          <li><Link to="/website/index-3">Home Page Three</Link></li>
+                          {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
+                          <li><Link to="/website/index-3">Home Page Three</Link></li> */}
                         </ul>
                       </li>
                       <li>
@@ -100,7 +100,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <ul>
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
-                          <li><Link to="/website/department-details-2">Dental</Link></li>
+                          {/* <li><Link to="/website/department-details-2">Dental</Link></li> */}
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -132,7 +132,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website/blog">Blog</Link>
                         <ul>
                           <li><Link to="/website/blog">Blog Grid</Link></li>
-                          <li><Link to="/website/blog-standard">Blog Standard</Link></li>
+                          {/* <li><Link to="/website/blog-standard">Blog Standard</Link></li> */}
                           <li><Link to="/website/blog-details">Blog Details</Link></li>
                         </ul>
                       </li>
@@ -189,8 +189,8 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website">Home</Link>
                         <ul>
                           <li><Link to="/website">Home Page One</Link></li>
-                          <li><Link to="/website/index-2">Home Page Two</Link></li>
-                          <li><Link to="/website/index-3">Home Page Three</Link></li>
+                          {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
+                          <li><Link to="/website/index-3">Home Page Three</Link></li> */}
                         </ul>
                       </li>
                       <li>
@@ -201,7 +201,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <ul>
                           <li><Link to="/website/departments">Our Departments</Link></li>
                           <li><Link to="/website/department-details">Cardiology</Link></li>
-                          <li><Link to="/website/department-details-2">Dental</Link></li>
+                          {/* <li><Link to="/website/department-details-2">Dental</Link></li> */}
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -233,7 +233,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website/blog">Blog</Link>
                         <ul>
                           <li><Link to="/website/blog">Blog Grid</Link></li>
-                          <li><Link to="/website/blog-standard">Blog Standard</Link></li>
+                          {/* <li><Link to="/website/blog-standard">Blog Standard</Link></li> */}
                           <li><Link to="/website/blog-details">Blog Details</Link></li>
                         </ul>
                       </li>
