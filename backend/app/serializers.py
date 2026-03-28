@@ -2080,3 +2080,10 @@ class TicketAttachmentSerializer(serializers.ModelSerializer):
             "uploaded_at",
         ]
         read_only_fields = ["uploaded_by", "uploaded_at"]
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["id", "user", "title", "body", "is_read", "created_at"]
+        read_only_fields = ["id", "user", "title", "body", "created_at"]

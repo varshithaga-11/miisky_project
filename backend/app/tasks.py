@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import UserDietPlan, UserRegister
+from .models import Notification, UserDietPlan, UserRegister
 
 
 def _full_name(user):
@@ -80,15 +80,42 @@ def run_complete_expired_plans():
         admin_emails=admin_emails,
     )
 
-    updated = UserDietPlan.objects.filter(
+    expired_qs = UserDietPlan.objects.filter(
         status="active",
         end_date__lt=today,
-    ).update(status="completed")
+    ).select_related("user", "nutritionist", "diet_plan")
+    expired_plans = list(expired_qs)
+    updated = 0
+    if expired_plans:
+        plan_ids = [p.pk for p in expired_plans]
+        updated = UserDietPlan.objects.filter(pk__in=plan_ids).update(status="completed")
+
+    admin_ids = list(
+        UserRegister.objects.filter(role="admin", is_active=True).values_list("id", flat=True)
+    )
+    plan_completed_in_app = 0
+    for plan in expired_plans:
+        patient_name = _full_name(plan.user)
+        plan_name = plan.diet_plan.title if plan.diet_plan else "Diet plan"
+        body = (
+            f"{patient_name}'s plan \"{plan_name}\" is now completed (ended {plan.end_date})."
+        )
+        target_ids = set(admin_ids)
+        if plan.nutritionist_id:
+            target_ids.add(plan.nutritionist_id)
+        for uid in target_ids:
+            Notification.objects.create(
+                user_id=uid,
+                title="Patient diet plan completed",
+                body=body,
+            )
+            plan_completed_in_app += 1
 
     return {
         "expiry_3days_notified": count_3_days,
         "expiry_tomorrow_notified": count_tomorrow,
         "expired_plans_completed": updated,
+        "plan_completed_in_app_notifications": plan_completed_in_app,
     }
 
 

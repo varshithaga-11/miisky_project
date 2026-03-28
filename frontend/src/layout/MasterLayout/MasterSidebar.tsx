@@ -18,6 +18,7 @@ import {
   Package,
   ClipboardList,
   HelpCircle,
+  Bell,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -95,6 +96,11 @@ const adminNavItems: NavItem[] = [
     path: "/admin/user-nutrition-mapping",
   },
   {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "Reassignment Logs",
+    path: "/admin/reassignment-logs",
+  },
+  {
 
     icon: <ClipboardList className="w-5 h-5" />,
     name: "Patients Overview",
@@ -121,6 +127,14 @@ const adminNavItems: NavItem[] = [
     path: "/admin/patient-payment-verification",
   },
   {
+    icon: <ShoppingCart className="w-5 h-5" />,
+    name: "Orders Management",
+    subItems: [
+      { name: "All Orders", path: "/admin/all-orders" },
+      { name: "Kitchen Payouts", path: "/admin/payouts" },
+    ],
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Health Monitoring",
     subItems: [
@@ -136,6 +150,11 @@ const adminNavItems: NavItem[] = [
       { name: "Ticket Categories", path: "/admin/ticket-category" },
       { name: "Support Ticket Requests", path: "/admin/support-ticket-requests" },
     ],
+  },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/admin/notifications",
   },
   {
     icon: <UserCog className="w-5 h-5" />,
@@ -217,6 +236,11 @@ const patientNavItems: NavItem[] = [
     name: "Support Tickets",
     path: "/patient/support-tickets",
   },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/patient/notifications",
+  },
 ];
 
 const nutritionistNavItems: NavItem[] = [
@@ -274,6 +298,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <HelpCircle className="w-5 h-5" />,
     name: "Support Tickets",
     path: "/nutrition/support-tickets",
+  },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/nutrition/notifications",
   },
 ];
 

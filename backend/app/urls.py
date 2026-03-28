@@ -38,8 +38,11 @@ router.register(r'deliverychargeslab', DeliveryChargeSlabViewSet, basename='deli
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
 router.register(r'supportticket', SupportTicketViewSet, basename='supportticket')
+router.register(r'notifications', NotificationViewSet, basename='notifications')
 router.register(r'ticketmessage', TicketMessageViewSet, basename='ticketmessage')
 router.register(r'ticketattachment', TicketAttachmentViewSet, basename='ticketattachment')
+router.register(r'nutritionist-reassignment', NutritionistReassignmentViewSet, basename='nutritionist-reassignment')
+router.register(r'kitchen-reassignment', MicroKitchenReassignmentViewSet, basename='kitchen-reassignment')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)
@@ -136,6 +139,8 @@ urlpatterns = [
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),
     # path('userlist/', UserListView.as_view(), name='user_list'),
+    path("admin/all-orders/", views.AdminAllOrdersView.as_view(), name="admin-all-orders"),
+    path("admin/kitchen-payouts/", views.AdminKitchenPayoutsView.as_view(), name="admin-kitchen-payouts"),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
     path('login/', LoginView.as_view(), name='login'),
