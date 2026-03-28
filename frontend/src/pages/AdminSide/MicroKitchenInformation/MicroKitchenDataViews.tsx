@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FiClock, FiInfo, FiCheck, FiList, FiCalendar, FiUser, FiPackage, FiHash } from "react-icons/fi";
+import { FiClock, FiInfo, FiCheck, FiList, FiCalendar, FiUser, FiPackage, FiHash, FiNavigation2 } from "react-icons/fi";
+import { haversineKm } from "../../../utils/haversineKm";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -118,26 +119,82 @@ export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
   );
 }
 
-export function DisplayKitchenPatients({ items }: { items: any[] }) {
+function distanceFromKitchen(
+  kitchen: { latitude?: number | null; longitude?: number | null } | undefined,
+  patientLat: unknown,
+  patientLng: unknown
+): number | null {
+  const klat = kitchen?.latitude;
+  const klng = kitchen?.longitude;
+  if (
+    klat == null ||
+    klng == null ||
+    patientLat == null ||
+    patientLng == null ||
+    Number.isNaN(Number(klat)) ||
+    Number.isNaN(Number(klng)) ||
+    Number.isNaN(Number(patientLat)) ||
+    Number.isNaN(Number(patientLng))
+  ) {
+    return null;
+  }
+  return haversineKm(Number(klat), Number(klng), Number(patientLat), Number(patientLng));
+}
+
+export function DisplayKitchenPatients({
+  items,
+  kitchen,
+}: {
+  items: any[];
+  kitchen?: { latitude?: number | null; longitude?: number | null; brand_name?: string | null };
+}) {
   if (!items || items.length === 0) return <EmptyState message="No patients assigned to this kitchen." />;
+  const kitchenCoordsOk =
+    kitchen?.latitude != null &&
+    kitchen?.longitude != null &&
+    !Number.isNaN(Number(kitchen.latitude)) &&
+    !Number.isNaN(Number(kitchen.longitude));
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {items.map((x: any) => (
+    <div className="space-y-4">
+      {!kitchenCoordsOk && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-xl px-4 py-3">
+          This kitchen has no latitude/longitude on file. Set location on the kitchen account to see straight-line distances to patients.
+        </p>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {items.map((x: any) => {
+          const pd = x.patient_details || x.user_details;
+          const km = distanceFromKitchen(kitchen, pd?.latitude, pd?.longitude);
+          return (
         <div key={x.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <div className="font-bold text-gray-900 dark:text-white text-base">
-                {[x.user_details?.first_name, x.user_details?.last_name].filter(Boolean).join(" ") || "Patient"}
+                {[pd?.first_name, pd?.last_name].filter(Boolean).join(" ") || "Patient"}
               </div>
-              <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+              <div className="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
                 <span className={`px-2 py-0.5 rounded-full font-bold ${x.status === 'active' ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                   }`}>
-                  {x.status.replace("_", " ")}
+                  {String(x.status || "").replace("_", " ")}
                 </span>
-                <span>ID: {x.user}</span>
+                <span>User id: {pd?.id ?? x.user}</span>
               </div>
             </div>
-            <div className="text-right flex flex-col items-end">
+            <div className="text-right flex flex-col items-end gap-2">
+              {km !== null ? (
+                <div className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/25 border border-indigo-100 dark:border-indigo-800/40 px-3 py-2">
+                  <FiNavigation2 className="text-indigo-500 shrink-0" size={14} />
+                  <div>
+                    <div className="text-[10px] font-black text-indigo-400 uppercase leading-none">Distance</div>
+                    <div className="text-sm font-black text-indigo-700 dark:text-indigo-300">{km.toFixed(2)} km</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-[10px] font-bold text-gray-400 uppercase text-right max-w-[9rem]">
+                  {kitchenCoordsOk ? "Patient coords missing" : "Distance n/a"}
+                </div>
+              )}
               <div className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Period</div>
               <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.start_date || "—"}</div>
               <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.end_date || "—"}</div>
@@ -162,7 +219,10 @@ export function DisplayKitchenPatients({ items }: { items: any[] }) {
             </div>
           </div>
         </div>
-      ))}
+          );
+        })}
+      </div>
+      <p className="text-[10px] text-gray-400 italic">Straight-line (Haversine) distance; not driving distance.</p>
     </div>
   );
 }

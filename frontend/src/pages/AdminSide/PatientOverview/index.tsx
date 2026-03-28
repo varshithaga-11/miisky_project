@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { FiSearch, FiEye } from "react-icons/fi";
+import { useEffect, useState, useMemo } from "react";
+import { FiSearch, FiEye, FiNavigation2, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { fetchPatientUserList, PatientUserRow } from "./api";
+import { fetchPatientUserList, PatientUserRow, fetchAllMicroKitchenProfiles, MicroKitchenForDistance } from "./api";
+import { haversineKm } from "../../../utils/haversineKm";
 import { PatientDetailModal } from "./PatientDetailModal";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
@@ -20,6 +21,68 @@ const PatientOverviewPage: React.FC = () => {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientUserRow | null>(null);
+
+  const [distanceModalPatient, setDistanceModalPatient] = useState<PatientUserRow | null>(null);
+  const [microKitchens, setMicroKitchens] = useState<MicroKitchenForDistance[] | null>(null);
+  const [kitchensLoading, setKitchensLoading] = useState(false);
+  const [kitchensFetchError, setKitchensFetchError] = useState(false);
+
+  const loadMicroKitchens = async () => {
+    setKitchensLoading(true);
+    setKitchensFetchError(false);
+    try {
+      setMicroKitchens(await fetchAllMicroKitchenProfiles());
+    } catch (e) {
+      console.error(e);
+      setKitchensFetchError(true);
+      setMicroKitchens(null);
+    } finally {
+      setKitchensLoading(false);
+    }
+  };
+
+  const openDistanceModal = async (p: PatientUserRow) => {
+    setDistanceModalPatient(p);
+    if (microKitchens !== null) return;
+    await loadMicroKitchens();
+  };
+
+  const closeDistanceModal = () => setDistanceModalPatient(null);
+
+  const distanceRows = useMemo(() => {
+    if (!distanceModalPatient || microKitchens === null) return [];
+    const plat = distanceModalPatient.latitude;
+    const plng = distanceModalPatient.longitude;
+    const patientOk =
+      plat != null &&
+      plng != null &&
+      !Number.isNaN(Number(plat)) &&
+      !Number.isNaN(Number(plng));
+
+    return microKitchens
+      .map((k) => {
+        const klat = k.latitude;
+        const klng = k.longitude;
+        const kitchenOk =
+          klat != null &&
+          klng != null &&
+          !Number.isNaN(Number(klat)) &&
+          !Number.isNaN(Number(klng));
+        let km: number | null = null;
+        if (patientOk && kitchenOk) {
+          km = haversineKm(Number(plat), Number(plng), Number(klat), Number(klng));
+        }
+        return { kitchen: k, km };
+      })
+      .sort((a, b) => {
+        if (a.km === null && b.km === null) {
+          return (a.kitchen.brand_name || "").localeCompare(b.kitchen.brand_name || "");
+        }
+        if (a.km === null) return 1;
+        if (b.km === null) return -1;
+        return a.km - b.km;
+      });
+  }, [distanceModalPatient, microKitchens]);
 
   useEffect(() => {
     const load = async () => {
@@ -131,13 +194,13 @@ const PatientOverviewPage: React.FC = () => {
                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
+                      <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">
                         Loading patients...
                       </TableCell>
                     </TableRow>
                   ) : rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
+                      <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">
                         No patients found
                       </TableCell>
                     </TableRow>
@@ -167,13 +230,23 @@ const PatientOverviewPage: React.FC = () => {
                           ) : "—"}
                         </TableCell>
                         <TableCell className="px-5 py-4">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                            onClick={() => openDetail(r)}
-                          >
-                            <FiEye /> View details
-                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              title="Distance to all micro kitchens"
+                              onClick={() => openDistanceModal(r)}
+                              className="inline-flex items-center justify-center rounded-lg p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/15 dark:text-indigo-400 dark:hover:bg-indigo-500/25"
+                            >
+                              <FiNavigation2 className="h-4 w-4" aria-hidden />
+                            </button>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              onClick={() => openDetail(r)}
+                            >
+                              <FiEye /> View details
+                            </button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -211,6 +284,116 @@ const PatientOverviewPage: React.FC = () => {
 
       {selectedPatient && (
         <PatientDetailModal patient={selectedPatient} open={detailOpen} onClose={closeDetail} />
+      )}
+
+      {distanceModalPatient && (
+        <div
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          role="presentation"
+          onClick={closeDistanceModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-patient-distance-title"
+            className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-4 dark:border-gray-800">
+              <div className="min-w-0">
+                <h2 id="admin-patient-distance-title" className="text-lg font-bold text-gray-900 dark:text-white">
+                  Distance to micro kitchens
+                </h2>
+                <p className="mt-1 text-sm text-gray-500 truncate">
+                  {[distanceModalPatient.first_name, distanceModalPatient.last_name].filter(Boolean).join(" ") ||
+                    distanceModalPatient.username}
+                </p>
+                <p className="mt-2 text-xs text-gray-500">
+                  Patient coordinates:{" "}
+                  {distanceModalPatient.latitude != null && distanceModalPatient.longitude != null ? (
+                    <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                      {Number(distanceModalPatient.latitude).toFixed(5)}, {Number(distanceModalPatient.longitude).toFixed(5)}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400">Not set — distances unavailable</span>
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDistanceModal}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="Close"
+              >
+                <FiX className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(85vh-8rem)] px-6 py-4">
+              {kitchensLoading ? (
+                <div className="flex flex-col items-center gap-3 py-16">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                  <span className="text-sm text-gray-500">Loading kitchens…</span>
+                </div>
+              ) : kitchensFetchError ? (
+                <div className="flex flex-col items-center gap-4 py-12 text-center">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Could not load micro kitchens.</p>
+                  <button
+                    type="button"
+                    onClick={() => loadMicroKitchens()}
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-blue-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase text-gray-500 dark:border-gray-800 dark:bg-gray-800/50">
+                        <th className="px-4 py-3">Kitchen</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Lat, lng</th>
+                        <th className="px-4 py-3 text-end">Distance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {distanceRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-10 text-center text-gray-500 italic">
+                            No micro kitchens found.
+                          </td>
+                        </tr>
+                      ) : (
+                        distanceRows.map(({ kitchen, km }) => (
+                          <tr key={kitchen.id} className="border-b border-gray-50 last:border-0 dark:border-gray-800">
+                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                              {kitchen.brand_name || `Kitchen #${kitchen.id}`}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                              {kitchen.status || "—"}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">
+                              {kitchen.latitude != null && kitchen.longitude != null
+                                ? `${Number(kitchen.latitude).toFixed(5)}, ${Number(kitchen.longitude).toFixed(5)}`
+                                : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-end font-semibold text-indigo-600 dark:text-indigo-400">
+                              {km !== null ? `${km.toFixed(2)} km` : "—"}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-4 text-xs text-gray-400">
+                Haversine great-circle distance (approximate). Not driving distance.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

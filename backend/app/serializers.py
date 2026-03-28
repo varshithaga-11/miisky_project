@@ -882,11 +882,14 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             return None
         return {
             'id': u.id,
+            'username': u.username,
             'first_name': u.first_name,
             'last_name': u.last_name,
             'email': u.email,
             'mobile': u.mobile,
             'address': u.address,
+            'latitude': getattr(u, 'latitude', None),
+            'longitude': getattr(u, 'longitude', None),
         }
 
     def get_diet_plan_details(self, obj):

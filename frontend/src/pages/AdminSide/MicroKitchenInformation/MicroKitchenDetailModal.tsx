@@ -197,7 +197,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
               {!loading && !error && payload && (
                 <>
                   {screen === "info" && <DisplayKitchenInfo kitchen={payload} />}
-                  {screen === "patients" && <DisplayKitchenPatients items={payload} />}
+                  {screen === "patients" && <DisplayKitchenPatients items={payload} kitchen={kitchen} />}
                   {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
                   {screen === "reviews" && <DisplayKitchenReviews items={payload} />}
                   {screen === "orders" && <DisplayKitchenOrders items={payload} />}

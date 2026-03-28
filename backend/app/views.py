@@ -643,6 +643,8 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                         "state": patient.state.name if patient.state else None,
                         "country": patient.country.name if patient.country else None,
                         "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
+                        "latitude": getattr(patient, "latitude", None),
+                        "longitude": getattr(patient, "longitude", None),
                     },
                     "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
                     "reassignment_details": reassignment_data,

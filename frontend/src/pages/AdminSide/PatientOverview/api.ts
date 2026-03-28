@@ -42,7 +42,36 @@ export interface PatientUserRow {
   active_plan_status?: string | null;
   active_kitchen_name?: string | null;
   active_nutritionist_name?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
+
+export type MicroKitchenForDistance = {
+  id: number;
+  brand_name: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  status?: string;
+};
+
+type MicroKitchenListPage = {
+  results: MicroKitchenForDistance[];
+  next: number | null;
+};
+
+/** All micro-kitchen profiles (any status), for admin distance views. */
+export const fetchAllMicroKitchenProfiles = async (): Promise<MicroKitchenForDistance[]> => {
+  const all: MicroKitchenForDistance[] = [];
+  let page = 1;
+  for (;;) {
+    const data = await getJson<MicroKitchenListPage>("api/microkitchenprofile/", { page, limit: 10 });
+    const { results, next } = data;
+    all.push(...(results || []));
+    if (!next) break;
+    page = next;
+  }
+  return all;
+};
 
 async function getJson<T>(path: string, params?: Record<string, string | number>): Promise<T> {
   const url = createApiUrl(path);
