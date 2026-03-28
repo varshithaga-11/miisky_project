@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins
 from rest_framework.views import APIView
@@ -366,23 +366,110 @@ class AdminKitchenPayoutsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
-        # Placeholder for kitchen payout calculation logic
-        # Typically involves summing delivered orders for each kitchen
         kitchens = MicroKitchenProfile.objects.all()
         results = []
         for k in kitchens:
-            total_sales = Order.objects.filter(micro_kitchen=k, status='delivered').aggregate(total=models.Sum('total_amount'))['total'] or 0
-            results.append({
-                "id": k.id,
-                "kitchen_name": k.brand_name,
-                "total_sales": float(total_sales),
-                "commission_due": float(total_sales) * 0.1, # Example 10%
-                "payout_status": "Pending"
-            })
-        
+            total_sales = (
+                Order.objects.filter(micro_kitchen=k, status="delivered").aggregate(
+                    total=Sum("total_amount")
+                )["total"]
+                or 0
+            )
+            plan_pending = (
+                PayoutRecord.objects.filter(
+                    recipient_role=PayoutRecord.ROLE_KITCHEN,
+                    micro_kitchen=k,
+                    status=PayoutRecord.STATUS_PENDING,
+                ).aggregate(total=Sum("amount"))["total"]
+                or 0
+            )
+            plan_disbursed = (
+                PayoutRecord.objects.filter(
+                    recipient_role=PayoutRecord.ROLE_KITCHEN,
+                    micro_kitchen=k,
+                    status=PayoutRecord.STATUS_DISBURSED,
+                ).aggregate(total=Sum("amount"))["total"]
+                or 0
+            )
+            results.append(
+                {
+                    "id": k.id,
+                    "kitchen_name": k.brand_name,
+                    "total_sales": float(total_sales),
+                    "order_commission_example": float(total_sales) * 0.1,
+                    "diet_plan_payout_pending": float(plan_pending),
+                    "diet_plan_payout_disbursed": float(plan_disbursed),
+                    "payout_status": "Pending" if plan_pending else "Clear",
+                }
+            )
+
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(results, request)
         return paginator.get_paginated_response(paginated_data)
+
+
+class PlatformPaymentSettingsView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        obj = PlatformPaymentSettings.get_solo()
+        return Response(PlatformPaymentSettingsSerializer(obj).data)
+
+    def patch(self, request):
+        obj = PlatformPaymentSettings.get_solo()
+        ser = PlatformPaymentSettingsSerializer(obj, data=request.data, partial=True)
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        return Response(ser.data)
+
+
+class NutritionistPlanPayoutsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if getattr(request.user, "role", None) != "nutritionist":
+            return Response(
+                {"detail": "Only nutritionists can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        qs = (
+            PayoutRecord.objects.filter(
+                recipient_role=PayoutRecord.ROLE_NUTRITIONIST,
+                nutritionist=request.user,
+            )
+            .select_related(
+                "ledger__user_diet_plan__user",
+                "ledger__user_diet_plan__diet_plan",
+            )
+            .order_by("-id")
+        )
+        return Response(PayoutRecordSerializer(qs, many=True).data)
+
+
+class MicroKitchenPlanPayoutsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response(
+                {"detail": "Only micro kitchen users can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+        if not mk:
+            return Response([])
+        qs = (
+            PayoutRecord.objects.filter(
+                recipient_role=PayoutRecord.ROLE_KITCHEN,
+                micro_kitchen=mk,
+            )
+            .select_related(
+                "ledger__user_diet_plan__user",
+                "ledger__user_diet_plan__diet_plan",
+            )
+            .order_by("-id")
+        )
+        return Response(PayoutRecordSerializer(qs, many=True).data)
 
 
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
@@ -855,6 +942,10 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                 active_diet_plan=active_plan,
                 effective_from=effective_from,
             )
+
+        from .plan_payment import refresh_ledger_payouts_if_exists
+
+        refresh_ledger_payouts_if_exists(active_plan)
 
         out = UserNutritionistMappingSerializer(
             UserNutritionistMapping.objects.select_related("user", "nutritionist").get(
@@ -2246,6 +2337,9 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 )
 
         plan.refresh_from_db()
+        from .plan_payment import refresh_ledger_payouts_if_exists
+
+        refresh_ledger_payouts_if_exists(plan)
         return Response(self.get_serializer(plan).data, status=status.HTTP_200_OK)
 
 

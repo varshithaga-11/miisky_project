@@ -14,6 +14,7 @@ import {
   RotateCw,
   ChevronRight,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { getNutritionDashboardStats, NutritionDashboardStats } from "./api";
 
@@ -31,6 +32,7 @@ const nutritionMenus: DashboardMenuItem[] = [
   { label: "Allotted Patients", path: "/nutrition/allotted-patients", icon: Users, statKey: "allottedPatients", color: "blue", category: "Patient Care" },
   { label: "Consultation Request", path: "/nutrition/meeting-requests", icon: Video, statKey: "meetingRequests", color: "rose", category: "Patient Care" },
   { label: "Patient Documents", path: "/nutrition/uploaded-documents", icon: FileText, statKey: "patientDocuments", color: "sky", category: "Patient Care" },
+  { label: "Diet plan payouts", path: "/nutrition/plan-payouts", icon: Wallet, color: "lime", category: "Patient Care" },
 
   // Dietary Tools
   { label: "Meal Optimizer", path: "/nutrition/set-meals", icon: Layers, statKey: "mealOptimizer", color: "emerald", category: "Dietary Tools" },

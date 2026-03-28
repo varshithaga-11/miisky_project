@@ -101,6 +101,10 @@ import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index"
 import NonPatientDashboardPage from "./pages/NonPatient/Dashboard/index";
 import NutritionKitchenReassignment from "./pages/AdminSide/NutritionKitchenReassignment/index";
 import OrderManagementPage from "./pages/AdminSide/OrderManagement/index";
+import PaymentSplitSettingsPage from "./pages/AdminSide/PaymentSplitSettings/index";
+import KitchenPayoutsPage from "./pages/AdminSide/KitchenPayouts/index";
+import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
+import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
 import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
 import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
 
@@ -271,6 +275,8 @@ export function appRoutes() {
           <Route path="admin/notifications" element={<AdminNotificationsPage />} />
           <Route path="admin/reassignment-logs" element={<NutritionKitchenReassignment />} />
           <Route path="admin/all-orders" element={<OrderManagementPage />} />
+          <Route path="admin/payouts" element={<KitchenPayoutsPage />} />
+          <Route path="admin/payment-split-settings" element={<PaymentSplitSettingsPage />} />
           <Route path="nutrition/reference/ranges" element={<ReferenceLibraryPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
@@ -301,6 +307,7 @@ export function appRoutes() {
           <Route path="nutrition/micro-kitchens" element={<ListOfMicroKitchensPage />} />
           <Route path="nutrition/support-tickets" element={<NutritionSupportTicketPage />} />
           <Route path="nutrition/notifications" element={<NutritionNotificationsPage />} />
+          <Route path="nutrition/plan-payouts" element={<NutritionPlanPayoutsPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
@@ -308,6 +315,7 @@ export function appRoutes() {
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
+          <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 

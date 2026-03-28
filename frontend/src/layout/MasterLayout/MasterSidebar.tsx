@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Bell,
   BookOpen,
+  Wallet,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -142,6 +143,7 @@ const adminNavItems: NavItem[] = [
       { name: "Health Parameters", path: "/admin/health-parameter" },
       { name: "Normal Ranges", path: "/admin/normal-range" },
       { name: "Diet Plans", path: "/admin/diet-plan" },
+      { name: "Payment split defaults", path: "/admin/payment-split-settings" },
     ],
   },
   {
@@ -291,6 +293,11 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/meeting-requests",
   },
   {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Diet plan payouts",
+    path: "/nutrition/plan-payouts",
+  },
+  {
     icon: <BookOpen className="w-5 h-5" />,
     name: "Reference Library",
     subItems: [
@@ -355,6 +362,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <Layers className="w-5 h-5" />,
     name: "Available Foods",
     path: "/microkitchen/available-foods",
+  },
+  {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Diet plan payouts",
+    path: "/microkitchen/plan-payouts",
   },
   {
     icon: <FileText className="w-5 h-5" />,

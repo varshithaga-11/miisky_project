@@ -795,6 +795,18 @@ class DietPlans(models.Model):
 
     no_of_days = models.IntegerField(null=True, blank=True)  # e.g. 30 days
 
+    # Optional override for patient plan payment split (% of gross). If any is null, platform defaults apply.
+    platform_fee_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        help_text="Override: platform share % of gross (must set all three to override)",
+    )
+    nutritionist_share_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+    )
+    kitchen_share_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+    )
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -1515,6 +1527,8 @@ class UserDietPlan(models.Model):
             self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days - 1)
 
         self.save()
+        from .plan_payment import ensure_plan_payment_ledger
+        ensure_plan_payment_ledger(self)
 
     def reject_payment(self):
         """Admin rejects payment"""
@@ -2208,6 +2222,120 @@ class MicroKitchenReassignment(models.Model):
     # Which date the new kitchen takes over from
     effective_from = models.DateField()
 
+
+class PlatformPaymentSettings(models.Model):
+    """Singleton (pk=1): default % split of gross patient plan payments when DietPlans has no override."""
+
+    default_platform_fee_percent = models.DecimalField(max_digits=5, decimal_places=2, default=20)
+    default_nutritionist_share_percent = models.DecimalField(max_digits=5, decimal_places=2, default=30)
+    default_kitchen_share_percent = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Platform payment split defaults"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class PlanPaymentLedger(models.Model):
+    """One row per UserDietPlan after admin verifies payment; stores gross and split pools."""
+
+    STATUS_PENDING = "pending"
+    STATUS_DISBURSED = "disbursed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_DISBURSED, "Disbursed"),
+    ]
+
+    user_diet_plan = models.OneToOneField(
+        "UserDietPlan",
+        on_delete=models.CASCADE,
+        related_name="payment_ledger",
+    )
+    gross_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    platform_fee_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    nutritionist_share_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    kitchen_share_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    platform_fee_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    nutritionist_pool_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    kitchen_pool_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Ledger plan={self.user_diet_plan_id} gross={self.gross_amount}"
+
+
+class PayoutRecord(models.Model):
+    """Per-recipient slice for a plan payment (platform, nutritionist segment, or kitchen segment)."""
+
+    ROLE_PLATFORM = "platform"
+    ROLE_NUTRITIONIST = "nutritionist"
+    ROLE_KITCHEN = "kitchen"
+    RECIPIENT_ROLE_CHOICES = [
+        (ROLE_PLATFORM, "Platform"),
+        (ROLE_NUTRITIONIST, "Nutritionist"),
+        (ROLE_KITCHEN, "Micro kitchen"),
+    ]
+
+    REASON_INITIAL = "initial"
+    REASON_REASSIGNMENT_SPLIT = "reassignment_split"
+    REASON_CHOICES = [
+        (REASON_INITIAL, "Initial"),
+        (REASON_REASSIGNMENT_SPLIT, "Reassignment split"),
+    ]
+
+    STATUS_PENDING = "pending"
+    STATUS_DISBURSED = "disbursed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_DISBURSED, "Disbursed"),
+    ]
+
+    ledger = models.ForeignKey(
+        PlanPaymentLedger,
+        on_delete=models.CASCADE,
+        related_name="payout_records",
+    )
+    recipient_role = models.CharField(max_length=20, choices=RECIPIENT_ROLE_CHOICES)
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plan_payout_records",
+    )
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plan_payout_records",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    period_from = models.DateField(null=True, blank=True)
+    period_to = models.DateField(null=True, blank=True)
+    reason = models.CharField(max_length=40, choices=REASON_CHOICES, default=REASON_INITIAL)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    paid_on = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["ledger_id", "recipient_role", "id"]
+
+    def __str__(self):
+        return f"Payout {self.recipient_role} {self.amount} (ledger {self.ledger_id})"
 
 
 # ------------------------------------------------------------

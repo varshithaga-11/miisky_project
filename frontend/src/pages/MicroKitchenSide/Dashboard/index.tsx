@@ -12,6 +12,7 @@ import {
   RotateCw,
   Zap,
   ChevronRight,
+  Wallet,
 } from "lucide-react";
 import { getMicroKitchenDashboardStats, MicroKitchenDashboardStats } from "./api";
 
@@ -33,6 +34,7 @@ const microKitchenMenus: DashboardMenuItem[] = [
   // Patients & Reviews
   { label: "Patients", path: "/microkitchen/patients", icon: Users, statKey: "patients", color: "blue", category: "Patients" },
   { label: "Kitchen Reviews", path: "/microkitchen/reviews", icon: Star, statKey: "kitchenReviews", color: "rose", category: "Patients" },
+  { label: "Diet plan payouts", path: "/microkitchen/plan-payouts", icon: Wallet, color: "lime", category: "Patients" },
 
   // Management
   { label: "Questionnaire", path: "/microkitchen/questionnaire", icon: FileText, statKey: "questionnaire", color: "violet", category: "Management" },

@@ -141,6 +141,21 @@ urlpatterns = [
     # path('userlist/', UserListView.as_view(), name='user_list'),
     path("admin/all-orders/", views.AdminAllOrdersView.as_view(), name="admin-all-orders"),
     path("admin/kitchen-payouts/", views.AdminKitchenPayoutsView.as_view(), name="admin-kitchen-payouts"),
+    path(
+        "admin/platform-payment-settings/",
+        views.PlatformPaymentSettingsView.as_view(),
+        name="admin-platform-payment-settings",
+    ),
+    path(
+        "nutrition/plan-payouts/",
+        views.NutritionistPlanPayoutsView.as_view(),
+        name="nutrition-plan-payouts",
+    ),
+    path(
+        "microkitchen/plan-payouts/",
+        views.MicroKitchenPlanPayoutsView.as_view(),
+        name="microkitchen-plan-payouts",
+    ),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
     path('login/', LoginView.as_view(), name='login'),

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -738,6 +740,101 @@ class DietPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = DietPlans
         fields = "__all__"
+
+    def validate(self, attrs):
+        inst = self.instance
+
+        def _get(key):
+            if key in attrs and attrs[key] is not None:
+                return attrs[key]
+            if inst is not None:
+                return getattr(inst, key, None)
+            return None
+
+        p = _get("platform_fee_percent")
+        n = _get("nutritionist_share_percent")
+        k = _get("kitchen_share_percent")
+        if p is None and n is None and k is None:
+            return attrs
+        if p is None or n is None or k is None:
+            raise serializers.ValidationError(
+                "Provide all three split percentages (platform, nutritionist, kitchen), "
+                "or leave all empty to use platform defaults."
+            )
+        total = Decimal(str(p)) + Decimal(str(n)) + Decimal(str(k))
+        if total != Decimal("100"):
+            raise serializers.ValidationError("Split percentages must sum to 100.")
+        return attrs
+
+
+class PlatformPaymentSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformPaymentSettings
+        fields = (
+            "id",
+            "default_platform_fee_percent",
+            "default_nutritionist_share_percent",
+            "default_kitchen_share_percent",
+            "updated_at",
+        )
+        read_only_fields = ("id", "updated_at")
+
+    def validate(self, attrs):
+        # Merge with existing singleton for partial PATCH
+        inst = self.instance or PlatformPaymentSettings.get_solo()
+
+        def _v(key):
+            if key in attrs and attrs[key] is not None:
+                return attrs[key]
+            return getattr(inst, key, None)
+
+        p, n, k = _v("default_platform_fee_percent"), _v(
+            "default_nutritionist_share_percent"
+        ), _v("default_kitchen_share_percent")
+        total = Decimal(str(p)) + Decimal(str(n)) + Decimal(str(k))
+        if total != Decimal("100"):
+            raise serializers.ValidationError("Default split percentages must sum to 100.")
+        return attrs
+
+
+class PayoutRecordSerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    plan_title = serializers.SerializerMethodField()
+    ledger_gross = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True, source="ledger.gross_amount"
+    )
+
+    class Meta:
+        model = PayoutRecord
+        fields = (
+            "id",
+            "ledger",
+            "ledger_gross",
+            "recipient_role",
+            "nutritionist",
+            "micro_kitchen",
+            "amount",
+            "period_from",
+            "period_to",
+            "reason",
+            "status",
+            "paid_on",
+            "created_at",
+            "patient_name",
+            "plan_title",
+        )
+        read_only_fields = fields
+
+    def get_patient_name(self, obj):
+        u = getattr(obj.ledger.user_diet_plan, "user", None)
+        if not u:
+            return None
+        name = f"{u.first_name or ''} {u.last_name or ''}".strip()
+        return name or u.username
+
+    def get_plan_title(self, obj):
+        dp = getattr(obj.ledger.user_diet_plan, "diet_plan", None)
+        return dp.title if dp else None
 
 
 # ── Role Questionnaires / Profiles ─────────────────────────────────────────────

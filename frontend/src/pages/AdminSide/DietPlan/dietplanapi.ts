@@ -20,6 +20,10 @@ export interface DietPlan {
     created_by?: number;
     final_amount?: string | number;
     features?: DietPlanFeature[];
+    /** Optional override; all three must be set (sum 100) or leave all empty for platform defaults */
+    platform_fee_percent?: string | number | null;
+    nutritionist_share_percent?: string | number | null;
+    kitchen_share_percent?: string | number | null;
 }
 
 export interface PaginatedResponse<T> {

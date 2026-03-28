@@ -23,7 +23,10 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
     amount: "",
     discount_amount: "0",
     no_of_days: 30,
-    is_active: true
+    is_active: true,
+    platform_fee_percent: "",
+    nutritionist_share_percent: "",
+    kitchen_share_percent: "",
   });
   const [features, setFeatures] = useState<FeatureItem[]>([]);
   const [newFeature, setNewFeature] = useState("");
@@ -64,9 +67,33 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
         toast.warning("Please fill required fields (Title and Amount)");
         return;
     }
+    const pRaw = String(formData.platform_fee_percent ?? "").trim();
+    const nRaw = String(formData.nutritionist_share_percent ?? "").trim();
+    const kRaw = String(formData.kitchen_share_percent ?? "").trim();
+    const anySet = pRaw || nRaw || kRaw;
+    if (anySet) {
+      const p = parseFloat(pRaw);
+      const n = parseFloat(nRaw);
+      const k = parseFloat(kRaw);
+      if ([p, n, k].some((x) => Number.isNaN(x))) {
+        toast.warning("Fill all three payment split percentages or leave all blank for platform defaults.");
+        return;
+      }
+      if (Math.abs(p + n + k - 100) > 0.001) {
+        toast.warning("Payment split percentages must sum to 100.");
+        return;
+      }
+    }
     setLoading(true);
     try {
-      const planResp = await createDietPlan(formData);
+      const { platform_fee_percent, nutritionist_share_percent, kitchen_share_percent, ...rest } = formData;
+      const payload: Record<string, unknown> = { ...rest };
+      if (anySet) {
+        payload.platform_fee_percent = parseFloat(pRaw);
+        payload.nutritionist_share_percent = parseFloat(nRaw);
+        payload.kitchen_share_percent = parseFloat(kRaw);
+      }
+      const planResp = await createDietPlan(payload as Partial<DietPlan>);
       
       // Add features if any
       if (features.length > 0) {
@@ -131,6 +158,48 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
             <div>
               <Label htmlFor="no_of_days">Duration (Days)</Label>
               <Input id="no_of_days" type="number" value={formData.no_of_days} onChange={handleChange} />
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-600 pt-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Payment split override (optional)
+              </p>
+              <p className="text-xs text-gray-500">Leave blank for platform defaults. If set, all three must total 100%.</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label htmlFor="platform_fee_percent">Platform %</Label>
+                  <Input
+                    id="platform_fee_percent"
+                    type="number"
+                    step="0.01"
+                    value={formData.platform_fee_percent ?? ""}
+                    onChange={handleChange}
+                    placeholder="—"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nutritionist_share_percent">Nutritionist %</Label>
+                  <Input
+                    id="nutritionist_share_percent"
+                    type="number"
+                    step="0.01"
+                    value={formData.nutritionist_share_percent ?? ""}
+                    onChange={handleChange}
+                    placeholder="—"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="kitchen_share_percent">Kitchen %</Label>
+                  <Input
+                    id="kitchen_share_percent"
+                    type="number"
+                    step="0.01"
+                    value={formData.kitchen_share_percent ?? ""}
+                    onChange={handleChange}
+                    placeholder="—"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

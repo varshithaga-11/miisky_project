@@ -13,8 +13,18 @@ export const getAllOrders = async (page: number = 1, limit: number = 10, search:
   return response.data;
 };
 
+export interface KitchenPayoutRow {
+  id: number;
+  kitchen_name: string;
+  total_sales: number;
+  order_commission_example: number;
+  diet_plan_payout_pending: number;
+  diet_plan_payout_disbursed: number;
+  payout_status: string;
+}
+
 /**
- * Fetches kitchen payout reports.
+ * Fetches kitchen payout reports (orders + diet plan payout totals).
  */
 export const getKitchenPayouts = async (page: number = 1, limit: number = 10, search: string = "") => {
   const url = createApiUrl("api/admin/kitchen-payouts/");

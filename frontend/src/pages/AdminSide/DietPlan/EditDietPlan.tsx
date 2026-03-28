@@ -50,9 +50,32 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const pRaw = String(formData.platform_fee_percent ?? "").trim();
+    const nRaw = String(formData.nutritionist_share_percent ?? "").trim();
+    const kRaw = String(formData.kitchen_share_percent ?? "").trim();
+    const anySet = pRaw || nRaw || kRaw;
+    if (anySet) {
+      const p = parseFloat(pRaw);
+      const n = parseFloat(nRaw);
+      const k = parseFloat(kRaw);
+      if ([p, n, k].some((x) => Number.isNaN(x))) {
+        toast.warning("Fill all three payment split percentages or clear all to use platform defaults.");
+        return;
+      }
+      if (Math.abs(p + n + k - 100) > 0.001) {
+        toast.warning("Payment split percentages must sum to 100.");
+        return;
+      }
+    }
     setSaveLoading(true);
     try {
       const { features, final_amount, ...cleanData } = formData as any;
+      const splitKeys = ["platform_fee_percent", "nutritionist_share_percent", "kitchen_share_percent"] as const;
+      for (const key of splitKeys) {
+        const v = cleanData[key];
+        if (v === "" || v === undefined) cleanData[key] = null;
+        else if (typeof v === "string") cleanData[key] = parseFloat(v);
+      }
       await updateDietPlan(id, cleanData);
       toast.success("Diet plan updated successfully!");
       onUpdate();
@@ -164,6 +187,49 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
                 <div>
                     <Label htmlFor="no_of_days">Duration (Days)</Label>
                     <Input id="no_of_days" type="number" value={formData.no_of_days || ""} onChange={handlePlanChange} />
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-2 space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Payment split override (optional)
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Leave blank to use admin defaults. If set, all three must total 100%.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label htmlFor="platform_fee_percent">Platform %</Label>
+                      <Input
+                        id="platform_fee_percent"
+                        type="number"
+                        step="0.01"
+                        value={formData.platform_fee_percent ?? ""}
+                        onChange={handlePlanChange}
+                        placeholder="—"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="nutritionist_share_percent">Nutritionist %</Label>
+                      <Input
+                        id="nutritionist_share_percent"
+                        type="number"
+                        step="0.01"
+                        value={formData.nutritionist_share_percent ?? ""}
+                        onChange={handlePlanChange}
+                        placeholder="—"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="kitchen_share_percent">Kitchen %</Label>
+                      <Input
+                        id="kitchen_share_percent"
+                        type="number"
+                        step="0.01"
+                        value={formData.kitchen_share_percent ?? ""}
+                        onChange={handlePlanChange}
+                        placeholder="—"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="pt-4 flex gap-2">
                     <Button type="submit" disabled={saveLoading} className="w-full">
