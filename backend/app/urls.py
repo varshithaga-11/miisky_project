@@ -161,6 +161,11 @@ urlpatterns = [
         views.AdminPayoutTransactionListCreateView.as_view(),
         name="admin-plan-payout-transactions",
     ),
+    path(
+        "admin/plan-payments-overview/",
+        views.AdminPlanPaymentsOverviewView.as_view(),
+        name="admin-plan-payments-overview",
+    ),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
     path('login/', LoginView.as_view(), name='login'),

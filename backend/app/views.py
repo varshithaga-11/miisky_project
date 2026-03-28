@@ -1,7 +1,8 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render
-from django.db.models import F, Q, Sum
+from django.db.models import DecimalField, F, Prefetch, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins
 from rest_framework.views import APIView
@@ -516,6 +517,53 @@ class AdminPayoutTransactionListCreateView(APIView):
             PayoutTransactionReadSerializer(tx, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class AdminPlanPaymentsOverviewView(APIView):
+    """Paginated list of all verified plan payments (PlanPaymentSnapshot) with plan and patient context."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        qs = PlanPaymentSnapshot.objects.select_related(
+            "user_diet_plan__user",
+            "user_diet_plan__diet_plan",
+            "user_diet_plan__nutritionist",
+            "user_diet_plan__micro_kitchen",
+            "user_diet_plan__verified_by",
+        ).prefetch_related(
+            Prefetch(
+                "payouts",
+                queryset=PayoutTracker.objects.select_related(
+                    "nutritionist", "micro_kitchen"
+                ).order_by("payout_type", "id"),
+            ),
+        )
+        search = request.query_params.get("search", "").strip()
+        if search:
+            qs = qs.filter(
+                Q(user_diet_plan__user__first_name__icontains=search)
+                | Q(user_diet_plan__user__last_name__icontains=search)
+                | Q(user_diet_plan__user__email__icontains=search)
+                | Q(user_diet_plan__user__username__icontains=search)
+                | Q(user_diet_plan__diet_plan__title__icontains=search)
+                | Q(user_diet_plan__diet_plan__code__icontains=search)
+                | Q(user_diet_plan__transaction_id__icontains=search)
+            )
+        qs = (
+            qs.annotate(
+                total_disbursed=Coalesce(
+                    Sum("payouts__paid_amount"),
+                    Value(Decimal("0.00")),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+            )
+            .order_by("-created_at")
+        )
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request)
+        ser = AdminPlanPaymentOverviewSerializer(page, many=True)
+        return paginator.get_paginated_response(ser.data)
 
 
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────

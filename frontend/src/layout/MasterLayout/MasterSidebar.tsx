@@ -135,6 +135,11 @@ const adminNavItems: NavItem[] = [
     path: "/admin/record-plan-payouts",
   },
   {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "Plan payments overview",
+    path: "/admin/plan-payments-overview",
+  },
+  {
     icon: <ShoppingCart className="w-5 h-5" />,
     name: "Orders Management",
     subItems: [

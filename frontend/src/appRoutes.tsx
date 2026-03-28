@@ -103,6 +103,7 @@ import NutritionKitchenReassignment from "./pages/AdminSide/NutritionKitchenReas
 import OrderManagementPage from "./pages/AdminSide/OrderManagement/index";
 import KitchenPayoutsPage from "./pages/AdminSide/KitchenPayouts/index";
 import RecordPlanPayoutsPage from "./pages/AdminSide/RecordPlanPayouts/index";
+import PlanPaymentsOverviewPage from "./pages/AdminSide/PlanPaymentsOverview/index";
 import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
 import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
 import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
@@ -277,6 +278,7 @@ export function appRoutes() {
           <Route path="admin/all-orders" element={<OrderManagementPage />} />
           <Route path="admin/payouts" element={<KitchenPayoutsPage />} />
           <Route path="admin/record-plan-payouts" element={<RecordPlanPayoutsPage />} />
+          <Route path="admin/plan-payments-overview" element={<PlanPaymentsOverviewPage />} />
           <Route path="nutrition/reference/ranges" element={<ReferenceLibraryPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />

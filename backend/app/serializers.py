@@ -973,6 +973,152 @@ class PayoutTransactionCreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class AdminPlanPaymentOverviewSerializer(serializers.ModelSerializer):
+    """Admin list: frozen snapshot + patient/plan context + total disbursed on linked payout trackers."""
+
+    patient = serializers.SerializerMethodField()
+    diet_plan = serializers.SerializerMethodField()
+    nutritionist = serializers.SerializerMethodField()
+    micro_kitchen = serializers.SerializerMethodField()
+    verified_by_name = serializers.SerializerMethodField()
+    payout_trackers = serializers.SerializerMethodField()
+    total_outstanding = serializers.SerializerMethodField()
+    user_diet_plan_status = serializers.CharField(source="user_diet_plan.status", read_only=True)
+    payment_status = serializers.CharField(source="user_diet_plan.payment_status", read_only=True)
+    is_payment_verified = serializers.BooleanField(
+        source="user_diet_plan.is_payment_verified", read_only=True
+    )
+    amount_paid_reported = serializers.DecimalField(
+        source="user_diet_plan.amount_paid",
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+    )
+    transaction_id = serializers.CharField(
+        source="user_diet_plan.transaction_id", read_only=True, allow_null=True
+    )
+    verified_on = serializers.DateTimeField(
+        source="user_diet_plan.verified_on", read_only=True, allow_null=True
+    )
+    plan_start_date = serializers.DateField(
+        source="user_diet_plan.start_date", read_only=True, allow_null=True
+    )
+    plan_end_date = serializers.DateField(
+        source="user_diet_plan.end_date", read_only=True, allow_null=True
+    )
+    total_disbursed = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PlanPaymentSnapshot
+        fields = (
+            "id",
+            "user_diet_plan",
+            "created_at",
+            "total_amount",
+            "platform_percent",
+            "nutrition_percent",
+            "kitchen_percent",
+            "platform_amount",
+            "nutrition_amount",
+            "kitchen_amount",
+            "patient",
+            "diet_plan",
+            "nutritionist",
+            "micro_kitchen",
+            "user_diet_plan_status",
+            "payment_status",
+            "amount_paid_reported",
+            "transaction_id",
+            "verified_on",
+            "verified_by_name",
+            "plan_start_date",
+            "plan_end_date",
+            "total_disbursed",
+            "total_outstanding",
+            "payout_trackers",
+            "is_payment_verified",
+        )
+        read_only_fields = fields
+
+    def get_payout_trackers(self, obj):
+        rows = []
+        for t in obj.payouts.all().order_by("payout_type", "id"):
+            rem = max(t.total_amount - t.paid_amount, Decimal("0"))
+            recipient = "—"
+            if t.payout_type == PayoutTracker.PAYOUT_TYPE_PLATFORM:
+                recipient = "Miisky (platform)"
+            elif t.payout_type == PayoutTracker.PAYOUT_TYPE_NUTRITIONIST and t.nutritionist:
+                u = t.nutritionist
+                recipient = f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username
+            elif t.payout_type == PayoutTracker.PAYOUT_TYPE_KITCHEN and t.micro_kitchen:
+                recipient = t.micro_kitchen.brand_name or f"Kitchen #{t.micro_kitchen_id}"
+            rows.append(
+                {
+                    "id": t.id,
+                    "payout_type": t.payout_type,
+                    "recipient_label": recipient,
+                    "period_from": t.period_from,
+                    "period_to": t.period_to,
+                    "total_amount": str(t.total_amount),
+                    "paid_amount": str(t.paid_amount),
+                    "remaining_amount": str(rem),
+                    "status": t.status,
+                    "is_closed": t.is_closed,
+                    "closed_reason": t.closed_reason,
+                }
+            )
+        return rows
+
+    def get_total_outstanding(self, obj):
+        total = Decimal("0")
+        for t in obj.payouts.all():
+            total += max(t.total_amount - t.paid_amount, Decimal("0"))
+        return str(total)
+
+    def get_patient(self, obj):
+        u = getattr(obj.user_diet_plan, "user", None)
+        if not u:
+            return None
+        name = f"{u.first_name or ''} {u.last_name or ''}".strip()
+        return {
+            "id": u.id,
+            "name": name or u.username,
+            "email": u.email,
+        }
+
+    def get_diet_plan(self, obj):
+        dp = getattr(obj.user_diet_plan, "diet_plan", None)
+        if not dp:
+            return None
+        return {
+            "id": dp.id,
+            "title": dp.title,
+            "code": dp.code,
+            "no_of_days": dp.no_of_days,
+        }
+
+    def get_nutritionist(self, obj):
+        n = getattr(obj.user_diet_plan, "nutritionist", None)
+        if not n:
+            return None
+        name = f"{n.first_name or ''} {n.last_name or ''}".strip()
+        return {"id": n.id, "name": name or n.username}
+
+    def get_micro_kitchen(self, obj):
+        mk = getattr(obj.user_diet_plan, "micro_kitchen", None)
+        if not mk:
+            return None
+        return {"id": mk.id, "brand_name": mk.brand_name}
+
+    def get_verified_by_name(self, obj):
+        vb = getattr(obj.user_diet_plan, "verified_by", None)
+        if not vb:
+            return None
+        name = f"{vb.first_name or ''} {vb.last_name or ''}".strip()
+        return name or vb.username
+
+
 # ── Role Questionnaires / Profiles ─────────────────────────────────────────────
 
 class UserQuestionnaireSerializer(serializers.ModelSerializer):
