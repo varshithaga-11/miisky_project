@@ -379,6 +379,11 @@ const nonPatientNavItems: NavItem[] = [
     name: "Profile",
     path: "/profile-info",
   },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support Tickets",
+    path: "/non-patient/support-tickets",
+  },
 ];
 
 const masterNavItems: NavItem[] = [

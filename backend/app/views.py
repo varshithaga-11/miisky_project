@@ -218,18 +218,22 @@ class MicroKitchenDashboardCountsView(APIView):
         user = request.user
         kitchen = MicroKitchenProfile.objects.filter(user=user).first()
         kitchen_id = kitchen.id if kitchen else None
+        today = timezone.now().date()
 
         return Response({
             "questionnaire": 1 if kitchen_id else 0,
             "inspectionReports": MicroKitchenInspection.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
-            "patients": UserDietPlan.objects.filter(micro_kitchen_id=kitchen_id, status="active").count() if kitchen_id else 0,
-            "dailyPrep": UserMeal.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
-            "orders": Order.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
+            "patients": UserDietPlan.objects.filter(
+                 Q(micro_kitchen_id=kitchen_id) | Q(original_micro_kitchen_id=kitchen_id),
+                 status__in=['active', 'approved', 'payment_pending']
+            ).count() if kitchen_id else 0,
+            "dailyPrep": UserMeal.objects.filter(micro_kitchen_id=kitchen_id, meal_date=today).count() if kitchen_id else 0,
+            "orders": Order.objects.filter(micro_kitchen_id=kitchen_id, created_at__date=today).count() if kitchen_id else 0,
             "availableFoods": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=True).count() if kitchen_id else 0,
             "kitchenReviews": MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
             "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
-            # Order & Food Status
-            "ordersPending": Order.objects.filter(micro_kitchen_id=kitchen_id, status="pending").count() if kitchen_id else 0,
+            # Status Counts
+            "ordersPending": Order.objects.filter(micro_kitchen_id=kitchen_id, status__in=["placed", "accepted", "preparing", "ready"]).count() if kitchen_id else 0,
             "ordersCompleted": Order.objects.filter(micro_kitchen_id=kitchen_id, status="delivered").count() if kitchen_id else 0,
             "foodsAvailable": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=True).count() if kitchen_id else 0,
             "foodsOutOfStock": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=False).count() if kitchen_id else 0,
