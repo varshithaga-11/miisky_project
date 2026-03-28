@@ -117,7 +117,7 @@ export const deleteBlogPost = (id: number) => API.delete(`/website/blogpost/${id
 // BLOG COMMENTS
 // ============================================================================
 export const getBlogComments = (postId?: number) => {
-  const url = postId ? `/website/blogcomment/?post=${postId}` : '/website/blogcomment/';
+  const url = postId ? `/website/blogcomment/?blog_post=${postId}` : '/website/blogcomment/';
   return API.get(url);
 };
 export const getBlogCommentById = (id: number) => API.get(`/website/blogcomment/${id}/`);

@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Image from "../Image";
-import { useState } from "react";
+import { getDepartments } from "../../../utils/api";
 
 type MobileMenuProps = {
   isSidebar: boolean;
@@ -10,6 +11,20 @@ type MobileMenuProps = {
 
 export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar }: MobileMenuProps) {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [departments, setDepartments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDepartmentsData = async () => {
+      try {
+        const response = await getDepartments();
+        const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+        setDepartments(data);
+      } catch (err) {
+        console.error("Failed to fetch departments for mobile menu:", err);
+      }
+    };
+    fetchDepartmentsData();
+  }, []);
 
   const toggleDropdown = (key: number) => {
     if (activeDropdown === key) {
@@ -35,17 +50,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
             <ul className="navigation clearfix">
 
               {/* Home */}
-              <li className={`dropdown ${activeDropdown === 1 ? "current" : ""}`}>
-                <Link to="/website">Home</Link>
-                <ul style={{ display: activeDropdown === 1 ? "block" : "none" }}>
-                  <li><Link to="/website">Home Page One</Link></li>
-                  {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
-                  <li><Link to="/website/index-3">Home Page Three</Link></li> */}
-                </ul>
-                <div className={`dropdown-btn ${activeDropdown === 1 ? "open" : ""}`} onClick={() => toggleDropdown(1)}>
-                  <span className="fa fa-angle-right" />
-                </div>
-              </li>
+              <li><Link to="/website">Home</Link></li>
 
               {/* About */}
               <li><Link to="/website/about">About Us</Link></li>
@@ -55,12 +60,11 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                 <Link to="/website">Departments</Link>
                 <ul style={{ display: activeDropdown === 2 ? "block" : "none" }}>
                   <li><Link to="/website/departments">Our Departments</Link></li>
-                  <li><Link to="/website/department-details">Cardiology</Link></li>
-                  {/* <li><Link to="/website/department-details-2">Dental</Link></li>
-                  <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                  <li><Link to="/website/department-details-4">Neurology</Link></li>
-                  <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                  <li><Link to="/website/department-details-6">Modern Laboratory</Link></li> */}
+                  {departments.map((dept: any) => (
+                    <li key={dept.id}>
+                      <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                    </li>
+                  ))}
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 2 ? "open" : ""}`} onClick={() => toggleDropdown(2)}>
                   <span className="fa fa-angle-right" />

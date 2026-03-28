@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Image from "../../Image";
 import MobileMenu from "../MobileMenu";
+import { getDepartments } from "../../../../utils/api";
 
 // ✅ Define props type
 type Header2Props = {
@@ -10,6 +12,21 @@ type Header2Props = {
 };
 
 export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Header2Props) {
+  const [departments, setDepartments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDepartmentsData = async () => {
+      try {
+        const response = await getDepartments();
+        const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+        setDepartments(data);
+      } catch (err) {
+        console.error("Failed to fetch departments for header:", err);
+      }
+    };
+    fetchDepartmentsData();
+  }, []);
+
   const logout = () => {
     localStorage.removeItem("miisky_access_token");
     window.location.href = "/website/login";
@@ -69,13 +86,8 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent2">
                     <ul className="navigation clearfix">
-                       <li className="dropdown">
+                       <li>
                         <Link to="/website">Home</Link>
-                        <ul>
-                          <li><Link to="/website">Home Page One</Link></li>
-                          {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
-                          <li><Link to="/website/index-3">Home Page Three</Link></li> */}
-                        </ul>
                       </li>
                       <li>
                         <Link to="/website/about">About Us</Link>
@@ -84,12 +96,11 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website/departments">Departments</Link>
                         <ul>
                           <li><Link to="/website/departments">Our Departments</Link></li>
-                          <li><Link to="/website/department-details">Cardiology</Link></li>
-                          {/* <li><Link to="/website/department-details-2">Dental</Link></li>
-                          <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                          <li><Link to="/website/department-details-4">Neurology</Link></li>
-                          <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li> */}
+                          {departments.map((dept: any) => (
+                            <li key={dept.id}>
+                              <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                            </li>
+                          ))}
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -172,13 +183,8 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent2Sticky">
                     <ul className="navigation clearfix">
-                       <li className="dropdown">
+                       <li>
                         <Link to="/website">Home</Link>
-                        <ul>
-                          <li><Link to="/website">Home Page One</Link></li>
-                          {/* <li><Link to="/website/index-2">Home Page Two</Link></li>
-                          <li><Link to="/website/index-3">Home Page Three</Link></li> */}
-                        </ul>
                       </li>
                       <li>
                         <Link to="/website/about">About Us</Link>
@@ -187,12 +193,11 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/website/departments">Departments</Link>
                         <ul>
                           <li><Link to="/website/departments">Our Departments</Link></li>
-                          <li><Link to="/website/department-details">Cardiology</Link></li>
-                          {/* <li><Link to="/website/department-details-2">Dental</Link></li>
-                          <li><Link to="/website/department-details-3">Gastroenterology</Link></li>
-                          <li><Link to="/website/department-details-4">Neurology</Link></li>
-                          <li><Link to="/website/department-details-5">Orthopaedics</Link></li>
-                          <li><Link to="/website/department-details-6">Laboratory</Link></li> */}
+                          {departments.map((dept: any) => (
+                            <li key={dept.id}>
+                              <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                            </li>
+                          ))}
                         </ul>
                       </li>
                       <li className="dropdown">

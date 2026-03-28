@@ -90,7 +90,7 @@ export default function News({ posts }: NewsProps) {
               <div className="news-block-one">
                 <div className="inner-box">
                   <figure className="image-box">
-                    <Link to={`/website/blog-details?slug=${post.slug}`}>
+                    <Link to={`/website/blog-details/${post.id}`}>
                       <Image
                         src={post.image || '/website/assets/images/news/news-1.jpg'}
                         alt={post.title}
@@ -104,7 +104,7 @@ export default function News({ posts }: NewsProps) {
                       <span className="comment-box">{post.category}</span>
                     )}
                     <h3>
-                      <Link to={`/website/blog-details?slug=${post.slug}`}>{post.title}</Link>
+                      <Link to={`/website/blog-details/${post.id}`}>{post.title}</Link>
                     </h3>
                     <ul className="post-info clearfix">
                       <li>
@@ -115,14 +115,14 @@ export default function News({ posts }: NewsProps) {
                       </li>
                       <li>
                         <i className="icon-60"></i>
-                        <Link to={`/website/blog-details?slug=${post.slug}`}>
+                        <Link to={`/website/blog-details/${post.id}`}>
                           {post.author || "Admin"}
                         </Link>
                       </li>
                     </ul>
                     <p>{post.excerpt}</p>
                     <div className="link">
-                      <Link to={`/website/blog-details?slug=${post.slug}`}>Read More</Link>
+                      <Link to={`/website/blog-details/${post.id}`}>Read More</Link>
                     </div>
                   </div>
                 </div>

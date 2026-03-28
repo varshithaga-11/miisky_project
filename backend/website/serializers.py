@@ -99,7 +99,7 @@ class BlogCommentSerializer(serializers.ModelSerializer):
 class BlogPostSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     tags = BlogTagSerializer(many=True, read_only=True)
-    comments = BlogCommentSerializer(many=True, read_only=True)
+    comments = serializers.SerializerMethodField(read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=BlogTag.objects.all(), source='tags', write_only=True, required=False
     )
@@ -107,6 +107,10 @@ class BlogPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogPost
         fields = '__all__'
+
+    def get_comments(self, obj):
+        approved_comments = obj.comments.filter(is_approved=True)
+        return BlogCommentSerializer(approved_comments, many=True).data
 
 
 class BlogPostListSerializer(serializers.ModelSerializer):

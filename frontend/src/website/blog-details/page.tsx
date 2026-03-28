@@ -4,15 +4,17 @@ import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
-import { getBlogPostById, getBlogPosts } from "../../utils/api";
+import { getBlogPostById, getBlogPosts, createBlogComment } from "../../utils/api";
 import { MOCK_BLOG_POSTS } from "../utils/mockData";
 
 export default function BlogDetails() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const { id } = useParams<{ id: string }>();
-    const [post, setPost] = useState<any>(MOCK_BLOG_POSTS[0] || {});
-    const [latestPosts, setLatestPosts] = useState<any[]>(MOCK_BLOG_POSTS.slice(0, 3));
+    const [post, setPost] = useState<any>(null);
+    const [latestPosts, setLatestPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [commentData, setCommentData] = useState({ name: "", email: "", message: "" });
+    const [commentStatus, setCommentStatus] = useState({ type: "", message: "" });
 
     useEffect(() => {
         setHeaderStyle(3);
@@ -51,7 +53,28 @@ export default function BlogDetails() {
         fetchLatestPosts();
     }, [id]);
 
+    const handleCommentSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id) return;
+        
+        setCommentStatus({ type: "info", message: "Submitting comment..." });
+        try {
+            await createBlogComment({
+                blog_post: parseInt(id),
+                name: commentData.name,
+                email: commentData.email,
+                comment: commentData.message
+            });
+            setCommentStatus({ type: "success", message: "Your comment has been submitted and is awaiting approval!" });
+            setCommentData({ name: "", email: "", message: "" });
+        } catch (err) {
+            console.error("Failed to submit comment:", err);
+            setCommentStatus({ type: "danger", message: "Failed to submit comment. Please try again later." });
+        }
+    };
+
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
+    if (!post) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Blog post not found.</div></div>;
 
     return (
         <div className="boxed_wrapper">
@@ -115,26 +138,57 @@ export default function BlogDetails() {
                                         </ul>
                                     </div>
                                     <div className="comment-box mb_60">
-                                        <h3>Comments({post.comment_count || 0})</h3>
-                                        <div className="comment">
-                                            <figure className="thumb-box"><Image src="/website/assets/images/news/comment-1.jpg" alt="Commenter" width={88} height={86} priority /></figure>
-                                            <h4>Reader Comment<span>Today</span></h4>
-                                            <p>Thank you for sharing this valuable information. This post has helped me understand the topic better and I appreciate your professional insights.</p>
-                                            <Link to="/website/blog-details" className="reply-btn"><i className="icon-58"></i></Link>
-                                        </div>
+                                        <h3>Comments({post.comments?.length || 0})</h3>
+                                        {post.comments && post.comments.length > 0 ? (
+                                            post.comments.map((comment: any) => (
+                                                <div key={comment.id} className="comment">
+                                                    <figure className="thumb-box"><Image src="/website/assets/images/news/comment-1.jpg" alt="Commenter" width={88} height={86} priority /></figure>
+                                                    <h4>{comment.name}<span>{new Date(comment.created_at).toLocaleDateString()}</span></h4>
+                                                    <p>{comment.comment}</p>
+                                                    <Link to="#" className="reply-btn" onClick={(e) => e.preventDefault()}><i className="icon-58"></i></Link>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p>No comments yet. Be the first to comment!</p>
+                                        )}
                                     </div>
                                     <div className="comment-form">
                                         <h3>Leave a Reply</h3>
-                                        <form method="post" action="/website/blog-details" className="default-form">
+                                        {commentStatus.message && (
+                                            <div className={`alert alert-${commentStatus.type}`} role="alert">
+                                                {commentStatus.message}
+                                            </div>
+                                        )}
+                                        <form onSubmit={handleCommentSubmit} className="default-form">
                                             <div className="row clearfix">
                                                 <div className="col-lg-6 col-md-6 col-sm-12 form-group">
-                                                    <input type="text" name="name" placeholder="Name" required/>
+                                                    <input 
+                                                        type="text" 
+                                                        name="name" 
+                                                        placeholder="Name" 
+                                                        required
+                                                        value={commentData.name}
+                                                        onChange={(e) => setCommentData({ ...commentData, name: e.target.value })}
+                                                    />
                                                 </div>
                                                 <div className="col-lg-6 col-md-6 col-sm-12 form-group">
-                                                    <input type="email" name="email" placeholder="Email" required/>
+                                                    <input 
+                                                        type="email" 
+                                                        name="email" 
+                                                        placeholder="Email" 
+                                                        required
+                                                        value={commentData.email}
+                                                        onChange={(e) => setCommentData({ ...commentData, email: e.target.value })}
+                                                    />
                                                 </div>
                                                 <div className="col-lg-12 col-md-12 col-sm-12 form-group">
-                                                    <textarea name="message" placeholder="Type Comment Here ..."></textarea>
+                                                    <textarea 
+                                                        name="message" 
+                                                        placeholder="Type Comment Here ..."
+                                                        required
+                                                        value={commentData.message}
+                                                        onChange={(e) => setCommentData({ ...commentData, message: e.target.value })}
+                                                    ></textarea>
                                                 </div>
                                                 <div className="col-lg-12 col-md-12 col-sm-12 form-group message-btn">
                                                     <button type="submit" className="theme-btn btn-two"><span>Send your message</span></button>

@@ -115,30 +115,16 @@ export default function BlogPage() {
                                             <h3>Latest News</h3>
                                         </div>
                                         <div className="post-inner">
-                                            <div className="post">
-                                                <figure className="post-thumb"><Link to="/website/blog-details"><Image src="/website/assets/images/news/post-1.jpg" alt="Image" width={100} height={101} priority /></Link></figure>
-                                                <h3><Link to="/website/blog-details">Prepare to Speak with Your Eye Specialist.</Link></h3>
-                                                <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 6, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                </ul>
-                                            </div>
-                                            <div className="post">
-                                                <figure className="post-thumb"><Link to="/website/blog-details"><Image src="/website/assets/images/news/post-2.jpg" alt="Image" width={100} height={101} priority /></Link></figure>
-                                                <h3><Link to="/website/blog-details">From Diagnosis to Cure: The Role.</Link></h3>
-                                                <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 5, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                </ul>
-                                            </div>
-                                            <div className="post">
-                                                <figure className="post-thumb"><Link to="/website/blog-details"><Image src="/website/assets/images/news/post-3.jpg" alt="Image" width={100} height={101} priority /></Link></figure>
-                                                <h3><Link to="/website/blog-details">Empowering Patients in through</Link></h3>
-                                                <ul className="post-info clearfix">
-                                                    <li><i className="icon-59"></i>March 4, 2023</li>
-                                                    <li><i className="icon-60"></i><Link to="/website/blog-details">Author</Link></li>
-                                                </ul>
-                                            </div>
+                                            {posts.slice(0, 3).map((latestPost: any) => (
+                                                <div key={latestPost.id} className="post">
+                                                    <figure className="post-thumb"><Link to={`/website/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || latestPost.image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
+                                                    <h3><Link to={`/website/blog-details/${latestPost.id}`}>{latestPost.title}</Link></h3>
+                                                    <ul className="post-info clearfix">
+                                                        <li><i className="icon-59"></i>{new Date(latestPost.published_at || latestPost.created_at || new Date()).toLocaleDateString()}</li>
+                                                        <li><i className="icon-60"></i><Link to={`/website/blog-details/${latestPost.id}`}>{latestPost.author || "Admin"}</Link></li>
+                                                    </ul>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="consulting-widget">
