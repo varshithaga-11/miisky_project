@@ -14,6 +14,8 @@ from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 import os
 import random
+import math
+from decimal import Decimal
 from rest_framework import status
 
 from .models import *
@@ -2574,23 +2576,44 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response({"message": "Item added to cart", "cart_id": cart.id})
 
 
+def _haversine_km(lat1, lon1, lat2, lon2):
+    """Great-circle distance in km; returns None if coords invalid or missing."""
+    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
+        return None
+    try:
+        a1, o1, a2, o2 = float(lat1), float(lon1), float(lat2), float(lon2)
+    except (TypeError, ValueError):
+        return None
+    r = 6371.0
+    p1, p2 = math.radians(a1), math.radians(a2)
+    dphi = math.radians(a2 - a1)
+    dl = math.radians(o2 - o1)
+    h = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h))
+    return r * c
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
 
     def get_queryset(self):
         user = self.request.user
+        base = Order.objects.select_related(
+            'user', 'micro_kitchen', 'delivery_slab'
+        ).prefetch_related('items__food', 'ratings').order_by('-created_at')
+
         if user.role == 'admin':
-            qs = Order.objects.all().order_by('-created_at')
+            qs = base
             micro_kitchen_id = self.request.query_params.get('micro_kitchen')
             if micro_kitchen_id:
                 qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
             return qs
 
         if user.role == 'micro_kitchen':
-            return Order.objects.filter(micro_kitchen__user=user).order_by('-created_at')
+            return base.filter(micro_kitchen__user=user)
 
-        return Order.objects.filter(user=user).order_by('-created_at')
+        return base.filter(user=user)
 
     @action(detail=False, methods=['post'], url_path='place-order')
     def place_order(self, request):
@@ -2617,15 +2640,57 @@ class OrderViewSet(viewsets.ModelViewSet):
                 return (item.food.price or 0) if item.food.price else 0
 
             total_amount = sum(get_price(item) * item.quantity for item in cart_items)
-            
-            # Create Order
+            total_dec = Decimal(str(round(float(total_amount), 2)))
+
+            customer = request.user
+            kitchen_profile = cart.micro_kitchen
+            kitchen_user = kitchen_profile.user if kitchen_profile else None
+
+            dist_km = None
+            slab = None
+            delivery_charge_dec = Decimal('0')
+            if (
+                kitchen_profile
+                and kitchen_user
+                and getattr(customer, 'latitude', None) is not None
+                and getattr(customer, 'longitude', None) is not None
+                and getattr(kitchen_user, 'latitude', None) is not None
+                and getattr(kitchen_user, 'longitude', None) is not None
+            ):
+                dist_km = _haversine_km(
+                    customer.latitude,
+                    customer.longitude,
+                    kitchen_user.latitude,
+                    kitchen_user.longitude,
+                )
+                if dist_km is not None:
+                    d_dec = Decimal(str(round(dist_km, 2)))
+                    slab = (
+                        DeliveryChargeSlab.objects.filter(
+                            micro_kitchen=kitchen_profile,
+                            min_km__lte=d_dec,
+                            max_km__gte=d_dec,
+                        )
+                        .order_by('min_km')
+                        .first()
+                    )
+                    if slab:
+                        delivery_charge_dec = slab.charge
+
+            final_dec = total_dec + delivery_charge_dec
+            dist_dec = Decimal(str(round(dist_km, 2))) if dist_km is not None else None
+
             order = Order.objects.create(
-                user=request.user,
-                micro_kitchen=cart.micro_kitchen,
-                order_type='patient' if request.user.role == 'patient' else 'non_patient',
-                total_amount=total_amount,
-                delivery_address=delivery_address or (getattr(request.user, 'address', '')),
-                status='placed'
+                user=customer,
+                micro_kitchen=kitchen_profile,
+                order_type='patient' if customer.role == 'patient' else 'non_patient',
+                total_amount=total_dec,
+                delivery_distance_km=dist_dec,
+                delivery_charge=delivery_charge_dec,
+                delivery_slab=slab,
+                final_amount=final_dec,
+                delivery_address=delivery_address or (getattr(customer, 'address', '') or ''),
+                status='placed',
             )
 
             # Create OrderItems
@@ -2659,6 +2724,62 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = new_status
         order.save()
         return Response({"message": f"Order status updated to {new_status}"})
+
+
+class DeliveryChargeSlabViewSet(viewsets.ModelViewSet):
+    serializer_class = DeliveryChargeSlabSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        if role == 'admin':
+            qs = DeliveryChargeSlab.objects.select_related('micro_kitchen').all().order_by(
+                'micro_kitchen_id', 'min_km'
+            )
+            mk = self.request.query_params.get('micro_kitchen')
+            if mk:
+                qs = qs.filter(micro_kitchen_id=mk)
+            return qs
+        if role == 'micro_kitchen':
+            profile = MicroKitchenProfile.objects.filter(user=user).first()
+            if not profile:
+                return DeliveryChargeSlab.objects.none()
+            return DeliveryChargeSlab.objects.filter(micro_kitchen=profile).order_by('min_km')
+        return DeliveryChargeSlab.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        if role == 'micro_kitchen':
+            profile = MicroKitchenProfile.objects.filter(user=user).first()
+            if not profile:
+                raise PermissionDenied('No micro kitchen profile for this account.')
+            serializer.save(micro_kitchen=profile)
+            return
+        if role == 'admin':
+            serializer.save()
+            return
+        raise PermissionDenied()
+
+    def perform_update(self, serializer):
+        self._ensure_owner_or_admin(serializer.instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._ensure_owner_or_admin(instance)
+        instance.delete()
+
+    def _ensure_owner_or_admin(self, instance):
+        user = self.request.user
+        if getattr(user, 'role', None) == 'admin':
+            return
+        if getattr(user, 'role', None) == 'micro_kitchen':
+            profile = MicroKitchenProfile.objects.filter(user=user).first()
+            if profile and instance.micro_kitchen_id == profile.id:
+                return
+        raise PermissionDenied()
 
 
 class CartItemViewSet(viewsets.ModelViewSet):

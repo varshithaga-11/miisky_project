@@ -20,6 +20,7 @@ const MasterLayout = lazy(() => import("./layout/MasterLayout/MasterLayout"));
 const Blank = lazy(() => import("./pages/Blank"));
 const KitchenMenuPage = lazy(() => import("./pages/NonPatient/KitchenMenu/index"));
 const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/SeparateOrders/index"));
+const MicroKitchenDeliveryChargesPage = lazy(() => import("./pages/MicroKitchenSide/DeliveryCharges/index"));
 const PatientCartPage = lazy(() => import("./pages/PatientSide/Cart/index"));
 const PatientOrdersPage = lazy(() => import("./pages/PatientSide/Orders/index"));
 
@@ -258,6 +259,7 @@ export function appRoutes() {
           <Route path="patient/cart" element={<PatientCartPage />} />
           <Route path="patient/orders" element={<PatientOrdersPage />} />
           <Route path="microkitchen/orders" element={<KitchenOrdersPage />} />
+          <Route path="microkitchen/delivery-charges" element={<MicroKitchenDeliveryChargesPage />} />
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />

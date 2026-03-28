@@ -67,6 +67,11 @@ export interface Order {
   order_type: 'patient' | 'non_patient';
   status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'picked_up' | 'delivered' | 'cancelled';
   total_amount: number;
+  delivery_distance_km?: number | string | null;
+  delivery_charge?: number | string | null;
+  delivery_slab?: number | null;
+  delivery_slab_details?: { id?: number; min_km: string; max_km: string; charge: string } | null;
+  final_amount?: number | string | null;
   delivery_address: string;
   items: OrderItem[];
   ratings?: MicroKitchenRating[];
@@ -109,7 +114,8 @@ export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
 export const getMyOrders = async (): Promise<Order[]> => {
   const url = createApiUrl("api/order/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
-  return response.data;
+  const d = response.data;
+  return Array.isArray(d) ? d : d?.results ?? [];
 };
 
 export const updateOrderStatus = async (orderId: number, status: string) => {

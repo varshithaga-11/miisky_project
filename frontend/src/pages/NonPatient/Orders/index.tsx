@@ -4,6 +4,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
 import { FiPackage, FiClock, FiMapPin, FiCheckCircle, FiLoader, FiCalendar, FiBox, FiStar, FiMessageSquare } from "react-icons/fi";
+import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { motion, AnimatePresence } from "framer-motion";
 
 const RatingModal: React.FC<{
@@ -194,15 +195,18 @@ const OrdersPage: React.FC = () => {
                                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiCalendar /> Order Date</p>
                                                         <p className="text-xs font-black text-gray-900 dark:text-white">{new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                     </div>
-                                                    <div className="bg-gray-100 shadow-inner dark:bg-white/[0.03] p-5 rounded-3xl">
-                                                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiCheckCircle /> Total amount</p>
-                                                        <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">₹{order.total_amount}</p>
+                                                    <div className="bg-gray-100 shadow-inner dark:bg-white/[0.03] p-5 rounded-3xl md:col-span-1">
+                                                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiCheckCircle /> Order total</p>
+                                                        <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">₹{Number(order.final_amount ?? order.total_amount).toFixed(2)}</p>
+                                                        <p className="text-[9px] text-gray-400 mt-1">Incl. delivery where applicable</p>
                                                     </div>
                                                     <div className="col-span-2 bg-gray-50/50 dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-50 dark:border-white/5">
                                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FiMapPin /> Delivery Location</p>
                                                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate">{order.delivery_address}</p>
                                                     </div>
                                                 </div>
+
+                                                <OrderDeliverySummary order={order} className="mt-2" />
 
                                                 {/* Order Items Gallery & Existing Rating */}
                                                 <div className="space-y-6">

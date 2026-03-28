@@ -1814,6 +1814,20 @@ class MicroKitchenFood(models.Model):
 # ------------------------------------------------------------
 # --------------------------------------------------------------------
 
+class DeliveryChargeSlab(models.Model):
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE,
+        related_name='delivery_slabs'
+    )
+
+    min_km = models.DecimalField(max_digits=5, decimal_places=2)
+    max_km = models.DecimalField(max_digits=5, decimal_places=2)
+
+    charge = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.micro_kitchen} ({self.min_km} - {self.max_km} km) = ₹{self.charge}"
 
 
 class Order(models.Model):
@@ -1852,12 +1866,28 @@ class Order(models.Model):
         default='placed'
     )
 
+    # 💰 Food total
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # 🚚 Delivery info (ADD THIS)
+    delivery_distance_km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # (Optional but BEST) store slab used
+    delivery_slab = models.ForeignKey(
+        DeliveryChargeSlab,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    # 💵 Final bill (food total + delivery_charge)
+    final_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     delivery_address = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
-
 
 
 class OrderItem(models.Model):

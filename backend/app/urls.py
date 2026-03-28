@@ -33,6 +33,7 @@ router.register(r'microkitchenrating', MicroKitchenRatingViewSet, basename='micr
 router.register(r'cart', CartViewSet, basename='cart')
 router.register(r'cart-item', CartItemViewSet, basename='cart-item')
 router.register(r'order', OrderViewSet, basename='order')
+router.register(r'deliverychargeslab', DeliveryChargeSlabViewSet, basename='deliverychargeslab')
 
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')

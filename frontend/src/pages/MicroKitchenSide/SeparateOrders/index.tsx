@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import { FiPackage, FiLoader, FiMapPin, FiUser, FiCalendar, FiDollarSign, FiStar, FiMessageSquare } from "react-icons/fi";
+import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { motion, AnimatePresence } from "framer-motion";
 
 const SeparateOrdersPage: React.FC = () => {
@@ -189,10 +190,13 @@ const SeparateOrdersPage: React.FC = () => {
                                                     <div className="flex items-center gap-2">
                                                         <FiDollarSign className="text-emerald-500" size={16} />
                                                         <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                                                            ₹{Number(order.total_amount)}
+                                                            ₹{Number(order.final_amount ?? order.total_amount).toFixed(2)}
                                                         </span>
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase">total</span>
                                                     </div>
                                                 </div>
+
+                                                <OrderDeliverySummary order={order} className="mt-2" />
 
                                                 <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl">
                                                     <FiMapPin className="text-indigo-500 flex-shrink-0 mt-0.5" size={18} />

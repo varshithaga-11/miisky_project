@@ -1609,18 +1609,40 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return None
 
 
+class DeliveryChargeSlabSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryChargeSlab
+        fields = ['id', 'micro_kitchen', 'min_km', 'max_km', 'charge']
+
+    def validate(self, attrs):
+        min_km = attrs.get('min_km')
+        max_km = attrs.get('max_km')
+        if self.instance:
+            if min_km is None:
+                min_km = self.instance.min_km
+            if max_km is None:
+                max_km = self.instance.max_km
+        if min_km is not None and max_km is not None and min_km > max_km:
+            raise serializers.ValidationError({'min_km': 'Must be less than or equal to max_km.'})
+        return attrs
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     ratings = MicroKitchenRatingSerializer(many=True, read_only=True)
+    delivery_slab_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
         fields = [
             'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
-            'order_type', 'status', 'total_amount', 'delivery_address',
-            'items', 'ratings', 'created_at'
+            'order_type', 'status',
+            'total_amount', 'delivery_distance_km', 'delivery_charge', 'delivery_slab',
+            'delivery_slab_details', 'final_amount',
+            'delivery_address',
+            'items', 'ratings', 'created_at',
         ]
 
     def get_user_details(self, obj):
@@ -1640,6 +1662,17 @@ class OrderSerializer(serializers.ModelSerializer):
                 'brand_name': obj.micro_kitchen.brand_name,
             }
         return None
+
+    def get_delivery_slab_details(self, obj):
+        s = getattr(obj, 'delivery_slab', None)
+        if not s:
+            return None
+        return {
+            'id': s.id,
+            'min_km': str(s.min_km),
+            'max_km': str(s.max_km),
+            'charge': str(s.charge),
+        }
 
 
 class AdminPatientListSerializer(serializers.ModelSerializer):
