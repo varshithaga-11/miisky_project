@@ -400,21 +400,6 @@ class AdminKitchenPayoutsView(APIView):
         return paginator.get_paginated_response(paginated_data)
 
 
-class PlatformPaymentSettingsView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminRole]
-
-    def get(self, request):
-        obj = PlatformPaymentSettings.get_solo()
-        return Response(PlatformPaymentSettingsSerializer(obj).data)
-
-    def patch(self, request):
-        obj = PlatformPaymentSettings.get_solo()
-        ser = PlatformPaymentSettingsSerializer(obj, data=request.data, partial=True)
-        ser.is_valid(raise_exception=True)
-        ser.save()
-        return Response(ser.data)
-
-
 class NutritionistPlanPayoutsView(APIView):
     permission_classes = [IsAuthenticated]
 

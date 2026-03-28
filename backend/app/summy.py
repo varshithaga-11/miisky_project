@@ -8,7 +8,7 @@ class DietPlans(models.Model):
 
     no_of_days = models.IntegerField(null=True, blank=True)  # e.g. 30 days
 
-    # Optional override for patient plan payment split (% of gross). If any is null, platform defaults apply.
+    # Optional override for patient plan payment split (% of gross). If any is null, code defaults apply (15/15/60).
     platform_fee_percent = models.DecimalField(
         max_digits=5, decimal_places=2, null=True, blank=True,
         help_text="Override: platform share % of gross (must set all three to override)",

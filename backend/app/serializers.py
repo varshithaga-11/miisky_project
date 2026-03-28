@@ -759,41 +759,11 @@ class DietPlanSerializer(serializers.ModelSerializer):
         if p is None or n is None or k is None:
             raise serializers.ValidationError(
                 "Provide all three split percentages (platform, nutritionist, kitchen), "
-                "or leave all empty to use platform defaults."
+                "or leave all empty to use defaults (15% platform, 15% nutrition, 60% kitchen)."
             )
         total = Decimal(str(p)) + Decimal(str(n)) + Decimal(str(k))
         if total != Decimal("100"):
             raise serializers.ValidationError("Split percentages must sum to 100.")
-        return attrs
-
-
-class PlatformPaymentSettingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlatformPaymentSettings
-        fields = (
-            "id",
-            "default_platform_fee_percent",
-            "default_nutritionist_share_percent",
-            "default_kitchen_share_percent",
-            "updated_at",
-        )
-        read_only_fields = ("id", "updated_at")
-
-    def validate(self, attrs):
-        # Merge with existing singleton for partial PATCH
-        inst = self.instance or PlatformPaymentSettings.get_solo()
-
-        def _v(key):
-            if key in attrs and attrs[key] is not None:
-                return attrs[key]
-            return getattr(inst, key, None)
-
-        p, n, k = _v("default_platform_fee_percent"), _v(
-            "default_nutritionist_share_percent"
-        ), _v("default_kitchen_share_percent")
-        total = Decimal(str(p)) + Decimal(str(n)) + Decimal(str(k))
-        if total != Decimal("100"):
-            raise serializers.ValidationError("Default split percentages must sum to 100.")
         return attrs
 
 

@@ -18,12 +18,16 @@ from .models import (
     NutritionistReassignment,
     PayoutTracker,
     PlanPaymentSnapshot,
-    PlatformPaymentSettings,
     UserDietPlan,
     UserRegister,
 )
 
 logger = logging.getLogger(__name__)
+
+# Default split of gross when DietPlans has no per-plan override (must sum to 100).
+DEFAULT_PLATFORM_PCT = Decimal("15")
+DEFAULT_NUTRITION_PCT = Decimal("15")
+DEFAULT_KITCHEN_PCT = Decimal("60")
 
 
 def _q2(value: Decimal) -> Decimal:
@@ -47,23 +51,14 @@ def _intersect_range(plan_start, plan_end, seg_start, seg_end) -> Optional[Tuple
 
 
 def get_split_percentages(diet_plan) -> Tuple[Decimal, Decimal, Decimal]:
-    defaults = PlatformPaymentSettings.get_solo()
     if diet_plan is None:
-        return (
-            defaults.default_platform_fee_percent,
-            defaults.default_nutritionist_share_percent,
-            defaults.default_kitchen_share_percent,
-        )
+        return (DEFAULT_PLATFORM_PCT, DEFAULT_NUTRITION_PCT, DEFAULT_KITCHEN_PCT)
     p = diet_plan.platform_fee_percent
     n = diet_plan.nutritionist_share_percent
     k = diet_plan.kitchen_share_percent
     if p is not None and n is not None and k is not None:
         return (p, n, k)
-    return (
-        defaults.default_platform_fee_percent,
-        defaults.default_nutritionist_share_percent,
-        defaults.default_kitchen_share_percent,
-    )
+    return (DEFAULT_PLATFORM_PCT, DEFAULT_NUTRITION_PCT, DEFAULT_KITCHEN_PCT)
 
 
 def gross_amount_for_user_diet_plan(plan: UserDietPlan) -> Decimal:

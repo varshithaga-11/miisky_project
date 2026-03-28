@@ -799,7 +799,7 @@ class DietPlans(models.Model):
 
     no_of_days = models.IntegerField(null=True, blank=True)  # e.g. 30 days
 
-    # Optional override for patient plan payment split (% of gross). If any is null, platform defaults apply.
+    # Optional override for patient plan payment split (% of gross). If any is null, code defaults apply (15/15/60).
     platform_fee_percent = models.DecimalField(
         max_digits=5, decimal_places=2, null=True, blank=True,
         help_text="Override: platform share % of gross (must set all three to override)",
@@ -2233,30 +2233,6 @@ class MicroKitchenReassignment(models.Model):
 
 # ------------------------------------------------------------
 # --------------------------------------------------------------------
-
-
-class PlatformPaymentSettings(models.Model):
-    """Singleton (pk=1): default % split of gross patient plan payments when DietPlans has no override."""
-
-    default_platform_fee_percent = models.DecimalField(max_digits=5, decimal_places=2, default=20)
-    default_nutritionist_share_percent = models.DecimalField(max_digits=5, decimal_places=2, default=30)
-    default_kitchen_share_percent = models.DecimalField(max_digits=5, decimal_places=2, default=50)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Platform payment split defaults"
-
-    def save(self, *args, **kwargs):
-        self.pk = 1
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        return
-
-    @classmethod
-    def get_solo(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
 
 
 class PlanPaymentSnapshot(models.Model):

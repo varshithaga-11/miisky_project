@@ -149,7 +149,6 @@ const adminNavItems: NavItem[] = [
       { name: "Health Parameters", path: "/admin/health-parameter" },
       { name: "Normal Ranges", path: "/admin/normal-range" },
       { name: "Diet Plans", path: "/admin/diet-plan" },
-      { name: "Payment split defaults", path: "/admin/payment-split-settings" },
     ],
   },
   {
