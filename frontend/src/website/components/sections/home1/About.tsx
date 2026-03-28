@@ -1,13 +1,48 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Image from "../../Image";
-import { appointmentApi } from "../../../utils/api";
-import { MOCK_DEPARTMENTS } from "../../../utils/mockData";
+import { appointmentApi, getCompanyInfo, getDepartments } from "@/utils/api";
+import { MOCK_DEPARTMENTS } from "@/Website/utils/mockData";
 
 export default function About() {
     const [date, setDate] = useState("");
     const [phone, setPhone] = useState("");
     const [service, setService] = useState("");
     const [bookStatus, setBookStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const [stats, setStats] = useState({
+        years_experience: 30,
+        doctors_count: "180+",
+        services_count: "200+",
+        satisfied_patients: "10k+",
+        specialities: ["Preventive care", "Diagnostic testing", "Mental health services"],
+        vision: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
+    });
+    const [departments, setDepartments] = useState<any[]>(MOCK_DEPARTMENTS);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const infoRes = await getCompanyInfo();
+                const info = Array.isArray(infoRes.data) ? infoRes.data[0] : infoRes.data;
+                if (info) {
+                    setStats({
+                        years_experience: info.years_experience || 30,
+                        doctors_count: info.doctors_count || "180+",
+                        services_count: info.services_count || "200+",
+                        satisfied_patients: info.satisfied_patients || "10k+",
+                        specialities: info.our_specialities || ["Preventive care", "Diagnostic testing", "Mental health services"],
+                        vision: info.our_vision || ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
+                    });
+                }
+
+                const deptRes = await getDepartments();
+                const depts = Array.isArray(deptRes.data) ? deptRes.data : deptRes.data.results || [];
+                if (depts.length > 0) setDepartments(depts);
+            } catch (err) {
+                console.error("Failed to fetch info:", err);
+            }
+        };
+        fetchData();
+    }, []);
 
     const handleBook = async (e: FormEvent) => {
         e.preventDefault();
@@ -54,9 +89,7 @@ export default function About() {
                                                 <div className="specialities-box">
                                                     <h4>Our Specialities</h4>
                                                     <ul className="list-style-one clearfix">
-                                                        <li>Preventive care</li>
-                                                        <li>Diagnostic testing</li>
-                                                        <li>Mental health services</li>
+                                                        {stats.specialities.map((item: any, i: number) => <li key={i}>{item}</li>)}
                                                     </ul>
                                                 </div>
                                             </div>
@@ -64,9 +97,7 @@ export default function About() {
                                                 <div className="specialities-box">
                                                     <h4>Our Vision</h4>
                                                     <ul className="list-style-one clearfix">
-                                                        <li>To provide accessible and equitable</li>
-                                                        <li>To use innovative technology</li>
-                                                        <li>To empower patients</li>
+                                                        {stats.vision.map((item: any, i: number) => <li key={i}>{item}</li>)}
                                                     </ul>
                                                 </div>
                                             </div>
@@ -85,7 +116,7 @@ export default function About() {
                                     <figure className="image"><Image src="/website/assets/images/resource/about-1.jpg" alt="About Image" width={523} height={399} priority /></figure>
                                     <div className="text-box">
                                         <div className="image-shape"style={{ backgroundImage: "url(/website/assets/images/shape/shape-7.png)" }}></div>
-                                        <h2>30</h2>
+                                        <h2>{stats.years_experience}</h2>
                                         <span>Years of Experience in This Field</span>
                                     </div>
                                 </div>
@@ -110,7 +141,7 @@ export default function About() {
                                         onChange={(e) => setService(e.target.value)}
                                     >
                                         <option value="">Select a service</option>
-                                        {MOCK_DEPARTMENTS.map((dept) => (
+                                        {departments.map((dept) => (
                                             <option key={dept.id} value={dept.name}>{dept.name}</option>
                                         ))}
                                     </select>

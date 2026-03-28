@@ -305,3 +305,23 @@ class PatentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patent
         fields = '__all__'
+
+
+# ===========================================================================
+# 22. WORKFLOW STEPS
+# ===========================================================================
+
+class WorkflowStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkflowStep
+        fields = '__all__'
+
+
+# ===========================================================================
+# 23. PRICING PLANS
+# ===========================================================================
+
+class PricingPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PricingPlan
+        fields = '__all__'

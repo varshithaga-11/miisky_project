@@ -6,9 +6,9 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useEffect, useState } from "react";
-import { getBlogPosts } from "@/utils/api";
-import type { BlogPost } from '@/Website/utils/types';
-import { MOCK_BLOG_POSTS } from '@/Website/utils/mockData';
+import { getBlogPosts } from "../../../../utils/api";
+import type { BlogPost } from '../../../../Website/utils/types';
+import { MOCK_BLOG_POSTS } from '../../../../Website/utils/mockData';
 
 interface NewsProps {
   posts?: BlogPost[];
@@ -16,8 +16,8 @@ interface NewsProps {
 
 export default function News({ posts }: NewsProps) {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(posts || MOCK_BLOG_POSTS);
-  const [loading, setLoading] = useState(!posts);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(!posts);
+  const [, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (posts) {

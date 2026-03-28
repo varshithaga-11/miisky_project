@@ -60,7 +60,7 @@ export default function Service({ departments }: ServiceProps) {
         const formattedDepts = depts.map((dept: any) => ({
           id: dept.id,
           name: dept.name || "Department",
-          icon: dept.icon || "icon-18",
+          icon: dept.icon_class || dept.icon || "icon-18",
           image: dept.image_url || dept.image || "/website/assets/images/service/service-1.jpg",
           description: dept.description || "",
         }));

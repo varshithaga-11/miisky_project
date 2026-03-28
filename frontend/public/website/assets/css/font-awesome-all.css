@@ -6162,12 +6162,12 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: normal;
   font-display: auto;
-  src: url("/assets/fonts/fa-brands-400.eot");
-  src: url("/assets/fonts/fa-brands-400.eot?#iefix") format("embedded-opentype"),
-       url("/assets/fonts/fa-brands-400.woff2") format("woff2"),
-       url("/assets/fonts/fa-brands-400.woff") format("woff"),
-       url("/assets/fonts/fa-brands-400.ttf") format("truetype"),
-       url("/assets/fonts/fa-brands-400.svg#fontawesome") format("svg");
+  src: url("/website/assets/fonts/fa-brands-400.eot");
+  src: url("/website/assets/fonts/fa-brands-400.eot?#iefix") format("embedded-opentype"),
+       url("/website/assets/fonts/fa-brands-400.woff2") format("woff2"),
+       url("/website/assets/fonts/fa-brands-400.woff") format("woff"),
+       url("/website/assets/fonts/fa-brands-400.ttf") format("truetype"),
+       url("/website/assets/fonts/fa-brands-400.svg#fontawesome") format("svg");
 }
 
 
@@ -6178,12 +6178,12 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: 300;
   font-display: auto;
-  src: url("/assets/fonts/fa-light-300.eot");
-  src: url("/assets/fonts/fa-light-300.eot?#iefix") format("embedded-opentype"),
-       url("/assets/fonts/fa-light-300.woff2") format("woff2"),
-       url("/assets/fonts/fa-light-300.woff") format("woff"),
-       url("/assets/fonts/fa-light-300.ttf") format("truetype"),
-       url("/assets/fonts/fa-light-300.svg#fontawesome") format("svg");
+  src: url("/website/assets/fonts/fa-light-300.eot");
+  src: url("/website/assets/fonts/fa-light-300.eot?#iefix") format("embedded-opentype"),
+       url("/website/assets/fonts/fa-light-300.woff2") format("woff2"),
+       url("/website/assets/fonts/fa-light-300.woff") format("woff"),
+       url("/website/assets/fonts/fa-light-300.ttf") format("truetype"),
+       url("/website/assets/fonts/fa-light-300.svg#fontawesome") format("svg");
 }
 
 
@@ -6195,12 +6195,12 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: 400;
   font-display: auto;
-  src: url("/assets/fonts/fa-regular-400.eot");
-  src: url("/assets/fonts/fa-regular-400.eot?#iefix") format("embedded-opentype"),
-       url("/assets/fonts/fa-regular-400.woff2") format("woff2"),
-       url("/assets/fonts/fa-regular-400.woff") format("woff"),
-       url("/assets/fonts/fa-regular-400.ttf") format("truetype"),
-       url("/assets/fonts/fa-regular-400.svg#fontawesome") format("svg");
+  src: url("/website/assets/fonts/fa-regular-400.eot");
+  src: url("/website/assets/fonts/fa-regular-400.eot?#iefix") format("embedded-opentype"),
+       url("/website/assets/fonts/fa-regular-400.woff2") format("woff2"),
+       url("/website/assets/fonts/fa-regular-400.woff") format("woff"),
+       url("/website/assets/fonts/fa-regular-400.ttf") format("truetype"),
+       url("/website/assets/fonts/fa-regular-400.svg#fontawesome") format("svg");
 }
 
 
@@ -6212,12 +6212,12 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: 900;
   font-display: auto;
-  src: url("/assets/fonts/fa-solid-900.eot");
-  src: url("/assets/fonts/fa-solid-900.eot?#iefix") format("embedded-opentype"),
-       url("/assets/fonts/fa-solid-900.woff2") format("woff2"),
-       url("/assets/fonts/fa-solid-900.woff") format("woff"),
-       url("/assets/fonts/fa-solid-900.ttf") format("truetype"),
-       url("/assets/fonts/fa-solid-900.svg#fontawesome") format("svg");
+  src: url("/website/assets/fonts/fa-solid-900.eot");
+  src: url("/website/assets/fonts/fa-solid-900.eot?#iefix") format("embedded-opentype"),
+       url("/website/assets/fonts/fa-solid-900.woff2") format("woff2"),
+       url("/website/assets/fonts/fa-solid-900.woff") format("woff"),
+       url("/website/assets/fonts/fa-solid-900.ttf") format("truetype"),
+       url("/website/assets/fonts/fa-solid-900.svg#fontawesome") format("svg");
 }
 
 

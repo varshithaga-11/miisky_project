@@ -71,7 +71,10 @@ export const deleteMedicalDevice = (id: number) => API.delete(`/website/medicald
 // ============================================================================
 // DEVICE FEATURES
 // ============================================================================
-export const getDeviceFeatures = () => API.get('/website/devicefeature/');
+export const getDeviceFeatures = (deviceId?: number) => {
+  const url = deviceId ? `/website/devicefeature/?device=${deviceId}` : '/website/devicefeature/';
+  return API.get(url);
+};
 export const getDeviceFeatureById = (id: number) => API.get(`/website/devicefeature/${id}/`);
 export const createDeviceFeature = (data: any) => API.post('/website/devicefeature/', data);
 export const updateDeviceFeature = (id: number, data: any) => API.put(`/website/devicefeature/${id}/`, data);
@@ -259,6 +262,24 @@ export const getPatentById = (id: number) => API.get(`/website/patent/${id}/`);
 export const createPatent = (data: any) => API.post('/website/patent/', data);
 export const updatePatent = (id: number, data: any) => API.put(`/website/patent/${id}/`, data);
 export const deletePatent = (id: number) => API.delete(`/website/patent/${id}/`);
+
+// ============================================================================
+// WORKFLOW STEPS
+// ============================================================================
+export const getWorkflowSteps = () => API.get('/website/workflowstep/');
+export const getWorkflowStepById = (id: number) => API.get(`/website/workflowstep/${id}/`);
+export const createWorkflowStep = (data: any) => API.post('/website/workflowstep/', data);
+export const updateWorkflowStep = (id: number, data: any) => API.put(`/website/workflowstep/${id}/`, data);
+export const deleteWorkflowStep = (id: number) => API.delete(`/website/workflowstep/${id}/`);
+
+// ============================================================================
+// PRICING PLANS
+// ============================================================================
+export const getPricingPlans = () => API.get('/website/pricingplan/');
+export const getPricingPlanById = (id: number) => API.get(`/website/pricingplan/${id}/`);
+export const createPricingPlan = (data: any) => API.post('/website/pricingplan/', data);
+export const updatePricingPlan = (id: number, data: any) => API.put(`/website/pricingplan/${id}/`, data);
+export const deletePricingPlan = (id: number) => API.delete(`/website/pricingplan/${id}/`);
 
 // ============================================================================
 // DASHBOARD STATS

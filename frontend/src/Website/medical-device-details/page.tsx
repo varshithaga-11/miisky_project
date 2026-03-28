@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Image from "../components/Image";
-import { getMedicalDeviceById, getMedicalDeviceCategories } from "../../utils/api";
+import { getMedicalDeviceById, getMedicalDeviceCategories, getDeviceFeatures } from "../../utils/api";
 import Cta from "../components/sections/home2/Cta";
 
 export default function MedicalDeviceDetailsPage() {
@@ -10,6 +10,7 @@ export default function MedicalDeviceDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const [device, setDevice] = useState<any>(null);
     const [category, setCategory] = useState<any>(null);
+    const [features, setFeatures] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,9 +23,10 @@ export default function MedicalDeviceDetailsPage() {
             if (!id) return;
             try {
                 setLoading(true);
-                const [deviceRes, categoriesRes] = await Promise.all([
+                const [deviceRes, categoriesRes, featuresRes] = await Promise.all([
                     getMedicalDeviceById(parseInt(id)),
-                    getMedicalDeviceCategories()
+                    getMedicalDeviceCategories(),
+                    getDeviceFeatures(parseInt(id))
                 ]);
                 
                 const deviceData = deviceRes.data;
@@ -33,6 +35,9 @@ export default function MedicalDeviceDetailsPage() {
                 const categories = Array.isArray(categoriesRes.data) ? categoriesRes.data : categoriesRes.data.results || [];
                 const foundCategory = categories.find((c: any) => c.id === deviceData.category_id);
                 setCategory(foundCategory);
+
+                const featuresData = Array.isArray(featuresRes.data) ? featuresRes.data : featuresRes.data.results || [];
+                setFeatures(featuresData);
             } catch (err) {
                 console.error("Failed to fetch medical device details:", err);
             } finally {
@@ -75,22 +80,28 @@ export default function MedicalDeviceDetailsPage() {
                                 <div className="features-box mb_40">
                                     <h3 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '20px' }}>Key Specifications</h3>
                                     <ul className="list-item clearfix" style={{ paddingLeft: '0', listStyle: 'none' }}>
-                                        <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                                            <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px' }}></i>
-                                            Advanced Sensor Technology
-                                        </li>
-                                        <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                                            <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px' }}></i>
-                                            Ergonomic Design for Ease of Use
-                                        </li>
-                                        <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                                            <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px' }}></i>
-                                            Certified for International Standards
-                                        </li>
-                                        <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                                            <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px' }}></i>
-                                            Real-time Data Monitoring
-                                        </li>
+                                        {features.length > 0 ? (
+                                            features.map((feature: any) => (
+                                                <li key={feature.id} style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                                    <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px', marginTop: '5px' }}></i>
+                                                    <div>
+                                                        <strong style={{ display: 'block', fontSize: '16px' }}>{feature.title}</strong>
+                                                        {feature.description && <span style={{ fontSize: '13px', color: '#777' }}>{feature.description}</span>}
+                                                    </div>
+                                                </li>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
+                                                    <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px' }}></i>
+                                                    Advanced Patient Monitoring
+                                                </li>
+                                                <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
+                                                    <i className="fas fa-check-circle" style={{ color: '#0646ac', marginRight: '10px' }}></i>
+                                                    Clinical Precision Engineering
+                                                </li>
+                                            </>
+                                        )}
                                     </ul>
                                 </div>
                                 <div className="btn-box">

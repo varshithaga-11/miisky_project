@@ -661,6 +661,50 @@ class PatentViewSet(viewsets.ModelViewSet):
 
 
 # ===========================================================================
+# 22. WORKFLOW STEPS
+# ===========================================================================
+
+class WorkflowStepViewSet(viewsets.ModelViewSet):
+    serializer_class = WorkflowStepSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'description']
+    ordering = ['position']
+
+    def get_queryset(self):
+        qs = WorkflowStep.objects.all()
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=_bool(is_active))
+        else:
+            qs = qs.filter(is_active=True)
+        return qs.order_by('position')
+
+
+# ===========================================================================
+# 23. PRICING PLANS
+# ===========================================================================
+
+class PricingPlanViewSet(viewsets.ModelViewSet):
+    serializer_class = PricingPlanSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'savings_text']
+    ordering = ['position']
+
+    def get_queryset(self):
+        qs = PricingPlan.objects.all()
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=_bool(is_active))
+        else:
+            qs = qs.filter(is_active=True)
+        return qs.order_by('position')
+
+
+# ===========================================================================
 # 22. DASHBOARD STATS
 # ===========================================================================
 

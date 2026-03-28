@@ -1,24 +1,5 @@
 """
 Miisky — SVASTH Website App Models
-
-Covers all sections of the live website at miisky.com:
-  - Company Info & Contact
-  - Navigation / Menu
-  - Hero / Banner Sections
-  - Medical Devices & NIR Technology
-  - Health Foods & Product Catalog
-  - Health Food Concept Articles
-  - Workflow Steps
-  - Blog / Food Blogs
-  - Reports
-  - Callback Requests
-  - Testimonials & FAQs
-  - Newsletter Subscribers
-  - Team Members
-  - Careers / Job Listings
-  - Gallery / Media
-  - Partners / Collaborations
-  - AI Chatbot Configuration
 """
 
 from django.db import models
@@ -68,9 +49,16 @@ class CompanyInfo(models.Model):
     meta_description = models.TextField(blank=True, null=True)
     meta_keywords = models.TextField(blank=True, null=True)
 
-    # Working Hours
-    working_hours = models.CharField(max_length=200, blank=True, null=True)
-    # e.g. "Mon–Sat: 9 AM – 6 PM"
+    # Stat Counters
+    years_experience = models.PositiveIntegerField(default=30)
+    doctors_count = models.CharField(max_length=50, default="180+")
+    services_count = models.CharField(max_length=50, default="200+")
+    satisfied_patients = models.CharField(max_length=50, default="10k+")
+
+    # Mission & Vision (JSON format for bullet points)
+    our_specialities = models.JSONField(blank=True, null=True)
+    our_vision = models.JSONField(blank=True, null=True)
+    mission_statement = models.TextField(blank=True, null=True)
 
     # Audit
     created_at = models.DateTimeField(auto_now_add=True)
@@ -176,6 +164,7 @@ class MedicalDevice(models.Model):
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     short_description = models.CharField(max_length=300, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    long_description = models.TextField(blank=True, null=True) # For detail page overview
 
     # Technology
     primary_technology = models.CharField(max_length=100, blank=True, null=True)
@@ -362,6 +351,7 @@ class BlogPost(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
 
     is_featured = models.BooleanField(default=False)
+    read_time = models.CharField(max_length=50, blank=True, null=True) # e.g. "5 min read"
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -552,6 +542,7 @@ class Department(models.Model):
     head_name = models.CharField(max_length=200, blank=True, null=True)
     head_email = models.CharField(max_length=150, blank=True, null=True)
     position = models.PositiveIntegerField(default=1)
+    icon_class = models.CharField(max_length=100, blank=True, null=True) # e.g. "icon-18"
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -587,6 +578,7 @@ class TeamMember(models.Model):
     email = models.CharField(max_length=150, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     position = models.PositiveIntegerField(default=1)
+    is_doctor = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -917,5 +909,57 @@ class Patent(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# ===========================================================================
+# 22. WORKFLOW STEPS
+# ===========================================================================
+
+class WorkflowStep(models.Model):
+    """
+    Steps for "How it Works" section on the home page.
+    """
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    icon_class = models.CharField(max_length=100, blank=True, null=True) # e.g. "icon-20"
+    position = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['position']
+
+    def __str__(self):
+        return self.title
+
+
+# ===========================================================================
+# 23. PRICING PLANS
+# ===========================================================================
+
+class PricingPlan(models.Model):
+    """
+    Subscription/Pricing plans for the website.
+    """
+    name = models.CharField(max_length=100) # e.g. Basic Plan, Silver Plan
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    currency_symbol = models.CharField(max_length=10, default="$")
+    billing_period = models.CharField(max_length=50, default="monthly")
+    savings_text = models.CharField(max_length=100, blank=True, null=True) # e.g. "Save 25%"
+    icon_class = models.CharField(max_length=100, default="icon-20")
+    
+    features = models.JSONField(default=list) # List of feature strings
+    
+    is_popular = models.BooleanField(default=False)
+    cta_text = models.CharField(max_length=100, default="Choose Plan +")
+    cta_url = models.CharField(max_length=255, default="/website/pricing")
+    
+    position = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['position']
+
+    def __str__(self):
+        return self.name
 
 

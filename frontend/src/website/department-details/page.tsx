@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import Image from "../components/Image";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
 import { getDepartmentById, getDepartments } from "../../utils/api";
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 
 export default function DepartmentDetails() {
+    const { id } = useParams<{ id: string }>();
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [department, setDepartment] = useState<any>(MOCK_DEPARTMENTS[0] || {});
     const [departments, setDepartments] = useState<any[]>(MOCK_DEPARTMENTS);
@@ -20,8 +21,9 @@ export default function DepartmentDetails() {
     useEffect(() => {
         const fetchDepartment = async () => {
             try {
-                // Fetch specific department (ID 1 for Cardiology)
-                const response = await getDepartmentById(1);
+                // Fetch dynamic department based on ID
+                const deptId = id ? parseInt(id) : 1;
+                const response = await getDepartmentById(deptId);
                 setDepartment(response.data || MOCK_DEPARTMENTS[0]);
             } catch (err) {
                 console.warn('Failed to fetch department:', err);
@@ -44,7 +46,7 @@ export default function DepartmentDetails() {
 
         fetchDepartment();
         fetchAllDepartments();
-    }, []);
+    }, [id]);
 
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
@@ -62,8 +64,8 @@ export default function DepartmentDetails() {
                                         </div>
                                         <div className="widget-content">
                                             <ul className="category-list clearfix">
-                                                {departments.map((dept: any, idx: number) => (
-                                                    <li key={dept.id}><Link to={idx === 0 ? "/website/department-details" : `/website/department-details-${idx + 1}`} className={department.id === dept.id ? "current" : ""}>{dept.name}</Link></li>
+                                                {departments.map((dept: any) => (
+                                                    <li key={dept.id}><Link to={`/website/department-details/${dept.id}`} className={department.id === dept.id ? "current" : ""}>{dept.name}</Link></li>
                                                 ))}
                                             </ul>
                                         </div>

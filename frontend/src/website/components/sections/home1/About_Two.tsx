@@ -1,44 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "../../Image";
+import { getCompanyInfo } from "@/utils/api";
 
 export default function About_Two() {
   const [activeTab, setActiveTab] = useState(4);
+  const [tabContent, setTabContent] = useState<any[]>([]);
 
-  const tabs = [
-    { id: 4, title: "Vision" },
-    { id: 5, title: "Mission" },
-    { id: 6, title: "Strategy" },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getCompanyInfo();
+        const info = Array.isArray(response.data) ? response.data[0] : response.data;
+        if (info) {
+          setTabContent([
+            {
+              id: 4,
+              title: "Vision",
+              heading: "Vision",
+              paragraph: info.vision_statement || info.mission_statement || "Our vision is to provide accessible and equitable healthcare to all individuals.",
+              leftListTitle: "Our Specialities",
+              leftList: info.our_specialities || ["Preventive care", "Diagnostic testing", "Mental health services"],
+              rightListTitle: "Our Vision",
+              rightList: info.our_vision || ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
+            },
+            {
+              id: 5,
+              title: "Mission",
+              heading: "Mission",
+              paragraph: info.mission_statement || "Our mission is to empower patients and use innovative technology to improve health outcomes.",
+              leftListTitle: "Our Specialities",
+              leftList: info.our_specialities || ["Preventive care", "Diagnostic testing", "Mental health services"],
+              rightListTitle: "Our Mission",
+              rightList: info.our_vision || ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
+            },
+            {
+              id: 6,
+              title: "Strategy",
+              heading: "Strategy",
+              paragraph: info.strategy_statement || info.mission_statement || "We focus on a patient-centric approach combined with cutting-edge medical research.",
+              leftListTitle: "Our Specialities",
+              leftList: info.our_specialities || ["Preventive care", "Diagnostic testing", "Mental health services"],
+              rightListTitle: "Our Strategy",
+              rightList: info.our_vision || ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch company info for tabs:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const tabContent = [
-    {
-      id: 4,
-      heading: "Vision",
-      paragraph: "The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life. I am forever grateful for everything they did for me",
-      leftListTitle: "Our Specialities",
-      leftList: ["Preventive care", "Diagnostic testing", "Mental health services"],
-      rightListTitle: "Our Vision",
-      rightList: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
-    },
-    {
-      id: 5,
-      heading: "Mission",
-      paragraph: "The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life. I am forever grateful for everything they did for me",
-      leftListTitle: "Our Specialities",
-      leftList: ["Preventive care", "Diagnostic testing", "Mental health services"],
-      rightListTitle: "Our Mission",
-      rightList: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
-    },
-    {
-      id: 6,
-      heading: "Strategy",
-      paragraph: "The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life. I am forever grateful for everything they did for me",
-      leftListTitle: "Our Specialities",
-      leftList: ["Preventive care", "Diagnostic testing", "Mental health services"],
-      rightListTitle: "Our Strategy",
-      rightList: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
-    },
-  ];
+  const tabs = tabContent.map(t => ({ id: t.id, title: t.title }));
+
+  if (tabContent.length === 0) return null;
 
   return (
     <section className="about-style-two pt_140">
@@ -89,7 +105,7 @@ export default function About_Two() {
                                 <div className="specialities-box">
                                   <h4>{content.leftListTitle}</h4>
                                   <ul className="list-style-one clearfix">
-                                    {content.leftList.map((item, i) => <li key={i}>{item}</li>)}
+                                    {content.leftList.map((item: any, i: number) => <li key={i}>{item}</li>)}
                                   </ul>
                                 </div>
                               </div>
@@ -97,7 +113,7 @@ export default function About_Two() {
                                 <div className="specialities-box">
                                   <h4>{content.rightListTitle}</h4>
                                   <ul className="list-style-one clearfix">
-                                    {content.rightList.map((item, i) => <li key={i}>{item}</li>)}
+                                    {content.rightList.map((item: any, i: number) => <li key={i}>{item}</li>)}
                                   </ul>
                                 </div>
                               </div>
