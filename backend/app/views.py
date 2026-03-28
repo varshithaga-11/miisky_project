@@ -2553,7 +2553,35 @@ class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
 
     def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user)
+        return (
+            Cart.objects.filter(user=self.request.user)
+            .select_related('micro_kitchen', 'micro_kitchen__user')
+            .prefetch_related('items__food')
+        )
+
+    @action(detail=True, methods=['get'], url_path='checkout-preview')
+    def checkout_preview(self, request, pk=None):
+        cart = self.get_object()
+        data = _compute_checkout_for_cart(request.user, cart)
+        slab = data['delivery_slab']
+        payload = {
+            'food_subtotal': str(data['food_subtotal']),
+            'delivery_distance_km': str(data['delivery_distance_km'])
+            if data['delivery_distance_km'] is not None
+            else None,
+            'delivery_charge': str(data['delivery_charge']),
+            'delivery_slab': None,
+            'final_amount': str(data['final_amount']),
+            'warnings': data['warnings'],
+        }
+        if slab:
+            payload['delivery_slab'] = {
+                'id': slab.id,
+                'min_km': str(slab.min_km),
+                'max_km': str(slab.max_km),
+                'charge': str(slab.charge),
+            }
+        return Response(payload)
 
     @action(detail=False, methods=['post'], url_path='add-item')
     def add_item(self, request):
@@ -2593,6 +2621,94 @@ def _haversine_km(lat1, lon1, lat2, lon2):
     return r * c
 
 
+def _slab_penalty_km(slab, d_km: Decimal) -> Decimal:
+    """0 if d is inside [min_km, max_km]; else distance to nearest slab edge."""
+    if slab.min_km <= d_km <= slab.max_km:
+        return Decimal('0')
+    if d_km < slab.min_km:
+        return slab.min_km - d_km
+    return d_km - slab.max_km
+
+
+def _resolve_delivery_slab_for_distance(kitchen_profile, d_km: Decimal):
+    """
+    Pick slab for distance. Exact range match first; otherwise nearest slab (handles gaps and beyond max range).
+    """
+    slabs = list(
+        DeliveryChargeSlab.objects.filter(micro_kitchen=kitchen_profile).order_by('min_km')
+    )
+    warnings = []
+    if not slabs:
+        return None, Decimal('0'), warnings + ['no_slabs']
+    for s in slabs:
+        if s.min_km <= d_km <= s.max_km:
+            return s, Decimal(str(s.charge)), warnings
+    best = min(slabs, key=lambda s: _slab_penalty_km(s, d_km))
+    if _slab_penalty_km(best, d_km) > 0:
+        warnings.append('nearest_slab_applied')
+    return best, Decimal(str(best.charge)), warnings
+
+
+def _cart_food_total_decimal(cart):
+    total = Decimal('0')
+    for item in cart.items.select_related('food'):
+        mcf = MicroKitchenFood.objects.filter(
+            micro_kitchen=cart.micro_kitchen, food=item.food
+        ).first()
+        if mcf and mcf.price is not None:
+            p = Decimal(str(mcf.price))
+        else:
+            fp = getattr(item.food, 'price', None) if item.food else None
+            p = Decimal(str(fp)) if fp is not None else Decimal('0')
+        total += p * item.quantity
+    return total.quantize(Decimal('0.01'))
+
+
+def _compute_checkout_for_cart(user, cart):
+    """
+    Food subtotal, delivery distance/charge/slab, final total, and warning codes for UI.
+    """
+    warnings = []
+    total_dec = _cart_food_total_decimal(cart)
+    kitchen_profile = cart.micro_kitchen
+    kitchen_user = kitchen_profile.user if kitchen_profile else None
+
+    dist_km = None
+    dist_dec = None
+    slab = None
+    delivery_charge_dec = Decimal('0')
+
+    if not kitchen_profile:
+        warnings.append('no_kitchen')
+    elif not kitchen_user:
+        warnings.append('no_kitchen')
+    elif getattr(user, 'latitude', None) is None or getattr(user, 'longitude', None) is None:
+        warnings.append('no_customer_coordinates')
+    elif getattr(kitchen_user, 'latitude', None) is None or getattr(kitchen_user, 'longitude', None) is None:
+        warnings.append('no_kitchen_coordinates')
+    else:
+        dist_km = _haversine_km(
+            user.latitude,
+            user.longitude,
+            kitchen_user.latitude,
+            kitchen_user.longitude,
+        )
+        if dist_km is not None:
+            dist_dec = Decimal(str(round(dist_km, 2)))
+            slab, delivery_charge_dec, sw = _resolve_delivery_slab_for_distance(kitchen_profile, dist_dec)
+            warnings.extend(sw)
+
+    final_dec = (total_dec + delivery_charge_dec).quantize(Decimal('0.01'))
+    return {
+        'food_subtotal': total_dec,
+        'delivery_distance_km': dist_dec,
+        'delivery_charge': delivery_charge_dec,
+        'delivery_slab': slab,
+        'final_amount': final_dec,
+        'warnings': warnings,
+    }
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
@@ -2600,7 +2716,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         base = Order.objects.select_related(
-            'user', 'micro_kitchen', 'delivery_slab'
+            'user', 'micro_kitchen', 'micro_kitchen__user', 'delivery_slab'
         ).prefetch_related('items__food', 'ratings').order_by('-created_at')
 
         if user.role == 'admin':
@@ -2624,61 +2740,31 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response({"error": "cart_id required"}, status=400)
 
         try:
-            cart = Cart.objects.get(id=cart_id, user=request.user)
-            cart_items = cart.items.all()
-            
+            cart = (
+                Cart.objects.select_related('micro_kitchen', 'micro_kitchen__user')
+                .prefetch_related('items__food')
+                .get(id=cart_id, user=request.user)
+            )
+            cart_items = list(cart.items.select_related('food'))
             if not cart_items:
                 return Response({"error": "Cart is empty"}, status=400)
 
-            # Get price from MicroKitchenFood if available, else Food
             def get_price(item):
                 mcf = MicroKitchenFood.objects.filter(
                     micro_kitchen=cart.micro_kitchen, food=item.food
                 ).first()
                 if mcf:
                     return float(mcf.price)
-                return (item.food.price or 0) if item.food.price else 0
+                return (item.food.price or 0) if item.food and item.food.price else 0
 
-            total_amount = sum(get_price(item) * item.quantity for item in cart_items)
-            total_dec = Decimal(str(round(float(total_amount), 2)))
-
+            breakdown = _compute_checkout_for_cart(request.user, cart)
+            total_dec = breakdown['food_subtotal']
+            dist_dec = breakdown['delivery_distance_km']
+            delivery_charge_dec = breakdown['delivery_charge']
+            slab = breakdown['delivery_slab']
+            final_dec = breakdown['final_amount']
             customer = request.user
             kitchen_profile = cart.micro_kitchen
-            kitchen_user = kitchen_profile.user if kitchen_profile else None
-
-            dist_km = None
-            slab = None
-            delivery_charge_dec = Decimal('0')
-            if (
-                kitchen_profile
-                and kitchen_user
-                and getattr(customer, 'latitude', None) is not None
-                and getattr(customer, 'longitude', None) is not None
-                and getattr(kitchen_user, 'latitude', None) is not None
-                and getattr(kitchen_user, 'longitude', None) is not None
-            ):
-                dist_km = _haversine_km(
-                    customer.latitude,
-                    customer.longitude,
-                    kitchen_user.latitude,
-                    kitchen_user.longitude,
-                )
-                if dist_km is not None:
-                    d_dec = Decimal(str(round(dist_km, 2)))
-                    slab = (
-                        DeliveryChargeSlab.objects.filter(
-                            micro_kitchen=kitchen_profile,
-                            min_km__lte=d_dec,
-                            max_km__gte=d_dec,
-                        )
-                        .order_by('min_km')
-                        .first()
-                    )
-                    if slab:
-                        delivery_charge_dec = slab.charge
-
-            final_dec = total_dec + delivery_charge_dec
-            dist_dec = Decimal(str(round(dist_km, 2))) if dist_km is not None else None
 
             order = Order.objects.create(
                 user=customer,
@@ -2693,7 +2779,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status='placed',
             )
 
-            # Create OrderItems
             for item in cart_items:
                 price = get_price(item)
                 OrderItem.objects.create(
@@ -2701,7 +2786,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     food=item.food,
                     quantity=item.quantity,
                     price=price,
-                    subtotal=price * item.quantity
+                    subtotal=price * item.quantity,
                 )
 
             # Clear cart

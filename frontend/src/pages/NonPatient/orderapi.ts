@@ -58,11 +58,15 @@ export interface Order {
     first_name: string;
     last_name: string;
     mobile: string;
+    latitude?: number | null;
+    longitude?: number | null;
   };
   micro_kitchen: number;
   kitchen_details?: {
     id: number;
     brand_name: string;
+    latitude?: number | null;
+    longitude?: number | null;
   };
   order_type: 'patient' | 'non_patient';
   status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'picked_up' | 'delivered' | 'cancelled';
@@ -102,6 +106,21 @@ export const deleteCartItem = async (itemId: number) => {
 };
 
 // Order APIs
+export type CheckoutPreview = {
+  food_subtotal: string;
+  delivery_distance_km: string | null;
+  delivery_charge: string;
+  delivery_slab: { id: number; min_km: string; max_km: string; charge: string } | null;
+  final_amount: string;
+  warnings: string[];
+};
+
+export const getCartCheckoutPreview = async (cartId: number): Promise<CheckoutPreview> => {
+  const url = createApiUrl(`api/cart/${cartId}/checkout-preview/`);
+  const response = await axios.get<CheckoutPreview>(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
 export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
   const url = createApiUrl("api/order/place-order/");
   const response = await axios.post(url, {
