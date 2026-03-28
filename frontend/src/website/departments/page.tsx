@@ -59,7 +59,7 @@ export default function DepartmentsPage() {
                                             <div className="lower-content">
                                                 <div className="inner">
                                                     <div className="icon-box"><i className={dept.icon || "icon-18"}></i></div>
-                                                    <h3><Link to={`/website/department-details?id=${dept.id}`}>{dept.name}</Link></h3>
+                                                    <h3><Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link></h3>
                                                     <p>{dept.description?.substring(0, 60)}...</p>
                                                 </div>
                                             </div>

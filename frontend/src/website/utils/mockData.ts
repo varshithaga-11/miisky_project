@@ -71,12 +71,12 @@ export const MOCK_DEPARTMENTS: Department[] = [
 
 // Department slugs for routing
 export const DEPARTMENT_SLUGS: Record<number, string> = {
-  1: "/website/department-details",
-  2: "/website/department-details-2",
-  3: "/website/department-details-3",
-  4: "/website/department-details-4",
-  5: "/website/department-details-5",
-  6: "/website/department-details-6",
+  1: "/website/department-details/1",
+  2: "/website/department-details/2",
+  3: "/website/department-details/3",
+  4: "/website/department-details/4",
+  5: "/website/department-details/5",
+  6: "/website/department-details/6",
 };
 
 // ─── Services ─────────────────────────────────────────────────────────────────

@@ -325,6 +325,7 @@ export function appRoutes() {
           <Route path="contact" element={<WebsiteContact />} />
           <Route path="departments" element={<WebsiteDepartments />} />
           <Route path="department-details" element={<WebsiteDepartmentDetails />} />
+          <Route path="department-details/:id" element={<WebsiteDepartmentDetails />} />
           {/* <Route path="department-details-2" element={<WebsiteDepartmentDetails2 />} />
           <Route path="department-details-3" element={<WebsiteDepartmentDetails3 />} />
           <Route path="department-details-4" element={<WebsiteDepartmentDetails4 />} />

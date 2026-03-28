@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('../fonts/icomoon.eot?tin97q');
-  src:  url('../fonts/icomoon.eot?tin97q#iefix') format('embedded-opentype'),
-    url('../fonts/icomoon.ttf?tin97q') format('truetype'),
-    url('../fonts/icomoon.woff?tin97q') format('woff'),
-    url('../fonts/icomoon.svg?tin97q#icomoon') format('svg');
+  src:  url('/website/assets/fonts/icomoon.eot?tin97q');
+  src:  url('/website/assets/fonts/icomoon.eot?tin97q#iefix') format('embedded-opentype'),
+    url('/website/assets/fonts/icomoon.ttf?tin97q') format('truetype'),
+    url('/website/assets/fonts/icomoon.woff?tin97q') format('woff'),
+    url('/website/assets/fonts/icomoon.svg?tin97q#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -13,7 +13,6 @@
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;
-  speak: never;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
