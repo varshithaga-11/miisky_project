@@ -1995,6 +1995,7 @@ class SupportTicket(models.Model):
         ('patient', 'Patient'),
         ('nutritionist', 'Nutritionist'),
         ('kitchen', 'Kitchen'),
+        ('non_patient', 'Non Patient'),
     ]
 
     created_by = models.ForeignKey(

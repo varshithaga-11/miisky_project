@@ -91,6 +91,7 @@ import SupportTicketRequestsPage from "./pages/AdminSide/SupportTicketRequests";
 import PatientSupportTicketPage from "./pages/PatientSide/SupportTicket";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
+import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
 import PatientDashboardPage from "./pages/PatientSide/Dashboard/index";
 import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
 import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
@@ -289,6 +290,7 @@ export function appRoutes() {
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
+          <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 
 
