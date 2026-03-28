@@ -99,6 +99,7 @@ import PatientDashboardPage from "./pages/PatientSide/Dashboard/index";
 import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
 import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
 import NonPatientDashboardPage from "./pages/NonPatient/Dashboard/index";
+import NutritionKitchenReassignment from "./pages/AdminSide/NutritionKitchenReassignment/index";
 
 
 // Master Side Pages
@@ -260,6 +261,7 @@ export function appRoutes() {
           <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
           <Route path="admin/notifications" element={<AdminNotificationsPage />} />
+          <Route path="admin/reassignment-logs" element={<NutritionKitchenReassignment />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />

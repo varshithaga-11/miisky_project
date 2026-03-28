@@ -41,6 +41,8 @@ router.register(r'supportticket', SupportTicketViewSet, basename='supportticket'
 router.register(r'notifications', NotificationViewSet, basename='notifications')
 router.register(r'ticketmessage', TicketMessageViewSet, basename='ticketmessage')
 router.register(r'ticketattachment', TicketAttachmentViewSet, basename='ticketattachment')
+router.register(r'nutritionist-reassignment', NutritionistReassignmentViewSet, basename='nutritionist-reassignment')
+router.register(r'kitchen-reassignment', MicroKitchenReassignmentViewSet, basename='kitchen-reassignment')
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet)

@@ -96,6 +96,11 @@ const adminNavItems: NavItem[] = [
     path: "/admin/user-nutrition-mapping",
   },
   {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "Reassignment Logs",
+    path: "/admin/reassignment-logs",
+  },
+  {
 
     icon: <ClipboardList className="w-5 h-5" />,
     name: "Patients Overview",

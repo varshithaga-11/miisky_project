@@ -3477,3 +3477,51 @@ class NotificationViewSet(
             notification.is_read = True
             notification.save(update_fields=["is_read"])
         return Response({"message": "Notification marked as read"})
+
+class NutritionistReassignmentViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    View to list nutritionist reassignments, primarily for admins.
+    """
+    queryset = NutritionistReassignment.objects.select_related(
+        'user', 'previous_nutritionist', 'new_nutritionist', 'reassigned_by', 'active_diet_plan'
+    ).order_by('-reassigned_on')
+    serializer_class = NutritionistReassignmentSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        'user__username', 'user__first_name', 'user__last_name',
+        'previous_nutritionist__username', 'new_nutritionist__username',
+        'reason', 'notes'
+    ]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user_id = self.request.query_params.get('user')
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        return qs
+
+class MicroKitchenReassignmentViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    View to list micro kitchen reassignments, primarily for admins.
+    """
+    queryset = MicroKitchenReassignment.objects.select_related(
+        'user_diet_plan__user', 'previous_kitchen', 'new_kitchen', 'reassigned_by'
+    ).order_by('-reassigned_on')
+    serializer_class = MicroKitchenReassignmentSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        'user_diet_plan__user__username', 'user_diet_plan__user__first_name', 'user_diet_plan__user__last_name',
+        'previous_kitchen__brand_name', 'new_kitchen__brand_name',
+        'reason', 'notes'
+    ]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user_id = self.request.query_params.get('user')
+        if user_id:
+            qs = qs.filter(user_diet_plan__user_id=user_id)
+        return qs
