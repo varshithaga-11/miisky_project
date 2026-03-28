@@ -7,6 +7,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { InfoRow, InfoSection, EmptyState } from "../PatientOverview/PatientDataViews";
 import { createApiUrl } from "../../../access/access";
+import { AdminOrderList } from "../shared/AdminOrderList";
+import type { DeliveryChargeSlabAdmin } from "./api";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -17,7 +19,7 @@ const getMediaUrl = (path: string | undefined | null) => {
 export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <section className="space-y-4">
           <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold flex items-center gap-2">
             <FiInfo /> Basic Info
@@ -41,6 +43,22 @@ export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
             <InfoRow label="GST No" value={kitchen.gst_no || "N/A"} />
             <InfoRow label="Area" value={`${kitchen.kitchen_area} sq.ft`} />
             <InfoRow label="Platform" value={`${kitchen.platform_area} sq.ft`} />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold flex items-center gap-2">
+            <FiNavigation2 /> Location (for delivery distance)
+          </h4>
+          <div className="space-y-1">
+            <InfoRow
+              label="Latitude"
+              value={kitchen.latitude != null && kitchen.latitude !== "" ? String(kitchen.latitude) : "Not set"}
+            />
+            <InfoRow
+              label="Longitude"
+              value={kitchen.longitude != null && kitchen.longitude !== "" ? String(kitchen.longitude) : "Not set"}
+            />
           </div>
         </section>
 
@@ -398,32 +416,41 @@ export function DisplayKitchenReviews({ items }: { items: any[] }) {
 }
 
 export function DisplayKitchenOrders({ items }: { items: any[] }) {
-  if (!items || items.length === 0) return <EmptyState message="No orders found." />;
+  return <AdminOrderList items={items || []} hideKitchen />;
+}
+
+export function DisplayKitchenDeliverySlabs({ slabs }: { slabs: DeliveryChargeSlabAdmin[] }) {
+  if (!slabs?.length) {
+    return (
+      <EmptyState message="No delivery charge slabs configured. Customer checkout will show ₹0 delivery until slabs are added." />
+    );
+  }
+  const sorted = [...slabs].sort((a, b) => Number(a.min_km) - Number(b.min_km));
   return (
     <div className="space-y-4">
-      {items.map((o: any) => (
-        <div key={o.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/60 dark:bg-gray-800/30 shadow-sm flex flex-wrap items-center justify-between gap-4 hover:shadow-md transition-all">
-          <div className="flex-1 min-w-[200px]">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-bold text-gray-900 dark:text-white text-base">Order #{o.id}</span>
-              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${o.status === 'delivered' ? "bg-green-100 text-green-700" : o.status === 'cancelled' ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-                }`}>
-                {o.status}
-              </span>
-            </div>
-            <div className="text-xs text-gray-500 flex items-center gap-3">
-              <span>{o.order_type?.toUpperCase()}</span>
-              <span>•</span>
-              <span>{o.created_at ? new Date(o.created_at).toLocaleString() : "—"}</span>
-            </div>
-            <div className="text-[11px] text-gray-500 mt-2 truncate max-w-md">📍 {o.delivery_address || "No address"}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-gray-400 font-bold uppercase">Total Amount</div>
-            <div className="text-xl font-black text-gray-900 dark:text-white">₹ {o.total_amount ?? 0}</div>
-          </div>
-        </div>
-      ))}
+      <p className="text-sm text-gray-600 dark:text-gray-300">
+        Distance bands used to compute delivery on checkout (straight-line km). Charges apply to orders from this kitchen.
+      </p>
+      <div className="rounded-2xl border border-gray-100 dark:border-white/[0.08] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 dark:bg-gray-800/80 text-left text-[10px] font-black uppercase tracking-wider text-gray-500">
+            <tr>
+              <th className="px-4 py-3">Min km</th>
+              <th className="px-4 py-3">Max km</th>
+              <th className="px-4 py-3 text-right">Charge (₹)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-white/[0.06]">
+            {sorted.map((s) => (
+              <tr key={s.id} className="bg-white/80 dark:bg-gray-900/40">
+                <td className="px-4 py-3 font-mono">{s.min_km}</td>
+                <td className="px-4 py-3 font-mono">{s.max_km}</td>
+                <td className="px-4 py-3 text-right font-bold text-blue-600 dark:text-blue-400">{s.charge}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

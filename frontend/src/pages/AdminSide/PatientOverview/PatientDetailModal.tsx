@@ -13,6 +13,8 @@ import {
   fetchKitchenHistoryForPatient,
   PatientUserRow,
 } from "./api";
+import { fetchOrdersForUserAdmin } from "../shared/adminOrderApi";
+import { AdminOrderList } from "../shared/AdminOrderList";
 import {
   DisplayUserProfile,
   DisplayQuestionnaire,
@@ -43,7 +45,8 @@ export type DataView =
   | "nutritionistProfile"
   | "reviews"
   | "dietPlans"
-  | "meals";
+  | "meals"
+  | "orders";
 
 const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   profile: "User profile",
@@ -56,6 +59,7 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   reviews: "Nutritionist reviews",
   dietPlans: "Diet plans",
   meals: "Meals & packaging",
+  orders: "Food orders (delivery)",
 };
 
 const MENU_ITEMS: { key: DataView; description: string }[] = [
@@ -69,6 +73,7 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "reviews", description: "Comments on health documents" },
   { key: "dietPlans", description: "Suggested and active diet plans" },
   { key: "meals", description: "Planned meals, foods, packaging" },
+  { key: "orders", description: "Food orders: kitchen, totals, delivery distance & address" },
 ];
 
 type Props = {
@@ -171,6 +176,9 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             break;
           case "meals":
             setPayload(await fetchUserMealsForPatient(id));
+            break;
+          case "orders":
+            setPayload(await fetchOrdersForUserAdmin(id));
             break;
           default:
             break;
@@ -287,6 +295,9 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
               )}
               {!loading && !error && screen === "meals" && Array.isArray(payload) && (
                 <DisplayMeals meals={payload as MealRow[]} />
+              )}
+              {!loading && !error && screen === "orders" && Array.isArray(payload) && (
+                <AdminOrderList items={payload} hideCustomer />
               )}
             </>
           )}

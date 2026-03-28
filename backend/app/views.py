@@ -2724,6 +2724,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             micro_kitchen_id = self.request.query_params.get('micro_kitchen')
             if micro_kitchen_id:
                 qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+            order_user_id = self.request.query_params.get('user')
+            if order_user_id:
+                qs = qs.filter(user_id=order_user_id)
             return qs
 
         if user.role == 'micro_kitchen':

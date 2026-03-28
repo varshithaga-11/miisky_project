@@ -1,6 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { 
-  FiArrowLeft, FiX, FiInfo, FiUsers, FiClipboard, FiStar, FiShoppingCart, FiMenu, FiTruck 
+import {
+  FiArrowLeft,
+  FiX,
+  FiInfo,
+  FiUsers,
+  FiClipboard,
+  FiStar,
+  FiShoppingCart,
+  FiMenu,
+  FiTruck,
+  FiDollarSign,
 } from "react-icons/fi";
 import {
   getMicroKitchenPatientsNoPagination,
@@ -9,6 +18,7 @@ import {
   getMicroKitchenOrdersNoPagination,
   getMicroKitchenAvailableFoodsNoPagination,
   getMicroKitchenDailyMealsNoPagination,
+  getMicroKitchenDeliverySlabs,
   MicroKitchenProfile,
 } from "./api";
 import {
@@ -19,6 +29,7 @@ import {
   DisplayKitchenOrders,
   DisplayKitchenFoods,
   DisplayKitchenDailyPrep,
+  DisplayKitchenDeliverySlabs,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
@@ -28,6 +39,7 @@ export type KitchenDataView =
   | "inspections"
   | "reviews"
   | "orders"
+  | "delivery"
   | "foods";
 
 const VIEW_TITLES: Record<KitchenDataView, string> = {
@@ -37,16 +49,18 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   inspections: "Compliance & Inspections",
   reviews: "Patient Reviews",
   orders: "Micro Kitchen Orders",
+  delivery: "Delivery charges & distance slabs",
   foods: "Food Available (Menu)",
 };
 
 const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
-  { key: "info", description: "Kitchen basics, owner info, questionnaire", icon: <FiInfo /> },
+  { key: "info", description: "Kitchen basics, owner info, GPS, questionnaire", icon: <FiInfo /> },
   { key: "patients", description: "Currently allotted patients and meal slots", icon: <FiUsers /> },
   { key: "prep", description: "Today's dispatch, packaging and prep logistics", icon: <FiTruck /> },
   { key: "inspections", description: "Detailed inspection reports and compliance", icon: <FiClipboard /> },
   { key: "reviews", description: "Ratings and feedback from patients", icon: <FiStar /> },
-  { key: "orders", description: "Order history for this kitchen", icon: <FiShoppingCart /> },
+  { key: "orders", description: "Orders with address, distance, delivery & line items", icon: <FiShoppingCart /> },
+  { key: "delivery", description: "Distance slabs and charge amounts for this kitchen", icon: <FiDollarSign /> },
   { key: "foods", description: "Menu items currently provided by the kitchen", icon: <FiMenu /> },
 ];
 
@@ -100,6 +114,9 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "orders":
             setPayload(await getMicroKitchenOrdersNoPagination(id));
+            break;
+          case "delivery":
+            setPayload(await getMicroKitchenDeliverySlabs(id));
             break;
           case "foods":
             setPayload(await getMicroKitchenAvailableFoodsNoPagination(id));
@@ -201,6 +218,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                   {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
                   {screen === "reviews" && <DisplayKitchenReviews items={payload} />}
                   {screen === "orders" && <DisplayKitchenOrders items={payload} />}
+                  {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload} />}
                   {screen === "foods" && <DisplayKitchenFoods items={payload} />}
                   {screen === "prep" && <DisplayKitchenDailyPrep items={payload} />}
                 </>

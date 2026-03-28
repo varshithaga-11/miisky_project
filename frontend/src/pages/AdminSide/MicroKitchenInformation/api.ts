@@ -250,3 +250,23 @@ export const getMicroKitchenDailyMealsNoPagination = async (microKitchenId: numb
   });
   return response.data;
 };
+
+export type DeliveryChargeSlabAdmin = {
+  id: number;
+  micro_kitchen: number;
+  min_km: string;
+  max_km: string;
+  charge: string;
+};
+
+/** Admin: distance–charge slabs configured for this kitchen. */
+export const getMicroKitchenDeliverySlabs = async (microKitchenId: number): Promise<DeliveryChargeSlabAdmin[]> => {
+  const url = createApiUrl(`api/deliverychargeslab/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, limit: 200, page: 1 },
+  });
+  const d = response.data;
+  if (Array.isArray(d)) return d;
+  return d?.results ?? [];
+};

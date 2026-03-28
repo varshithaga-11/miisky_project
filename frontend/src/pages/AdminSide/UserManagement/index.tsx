@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getUserList, deleteUser } from "./api";
@@ -59,6 +59,7 @@ const UserManagementPage: React.FC = () => {
   >("all");
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [nonPatientDetailUser, setNonPatientDetailUser] = useState<UserRegister | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -299,11 +300,28 @@ const UserManagementPage: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell className="px-5 py-4">
-                      <div className="flex space-x-3">
-                        <button className="text-blue-600 hover:text-blue-800" onClick={() => { setEditUserId(user.id!); setIsEditModalOpen(true); }}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {user.role === "non_patient" && (
+                          <button
+                            type="button"
+                            title="Profile, address, coordinates & orders"
+                            className="text-emerald-600 hover:text-emerald-800 p-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            onClick={() => setNonPatientDetailUser(user)}
+                          >
+                            <FiEye />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="text-blue-600 hover:text-blue-800 p-1"
+                          onClick={() => {
+                            setEditUserId(user.id!);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
                           <FiEdit />
                         </button>
-                        <button className="text-red-600 hover:text-red-800" onClick={() => handleDelete(user.id!)}>
+                        <button type="button" className="text-red-600 hover:text-red-800 p-1" onClick={() => handleDelete(user.id!)}>
                           <FiTrash2 />
                         </button>
                       </div>
@@ -347,6 +365,14 @@ const UserManagementPage: React.FC = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onUpdated={onUserUpdated}
+        />
+      )}
+
+      {nonPatientDetailUser && (
+        <NonPatientUserDetailModal
+          user={nonPatientDetailUser}
+          open={!!nonPatientDetailUser}
+          onClose={() => setNonPatientDetailUser(null)}
         />
       )}
     </>

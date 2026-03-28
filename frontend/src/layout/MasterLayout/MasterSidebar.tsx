@@ -101,6 +101,11 @@ const adminNavItems: NavItem[] = [
     path: "/admin/patients-overview",
   },
   {
+    icon: <ShoppingCart className="w-5 h-5" />,
+    name: "Non-Patient Users",
+    path: "/admin/non-patient-information",
+  },
+  {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Micro Kitchens",
     path: "/admin/micro-kitchen-information",
