@@ -1,26 +1,30 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
-export interface PlanPayoutRecord {
+/** Matches backend PayoutTrackerSerializer */
+export interface PlanPayoutTrackerRow {
   id: number;
-  ledger: number;
-  ledger_gross: string;
-  recipient_role: string;
+  snapshot: number;
+  snapshot_total: string;
+  payout_type: string;
   nutritionist: number | null;
   micro_kitchen: number | null;
-  amount: string;
+  total_amount: string;
+  paid_amount: string;
+  remaining_amount: string;
   period_from: string | null;
   period_to: string | null;
-  reason: string;
   status: string;
-  paid_on: string | null;
+  is_closed: boolean;
+  closed_reason: string | null;
+  closed_on: string | null;
   created_at: string;
   patient_name: string | null;
   plan_title: string | null;
 }
 
-export async function fetchNutritionistPlanPayouts(): Promise<PlanPayoutRecord[]> {
+export async function fetchNutritionistPlanPayouts(): Promise<PlanPayoutTrackerRow[]> {
   const url = createApiUrl("api/nutrition/plan-payouts/");
-  const res = await axios.get<PlanPayoutRecord[]>(url, { headers: await getAuthHeaders() });
+  const res = await axios.get<PlanPayoutTrackerRow[]>(url, { headers: await getAuthHeaders() });
   return res.data;
 }

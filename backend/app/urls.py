@@ -156,6 +156,16 @@ urlpatterns = [
         views.MicroKitchenPlanPayoutsView.as_view(),
         name="microkitchen-plan-payouts",
     ),
+    path(
+        "admin/plan-payout-trackers/",
+        views.AdminPayoutTrackersForPayView.as_view(),
+        name="admin-plan-payout-trackers",
+    ),
+    path(
+        "admin/plan-payout-transactions/",
+        views.AdminPayoutTransactionListCreateView.as_view(),
+        name="admin-plan-payout-transactions",
+    ),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
     path('login/', LoginView.as_view(), name='login'),

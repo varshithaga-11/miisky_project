@@ -21,6 +21,7 @@ import {
   Bell,
   BookOpen,
   Wallet,
+  Send,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -127,6 +128,11 @@ const adminNavItems: NavItem[] = [
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Payment Verification",
     path: "/admin/patient-payment-verification",
+  },
+  {
+    icon: <Send className="w-5 h-5" />,
+    name: "Record plan payouts",
+    path: "/admin/record-plan-payouts",
   },
   {
     icon: <ShoppingCart className="w-5 h-5" />,

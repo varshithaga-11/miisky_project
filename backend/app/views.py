@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins
 from rest_framework.views import APIView
@@ -375,22 +375,14 @@ class AdminKitchenPayoutsView(APIView):
                 )["total"]
                 or 0
             )
-            plan_pending = (
-                PayoutRecord.objects.filter(
-                    recipient_role=PayoutRecord.ROLE_KITCHEN,
-                    micro_kitchen=k,
-                    status=PayoutRecord.STATUS_PENDING,
-                ).aggregate(total=Sum("amount"))["total"]
-                or 0
+            kt = PayoutTracker.objects.filter(
+                payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                micro_kitchen=k,
             )
-            plan_disbursed = (
-                PayoutRecord.objects.filter(
-                    recipient_role=PayoutRecord.ROLE_KITCHEN,
-                    micro_kitchen=k,
-                    status=PayoutRecord.STATUS_DISBURSED,
-                ).aggregate(total=Sum("amount"))["total"]
-                or 0
+            plan_pending = sum(
+                max((t.total_amount - t.paid_amount), Decimal("0")) for t in kt
             )
+            plan_disbursed = kt.aggregate(s=Sum("paid_amount"))["s"] or Decimal("0")
             results.append(
                 {
                     "id": k.id,
@@ -433,17 +425,17 @@ class NutritionistPlanPayoutsView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         qs = (
-            PayoutRecord.objects.filter(
-                recipient_role=PayoutRecord.ROLE_NUTRITIONIST,
+            PayoutTracker.objects.filter(
+                payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
                 nutritionist=request.user,
             )
             .select_related(
-                "ledger__user_diet_plan__user",
-                "ledger__user_diet_plan__diet_plan",
+                "snapshot__user_diet_plan__user",
+                "snapshot__user_diet_plan__diet_plan",
             )
             .order_by("-id")
         )
-        return Response(PayoutRecordSerializer(qs, many=True).data)
+        return Response(PayoutTrackerSerializer(qs, many=True).data)
 
 
 class MicroKitchenPlanPayoutsView(APIView):
@@ -459,17 +451,86 @@ class MicroKitchenPlanPayoutsView(APIView):
         if not mk:
             return Response([])
         qs = (
-            PayoutRecord.objects.filter(
-                recipient_role=PayoutRecord.ROLE_KITCHEN,
+            PayoutTracker.objects.filter(
+                payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
                 micro_kitchen=mk,
             )
             .select_related(
-                "ledger__user_diet_plan__user",
-                "ledger__user_diet_plan__diet_plan",
+                "snapshot__user_diet_plan__user",
+                "snapshot__user_diet_plan__diet_plan",
             )
             .order_by("-id")
         )
-        return Response(PayoutRecordSerializer(qs, many=True).data)
+        return Response(PayoutTrackerSerializer(qs, many=True).data)
+
+
+class AdminPayoutTrackersForPayView(APIView):
+    """List nutritionist/kitchen payout trackers that still have a remaining balance (admin)."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        ptype = (request.query_params.get("type") or "all").lower()
+        qs = (
+            PayoutTracker.objects.filter(
+                payout_type__in=(
+                    PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+                    PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                ),
+                is_closed=False,
+            )
+            .filter(total_amount__gt=F("paid_amount"))
+            .select_related(
+                "nutritionist",
+                "micro_kitchen",
+                "snapshot__user_diet_plan__user",
+                "snapshot__user_diet_plan__diet_plan",
+            )
+            .order_by("payout_type", "-id")
+        )
+        if ptype == "nutritionist":
+            qs = qs.filter(payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST)
+        elif ptype == "kitchen":
+            qs = qs.filter(payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN)
+        return Response(AdminPayoutTrackerForPayoutSerializer(qs, many=True).data)
+
+
+class AdminPayoutTransactionListCreateView(APIView):
+    """List recent plan payout transfers or log a new payment (multipart supported)."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        qs = (
+            PayoutTransaction.objects.select_related(
+                "tracker__nutritionist",
+                "tracker__micro_kitchen",
+                "tracker__snapshot__user_diet_plan__user",
+                "tracker__snapshot__user_diet_plan__diet_plan",
+                "paid_by",
+            )
+            .filter(
+                tracker__payout_type__in=(
+                    PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+                    PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                )
+            )
+            .order_by("-paid_on")
+        )
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request)
+        ser = PayoutTransactionReadSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(ser.data)
+
+    def post(self, request):
+        ser = PayoutTransactionCreateSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        tx = ser.save(paid_by=request.user)
+        return Response(
+            PayoutTransactionReadSerializer(tx, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────

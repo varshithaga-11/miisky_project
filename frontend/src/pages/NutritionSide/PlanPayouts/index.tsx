@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
-import { fetchNutritionistPlanPayouts, PlanPayoutRecord } from "./api";
+import { fetchNutritionistPlanPayouts, PlanPayoutTrackerRow } from "./api";
 
 function fmtDate(s: string | null) {
   if (!s) return "—";
@@ -10,7 +10,7 @@ function fmtDate(s: string | null) {
 }
 
 export default function NutritionPlanPayoutsPage() {
-  const [rows, setRows] = useState<PlanPayoutRecord[]>([]);
+  const [rows, setRows] = useState<PlanPayoutTrackerRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,8 +26,10 @@ export default function NutritionPlanPayoutsPage() {
     })();
   }, []);
 
-  const pending = rows.filter((r) => r.status === "pending");
-  const totalPending = pending.reduce((acc, r) => acc + parseFloat(r.amount || "0"), 0);
+  const totalRemaining = rows.reduce(
+    (acc, r) => acc + parseFloat(String(r.remaining_amount ?? "0")),
+    0
+  );
 
   return (
     <>
@@ -37,13 +39,13 @@ export default function NutritionPlanPayoutsPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Amounts are calculated when admin verifies payment. If you were reassigned mid-plan, rows are split by
-            calendar days in each segment. Status <span className="font-medium">pending</span> means not yet marked
-            disbursed by operations.
+            Each row is a <span className="font-medium">payout tracker</span> for a date range. Admin records actual
+            transfers separately; <span className="font-medium">remaining</span> is what is still owed on that tracker.
+            Closed rows are kept for history when the plan was resplit after reassignment.
           </p>
           <div className="text-lg font-semibold text-gray-900 dark:text-white">
-            Pending total:{" "}
-            <span className="text-amber-600 dark:text-amber-400">₹{totalPending.toFixed(2)}</span>
+            Remaining across trackers:{" "}
+            <span className="text-amber-600 dark:text-amber-400">₹{totalRemaining.toFixed(2)}</span>
           </div>
         </div>
 
@@ -59,8 +61,9 @@ export default function NutritionPlanPayoutsPage() {
                   <TableCell isHeader>Patient</TableCell>
                   <TableCell isHeader>Plan</TableCell>
                   <TableCell isHeader>Period</TableCell>
-                  <TableCell isHeader>Amount</TableCell>
-                  <TableCell isHeader>Reason</TableCell>
+                  <TableCell isHeader>Total</TableCell>
+                  <TableCell isHeader>Paid</TableCell>
+                  <TableCell isHeader>Remaining</TableCell>
                   <TableCell isHeader>Status</TableCell>
                 </TableRow>
               </TableHeader>
@@ -72,17 +75,21 @@ export default function NutritionPlanPayoutsPage() {
                     <TableCell className="text-xs whitespace-nowrap">
                       {fmtDate(r.period_from)} → {fmtDate(r.period_to)}
                     </TableCell>
-                    <TableCell className="font-semibold">₹{parseFloat(r.amount).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs capitalize">{r.reason.replace(/_/g, " ")}</TableCell>
+                    <TableCell>₹{parseFloat(r.total_amount).toFixed(2)}</TableCell>
+                    <TableCell>₹{parseFloat(r.paid_amount).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">₹{parseFloat(r.remaining_amount).toFixed(2)}</TableCell>
                     <TableCell>
                       <span
                         className={
-                          r.status === "pending"
-                            ? "text-amber-700 dark:text-amber-400"
-                            : "text-emerald-700 dark:text-emerald-400"
+                          r.status === "paid"
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : r.status === "closed"
+                              ? "text-gray-500"
+                              : "text-amber-700 dark:text-amber-400"
                         }
                       >
                         {r.status}
+                        {r.is_closed && r.status !== "closed" ? " (closed)" : ""}
                       </span>
                     </TableCell>
                   </TableRow>
