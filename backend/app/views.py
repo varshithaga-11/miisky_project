@@ -261,6 +261,56 @@ class PatientServiceProvidersView(APIView):
         })
 
 
+class ExpertServiceProvidersView(APIView):
+    """Fetch associated nutritionists/kitchens for experts."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = getattr(user, 'role', None)
+
+        if role == 'nutritionist':
+            # Find all kitchens linked to this nutritionist's patients
+            plans = UserDietPlan.objects.filter(nutritionist=user).select_related('micro_kitchen__user')
+            kitchens = []
+            seen = set()
+            for p in plans:
+                if p.micro_kitchen and p.micro_kitchen.user and p.micro_kitchen.user.id not in seen:
+                    kitchens.append({
+                        "id": p.micro_kitchen.user.id,
+                        "name": p.micro_kitchen.brand_name or p.micro_kitchen.user.username,
+                        "is_active": p.status == 'active',
+                        "role": "kitchen"
+                    })
+                    seen.add(p.micro_kitchen.user.id)
+            return Response({"nutritionists": [], "kitchens": kitchens})
+
+        elif role == 'micro_kitchen':
+            # Find all nutritionists linked to this kitchen's patients
+            # Kitchen is a Profile, linked to user
+            try:
+                mk_profile = user.micro_kitchen
+            except:
+                return Response({"nutritionists": [], "kitchens": []})
+
+            plans = UserDietPlan.objects.filter(micro_kitchen=mk_profile).select_related('nutritionist')
+            nutritionists = []
+            seen = set()
+            for p in plans:
+                if p.nutritionist and p.nutritionist.id not in seen:
+                    name = [p.nutritionist.first_name, p.nutritionist.last_name]
+                    nutritionists.append({
+                        "id": p.nutritionist.id,
+                        "name": " ".join(filter(None, name)).strip() or p.nutritionist.username,
+                        "is_active": True, # UserRegister itself doesn't have is_active for experts? It has, but we'll assume yes
+                        "role": "nutritionist"
+                    })
+                    seen.add(p.nutritionist.id)
+            return Response({"nutritionists": nutritionists, "kitchens": []})
+
+        return Response({"error": "Only experts can use this endpoint"}, status=400)
+
+
 class NutritionDashboardCountsView(APIView):
     permission_classes = [IsAuthenticated]
 

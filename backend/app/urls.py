@@ -181,6 +181,7 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('token/refresh/', RefreshTokenView.as_view(), name='token_refresh'),
     path("patient/service-providers/", views.PatientServiceProvidersView.as_view(), name="patient-service-providers"),
+    path("expert/service-providers/", views.ExpertServiceProvidersView.as_view(), name="expert-service-providers"),
     # path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     # path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),
     # path('resetpassword/', ResetPasswordView.as_view(), name='resetpassword'),

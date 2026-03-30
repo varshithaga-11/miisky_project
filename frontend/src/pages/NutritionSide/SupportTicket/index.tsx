@@ -19,6 +19,8 @@ import {
   TicketAttachment,
   getTicketAttachments,
   uploadTicketAttachment,
+  getServiceProviders,
+  SupportServiceProvider,
 } from "./api";
 import { getUserIdFromToken } from "../../../utils/auth";
 
@@ -37,16 +39,21 @@ const SupportTicketPage: React.FC = () => {
   const [categories, setCategories] = useState<TicketCategory[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [providers, setProviders] = useState<{ nutritionists: SupportServiceProvider[]; kitchens: SupportServiceProvider[] }>({
+    nutritionists: [],
+    kitchens: [],
+  });
   const currentUserId = useMemo(() => getUserIdFromToken(), []);
 
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [form, setForm] = useState<{
     category: number | "";
     target_user_type: SupportTicketTargetType;
+    assigned_to: number | "";
     title: string;
     description: string;
     priority: SupportTicketPriority;
-  }>({ category: "", target_user_type: "admin", title: "", description: "", priority: "medium" });
+  }>({ category: "", target_user_type: "admin", assigned_to: "", title: "", description: "", priority: "medium" });
 
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
@@ -106,8 +113,18 @@ const SupportTicketPage: React.FC = () => {
     }
   };
 
+  const loadProviders = async () => {
+    try {
+      const data = await getServiceProviders();
+      setProviders(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     loadCategories();
+    loadProviders();
   }, []);
 
   useEffect(() => {
@@ -117,6 +134,19 @@ const SupportTicketPage: React.FC = () => {
   useEffect(() => {
     if (activeTicket?.id) loadMessages(activeTicket.id);
   }, [activeTicket?.id]);
+
+  useEffect(() => {
+    if (form.target_user_type === "admin") {
+      setForm(p => ({ ...p, assigned_to: "" }));
+    } else {
+      const list = form.target_user_type === "kitchen" ? providers.kitchens : providers.nutritionists;
+      if (list.length === 1) {
+        setForm(p => ({ ...p, assigned_to: list[0].id }));
+      } else {
+        setForm(p => ({ ...p, assigned_to: "" }));
+      }
+    }
+  }, [form.target_user_type, providers]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +158,7 @@ const SupportTicketPage: React.FC = () => {
       const created = await createSupportTicket({
         user_type: "nutritionist",
         target_user_type: form.target_user_type,
+        assigned_to: form.assigned_to === "" ? null : Number(form.assigned_to),
         category: form.category === "" ? null : Number(form.category),
         title: form.title.trim(),
         description: form.description.trim(),
@@ -135,7 +166,7 @@ const SupportTicketPage: React.FC = () => {
       });
       toast.success("Ticket created");
       setIsNewOpen(false);
-      setForm({ category: "", target_user_type: "admin", title: "", description: "", priority: "medium" });
+      setForm({ category: "", target_user_type: "admin", assigned_to: "", title: "", description: "", priority: "medium" });
       setTickets((prev) => [created, ...prev]);
       setActiveTicket(created);
     } catch (e) {
@@ -427,6 +458,29 @@ const SupportTicketPage: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              {form.target_user_type === "kitchen" && (
+                <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Select Specific Kitchen
+                  </label>
+                  <select
+                    value={form.assigned_to}
+                    onChange={(e) => setForm(p => ({ ...p, assigned_to: e.target.value === "" ? "" : Number(e.target.value) }))}
+                    className="w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="">-- Choose --</option>
+                    {providers.kitchens.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {!p.is_active ? "(Inactive)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {providers.kitchens.length === 0 && (
+                    <p className="text-[10px] text-amber-600 font-medium">Note: No specific kitchen found. Admin will route this for you.</p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
