@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyActivePlan, createMeetingRequest, getMyMeetingRequests, MeetingRequest } from "./api";
+import { getMyActivePlan, createMeetingRequest, getMyMeetingRequests, getAvailableSlots, MeetingRequest, AvailabilitySlot } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiVideo, FiClock, FiCalendar, FiSend, FiCheckCircle, FiInfo } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,18 @@ const SendingMeetingRequest: React.FC = () => {
     const [preferredTime, setPreferredTime] = useState("");
     const [reason, setReason] = useState("");
 
+    const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
+    const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
+
+    const formatTo12Hr = (time24: string) => {
+        if (!time24) return "";
+        const [h, m] = time24.split(":");
+        const hour = parseInt(h);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12.toString().padStart(2, '0')}:${m} ${ampm}`;
+    };
+
     useEffect(() => {
         loadData();
     }, []);
@@ -29,6 +41,11 @@ const SendingMeetingRequest: React.FC = () => {
             setActivePlan(plan);
             const reqs = await getMyMeetingRequests();
             setMyRequests(reqs.sort((a, b) => b.id - a.id));
+
+            if (plan?.nutritionist) {
+                const slots = await getAvailableSlots(plan.nutritionist);
+                setAvailableSlots(slots);
+            }
         } catch (err) {
             toast.error("Failed to load your nutrition status");
         } finally {
@@ -54,7 +71,8 @@ const SendingMeetingRequest: React.FC = () => {
                 user_diet_plan: activePlan.id,
                 preferred_date: preferredDate,
                 preferred_time: preferredTime,
-                reason: reason
+                reason: reason,
+                availability_slot: selectedSlotId || undefined
             });
             toast.success("Meeting request sent to your nutritionist! 📅");
             // Clear form
@@ -126,40 +144,71 @@ const SendingMeetingRequest: React.FC = () => {
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="space-y-6">
-                                        <div>
-                                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-3 ml-2">Preferred Meeting Request (Date & Time)</label>
-                                            <DateTimePicker
-                                                id="meeting-datetime"
-                                                placeholder="Select date and time"
-                                                minDate="today"
-                                                className="h-16 rounded-[30px] p-6 bg-gray-50 dark:bg-gray-800 border-none text-sm font-bold focus:ring-4 focus:ring-indigo-500/10"
-                                                onChange={(selectedDates) => {
-                                                    if (Array.isArray(selectedDates) && selectedDates.length > 0) {
-                                                        const date = selectedDates[0] as Date;
-                                                        const yyyy = date.getFullYear();
-                                                        const mm = String(date.getMonth() + 1).padStart(2, '0');
-                                                        const dd = String(date.getDate()).padStart(2, '0');
-                                                        setPreferredDate(`${yyyy}-${mm}-${dd}`);
-                                                        
-                                                        const hh = String(date.getHours()).padStart(2, '0');
-                                                        const min = String(date.getMinutes()).padStart(2, '0');
-                                                        setPreferredTime(`${hh}:${min}`);
-                                                    } else if (selectedDates instanceof Date) {
-                                                        const date = selectedDates;
-                                                        const yyyy = date.getFullYear();
-                                                        const mm = String(date.getMonth() + 1).padStart(2, '0');
-                                                        const dd = String(date.getDate()).padStart(2, '0');
-                                                        setPreferredDate(`${yyyy}-${mm}-${dd}`);
-                                                        
-                                                        const hh = String(date.getHours()).padStart(2, '0');
-                                                        const min = String(date.getMinutes()).padStart(2, '0');
-                                                        setPreferredTime(`${hh}:${min}`);
-                                                    }
-                                                }}
-                                                defaultDate={preferredDate && preferredTime ? `${preferredDate}T${preferredTime}` : undefined}
-                                                required
-                                            />
-                                        </div>
+                                        {availableSlots.length > 0 ? (
+                                            <div>
+                                                <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-3 ml-2 italic">Select an Available Slot</label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto p-2 no-scrollbar">
+                                                    {availableSlots.map(slot => (
+                                                        <button
+                                                            key={slot.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedSlotId(slot.id);
+                                                                setPreferredDate(slot.date);
+                                                                setPreferredTime(slot.start_time);
+                                                            }}
+                                                            className={`p-4 rounded-3xl border-2 transition-all text-left flex flex-col gap-1 ${
+                                                                selectedSlotId === slot.id 
+                                                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 shadow-lg' 
+                                                                : 'border-gray-100 dark:border-white/5 hover:border-indigo-300'
+                                                            }`}
+                                                        >
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                                {new Date(slot.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}
+                                                            </span>
+                                                            <span className="text-sm font-black uppercase italic tracking-tighter text-indigo-600">
+                                                                {formatTo12Hr(slot.start_time)} - {formatTo12Hr(slot.end_time)}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-3 ml-2">Preferred Meeting Request (Date & Time)</label>
+                                                <DateTimePicker
+                                                    id="meeting-datetime"
+                                                    placeholder="Select date and time"
+                                                    minDate="today"
+                                                    className="h-16 rounded-[30px] p-6 bg-gray-50 dark:bg-gray-800 border-none text-sm font-bold focus:ring-4 focus:ring-indigo-500/10"
+                                                    onChange={(selectedDates) => {
+                                                        if (Array.isArray(selectedDates) && selectedDates.length > 0) {
+                                                            const date = selectedDates[0] as Date;
+                                                            const yyyy = date.getFullYear();
+                                                            const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                                            const dd = String(date.getDate()).padStart(2, '0');
+                                                            setPreferredDate(`${yyyy}-${mm}-${dd}`);
+                                                            
+                                                            const hh = String(date.getHours()).padStart(2, '0');
+                                                            const min = String(date.getMinutes()).padStart(2, '0');
+                                                            setPreferredTime(`${hh}:${min}`);
+                                                        } else if (selectedDates instanceof Date) {
+                                                            const date = selectedDates;
+                                                            const yyyy = date.getFullYear();
+                                                            const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                                            const dd = String(date.getDate()).padStart(2, '0');
+                                                            setPreferredDate(`${yyyy}-${mm}-${dd}`);
+                                                            
+                                                            const hh = String(date.getHours()).padStart(2, '0');
+                                                            const min = String(date.getMinutes()).padStart(2, '0');
+                                                            setPreferredTime(`${hh}:${min}`);
+                                                        }
+                                                    }}
+                                                    defaultDate={preferredDate && preferredTime ? `${preferredDate}T${preferredTime}` : undefined}
+                                                    required
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div>
