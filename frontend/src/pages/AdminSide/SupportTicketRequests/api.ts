@@ -4,6 +4,7 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 export type SupportTicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "medium" | "high";
 export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen";
+export type SupportTicketTargetType = "admin" | "nutritionist" | "kitchen";
 
 export type TicketCategory = {
   id: number;
@@ -16,6 +17,7 @@ export type SupportTicket = {
   assigned_to: number | null;
   category: number | null;
   user_type: SupportTicketUserType;
+  target_user_type: SupportTicketTargetType;
   title: string;
   description: string;
   status: SupportTicketStatus;

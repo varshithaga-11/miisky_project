@@ -2480,6 +2480,7 @@ class SupportTicketSerializer(serializers.ModelSerializer):
             "category",
             "category_details",
             "user_type",
+            "target_user_type",
             "title",
             "description",
             "status",

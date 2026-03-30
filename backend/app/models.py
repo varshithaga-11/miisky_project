@@ -2016,6 +2016,12 @@ class SupportTicket(models.Model):
         ('non_patient', 'Non Patient'),
     ]
 
+    TARGET_USER_TYPE_CHOICES = [
+        ('admin', 'Support/Admin'),
+        ('nutritionist', 'Account Nutritionist'),
+        ('kitchen', 'Account Kitchen'),
+    ]
+
     created_by = models.ForeignKey(
         UserRegister,
         on_delete=models.SET_NULL,null=True,blank=True,
@@ -2041,6 +2047,12 @@ class SupportTicket(models.Model):
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPE_CHOICES
+    )
+
+    target_user_type = models.CharField(
+        max_length=20,
+        choices=TARGET_USER_TYPE_CHOICES,
+        default='admin'
     )
 
     title = models.CharField(max_length=255)

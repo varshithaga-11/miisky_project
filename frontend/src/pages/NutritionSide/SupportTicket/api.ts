@@ -9,6 +9,7 @@ export type TicketCategory = {
 export type SupportTicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "medium" | "high";
 export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen";
+export type SupportTicketTargetType = "admin" | "nutritionist" | "kitchen";
 
 export type SupportTicket = {
   id: number;
@@ -16,6 +17,7 @@ export type SupportTicket = {
   assigned_to: number | null;
   category: number | null;
   user_type: SupportTicketUserType;
+  target_user_type: SupportTicketTargetType;
   title: string;
   description: string;
   status: SupportTicketStatus;
@@ -64,6 +66,7 @@ export async function getTicketCategories(search = ""): Promise<TicketCategory[]
 export async function createSupportTicket(payload: {
   category?: number | null;
   user_type: SupportTicketUserType;
+  target_user_type?: SupportTicketTargetType;
   title: string;
   description: string;
   priority?: SupportTicketPriority;

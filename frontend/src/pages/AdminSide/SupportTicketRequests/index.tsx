@@ -218,7 +218,7 @@ const SupportTicketRequestsPage: React.FC = () => {
                         #{t.id} {t.title}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        {t.user_type} • {formatName(t.created_by_details)}
+                        {t.user_type} → {t.target_user_type?.toUpperCase() || "ADMIN"} • {formatName(t.created_by_details)}
                       </div>
                     </div>
                     <div className="shrink-0">{getStatusBadge(t.status)}</div>

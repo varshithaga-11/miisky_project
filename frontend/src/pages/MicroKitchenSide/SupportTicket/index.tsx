@@ -13,6 +13,7 @@ import {
   SupportTicket,
   SupportTicketPriority,
   SupportTicketStatus,
+  SupportTicketTargetType,
   TicketCategory,
   TicketMessage,
   TicketAttachment,
@@ -41,10 +42,11 @@ const SupportTicketPage: React.FC = () => {
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [form, setForm] = useState<{
     category: number | "";
+    target_user_type: SupportTicketTargetType;
     title: string;
     description: string;
     priority: SupportTicketPriority;
-  }>({ category: "", title: "", description: "", priority: "medium" });
+  }>({ category: "", target_user_type: "admin", title: "", description: "", priority: "medium" });
 
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
@@ -55,6 +57,7 @@ const SupportTicketPage: React.FC = () => {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const filteredTickets = useMemo(() => {
+    if (statusFilter === "all") return tickets;
     return tickets.filter((t) => t.status === statusFilter);
   }, [tickets, statusFilter]);
 
@@ -124,6 +127,7 @@ const SupportTicketPage: React.FC = () => {
     try {
       const created = await createSupportTicket({
         user_type: "kitchen",
+        target_user_type: form.target_user_type,
         category: form.category === "" ? null : Number(form.category),
         title: form.title.trim(),
         description: form.description.trim(),
@@ -131,7 +135,7 @@ const SupportTicketPage: React.FC = () => {
       });
       toast.success("Ticket created");
       setIsNewOpen(false);
-      setForm({ category: "", title: "", description: "", priority: "medium" });
+      setForm({ category: "", target_user_type: "admin", title: "", description: "", priority: "medium" });
       setTickets((prev) => [created, ...prev]);
       setActiveTicket(created);
     } catch (e) {
@@ -231,7 +235,12 @@ const SupportTicketPage: React.FC = () => {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-white truncate">#{t.id} {t.title}</div>
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {t.assigned_to === currentUserId && t.created_by !== currentUserId && (
+                          <span className="mr-1.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-[9px] font-black uppercase rounded">From Patient</span>
+                        )}
+                        #{t.id} {t.title}
+                      </div>
                       <div className="text-xs text-gray-500 truncate">{t.description}</div>
                     </div>
                     <div className="shrink-0">{getStatusBadge(t.status)}</div>
@@ -395,6 +404,30 @@ const SupportTicketPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreate} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 italic">Who is this for? / Ask To</label>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { id: "admin", label: "Miisky Support", icon: "🏢" },
+                    { id: "nutritionist", label: "Nutrition Expert", icon: "🥗" },
+                  ].map((target) => (
+                    <button
+                      key={target.id}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${
+                        form.target_user_type === target.id
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"
+                          : "border-gray-100 dark:border-white/5 hover:border-blue-200"
+                      }`}
+                    >
+                      <span className="text-xl">{target.icon}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-tight">{target.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Category</label>
