@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { updatePricingPlan, getPricingPlanById, PricingPlan } from "./pricingplanapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   id: number;
@@ -20,7 +23,7 @@ const EditPricingPlan: React.FC<Props> = ({ id, onSuccess, onClose }) => {
         const data = await getPricingPlanById(id);
         setFormData(data);
       } catch (error) {
-        toast.error("Failed to access plan parameters");
+        toast.error("Failed to load pricing plan data");
       } finally {
         setFetching(false);
       }
@@ -33,141 +36,148 @@ const EditPricingPlan: React.FC<Props> = ({ id, onSuccess, onClose }) => {
     setLoading(true);
     try {
       await updatePricingPlan(id, formData);
-      toast.success("Monetization matrix recalibrated!");
+      toast.success("Pricing plan updated successfully!");
       onSuccess();
       onClose();
     } catch (error) {
-      toast.error("Process modification failed");
+      toast.error("Failed to update pricing plan");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left text-xs">
-      <div className="bg-white rounded-2xl p-8 w-full max-lg max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center font-sans tracking-tight">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Recalibrate Subscription</h2>
-        </div>
-
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Edit Pricing Plan</h2>
+        
         {fetching ? (
-          <div className="py-20 text-center font-black animate-pulse text-blue-600 uppercase tracking-widest font-sans italic">Synchronizing Plan Data...</div>
+          <div className="py-20 text-center text-gray-400 font-bold animate-pulse">Synchronizing Plan Data...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Plan Title</label>
-                <input
+                <Label htmlFor="name">Plan Name *</Label>
+                <Input
+                  id="name"
                   type="text"
                   required
                   value={formData.name || ""}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-semibold italic"
+                  disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Category</label>
+                <Label htmlFor="plan_category">Plan Category</Label>
                 <select
+                  id="plan_category"
                   value={formData.plan_category || ""}
                   onChange={(e) => setFormData({ ...formData, plan_category: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-[10px] font-black uppercase font-sans italic"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                  disabled={loading}
                 >
-                  <option value="standard">Stationary Tier</option>
-                  <option value="premium">Elite Matrix</option>
-                  <option value="enterprise">Corporate Grid</option>
+                  <option value="standard">Standard</option>
+                  <option value="premium">Premium</option>
+                  <option value="enterprise">Enterprise</option>
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 italic font-sans italic">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Price (Monthly)</label>
-                <input
+                <Label htmlFor="price_monthly">Monthly Price *</Label>
+                <Input
+                  id="price_monthly"
                   type="number"
                   required
                   value={formData.price_monthly || 0}
                   onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) || 0 })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-bold font-mono italic"
+                  disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Price (Yearly)</label>
-                <input
+                <Label htmlFor="price_yearly">Yearly Price</Label>
+                <Input
+                  id="price_yearly"
                   type="number"
                   value={formData.price_yearly || 0}
                   onChange={(e) => setFormData({ ...formData, price_yearly: parseFloat(e.target.value) || 0 })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-bold font-mono italic"
+                  disabled={loading}
                 />
               </div>
             </div>
 
-            <div className="font-sans italic">
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Plan Features (comma separated list)</label>
+            <div>
+              <Label htmlFor="features">Features (one per line or comma-separated)</Label>
               <textarea
+                id="features"
                 required
                 value={(formData.features || []).join(", ")}
                 onChange={(e) => setFormData({ ...formData, features: e.target.value.split(",").map(i => i.trim()).filter(i => i) })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-[10px] h-24 resize-none italic"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-none"
+                disabled={loading}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 font-sans italic shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div>
-                  <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Button Manifest</label>
-                  <input
+                  <Label htmlFor="button_text">Button Text</Label>
+                  <Input
+                    id="button_text"
                     type="text"
                     value={formData.button_text || ""}
                     onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs shadow-sm font-sans italic"
+                    disabled={loading}
                   />
                </div>
                <div>
-                  <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none font-sans italic">Grid Position</label>
-                  <input
+                  <Label htmlFor="position">Sort Order</Label>
+                  <Input
+                    id="position"
                     type="number"
                     value={formData.position || 0}
                     onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs italic font-sans italic"
+                    disabled={loading}
                   />
                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <label className="flex items-center group cursor-pointer inline-flex font-sans italic">
+            <div className="flex flex-wrap gap-6 pt-2">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
+                  id="is_featured"
                   checked={formData.is_featured || false}
                   onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                  className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer font-sans italic"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors font-sans italic">High Priority (Featured)</span>
-              </label>
-              <label className="flex items-center group cursor-pointer inline-flex font-sans italic">
+                <Label htmlFor="is_featured" className="mb-0 cursor-pointer">Featured Plan</Label>
+              </div>
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
+                  id="is_active"
                   checked={formData.is_active || false}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer font-sans italic"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors font-sans italic">Visible for Procurement</span>
-              </label>
+                <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
+              </div>
             </div>
 
-            <div className="flex gap-4 pt-6 border-t mt-4 font-sans italic shadow-sm">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-8 py-4 rounded-xl border border-gray-200 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all focus:ring-0 font-sans italic"
-              >
-                Abort
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-[2] px-8 py-4 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 font-sans italic"
-              >
-                {loading ? "Materializing..." : "Update Tier"}
-              </button>
+            <div className="flex gap-2 pt-4 border-t mt-6">
+              <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? "Updating..." : "Update Plan"}
+              </Button>
             </div>
           </form>
         )}

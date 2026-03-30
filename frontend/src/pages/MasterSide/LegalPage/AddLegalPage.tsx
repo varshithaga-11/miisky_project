@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { createLegalPage, LegalPage } from "./legalpageapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   onSuccess: () => void;
@@ -24,7 +27,7 @@ const AddLegalPage: React.FC<Props> = ({ onSuccess, onClose }) => {
     setLoading(true);
     try {
       await createLegalPage(formData as any);
-      toast.success("Legal page added!");
+      toast.success("Legal page added successfully!");
       onSuccess();
       onClose();
     } catch (error) {
@@ -36,20 +39,26 @@ const AddLegalPage: React.FC<Props> = ({ onSuccess, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">New Legal Record</h2>
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Add Legal Page</h2>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Page Type</label>
+              <Label htmlFor="page_type">Page Type *</Label>
               <select
+                id="page_type"
                 required
                 value={formData.page_type}
                 onChange={(e) => setFormData({ ...formData, page_type: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
               >
                 <option value="privacy_policy">Privacy Policy</option>
                 <option value="terms_of_service">Terms of Service</option>
@@ -60,84 +69,83 @@ const AddLegalPage: React.FC<Props> = ({ onSuccess, onClose }) => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Title</label>
-              <input
+              <Label htmlFor="title">Page Title *</Label>
+              <Input
+                id="title"
                 type="text"
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+                disabled={loading}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Content (Full Text)</label>
+            <Label htmlFor="content">Legal Content *</Label>
             <textarea
+              id="content"
               required
               rows={8}
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-serif"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm font-serif"
+              disabled={loading}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Version</label>
-              <input
+              <Label htmlFor="version">Version</Label>
+              <Input
+                id="version"
                 type="text"
-                value={formData.version}
+                placeholder="e.g. 1.0.0"
+                value={formData.version || ""}
                 onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Effective Date</label>
-              <input
+              <Label htmlFor="effective_date">Effective Date</Label>
+              <Input
+                id="effective_date"
                 type="date"
-                value={formData.effective_date}
+                value={formData.effective_date || ""}
                 onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Last Updated</label>
-              <input
+              <Label htmlFor="last_updated">Last Updated</Label>
+              <Input
+                id="last_updated"
                 type="date"
-                value={formData.last_updated}
+                value={formData.last_updated || ""}
                 onChange={(e) => setFormData({ ...formData, last_updated: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <div className="flex items-center group cursor-pointer inline-flex">
+          <div className="flex items-center gap-3 pt-2">
             <input
               type="checkbox"
-              id="add_legal_active"
-              checked={formData.is_active}
+              id="is_active"
+              checked={formData.is_active || false}
               onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            <label htmlFor="add_legal_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Active (Visible on Website)</label>
+            <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
           </div>
 
-          <div className="flex gap-4 mt-8">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
-            >
-              {loading ? "Adding..." : "Add Legal Page"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
-            >
+          <div className="flex gap-2 pt-4 border-t mt-6">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? "Adding..." : "Add Legal Page"}
+            </Button>
           </div>
         </form>
       </div>

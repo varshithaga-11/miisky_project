@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { createWebsiteReport, WebsiteReport } from "./websitereportapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   onSuccess: () => void;
@@ -15,7 +18,7 @@ const AddWebsiteReport: React.FC<Props> = ({ onSuccess, onClose, reportTypes }) 
     requested_by_email: "",
     report_type: undefined,
     message: "",
-    status: "pending", // MATCHES BACKEND CHOICE
+    status: "pending", 
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,106 +26,106 @@ const AddWebsiteReport: React.FC<Props> = ({ onSuccess, onClose, reportTypes }) 
     setLoading(true);
     try {
       await createWebsiteReport(formData as WebsiteReport);
-      toast.success("Report Manifested!");
+      toast.success("Website report added successfully!");
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error(error.response?.data);
-      toast.error("Manifestation Failed: Status mismatch or missing fields.");
+      toast.error("Failed to add report");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Register Report</h2>
-          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Incoming data request or platform feedback.</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6 text-left">
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Requester</label>
-              <input
-                type="text"
-                required
-                placeholder="Full identity name..."
-                value={formData.requested_by_name || ""}
-                onChange={(e) => setFormData({ ...formData, requested_by_name: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Email Channel</label>
-              <input
-                type="email"
-                required
-                placeholder="identity@domain.com"
-                value={formData.requested_by_email || ""}
-                onChange={(e) => setFormData({ ...formData, requested_by_email: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Report Schema</label>
-              <select
-                required
-                value={formData.report_type || ""}
-                onChange={(e) => setFormData({ ...formData, report_type: parseInt(e.target.value) || undefined })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-bold uppercase"
-              >
-                <option value="">Priority Hierarchy</option>
-                {reportTypes.map((type) => (
-                  <option key={type.id} value={type.id}>{type.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Transmission Message</label>
-              <textarea
-                required
-                placeholder="Input deep issue logs or feedback..."
-                value={formData.message || ""}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs h-24 resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Operational Status</label>
-              <select
-                value={formData.status || "pending"}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-bold uppercase"
-              >
-                <option value="pending">⏳ Pending Queue</option>
-                <option value="generated">⚡ Data Generated</option>
-                <option value="failed">❌ System Failure</option>
-              </select>
-            </div>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Add Website Report</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          <div>
+            <Label htmlFor="requested_by_name">Requester Name *</Label>
+            <Input
+              id="requested_by_name"
+              type="text"
+              required
+              placeholder="Full name of the requester"
+              value={formData.requested_by_name || ""}
+              onChange={(e) => setFormData({ ...formData, requested_by_name: e.target.value })}
+              disabled={loading}
+            />
           </div>
 
-          <div className="flex gap-4 pt-4 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-4 rounded-xl border border-gray-200 text-gray-400 text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-all focus:ring-0"
-            >
-              Discard
-            </button>
-            <button
-              type="submit"
+          <div>
+            <Label htmlFor="requested_by_email">Requester Email *</Label>
+            <Input
+              id="requested_by_email"
+              type="email"
+              required
+              placeholder="email@example.com"
+              value={formData.requested_by_email || ""}
+              onChange={(e) => setFormData({ ...formData, requested_by_email: e.target.value })}
               disabled={loading}
-              className="flex-[2] px-6 py-4 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="report_type">Report Type *</Label>
+            <select
+              id="report_type"
+              required
+              value={formData.report_type || ""}
+              onChange={(e) => setFormData({ ...formData, report_type: parseInt(e.target.value) || undefined })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm font-bold uppercase"
+              disabled={loading}
             >
-              {loading ? "Transmitting..." : "Submit Report"}
-            </button>
+              <option value="">Select a report type...</option>
+              {reportTypes.map((type) => (
+                <option key={type.id} value={type.id}>{type.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <Label htmlFor="message">Message *</Label>
+            <textarea
+              id="message"
+              required
+              placeholder="Describe the issue or data request..."
+              value={formData.message || ""}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-none"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <select
+              id="status"
+              value={formData.status || "pending"}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              disabled={loading}
+            >
+              <option value="pending">Pending</option>
+              <option value="generated">Generated</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t mt-6">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? "Submitting..." : "Submit Report"}
+            </Button>
           </div>
         </form>
       </div>

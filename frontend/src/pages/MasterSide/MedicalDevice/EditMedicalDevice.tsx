@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { updateMedicalDevice, getMedicalDeviceById, MedicalDevice } from "./medicaldeviceapi";
+import { updateMedicalDevice, getMedicalDeviceById } from "./medicaldeviceapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   id: number;
@@ -23,7 +26,7 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
         const data = await getMedicalDeviceById(id);
         setFormData(data);
       } catch (error) {
-        toast.error("Failed to load data");
+        toast.error("Failed to load device data");
       } finally {
         setFetching(false);
       }
@@ -37,7 +40,6 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        // Skip URL fields and complex arrays/objects (handled by backend or updated separately)
         if (!key.endsWith('_url') && value !== undefined && value !== null) {
           if (typeof value === 'object') {
             data.append(key, JSON.stringify(value));
@@ -51,45 +53,52 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
       if (thumbFile) data.append("thumbnail", thumbFile);
 
       await updateMedicalDevice(id, data);
-      toast.success("Updated!");
+      toast.success("Medical device updated successfully!");
       onSuccess();
       onClose();
     } catch (error) {
-      toast.error("Failed to update");
+      toast.error("Failed to update medical device");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Medical Device</h2>
-        </div>
-
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4">Edit Medical Device</h2>
+        
         {fetching ? (
-          <div className="py-20 text-center text-gray-500 font-medium tracking-wide">Retrieving device details...</div>
+          <div className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">Retrieving Device Data...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Device Name</label>
-              <input
+              <Label htmlFor="name">Device Name *</Label>
+              <Input
+                id="name"
                 type="text"
                 required
                 value={formData.name || ""}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Category</label>
+              <Label htmlFor="category">Category *</Label>
               <select
+                id="category"
                 required
                 value={formData.category || ""}
                 onChange={(e) => setFormData({ ...formData, category: parseInt(e.target.value) || undefined })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
               >
                 <option value="">Select Category</option>
                 {categories.map((cat) => (
@@ -99,152 +108,169 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Price (USD)</label>
-              <input
+              <Label htmlFor="price">Price (USD)</Label>
+              <Input
+                id="price"
                 type="number"
                 value={formData.price || ""}
                 onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || undefined })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Device Visual Assets</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                   {formData.image_url && (
-                     <div className="w-full h-32 rounded bg-gray-50 border flex items-center justify-center p-2 overflow-hidden">
-                        <img src={formData.image_url} alt="Current" className="max-w-full max-h-full object-contain" />
-                     </div>
-                   )}
-                   <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-3 text-center">
-                      <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                      <span className="text-gray-400 font-black text-[10px] uppercase">{imageFile ? imageFile.name : "Replace Main Image"}</span>
+              <Label htmlFor="image">Main Image</Label>
+              <div className="flex items-center gap-4 mb-2">
+                 {formData.image_url && (
+                   <div className="w-16 h-16 rounded border overflow-hidden shrink-0">
+                      <img src={formData.image_url} alt="current" className="w-full h-full object-cover" />
                    </div>
-                </div>
-                <div className="space-y-2">
-                   {formData.thumbnail_url && (
-                     <div className="w-full h-32 rounded bg-gray-50 border flex items-center justify-center p-2 overflow-hidden">
-                        <img src={formData.thumbnail_url} alt="Current" className="max-w-full max-h-full object-contain" />
-                     </div>
-                   )}
-                   <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-3 text-center">
-                      <input type="file" accept="image/*" onChange={(e) => setThumbFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                      <span className="text-gray-400 font-black text-[10px] uppercase">{thumbFile ? thumbFile.name : "Replace Thumbnail"}</span>
-                   </div>
-                </div>
+                 )}
+                 <div className="text-xs text-gray-400">
+                    {formData.image_url ? "Replace existing image" : "No image set"}
+                 </div>
               </div>
+              <Input
+                id="image"
+                type="file"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="py-1.5"
+                disabled={loading}
+              />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Short Description</label>
+              <Label htmlFor="thumbnail">Thumbnail</Label>
+              <div className="flex items-center gap-4 mb-2">
+                 {formData.thumbnail_url && (
+                   <div className="w-16 h-16 rounded border overflow-hidden shrink-0">
+                      <img src={formData.thumbnail_url} alt="current" className="w-full h-full object-cover" />
+                   </div>
+                 )}
+                 <div className="text-xs text-gray-400">
+                    {formData.thumbnail_url ? "Replace existing thumbnail" : "No thumbnail set"}
+                 </div>
+              </div>
+              <Input
+                id="thumbnail"
+                type="file"
+                onChange={(e) => setThumbFile(e.target.files?.[0] || null)}
+                className="py-1.5"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="short_description">Short Description</Label>
               <textarea
+                id="short_description"
                 value={formData.short_description || ""}
                 onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
                 rows={2}
+                disabled={loading}
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Full Description</label>
+              <Label htmlFor="description">Full Description</Label>
               <textarea
+                id="description"
                 value={formData.description || ""}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
                 rows={4}
+                disabled={loading}
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Long Description</label>
+              <Label htmlFor="long_description">Technical Specs / Long Description</Label>
               <textarea
+                id="long_description"
                 value={formData.long_description || ""}
                 onChange={(e) => setFormData({ ...formData, long_description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
                 rows={4}
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Technology</label>
-              <input
+              <Label htmlFor="technology">Primary Technology</Label>
+              <Input
+                id="technology"
                 type="text"
                 value={formData.primary_technology || ""}
                 onChange={(e) => setFormData({ ...formData, primary_technology: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                placeholder="e.g. Biosensors"
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Connectivity</label>
-              <input
+              <Label htmlFor="connectivity">Connectivity</Label>
+              <Input
+                id="connectivity"
                 type="text"
                 value={formData.connectivity || ""}
                 onChange={(e) => setFormData({ ...formData, connectivity: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                placeholder="e.g. Bluetooth, Wi-Fi"
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Position</label>
-              <input
+              <Label htmlFor="position">Display Priority</Label>
+              <Input
+                id="position"
                 type="number"
                 value={formData.position || 0}
                 onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
 
-            <div className="md:col-span-2 space-y-4 mt-4">
-              <label className="flex items-center group cursor-pointer">
+            <div className="md:col-span-2 flex flex-wrap gap-6 pt-2">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
+                  id="is_featured"
                   checked={formData.is_featured || false}
                   onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors">Featured Device</span>
-              </label>
+                <Label htmlFor="is_featured" className="mb-0 cursor-pointer">Featured Device</Label>
+              </div>
 
-              <label className="flex items-center group cursor-pointer">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
+                  id="is_active"
                   checked={formData.is_active || false}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors">Active Status</span>
-              </label>
+                <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
+              </div>
 
-              <label className="flex items-center group cursor-pointer">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
+                  id="is_available"
                   checked={formData.is_available || false}
                   onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors">Available to Order</span>
-              </label>
+                <Label htmlFor="is_available" className="mb-0 cursor-pointer">Available to Order</Label>
+              </div>
             </div>
 
-            <div className="md:col-span-2 flex gap-4 mt-8">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
-              >
-                {loading ? "Processing..." : "Save Changes"}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
-              >
+            <div className="md:col-span-2 flex justify-end gap-2 mt-8">
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
                 Cancel
-              </button>
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Updating..." : "Update Medical Device"}
+              </Button>
             </div>
           </form>
         )}

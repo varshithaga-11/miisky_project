@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { updateJobApplication, getJobApplicationById, JobApplication } from "./jobapplicationapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   id: number;
@@ -28,7 +31,7 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
             cover_letter: data.cover_letter
         });
       } catch (error) {
-        toast.error("Failed to load data");
+        toast.error("Failed to load application data");
       } finally {
         setFetching(false);
       }
@@ -41,11 +44,11 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
     setLoading(true);
     try {
       await updateJobApplication(id, formData);
-      toast.success("Updated!");
+      toast.success("Job application updated successfully!");
       onSuccess();
       onClose();
     } catch (error) {
-      toast.error("Failed to update");
+      toast.error("Failed to update application");
     } finally {
       setLoading(false);
     }
@@ -53,24 +56,30 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
 
   return (
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Application</h2>
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Edit Application</h2>
         
         {fetching ? (
-          <div className="py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs animate-pulse font-mono">Retrieving Profile...</div>
+          <div className="py-20 text-center text-gray-400 font-bold animate-pulse">Retrieving Profile...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Job Listing</label>
+              <Label htmlFor="job">Job Listing *</Label>
               <select
+                id="job"
                 required
                 value={formData.job || ""}
                 onChange={(e) => setFormData({ ...formData, job: parseInt(e.target.value) || undefined })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm font-bold"
+                disabled={loading}
               >
-                <option value="">Select Job</option>
+                <option value="">Select Job Position</option>
                 {jobListings.map((job) => (
                   <option key={job.id} value={job.id}>{job.title}</option>
                 ))}
@@ -78,43 +87,49 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Applicant Name</label>
-              <input
+              <Label htmlFor="applicant_name">Applicant Name *</Label>
+              <Input
+                id="applicant_name"
                 type="text"
                 required
                 value={formData.applicant_name || ""}
                 onChange={(e) => setFormData({ ...formData, applicant_name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+                disabled={loading}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Email</label>
-              <input
-                type="email"
-                required
-                value={formData.email || ""}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone || ""}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Phone</label>
-              <input
-                type="tel"
-                value={formData.phone || ""}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Status</label>
+              <Label htmlFor="status">Application Status</Label>
               <select
+                id="status"
                 value={formData.status || ""}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-blue-600"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-blue-400 text-sm font-bold uppercase tracking-widest"
+                disabled={loading}
               >
                 <option value="applied">Applied</option>
                 <option value="reviewing">Reviewing</option>
@@ -124,30 +139,23 @@ const EditJobApplication: React.FC<Props> = ({ id, onSuccess, onClose, jobListin
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Cover Letter</label>
+              <Label htmlFor="cover_letter">Cover Letter / Notes</Label>
               <textarea
+                id="cover_letter"
                 value={formData.cover_letter || ""}
                 onChange={(e) => setFormData({ ...formData, cover_letter: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-none"
+                disabled={loading}
               />
             </div>
 
-            <div className="flex gap-4 mt-8">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
-              >
-                {loading ? "Saving Progress..." : "Update Profile"}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
-              >
+            <div className="flex gap-2 pt-4 border-t mt-4">
+              <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
                 Cancel
-              </button>
+              </Button>
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? "Updating..." : "Update Application"}
+              </Button>
             </div>
           </form>
         )}

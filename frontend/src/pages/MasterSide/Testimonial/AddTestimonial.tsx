@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { FiSave } from "react-icons/fi";
 import { createTestimonial } from "./testimonialapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface AddTestimonialProps {
   onSuccess: () => void;
@@ -22,7 +24,7 @@ const AddTestimonial: React.FC<AddTestimonialProps> = ({ onSuccess, onClose }) =
     position: 1,
   });
   const [photo, setPhoto] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -35,7 +37,7 @@ const AddTestimonial: React.FC<AddTestimonialProps> = ({ onSuccess, onClose }) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setLoading(true);
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
@@ -52,45 +54,79 @@ const AddTestimonial: React.FC<AddTestimonialProps> = ({ onSuccess, onClose }) =
     } catch (error) {
       toast.error("Failed to add testimonial");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">New Testimonial</h2>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="col-span-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Name *</label>
-              <input 
-                type="text" 
-                name="name" 
-                required 
-                value={formData.name} 
-                onChange={handleChange} 
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" 
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Add Testimonial</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                disabled={loading}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Designation</label>
-              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" />
+              <Label htmlFor="designation">Designation</Label>
+              <Input
+                id="designation"
+                name="designation"
+                type="text"
+                value={formData.designation}
+                onChange={handleChange}
+                disabled={loading}
+              />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Organization</label>
-              <input type="text" name="organization" value={formData.organization} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" />
+              <Label htmlFor="organization">Organization</Label>
+              <Input
+                id="organization"
+                name="organization"
+                type="text"
+                value={formData.organization}
+                onChange={handleChange}
+                disabled={loading}
+              />
             </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Testimonial Text *</label>
-              <textarea name="testimonial_text" required value={formData.testimonial_text} onChange={handleChange} rows={4} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all resize-none"></textarea>
+            <div className="md:col-span-2">
+              <Label htmlFor="testimonial_text">Testimonial Content *</Label>
+              <textarea
+                id="testimonial_text"
+                name="testimonial_text"
+                required
+                value={formData.testimonial_text}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-32 resize-none"
+                disabled={loading}
+              />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Type</label>
-              <select name="testimonial_type" value={formData.testimonial_type} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all">
+              <Label htmlFor="testimonial_type">Category</Label>
+              <select
+                id="testimonial_type"
+                name="testimonial_type"
+                value={formData.testimonial_type}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
+              >
                 <option value="general">General</option>
                 <option value="patient">Patient</option>
                 <option value="nutritionist">Nutritionist</option>
@@ -98,34 +134,64 @@ const AddTestimonial: React.FC<AddTestimonialProps> = ({ onSuccess, onClose }) =
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Rating (1-5)</label>
-              <input type="number" name="rating" min={1} max={5} step={0.1} value={formData.rating} onChange={handleChange} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" />
+              <Label htmlFor="rating">Rating (1-5)</Label>
+              <Input
+                id="rating"
+                name="rating"
+                type="number"
+                min={1}
+                max={5}
+                step={0.1}
+                value={formData.rating}
+                onChange={handleChange}
+                disabled={loading}
+              />
             </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Photo</label>
-              <input type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files ? e.target.files[0] : null)} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            </div>
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer mt-2">
-                <input type="checkbox" name="is_featured" checked={formData.is_featured} onChange={handleChange} className="w-4 h-4 text-blue-600 rounded" />
-                <span className="text-sm font-semibold text-gray-700">Featured</span>
-              </label>
-            </div>
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer mt-2">
-                <input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} className="w-4 h-4 text-blue-600 rounded" />
-                <span className="text-sm font-semibold text-gray-700">Active</span>
-              </label>
+            <div className="md:col-span-2">
+              <Label htmlFor="photo">Profile Photo</Label>
+              <input
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhoto(e.target.files ? e.target.files[0] : null)}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300 transition-all"
+                disabled={loading}
+              />
             </div>
           </div>
 
-          <div className="flex gap-4 mt-8">
-            <button type="submit" disabled={isSubmitting} className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-              <FiSave /> {isSubmitting ? "Saving..." : "Save Testimonial"}
-            </button>
-            <button type="button" onClick={onClose} className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest">
+          <div className="flex flex-wrap gap-6 pt-2">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="is_featured"
+                name="is_featured"
+                checked={formData.is_featured}
+                onChange={handleChange}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <Label htmlFor="is_featured" className="mb-0 cursor-pointer">Featured</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="is_active"
+                name="is_active"
+                checked={formData.is_active}
+                onChange={handleChange}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <Label htmlFor="is_active" className="mb-0 cursor-pointer">Published</Label>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t mt-6">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? "Adding..." : "Add Testimonial"}
+            </Button>
           </div>
         </form>
       </div>

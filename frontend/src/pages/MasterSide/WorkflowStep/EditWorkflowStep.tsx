@@ -3,8 +3,6 @@ import { toast } from "react-toastify";
 import { updateWorkflowStep, getWorkflowStepById, WorkflowStep } from "./workflowstepapi";
 import Label from "../../../components/form/Label";
 import Input from "../../../components/form/input/InputField";
-import TextArea from "../../../components/form/input/TextArea";
-import Checkbox from "../../../components/form/input/Checkbox";
 import Button from "../../../components/ui/button/Button";
 
 interface Props {
@@ -26,51 +24,47 @@ const EditWorkflowStep: React.FC<Props> = ({ id, onSuccess, onClose }) => {
         setFormData(data);
       } catch (error) {
         toast.error("Failed to load step details");
+        onClose();
       } finally {
         setFetching(false);
       }
     };
     fetchStep();
-  }, [id]);
+  }, [id, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await updateWorkflowStep(id, formData);
-      toast.success("Operational step recalibrated!");
+      toast.success("Workflow step updated successfully!");
       onSuccess();
       onClose();
     } catch (error) {
-       console.error(error);
-      toast.error("Failed to update process node");
+      toast.error("Failed to update step");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4 text-left">
-      <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-8 w-full max-w-lg shadow-2xl border border-gray-100 dark:border-gray-800">
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-gray-800 font-sans italic">
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Recalibrate <span className="text-blue-600">Node</span></h2>
-            <p className="text-[10px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-widest mt-1">Modifying operational parameters for the clinical flow.</p>
-          </div>
-          <button onClick={onClose} className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-all font-sans italic">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-        </div>
-
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Edit Workflow Step</h2>
+        
         {fetching ? (
-          <div className="py-20 text-center text-gray-400 animate-pulse font-black uppercase tracking-widest text-xs italic font-sans italic font-sans italic">
-            Synchronizing Node Parameters...
-          </div>
+          <div className="py-20 text-center text-gray-400 font-bold animate-pulse">Retreiving Step Details...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6 font-sans italic">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label htmlFor="title" className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-3">Step Nomenclature</Label>
+                <Label htmlFor="title">Step Title *</Label>
                 <Input
                   id="title"
                   name="title"
@@ -78,13 +72,13 @@ const EditWorkflowStep: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                   required
                   value={formData.title || ""}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Biosensor Activation"
-                  className="bg-gray-50 border-transparent focus:border-blue-500 font-bold"
+                  placeholder="e.g. Planning"
+                  disabled={loading}
                 />
               </div>
 
-              <div>
-                <Label htmlFor="position" className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-3">Priority Order</Label>
+              <div className="md:col-span-2">
+                <Label htmlFor="position">Position (Order)</Label>
                 <Input
                   id="position"
                   name="position"
@@ -92,46 +86,45 @@ const EditWorkflowStep: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                   required
                   value={formData.position || 1}
                   onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 1 })}
-                  className="bg-gray-50 border-transparent focus:border-blue-500 font-mono font-black"
+                  disabled={loading}
                 />
               </div>
 
               <div className="md:col-span-2">
-                 <Label htmlFor="description" className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-3">Operational Intelligence</Label>
-                 <TextArea
-                   rows={4}
-                   value={formData.description || ""}
-                   onChange={(val) => setFormData({ ...formData, description: val })}
-                   placeholder="Detailed process description..."
-                   className="bg-gray-50 border-transparent focus:border-blue-500"
-                 />
-              </div>
-
-              <div className="md:col-span-2 pb-2">
-                <Checkbox
-                  label="Visible in Production"
-                  checked={formData.is_active || false}
-                  onChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                <Label htmlFor="description">Description (Optional)</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description || ""}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Detailed description of this step..."
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-28 resize-none"
+                  disabled={loading}
                 />
               </div>
             </div>
 
-            <div className="flex gap-4 pt-8 border-t border-gray-100 dark:border-gray-800">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] border-2"
-                disabled={loading}
-                type="button"
-              >
-                Abort Changes
+            <div className="flex flex-wrap gap-6 pt-2 pb-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  name="is_active"
+                  checked={formData.is_active || false}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  disabled={loading}
+                />
+                <Label htmlFor="is_active" className="mb-0 cursor-pointer">Active / Published</Label>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t mt-6">
+              <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
+                Cancel
               </Button>
-              <Button
-                className="flex-[2] py-4 text-[10px] font-black uppercase tracking-[0.2em] bg-gray-900 shadow-2xl hover:bg-blue-600"
-                disabled={loading}
-                type="submit"
-              >
-                {loading ? "Materializing..." : "Commit Recalibration"}
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? "Updating..." : "Update Step"}
               </Button>
             </div>
           </form>

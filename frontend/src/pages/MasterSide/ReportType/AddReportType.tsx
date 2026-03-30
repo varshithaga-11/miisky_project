@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { createReportType, ReportType } from "./reporttypeapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   onSuccess: () => void;
@@ -19,7 +22,7 @@ const AddReportType: React.FC<Props> = ({ onSuccess, onClose }) => {
     setLoading(true);
     try {
       await createReportType(formData as ReportType);
-      toast.success("Classification schema updated!");
+      toast.success("Report type added successfully!");
       onSuccess();
       onClose();
     } catch (error) {
@@ -31,51 +34,48 @@ const AddReportType: React.FC<Props> = ({ onSuccess, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">New Schema</h2>
-          <p className="text-gray-500 text-[10px] mt-1 font-bold uppercase tracking-widest leading-tight opacity-60">Establish a new classification for system reports.</p>
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Add Report Type</h2>
         
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Schema Identifier</label>
-            <input
+            <Label htmlFor="name">Report Type Name *</Label>
+            <Input
+              id="name"
               type="text"
               required
-              placeholder="e.g. Clinical Incident Report"
+              placeholder="e.g. Clinical Incident"
               value={formData.name || ""}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+              disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Logic Definition</label>
+            <Label htmlFor="description">Description</Label>
             <textarea
+              id="description"
               placeholder="Detailed description of the reporting requirements..."
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-32 resize-none"
+              disabled={loading}
             />
           </div>
 
-          <div className="flex gap-4 mt-8">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
-            >
-              {loading ? "Establishing..." : "Save Schema"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
-            >
+          <div className="flex gap-2 pt-4 border-t mt-6">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? "Adding..." : "Add Type"}
+            </Button>
           </div>
         </form>
       </div>

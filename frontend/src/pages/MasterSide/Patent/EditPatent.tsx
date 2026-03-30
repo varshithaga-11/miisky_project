@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { updatePatent, Patent, getMedicalDevices } from "./patentapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   patent: Patent;
@@ -32,7 +35,7 @@ const EditPatent: React.FC<Props> = ({ patent, onSuccess, onClose }) => {
       if (docFile) data.append("patent_document", docFile);
 
       await updatePatent(patent.id!, data);
-      toast.success("Patent updated!");
+      toast.success("Patent updated successfully!");
       onSuccess();
       onClose();
     } catch (error) {
@@ -43,69 +46,82 @@ const EditPatent: React.FC<Props> = ({ patent, onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-      <div className="bg-white rounded-[2rem] p-10 w-full max-w-3xl max-h-screen overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-5 duration-200">
-        <h2 className="text-4xl font-black text-blue-900 mb-8 tracking-tighter">Edit IP Record</h2>
-        <form onSubmit={handleSubmit} className="space-y-6 font-sans">
-          
-          <div className="space-y-4">
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Title</label>
-            <input
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Edit Patent Record</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Patent Title *</Label>
+            <Input
+              id="title"
               type="text"
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-blue-50/50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-blue-900"
+              disabled={loading}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Patent Number</label>
-              <input
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="patent_number">Patent Number</Label>
+              <Input
+                id="patent_number"
                 type="text"
                 value={formData.patent_number || ""}
                 onChange={(e) => setFormData({ ...formData, patent_number: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Inventors</label>
-              <input
+            <div>
+              <Label htmlFor="inventors">Inventors</Label>
+              <Input
+                id="inventors"
                 type="text"
                 value={formData.inventors || ""}
                 onChange={(e) => setFormData({ ...formData, inventors: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-4 text-xs font-sans">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Filing Date</label>
-              <input
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="filing_date">Filing Date</Label>
+              <Input
+                id="filing_date"
                 type="date"
                 value={formData.filing_date || ""}
                 onChange={(e) => setFormData({ ...formData, filing_date: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Jurisdiction</label>
-              <input
+            <div>
+              <Label htmlFor="jurisdiction">Jurisdiction</Label>
+              <Input
+                id="jurisdiction"
                 type="text"
                 value={formData.jurisdiction || ""}
                 onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Current Status</label>
+            <div>
+              <Label htmlFor="status">Current Status *</Label>
               <select
+                id="status"
                 required
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm font-bold"
+                disabled={loading}
               >
                 <option value="filed">Filed</option>
                 <option value="pending">Pending</option>
@@ -116,45 +132,56 @@ const EditPatent: React.FC<Props> = ({ patent, onSuccess, onClose }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Linked Device</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="device">Linked Medical Device</Label>
               <select
+                id="device"
                 value={formData.device || ""}
                 onChange={(e) => setFormData({ ...formData, device: parseInt(e.target.value) || undefined })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700 text-sm"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
               >
                 <option value="">Select Medical Device (optional)</option>
                 {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Document Attachment</label>
-              <div className="relative overflow-hidden bg-white rounded-2xl border-2 border-dashed border-blue-900/10 hover:border-blue-900/30 transition-all">
-                <input type="file" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
-                <div className="flex items-center justify-between px-5 py-4 text-sm font-bold text-blue-900/40">
+            <div>
+              <Label htmlFor="patent_document">Document Attachment</Label>
+              <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
+                <input 
+                  id="patent_document"
+                  type="file" 
+                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  disabled={loading}
+                />
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400">
                   <span className="truncate max-w-[12rem]">{docFile ? docFile.name : patent.patent_document ? "Change existing document" : "Attach original file..."}</span>
-                  {patent.patent_document && !docFile && <span className="bg-blue-900/10 px-2 py-1 rounded text-[10px] text-blue-900 font-black tracking-widest">FIXED</span>}
+                  {patent.patent_document && !docFile && <span className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest">Fixed Asset</span>}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-6 flex gap-6">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-900 text-white font-black uppercase tracking-widest text-sm py-5 rounded-[1.25rem] shadow-2xl shadow-blue-200 hover:bg-black transition-all"
-            >
-              {loading ? "Persisting..." : "Update Application"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-10 bg-white border border-gray-100 text-gray-400 font-bold rounded-[1.25rem] hover:bg-gray-50 transition-all active:scale-95"
-            >
-              Discard
-            </button>
+          <div className="flex items-center gap-3 pt-2">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={formData.is_active || false}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t mt-6">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? "Updating..." : "Update Patent"}
+            </Button>
           </div>
         </form>
       </div>

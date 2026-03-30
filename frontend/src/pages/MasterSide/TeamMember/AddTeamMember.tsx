@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { createTeamMember, TeamMember } from "./teammemberapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   onSuccess: () => void;
@@ -48,146 +51,146 @@ const AddTeamMember: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
       onClose();
     } catch (error: any) {
       console.error(error.response?.data);
-      toast.error("Failed to onboard team member. Check console.");
+      toast.error("Failed to onboard team member.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Member <span className="text-blue-600">Onboarding</span></h2>
-          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Integrating new talent into the Miisky Svasth ecosystem.</p>
-        </div>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Add New Team Member</h2>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Identity / Full Name</label>
-            <input
-              type="text"
-              required
-              value={formData.name || ""}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-semibold"
-              placeholder="e.g. Dr. Sarah Jenkins"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                required
+                value={formData.name || ""}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g. Dr. Sarah Jenkins"
+                disabled={loading}
+              />
+            </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Designation</label>
-            <input
-              type="text"
-              required
-              value={formData.designation || ""}
-              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-semibold"
-              placeholder="Chief Data Scientist"
-            />
-          </div>
+            <div>
+              <Label htmlFor="designation">Designation *</Label>
+              <Input
+                id="designation"
+                type="text"
+                required
+                value={formData.designation || ""}
+                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                placeholder="Chief Data Scientist"
+                disabled={loading}
+              />
+            </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Division / Dept</label>
-            <select
-              value={formData.department || ""}
-              onChange={(e) => setFormData({ ...formData, department: parseInt(e.target.value) || undefined })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-bold uppercase"
-            >
-              <option value="">Station Assignment</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <Label htmlFor="department">Department</Label>
+              <select
+                id="department"
+                value={formData.department || ""}
+                onChange={(e) => setFormData({ ...formData, department: parseInt(e.target.value) || undefined })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
+              >
+                <option value="">Select Department</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Communication / Email</label>
-            <input
-              type="email"
-              value={formData.email || ""}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-mono"
-              placeholder="sarah@miisky.com"
-            />
-          </div>
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="sarah@miisky.com"
+                disabled={loading}
+              />
+            </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Contact / Phone</label>
-            <input
-              type="tel"
-              value={formData.phone || ""}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs font-mono"
-            />
-          </div>
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone || ""}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                disabled={loading}
+              />
+            </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Identity Manifest / Profile Photo</label>
-            <div className="flex items-center gap-4">
-               {photoFile && (
-                 <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
-                    <img src={URL.createObjectURL(photoFile)} alt="preview" className="w-full h-full object-cover" />
-                 </div>
-               )}
-               <input
+            <div className="md:col-span-2">
+              <Label htmlFor="photo">Profile Photo</Label>
+              <Input
+                id="photo"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                className="block w-full text-[10px] text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 cursor-pointer"
+                className="py-1.5"
+                disabled={loading}
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="bio">Professional Bio</Label>
+              <textarea
+                id="bio"
+                value={formData.bio || ""}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                rows={4}
+                placeholder="Professional journey synopsis..."
+                disabled={loading}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <Label htmlFor="is_active" className="mb-0 cursor-pointer">Visible Profile</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_doctor"
+                  checked={formData.is_doctor || false}
+                  onChange={(e) => setFormData({ ...formData, is_doctor: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <Label htmlFor="is_doctor" className="mb-0 cursor-pointer">Specialist (Doctor)</Label>
+              </div>
             </div>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest leading-none">Professional Manifest / Bio</label>
-            <textarea
-              value={formData.bio || ""}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-xs h-24 resize-none"
-              placeholder="Professional journey synopsis..."
-            />
-          </div>
-
-          <div className="flex items-center">
-            <label className="flex items-center group cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
-              />
-              <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Visible Manifest</span>
-            </label>
-          </div>
-
-          <div className="flex items-center">
-            <label className="flex items-center group cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.is_doctor || false}
-                onChange={(e) => setFormData({ ...formData, is_doctor: e.target.checked })}
-                className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
-              />
-              <span className="ml-3 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Specialist Identity (Doctor)</span>
-            </label>
-          </div>
-
-          <div className="md:col-span-2 flex gap-4 pt-6 border-t mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-8 py-4 rounded-xl border border-gray-200 text-gray-400 text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-all focus:ring-0"
-            >
-              Abort
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-[2] px-8 py-4 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-            >
-              {loading ? "Materializing..." : "Initiate Onboarding"}
-            </button>
+          <div className="flex justify-end gap-2 mt-8">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save Member"}
+            </Button>
           </div>
         </form>
       </div>

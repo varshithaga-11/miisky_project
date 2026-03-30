@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getDepartmentById, updateDepartment, Department } from "./departmentapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface EditDepartmentProps {
   departmentId: number;
@@ -84,140 +87,131 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Cluster</h2>
-        </div>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Edit Department</h2>
         
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Department Name *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Department Name *</Label>
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter department name"
+              required
+              disabled={loading}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                rows={3}
-              />
-            </div>
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+              rows={3}
+              disabled={loading}
+            />
+          </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Department Head Name
-              </label>
-              <input
+              <Label htmlFor="head_name">Head Name</Label>
+              <Input
+                id="head_name"
                 type="text"
                 value={head_name}
                 onChange={(e) => setHeadName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
-
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Department Head Email
-              </label>
-              <input
+              <Label htmlFor="head_email">Head Email</Label>
+              <Input
+                id="head_email"
                 type="email"
                 value={head_email}
                 onChange={(e) => setHeadEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Position
-              </label>
-              <input
-                type="number"
-                value={position}
-                onChange={(e) => setPosition(parseInt(e.target.value))}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                min="1"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Icon Class
-              </label>
-              <input
-                type="text"
-                value={icon_class}
-                onChange={(e) => setIconClass(e.target.value)}
-                placeholder="e.g. icon-18, icon-22"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Short Description
-              </label>
-              <input
-                type="text"
-                value={short_description}
-                onChange={(e) => setShortDescription(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                Image
-              </label>
-              <input
-                type="file"
-                onChange={(e) => setImage(e.target.files?.[0] || null)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                accept="image/*"
-              />
-            </div>
-
-            <div className="flex items-center group cursor-pointer inline-flex">
-              <input
-                type="checkbox"
-                id="edit_dept_active"
-                checked={is_active}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
-              />
-              <label htmlFor="edit_dept_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Active</label>
             </div>
           </div>
 
-          <div className="flex gap-4 mt-8">
-            <button
-              type="submit"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="position">Position</Label>
+              <Input
+                id="position"
+                type="number"
+                value={position}
+                onChange={(e) => setPosition(parseInt(e.target.value))}
+                min="1"
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <Label htmlFor="icon_class">Icon Class</Label>
+              <Input
+                id="icon_class"
+                type="text"
+                value={icon_class}
+                onChange={(e) => setIconClass(e.target.value)}
+                placeholder="e.g. icon-18"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="short_description">Short Description</Label>
+            <Input
+              id="short_description"
+              type="text"
+              value={short_description}
+              onChange={(e) => setShortDescription(e.target.value)}
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
-            >
-              {loading ? "Updating..." : "Update Cluster"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
-            >
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="image">Department Image</Label>
+            <Input
+              id="image"
+              type="file"
+              onChange={(e) => setImage(e.target.files?.[0] || null)}
+              className="py-1.5"
+              accept="image/*"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={is_active}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <Label htmlFor="is_active" className="mb-0 cursor-pointer">Active</Label>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-8">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Department"}
+            </Button>
           </div>
         </form>
       </div>

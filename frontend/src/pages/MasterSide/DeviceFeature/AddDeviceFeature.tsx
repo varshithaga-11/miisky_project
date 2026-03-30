@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiBox, FiList, FiArrowRight } from "react-icons/fi";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { createDeviceFeature } from "./devicefeatureapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   onSuccess: () => void;
@@ -70,145 +73,107 @@ const AddDeviceFeature: React.FC<Props> = ({ onSuccess, onClose, devices }) => {
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error(error.response?.data);
-      toast.error(`Partial success: ${successCount} added. Error on ${features[successCount]?.title || 'next entry'}.`);
+      toast.error(`Partial success: ${successCount} added. Error on entry ${successCount + 1}.`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-4 font-sans text-left overflow-y-auto">
-      <div className="bg-white dark:bg-gray-900 rounded-[2rem] w-full max-w-2xl my-auto shadow-2xl relative border border-white/10 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4">Bulk Add Features</h2>
         
-        {/* Header */}
-        <div className="p-8 border-b border-gray-100 dark:border-white/[0.05] flex justify-between items-center bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/10 rounded-t-[2rem]">
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight uppercase flex items-center gap-3">
-              <FiBox className="text-blue-600" /> Bulk Feature Sync
-            </h2>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 ml-9">Register multiple capabilities at once</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors">
-             <FiTrash2 size={24} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="p-8 overflow-y-auto custom-scrollbar space-y-8">
-            
-            {/* Device Selection */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-               <label className="block text-[10px] font-black text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-[0.2em]">Target Implementation Hardware</label>
-               <select
-                 required
-                 value={deviceId || ""}
-                 onChange={(e) => setDeviceId(parseInt(e.target.value) || undefined)}
-                 className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700 dark:text-white"
-               >
-                 <option value="">Choose Medical Device...</option>
-                 {devices.map((device) => (
-                   <option key={device.id} value={device.id}>
-                     {device.name}
-                   </option>
-                 ))}
-               </select>
-            </div>
-
-            {/* Feature Entries */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <FiList /> Feature Stack
-                </h3>
-                <button 
-                  type="button" 
-                  onClick={handleAddEntry}
-                  className="text-[10px] font-black bg-blue-600 text-white px-3 py-1.5 rounded-full uppercase tracking-tighter hover:bg-blue-700 transition-all flex items-center gap-1 shadow-lg shadow-blue-500/20"
-                >
-                  <FiPlus /> Add Entry
-                </button>
-              </div>
-
-              {features.map((feature, index) => (
-                <div key={index} className="group relative bg-white dark:bg-transparent border border-gray-100 dark:border-white/[0.05] p-5 rounded-2xl hover:shadow-xl hover:border-blue-500/30 transition-all duration-300">
-                  <div className="absolute -left-3 top-5 bg-gray-900 dark:bg-blue-600 text-white w-6 h-6 rounded-lg text-[10px] flex items-center justify-center font-black shadow-lg">
-                    {index + 1}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-2 space-y-1.5">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Feature Title</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. AI-Driven Diagnosis"
-                        value={feature.title}
-                        onChange={(e) => updateEntry(index, "title", e.target.value)}
-                        className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 outline-none rounded-xl px-4 py-2 text-sm font-bold focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Order</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={feature.position}
-                        onChange={(e) => updateEntry(index, "position", parseInt(e.target.value) || 0)}
-                        className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 outline-none rounded-xl px-4 py-2 text-sm font-mono focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-
-                    <div className="flex items-end justify-end">
-                       <button 
-                        type="button"
-                        onClick={() => handleRemoveEntry(index)}
-                        disabled={features.length === 1}
-                        className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all disabled:opacity-0"
-                      >
-                        <FiTrash2 size={18} />
-                      </button>
-                    </div>
-
-                    <div className="md:col-span-4 space-y-1.5 pt-2">
-                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Capability Description</label>
-                       <textarea
-                        placeholder="Define the technical utility..."
-                        value={feature.description}
-                        onChange={(e) => updateEntry(index, "description", e.target.value)}
-                        className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 outline-none rounded-xl px-4 py-2 text-xs h-16 resize-none focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="p-8 border-t border-gray-100 dark:border-white/[0.05] bg-gray-50/50 dark:bg-gray-800/20 rounded-b-[2rem] flex gap-4">
-             <button
-              type="button"
-              onClick={onClose}
-              className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-all active:scale-95"
-            >
-              Cancel Operation
-            </button>
-            <button
-              type="submit"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <Label htmlFor="device">Target Medical Device *</Label>
+            <select
+              id="device"
+              required
+              value={deviceId || ""}
+              onChange={(e) => setDeviceId(parseInt(e.target.value) || undefined)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-4 rounded-2xl disabled:opacity-50 hover:shadow-2xl hover:shadow-blue-500/40 active:scale-[0.98] transition-all text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Uploading Stack...
+              <option value="">Choose Device...</option>
+              {devices.map((device) => (
+                <option key={device.id} value={device.id}>{device.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Features List</h3>
+              <Button type="button" variant="outline" size="sm" onClick={handleAddEntry} disabled={loading}>
+                <FiPlus className="mr-1" /> Add Entry
+              </Button>
+            </div>
+
+            {features.map((feature, index) => (
+              <div key={index} className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                   <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">Feature #{index + 1}</span>
+                   <button 
+                    type="button" 
+                    onClick={() => handleRemoveEntry(index)}
+                    disabled={features.length === 1 || loading}
+                    className="text-gray-400 hover:text-red-500 disabled:opacity-0 transition-colors"
+                   >
+                     <FiTrash2 size={16} />
+                   </button>
                 </div>
-              ) : (
-                <>Deploy {features.length} Features <FiArrowRight /></>
-              )}
-            </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="md:col-span-3">
+                    <Label>Title *</Label>
+                    <Input
+                      type="text"
+                      required
+                      placeholder="e.g. AI-Driven Analysis"
+                      value={feature.title}
+                      onChange={(e) => updateEntry(index, "title", e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <Label>Sort Order</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={feature.position}
+                      onChange={(e) => updateEntry(index, "position", parseInt(e.target.value) || 0)}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="md:col-span-4">
+                    <Label>Description</Label>
+                    <textarea
+                      placeholder="Define the technical utility..."
+                      value={feature.description}
+                      onChange={(e) => updateEntry(index, "description", e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white h-20 resize-none"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 mt-8 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Syncing..." : `Deploy ${features.length} Features`}
+            </Button>
           </div>
         </form>
       </div>

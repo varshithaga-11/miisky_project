@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { createPatent, Patent, getMedicalDevices } from "./patentapi";
+import { createPatent, getMedicalDevices } from "./patentapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   onSuccess: () => void;
@@ -10,7 +13,7 @@ interface Props {
 const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
-  const [formData, setFormData] = useState<Partial<Patent>>({
+  const [formData, setFormData] = useState<any>({
     title: "",
     patent_number: "",
     application_number: "",
@@ -23,7 +26,7 @@ const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
     status: "filed",
     external_link: "",
     technology_area: "",
-    device: undefined,
+    device: "",
     is_active: true,
   });
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -38,12 +41,12 @@ const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) data.append(key, val.toString());
+        if (val !== undefined && val !== null && val !== "") data.append(key, val.toString());
       });
       if (docFile) data.append("patent_document", docFile);
 
       await createPatent(data);
-      toast.success("Patent filed successfully!");
+      toast.success("Patent added successfully!");
       onSuccess();
       onClose();
     } catch (error) {
@@ -54,71 +57,84 @@ const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[2rem] p-10 w-full max-w-3xl max-h-screen overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-        <h2 className="text-4xl font-black text-blue-900 mb-8 tracking-tighter">New Patent Application</h2>
-        <form onSubmit={handleSubmit} className="space-y-6 font-sans">
-          
-          <div className="space-y-4">
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Title</label>
-            <input
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-4 text-center">Add Patent Application</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Patent Title *</Label>
+            <Input
+              id="title"
               type="text"
               required
+              placeholder="Full official patent title..."
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-blue-50/50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-blue-900 placeholder:text-blue-200"
-              placeholder="Full official patent title..."
+              disabled={loading}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Patent / App Number</label>
-              <input
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="patent_number">Patent / App Number</Label>
+              <Input
+                id="patent_number"
                 type="text"
                 value={formData.patent_number}
                 onChange={(e) => setFormData({ ...formData, patent_number: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Inventors</label>
-              <input
+            <div>
+              <Label htmlFor="inventors">Inventors</Label>
+              <Input
+                id="inventors"
                 type="text"
+                placeholder="Comma separated names..."
                 value={formData.inventors}
                 onChange={(e) => setFormData({ ...formData, inventors: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
-                placeholder="Comma separated names..."
+                disabled={loading}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Filing Date</label>
-              <input
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="filing_date">Filing Date</Label>
+              <Input
+                id="filing_date"
                 type="date"
                 value={formData.filing_date}
                 onChange={(e) => setFormData({ ...formData, filing_date: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Jurisdiction</label>
-              <input
+            <div>
+              <Label htmlFor="jurisdiction">Jurisdiction</Label>
+              <Input
+                id="jurisdiction"
                 type="text"
                 value={formData.jurisdiction}
                 onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Current Status</label>
+            <div>
+              <Label htmlFor="status">Current Status *</Label>
               <select
+                id="status"
                 required
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
               >
                 <option value="filed">Filed</option>
                 <option value="pending">Pending</option>
@@ -129,42 +145,57 @@ const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Linked Device</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="device">Linked Medical Device</Label>
               <select
+                id="device"
                 value={formData.device}
-                onChange={(e) => setFormData({ ...formData, device: parseInt(e.target.value) || undefined })}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none focus:ring-4 ring-blue-100 transition-all font-bold text-gray-700"
+                onChange={(e) => setFormData({ ...formData, device: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
               >
-                <option value="">Select Medical Device (optional)</option>
+                <option value="">Select Device (Optional)</option>
                 {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
-            <div className="space-y-4 text-xs">
-              <label className="block font-black text-gray-400 uppercase tracking-widest pl-1">Patent Document (PDF)</label>
-              <div className="relative overflow-hidden bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                <input type="file" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
-                <div className="px-5 py-4 text-sm font-bold text-gray-400 truncate">{docFile ? docFile.name : "Attach original file..."}</div>
+            <div>
+              <Label htmlFor="patent_document">Patent Document (PDF)</Label>
+              <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
+                <input 
+                  id="patent_document"
+                  type="file" 
+                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  disabled={loading}
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-gray-600 dark:text-gray-400 font-bold text-xs truncate max-w-full">
+                    {docFile ? docFile.name : "Attach Original PDF"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-6 flex gap-6">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-900 text-white font-black uppercase tracking-widest text-sm py-5 rounded-[1.25rem] shadow-2xl shadow-blue-200 hover:bg-blue-800 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-            >
-              {loading ? "Registering..." : "Record Patent"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-100 text-gray-400 font-bold px-10 rounded-[1.25rem] hover:bg-red-50 hover:text-red-400 transition-all active:scale-95"
-            >
+          <div className="flex items-center gap-3 pt-2">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={formData.is_active || false}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t mt-6">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? "Adding..." : "Add Patent"}
+            </Button>
           </div>
         </form>
       </div>

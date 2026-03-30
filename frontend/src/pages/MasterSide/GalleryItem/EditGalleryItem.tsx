@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { updateGalleryItem, getGalleryItemById, GalleryItem } from "./galleryitemapi";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
 
 interface Props {
   id: number;
@@ -23,7 +26,7 @@ const EditGalleryItem: React.FC<Props> = ({ id, onSuccess, onClose, categories }
         const { image, ...rest } = data;
         setFormData({ ...rest, image_url: image });
       } catch (error) {
-        toast.error("Failed to load item data");
+        toast.error("Failed to load gallery item");
       } finally {
         setFetching(false);
       }
@@ -48,37 +51,42 @@ const EditGalleryItem: React.FC<Props> = ({ id, onSuccess, onClose, categories }
       }
 
       await updateGalleryItem(id, data as any);
-      toast.success("Identity recalibrated!");
+      toast.success("Gallery item updated successfully!");
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error(error.response?.data);
-      toast.error("Recalibration failed. Check console.");
+      toast.error("Failed to update gallery item");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
-        <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Edit Asset</h2>
-        </div>
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Edit Gallery Item</h2>
         
         {fetching ? (
-          <div className="py-20 text-center text-gray-400 font-black uppercase tracking-widest text-sm animate-pulse">Retrieving encrypted data...</div>
+          <div className="py-20 text-center text-gray-400">Loading gallery item data...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Category Assignment</label>
+              <Label htmlFor="category">Gallery Category *</Label>
               <select
+                id="category"
                 required
                 value={formData.category || ""}
                 onChange={(e) => setFormData({ ...formData, category: parseInt(e.target.value) || undefined })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                disabled={loading}
               >
-                <option value="">Select Target Category</option>
+                <option value="">Select Category</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -86,80 +94,79 @@ const EditGalleryItem: React.FC<Props> = ({ id, onSuccess, onClose, categories }
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Asset Title</label>
-              <input
+              <Label htmlFor="title">Asset Title *</Label>
+              <Input
+                id="title"
                 type="text"
                 required
                 value={formData.title || ""}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Description manifest</label>
+              <Label htmlFor="description">Description</Label>
               <textarea
+                id="description"
                 value={formData.description || ""}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all h-20 resize-none"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                rows={3}
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Digital Artifact / Image</label>
+              <Label htmlFor="image">Gallery Asset / Image</Label>
               <div className="flex items-center gap-4">
-                 <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                 <div className="w-16 h-16 rounded border overflow-hidden shrink-0">
                     <img 
                       src={photoFile ? URL.createObjectURL(photoFile) : (formData.image_url as string)} 
                       alt="preview" 
                       className="w-full h-full object-cover" 
                     />
                  </div>
-                 <input
+                 <Input
+                  id="image"
                   type="file"
                   accept="image/*"
                   onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="w-full border border-dashed border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-bold text-sm text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                  className="py-1.5"
+                  disabled={loading}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Matrix Pos</label>
-              <input
+              <Label htmlFor="position">Display Position</Label>
+              <Input
+                id="position"
                 type="number"
                 value={formData.position || 0}
                 onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                disabled={loading}
               />
             </div>
 
-            <div className="flex items-center group cursor-pointer inline-flex">
+            <div className="flex items-center gap-3">
               <input
                 type="checkbox"
-                id="edit_gal_item_active"
+                id="is_active"
                 checked={formData.is_active || false}
                 onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
               />
-              <label htmlFor="edit_gal_item_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Manifest Visible</label>
+              <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live / Active</Label>
             </div>
 
-            <div className="flex gap-4 mt-8">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-sm uppercase tracking-widest"
-              >
-                {loading ? "Recalibrating..." : "Update Asset"}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 border-2 border-gray-200 text-gray-400 font-black py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm uppercase tracking-widest"
-              >
+            <div className="flex justify-end gap-2 mt-8">
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
                 Cancel
-              </button>
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Updating..." : "Update Asset"}
+              </Button>
             </div>
           </form>
         )}
