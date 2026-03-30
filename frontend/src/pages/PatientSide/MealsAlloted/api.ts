@@ -45,3 +45,9 @@ export const markAsConsumed = async (mealId: number): Promise<UserMeal> => {
     const response = await axios.patch(url, { is_consumed: true, consumed_at: new Date().toISOString() }, { headers: await getAuthHeaders() });
     return response.data;
 };
+
+export const updateMealNote = async (mealId: number, notes: string): Promise<UserMeal> => {
+    const url = createApiUrl(`api/usermeal/${mealId}/`);
+    const response = await axios.patch(url, { notes }, { headers: await getAuthHeaders() });
+    return response.data;
+};

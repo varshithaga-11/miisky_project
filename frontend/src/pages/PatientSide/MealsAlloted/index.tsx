@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyMeals, markAsConsumed } from "./api";
+import { getMyMeals, markAsConsumed, updateMealNote } from "./api";
 import type { UserMeal } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiClock, FiCheckCircle, FiActivity, FiCalendar, FiList, FiPackage } from "react-icons/fi";
+import { FiClock, FiCheckCircle, FiActivity, FiCalendar, FiList, FiPackage, FiEdit2, FiX, FiCheck } from "react-icons/fi";
 import { GiBreadSlice, GiBowlOfRice, GiHamburger, GiCookingPot } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,6 +21,11 @@ const MealsAllotedPage: React.FC = () => {
     // Hover State for Calendar
     const [hoveredEvent, setHoveredEvent] = useState<UserMeal | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    
+    // Note Editing State
+    const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+    const [tempNote, setTempNote] = useState("");
+    const [updatingNote, setUpdatingNote] = useState(false);
 
     useEffect(() => {
         fetchMeals();
@@ -50,6 +55,21 @@ const MealsAllotedPage: React.FC = () => {
             toast.success("Great job! Meal logged. 🍱");
         } catch (err) {
             toast.error("Failed to log consumption");
+        }
+    };
+
+    const handleSaveNote = async () => {
+        if (editingNoteId === null) return;
+        setUpdatingNote(true);
+        try {
+            await updateMealNote(editingNoteId, tempNote);
+            setAllMeals(prev => prev.map(m => m.id === editingNoteId ? { ...m, notes: tempNote } : m));
+            setEditingNoteId(null);
+            toast.success("Note saved successfully");
+        } catch (err) {
+            toast.error("Failed to save note");
+        } finally {
+            setUpdatingNote(false);
         }
     };
 
@@ -259,11 +279,34 @@ const MealsAllotedPage: React.FC = () => {
                                                             <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-4 leading-tight group-hover:text-indigo-600 transition-colors">
                                                                 {meal.food_details?.name}
                                                             </h3>
-                                                            {meal.notes && (
-                                                                <p className="text-xs text-gray-400 font-medium mb-6 italic line-clamp-2">
-                                                                    "{meal.notes}"
-                                                                </p>
-                                                            )}
+                                                            <div className="group/note relative">
+                                                                {meal.notes ? (
+                                                                    <div className="bg-gray-50 dark:bg-white/[0.03] p-4 rounded-2xl mb-6 relative hover:bg-indigo-50/50 dark:hover:bg-white/[0.05] transition-colors border border-transparent hover:border-indigo-100 dark:hover:border-white/10 group-hover:shadow-sm">
+                                                                        <p className="text-xs text-gray-500 font-medium italic pr-8">
+                                                                            "{meal.notes}"
+                                                                        </p>
+                                                                        <button 
+                                                                            onClick={() => {
+                                                                                setEditingNoteId(meal.id);
+                                                                                setTempNote(meal.notes || "");
+                                                                            }}
+                                                                            className="absolute top-3 right-3 opacity-0 group-hover/note:opacity-100 p-1.5 bg-white dark:bg-gray-800 rounded-lg text-indigo-500 shadow-sm border border-gray-100 dark:border-white/10 transition-all hover:scale-110"
+                                                                        >
+                                                                            <FiEdit2 size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            setEditingNoteId(meal.id);
+                                                                            setTempNote("");
+                                                                        }}
+                                                                        className="flex items-center gap-2 mb-6 text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 transition-colors bg-indigo-50 dark:bg-indigo-900/20 px-4 py-2 rounded-xl group-hover:shadow-md"
+                                                                    >
+                                                                        <FiEdit2 size={12} /> Add Special Note
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                             <div className="flex flex-wrap gap-3 mb-10">
                                                                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-2xl text-[10px] font-bold text-gray-500 tracking-wider flex items-center gap-2">
                                                                     <span className="opacity-40">Qty:</span> {meal.quantity}
@@ -335,6 +378,60 @@ const MealsAllotedPage: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Note Editor Modal */}
+            <AnimatePresence>
+                {editingNoteId !== null && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-950/60 backdrop-blur-md">
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/10"
+                        >
+                            <div className="p-8 lg:p-12 space-y-8">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-tight mb-2">Meal Notes</h2>
+                                        <p className="text-gray-400 font-medium italic text-sm leading-relaxed">Add preferences or instructions (e.g., "No onions", "Extra spicy")</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setEditingNoteId(null)}
+                                        className="p-3 rounded-2xl bg-gray-50 dark:bg-white/[0.03] text-gray-400 hover:text-rose-500 transition-all"
+                                    >
+                                        <FiX size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="relative group/field">
+                                    <textarea 
+                                        value={tempNote}
+                                        onChange={(e) => setTempNote(e.target.value)}
+                                        placeholder="Enter your special meal requirements..."
+                                        className="w-full p-8 bg-gray-50 dark:bg-white/[0.02] border border-transparent dark:border-white/[0.05] rounded-[30px] shadow-inner focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-sm min-h-[160px] placeholder:text-gray-300 placeholder:font-medium text-gray-700 dark:text-gray-200"
+                                    />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={() => setEditingNoteId(null)}
+                                        className="flex-1 py-5 rounded-[22px] border-2 border-gray-100 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={handleSaveNote}
+                                        disabled={updatingNote}
+                                        className="flex-[2] flex items-center justify-center gap-3 py-5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-[22px] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 transition-all"
+                                    >
+                                        {updatingNote ? <span className="animate-pulse">Updating...</span> : <><FiCheck size={14} /> Update Note</>}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </>
     );
 };
