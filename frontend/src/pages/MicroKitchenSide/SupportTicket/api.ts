@@ -9,6 +9,7 @@ export type TicketCategory = {
 export type SupportTicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "medium" | "high";
 export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen";
+export type SupportTicketTargetType = "admin" | "nutritionist" | "kitchen";
 
 export type SupportTicket = {
   id: number;
@@ -16,6 +17,7 @@ export type SupportTicket = {
   assigned_to: number | null;
   category: number | null;
   user_type: SupportTicketUserType;
+  target_user_type: SupportTicketTargetType;
   title: string;
   description: string;
   status: SupportTicketStatus;
@@ -61,9 +63,18 @@ export async function getTicketCategories(search = ""): Promise<TicketCategory[]
   return res.data as TicketCategory[];
 }
 
+export type SupportServiceProvider = {
+  id: number;
+  name: string;
+  is_active: boolean;
+  role: "nutritionist" | "kitchen";
+};
+
 export async function createSupportTicket(payload: {
   category?: number | null;
   user_type: SupportTicketUserType;
+  target_user_type?: SupportTicketTargetType;
+  assigned_to?: number | null;
   title: string;
   description: string;
   priority?: SupportTicketPriority;
@@ -71,6 +82,12 @@ export async function createSupportTicket(payload: {
   const url = createApiUrl("api/supportticket/");
   const res = await axios.post(url, payload, { headers: await getAuthHeaders() });
   return res.data as SupportTicket;
+}
+
+export async function getServiceProviders(): Promise<{ nutritionists: SupportServiceProvider[]; kitchens: SupportServiceProvider[] }> {
+  const url = createApiUrl("api/expert/service-providers/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
 }
 
 export async function getMySupportTickets(params?: {

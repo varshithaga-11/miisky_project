@@ -217,6 +217,100 @@ class PatientDashboardCountsView(APIView):
         })
 
 
+class PatientServiceProvidersView(APIView):
+    """Fetch assigned nutritionists and kitchens for the patient."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != 'patient' and user.role != 'non_patient':
+            return Response({"error": "Only patients/non-patients have assigned providers"}, status=400)
+
+        # 1. Nutritionists (Mapped via UserNutritionistMapping)
+        nut_mappings = UserNutritionistMapping.objects.filter(user=user).select_related('nutritionist')
+        nutritionists = []
+        seen_nuts = set()
+        for m in nut_mappings:
+            if m.nutritionist and m.nutritionist.id not in seen_nuts:
+                name = [m.nutritionist.first_name, m.nutritionist.last_name]
+                nutritionists.append({
+                    "id": m.nutritionist.id,
+                    "name": " ".join(filter(None, name)).strip() or m.nutritionist.username,
+                    "is_active": m.is_active,
+                    "role": "nutritionist"
+                })
+                seen_nuts.add(m.nutritionist.id)
+
+        # 2. Kitchens (Mapped via UserDietPlan -> micro_kitchen)
+        diet_plans = UserDietPlan.objects.filter(user=user).select_related('micro_kitchen__user')
+        kitchens = []
+        seen_kitchens = set()
+        for p in diet_plans:
+            if p.micro_kitchen and p.micro_kitchen.user and p.micro_kitchen.user.id not in seen_kitchens:
+                kitchens.append({
+                    "id": p.micro_kitchen.user.id,
+                    "name": p.micro_kitchen.brand_name or p.micro_kitchen.user.username,
+                    "is_active": p.status == 'active',
+                    "role": "kitchen"
+                })
+                seen_kitchens.add(p.micro_kitchen.user.id)
+
+        return Response({
+            "nutritionists": nutritionists,
+            "kitchens": kitchens
+        })
+
+
+class ExpertServiceProvidersView(APIView):
+    """Fetch associated nutritionists/kitchens for experts."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = getattr(user, 'role', None)
+
+        if role == 'nutritionist':
+            # Find all kitchens linked to this nutritionist's patients
+            plans = UserDietPlan.objects.filter(nutritionist=user).select_related('micro_kitchen__user')
+            kitchens = []
+            seen = set()
+            for p in plans:
+                if p.micro_kitchen and p.micro_kitchen.user and p.micro_kitchen.user.id not in seen:
+                    kitchens.append({
+                        "id": p.micro_kitchen.user.id,
+                        "name": p.micro_kitchen.brand_name or p.micro_kitchen.user.username,
+                        "is_active": p.status == 'active',
+                        "role": "kitchen"
+                    })
+                    seen.add(p.micro_kitchen.user.id)
+            return Response({"nutritionists": [], "kitchens": kitchens})
+
+        elif role == 'micro_kitchen':
+            # Find all nutritionists linked to this kitchen's patients
+            # Kitchen is a Profile, linked to user
+            try:
+                mk_profile = user.micro_kitchen
+            except:
+                return Response({"nutritionists": [], "kitchens": []})
+
+            plans = UserDietPlan.objects.filter(micro_kitchen=mk_profile).select_related('nutritionist')
+            nutritionists = []
+            seen = set()
+            for p in plans:
+                if p.nutritionist and p.nutritionist.id not in seen:
+                    name = [p.nutritionist.first_name, p.nutritionist.last_name]
+                    nutritionists.append({
+                        "id": p.nutritionist.id,
+                        "name": " ".join(filter(None, name)).strip() or p.nutritionist.username,
+                        "is_active": True, # UserRegister itself doesn't have is_active for experts? It has, but we'll assume yes
+                        "role": "nutritionist"
+                    })
+                    seen.add(p.nutritionist.id)
+            return Response({"nutritionists": nutritionists, "kitchens": []})
+
+        return Response({"error": "Only experts can use this endpoint"}, status=400)
+
+
 class NutritionDashboardCountsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -235,7 +329,7 @@ class NutritionDashboardCountsView(APIView):
             "suggestedPlans": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
             "approvedPlans": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
             "meetingRequests": MeetingRequest.objects.filter(nutritionist=user).count(),
-            "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
+            "supportTickets": SupportTicket.objects.filter(Q(created_by=user) | Q(assigned_to=user)).count(),
             # Status based analytics
             "plansSuggested": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
             "plansApproved": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
@@ -264,7 +358,7 @@ class MicroKitchenDashboardCountsView(APIView):
             "orders": Order.objects.filter(micro_kitchen_id=kitchen_id, created_at__date=today).count() if kitchen_id else 0,
             "availableFoods": MicroKitchenFood.objects.filter(micro_kitchen_id=kitchen_id, is_available=True).count() if kitchen_id else 0,
             "kitchenReviews": MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).count() if kitchen_id else 0,
-            "supportTickets": SupportTicket.objects.filter(created_by=user).count(),
+            "supportTickets": SupportTicket.objects.filter(Q(created_by=user) | Q(assigned_to=user)).count(),
             # Status Counts
             "ordersPending": Order.objects.filter(micro_kitchen_id=kitchen_id, status__in=["placed", "accepted", "preparing", "ready"]).count() if kitchen_id else 0,
             "ordersCompleted": Order.objects.filter(micro_kitchen_id=kitchen_id, status="delivered").count() if kitchen_id else 0,
@@ -3556,11 +3650,16 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
         user_type_param = self.request.query_params.get("user_type")
         mine = self.request.query_params.get("mine")
 
+        from django.db.models import Q
         if getattr(u, "role", None) != "admin":
-            qs = qs.filter(created_by=u)
+            # Non-admins: only see what they created OR what is assigned specifically to them
+            qs = qs.filter(Q(created_by=u) | Q(assigned_to=u))
         else:
+            # Admins: only see what was sent to 'admin' OR what they created themselves
             if mine in ["1", "true", "True", "yes", "y"]:
                 qs = qs.filter(created_by=u)
+            else:
+                qs = qs.filter(Q(target_user_type="admin") | Q(created_by=u))
 
         if status_param:
             qs = qs.filter(status=status_param)
@@ -3570,6 +3669,8 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         u = self.request.user
+        target_user_type = self.request.data.get("target_user_type", "admin")
+        explicit_assigned_to = self.request.data.get("assigned_to")
 
         role = getattr(u, "role", None)
         if role == "patient" or role == "non_patient":
@@ -3579,21 +3680,42 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
         elif role == "micro_kitchen":
             user_type = "kitchen"
         else:
-            # Admin creating on behalf; accept incoming user_type if valid, else default to patient.
             user_type = self.request.data.get("user_type") or "patient"
 
-        assigned_to = serializer.validated_data.get("assigned_to", None)
-        if getattr(u, "role", None) != "admin":
-            assigned_to = None
+        # Auto-assignment logic based on target_user_type
+        assigned_to = None
+        
+        if explicit_assigned_to:
+            assigned_to = UserRegister.objects.filter(id=explicit_assigned_to).first()
 
-        ticket = serializer.save(created_by=u, user_type=user_type, assigned_to=assigned_to)
+        if not assigned_to and role != "admin":
+            if target_user_type == 'nutritionist':
+                mapping = UserNutritionistMapping.objects.filter(user=u, is_active=True).first()
+                if mapping:
+                    assigned_to = mapping.nutritionist
+            elif target_user_type == 'kitchen':
+                plan = UserDietPlan.objects.filter(user=u, status='active').first()
+                if plan and plan.micro_kitchen:
+                    assigned_to = plan.micro_kitchen.user
+
+        ticket = serializer.save(created_by=u, user_type=user_type, assigned_to=assigned_to, target_user_type=target_user_type)
         creator_label = _notification_user_display(ticket.created_by)
         title_preview = (ticket.title or "Support ticket").strip()[:200]
+        
+        # Notify admins
         for admin in UserRegister.objects.filter(role="admin", is_active=True):
             Notification.objects.create(
                 user_id=admin.id,
                 title="New support ticket",
                 body=f"{creator_label} created ticket #{ticket.id}: {title_preview}",
+            )
+            
+        # Notify specific assigned user if any
+        if ticket.assigned_to and ticket.assigned_to.role != 'admin':
+            Notification.objects.create(
+                user_id=ticket.assigned_to.id,
+                title=f"New Chat from {creator_label} regarding ticket",
+                body=f"You have a new message regarding: {title_preview}",
             )
 
     def perform_update(self, serializer):
@@ -3631,7 +3753,8 @@ class TicketMessageViewSet(viewsets.ModelViewSet):
             qs = qs.filter(ticket_id=ticket_id)
 
         if getattr(u, "role", None) != "admin":
-            qs = qs.filter(ticket__created_by=u, is_internal=False)
+            from django.db.models import Q
+            qs = qs.filter(Q(ticket__created_by=u) | Q(ticket__assigned_to=u), is_internal=False)
         return qs
 
     def perform_create(self, serializer):
@@ -3642,10 +3765,25 @@ class TicketMessageViewSet(viewsets.ModelViewSet):
         is_internal = bool(serializer.validated_data.get("is_internal", False))
         if getattr(u, "role", None) != "admin":
             is_internal = False
-            if not ticket or ticket.created_by_id != u.id:
+            # Check if user is either the creator or the assigned recipient
+            if not ticket or (ticket.created_by_id != u.id and ticket.assigned_to_id != u.id):
                 raise PermissionDenied("Not allowed to post on this ticket.")
 
-        serializer.save(sender=u, is_internal=is_internal)
+        message = serializer.save(sender=u, is_internal=is_internal)
+        
+        # Notify the other party
+        recipient = None
+        if ticket.created_by_id == u.id:
+            recipient = ticket.assigned_to
+        else:
+            recipient = ticket.created_by
+            
+        if recipient:
+            Notification.objects.create(
+                user_id=recipient.id,
+                title=f"New Message from {_notification_user_display(u)}",
+                body=f"Ticket #{ticket.id}: {message.message[:100]}",
+            )
 
 
 class TicketAttachmentViewSet(viewsets.ModelViewSet):
@@ -3661,14 +3799,15 @@ class TicketAttachmentViewSet(viewsets.ModelViewSet):
         if ticket_id:
             qs = qs.filter(ticket_id=ticket_id)
         if getattr(u, "role", None) != "admin":
-            qs = qs.filter(ticket__created_by=u)
+            from django.db.models import Q
+            qs = qs.filter(Q(ticket__created_by=u) | Q(ticket__assigned_to=u))
         return qs
 
     def perform_create(self, serializer):
         u = self.request.user
         ticket = serializer.validated_data.get("ticket")
         if getattr(u, "role", None) != "admin":
-            if not ticket or ticket.created_by_id != u.id:
+            if not ticket or (ticket.created_by_id != u.id and ticket.assigned_to_id != u.id):
                 raise PermissionDenied("Not allowed to upload for this ticket.")
         serializer.save(uploaded_by=u)
 

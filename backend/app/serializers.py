@@ -2315,6 +2315,8 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
     patient_details = serializers.SerializerMethodField()
     diet_plan_details = serializers.SerializerMethodField()
     nutritionist_details = serializers.SerializerMethodField()
+    original_nutritionist_details = serializers.SerializerMethodField()
+    original_micro_kitchen_details = serializers.SerializerMethodField()
     patient_questionnaire = serializers.SerializerMethodField()
 
     class Meta:
@@ -2322,7 +2324,9 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'status', 'suggested_on', 'approved_on', 'start_date', 'end_date',
             'patient_details', 'diet_plan_details', 'nutritionist_details',
-            'patient_questionnaire', 'nutritionist_notes'
+            'patient_questionnaire', 'nutritionist_notes',
+            'original_nutritionist_details', 'nutritionist_effective_from',
+            'original_micro_kitchen_details', 'micro_kitchen_effective_from'
         ]
 
     def get_patient_details(self, obj):
@@ -2354,6 +2358,23 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
                 'id': obj.nutritionist.id,
                 'first_name': obj.nutritionist.first_name,
                 'last_name': obj.nutritionist.last_name,
+            }
+        return None
+
+    def get_original_nutritionist_details(self, obj):
+        if obj.original_nutritionist:
+            return {
+                'id': obj.original_nutritionist.id,
+                'first_name': obj.original_nutritionist.first_name,
+                'last_name': obj.original_nutritionist.last_name,
+            }
+        return None
+
+    def get_original_micro_kitchen_details(self, obj):
+        if obj.original_micro_kitchen:
+            return {
+                'id': obj.original_micro_kitchen.id,
+                'brand_name': obj.original_micro_kitchen.brand_name,
             }
         return None
 
@@ -2480,6 +2501,7 @@ class SupportTicketSerializer(serializers.ModelSerializer):
             "category",
             "category_details",
             "user_type",
+            "target_user_type",
             "title",
             "description",
             "status",
