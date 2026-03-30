@@ -1,11 +1,11 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
-import type { PlanPayoutRecord } from "../../NutritionSide/PlanPayouts/api";
+import type { PlanPayoutTrackerRow } from "../../NutritionSide/PlanPayouts/api";
 
-export type { PlanPayoutRecord };
+export type { PlanPayoutTrackerRow };
 
-export async function fetchMicroKitchenPlanPayouts(): Promise<PlanPayoutRecord[]> {
+export async function fetchMicroKitchenPlanPayouts(): Promise<PlanPayoutTrackerRow[]> {
   const url = createApiUrl("api/microkitchen/plan-payouts/");
-  const res = await axios.get<PlanPayoutRecord[]>(url, { headers: await getAuthHeaders() });
+  const res = await axios.get<PlanPayoutTrackerRow[]>(url, { headers: await getAuthHeaders() });
   return res.data;
 }

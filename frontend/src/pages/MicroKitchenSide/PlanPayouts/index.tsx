@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
-import { fetchMicroKitchenPlanPayouts, PlanPayoutRecord } from "./api";
+import { fetchMicroKitchenPlanPayouts, PlanPayoutTrackerRow } from "./api";
 
 function fmtDate(s: string | null) {
   if (!s) return "—";
@@ -10,7 +10,7 @@ function fmtDate(s: string | null) {
 }
 
 export default function MicroKitchenPlanPayoutsPage() {
-  const [rows, setRows] = useState<PlanPayoutRecord[]>([]);
+  const [rows, setRows] = useState<PlanPayoutTrackerRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,8 +26,10 @@ export default function MicroKitchenPlanPayoutsPage() {
     })();
   }, []);
 
-  const pending = rows.filter((r) => r.status === "pending");
-  const totalPending = pending.reduce((acc, r) => acc + parseFloat(r.amount || "0"), 0);
+  const totalRemaining = rows.reduce(
+    (acc, r) => acc + parseFloat(String(r.remaining_amount ?? "0")),
+    0
+  );
 
   return (
     <>
@@ -37,12 +39,12 @@ export default function MicroKitchenPlanPayoutsPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Your kitchen share is computed when admin verifies the patient payment. If the plan moved to another
-            kitchen partway through, amounts are split by the dates in each segment.
+            Each row is a <span className="font-medium">payout tracker</span> for a date range. Remaining is the
+            difference between what is owed and what admin has recorded as paid for that tracker.
           </p>
           <div className="text-lg font-semibold text-gray-900 dark:text-white">
-            Pending total:{" "}
-            <span className="text-amber-600 dark:text-amber-400">₹{totalPending.toFixed(2)}</span>
+            Remaining across trackers:{" "}
+            <span className="text-amber-600 dark:text-amber-400">₹{totalRemaining.toFixed(2)}</span>
           </div>
         </div>
 
@@ -58,8 +60,9 @@ export default function MicroKitchenPlanPayoutsPage() {
                   <TableCell isHeader>Patient</TableCell>
                   <TableCell isHeader>Plan</TableCell>
                   <TableCell isHeader>Period</TableCell>
-                  <TableCell isHeader>Amount</TableCell>
-                  <TableCell isHeader>Reason</TableCell>
+                  <TableCell isHeader>Total</TableCell>
+                  <TableCell isHeader>Paid</TableCell>
+                  <TableCell isHeader>Remaining</TableCell>
                   <TableCell isHeader>Status</TableCell>
                 </TableRow>
               </TableHeader>
@@ -71,17 +74,21 @@ export default function MicroKitchenPlanPayoutsPage() {
                     <TableCell className="text-xs whitespace-nowrap">
                       {fmtDate(r.period_from)} → {fmtDate(r.period_to)}
                     </TableCell>
-                    <TableCell className="font-semibold">₹{parseFloat(r.amount).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs capitalize">{r.reason.replace(/_/g, " ")}</TableCell>
+                    <TableCell>₹{parseFloat(r.total_amount).toFixed(2)}</TableCell>
+                    <TableCell>₹{parseFloat(r.paid_amount).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">₹{parseFloat(r.remaining_amount).toFixed(2)}</TableCell>
                     <TableCell>
                       <span
                         className={
-                          r.status === "pending"
-                            ? "text-amber-700 dark:text-amber-400"
-                            : "text-emerald-700 dark:text-emerald-400"
+                          r.status === "paid"
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : r.status === "closed"
+                              ? "text-gray-500"
+                              : "text-amber-700 dark:text-amber-400"
                         }
                       >
                         {r.status}
+                        {r.is_closed && r.status !== "closed" ? " (closed)" : ""}
                       </span>
                     </TableCell>
                   </TableRow>

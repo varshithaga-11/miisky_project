@@ -142,11 +142,6 @@ urlpatterns = [
     path("admin/all-orders/", views.AdminAllOrdersView.as_view(), name="admin-all-orders"),
     path("admin/kitchen-payouts/", views.AdminKitchenPayoutsView.as_view(), name="admin-kitchen-payouts"),
     path(
-        "admin/platform-payment-settings/",
-        views.PlatformPaymentSettingsView.as_view(),
-        name="admin-platform-payment-settings",
-    ),
-    path(
         "nutrition/plan-payouts/",
         views.NutritionistPlanPayoutsView.as_view(),
         name="nutrition-plan-payouts",
@@ -155,6 +150,21 @@ urlpatterns = [
         "microkitchen/plan-payouts/",
         views.MicroKitchenPlanPayoutsView.as_view(),
         name="microkitchen-plan-payouts",
+    ),
+    path(
+        "admin/plan-payout-trackers/",
+        views.AdminPayoutTrackersForPayView.as_view(),
+        name="admin-plan-payout-trackers",
+    ),
+    path(
+        "admin/plan-payout-transactions/",
+        views.AdminPayoutTransactionListCreateView.as_view(),
+        name="admin-plan-payout-transactions",
+    ),
+    path(
+        "admin/plan-payments-overview/",
+        views.AdminPlanPaymentsOverviewView.as_view(),
+        name="admin-plan-payments-overview",
     ),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),

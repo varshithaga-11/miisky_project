@@ -6,9 +6,13 @@ Health Reports, Diet Plans, Meals, Meetings.
 
 See PROJECT_ROOT/WORKFLOW.md for full workflow and relationships.
 """
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db.models import Sum
 
 
 class Country(models.Model):
@@ -795,7 +799,7 @@ class DietPlans(models.Model):
 
     no_of_days = models.IntegerField(null=True, blank=True)  # e.g. 30 days
 
-    # Optional override for patient plan payment split (% of gross). If any is null, platform defaults apply.
+    # Optional override for patient plan payment split (% of gross). If any is null, code defaults apply (15/15/60).
     platform_fee_percent = models.DecimalField(
         max_digits=5, decimal_places=2, null=True, blank=True,
         help_text="Override: platform share % of gross (must set all three to override)",
@@ -1527,8 +1531,8 @@ class UserDietPlan(models.Model):
             self.end_date = self.start_date + timedelta(days=self.diet_plan.no_of_days - 1)
 
         self.save()
-        from .plan_payment import ensure_plan_payment_ledger
-        ensure_plan_payment_ledger(self)
+        from .plan_payment import ensure_plan_payment_snapshot
+        ensure_plan_payment_snapshot(self)
 
     def reject_payment(self):
         """Admin rejects payment"""
@@ -2223,119 +2227,251 @@ class MicroKitchenReassignment(models.Model):
     effective_from = models.DateField()
 
 
-class PlatformPaymentSettings(models.Model):
-    """Singleton (pk=1): default % split of gross patient plan payments when DietPlans has no override."""
-
-    default_platform_fee_percent = models.DecimalField(max_digits=5, decimal_places=2, default=20)
-    default_nutritionist_share_percent = models.DecimalField(max_digits=5, decimal_places=2, default=30)
-    default_kitchen_share_percent = models.DecimalField(max_digits=5, decimal_places=2, default=50)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Platform payment split defaults"
-
-    def save(self, *args, **kwargs):
-        self.pk = 1
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        return
-
-    @classmethod
-    def get_solo(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
 
 
-class PlanPaymentLedger(models.Model):
-    """One row per UserDietPlan after admin verifies payment; stores gross and split pools."""
+# ------------------------------------------------------------
+# --------------------------------------------------------------------
 
-    STATUS_PENDING = "pending"
-    STATUS_DISBURSED = "disbursed"
-    STATUS_CHOICES = [
-        (STATUS_PENDING, "Pending"),
-        (STATUS_DISBURSED, "Disbursed"),
-    ]
+
+class PlanPaymentSnapshot(models.Model):
+    """
+    Immutable financial record created when admin verifies payment.
+    Percentages and amounts are frozen so later catalog changes do not affect this plan.
+    """
 
     user_diet_plan = models.OneToOneField(
         "UserDietPlan",
         on_delete=models.CASCADE,
-        related_name="payment_ledger",
+        related_name="payment_snapshot",
     )
-    gross_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    platform_fee_percent = models.DecimalField(max_digits=5, decimal_places=2)
-    nutritionist_share_percent = models.DecimalField(max_digits=5, decimal_places=2)
-    kitchen_share_percent = models.DecimalField(max_digits=5, decimal_places=2)
-    platform_fee_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    nutritionist_pool_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    kitchen_pool_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    platform_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    nutrition_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    kitchen_percent = models.DecimalField(max_digits=5, decimal_places=2)
+
+    platform_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    nutrition_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    kitchen_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Ledger plan={self.user_diet_plan_id} gross={self.gross_amount}"
+        return f"Snapshot for plan {self.user_diet_plan_id} — ₹{self.total_amount}"
 
 
-class PayoutRecord(models.Model):
-    """Per-recipient slice for a plan payment (platform, nutritionist segment, or kitchen segment)."""
+class PayoutTracker(models.Model):
+    """
+    Amount owed to one recipient for one period; multiple PayoutTransaction rows may apply until paid.
+    On reassignment, unpaid trackers for nutritionist/kitchen are closed and new rows cover new periods.
+    """
 
-    ROLE_PLATFORM = "platform"
-    ROLE_NUTRITIONIST = "nutritionist"
-    ROLE_KITCHEN = "kitchen"
-    RECIPIENT_ROLE_CHOICES = [
-        (ROLE_PLATFORM, "Platform"),
-        (ROLE_NUTRITIONIST, "Nutritionist"),
-        (ROLE_KITCHEN, "Micro kitchen"),
-    ]
-
-    REASON_INITIAL = "initial"
-    REASON_REASSIGNMENT_SPLIT = "reassignment_split"
-    REASON_CHOICES = [
-        (REASON_INITIAL, "Initial"),
-        (REASON_REASSIGNMENT_SPLIT, "Reassignment split"),
-    ]
-
-    STATUS_PENDING = "pending"
-    STATUS_DISBURSED = "disbursed"
-    STATUS_CHOICES = [
-        (STATUS_PENDING, "Pending"),
-        (STATUS_DISBURSED, "Disbursed"),
-    ]
-
-    ledger = models.ForeignKey(
-        PlanPaymentLedger,
+    snapshot = models.ForeignKey(
+        PlanPaymentSnapshot,
         on_delete=models.CASCADE,
-        related_name="payout_records",
+        related_name="payouts",
     )
-    recipient_role = models.CharField(max_length=20, choices=RECIPIENT_ROLE_CHOICES)
+
+    PAYOUT_TYPE_PLATFORM = "platform"
+    PAYOUT_TYPE_NUTRITIONIST = "nutritionist"
+    PAYOUT_TYPE_KITCHEN = "kitchen"
+    PAYOUT_TYPE_CHOICES = [
+        (PAYOUT_TYPE_PLATFORM, "Platform"),
+        (PAYOUT_TYPE_NUTRITIONIST, "Nutritionist"),
+        (PAYOUT_TYPE_KITCHEN, "Kitchen"),
+    ]
+    payout_type = models.CharField(max_length=20, choices=PAYOUT_TYPE_CHOICES)
+
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="plan_payout_records",
+        on_delete=models.SET_NULL,
+        related_name="nutritionist_payout_trackers",
     )
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="plan_payout_records",
+        on_delete=models.SET_NULL,
+        related_name="kitchen_payout_trackers",
     )
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+
     period_from = models.DateField(null=True, blank=True)
     period_to = models.DateField(null=True, blank=True)
-    reason = models.CharField(max_length=40, choices=REASON_CHOICES, default=REASON_INITIAL)
+
+    STATUS_PENDING = "pending"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_PAID = "paid"
+    STATUS_CLOSED = "closed"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_PAID, "Fully Paid"),
+        (STATUS_CLOSED, "Closed Early"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    paid_on = models.DateTimeField(null=True, blank=True)
+
+    is_closed = models.BooleanField(default=False)
+    closed_reason = models.TextField(null=True, blank=True)
+    closed_by = models.ForeignKey(
+        UserRegister,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="closed_payout_trackers",
+    )
+    closed_on = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ["ledger_id", "recipient_role", "id"]
+    @property
+    def remaining_amount(self):
+        return max(self.total_amount - self.paid_amount, Decimal("0.00"))
+
+    @property
+    def is_fully_paid(self):
+        return self.paid_amount >= self.total_amount
+
+    def clean(self):
+        if self.payout_type == self.PAYOUT_TYPE_NUTRITIONIST:
+            if not self.nutritionist_id:
+                raise ValidationError("Nutritionist payout must have a nutritionist set.")
+            if self.micro_kitchen_id:
+                raise ValidationError("Nutritionist payout must not have a kitchen set.")
+        elif self.payout_type == self.PAYOUT_TYPE_KITCHEN:
+            if not self.micro_kitchen_id:
+                raise ValidationError("Kitchen payout must have a micro_kitchen set.")
+            if self.nutritionist_id:
+                raise ValidationError("Kitchen payout must not have a nutritionist set.")
+        elif self.payout_type == self.PAYOUT_TYPE_PLATFORM:
+            if self.nutritionist_id or self.micro_kitchen_id:
+                raise ValidationError("Platform payout must have neither nutritionist nor kitchen set.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Payout {self.recipient_role} {self.amount} (ledger {self.ledger_id})"
+        if self.payout_type == self.PAYOUT_TYPE_PLATFORM:
+            return f"Platform payout — ₹{self.total_amount} [{self.period_from} → {self.period_to}]"
+        if self.payout_type == self.PAYOUT_TYPE_NUTRITIONIST:
+            return f"Nutritionist payout ({self.nutritionist}) — ₹{self.total_amount} [{self.period_from} → {self.period_to}]"
+        return f"Kitchen payout ({self.micro_kitchen}) — ₹{self.total_amount} [{self.period_from} → {self.period_to}]"
+
+    class Meta:
+        ordering = ["created_at"]
+
+
+class PayoutTransaction(models.Model):
+    """One real transfer logged against a PayoutTracker; updates tracker.paid_amount on save/delete."""
+
+    tracker = models.ForeignKey(
+        PayoutTracker,
+        on_delete=models.CASCADE,
+        related_name="transactions",
+    )
+
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    payout_date = models.DateField(null=True, blank=True)
+
+    PAYMENT_METHOD_BANK = "bank_transfer"
+    PAYMENT_METHOD_UPI = "upi"
+    PAYMENT_METHOD_CASH = "cash"
+    PAYMENT_METHOD_CHEQUE = "cheque"
+    PAYMENT_METHOD_OTHER = "other"
+    PAYMENT_METHOD_CHOICES = [
+        (PAYMENT_METHOD_BANK, "Bank Transfer"),
+        (PAYMENT_METHOD_UPI, "UPI"),
+        (PAYMENT_METHOD_CASH, "Cash"),
+        (PAYMENT_METHOD_CHEQUE, "Cheque"),
+        (PAYMENT_METHOD_OTHER, "Other"),
+    ]
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES,
+        null=True,
+        blank=True,
+    )
+
+    payment_screenshot = models.ImageField(
+        upload_to="payout_screenshots/",
+        null=True,
+        blank=True,
+    )
+    transaction_reference = models.CharField(max_length=100, null=True, blank=True)
+    note = models.CharField(max_length=255, null=True, blank=True)
+
+    paid_by = models.ForeignKey(
+        UserRegister,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="initiated_payout_transactions",
+    )
+    paid_on = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._update_tracker()
+
+    def delete(self, *args, **kwargs):
+        tid = self.tracker_id
+        super().delete(*args, **kwargs)
+        PayoutTransaction._recalc_tracker_paid_amount(tid)
+
+    @staticmethod
+    def _recalc_tracker_paid_amount(tracker_id):
+        if not tracker_id:
+            return
+        try:
+            tracker = PayoutTracker.objects.get(pk=tracker_id)
+        except PayoutTracker.DoesNotExist:
+            return
+        total_paid = (
+            PayoutTransaction.objects.filter(tracker_id=tracker_id).aggregate(s=Sum("amount_paid"))["s"]
+            or Decimal("0.00")
+        )
+        tracker.paid_amount = total_paid
+        if tracker.is_closed:
+            tracker.status = PayoutTracker.STATUS_CLOSED
+        elif total_paid >= tracker.total_amount:
+            tracker.status = PayoutTracker.STATUS_PAID
+        elif total_paid > 0:
+            tracker.status = PayoutTracker.STATUS_IN_PROGRESS
+        else:
+            tracker.status = PayoutTracker.STATUS_PENDING
+        PayoutTracker.objects.filter(pk=tracker.pk).update(paid_amount=tracker.paid_amount, status=tracker.status)
+
+    def _update_tracker(self):
+        tracker = self.tracker
+        total_paid = (
+            tracker.transactions.aggregate(s=Sum("amount_paid"))["s"] or Decimal("0.00")
+        )
+        tracker.paid_amount = total_paid
+        if tracker.is_closed:
+            tracker.status = PayoutTracker.STATUS_CLOSED
+        elif total_paid >= tracker.total_amount:
+            tracker.status = PayoutTracker.STATUS_PAID
+        elif total_paid > 0:
+            tracker.status = PayoutTracker.STATUS_IN_PROGRESS
+        else:
+            tracker.status = PayoutTracker.STATUS_PENDING
+        PayoutTracker.objects.filter(pk=tracker.pk).update(paid_amount=tracker.paid_amount, status=tracker.status)
+
+    def __str__(self):
+        return f"₹{self.amount_paid} via {self.payment_method} on {self.payout_date}"
+
+    class Meta:
+        ordering = ["paid_on"]
 
 
 # ------------------------------------------------------------

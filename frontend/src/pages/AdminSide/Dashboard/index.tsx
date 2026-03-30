@@ -15,6 +15,8 @@ import {
   TrendingUp,
   FileText,
   MapPin,
+  Send,
+  ClipboardList,
 } from "lucide-react";
 import { getAdminDashboardStats, AdminDashboardStats } from "./api";
 
@@ -35,6 +37,8 @@ const adminMenus: DashboardMenuItem[] = [
   { label: "Nutritionists", path: "/admin/nutrition-information", icon: Users, statKey: "nutritionists", color: "violet", category: "Care" },
   { label: "Allotments", path: "/admin/user-nutrition-mapping", icon: Briefcase, statKey: "allottedPatients", color: "rose", category: "Care" },
   { label: "Verification", path: "/admin/patient-payment-verification", icon: ShieldCheck, statKey: "verifications", color: "emerald", category: "Care" },
+  { label: "Record plan payouts", path: "/admin/record-plan-payouts", icon: Send, color: "lime", category: "Care" },
+  { label: "Plan payments overview", path: "/admin/plan-payments-overview", icon: ClipboardList, color: "cyan", category: "Care" },
 
   // Food Management
   { label: "Micro Kitchens", path: "/admin/micro-kitchen-information", icon: UtensilsCrossed, statKey: "microKitchens", color: "amber", category: "Food" },

@@ -76,7 +76,7 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
       const n = parseFloat(nRaw);
       const k = parseFloat(kRaw);
       if ([p, n, k].some((x) => Number.isNaN(x))) {
-        toast.warning("Fill all three payment split percentages or leave all blank for platform defaults.");
+        toast.warning("Fill all three payment split percentages or leave all blank for 15/15/60 defaults.");
         return;
       }
       if (Math.abs(p + n + k - 100) > 0.001) {
@@ -164,7 +164,9 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Payment split override (optional)
               </p>
-              <p className="text-xs text-gray-500">Leave blank for platform defaults. If set, all three must total 100%.</p>
+              <p className="text-xs text-gray-500">
+                Leave blank for 15% platform, 15% nutrition, 60% kitchen. If set, all three must total 100%.
+              </p>
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label htmlFor="platform_fee_percent">Platform %</Label>
