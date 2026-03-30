@@ -9,11 +9,13 @@ interface Props {
 
 const AddPartner: React.FC<Props> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Partial<Partner>>({
     name: "",
     description: "",
     website_url: "",
-    logo: "",
+    logo_alt_text: "",
+    display_on_home: false,
     position: 0,
     is_active: true,
   });
@@ -22,7 +24,18 @@ const AddPartner: React.FC<Props> = ({ onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createPartner(formData as Partner);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          data.append(key, value.toString());
+        }
+      });
+      
+      if (logoFile) {
+        data.append("logo", logoFile);
+      }
+
+      await createPartner(data as any);
       toast.success("Partner added successfully!");
       onSuccess();
       onClose();
@@ -75,13 +88,31 @@ const AddPartner: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div className="mb-5">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Logo URL</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Brand Logo (Binary)</label>
+            <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-4 text-center">
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              />
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-gray-600 font-bold text-xs truncate max-w-full">
+                  {logoFile ? logoFile.name : "Select Logo Asset"}
+                </span>
+                <span className="text-gray-400 text-[10px] font-semibold">SVG or PNG Preferred</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Logo Alt Text</label>
             <input
-              type="url"
-              value={formData.logo || ""}
-              onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+              type="text"
+              value={formData.logo_alt_text || ""}
+              onChange={(e) => setFormData({ ...formData, logo_alt_text: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              placeholder="https://example.com/logo.png"
+              placeholder="Partner logo description"
             />
           </div>
 
@@ -105,6 +136,16 @@ const AddPartner: React.FC<Props> = ({ onSuccess, onClose }) => {
                 className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
               />
               <label htmlFor="add_partner_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Active Publication</label>
+            </div>
+            <div className="flex items-center group cursor-pointer inline-flex mt-2 ml-6">
+              <input
+                type="checkbox"
+                id="add_partner_home"
+                checked={formData.display_on_home || false}
+                onChange={(e) => setFormData({ ...formData, display_on_home: e.target.checked })}
+                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+              />
+              <label htmlFor="add_partner_home" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Show on Home</label>
             </div>
           </div>
 

@@ -7,6 +7,8 @@ export interface Partner {
   logo?: string;
   description?: string;
   website_url?: string;
+  logo_alt_text?: string;
+  display_on_home?: boolean;
   position?: number;
   is_active?: boolean;
 }

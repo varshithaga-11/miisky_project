@@ -34,6 +34,15 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // If clicking a dropdown toggle button, don't scroll or close menu
+    if ((e.target as HTMLElement).closest('.dropdown-btn')) {
+      return;
+    }
+    window.scrollTo(0, 0);
+    handleMobileMenu();
+  };
+
   return (
     <>
       {/* Mobile Menu */}
@@ -47,7 +56,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
             <Link to="/website"><Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={203} height={40} priority /></Link>
           </div>
           <div className="menu-outer">
-            <ul className="navigation clearfix">
+            <ul className="navigation clearfix" onClick={handleClick}>
 
               {/* Home */}
               <li><Link to="/website">Home</Link></li>
@@ -101,7 +110,8 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
               </li>
 
               {/* Contact */}
-              <li><Link to="/website/contact">Contact</Link></li>
+              <li><Link to="/website/contact" onClick={handleMobileMenu}>Contact</Link></li>
+
 
             </ul>
           </div>

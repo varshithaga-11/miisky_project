@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useLayout } from "./context/LayoutContext";
 import About from "./components/sections/home1/About";
 import About_Two from "./components/sections/home1/About_Two";
-import Appointment from "./components/sections/home1/Appointment";
 import Banner from "./components/sections/home1/Banner";
 import Chooseus from "./components/sections/home1/Chooseus";
 import Contact_Info from "./components/sections/home1/Contact_Info";
@@ -28,7 +27,6 @@ export default function HomePage() {
             <About/>
             <Service/>
             <Chooseus/>
-            <Appointment/>
             <Working/>
             <About_Two/>
             <Team/>

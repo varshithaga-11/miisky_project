@@ -11,7 +11,8 @@ interface Props {
 const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [formData, setFormData] = useState<Partial<Partner>>({});
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,9 +23,11 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             name: data.name,
             description: data.description,
             website_url: data.website_url,
-            logo: data.logo,
+            logo_alt_text: data.logo_alt_text,
+            display_on_home: data.display_on_home,
             position: data.position,
-            is_active: data.is_active
+            is_active: data.is_active,
+            logo_url: data.logo_url // From the new serializer
         });
       } catch (error) {
         toast.error("Failed to load data");
@@ -39,7 +42,18 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await updatePartner(id, formData);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'logo_url' && value !== undefined && value !== null) {
+          data.append(key, value.toString());
+        }
+      });
+      
+      if (logoFile) {
+        data.append("logo", logoFile);
+      }
+
+      await updatePartner(id, data);
       toast.success("Updated!");
       onSuccess();
       onClose();
@@ -93,11 +107,36 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Logo URL</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Brand Logo (Binary)</label>
+              <div className="flex items-center gap-4 mb-3">
+                 {formData.logo_url && (
+                   <div className="w-16 h-16 rounded border bg-gray-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                      <img src={formData.logo_url} alt="current" className="max-w-full max-h-full object-contain" />
+                   </div>
+                 )}
+                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formData.logo_url ? "Replace with new asset if needed" : "Inject new asset"}</div>
+              </div>
+              <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-4 text-center">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-gray-600 font-bold text-xs truncate max-w-full">
+                    {logoFile ? logoFile.name : "Select New Logo Asset"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Logo Alt Text</label>
               <input
-                type="url"
-                value={formData.logo || ""}
-                onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                type="text"
+                value={formData.logo_alt_text || ""}
+                onChange={(e) => setFormData({ ...formData, logo_alt_text: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
@@ -122,6 +161,16 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                   className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
                 />
                 <label htmlFor="edit_partner_active" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Active Status</label>
+              </div>
+              <div className="flex items-center group cursor-pointer inline-flex mt-2 ml-6">
+                <input
+                  type="checkbox"
+                  id="edit_partner_home"
+                  checked={formData.display_on_home || false}
+                  onChange={(e) => setFormData({ ...formData, display_on_home: e.target.checked })}
+                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                />
+                <label htmlFor="edit_partner_home" className="ml-3 text-sm font-bold text-gray-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors cursor-pointer select-none">Show on Home</label>
               </div>
             </div>
 

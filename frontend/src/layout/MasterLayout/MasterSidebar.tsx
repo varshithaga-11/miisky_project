@@ -22,7 +22,6 @@ import {
   BookOpen,
   Wallet,
   Send,
-  Mail,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";

@@ -1,13 +1,8 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "../../Image";
-import { appointmentApi, getCompanyInfo, getDepartments } from "@/utils/api";
-import { MOCK_DEPARTMENTS } from "@/Website/utils/mockData";
+import { getCompanyInfo } from "@/utils/api";
 
 export default function About() {
-    const [date, setDate] = useState("");
-    const [phone, setPhone] = useState("");
-    const [service, setService] = useState("");
-    const [bookStatus, setBookStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [stats, setStats] = useState({
         years_experience: 30,
         doctors_count: "180+",
@@ -16,7 +11,6 @@ export default function About() {
         specialities: ["Preventive care", "Diagnostic testing", "Mental health services"],
         vision: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
     });
-    const [departments, setDepartments] = useState<any[]>(MOCK_DEPARTMENTS);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -33,10 +27,6 @@ export default function About() {
                         vision: info.our_vision || ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
                     });
                 }
-
-                const deptRes = await getDepartments();
-                const depts = Array.isArray(deptRes.data) ? deptRes.data : deptRes.data.results || [];
-                if (depts.length > 0) setDepartments(depts);
             } catch (err) {
                 console.error("Failed to fetch info:", err);
             }
@@ -44,17 +34,6 @@ export default function About() {
         fetchData();
     }, []);
 
-    const handleBook = async (e: FormEvent) => {
-        e.preventDefault();
-        setBookStatus("loading");
-        try {
-            await appointmentApi.create({ name: "", email: "", phone, date, department: service });
-            setBookStatus("success");
-            setDate(""); setPhone(""); setService("");
-        } catch {
-            setBookStatus("error");
-        }
-    };
   return (
         <section className="about-section p_relative">
             <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-8.png)" }}></div>
@@ -71,7 +50,7 @@ export default function About() {
                 </div>
             </div>
             <div className="auto-container">
-                <div className="upper-content mb_80">
+                <div className="upper-content">
                     <div className="row clearfix">
                         <div className="col-lg-6 col-md-12 col-sm-12 content-column">
                             <div className="content-block-one">
@@ -122,64 +101,6 @@ export default function About() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div className="appointment-box">
-                    <h4>Book an Appointment</h4>
-                    <div className="form-inner">
-                        {bookStatus === "success" ? (
-                            <p style={{ color: "green", padding: "12px 0" }}>✅ Appointment requested! We will call you soon.</p>
-                        ) : (
-                        <form onSubmit={handleBook} className="clearfix">
-                            <div className="form-group">
-                                <div className="icon-box"><i className="icon-15"></i></div>
-                                <span>Choose service</span>
-                                <div className="select-box">
-                                    <select
-                                        className="selectmenu"
-                                        value={service}
-                                        onChange={(e) => setService(e.target.value)}
-                                    >
-                                        <option value="">Select a service</option>
-                                        {departments.map((dept) => (
-                                            <option key={dept.id} value={dept.name}>{dept.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <div className="icon-box"><i className="icon-16"></i></div>
-                                <span>Date</span>
-                                <input
-                                    type="date"
-                                    id="date"
-                                    placeholder="MM / DD / YYYY"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <div className="icon-box"><i className="icon-17"></i></div>
-                                <span>Phone</span>
-                                <input
-                                    type="text"
-                                    name="phone"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="+ 1 (XXX) XXX XXX"
-                                    required
-                                />
-                            </div>
-                            {bookStatus === "error" && (
-                                <p style={{ color: "red", marginBottom: "8px" }}>Something went wrong. Please try again.</p>
-                            )}
-                            <div className="message-btn">
-                                <button type="submit" className="theme-btn btn-one" disabled={bookStatus === "loading"}>
-                                    <span>{bookStatus === "loading" ? "Booking..." : "Book Now"}</span>
-                                </button>
-                            </div>
-                        </form>
-                        )}
                     </div>
                 </div>
             </div>

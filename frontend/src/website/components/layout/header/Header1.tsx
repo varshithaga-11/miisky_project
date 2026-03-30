@@ -31,7 +31,10 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
     localStorage.removeItem("miisky_access_token");
     window.location.href = "/website/login";
   };
-  
+  const scrollToTop = () => {
+    window.scrollTo(0, 0);
+  };
+
   return (
     <>
       {/* main header */}
@@ -84,7 +87,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-box">
               <div className="logo-box">
                 <figure className="logo">
-                  <Link to="/website">
+                  <Link to="/website" onClick={scrollToTop}>
                     <Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={203} height={40} priority />
                   </Link>
                 </figure>
@@ -99,7 +102,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                 {/* Desktop nav simplified */}
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent">
-                    <ul className="navigation clearfix">
+                    <ul className="navigation clearfix" onClick={scrollToTop}>
                       <li>
                         <Link to="/website">Home</Link>
                       </li>
@@ -168,11 +171,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                     <Link to="/website/contact" style={{ color: "inherit" }}>+ 1 (246) 333-0088</Link>
                   </h6>
                 </div>
-                <div className="btn-box">
-                  <Link to="/website" className="theme-btn btn-one">
-                    <span>Appointment</span>
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
@@ -184,7 +182,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-box">
               <div className="logo-box">
                 <figure className="logo">
-                  <Link to="/website">
+                  <Link to="/website" onClick={scrollToTop}>
                     <Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={203} height={40} priority />
                   </Link>
                 </figure>
@@ -198,7 +196,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
 
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContentSticky">
-                    <ul className="navigation clearfix">
+                    <ul className="navigation clearfix" onClick={scrollToTop}>
                       <li>
                         <Link to="/website">Home</Link>
                       </li>
@@ -266,11 +264,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <h6>
                      <Link to="/website/contact" style={{ color: "inherit" }}>+ 1 (246) 333-0088</Link>
                   </h6>
-                </div>
-                <div className="btn-box">
-                  <Link to="/website" className="theme-btn btn-one">
-                    <span>Appointment</span>
-                  </Link>
                 </div>
               </div>
             </div>
