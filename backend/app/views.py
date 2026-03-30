@@ -3714,7 +3714,7 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
         if ticket.assigned_to and ticket.assigned_to.role != 'admin':
             Notification.objects.create(
                 user_id=ticket.assigned_to.id,
-                title=f"New Chat from {creator_label}",
+                title=f"New Chat from {creator_label} regarding ticket",
                 body=f"You have a new message regarding: {title_preview}",
             )
 
