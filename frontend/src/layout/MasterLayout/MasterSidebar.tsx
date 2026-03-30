@@ -702,11 +702,11 @@ const MasterSidebar: React.FC = () => {
           }`}
       >
         <Link to="/">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <span className="font-bold text-xl text-gray-900 dark:text-white">Miisky</span>
-          ) : (
-            <span className="font-bold text-base text-gray-900 dark:text-white">M</span>
-          )}
+          <img
+            src="/miisky-logo.png"
+            alt="Miisky Logo"
+            className={`${isExpanded || isHovered || isMobileOpen ? "h-10" : "h-6"} w-auto`}
+          />
         </Link>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">

@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 import { FiChevronDown } from "react-icons/fi";
 import { useLanguage } from "../Context/LanguageContext";
-import logo from "../../assets/logo.jpg";
+import logo from "../../assets/miisky-logo.png";
 
 export default function HeaderMainPage() {
   const { language, setLanguage } = useLanguage();
@@ -120,8 +120,8 @@ export default function HeaderMainPage() {
       >
         {/* Logo */}
         <div className="flex items-center justify-center space-x-2 font-bold text-2xl">
-          <span className="w-15 h-10 overflow-hidden">
-            <img src={logo} alt="logo" />
+          <span className="h-10 overflow-hidden">
+            <img src={logo} alt="logo" className="h-full w-auto" />
           </span>
           <div className="flex flex-col items-center justify-center">
             <p className="text-[24px] font-bold italic text-black">
