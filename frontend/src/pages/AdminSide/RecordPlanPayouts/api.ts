@@ -13,7 +13,8 @@ export interface PayableTrackerRow {
   period_to: string | null;
   total_amount: string;
   paid_amount: string;
-  remaining_amount: string;
+  remaining_amount: number | string;
+  shared_percentage: string;
   status: string;
 }
 
@@ -41,6 +42,24 @@ export interface PaginatedTransactions {
   total_pages: number;
 }
 
+export interface PatientTrackersRow {
+  id: number;
+  patient_name: string;
+  trackers: PayableTrackerRow[];
+}
+
+export interface PaginatedPatientTrackers {
+  count: number;
+  results: PatientTrackersRow[];
+  total_pages: number;
+}
+
+export async function fetchPayoutPatients(page = 1, limit = 15): Promise<PaginatedPatientTrackers> {
+  const url = createApiUrl(`api/admin/plan-payout-patients/?page=${page}&limit=${limit}`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data as PaginatedPatientTrackers;
+}
+
 export async function fetchPayableTrackers(type: PayableTrackerType = "all"): Promise<PayableTrackerRow[]> {
   const params = type === "all" ? "" : `?type=${type}`;
   const url = createApiUrl(`api/admin/plan-payout-trackers/${params}`);
@@ -52,6 +71,12 @@ export async function fetchPayoutTransactions(page = 1, limit = 15): Promise<Pag
   const url = createApiUrl(`api/admin/plan-payout-transactions/?page=${page}&limit=${limit}`);
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data as PaginatedTransactions;
+}
+
+export async function fetchTrackerTransactions(trackerId: number): Promise<PayoutTransactionRow[]> {
+  const url = createApiUrl(`api/admin/plan-payout-transactions/?tracker=${trackerId}&limit=100`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data.results || [];
 }
 
 export async function createPayoutTransaction(payload: {

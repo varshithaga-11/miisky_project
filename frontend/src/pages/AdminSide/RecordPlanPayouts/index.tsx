@@ -4,14 +4,14 @@ import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { toast } from "react-toastify";
+import { Modal } from "../../../components/ui/modal";
 import {
   createPayoutTransaction,
-  fetchPayableTrackers,
-  fetchPayoutTransactions,
+  fetchPayoutPatients,
+  fetchTrackerTransactions,
   PayableTrackerRow,
-  PayableTrackerType,
+  PatientTrackersRow,
   PayoutTransactionRow,
 } from "./api";
 
@@ -29,18 +29,21 @@ function fmtDate(s: string | null) {
 }
 
 export default function RecordPlanPayoutsPage() {
-  const [filterType, setFilterType] = useState<PayableTrackerType>("all");
-  const [trackers, setTrackers] = useState<PayableTrackerRow[]>([]);
-  const [txPage, setTxPage] = useState(1);
-  const [txData, setTxData] = useState<{ rows: PayoutTransactionRow[]; totalPages: number }>({
-    rows: [],
+  const [patientPage, setPatientPage] = useState(1);
+  const [patientData, setPatientData] = useState<{ results: PatientTrackersRow[]; totalPages: number }>({
+    results: [],
     totalPages: 1,
   });
-  const [loadingTrackers, setLoadingTrackers] = useState(true);
-  const [loadingTx, setLoadingTx] = useState(true);
+  const [loadingPatients, setLoadingPatients] = useState(true);
+  const [expandedPatients, setExpandedPatients] = useState<number[]>([]);
+  const [trackerTxs, setTrackerTxs] = useState<Record<number, PayoutTransactionRow[]>>({});
+
+
+  // Modal / Form state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTracker, setSelectedTracker] = useState<PayableTrackerRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [trackerId, setTrackerId] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [payoutDate, setPayoutDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [paymentMethod, setPaymentMethod] = useState("upi");
@@ -48,56 +51,50 @@ export default function RecordPlanPayoutsPage() {
   const [note, setNote] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
 
-  const loadTrackers = useCallback(async () => {
-    setLoadingTrackers(true);
+  const loadPatients = useCallback(async () => {
+    setLoadingPatients(true);
     try {
-      const data = await fetchPayableTrackers(filterType);
-      setTrackers(data);
-      setTrackerId((prev) => {
-        if (data.some((t) => String(t.id) === prev)) return prev;
-        return data.length ? String(data[0].id) : "";
-      });
+      const res = await fetchPayoutPatients(patientPage, 12);
+      setPatientData({ results: res.results || [], totalPages: res.total_pages || 1 });
     } catch {
-      toast.error("Failed to load payable trackers");
-      setTrackers([]);
+      toast.error("Failed to load patient payout data");
+      setPatientData({ results: [], totalPages: 1 });
     } finally {
-      setLoadingTrackers(false);
+      setLoadingPatients(false);
     }
-  }, [filterType]);
+  }, [patientPage]);
 
-  const loadTx = useCallback(async () => {
-    setLoadingTx(true);
-    try {
-      const res = await fetchPayoutTransactions(txPage, 12);
-      setTxData({ rows: res.results || [], totalPages: res.total_pages || 1 });
-    } catch {
-      toast.error("Failed to load recent payouts");
-      setTxData({ rows: [], totalPages: 1 });
-    } finally {
-      setLoadingTx(false);
-    }
-  }, [txPage]);
 
   useEffect(() => {
-    loadTrackers();
-  }, [loadTrackers]);
+    loadPatients();
+  }, [loadPatients]);
 
-  useEffect(() => {
-    loadTx();
-  }, [loadTx]);
 
-  const selectedTracker = trackers.find((t) => String(t.id) === trackerId);
+  const openPayout = (tracker: PayableTrackerRow) => {
+    setSelectedTracker(tracker);
+    setAmountPaid(String(tracker.remaining_amount));
+    setIsModalOpen(true);
+  };
+
+  const closePayout = () => {
+    setIsModalOpen(false);
+    setSelectedTracker(null);
+    setAmountPaid("");
+    setReference("");
+    setNote("");
+    setScreenshot(null);
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trackerId || !amountPaid || !paymentMethod) {
-      toast.warning("Choose a tracker, amount, and payment method.");
+    if (!selectedTracker || !amountPaid || !paymentMethod) {
+      toast.warning("Incomplete form.");
       return;
     }
     setSubmitting(true);
     try {
       await createPayoutTransaction({
-        tracker: parseInt(trackerId, 10),
+        tracker: selectedTracker.id,
         amount_paid: amountPaid,
         payout_date: payoutDate || undefined,
         payment_method: paymentMethod,
@@ -106,19 +103,22 @@ export default function RecordPlanPayoutsPage() {
         payment_screenshot: screenshot,
       });
       toast.success("Payout recorded.");
-      setAmountPaid("");
-      setReference("");
-      setNote("");
-      setScreenshot(null);
-      await loadTrackers();
-      await loadTx();
+      closePayout();
+      await loadPatients();
+      
+      // Re-fetch transactions for the updated tracker
+      try {
+        const res = await fetchTrackerTransactions(selectedTracker.id);
+        setTrackerTxs((prev) => ({ ...prev, [selectedTracker.id]: res }));
+      } catch {
+        // ignore
+      }
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
       const msg =
         (typeof data?.detail === "string" && data.detail) ||
         (typeof data?.amount_paid === "string" && data.amount_paid) ||
         (Array.isArray(data?.amount_paid) && String(data.amount_paid[0])) ||
-        (typeof data?.tracker === "string" && data.tracker) ||
         "Could not record payout";
       toast.error(msg);
     } finally {
@@ -134,74 +134,269 @@ export default function RecordPlanPayoutsPage() {
       />
       <PageBreadcrumb pageTitle="Record plan payouts" />
 
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Select an open <strong>nutritionist</strong> or <strong>kitchen</strong> payout line (with money still
-          owed), enter what you sent, and save. The recipient&apos;s tracker updates automatically; they see it on
-          their Diet plan payouts page.
+          Below is a list of <strong>patients</strong> who have money still owed to their assigned nutritionist or
+          micro kitchen. Select a line to record what you sent.
         </p>
 
         <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm space-y-6">
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["all", "All"],
-                ["nutritionist", "Nutritionists"],
-                ["kitchen", "Micro kitchens"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setFilterType(key);
-                  setTrackerId("");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                  filterType === key
-                    ? "bg-brand-500 text-white border-brand-500"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {loadingTrackers ? (
-            <p className="text-sm text-gray-500">Loading trackers…</p>
-          ) : trackers.length === 0 ? (
-            <p className="text-sm text-amber-700 dark:text-amber-400">
-              No payable trackers right now (nothing with a remaining balance, or none match this filter).
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payable Patients</h2>
+          {loadingPatients ? (
+            <p className="text-sm text-gray-500 py-6">Loading patients…</p>
+          ) : patientData.results.length === 0 ? (
+            <p className="text-sm text-amber-700 dark:text-amber-400 py-6">
+              No patients have open payable lines right now.
             </p>
           ) : (
-            <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4 md:col-span-2">
-                <Label htmlFor="tracker">Payout line *</Label>
-                <select
-                  id="tracker"
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                  value={trackerId}
-                  onChange={(e) => setTrackerId(e.target.value)}
-                  required
-                >
-                  {trackers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      [{t.payout_type}] {t.recipient_label} — {t.plan_title || "Plan"} — patient:{" "}
-                      {t.patient_name || "—"} — remaining ₹{parseFloat(String(t.remaining_amount)).toFixed(2)}
-                    </option>
-                  ))}
-                </select>
-                {selectedTracker && (
-                  <p className="text-xs text-gray-500">
-                    Period {fmtDate(selectedTracker.period_from)} → {fmtDate(selectedTracker.period_to)} · Total ₹
-                    {parseFloat(selectedTracker.total_amount).toFixed(2)} · Paid ₹
-                    {parseFloat(selectedTracker.paid_amount).toFixed(2)} · Remaining ₹
-                    {parseFloat(String(selectedTracker.remaining_amount)).toFixed(2)}
-                  </p>
-                )}
+            <>
+              <div className="space-y-3">
+                {patientData.results.map((patient) => {
+                  const isExpanded = expandedPatients.includes(patient.id);
+                  const toggleExpand = async () => {
+                    const willExpand = !isExpanded;
+                    setExpandedPatients((prev) =>
+                      willExpand ? [...prev, patient.id] : prev.filter((id) => id !== patient.id)
+                    );
+
+                    if (willExpand) {
+                      // Fetch transactions for each tracker of this patient
+                      patient.trackers.forEach(async (t) => {
+                        if (!trackerTxs[t.id]) {
+                          try {
+                            const res = await fetchTrackerTransactions(t.id);
+                            setTrackerTxs((prev) => ({ ...prev, [t.id]: res }));
+                          } catch {
+                            // ignore silently or toast
+                          }
+                        }
+                      });
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={patient.id}
+                      className="group flex flex-col rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-800/20 overflow-hidden transition-all hover:border-brand-200 dark:hover:border-brand-900"
+                    >
+                      <div
+                        onClick={toggleExpand}
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-white dark:hover:bg-gray-800/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span
+                            className={`flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 text-gray-400 transition-transform duration-200 ${
+                              isExpanded ? "rotate-180 text-brand-600 border-brand-200" : ""
+                            }`}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-gray-900 dark:text-white text-base">
+                                {patient.patient_name}
+                              </h3>
+                              <span className="text-gray-300">|</span>
+                              <span className="text-sm font-medium text-gray-500 truncate max-w-[200px] sm:max-w-none">
+                                {patient.trackers[0]?.plan_title || "No Plan"}
+                              </span>
+                            </div>
+                            <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">
+                              ID: {patient.id} • {patient.trackers.length} Payable Line{patient.trackers.length > 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="px-4 pb-4 space-y-3 bg-white/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800 pt-4">
+                          {patient.trackers.map((t) => (
+                            <div key={t.id} className="space-y-3">
+                              <div
+                                className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-5 py-4 shadow-sm"
+                              >
+                                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 flex-grow">
+                                  <div className="flex flex-col min-w-[120px]">
+                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
+                                      Recipient ({t.payout_type})
+                                    </span>
+                                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                      {t.recipient_label}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
+                                      Share
+                                    </span>
+                                    <span className="text-sm font-black text-brand-600">
+                                      {t.shared_percentage}%
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
+                                      Total Amount
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-500">
+                                      ₹{parseFloat(t.total_amount).toFixed(2)}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
+                                      Paid
+                                    </span>
+                                    <span className="text-sm font-medium text-green-600">
+                                      ₹{parseFloat(t.paid_amount).toFixed(2)}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
+                                      Remaining
+                                    </span>
+                                    <span className="text-base font-black text-gray-900 dark:text-white">
+                                      ₹{parseFloat(String(t.remaining_amount)).toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => openPayout(t)}
+                                  className="whitespace-nowrap shadow-md shadow-brand-200 dark:shadow-none"
+                                >
+                                  Record Payout
+                                </Button>
+                              </div>
+
+                              {/* Transaction History Sub-Table - Now uses state-fetched data */}
+                              {trackerTxs[t.id] && trackerTxs[t.id].length > 0 && (
+                                <div className="mx-2 mb-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/10 overflow-hidden">
+                                  <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40">
+                                    <h4 className="text-[10px] uppercase font-black text-gray-400 tracking-widest">Payment History</h4>
+                                  </div>
+                                  <div className="p-3 overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                      <thead>
+                                        <tr className="text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                                          <th className="pb-2 font-bold px-2">Date</th>
+                                          <th className="pb-2 font-bold px-2">Amount</th>
+                                          <th className="pb-2 font-bold px-2">Method</th>
+                                          <th className="pb-2 font-bold px-2">Reference</th>
+                                          <th className="pb-2 font-bold px-2">Screenshot</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                        {trackerTxs[t.id].map((tx) => (
+                                          <tr key={tx.id} className="text-gray-600 dark:text-gray-400 hover:bg-white/40 dark:hover:bg-gray-800/40">
+                                            <td className="py-2 px-2 whitespace-nowrap">
+                                              {tx.payout_date ? new Date(tx.payout_date).toLocaleDateString() : "—"}
+                                            </td>
+                                            <td className="py-2 px-2 font-bold text-gray-900 dark:text-gray-100">
+                                              ₹{parseFloat(tx.amount_paid).toFixed(2)}
+                                            </td>
+                                            <td className="py-2 px-2 capitalize">{tx.payment_method?.replace('_', ' ')}</td>
+                                            <td className="py-2 px-2 font-mono text-[10px]">{tx.transaction_reference || "—"}</td>
+                                            <td className="py-2 px-2">
+                                              {tx.payment_screenshot_url ? (
+                                                <a
+                                                  href={tx.payment_screenshot_url}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="text-brand-600 hover:underline font-bold flex items-center gap-1"
+                                                >
+                                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                  View
+                                                </a>
+                                              ) : "—"}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
+              {patientData.totalPages > 1 && (
+                <div className="flex justify-end items-center gap-4 mt-8 text-sm">
+                  <span className="text-gray-500">
+                    Page <span className="font-bold text-gray-900 dark:text-white">{patientPage}</span> of{" "}
+                    {patientData.totalPages}
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      disabled={patientPage <= 1}
+                      className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      onClick={() => setPatientPage((p) => Math.max(1, p - 1))}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={patientPage >= patientData.totalPages}
+                      className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      onClick={() => setPatientPage((p) => p + 1)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+      </div>
+
+      <Modal isOpen={isModalOpen} onClose={closePayout} className="max-w-xl p-0 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
+           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Record Payout</h2>
+           <p className="text-sm text-gray-500 mt-1">Log a payment transfer to a partner.</p>
+        </div>
+
+        <div className="p-6">
+          {selectedTracker && (
+            <div className="bg-brand-50 rounded-2xl p-5 mb-6 text-sm text-brand-900 border border-brand-100 dark:bg-brand-900/10 dark:text-brand-300 dark:border-brand-800/30">
+              <div className="grid grid-cols-2 gap-y-3">
+                <div>
+                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Recipient</span>
+                   <span className="font-bold underline decoration-brand-200">{selectedTracker.recipient_label}</span>
+                </div>
+                <div>
+                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Role</span>
+                   <span className="capitalize font-medium">{selectedTracker.payout_type}</span>
+                </div>
+                <div>
+                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Patient</span>
+                   <span className="font-medium text-gray-700 dark:text-gray-300">{selectedTracker.patient_name}</span>
+                </div>
+                <div>
+                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Owed Amount</span>
+                   <span className="text-lg font-black tracking-tight">₹{parseFloat(String(selectedTracker.remaining_amount)).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="amount_paid">Amount sent (₹) *</Label>
                 <Input
@@ -211,6 +406,7 @@ export default function RecordPlanPayoutsPage() {
                   min="0.01"
                   value={amountPaid}
                   onChange={(e) => setAmountPaid(e.target.value)}
+                  placeholder="Enter amount"
                   required
                 />
               </div>
@@ -223,11 +419,14 @@ export default function RecordPlanPayoutsPage() {
                   onChange={(e) => setPayoutDate(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="payment_method">Method *</Label>
                 <select
                   id="payment_method"
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm ring-brand-500 focus:border-brand-500 focus:ring-1 transition-all outline-none"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
@@ -239,114 +438,58 @@ export default function RecordPlanPayoutsPage() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="reference">Reference (UTR / cheque no.)</Label>
-                <Input id="reference" value={reference} onChange={(e) => setReference(e.target.value)} />
+                <Label htmlFor="reference">Reference (UTR / ID)</Label>
+                <Input id="reference" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction ID" />
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="note">Note</Label>
-                <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="screenshot">Receipt screenshot</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="note">Internal Note</Label>
+              <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional details..." />
+            </div>
+
+            <div>
+              <Label htmlFor="screenshot">Receipt screenshot</Label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 dark:border-gray-700 border-dashed rounded-2xl hover:border-brand-400 transition-colors cursor-pointer relative">
+                <div className="space-y-1 text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                    <span className="relative cursor-pointer rounded-md font-medium text-brand-600 hover:text-brand-500">
+                      Upload a file
+                    </span>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                </div>
                 <input
                   id="screenshot"
                   type="file"
                   accept="image/*"
-                  className="block w-full text-sm text-gray-600"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
                   onChange={(e) => setScreenshot(e.target.files?.[0] ?? null)}
                 />
               </div>
-              <div className="md:col-span-2">
-                <Button type="submit" disabled={submitting || trackers.length === 0}>
-                  {submitting ? "Saving…" : "Record payout"}
-                </Button>
-              </div>
-            </form>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent recorded payouts</h2>
-          {loadingTx ? (
-            <p className="text-sm text-gray-500 py-6">Loading…</p>
-          ) : txData.rows.length === 0 ? (
-            <p className="text-sm text-gray-500 py-6">No transactions yet.</p>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-800/80">
-                      <TableCell isHeader>When</TableCell>
-                      <TableCell isHeader>Type</TableCell>
-                      <TableCell isHeader>Recipient</TableCell>
-                      <TableCell isHeader>Patient / plan</TableCell>
-                      <TableCell isHeader>Amount</TableCell>
-                      <TableCell isHeader>Method</TableCell>
-                      <TableCell isHeader>By</TableCell>
-                      <TableCell isHeader>Ref</TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {txData.rows.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {new Date(r.paid_on).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="capitalize">{r.payout_type}</TableCell>
-                        <TableCell className="font-medium">{r.recipient_label}</TableCell>
-                        <TableCell className="text-xs">
-                          <div>{r.patient_name || "—"}</div>
-                          <div className="text-gray-500">{r.plan_title || "—"}</div>
-                        </TableCell>
-                        <TableCell>₹{parseFloat(r.amount_paid).toFixed(2)}</TableCell>
-                        <TableCell className="text-xs">{r.payment_method || "—"}</TableCell>
-                        <TableCell className="text-xs">{r.paid_by_display || "—"}</TableCell>
-                        <TableCell className="text-xs max-w-[120px] truncate">
-                          {r.transaction_reference || "—"}
-                          {r.payment_screenshot_url && (
-                            <a
-                              href={r.payment_screenshot_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block text-brand-600 hover:underline mt-0.5"
-                            >
-                              Receipt
-                            </a>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {txData.totalPages > 1 && (
-                <div className="flex justify-end gap-2 mt-4 text-sm">
-                  <button
-                    type="button"
-                    disabled={txPage <= 1}
-                    className="px-3 py-1 rounded-lg border disabled:opacity-40"
-                    onClick={() => setTxPage((p) => Math.max(1, p - 1))}
-                  >
-                    Previous
-                  </button>
-                  <span className="py-1 text-gray-600">
-                    Page {txPage} / {txData.totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={txPage >= txData.totalPages}
-                    className="px-3 py-1 rounded-lg border disabled:opacity-40"
-                    onClick={() => setTxPage((p) => p + 1)}
-                  >
-                    Next
-                  </button>
-                </div>
+              {screenshot && (
+                <p className="mt-2 text-xs font-bold text-brand-600 flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Selected: {screenshot.name}
+                </p>
               )}
-            </>
-          )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <Button type="button" variant="outline" onClick={closePayout} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting} className="min-w-[140px]">
+                {submitting ? "Processing..." : "Confirm Payout"}
+              </Button>
+            </div>
+          </form>
         </div>
-      </div>
+      </Modal>
     </>
   );
 }

@@ -157,6 +157,11 @@ urlpatterns = [
         name="admin-plan-payout-trackers",
     ),
     path(
+        "admin/plan-payout-patients/",
+        views.AdminPayoutPatientsWithTrackersView.as_view(),
+        name="admin-plan-payout-patients",
+    ),
+    path(
         "admin/plan-payout-transactions/",
         views.AdminPayoutTransactionListCreateView.as_view(),
         name="admin-plan-payout-transactions",

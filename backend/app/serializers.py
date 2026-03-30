@@ -821,6 +821,7 @@ class AdminPayoutTrackerForPayoutSerializer(serializers.ModelSerializer):
     plan_title = serializers.SerializerMethodField()
     recipient_label = serializers.SerializerMethodField()
     remaining_amount = serializers.SerializerMethodField()
+    shared_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = PayoutTracker
@@ -835,6 +836,7 @@ class AdminPayoutTrackerForPayoutSerializer(serializers.ModelSerializer):
             "total_amount",
             "paid_amount",
             "remaining_amount",
+            "shared_percentage",
             "status",
         )
         read_only_fields = fields
@@ -859,8 +861,53 @@ class AdminPayoutTrackerForPayoutSerializer(serializers.ModelSerializer):
         dp = getattr(obj.snapshot.user_diet_plan, "diet_plan", None)
         return dp.title if dp else None
 
+    def get_shared_percentage(self, obj):
+        if not obj.snapshot:
+            return "0.00"
+        if obj.payout_type == PayoutTracker.PAYOUT_TYPE_NUTRITIONIST:
+            return str(obj.snapshot.nutrition_percent)
+        if obj.payout_type == PayoutTracker.PAYOUT_TYPE_KITCHEN:
+            return str(obj.snapshot.kitchen_percent)
+        return "0.00"
+
     def get_remaining_amount(self, obj):
-        return obj.remaining_amount
+        return str(obj.remaining_amount)
+
+
+
+
+class AdminPayoutPatientTrackersSerializer(serializers.ModelSerializer):
+    """Groups open PayoutTracker records under their respective patient (UserRegister)."""
+
+    patient_name = serializers.SerializerMethodField()
+    trackers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserRegister
+        fields = ("id", "patient_name", "trackers")
+
+    def get_patient_name(self, obj):
+        name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+        return name or obj.username
+
+    def get_trackers(self, obj):
+        from .models import PayoutTracker
+        from django.db.models import F
+
+        qs = (
+            PayoutTracker.objects.filter(
+                snapshot__user_diet_plan__user=obj,
+                is_closed=False,
+            )
+            .filter(total_amount__gt=F("paid_amount"))
+            .select_related(
+                "nutritionist",
+                "micro_kitchen",
+                "snapshot__user_diet_plan__diet_plan",
+            )
+            .order_by("payout_type")
+        )
+        return AdminPayoutTrackerForPayoutSerializer(qs, many=True).data
 
 
 class PayoutTransactionReadSerializer(serializers.ModelSerializer):

@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.db.models import DecimalField, F, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
-from rest_framework import viewsets, status, filters, mixins
+from rest_framework import viewsets, status, filters, mixins, generics
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
@@ -481,6 +481,33 @@ class AdminPayoutTrackersForPayView(APIView):
         return Response(AdminPayoutTrackerForPayoutSerializer(qs, many=True).data)
 
 
+class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
+    """
+    Paginated list of patients who have at least one open/unpaid PayoutTracker.
+    Includes the actual trackers nested inside each patient result.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    serializer_class = AdminPayoutPatientTrackersSerializer
+
+    def get_queryset(self):
+        from .models import PayoutTracker, UserRegister
+        from django.db.models import F
+
+        # We only want patients who have at least one tracker that is not closed and has money owed.
+        return (
+            UserRegister.objects.filter(
+                diet_plans__payment_snapshot__payouts__is_closed=False,
+                diet_plans__payment_snapshot__payouts__total_amount__gt=F(
+                    "diet_plans__payment_snapshot__payouts__paid_amount"
+                ),
+            )
+            .distinct()
+            .order_by("first_name", "last_name", "id")
+        )
+
+
 class AdminPayoutTransactionListCreateView(APIView):
     """List recent plan payout transfers or log a new payment (multipart supported)."""
 
@@ -488,22 +515,18 @@ class AdminPayoutTransactionListCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
-        qs = (
-            PayoutTransaction.objects.select_related(
-                "tracker__nutritionist",
-                "tracker__micro_kitchen",
-                "tracker__snapshot__user_diet_plan__user",
-                "tracker__snapshot__user_diet_plan__diet_plan",
-                "paid_by",
-            )
-            .filter(
-                tracker__payout_type__in=(
-                    PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
-                    PayoutTracker.PAYOUT_TYPE_KITCHEN,
-                )
-            )
-            .order_by("-paid_on")
-        )
+        qs = PayoutTransaction.objects.select_related(
+            "tracker__nutritionist",
+            "tracker__micro_kitchen",
+            "tracker__snapshot__user_diet_plan__user",
+            "tracker__snapshot__user_diet_plan__diet_plan",
+            "paid_by",
+        ).all()
+        tracker_id = request.query_params.get("tracker")
+        if tracker_id:
+            qs = qs.filter(tracker_id=tracker_id)
+        
+        qs = qs.order_by("-paid_on")
         paginator = Pagination()
         page = paginator.paginate_queryset(qs, request)
         ser = PayoutTransactionReadSerializer(page, many=True, context={"request": request})
