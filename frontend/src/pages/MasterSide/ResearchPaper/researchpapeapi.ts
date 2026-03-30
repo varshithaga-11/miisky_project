@@ -9,7 +9,9 @@ export interface ResearchPaper {
   abstract?: string;
   publication_date?: string;
   published_date?: string;
-  pdf_file?: string;
+  document?: any;
+  document_url?: string;
+  pdf_file?: string; // Kept for legacy if needed, but primary is document
   position?: number;
   is_active?: boolean;
 }

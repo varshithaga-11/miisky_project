@@ -4,6 +4,7 @@ import { createLegalPage, LegalPage } from "./legalpageapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   onSuccess: () => void;
@@ -107,23 +108,19 @@ const AddLegalPage: React.FC<Props> = ({ onSuccess, onClose }) => {
               />
             </div>
             <div>
-              <Label htmlFor="effective_date">Effective Date</Label>
-              <Input
+              <DatePicker2
                 id="effective_date"
-                type="date"
+                label="Effective Date"
                 value={formData.effective_date || ""}
-                onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
-                disabled={loading}
+                onChange={(date) => setFormData({ ...formData, effective_date: date })}
               />
             </div>
             <div>
-              <Label htmlFor="last_updated">Last Updated</Label>
-              <Input
+              <DatePicker2
                 id="last_updated"
-                type="date"
+                label="Last Updated"
                 value={formData.last_updated || ""}
-                onChange={(e) => setFormData({ ...formData, last_updated: e.target.value })}
-                disabled={loading}
+                onChange={(date) => setFormData({ ...formData, last_updated: date })}
               />
             </div>
           </div>

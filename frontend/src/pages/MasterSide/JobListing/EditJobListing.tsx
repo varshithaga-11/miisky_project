@@ -4,6 +4,7 @@ import { updateJobListing, getJobListingById, JobListing } from "./joblistingapi
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   id: number;
@@ -218,13 +219,11 @@ const EditJobListing: React.FC<Props> = ({ id, onSuccess, onClose, departments }
             </div>
 
             <div>
-              <Label htmlFor="application_deadline">Application Deadline</Label>
-              <Input
+              <DatePicker2
                 id="application_deadline"
-                type="date"
+                label="Application Deadline"
                 value={formData.application_deadline || ""}
-                onChange={(e) => setFormData({ ...formData, application_deadline: e.target.value })}
-                disabled={loading}
+                onChange={(date) => setFormData({ ...formData, application_deadline: date })}
               />
             </div>
 

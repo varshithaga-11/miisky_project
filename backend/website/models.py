@@ -256,7 +256,7 @@ class ResearchPaper(models.Model):
     published_date = models.DateField(blank=True, null=True)
     journal_conference = models.CharField(max_length=300, blank=True, null=True)
     abstract = models.TextField(blank=True, null=True)
-    document = models.CharField(max_length=255, null=True, blank=True)
+    document = models.FileField(upload_to='website/research_papers/', null=True, blank=True)
     external_url = models.CharField(max_length=500, blank=True, null=True)
     device = models.ForeignKey(
         MedicalDevice, on_delete=models.SET_NULL, null=True, blank=True, related_name='research_papers'

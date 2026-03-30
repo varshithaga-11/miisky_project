@@ -4,6 +4,7 @@ import { createPatent, getMedicalDevices } from "./patentapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   onSuccess: () => void;
@@ -107,13 +108,11 @@ const AddPatent: React.FC<Props> = ({ onSuccess, onClose }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="filing_date">Filing Date</Label>
-              <Input
+              <DatePicker2
                 id="filing_date"
-                type="date"
+                label="Filing Date"
                 value={formData.filing_date}
-                onChange={(e) => setFormData({ ...formData, filing_date: e.target.value })}
-                disabled={loading}
+                onChange={(date) => setFormData({ ...formData, filing_date: date })}
               />
             </div>
             <div>

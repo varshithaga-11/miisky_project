@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiEdit, FiSearch, FiFileText } from "react-icons/fi";
 import { getResearchPaperList, deleteResearchPaper, ResearchPaper } from "./researchpapeapi";
 import AddResearchPaper from "./AddResearchPaper";
 import EditResearchPaper from "./EditResearchPaper";
@@ -111,6 +111,7 @@ const ResearchPaperPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Paper Details</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Authors</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Pub. Date</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">PDF</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
@@ -118,11 +119,11 @@ const ResearchPaperPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && papers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Syncing repository...</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Syncing repository...</TableCell>
                 </TableRow>
               ) : papers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No research papers found</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No research papers found</TableCell>
                 </TableRow>
               ) : (
                 papers.map((paper) => (
@@ -139,6 +140,20 @@ const ResearchPaperPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-mono text-xs text-gray-400 dark:text-gray-500">
                          {paper.published_date || "N/A"}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-theme-sm">
+                        {paper.document_url ? (
+                          <a 
+                            href={paper.document_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 transition-colors text-xs font-bold"
+                          >
+                            <FiFileText className="text-sm" /> View
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-[10px] uppercase font-bold italic tracking-widest leading-none">No File</span>
+                        )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${

@@ -4,6 +4,7 @@ import { updateResearchPaper, getResearchPaperById, ResearchPaper } from "./rese
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   id: number;
@@ -15,6 +16,7 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [formData, setFormData] = useState<Partial<ResearchPaper>>({});
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,7 +29,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             abstract: data.abstract,
             publication_date: data.publication_date,
             published_date: data.published_date,
-            pdf_file: data.pdf_file,
+            document: data.document,
+            document_url: data.document_url,
             position: data.position,
             is_active: data.is_active
         });
@@ -44,7 +47,15 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await updateResearchPaper(id, formData);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && key !== "document" && key !== "document_url") {
+          data.append(key, val.toString());
+        }
+      });
+      if (pdfFile) data.append("document", pdfFile);
+
+      await updateResearchPaper(id, data as any);
       toast.success("Research paper updated successfully!");
       onSuccess();
       onClose();
@@ -96,13 +107,11 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="published_date">Published Date</Label>
-                <Input
+                <DatePicker2
                   id="published_date"
-                  type="date"
+                  label="Published Date"
                   value={formData.published_date || ""}
-                  onChange={(e) => setFormData({ ...formData, published_date: e.target.value })}
-                  disabled={loading}
+                  onChange={(date) => setFormData({ ...formData, published_date: date })}
                 />
               </div>
               <div>
@@ -129,15 +138,33 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             </div>
 
             <div>
-              <Label htmlFor="pdf_file">PDF Document URL</Label>
-              <Input
-                id="pdf_file"
-                type="url"
-                value={formData.pdf_file || ""}
-                onChange={(e) => setFormData({ ...formData, pdf_file: e.target.value })}
-                placeholder="https://example.com/paper.pdf"
-                disabled={loading}
-              />
+              <Label htmlFor="document">Research Paper (PDF)</Label>
+              <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-6 text-center">
+                <input 
+                  id="document"
+                  type="file" 
+                  accept=".pdf"
+                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  disabled={loading}
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
+                    <span className="truncate max-w-[12rem]">
+                      {pdfFile ? pdfFile.name : formData.document_url ? "Update Existing PDF" : "Attach File..."}
+                    </span>
+                    {formData.document_url && !pdfFile && (
+                      <span className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Saved
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Max Size: 15MB</p>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-2">

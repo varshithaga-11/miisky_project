@@ -4,6 +4,7 @@ import { createResearchPaper, ResearchPaper } from "./researchpapeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   onSuccess: () => void;
@@ -18,16 +19,23 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
     abstract: "",
     publication_date: "",
     published_date: "",
-    pdf_file: "",
+    document: "",
     position: 0,
     is_active: true,
   });
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createResearchPaper(formData as ResearchPaper);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== "" && key !== "document") data.append(key, val.toString());
+      });
+      if (pdfFile) data.append("document", pdfFile);
+
+      await createResearchPaper(data as any);
       toast.success("Research paper added successfully!");
       onSuccess();
       onClose();
@@ -77,13 +85,11 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="published_date">Published Date</Label>
-              <Input
+              <DatePicker2
                 id="published_date"
-                type="date"
+                label="Published Date"
                 value={formData.published_date || ""}
-                onChange={(e) => setFormData({ ...formData, published_date: e.target.value })}
-                disabled={loading}
+                onChange={(date) => setFormData({ ...formData, published_date: date })}
               />
             </div>
             <div>
@@ -111,15 +117,29 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div>
-            <Label htmlFor="pdf_file">PDF Document URL</Label>
-            <Input
-              id="pdf_file"
-              type="url"
-              value={formData.pdf_file || ""}
-              onChange={(e) => setFormData({ ...formData, pdf_file: e.target.value })}
-              placeholder="https://example.com/research.pdf"
-              disabled={loading}
-            />
+            <Label htmlFor="document">Research Paper (PDF) *</Label>
+            <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-6 text-center">
+              <input 
+                id="document"
+                type="file" 
+                accept=".pdf"
+                required
+                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                disabled={loading}
+              />
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <span className="text-gray-600 dark:text-gray-400 font-bold text-xs truncate max-w-full">
+                  {pdfFile ? pdfFile.name : "Click or Drag to Upload PDF"}
+                </span>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Max Size: 15MB</p>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 pt-2">

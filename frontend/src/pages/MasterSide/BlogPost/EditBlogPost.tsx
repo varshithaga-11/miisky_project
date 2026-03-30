@@ -4,6 +4,7 @@ import { updateBlogPost, getBlogPostById, BlogPost } from "./blogpostapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   id: number;
@@ -219,13 +220,11 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories }) =
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Publication Settings</h3>
                   
                   <div>
-                    <Label htmlFor="published_at">Public Date</Label>
-                    <Input
+                    <DatePicker2
                       id="published_at"
-                      type="date"
+                      label="Public Date"
                       value={formData.published_at?.split("T")[0] || ""}
-                      onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
-                      disabled={loading}
+                      onChange={(date: string) => setFormData({ ...formData, published_at: date })}
                     />
                   </div>
 
