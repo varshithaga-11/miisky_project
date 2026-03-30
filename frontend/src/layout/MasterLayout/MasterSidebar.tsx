@@ -482,7 +482,7 @@ const masterNavItems: NavItem[] = [
       { name: "FAQs", path: "/master/faq" },
       { name: "Pricing Plans", path: "/master/pricingplan" },
       { name: "Report Types", path: "/master/reporttype" },
-      { name: "Stat Counters", path: "/master/statcounter" },
+      // { name: "Stat Counters", path: "/master/statcounter" },
       { name: "Testimonials", path: "/master/testimonial" },
       { name: "Website Reports", path: "/master/websitereport" },
     ],
@@ -521,11 +521,11 @@ const masterNavItems: NavItem[] = [
       { name: "Team Members", path: "/master/teammember" },
     ],
   },
-  {
-    icon: <Mail className="w-5 h-5" />,
-    name: "Website Inquiries",
-    path: "/master/websiteinquiry",
-  },
+  // {
+  //   icon: <Mail className="w-5 h-5" />,
+  //   name: "Website Inquiries",
+  //   path: "/master/websiteinquiry",
+  // },
 ];
 
 const MasterSidebar: React.FC = () => {
