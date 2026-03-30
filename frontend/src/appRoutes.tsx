@@ -108,6 +108,7 @@ import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
 import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
 import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
 import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
+import PaymentHistoryPage from "./pages/PatientSide/PaymentHistory/index";
 
 
 // Master Side Pages
@@ -297,6 +298,7 @@ export function appRoutes() {
           <Route path="patient/kitchen/:kitchenId/menu" element={<KitchenMenuPage />} />
           <Route path="patient/cart" element={<PatientCartPage />} />
           <Route path="patient/orders" element={<PatientOrdersPage />} />
+          <Route path="patient/payment-history" element={<PaymentHistoryPage />} />
           <Route path="microkitchen/orders" element={<KitchenOrdersPage />} />
           <Route path="microkitchen/delivery-charges" element={<MicroKitchenDeliveryChargesPage />} />
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />

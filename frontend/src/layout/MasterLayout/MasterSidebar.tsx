@@ -241,6 +241,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/orders",
   },
   {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Payment History",
+    path: "/patient/payment-history",
+  },
+  {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
@@ -434,6 +439,11 @@ const nonPatientNavItems: NavItem[] = [
     icon: <Package className="w-5 h-5" />,
     name: "My Bookings",
     path: "/patient/orders",
+  },
+  {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Payment History",
+    path: "/patient/payment-history",
   },
   {
     icon: <UserCog className="w-5 h-5" />,
