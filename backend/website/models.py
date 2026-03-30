@@ -17,8 +17,8 @@ class CompanyInfo(models.Model):
     """
     name = models.CharField(max_length=200, default="Miisky Technovation Private Limited")
     tagline = models.CharField(max_length=300, blank=True, null=True)
-    logo = models.CharField(max_length=255, null=True, blank=True)
-    favicon = models.CharField(max_length=255, null=True, blank=True)
+    logo = models.ImageField(upload_to='website/company/', null=True, blank=True)
+    favicon = models.ImageField(upload_to='website/company/favicons/', null=True, blank=True)
 
     # Contact
     phone_primary = models.CharField(max_length=20, blank=True, null=True)
@@ -48,6 +48,10 @@ class CompanyInfo(models.Model):
     meta_title = models.CharField(max_length=200, blank=True, null=True)
     meta_description = models.TextField(blank=True, null=True)
     meta_keywords = models.TextField(blank=True, null=True)
+
+    # Miscellaneous
+    open_hours = models.CharField(max_length=200, blank=True, null=True) # e.g. "Mon-Fri: 8:00am to 5:00pm"
+    appointment_link = models.CharField(max_length=500, blank=True, null=True)
 
     # Stat Counters
     years_experience = models.PositiveIntegerField(default=30)
@@ -128,7 +132,7 @@ class MedicalDeviceCategory(models.Model):
     """
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
-    icon = models.CharField(max_length=255, null=True, blank=True)
+    icon = models.ImageField(upload_to='website/devices/categories/', null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
 
@@ -185,8 +189,8 @@ class MedicalDevice(models.Model):
     # e.g. ["Malaria", "Typhoid", "Tuberculosis", "UTI", "Yellow Fever"]
 
     # Media
-    image = models.CharField(max_length=255, null=True, blank=True)
-    thumbnail = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(upload_to='website/devices/', null=True, blank=True)
+    thumbnail = models.ImageField(upload_to='website/devices/thumbnails/', null=True, blank=True)
     video_url = models.URLField(blank=True, null=True)
 
     # Documents
@@ -275,7 +279,7 @@ class BlogCategory(models.Model):
     name = models.CharField(max_length=150)
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    image = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(upload_to='website/blog/categories/', null=True, blank=True)
     icon = models.CharField(max_length=100, null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
@@ -336,6 +340,7 @@ class BlogPost(models.Model):
     image = models.ImageField(upload_to='website/blog_images/', null=True, blank=True)
 
     author_name = models.CharField(max_length=200, blank=True, null=True)
+    author_designation = models.CharField(max_length=200, blank=True, null=True) # e.g. "Senior Nutritionist"
     author_image = models.ImageField(upload_to='website/authors/', null=True, blank=True)
     author_bio = models.TextField(blank=True, null=True)
 
@@ -539,7 +544,9 @@ class Department(models.Model):
     E.g.: Leadership, Technology, Medical, Nutrition, Operations, Sales & Marketing, HR.
     """
     name = models.CharField(max_length=150, unique=True)
+    short_description = models.CharField(max_length=300, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='website/departments/', null=True, blank=True)
     head_name = models.CharField(max_length=200, blank=True, null=True)
     head_email = models.CharField(max_length=150, blank=True, null=True)
     position = models.PositiveIntegerField(default=1)
@@ -620,11 +627,13 @@ class JobListing(models.Model):
     salary_range = models.CharField(max_length=100, blank=True, null=True)
     openings = models.PositiveIntegerField(default=1)
 
+    short_description = models.CharField(max_length=300, blank=True, null=True)
     job_description = models.TextField()
     responsibilities = models.TextField(blank=True, null=True)
     requirements = models.TextField(blank=True, null=True)
     benefits = models.TextField(blank=True, null=True)
 
+    application_form_link = models.CharField(max_length=500, blank=True, null=True) # For external job portals
     application_deadline = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -760,13 +769,15 @@ class Partner(models.Model):
     ]
 
     name = models.CharField(max_length=300)
-    logo = models.CharField(max_length=255, null=True, blank=True)
+    logo = models.ImageField(upload_to='website/partners/', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     website_url = models.CharField(max_length=500, blank=True, null=True)
     partner_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='other')
     collaboration_details = models.TextField(blank=True, null=True)
     since_year = models.PositiveIntegerField(null=True, blank=True)
     position = models.PositiveIntegerField(default=1)
+    display_on_home = models.BooleanField(default=True)
+    logo_alt_text = models.CharField(max_length=200, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -962,5 +973,75 @@ class PricingPlan(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# ===========================================================================
+# 24. WEBSITE INQUIRIES / APPOINTMENTS
+# ===========================================================================
+
+class WebsiteInquiry(models.Model):
+    """
+    Inquiries submitted via contact/appointment forms on the website.
+    """
+    INQUIRY_TYPE_CHOICES = [
+        ('appointment', 'Appointment'),
+        ('general_inquiry', 'General Inquiry'),
+        ('product_info', 'Product Information'),
+        ('partnership', 'Partnership'),
+    ]
+
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('responded', 'Responded'),
+        ('closed', 'Closed'),
+        ('spam', 'Spam'),
+    ]
+
+    inquiry_type = models.CharField(max_length=30, choices=INQUIRY_TYPE_CHOICES, default='general_inquiry')
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    subject = models.CharField(max_length=300, blank=True, null=True)
+    service_interested = models.CharField(max_length=200, blank=True, null=True)
+    preferred_date = models.DateField(blank=True, null=True)
+    
+    message = models.TextField()
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    admin_notes = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Website Inquiry"
+        verbose_name_plural = "Website Inquiries"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.inquiry_type.capitalize()} – {self.name} ({self.status})"
+
+
+# ===========================================================================
+# 25. DYNAMIC STAT COUNTERS
+# ===========================================================================
+
+class StatCounter(models.Model):
+    """
+    Dynamic counters for the home page (e.g., 30+ Years, 180+ Doctors).
+    """
+    title = models.CharField(max_length=100)
+    value = models.CharField(max_length=50) # e.g. "180", "100K", "30"
+    suffix = models.CharField(max_length=20, blank=True, null=True) # e.g. "+", "%", "Years"
+    icon_class = models.CharField(max_length=100, blank=True, null=True)
+    position = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['position']
+
+    def __str__(self):
+        return f"{self.title}: {self.value}{self.suffix or ''}"
 
 

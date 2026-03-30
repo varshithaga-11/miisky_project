@@ -740,5 +740,63 @@ class DashboardStatsView(APIView):
             },
             "partners": Partner.objects.count(),
             "patents": Patent.objects.count(),
+            "website_inquiries": {
+                "total": WebsiteInquiry.objects.count(),
+                "new": WebsiteInquiry.objects.filter(status='new').count()
+            },
+            "stat_counters": StatCounter.objects.count(),
         }
         return Response(stats)
+
+
+# ===========================================================================
+# 24. WEBSITE INQUIRIES
+# ===========================================================================
+
+class WebsiteInquiryViewSet(viewsets.ModelViewSet):
+    queryset = WebsiteInquiry.objects.all()
+    serializer_class = WebsiteInquirySerializer
+    pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'email', 'phone', 'subject', 'message']
+    ordering = ['-created_at']
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        # Always force 'new' status for public submissions
+        serializer.save(status='new')
+
+    def get_queryset(self):
+        qs = WebsiteInquiry.objects.all()
+        p = self.request.query_params
+        if p.get('inquiry_type'):
+            qs = qs.filter(inquiry_type=p['inquiry_type'])
+        if p.get('status'):
+            qs = qs.filter(status=p['status'])
+        return qs
+
+
+# ===========================================================================
+# 25. STAT COUNTERS
+# ===========================================================================
+
+class StatCounterViewSet(viewsets.ModelViewSet):
+    serializer_class = StatCounterSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'value']
+    ordering = ['position']
+
+    def get_queryset(self):
+        qs = StatCounter.objects.all()
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=_bool(is_active))
+        elif not self.request.user.is_authenticated:
+            qs = qs.filter(is_active=True)
+        return qs.order_by('position')

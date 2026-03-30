@@ -10,6 +10,7 @@ export interface BlogPost {
   content: string;
   read_time?: string;
   author_name?: string;
+  author_designation?: string;
   author_image?: any;
   featured_image?: string;
   image?: any;

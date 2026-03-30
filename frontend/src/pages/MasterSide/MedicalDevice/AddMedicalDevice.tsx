@@ -10,6 +10,8 @@ interface Props {
 
 const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Partial<MedicalDevice>>({
     name: "",
     description: "",
@@ -29,7 +31,17 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
     e.preventDefault();
     setLoading(true);
     try {
-      await createMedicalDevice(formData as MedicalDevice);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          data.append(key, value.toString());
+        }
+      });
+      
+      if (imageFile) data.append("image", imageFile);
+      if (thumbFile) data.append("thumbnail", thumbFile);
+
+      await createMedicalDevice(data as any);
       toast.success("Device added successfully!");
       onSuccess();
       onClose();
@@ -84,6 +96,26 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="0.00"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Device Visual Assets</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-4 text-center">
+                  <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-gray-600 font-bold text-[10px] uppercase">Main Image</span>
+                    <span className="text-blue-600 font-black text-xs truncate max-w-full italic">{imageFile ? imageFile.name : "Choose File"}</span>
+                  </div>
+               </div>
+               <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-4 text-center">
+                  <input type="file" accept="image/*" onChange={(e) => setThumbFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-gray-600 font-bold text-[10px] uppercase">Thumbnail</span>
+                    <span className="text-blue-600 font-black text-xs truncate max-w-full italic">{thumbFile ? thumbFile.name : "Choose File"}</span>
+                  </div>
+               </div>
+            </div>
           </div>
 
           <div className="md:col-span-2">

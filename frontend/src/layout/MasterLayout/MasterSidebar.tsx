@@ -22,6 +22,7 @@ import {
   BookOpen,
   Wallet,
   Send,
+  Mail,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -453,35 +454,24 @@ const masterNavItems: NavItem[] = [
     path: "/master/dashboard",
   },
   {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Company Management",
-    subItems: [
-      { name: "Company Info", path: "/master/companyinfo" },
-      { name: "About Sections", path: "/master/companyaboutsection" },
-      { name: "Hero Banners", path: "/master/herobanner" },
-      { name: "Legal Pages", path: "/master/legalpage" },
-      { name: "Workflow Steps", path: "/master/workflowstep" },
-    ],
-  },
-  {
-    icon: <Package className="w-5 h-5" />,
-    name: "Medical Devices",
-    subItems: [
-      { name: "Device Categories", path: "/master/medicaldevicecategory" },
-      { name: "Devices", path: "/master/medicaldevice" },
-      { name: "Device Features", path: "/master/devicefeature" },
-      { name: "Research Papers", path: "/master/researchpaper" },
-      { name: "Patents", path: "/master/patent" },
-    ],
-  },
-  {
     icon: <FileText className="w-5 h-5" />,
     name: "Blog Management",
     subItems: [
       { name: "Blog Categories", path: "/master/blogcategory" },
-      { name: "Blog Tags", path: "/master/blogtag" },
-      { name: "Blog Posts", path: "/master/blogpost" },
       { name: "Blog Comments", path: "/master/blogcomment" },
+      { name: "Blog Posts", path: "/master/blogpost" },
+      { name: "Blog Tags", path: "/master/blogtag" },
+    ],
+  },
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Company Management",
+    subItems: [
+      { name: "About Sections", path: "/master/companyaboutsection" },
+      { name: "Company Info", path: "/master/companyinfo" },
+      { name: "Hero Banners", path: "/master/herobanner" },
+      { name: "Legal Pages", path: "/master/legalpage" },
+      { name: "Workflow Steps", path: "/master/workflowstep" },
     ],
   },
   {
@@ -490,20 +480,11 @@ const masterNavItems: NavItem[] = [
     subItems: [
       { name: "FAQ Categories", path: "/master/faqcategory" },
       { name: "FAQs", path: "/master/faq" },
-      { name: "Testimonials", path: "/master/testimonial" },
       { name: "Pricing Plans", path: "/master/pricingplan" },
       { name: "Report Types", path: "/master/reporttype" },
+      { name: "Stat Counters", path: "/master/statcounter" },
+      { name: "Testimonials", path: "/master/testimonial" },
       { name: "Website Reports", path: "/master/websitereport" },
-    ],
-  },
-  {
-    icon: <Users className="w-5 h-5" />,
-    name: "Team & Careers",
-    subItems: [
-      { name: "Departments", path: "/master/department" },
-      { name: "Team Members", path: "/master/teammember" },
-      { name: "Job Listings", path: "/master/joblisting" },
-      { name: "Job Applications", path: "/master/jobapplication" },
     ],
   },
   {
@@ -515,9 +496,35 @@ const masterNavItems: NavItem[] = [
     ],
   },
   {
+    icon: <Package className="w-5 h-5" />,
+    name: "Medical Devices",
+    subItems: [
+      { name: "Device Categories", path: "/master/medicaldevicecategory" },
+      { name: "Device Features", path: "/master/devicefeature" },
+      { name: "Devices", path: "/master/medicaldevice" },
+      { name: "Patents", path: "/master/patent" },
+      { name: "Research Papers", path: "/master/researchpaper" },
+    ],
+  },
+  {
     icon: <Truck className="w-5 h-5" />,
     name: "Partners",
     path: "/master/partner",
+  },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "Team & Careers",
+    subItems: [
+      { name: "Departments", path: "/master/department" },
+      { name: "Job Applications", path: "/master/jobapplication" },
+      { name: "Job Listings", path: "/master/joblisting" },
+      { name: "Team Members", path: "/master/teammember" },
+    ],
+  },
+  {
+    icon: <Mail className="w-5 h-5" />,
+    name: "Website Inquiries",
+    path: "/master/websiteinquiry",
   },
 ];
 

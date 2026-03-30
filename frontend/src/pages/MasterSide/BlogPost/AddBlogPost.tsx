@@ -20,6 +20,7 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
     read_time: "5 min",
     category: undefined,
     author_name: "",
+    author_designation: "",
     excerpt: "",
     published_at: "",
     position: 0,
@@ -62,6 +63,7 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
     data.append("content", formData.content || "");
     if (formData.category) data.append("category", String(formData.category));
     data.append("author_name", formData.author_name || "");
+    data.append("author_designation", formData.author_designation || "");
     data.append("excerpt", formData.excerpt || "");
     data.append("read_time", formData.read_time || "5 min");
     data.append("is_active", String(formData.is_active));
@@ -158,6 +160,16 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
                     placeholder="Authors Full Name"
                   />
                   <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mt-1">Lead Contributor</p>
+                </div>
+                <div className="flex-1 border-l border-blue-100 pl-6">
+                   <input
+                    type="text"
+                    value={formData.author_designation || ""}
+                    onChange={(e) => setFormData({ ...formData, author_designation: e.target.value })}
+                    className="w-full bg-transparent border-none focus:ring-0 p-0 font-bold text-sm text-blue-800 placeholder:text-blue-200"
+                    placeholder="Designation / Role"
+                  />
+                  <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mt-1">Professional Title</p>
                 </div>
               </div>
             </div>

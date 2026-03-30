@@ -12,7 +12,9 @@ interface Props {
 const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [formData, setFormData] = useState<Partial<MedicalDevice>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
+  const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +35,22 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
     e.preventDefault();
     setLoading(true);
     try {
-      await updateMedicalDevice(id, formData);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        // Skip URL fields and complex arrays/objects (handled by backend or updated separately)
+        if (!key.endsWith('_url') && value !== undefined && value !== null) {
+          if (typeof value === 'object') {
+            data.append(key, JSON.stringify(value));
+          } else {
+            data.append(key, value.toString());
+          }
+        }
+      });
+      
+      if (imageFile) data.append("image", imageFile);
+      if (thumbFile) data.append("thumbnail", thumbFile);
+
+      await updateMedicalDevice(id, data);
       toast.success("Updated!");
       onSuccess();
       onClose();
@@ -89,6 +106,34 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
                 onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || undefined })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Device Visual Assets</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                   {formData.image_url && (
+                     <div className="w-full h-32 rounded bg-gray-50 border flex items-center justify-center p-2 overflow-hidden">
+                        <img src={formData.image_url} alt="Current" className="max-w-full max-h-full object-contain" />
+                     </div>
+                   )}
+                   <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-3 text-center">
+                      <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                      <span className="text-gray-400 font-black text-[10px] uppercase">{imageFile ? imageFile.name : "Replace Main Image"}</span>
+                   </div>
+                </div>
+                <div className="space-y-2">
+                   {formData.thumbnail_url && (
+                     <div className="w-full h-32 rounded bg-gray-50 border flex items-center justify-center p-2 overflow-hidden">
+                        <img src={formData.thumbnail_url} alt="Current" className="max-w-full max-h-full object-contain" />
+                     </div>
+                   )}
+                   <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-3 text-center">
+                      <input type="file" accept="image/*" onChange={(e) => setThumbFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                      <span className="text-gray-400 font-black text-[10px] uppercase">{thumbFile ? thumbFile.name : "Replace Thumbnail"}</span>
+                   </div>
+                </div>
+              </div>
             </div>
 
             <div className="md:col-span-2">

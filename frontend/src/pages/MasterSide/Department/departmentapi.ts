@@ -9,6 +9,8 @@ export interface Department {
   head_email?: string;
   position?: number;
   icon_class?: string;
+  image?: any;
+  short_description?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -23,10 +25,10 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
-export const createDepartment = async (data: Department) => {
+export const createDepartment = async (data: FormData | Department) => {
   const url = createApiUrl("api/website/department/");
   const response = await axios.post(url, data, {
-    headers: await getAuthHeaders(),
+    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
   });
   return response.data;
 };
@@ -58,10 +60,10 @@ export const getDepartmentById = async (id: number) => {
   return response.data;
 };
 
-export const updateDepartment = async (id: number, data: Partial<Department>) => {
+export const updateDepartment = async (id: number, data: FormData | Partial<Department>) => {
   const url = createApiUrl(`api/website/department/${id}/`);
   const response = await axios.patch(url, data, {
-    headers: await getAuthHeaders(),
+    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
   });
   return response.data;
 };

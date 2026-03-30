@@ -140,6 +140,8 @@ import PatentList from "./pages/MasterSide/Patent/index";
 import TestimonialPage from "./pages/MasterSide/Testimonial/index";
 import WorkflowStepPage from "./pages/MasterSide/WorkflowStep/index";
 import PricingPlanPage from "./pages/MasterSide/PricingPlan/index";
+import StatCounterPage from "./pages/MasterSide/StatCounter/index";
+import WebsiteInquiryPage from "./pages/MasterSide/WebsiteInquiry/index";
 
 // Website Pages
 const WebsiteLayout = lazy(() => import("./Website/layout"));
@@ -180,6 +182,7 @@ const WebsiteGallery = lazy(() => import("./Website/gallery/page"));
 const WebsiteGalleryDetails = lazy(() => import("./Website/gallery-details/page"));
 const WebsitePartners = lazy(() => import("./Website/partners/page"));
 const WebsitePartnerDetails = lazy(() => import("./Website/partner-details/page"));
+const WebsiteAppointment = lazy(() => import("./Website/appointment/page"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -229,6 +232,8 @@ export function appRoutes() {
           <Route path="master/testimonial" element={<TestimonialPage />} />
           <Route path="master/workflowstep" element={<WorkflowStepPage />} />
           <Route path="master/pricingplan" element={<PricingPlanPage />} />
+          <Route path="master/statcounter" element={<StatCounterPage />} />
+          <Route path="master/websiteinquiry" element={<WebsiteInquiryPage />} />
 
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />
@@ -388,6 +393,7 @@ export function appRoutes() {
           <Route path="gallery/:id" element={<WebsiteGalleryDetails />} />
           <Route path="partners" element={<WebsitePartners />} />
           <Route path="partners/:id" element={<WebsitePartnerDetails />} />
+          <Route path="appointment" element={<WebsiteAppointment />} />
         </Route>
 
 

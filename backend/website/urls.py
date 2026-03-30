@@ -30,9 +30,11 @@ router.register(r'websitereport', views.WebsiteReportViewSet, basename='websiter
 router.register(r'testimonial', views.TestimonialViewSet, basename='testimonial')
 
 # Forms / Submissions
+router.register(r'websiteinquiry', views.WebsiteInquiryViewSet, basename='websiteinquiry')
 
 
 # Trust & Engagement
+router.register(r'statcounter', views.StatCounterViewSet, basename='statcounter')
 
 router.register(r'faqcategory', views.FAQCategoryViewSet, basename='faqcategory')
 router.register(r'faq', views.FAQViewSet, basename='faq')

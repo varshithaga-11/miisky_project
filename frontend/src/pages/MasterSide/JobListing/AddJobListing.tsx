@@ -12,6 +12,8 @@ const AddJobListing: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<JobListing>>({
     title: "",
+    short_description: "",
+    application_form_link: "",
     job_description: "",
     requirements: "",
     location: "",
@@ -133,13 +135,35 @@ const AddJobListing: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
           </div>
 
           <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Short Description</label>
+            <textarea
+              value={formData.short_description || ""}
+              onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              rows={2}
+              placeholder="Brief summary for list views..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Application Form Link (External)</label>
+            <input
+              type="text"
+              value={formData.application_form_link || ""}
+              onChange={(e) => setFormData({ ...formData, application_form_link: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+              placeholder="https://forms.gle/..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Job Description</label>
             <textarea
               required
               value={formData.job_description || ""}
               onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              rows={3}
+              rows={4}
             />
           </div>
 

@@ -33,14 +33,9 @@ const AddCompanyInfo: React.FC<Props> = ({ onSuccess, onClose }) => {
     meta_title: "",
     meta_description: "",
     meta_keywords: "",
-    working_hours: "",
-    years_experience: 30,
-    doctors_count: "180+",
-    services_count: "200+",
-    satisfied_patients: "10k+",
-    our_specialities: ["Preventive care", "Diagnostic testing", "Mental health services"],
-    our_vision: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"],
     mission_statement: "",
+    open_hours: "",
+    appointment_link: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -214,13 +209,23 @@ const AddCompanyInfo: React.FC<Props> = ({ onSuccess, onClose }) => {
                 </div>
               ))}
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Working Hours</label>
+                 <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Open Hours</label>
                  <input
                    type="text"
                    placeholder="Mon - Fri: 9AM - 6PM"
-                   value={formData.working_hours || ""}
-                   onChange={(e) => setFormData({ ...formData, working_hours: e.target.value })}
+                   value={formData.open_hours || ""}
+                   onChange={(e) => setFormData({ ...formData, open_hours: e.target.value })}
                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                 />
+              </div>
+              <div>
+                 <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Appointment Link</label>
+                 <input
+                   type="text"
+                   placeholder="https://svasth.miisky.com/appointment"
+                   value={formData.appointment_link || ""}
+                   onChange={(e) => setFormData({ ...formData, appointment_link: e.target.value })}
+                   className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-mono"
                  />
               </div>
             </div>

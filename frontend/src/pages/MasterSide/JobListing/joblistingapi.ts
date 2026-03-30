@@ -12,6 +12,8 @@ export interface JobListing {
   qualification_required?: string;
   salary_range?: string;
   openings?: number;
+  short_description?: string;
+  application_form_link?: string;
   job_description: string;
   responsibilities?: string;
   requirements?: string;

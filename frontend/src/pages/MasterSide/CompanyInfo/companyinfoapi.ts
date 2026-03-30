@@ -28,7 +28,8 @@ export interface CompanyInfo {
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string;
-  working_hours?: string;
+  open_hours?: string;
+  appointment_link?: string;
   // New Stats Fields
   years_experience?: number;
   doctors_count?: string;

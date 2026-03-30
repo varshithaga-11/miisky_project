@@ -10,7 +10,9 @@ interface Props {
 
 const EditCompanyInfo: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<CompanyInfo>>({});
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [favFile, setFavFile] = useState<File | null>(null);
+  const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +30,21 @@ const EditCompanyInfo: React.FC<Props> = ({ id, onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await updateCompanyInfo(id, formData as any);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (!key.endsWith('_url') && value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            data.append(key, JSON.stringify(value));
+          } else {
+            data.append(key, value.toString());
+          }
+        }
+      });
+
+      if (logoFile) data.append("logo", logoFile);
+      if (favFile) data.append("favicon", favFile);
+
+      await updateCompanyInfo(id, data as any);
       toast.success("Updated!");
       onSuccess();
       onClose();
@@ -56,6 +72,40 @@ const EditCompanyInfo: React.FC<Props> = ({ id, onSuccess, onClose }) => {
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-lg"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Visual Identity (Binary)</label>
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <div className="flex items-center gap-3 mb-2">
+                     {formData.logo_url && (
+                        <div className="w-12 h-12 rounded border bg-gray-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                           <img src={formData.logo_url} alt="Logo" className="max-w-full max-h-full object-contain" />
+                        </div>
+                     )}
+                     <span className="text-[10px] font-black text-gray-400 uppercase">Logo Asset</span>
+                  </div>
+                  <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-3 text-center">
+                     <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                     <span className="text-gray-500 font-bold text-[10px] uppercase truncate block">{logoFile ? logoFile.name : "Replace Logo"}</span>
+                  </div>
+               </div>
+               <div>
+                  <div className="flex items-center gap-3 mb-2">
+                     {formData.favicon_url && (
+                        <div className="w-12 h-12 rounded border bg-gray-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                           <img src={formData.favicon_url} alt="Favicon" className="max-w-full max-h-full object-contain" />
+                        </div>
+                     )}
+                     <span className="text-[10px] font-black text-gray-400 uppercase">Favicon Asset</span>
+                  </div>
+                  <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-3 text-center">
+                     <input type="file" accept="image/*" onChange={(e) => setFavFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                     <span className="text-gray-500 font-bold text-[10px] uppercase truncate block">{favFile ? favFile.name : "Replace Favicon"}</span>
+                  </div>
+               </div>
+            </div>
           </div>
 
           <div className="md:col-span-2">
@@ -139,6 +189,30 @@ const EditCompanyInfo: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                 setFormData({ ...formData, pincode: e.target.value })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Open Hours</label>
+            <input
+              type="text"
+              value={formData.open_hours || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, open_hours: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Appointment Link</label>
+            <input
+              type="text"
+              value={formData.appointment_link || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, appointment_link: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono text-sm"
             />
           </div>
 

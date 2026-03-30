@@ -9,6 +9,7 @@ interface Props {
 
 const AddBlogCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Partial<BlogCategory>>({
     name: "",
     description: "",
@@ -21,7 +22,15 @@ const AddBlogCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createBlogCategory(formData as BlogCategory);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          data.append(key, value.toString());
+        }
+      });
+      if (imageFile) data.append("image", imageFile);
+
+      await createBlogCategory(data as any);
       toast.success("Blog category created!");
       onSuccess();
       onClose();
@@ -36,7 +45,7 @@ const AddBlogCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans text-left">
       <div className="bg-white rounded-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative border border-gray-100">
         <div className="mb-8 border-b pb-6 text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Add Category</h2>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic text-blue-600">Add Category</h2>
         </div>
         
         <form onSubmit={handleSubmit}>
@@ -51,6 +60,23 @@ const AddBlogCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold"
                 placeholder="e.g. Healthcare Tech"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Cover Image (Binary)</label>
+              <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-4 text-center">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-gray-600 font-bold text-xs truncate max-w-full">
+                    {imageFile ? imageFile.name : "Select Cover Asset"}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div>

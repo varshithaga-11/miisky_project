@@ -9,10 +9,10 @@ interface Props {
 
 const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
+  const [iconFile, setIconFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Partial<MedicalDeviceCategory>>({
     name: "",
     description: "",
-    icon: "",
     position: 0,
     is_active: true,
   });
@@ -21,7 +21,15 @@ const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createMedicalDeviceCategory(formData as MedicalDeviceCategory);
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          data.append(key, value.toString());
+        }
+      });
+      if (iconFile) data.append("icon", iconFile);
+
+      await createMedicalDeviceCategory(data as any);
       toast.success("Industrial category specialized!");
       onSuccess();
       onClose();
@@ -53,14 +61,20 @@ const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Icon signature</label>
-            <input
-              type="text"
-              placeholder="Lucide icon name or image link"
-              value={formData.icon || ""}
-              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Sector Icon (Binary)</label>
+            <div className="relative group overflow-hidden bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all p-4 text-center">
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => setIconFile(e.target.files?.[0] || null)}
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              />
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-gray-600 font-bold text-xs truncate max-w-full">
+                  {iconFile ? iconFile.name : "Choose Icon Asset"}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div>

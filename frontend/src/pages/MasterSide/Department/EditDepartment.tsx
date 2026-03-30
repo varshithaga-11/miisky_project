@@ -21,6 +21,8 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
   const [head_email, setHeadEmail] = useState("");
   const [position, setPosition] = useState(1);
   const [icon_class, setIconClass] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [short_description, setShortDescription] = useState("");
   const [is_active, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -35,6 +37,7 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
           setHeadEmail(data.head_email || "");
           setPosition(data.position || 1);
           setIconClass(data.icon_class || "");
+          setShortDescription(data.short_description || "");
           setIsActive(data.is_active !== false);
         } catch (error: any) {
           console.error("Error fetching department:", error);
@@ -55,17 +58,18 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
 
     setLoading(true);
     try {
-      const updatedData: Partial<Department> = {
-        name,
-        description: description || undefined,
-        head_name: head_name || undefined,
-        head_email: head_email || undefined,
-        position,
-        icon_class,
-        is_active,
-      };
+      const formData = new FormData();
+      formData.append("name", name);
+      if (description) formData.append("description", description);
+      if (short_description) formData.append("short_description", short_description);
+      if (head_name) formData.append("head_name", head_name);
+      if (head_email) formData.append("head_email", head_email);
+      formData.append("position", String(position));
+      formData.append("icon_class", icon_class);
+      formData.append("is_active", String(is_active));
+      if (image) formData.append("image", image);
 
-      const updated = await updateDepartment(departmentId, updatedData);
+      const updated = await updateDepartment(departmentId, formData as any);
       toast.success("Department updated successfully!");
       onUpdated(updated);
       onClose();
@@ -160,6 +164,30 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
                 onChange={(e) => setIconClass(e.target.value)}
                 placeholder="e.g. icon-18, icon-22"
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Short Description
+              </label>
+              <input
+                type="text"
+                value={short_description}
+                onChange={(e) => setShortDescription(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Image
+              </label>
+              <input
+                type="file"
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                accept="image/*"
               />
             </div>
 

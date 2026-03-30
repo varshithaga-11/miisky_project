@@ -14,6 +14,8 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
   const [head_email, setHeadEmail] = useState("");
   const [position, setPosition] = useState(1);
   const [icon_class, setIconClass] = useState("icon-18");
+  const [image, setImage] = useState<File | null>(null);
+  const [short_description, setShortDescription] = useState("");
   const [is_active, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -25,19 +27,19 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
       return;
     }
 
-    setLoading(true);
     try {
-      const newDepartment: Department = {
-        name,
-        description: description || undefined,
-        head_name: head_name || undefined,
-        head_email: head_email || undefined,
-        position,
-        icon_class,
-        is_active,
-      };
+      const formData = new FormData();
+      formData.append("name", name);
+      if (description) formData.append("description", description);
+      if (short_description) formData.append("short_description", short_description);
+      if (head_name) formData.append("head_name", head_name);
+      if (head_email) formData.append("head_email", head_email);
+      formData.append("position", String(position));
+      formData.append("icon_class", icon_class);
+      formData.append("is_active", String(is_active));
+      if (image) formData.append("image", image);
 
-      const created = await createDepartment(newDepartment);
+      const created = await createDepartment(formData as any);
       toast.success("Department created successfully!");
       onAdd(created);
       onClose();
@@ -130,6 +132,30 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
                 onChange={(e) => setIconClass(e.target.value)}
                 placeholder="e.g. icon-18, icon-22"
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Short Description
+              </label>
+              <input
+                type="text"
+                value={short_description}
+                onChange={(e) => setShortDescription(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Image
+              </label>
+              <input
+                type="file"
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                accept="image/*"
               />
             </div>
 

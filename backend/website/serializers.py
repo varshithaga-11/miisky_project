@@ -12,6 +12,9 @@ from .models import *
 # ===========================================================================
 
 class CompanyInfoSerializer(serializers.ModelSerializer):
+    logo_url = serializers.ImageField(source='logo', read_only=True)
+    favicon_url = serializers.ImageField(source='favicon', read_only=True)
+
     class Meta:
         model = CompanyInfo
         fields = '__all__'
@@ -39,6 +42,8 @@ class HeroBannerSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class MedicalDeviceCategorySerializer(serializers.ModelSerializer):
+    icon_url = serializers.ImageField(source='icon', read_only=True)
+    
     class Meta:
         model = MedicalDeviceCategory
         fields = '__all__'
@@ -60,6 +65,8 @@ class MedicalDeviceSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     features = DeviceFeatureSerializer(many=True, read_only=True)
     research_papers = ResearchPaperSerializer(many=True, read_only=True)
+    image_url = serializers.ImageField(source='image', read_only=True)
+    thumbnail_url = serializers.ImageField(source='thumbnail', read_only=True)
 
     class Meta:
         model = MedicalDevice
@@ -78,6 +85,8 @@ class MedicalDeviceWriteSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class BlogCategorySerializer(serializers.ModelSerializer):
+    image_url = serializers.ImageField(source='image', read_only=True)
+    
     class Meta:
         model = BlogCategory
         fields = '__all__'
@@ -121,7 +130,7 @@ class BlogPostListSerializer(serializers.ModelSerializer):
         model = BlogPost
         fields = [
             'id', 'category', 'category_name', 'title', 'slug', 'excerpt',
-            'cover_image', 'image', 'author_name', 'status', 'published_at',
+            'cover_image', 'image', 'author_name', 'author_designation', 'status', 'published_at',
             'views_count', 'likes_count', 'is_featured', 'is_active',
         ]
 
@@ -282,6 +291,8 @@ class GalleryItemSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class PartnerSerializer(serializers.ModelSerializer):
+    logo_url = serializers.ImageField(source='logo', read_only=True)
+    
     class Meta:
         model = Partner
         fields = '__all__'
@@ -324,4 +335,25 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
 class PricingPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingPlan
+        fields = '__all__'
+
+
+# ===========================================================================
+# 24. WEBSITE INQUIRIES
+# ===========================================================================
+
+class WebsiteInquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WebsiteInquiry
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+
+
+# ===========================================================================
+# 25. STAT COUNTERS
+# ===========================================================================
+
+class StatCounterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatCounter
         fields = '__all__'
