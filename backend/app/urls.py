@@ -167,6 +167,11 @@ urlpatterns = [
         name="admin-plan-payout-transactions",
     ),
     path(
+        "partner/plan-payout-transactions/",
+        views.PartnerPayoutTransactionListView.as_view(),
+        name="partner-plan-payout-transactions",
+    ),
+    path(
         "admin/plan-payments-overview/",
         views.AdminPlanPaymentsOverviewView.as_view(),
         name="admin-plan-payments-overview",

@@ -891,14 +891,29 @@ class AdminPayoutPatientTrackersSerializer(serializers.ModelSerializer):
         return name or obj.username
 
     def get_trackers(self, obj):
-        from .models import PayoutTracker
+        from .models import PayoutTracker, MicroKitchenProfile
         from django.db.models import F
 
+        request = self.context.get("request")
+        user = request.user if request else None
+
+        qs = PayoutTracker.objects.filter(snapshot__user_diet_plan__user=obj)
+
+        # If not admin, restrict to user's trackers
+        if user and not (user.is_staff or getattr(user, "role", "") == "admin"):
+            if user.role == "nutritionist":
+                qs = qs.filter(payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST, nutritionist=user)
+            elif user.role == "micro_kitchen":
+                mk = MicroKitchenProfile.objects.filter(user=user).first()
+                if mk:
+                    qs = qs.filter(payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN, micro_kitchen=mk)
+                else:
+                    return [] # Or restricted
+            else:
+                return []
+
         qs = (
-            PayoutTracker.objects.filter(
-                snapshot__user_diet_plan__user=obj,
-                is_closed=False,
-            )
+            qs.filter(is_closed=False)
             .filter(total_amount__gt=F("paid_amount"))
             .select_related(
                 "nutritionist",
@@ -907,7 +922,7 @@ class AdminPayoutPatientTrackersSerializer(serializers.ModelSerializer):
             )
             .order_by("payout_type")
         )
-        return AdminPayoutTrackerForPayoutSerializer(qs, many=True).data
+        return AdminPayoutTrackerForPayoutSerializer(qs, many=True, context=self.context).data
 
 
 class PayoutTransactionReadSerializer(serializers.ModelSerializer):

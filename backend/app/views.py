@@ -401,53 +401,81 @@ class AdminKitchenPayoutsView(APIView):
         return paginator.get_paginated_response(paginated_data)
 
 
-class NutritionistPlanPayoutsView(APIView):
+class NutritionistPlanPayoutsView(generics.ListAPIView):
+    """Paginated list of patients who have payout records for the logged-in nutritionist."""
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = AdminPayoutPatientTrackersSerializer
 
-    def get(self, request):
-        if getattr(request.user, "role", None) != "nutritionist":
-            return Response(
-                {"detail": "Only nutritionists can access this endpoint."},
-                status=status.HTTP_403_FORBIDDEN,
+    def get_queryset(self):
+        if getattr(self.request.user, "role", None) != "nutritionist":
+             return UserRegister.objects.none()
+             
+        from .models import PayoutTracker
+        return (
+            UserRegister.objects.filter(
+                diet_plans__payment_snapshot__payouts__payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+                diet_plans__payment_snapshot__payouts__nutritionist=self.request.user,
             )
-        qs = (
-            PayoutTracker.objects.filter(
-                payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
-                nutritionist=request.user,
-            )
-            .select_related(
-                "snapshot__user_diet_plan__user",
-                "snapshot__user_diet_plan__diet_plan",
-            )
-            .order_by("-id")
+            .distinct()
+            .order_by("first_name", "last_name", "id")
         )
-        return Response(PayoutTrackerSerializer(qs, many=True).data)
 
-
-class MicroKitchenPlanPayoutsView(APIView):
+class MicroKitchenPlanPayoutsView(generics.ListAPIView):
+    """Paginated list of patients who have payout records for the logged-in micro kitchen."""
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = AdminPayoutPatientTrackersSerializer
 
-    def get(self, request):
-        if getattr(request.user, "role", None) != "micro_kitchen":
-            return Response(
-                {"detail": "Only micro kitchen users can access this endpoint."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+    def get_queryset(self):
+        if getattr(self.request.user, "role", None) != "micro_kitchen":
+             return UserRegister.objects.none()
+             
+        from .models import PayoutTracker, MicroKitchenProfile
+        mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
         if not mk:
-            return Response([])
-        qs = (
-            PayoutTracker.objects.filter(
-                payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
-                micro_kitchen=mk,
+            return UserRegister.objects.none()
+
+        return (
+            UserRegister.objects.filter(
+                diet_plans__payment_snapshot__payouts__payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                diet_plans__payment_snapshot__payouts__micro_kitchen=mk,
             )
-            .select_related(
-                "snapshot__user_diet_plan__user",
-                "snapshot__user_diet_plan__diet_plan",
-            )
-            .order_by("-id")
+            .distinct()
+            .order_by("first_name", "last_name", "id")
         )
-        return Response(PayoutTrackerSerializer(qs, many=True).data)
+
+class PartnerPayoutTransactionListView(generics.ListAPIView):
+    """List transactions for the logged-in partner (nutritionist or micro-kitchen)."""
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = PayoutTransactionReadSerializer
+
+    def get_queryset(self):
+        from .models import PayoutTracker, MicroKitchenProfile
+        user = self.request.user
+        qs = PayoutTransaction.objects.none()
+        
+        if user.role == "nutritionist":
+             qs = PayoutTransaction.objects.filter(tracker__nutritionist=user)
+        elif user.role == "micro_kitchen":
+             mk = MicroKitchenProfile.objects.filter(user=user).first()
+             if mk:
+                 qs = PayoutTransaction.objects.filter(tracker__micro_kitchen=mk)
+        elif user.is_staff or getattr(user, "role", "") == "admin":
+             qs = PayoutTransaction.objects.all()
+             
+        tracker_id = self.request.query_params.get("tracker")
+        if tracker_id:
+            qs = qs.filter(tracker_id=tracker_id)
+            
+        return qs.select_related(
+            "tracker__nutritionist",
+            "tracker__micro_kitchen",
+            "tracker__snapshot__user_diet_plan__user",
+            "tracker__snapshot__user_diet_plan__diet_plan",
+            "paid_by",
+        ).order_by("-paid_on")
 
 
 class AdminPayoutTrackersForPayView(APIView):
