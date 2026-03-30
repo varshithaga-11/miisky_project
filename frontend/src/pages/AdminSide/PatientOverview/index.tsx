@@ -153,10 +153,6 @@ const PatientOverviewPage: React.FC = () => {
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Patient list: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">GET api/usermanagement/?role=patient</code>.
-              Opening a patient shows a menu; each option loads that model in the same window.
-            </p>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
               {Math.min(currentPage * pageSize, totalItems)} of {totalItems} patients
