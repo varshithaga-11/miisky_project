@@ -25,6 +25,16 @@ export interface MeetingRequest {
     nutritionist_notes?: string;
     scheduled_datetime?: string;
     created_on: string;
+    availability_slot?: number;
+}
+
+export interface AvailabilitySlot {
+    id: number;
+    nutritionist: number;
+    date: string;
+    start_time: string;
+    end_time: string;
+    is_booked: boolean;
 }
 
 // -------------------------------------------------------------
@@ -47,6 +57,13 @@ export const createMeetingRequest = async (data: Partial<MeetingRequest>) => {
 
 export const getMyMeetingRequests = async (): Promise<MeetingRequest[]> => {
     const url = createApiUrl(`api/meetingrequest/`);
+    const resp = await axios.get(url, { headers: await getAuthHeaders() });
+    const data = resp.data;
+    return Array.isArray(data) ? data : data?.results ?? [];
+};
+
+export const getAvailableSlots = async (nutritionistId: number): Promise<AvailabilitySlot[]> => {
+    const url = createApiUrl(`api/nutritionistavailability/?nutritionist=${nutritionistId}`);
     const resp = await axios.get(url, { headers: await getAuthHeaders() });
     const data = resp.data;
     return Array.isArray(data) ? data : data?.results ?? [];

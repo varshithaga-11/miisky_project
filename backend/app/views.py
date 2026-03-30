@@ -2824,6 +2824,16 @@ class MeetingRequestViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         meeting = serializer.save(patient=self.request.user)
+        
+        # Check if an availability slot was used and mark it booked
+        if meeting.availability_slot:
+            meeting.availability_slot.is_booked = True
+            meeting.availability_slot.save()
+            # If slot is provided, update meeting values to match slot
+            meeting.preferred_date = meeting.availability_slot.date
+            meeting.preferred_time = meeting.availability_slot.start_time
+            meeting.save()
+
         patient_name = _notification_user_display(meeting.patient)
         Notification.objects.create(
             user_id=meeting.nutritionist_id,
@@ -2878,8 +2888,34 @@ class MeetingRequestViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-        return Response(self.get_serializer(meeting).data)
 
+class NutritionistAvailabilityViewSet(viewsets.ModelViewSet):
+    queryset = NutritionistAvailability.objects.all()
+    serializer_class = NutritionistAvailabilitySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+
+        if role == 'nutritionist':
+            return self.queryset.filter(nutritionist=user).order_by('date', 'start_time')
+        
+        nutritionist_id = self.request.query_params.get('nutritionist')
+        if nutritionist_id:
+            return self.queryset.filter(
+                nutritionist_id=nutritionist_id, 
+                is_booked=False, 
+                date__gte=timezone.now().date()
+            ).order_by('date', 'start_time')
+
+        if role == 'admin' or user.is_staff:
+            return self.queryset.order_by('-date', 'start_time')
+        
+        return self.queryset.none()
+
+    def perform_create(self, serializer):
+        serializer.save(nutritionist=self.request.user)
 
 class NutritionistRatingViewSet(viewsets.ModelViewSet):
     queryset = NutritionistRating.objects.all().select_related('patient', 'nutritionist', 'diet_plan')

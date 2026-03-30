@@ -108,6 +108,7 @@ import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
 import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
 import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
 import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
+import AvailabilityCalendar from "./pages/NutritionSide/AvailabilityCalendar/index";
 import PaymentHistoryPage from "./pages/PatientSide/PaymentHistory/index";
 
 
@@ -318,6 +319,7 @@ export function appRoutes() {
           <Route path="nutrition/support-tickets" element={<NutritionSupportTicketPage />} />
           <Route path="nutrition/notifications" element={<NutritionNotificationsPage />} />
           <Route path="nutrition/plan-payouts" element={<NutritionPlanPayoutsPage />} />
+          <Route path="nutrition/availability-calendar" element={<AvailabilityCalendar />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />

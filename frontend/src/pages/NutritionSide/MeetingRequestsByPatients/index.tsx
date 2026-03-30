@@ -17,6 +17,15 @@ const MeetingRequestsByPatients: React.FC = () => {
     const [meetingLink, setMeetingLink] = useState("");
     const [notes, setNotes] = useState("");
 
+    const formatTo12Hr = (time24: string) => {
+        if (!time24) return "";
+        const [h, m] = time24.split(":");
+        const hour = parseInt(h);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12.toString().padStart(2, '0')}:${m} ${ampm}`;
+    };
+
     useEffect(() => {
         loadMeetings();
     }, []);
@@ -182,7 +191,7 @@ const MeetingRequestsByPatients: React.FC = () => {
                                                     <FiClock className="text-emerald-500" />
                                                     <div className="flex flex-col">
                                                         <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">Time Proposed</span>
-                                                        <span className="text-xs font-black uppercase tracking-tight">{m.preferred_time}</span>
+                                                        <span className="text-xs font-black uppercase tracking-tight">{formatTo12Hr(m.preferred_time)}</span>
                                                     </div>
                                                 </div>
                                             </div>

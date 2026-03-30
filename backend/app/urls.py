@@ -28,6 +28,7 @@ router.register(r'nutritionistreview', NutritionistReviewViewSet, basename='nutr
 router.register(r'usermeal', UserMealViewSet, basename='usermeal')
 router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
 router.register(r'meetingrequest', MeetingRequestViewSet, basename='meetingrequest')
+router.register(r'nutritionistavailability', NutritionistAvailabilityViewSet, basename='nutritionistavailability')
 router.register(r'nutritionistrating', NutritionistRatingViewSet, basename='nutritionistrating')
 router.register(r'microkitchenrating', MicroKitchenRatingViewSet, basename='microkitchenrating')
 router.register(r'cart', CartViewSet, basename='cart')

@@ -1889,7 +1889,7 @@ class MeetingRequestSerializer(serializers.ModelSerializer):
         model = MeetingRequest
         fields = [
             'id', 'patient', 'patient_details', 'nutritionist', 'nutritionist_details',
-            'user_diet_plan', 'preferred_date', 'preferred_time', 'reason',
+            'user_diet_plan', 'availability_slot', 'preferred_date', 'preferred_time', 'reason',
             'status', 'meeting_link', 'nutritionist_notes', 'scheduled_datetime',
             'created_on', 'updated_on'
         ]
@@ -1920,6 +1920,14 @@ class MeetingRequestSerializer(serializers.ModelSerializer):
         if request and request.user and not validated_data.get('patient'):
             validated_data['patient'] = request.user
         return super().create(validated_data)
+
+
+
+class NutritionistAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NutritionistAvailability
+        fields = ['id', 'nutritionist', 'date', 'start_time', 'end_time', 'is_booked', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'nutritionist', 'is_booked', 'created_at', 'updated_at']
 
 
 class NutritionistRatingSerializer(serializers.ModelSerializer):

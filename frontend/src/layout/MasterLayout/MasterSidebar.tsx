@@ -22,6 +22,7 @@ import {
   BookOpen,
   Wallet,
   Send,
+  Calendar,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -306,6 +307,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <Video className="w-5 h-5" />,
     name: "Meeting Requests",
     path: "/nutrition/meeting-requests",
+  },
+  {
+    icon: <Calendar className="w-5 h-5" />,
+    name: "Availability Calendar",
+    path: "/nutrition/availability-calendar",
   },
   {
     icon: <Wallet className="w-5 h-5" />,

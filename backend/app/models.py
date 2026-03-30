@@ -1657,6 +1657,15 @@ class MeetingRequest(models.Model):
         blank=True,
         related_name="meetings"
     )
+
+    # Link to a specific availability slot (optional)
+    availability_slot = models.OneToOneField(
+        'NutritionistAvailability',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="meeting"
+    )
     # optional: link meeting to a specific plan
 
     # 🗓️ Scheduling
@@ -1711,6 +1720,37 @@ class MeetingRequest(models.Model):
 
     def __str__(self):
         return f"{self.patient} → {self.nutritionist} ({self.status})"
+
+# --------------------------------------------------------------
+# 🗓️ Nutritionist Availability
+# --------------------------------------------------------------
+
+class NutritionistAvailability(models.Model):
+    """
+    Nutritionist sets their available time slots for consultations.
+    """
+    nutritionist = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name="availabilities"
+    )
+
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    is_booked = models.BooleanField(default=False)
+
+    # Tracking
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('nutritionist', 'date', 'start_time')
+        ordering = ['date', 'start_time']
+
+    def __str__(self):
+        return f"{self.nutritionist} - {self.date} ({self.start_time}-{self.end_time})"
 
 
 # --------------------------------------------------------------
