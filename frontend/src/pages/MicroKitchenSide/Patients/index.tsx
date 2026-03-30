@@ -44,6 +44,16 @@ interface PatientAllotted {
         first_name: string;
         last_name: string;
     };
+    original_nutritionist_details?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+    } | null;
+    nutritionist_effective_from?: string | null;
+    original_micro_kitchen_details?: {
+        id: number;
+        brand_name: string;
+    } | null;
     diet_plan_details: {
         id: number;
         plan_name: string;
@@ -54,8 +64,6 @@ interface PatientAllotted {
     status: string;
     suggested_on: string;
     approved_on: string;
-    current_kitchen_name?: string;
-    original_kitchen_name?: string | null;
     micro_kitchen_effective_from?: string | null;
 }
 
@@ -64,7 +72,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedPatient, setSelectedPatient] = useState<PatientAllotted | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-    
+
     // Calendar States
     const [showCalendar, setShowCalendar] = useState(false);
     const [patientMeals, setPatientMeals] = useState<UserMeal[]>([]);
@@ -103,7 +111,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
         fetchAllotments();
     }, []);
 
-    const filteredAllotments = allotments.filter(a => 
+    const filteredAllotments = allotments.filter(a =>
         `${a.patient_details.first_name} ${a.patient_details.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.patient_details.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -124,7 +132,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
 
             <div className="px-4 md:px-8 pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    
+
                     {/* Left: Patient List */}
                     <div className="lg:col-span-4 space-y-6">
                         <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 shadow-xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-white/5">
@@ -137,7 +145,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
 
                             <div className="relative mb-6">
                                 <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                                <input 
+                                <input
                                     type="text"
                                     placeholder="Search patients..."
                                     value={searchTerm}
@@ -148,7 +156,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
 
                             <div className="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-2 no-scrollbar">
                                 {loading ? (
-                                    [1,2,3].map(i => <div key={i} className="h-20 bg-gray-50 dark:bg-gray-900/50 rounded-3xl animate-pulse" />)
+                                    [1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-50 dark:bg-gray-900/50 rounded-3xl animate-pulse" />)
                                 ) : filteredAllotments.length === 0 ? (
                                     <div className="text-center py-10">
                                         <p className="text-gray-400 text-xs font-bold uppercase">No patients found</p>
@@ -157,16 +165,14 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                     <button
                                         key={a.id}
                                         onClick={() => setSelectedPatient(a)}
-                                        className={`w-full p-5 rounded-[28px] text-left transition-all group border ${
-                                            selectedPatient?.id === a.id 
-                                            ? "bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-600/20 translate-x-2" 
+                                        className={`w-full p-5 rounded-[28px] text-left transition-all group border ${selectedPatient?.id === a.id
+                                            ? "bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-600/20 translate-x-2"
                                             : "bg-gray-50/50 dark:bg-white/[0.02] border-transparent hover:border-indigo-500/30 hover:bg-white dark:hover:bg-white/[0.05]"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs ${
-                                                selectedPatient?.id === a.id ? "bg-white/20 text-white" : "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600"
-                                            }`}>
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs ${selectedPatient?.id === a.id ? "bg-white/20 text-white" : "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600"
+                                                }`}>
                                                 {a.patient_details.first_name?.[0] || 'U'}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -195,7 +201,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                 <p className="text-gray-400 mt-2 font-medium">Select a patient from the list to view their dietary requirements and contact information.</p>
                             </div>
                         ) : (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="space-y-8"
@@ -213,17 +219,17 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <div className="flex items-center gap-4 mt-3">
                                                 <span className="px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100/50">Active Allotment</span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Since {new Date(selectedPatient.suggested_on).toLocaleDateString()}</span>
-                                                {selectedPatient.original_kitchen_name && (
+                                                {selectedPatient.original_micro_kitchen_details && (
                                                     <span className="px-4 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-100/50">
-                                                        Switched from {selectedPatient.original_kitchen_name} on {selectedPatient.micro_kitchen_effective_from}
+                                                        Kitchen Switched from {selectedPatient.original_micro_kitchen_details.brand_name} on {selectedPatient.micro_kitchen_effective_from}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex gap-4">
-                                        <button 
+                                        <button
                                             onClick={() => fetchPatientMeals(selectedPatient.patient_details.id)}
                                             className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white hover:scale-110 transition-all shadow-lg shadow-indigo-600/20"
                                             title="View Meal Calendar"
@@ -244,7 +250,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Health Profile</h3>
                                             <FiLayers className="text-indigo-500" />
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
                                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diet Type</p>
@@ -265,9 +271,17 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                                 <span className="text-xs font-bold text-gray-500 uppercase">Meals Per Day</span>
                                                 <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{selectedPatient.patient_questionnaire?.meals_per_day || '3'} Sessions</span>
                                             </div>
-                                            <div className="flex items-center justify-between py-1">
-                                                <span className="text-xs font-bold text-gray-500 uppercase">Supervising Nutritionist</span>
-                                                <span className="text-xs font-black text-indigo-500 uppercase tracking-tighter">Chef {selectedPatient.nutritionist_details.first_name}</span>
+                                            <div className="py-2 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-gray-500 uppercase">Supervising Nutritionist</span>
+                                                    <span className="text-xs font-black text-indigo-500 uppercase tracking-tighter">{selectedPatient.nutritionist_details.first_name}</span>
+                                                </div>
+                                                {selectedPatient.original_nutritionist_details && (
+                                                    <div className="flex items-center justify-between opacity-60">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase italic">Previously Managed By</span>
+                                                        <span className="text-[10px] font-bold text-gray-500 uppercase italic">{selectedPatient.original_nutritionist_details.first_name} (Until {selectedPatient.nutritionist_effective_from})</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -324,7 +338,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                                             Safety & Constraints
                                         </h3>
-                                        
+
                                         <div className="space-y-4">
                                             <div className="p-5 bg-rose-50/30 dark:bg-rose-900/10 rounded-3xl border border-rose-100/50">
                                                 <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Critical Allergies</p>
@@ -384,7 +398,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                         <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Medical Context Mapping</h3>
                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] italic">Information for Preparation Guidance Only</span>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                                         <div>
                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diabetes Status</p>
@@ -423,13 +437,13 @@ const MicroKitchenPatientsPage: React.FC = () => {
             {/* Calendar Modal */}
             <AnimatePresence>
                 {showCalendar && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-xl flex items-center justify-center p-4 lg:p-12"
                     >
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0.9, y: 30 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 30 }}
@@ -448,7 +462,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setShowCalendar(false)}
                                     className="px-6 py-3 bg-gray-50 dark:bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-rose-500 hover:text-white transition-all border border-transparent hover:border-rose-500/20"
                                 >
@@ -492,7 +506,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                         )}
                                     />
                                 )}
-                                { /* CSS Injections for Calendar */ }
+                                { /* CSS Injections for Calendar */}
                                 <style>{`
                                     .fc-theme-standard .fc-scrollgrid { border: none !important; }
                                     .fc .fc-toolbar-title { font-weight: 900; text-transform: uppercase; letter-spacing: -0.05em; font-size: 1.5rem; color: #111827; }

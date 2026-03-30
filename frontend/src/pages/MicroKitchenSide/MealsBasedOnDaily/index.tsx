@@ -424,6 +424,18 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                                 </p>
                                                             </div>
 
+                                                            {m.notes && (
+                                                                <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 rounded-2xl border border-amber-100/50 dark:border-amber-900/20">
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <FiInfo className="text-amber-500" size={14} />
+                                                                        <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest leading-none">Nutritionist Instructions</span>
+                                                                    </div>
+                                                                    <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 italic">
+                                                                        {m.notes}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+
                                                             <div className="flex gap-3">
                                                                 <button className="flex-[2] py-4 bg-gray-900 dark:bg-white/10 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-indigo-600 transition-all shadow-xl shadow-gray-900/10 active:scale-95">
                                                                     Confirm Dispatch
