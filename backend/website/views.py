@@ -207,6 +207,12 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'excerpt', 'content', 'author_name']
     ordering_fields = ['published_at', 'views_count', 'likes_count']
     ordering = ['-published_at']
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [permission() for permission in self.permission_classes]
 
     def get_serializer_class(self):
         if self.action == 'list':

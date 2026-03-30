@@ -93,8 +93,9 @@ async function request<T>(
 ): Promise<T> {
   const { body, public: isPublic, ...rest } = options;
 
+  const isFormData = body instanceof FormData;
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(rest.headers as Record<string, string>),
   };
 
@@ -109,7 +110,7 @@ async function request<T>(
   const response = await fetch(url, {
     ...rest,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) as any : undefined,
   });
 
   // ── Handle token expiry (401) ──
@@ -396,6 +397,8 @@ export const blogApi = {
     getList<import("./types").BlogPost>("blog/", params),
   detail: (slug: string) =>
     get<import("./types").BlogPost>(`blog/${slug}/`),
+  create: (data: FormData) =>
+    post<any>("website/blogpost/", data, { public: true }),
 };
 
 export const servicesApi = {

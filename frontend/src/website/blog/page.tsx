@@ -36,10 +36,18 @@ export default function BlogPage() {
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
     return (
-        <div className="boxed_wrapper">
-                <section className="sidebar-page-container pt_120 pb_120">
-                    <div className="auto-container">
-                        <div className="row clearfix">
+        <div className="boxed_wrapper text-left">
+            <div className="bg-gray-100 py-4 border-b border-gray-200">
+                <div className="auto-container flex justify-end">
+                    <Link to="/website/blog-create" className="theme-btn btn-one !px-8 !py-2 text-sm"><span>Create Publication</span></Link>
+                </div>
+            </div>
+            <section className="sidebar-page-container pt_80 pb_120">
+                <div className="auto-container">
+                    <div className="mb-10 pb-6 border-b border-gray-100">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-0">Medical Insights</h2>
+                    </div>
+                    <div className="row clearfix">
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="blog-grid-content">
                                     <div className="row clearfix">

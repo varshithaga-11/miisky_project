@@ -120,6 +120,7 @@ import ResearchPaperPage from "./pages/MasterSide/ResearchPaper/index";
 import BlogCategoryPage from "./pages/MasterSide/BlogCategory/index";
 import BlogTagPage from "./pages/MasterSide/BlogTag/index";
 import BlogPostPage from "./pages/MasterSide/BlogPost/index";
+import WebsiteBlogCreate from "./Website/blog-create/page";
 import BlogCommentPage from "./pages/MasterSide/BlogComment/index";
 import FAQCategoryPage from "./pages/MasterSide/FAQCategory/index";
 import FAQPage from "./pages/MasterSide/FAQ/index";
@@ -347,6 +348,7 @@ export function appRoutes() {
           <Route index element={<WebsiteHome />} />
           <Route path="about" element={<WebsiteAbout />} />
           <Route path="blog" element={<WebsiteBlog />} />
+          <Route path="blog-create" element={<WebsiteBlogCreate />} />
           {/* <Route path="blog-standard" element={<WebsiteBlog2 />} /> */}
           <Route path="blog-details" element={<WebsiteBlogDetails />} />
           <Route path="blog-details/:id" element={<WebsiteBlogDetails />} />

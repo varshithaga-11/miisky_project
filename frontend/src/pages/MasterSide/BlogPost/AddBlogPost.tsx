@@ -65,6 +65,7 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
     data.append("excerpt", formData.excerpt || "");
     data.append("read_time", formData.read_time || "5 min");
     data.append("is_active", String(formData.is_active));
+    data.append("status", formData.status || "draft");
     data.append("position", String(formData.position || 0));
     if (formData.published_at) data.append("published_at", formData.published_at);
     
@@ -231,9 +232,21 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
                       />
                     </div>
 
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-[0.2em] font-mono">Publication Status</label>
+                      <select
+                        value={formData.status || "draft"}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                        className="w-full bg-white/5 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono"
+                      >
+                        <option value="draft" className="text-gray-900">Draft</option>
+                        <option value="published" className="text-gray-900">Published</option>
+                      </select>
+                    </div>
+
                     <div className="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5">
                         <label className="text-xs font-black text-gray-300 uppercase tracking-widest">Live Status</label>
-                        <div className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               checked={formData.is_active || false}
@@ -241,7 +254,7 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
                               className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </div>
+                        </label>
                     </div>
 
                     <div className="pt-6 space-y-4">

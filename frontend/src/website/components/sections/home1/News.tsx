@@ -58,16 +58,25 @@ export default function News({ posts }: NewsProps) {
 
     fetchBlogPosts();
   }, [posts]);
+
   return (
     <section className="news-section sec-pad">
       <div className="auto-container">
-        <div className="sec-title centred mb_60">
+        <div className="sec-title centred mb_60 relative">
           <span className="sub-title mb_5">Latest News</span>
           <h2>Resources to Keep You Informed <br />with Our Blog</h2>
-          <p>
+          <p className="mt_20 mb_30">
             Medical care is the practice of providing diagnosis, treatment, and preventive care for various <br />
             illnesses, injuries, and diseases.
           </p>
+          <div className="mt_40">
+             <Link 
+                to="/website/blog-create"
+                className="theme-btn btn-one"
+             >
+                <span>Share Your Story</span>
+             </Link>
+          </div>
         </div>
 
         <Swiper

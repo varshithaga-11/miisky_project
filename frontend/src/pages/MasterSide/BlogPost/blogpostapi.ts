@@ -18,6 +18,7 @@ export interface BlogPost {
   views_count?: number;
   likes_count?: number;
   is_active?: boolean;
+  status?: "draft" | "published";
   created_at?: string;
 }
 
