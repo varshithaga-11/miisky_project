@@ -50,6 +50,9 @@ export default function RecordPlanPayoutsPage() {
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
+  
+  // New state to hold multiple trackers for the selected patient in the modal
+  const [modalTrackers, setModalTrackers] = useState<PayableTrackerRow[]>([]);
 
   const loadPatients = useCallback(async () => {
     setLoadingPatients(true);
@@ -70,8 +73,9 @@ export default function RecordPlanPayoutsPage() {
   }, [loadPatients]);
 
 
-  const openPayout = (tracker: PayableTrackerRow) => {
+  const openPayout = (tracker: PayableTrackerRow, allTrackers?: PayableTrackerRow[]) => {
     setSelectedTracker(tracker);
+    setModalTrackers(allTrackers || [tracker]);
     setAmountPaid(String(tracker.remaining_amount));
     setIsModalOpen(true);
   };
@@ -79,6 +83,7 @@ export default function RecordPlanPayoutsPage() {
   const closePayout = () => {
     setIsModalOpen(false);
     setSelectedTracker(null);
+    setModalTrackers([]);
     setAmountPaid("");
     setReference("");
     setNote("");
@@ -211,117 +216,79 @@ export default function RecordPlanPayoutsPage() {
                       </div>
 
                       {isExpanded && (
-                        <div className="px-4 pb-4 space-y-3 bg-white/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800 pt-4">
-                          {patient.trackers.map((t) => (
-                            <div key={t.id} className="space-y-3">
+                        <div className="px-4 pb-4 bg-white/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800">
+                          <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {patient.trackers.map((t) => (
                               <div
-                                className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-5 py-4 shadow-sm"
+                                key={t.id}
+                                className="relative flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm hover:ring-1 hover:ring-brand-200 dark:hover:ring-brand-900 transition-all"
                               >
-                                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 flex-grow">
-                                  <div className="flex flex-col min-w-[120px]">
-                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
-                                      Recipient ({t.payout_type})
+                                <div className="flex items-start justify-between mb-4">
+                                  <div>
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mb-2 ${
+                                      t.payout_type === 'nutritionist' 
+                                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30' 
+                                      : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30'
+                                    }`}>
+                                      {t.payout_type?.replace('_', ' ')}
                                     </span>
-                                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                    <h4 className="font-bold text-gray-900 dark:text-white text-sm">
                                       {t.recipient_label}
-                                    </span>
+                                    </h4>
+                                    <p className="text-[10px] text-gray-500 font-medium">#{t.id} • {t.shared_percentage}% Share</p>
                                   </div>
-
-                                  <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
-                                      Share
-                                    </span>
-                                    <span className="text-sm font-black text-brand-600">
-                                      {t.shared_percentage}%
-                                    </span>
+                                  <div className="text-right">
+                                    <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Remaining Owed</span>
+                                    <span className="text-base font-black text-gray-900 dark:text-white">₹{parseFloat(String(t.remaining_amount)).toFixed(2)}</span>
                                   </div>
+                                </div>
 
-                                  <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
-                                      Total Amount
-                                    </span>
-                                    <span className="text-sm font-medium text-gray-500">
-                                      ₹{parseFloat(t.total_amount).toFixed(2)}
-                                    </span>
+                                <div className="grid grid-cols-2 gap-4 border-t border-gray-50 dark:border-gray-800 pt-4 mb-4">
+                                  <div>
+                                    <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Plan Allotted</span>
+                                    <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate block">{t.plan_title}</span>
                                   </div>
-
-                                  <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
-                                      Paid
-                                    </span>
-                                    <span className="text-sm font-medium text-green-600">
-                                      ₹{parseFloat(t.paid_amount).toFixed(2)}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
-                                      Remaining
-                                    </span>
-                                    <span className="text-base font-black text-gray-900 dark:text-white">
-                                      ₹{parseFloat(String(t.remaining_amount)).toFixed(2)}
+                                  <div className="text-right">
+                                    <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Total / Paid</span>
+                                    <span className="text-[11px] font-medium text-gray-500">
+                                      ₹{parseFloat(t.total_amount).toFixed(2)} / <span className="text-green-600 font-bold">₹{parseFloat(t.paid_amount).toFixed(2)}</span>
                                     </span>
                                   </div>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  onClick={() => openPayout(t)}
-                                  className="whitespace-nowrap shadow-md shadow-brand-200 dark:shadow-none"
-                                >
-                                  Record Payout
-                                </Button>
+
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => openPayout(t, patient.trackers)}
+                                    className="flex-1 shadow-sm h-9 text-[10px] uppercase font-black tracking-widest"
+                                  >
+                                    Add Payout
+                                  </Button>
+                                </div>
+
+                                {/* Mini Transaction History Link/Section */}
+                                {trackerTxs[t.id] && trackerTxs[t.id].length > 0 && (
+                                  <div className="mt-4 pt-4 border-t border-dashed border-gray-100 dark:border-gray-800">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Recent Payments</p>
+                                    <div className="space-y-2">
+                                      {trackerTxs[t.id].slice(0, 3).map((tx) => (
+                                        <div key={tx.id} className="flex items-center justify-between text-[10px]">
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium text-gray-400">{tx.payout_date ? new Date(tx.payout_date).toLocaleDateString() : '—'}</span>
+                                            <span className="capitalize text-gray-500">{tx.payment_method?.replace('_', ' ')}</span>
+                                          </div>
+                                          <span className="font-black text-gray-700 dark:text-gray-300">₹{parseFloat(tx.amount_paid).toFixed(2)}</span>
+                                        </div>
+                                      ))}
+                                      {trackerTxs[t.id].length > 3 && (
+                                        <p className="text-[8px] text-brand-600 font-bold italic pt-1">+ {trackerTxs[t.id].length - 3} more transactions</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-
-                              {/* Transaction History Sub-Table - Now uses state-fetched data */}
-                              {trackerTxs[t.id] && trackerTxs[t.id].length > 0 && (
-                                <div className="mx-2 mb-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/10 overflow-hidden">
-                                  <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40">
-                                    <h4 className="text-[10px] uppercase font-black text-gray-400 tracking-widest">Payment History</h4>
-                                  </div>
-                                  <div className="p-3 overflow-x-auto">
-                                    <table className="w-full text-left text-xs">
-                                      <thead>
-                                        <tr className="text-gray-400 border-b border-gray-100 dark:border-gray-800">
-                                          <th className="pb-2 font-bold px-2">Date</th>
-                                          <th className="pb-2 font-bold px-2">Amount</th>
-                                          <th className="pb-2 font-bold px-2">Method</th>
-                                          <th className="pb-2 font-bold px-2">Reference</th>
-                                          <th className="pb-2 font-bold px-2">Screenshot</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                        {trackerTxs[t.id].map((tx) => (
-                                          <tr key={tx.id} className="text-gray-600 dark:text-gray-400 hover:bg-white/40 dark:hover:bg-gray-800/40">
-                                            <td className="py-2 px-2 whitespace-nowrap">
-                                              {tx.payout_date ? new Date(tx.payout_date).toLocaleDateString() : "—"}
-                                            </td>
-                                            <td className="py-2 px-2 font-bold text-gray-900 dark:text-gray-100">
-                                              ₹{parseFloat(tx.amount_paid).toFixed(2)}
-                                            </td>
-                                            <td className="py-2 px-2 capitalize">{tx.payment_method?.replace('_', ' ')}</td>
-                                            <td className="py-2 px-2 font-mono text-[10px]">{tx.transaction_reference || "—"}</td>
-                                            <td className="py-2 px-2">
-                                              {tx.payment_screenshot_url ? (
-                                                <a
-                                                  href={tx.payment_screenshot_url}
-                                                  target="_blank"
-                                                  rel="noreferrer"
-                                                  className="text-brand-600 hover:underline font-bold flex items-center gap-1"
-                                                >
-                                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                                  View
-                                                </a>
-                                              ) : "—"}
-                                            </td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -374,22 +341,49 @@ export default function RecordPlanPayoutsPage() {
         <div className="p-6">
           {selectedTracker && (
             <div className="bg-brand-50 rounded-2xl p-5 mb-6 text-sm text-brand-900 border border-brand-100 dark:bg-brand-900/10 dark:text-brand-300 dark:border-brand-800/30">
-              <div className="grid grid-cols-2 gap-y-3">
+              <div className="mb-4">
+                <Label htmlFor="tracker_select" className="text-brand-700 dark:text-brand-400">Target Payout Role *</Label>
+                <select
+                  id="tracker_select"
+                  className="w-full mt-1 rounded-xl border border-brand-200 dark:border-brand-800 bg-white dark:bg-gray-950 px-4 py-2.5 text-sm font-bold text-brand-900 dark:text-brand-100 outline-none focus:ring-2 focus:ring-brand-500"
+                  value={selectedTracker.id}
+                  onChange={(e) => {
+                    const tid = parseInt(e.target.value);
+                    const found = modalTrackers.find(t => t.id === tid);
+                    if (found) {
+                      setSelectedTracker(found);
+                      setAmountPaid(String(found.remaining_amount));
+                    }
+                  }}
+                >
+                  {modalTrackers.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.payout_type === 'nutritionist' ? 'Nutritionist' : 'Micro Kitchen'}: {t.recipient_label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-y-4 pt-2">
                 <div>
-                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Recipient</span>
-                   <span className="font-bold underline decoration-brand-200">{selectedTracker.recipient_label}</span>
+                  <span className="block text-[10px] uppercase font-black text-brand-400 mb-0.5">Patient</span>
+                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                    {selectedTracker.patient_name || '--'}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="block text-[10px] uppercase font-black text-brand-400 mb-0.5">Plan Title</span>
+                  <span className="font-bold text-gray-700 dark:text-gray-300 text-xs italic">
+                    {selectedTracker.plan_title || '--'}
+                  </span>
                 </div>
                 <div>
-                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Role</span>
-                   <span className="capitalize font-medium">{selectedTracker.payout_type}</span>
+                  <span className="block text-[10px] uppercase font-black text-brand-400 mb-0.5">Currently Paid</span>
+                  <span className="text-sm font-black text-green-600">₹{parseFloat(selectedTracker.paid_amount).toFixed(2)}</span>
                 </div>
-                <div>
-                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Patient</span>
-                   <span className="font-medium text-gray-700 dark:text-gray-300">{selectedTracker.patient_name}</span>
-                </div>
-                <div>
-                   <span className="block text-[10px] uppercase font-bold text-brand-400 mb-0.5">Owed Amount</span>
-                   <span className="text-lg font-black tracking-tight">₹{parseFloat(String(selectedTracker.remaining_amount)).toFixed(2)}</span>
+                <div className="text-right">
+                  <span className="block text-[10px] uppercase font-black text-brand-400 mb-0.5">Remaining Owed</span>
+                  <span className="text-xl font-black tracking-tighter text-brand-600">₹{parseFloat(String(selectedTracker.remaining_amount)).toFixed(2)}</span>
                 </div>
               </div>
             </div>
