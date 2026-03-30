@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Trash2, Calendar as CalendarIcon, Clock, CheckCircle2 } from "lucide-react";
-import { getMyAvailability, createAvailabilitySlot, deleteAvailabilitySlot, AvailabilitySlot } from "./api";
+import { getMyAvailability, createAvailabilitySlot, deleteAvailabilitySlot, clearPastSlots, AvailabilitySlot } from "./api";
 import { toast } from "react-toastify";
 import PageMeta from "../../../components/common/PageMeta";
 import DatePicker2 from "../../../components/form/date-picker2";
@@ -69,6 +69,17 @@ const AvailabilityCalendar: React.FC = () => {
         }
     };
 
+    const handleClearPast = async () => {
+        if (!window.confirm("Are you sure you want to delete ALL unbooked slots from previous dates? This will not affect booked sessions.")) return;
+        try {
+            const res = await clearPastSlots();
+            toast.success(res.message || "Past unused slots cleared");
+            loadAvailability();
+        } catch (error) {
+            toast.error("Failed to clear past slots");
+        }
+    };
+
     // Group slots by date
     const groupedSlots = slots.reduce((acc, slot) => {
         if (!acc[slot.date]) acc[slot.date] = [];
@@ -105,6 +116,15 @@ const AvailabilityCalendar: React.FC = () => {
                             Set your consultation time slots for patients to book.
                         </p>
                     </div>
+                    {sortedDates.length > 0 && (
+                        <button 
+                            onClick={handleClearPast}
+                            className="bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Clear Past Unused Slots
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

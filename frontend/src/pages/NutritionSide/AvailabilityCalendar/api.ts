@@ -43,3 +43,11 @@ export const deleteAvailabilitySlot = async (id: number) => {
     });
     return response.data;
 };
+
+export const clearPastSlots = async () => {
+    const url = createApiUrl(`api/nutritionistavailability/clear-past/`);
+    const response = await axios.delete(url, {
+        headers: await getAuthHeaders(),
+    });
+    return response.data;
+};

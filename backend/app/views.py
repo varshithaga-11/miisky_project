@@ -2908,7 +2908,7 @@ class NutritionistAvailabilityViewSet(viewsets.ModelViewSet):
                 is_booked=False, 
                 date__gte=timezone.now().date()
             ).order_by('date', 'start_time')
-
+        
         if role == 'admin' or user.is_staff:
             return self.queryset.order_by('-date', 'start_time')
         
@@ -2916,6 +2916,26 @@ class NutritionistAvailabilityViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(nutritionist=self.request.user)
+
+    @action(detail=False, methods=['delete'], url_path='clear-past')
+    def clear_past_slots(self, request):
+        """
+        Delete all unbooked slots of the current nutritionist where date < today.
+        """
+        user = request.user
+        if getattr(user, 'role', None) != 'nutritionist':
+            return Response({"detail": "Only nutritionists can perform this."}, status=status.HTTP_403_FORBIDDEN)
+        
+        today = timezone.now().date()
+        # Only delete unbooked ones to avoid data inconsistency for meetings
+        past_unbooked = NutritionistAvailability.objects.filter(
+            nutritionist=user, 
+            date__lt=today, 
+            is_booked=False
+        )
+        count, _ = past_unbooked.delete()
+        
+        return Response({"message": f"Successfully deleted {count} past unbooked slots."})
 
 class NutritionistRatingViewSet(viewsets.ModelViewSet):
     queryset = NutritionistRating.objects.all().select_related('patient', 'nutritionist', 'diet_plan')
