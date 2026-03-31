@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
 import { getDepartmentById, getDepartments } from "../../utils/api";
+import AppointmentForm from "../components/elements/AppointmentForm";
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 
 export default function DepartmentDetails() {
@@ -84,34 +85,7 @@ export default function DepartmentDetails() {
                                             <h2>Appointment</h2>
                                         </div>
                                         <div className="form-inner">
-                                            <form method="post" action="/website" className="default-form">
-                                                <div className="form-group">
-                                                    <div className="icon"><i className="icon-45"></i></div>
-                                                    <input type="text" name="name" placeholder="Name" required/>
-                                                </div>
-                                                <div className="form-group">
-                                                    <div className="icon"><i className="icon-46"></i></div>
-                                                    <input type="email" name="email" placeholder="Email" required/>
-                                                </div>
-                                                <div className="form-group">
-                                                    <div className="icon"><Image src="/website/assets/images/icons/icon-15.svg" alt="Image" width={15} height={15} priority /></div>
-                                                    <div className="select-box">
-                                                        <select className="selectmenu">
-                                                            <option>I&apos;m interested in *</option>
-                                                            {departments.map((dept: any) => (
-                                                                <option key={dept.id}>{dept.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="form-group">
-                                                    <div className="icon"><i className="icon-48"></i></div>
-                                                    <textarea name="message" placeholder="Message"></textarea>
-                                                </div>
-                                                <div className="form-group message-btn">
-                                                    <button type="submit" className="theme-btn btn-two"><span>Send your message</span></button>
-                                                </div>
-                                            </form>
+                                            <AppointmentForm departmentName={department.name} />
                                         </div>
                                     </div>
                                     <div className="sidebar-widget schedule-widget">

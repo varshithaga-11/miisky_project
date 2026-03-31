@@ -73,7 +73,7 @@ export default function CareerDetailsPage() {
                                     <h3 className="mb_20 text-center" style={{ fontSize: '26px', fontWeight: 800 }}>Ready to join us?</h3>
                                     <p className="mb_30 text-center" style={{ color: '#888' }}>Interested candidates are requested to send their resumes and portfolios for consideration. We're looking forward to meeting you!</p>
                                     <div className="btn-box text-center">
-                                        <Link to="/website/contact" className="theme-btn btn-one" style={{ padding: '12px 60px', borderRadius: '40px', fontSize: '18px' }}>
+                                        <Link to={`/website/careers/apply/${id}`} className="theme-btn btn-one" style={{ padding: '12px 60px', borderRadius: '40px', fontSize: '18px' }}>
                                             <span>Apply Now</span>
                                         </Link>
                                     </div>

@@ -670,7 +670,7 @@ class JobApplication(models.Model):
     applicant_name = models.CharField(max_length=200)
     email = models.CharField(max_length=150)
     phone = models.CharField(max_length=20)
-    resume = models.CharField(max_length=255, null=True, blank=True)
+    resume = models.FileField(upload_to='website/resumes/', null=True, blank=True)
     cover_letter = models.TextField(blank=True, null=True)
     portfolio_url = models.CharField(max_length=500, blank=True, null=True)
     linkedin_url = models.CharField(max_length=500, blank=True, null=True)

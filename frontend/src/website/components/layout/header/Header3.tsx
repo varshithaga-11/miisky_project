@@ -45,10 +45,7 @@ export default function Header3({
     fetchDepartmentsData();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("miisky_access_token");
-    window.location.href = "/website/login";
-  };
+
 
   return (
     <>
@@ -144,38 +141,26 @@ export default function Header3({
               </div>
 
               <div className="menu-right-content">
-                <div className="btn-box">
-                  <Link to="/website" className="theme-btn btn-one">
-                    <span>Appointment</span>
-                  </Link>
-                  <button
-                    onClick={logout}
-                    style={{
-                      marginLeft: "15px",
-                      padding: "10px 24px",
-                      borderColor: "#0646ac",
-                      borderStyle: "solid",
-                      borderWidth: "1.5px",
-                      color: "#0646ac",
-                      backgroundColor: "transparent",
-                      borderRadius: "30px",
-                      cursor: "pointer",
-                      fontSize: "13.5px",
-                      fontWeight: 700,
-                      transition: "all 0.3s ease",
-                      textTransform: "uppercase"
-                    }}
-                    onMouseOver={(e) => {
-                      (e.target as HTMLButtonElement).style.backgroundColor = "#0646ac";
-                      (e.target as HTMLButtonElement).style.color = "white";
-                    }}
-                    onMouseOut={(e) => {
-                      (e.target as HTMLButtonElement).style.backgroundColor = "transparent";
-                      (e.target as HTMLButtonElement).style.color = "#0646ac";
-                    }}
-                  >
-                    Logout
-                  </button>
+                <div className="support-box" style={{ display: 'flex', alignItems: 'center' }}>
+                  <div className="icon-box" style={{ 
+                      width: '50px', 
+                      height: '50px', 
+                      backgroundColor: '#fba354', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      marginRight: '15px',
+                      flexShrink: 0
+                  }}>
+                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
+                  </div>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
+                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
+                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                    </h6>
+                  </div>
                 </div>
               </div>
             </div>
@@ -263,6 +248,30 @@ export default function Header3({
                     </ul>
                   </div>
                 </nav>
+              </div>
+              <div className="menu-right-content">
+                <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <div className="icon-box" style={{ 
+                      width: '50px', 
+                      height: '50px', 
+                      backgroundColor: '#fba354', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      marginRight: '15px',
+                      flexShrink: 0,
+                      position: 'relative'
+                  }}>
+                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
+                  </div>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative' }}>
+                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
+                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
+                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                    </h6>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

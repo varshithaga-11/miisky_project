@@ -7,8 +7,14 @@ export interface JobApplication {
   applicant_name: string;
   email: string;
   phone?: string;
-  resume?: string;
+  resume?: any;
   cover_letter?: string;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  current_ctc?: string;
+  expected_ctc?: string;
+  notice_period?: string;
+  years_of_experience?: number;
   status?: string;
   admin_notes?: string;
   applied_at?: string;
@@ -56,10 +62,10 @@ export const getJobApplicationById = async (id: number) => {
   return response.data;
 };
 
-export const updateJobApplication = async (id: number, data: Partial<JobApplication>) => {
+export const updateJobApplication = async (id: number, data: FormData | Partial<JobApplication>) => {
   const url = createApiUrl(`api/website/jobapplication/${id}/`);
   const response = await axios.patch(url, data, {
-    headers: await getAuthHeaders(),
+    headers: data instanceof FormData ? { ...await getAuthHeaders(), "Content-Type": "multipart/form-data" } : await getAuthHeaders(),
   });
   return response.data;
 };

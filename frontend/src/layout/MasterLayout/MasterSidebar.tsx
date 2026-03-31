@@ -23,6 +23,7 @@ import {
   Wallet,
   Send,
   Calendar,
+  Mail,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -536,11 +537,11 @@ const masterNavItems: NavItem[] = [
       { name: "Team Members", path: "/master/teammember" },
     ],
   },
-  // {
-  //   icon: <Mail className="w-5 h-5" />,
-  //   name: "Website Inquiries",
-  //   path: "/master/websiteinquiry",
-  // },
+  {
+    icon: <Mail className="w-5 h-5" />,
+    name: "Website Inquiries",
+    path: "/master/websiteinquiry",
+  },
 ];
 
 const MasterSidebar: React.FC = () => {

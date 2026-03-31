@@ -12,7 +12,7 @@ const API: AxiosInstance = axios.create({
 // Add request interceptor to include auth token if available
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('access');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,7 +27,8 @@ API.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Clear token and redirect to login if needed
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
     }
     return Promise.reject(error);
   }
@@ -110,7 +111,7 @@ export const deleteBlogTag = (id: number) => API.delete(`/website/blogtag/${id}/
 // ============================================================================
 // BLOG POSTS
 // ============================================================================
-export const getBlogPosts = () => API.get('/website/blogpost/');
+export const getBlogPosts = (params: any = {}) => API.get('/website/blogpost/', { params });
 export const getBlogPostById = (id: number) => API.get(`/website/blogpost/${id}/`);
 export const createBlogPost = (data: any) => API.post('/website/blogpost/', data);
 export const updateBlogPost = (id: number, data: any) => API.put(`/website/blogpost/${id}/`, data);
@@ -280,6 +281,15 @@ export const getPricingPlanById = (id: number) => API.get(`/website/pricingplan/
 export const createPricingPlan = (data: any) => API.post('/website/pricingplan/', data);
 export const updatePricingPlan = (id: number, data: any) => API.put(`/website/pricingplan/${id}/`, data);
 export const deletePricingPlan = (id: number) => API.delete(`/website/pricingplan/${id}/`);
+
+// ============================================================================
+// WEBSITE INQUIRIES
+// ============================================================================
+export const getWebsiteInquiries = (params: any = {}) => API.get('/website/websiteinquiry/', { params });
+export const getWebsiteInquiryById = (id: number) => API.get(`/website/websiteinquiry/${id}/`);
+export const createWebsiteInquiry = (data: any) => API.post('/website/websiteinquiry/', data);
+export const updateWebsiteInquiry = (id: number, data: any) => API.put(`/website/websiteinquiry/${id}/`, data);
+export const deleteWebsiteInquiry = (id: number) => API.delete(`/website/websiteinquiry/${id}/`);
 
 // ============================================================================
 // DASHBOARD STATS

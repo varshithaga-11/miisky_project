@@ -50,7 +50,7 @@ export default function CareersPage() {
                                         <h3 className="mb_15"><Link to={`/website/careers/${job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
                                         <p className="mb_20" style={{ color: '#555' }}>{job.description ? job.description.substring(0, 150) + "..." : "Excellent opportunity to grow your career in a dynamic environment."}</p>
                                         <div className="btn-box">
-                                            <Link to={`/website/careers/${job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                            <Link to={`/website/careers/apply/${job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
                                                 <span>Apply Now</span>
                                             </Link>
                                         </div>

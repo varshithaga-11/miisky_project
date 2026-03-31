@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiEdit, FiSearch, FiFileText } from "react-icons/fi";
-import { getJobApplicationList, deleteJobApplication, JobApplication } from "./jobapplicationapi";
-import { getJobListingList } from "../JobListing/joblistingapi";
-import AddJobApplication from "./AddJobApplication";
-import EditJobApplication from "./EditJobApplication";
+import { FiPlus, FiTrash2, FiEdit, FiSearch, FiMail, FiPhone, FiCalendar } from "react-icons/fi";
+import { getWebsiteInquiryList, deleteInquiry, WebsiteInquiry } from "./websiteinquiryapi";
+import AddWebsiteInquiry from "./AddWebsiteInquiry";
+import EditWebsiteInquiry from "./EditWebsiteInquiry";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -12,8 +11,8 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 
-const JobApplicationPage: React.FC = () => {
-  const [applications, setApplications] = useState<JobApplication[]>([]);
+const WebsiteInquiryPage: React.FC = () => {
+  const [inquiries, setInquiries] = useState<WebsiteInquiry[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -22,42 +21,31 @@ const JobApplicationPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [jobListings, setJobListings] = useState<any[]>([]);
 
-  const fetchApplications = useCallback(async () => {
+  const fetchInquiries = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getJobApplicationList(currentPage, pageSize, search);
-      setApplications(data.results);
-      setTotalItems(data.count);
-      setTotalPages(data.total_pages);
+      const data = await getWebsiteInquiryList(currentPage, pageSize, search);
+      setInquiries(data.results || []);
+      setTotalItems(data.count || 0);
+      setTotalPages(data.total_pages || 0);
     } catch (error) {
-      toast.error("Failed to load applications");
+      toast.error("Failed to load inquiries");
     } finally {
       setLoading(false);
     }
   }, [currentPage, pageSize, search]);
 
-  const fetchJobListings = useCallback(async () => {
-    try {
-      const data = await getJobListingList(1, 100);
-      setJobListings(data.results);
-    } catch (error) {
-      console.error("Failed to load job listings");
-    }
-  }, []);
-
   useEffect(() => {
-    fetchApplications();
-    fetchJobListings();
-  }, [fetchApplications, fetchJobListings]);
+    fetchInquiries();
+  }, [fetchInquiries]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete job application record?")) return;
+    if (!window.confirm("Delete inquiry record?")) return;
     try {
-      await deleteJobApplication(id);
+      await deleteInquiry(id);
       toast.success("Deleted!");
-      fetchApplications();
+      fetchInquiries();
     } catch (error) {
       toast.error("Failed to delete");
     }
@@ -65,17 +53,17 @@ const JobApplicationPage: React.FC = () => {
 
   const getStatusStyle = (status: string = "new") => {
     switch (status.toLowerCase()) {
-      case "reviewed": return "bg-blue-50 text-blue-600 dark:bg-blue-900/30";
-      case "shortlisted": return "bg-green-50 text-green-600 dark:bg-green-900/30";
-      case "rejected": return "bg-red-50 text-red-600 dark:bg-red-900/30";
+      case "responded": return "bg-blue-50 text-blue-600 dark:bg-blue-900/30";
+      case "closed": return "bg-green-50 text-green-600 dark:bg-green-900/30";
+      case "spam": return "bg-red-50 text-red-600 dark:bg-red-900/30";
       default: return "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30";
     }
   };
 
   return (
     <>
-      <PageMeta title="Recruitment Pipeline" description="Manage candidate applications and hiring workflow" />
-      <PageBreadcrumb pageTitle="Job Applications" />
+      <PageMeta title="Website Inquiries" description="Manage lead submissions and contact messages" />
+      <PageBreadcrumb pageTitle="Website Inquiries" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -83,7 +71,7 @@ const JobApplicationPage: React.FC = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search applicants..."
+              placeholder="Search inquiries..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
@@ -96,7 +84,7 @@ const JobApplicationPage: React.FC = () => {
                 className="inline-flex items-center gap-2"
                 onClick={() => setIsAddModalOpen(true)}
             >
-              <FiPlus /> Add application
+              <FiPlus /> Add manual inquiry
             </Button>
             
             <div className="flex items-center gap-2">
@@ -130,63 +118,65 @@ const JobApplicationPage: React.FC = () => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Applicant Details</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Target Role</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Exp.</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Pipeline Status</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Documents</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Sender Details</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Type & Subject</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Submitted On</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {loading && applications.length === 0 ? (
+              {loading && inquiries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading talent pool...</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading incoming messages...</TableCell>
                 </TableRow>
-              ) : applications.length === 0 ? (
+              ) : inquiries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No applications found</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No inquiries found</TableCell>
                 </TableRow>
               ) : (
-                applications.map((app, index) => (
-                  <TableRow key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                inquiries.map((inq, index) => (
+                  <TableRow key={inq.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <div className="flex flex-col">
-                            <span className="font-bold text-gray-900 text-theme-sm dark:text-white uppercase tracking-tight">{app.applicant_name}</span>
-                            <span className="text-xs text-gray-400 lowercase">{app.email}</span>
+                            <span className="font-bold text-gray-900 text-theme-sm dark:text-white tracking-tight uppercase">{inq.name}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400 lowercase">
+                                <FiMail /> {inq.email}
+                            </div>
+                            {inq.phone && (
+                                <div className="flex items-center gap-1.5 text-xs text-gray-400 underline">
+                                    <FiPhone /> {inq.phone}
+                                </div>
+                            )}
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100 uppercase tracking-tight dark:bg-indigo-900/30">
-                            {jobListings.find(j => j.id === app.job)?.title || "General Application"}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase w-fit mb-1 dark:bg-indigo-900/30">
+                                {inq.inquiry_type}
+                            </span>
+                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 italic">
+                                {inq.subject || "No Subject"}
+                            </span>
+                        </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(inq.status)}`}>
+                            {inq.status}
                         </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <span className="text-xs font-bold text-gray-700 bg-gray-50 px-2 py-1 rounded border border-gray-100 dark:bg-gray-800 dark:text-gray-300">
-                            {app.years_of_experience || 0} Yrs
-                        </span>
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(app.status)}`}>
-                            {app.status || "New"}
-                        </span>
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start">
-                        {app.resume ? (
-                           <a href={app.resume} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium text-xs border border-blue-200 px-2 py-1 rounded bg-blue-50/50">
-                             <FiFileText /> RESUME
-                           </a>
-                        ) : (
-                           <span className="text-gray-400 italic text-[10px]">NO RESUME</span>
-                        )}
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-mono italic">
+                            <FiCalendar /> {inq.created_at ? new Date(inq.created_at).toLocaleDateString() : "N/A"}
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                         <div className="flex items-center gap-3">
-                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(app.id!)}><FiEdit /></button>
-                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(app.id!)}><FiTrash2 /></button>
+                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(inq.id!)}><FiEdit /></button>
+                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(inq.id!)}><FiTrash2 /></button>
                         </div>
                     </TableCell>
                   </TableRow>
@@ -237,24 +227,21 @@ const JobApplicationPage: React.FC = () => {
       )}
 
       {isAddModalOpen && (
-        <AddJobApplication 
-          onSuccess={() => fetchApplications()} 
+        <AddWebsiteInquiry 
+          onSuccess={() => fetchInquiries()} 
           onClose={() => setIsAddModalOpen(false)} 
-          jobListings={jobListings}
         />
       )}
 
       {editingId && (
-        <EditJobApplication 
+        <EditWebsiteInquiry 
           id={editingId} 
-          onSuccess={() => fetchApplications()} 
+          onSuccess={() => fetchInquiries()} 
           onClose={() => setEditingId(null)} 
-          jobListings={jobListings}
         />
       )}
     </>
   );
 };
 
-export default JobApplicationPage;
-
+export default WebsiteInquiryPage;
