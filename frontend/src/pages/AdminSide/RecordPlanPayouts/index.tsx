@@ -9,10 +9,8 @@ import { Modal } from "../../../components/ui/modal";
 import {
   createPayoutTransaction,
   fetchPayoutPatients,
-  fetchTrackerTransactions,
   PayableTrackerRow,
   PatientTrackersRow,
-  PayoutTransactionRow,
 } from "./api";
 
 const METHODS: { value: string; label: string }[] = [
@@ -32,7 +30,6 @@ export default function RecordPlanPayoutsPage() {
   });
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [expandedPatients, setExpandedPatients] = useState<number[]>([]);
-  const [trackerTxs, setTrackerTxs] = useState<Record<number, PayoutTransactionRow[]>>({});
 
 
   // Modal / Form state
@@ -53,7 +50,7 @@ export default function RecordPlanPayoutsPage() {
   const loadPatients = useCallback(async () => {
     setLoadingPatients(true);
     try {
-      const res = await fetchPayoutPatients(patientPage, 12);
+      const res = await fetchPayoutPatients(patientPage, 10);
       setPatientData({ results: res.results || [], totalPages: res.total_pages || 1 });
     } catch {
       toast.error("Failed to load patient payout data");
@@ -106,14 +103,6 @@ export default function RecordPlanPayoutsPage() {
       toast.success("Payout recorded.");
       closePayout();
       await loadPatients();
-
-      // Re-fetch transactions for the updated tracker
-      try {
-        const res = await fetchTrackerTransactions(selectedTracker.id);
-        setTrackerTxs((prev) => ({ ...prev, [selectedTracker.id]: res }));
-      } catch {
-        // ignore
-      }
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
       const msg =
@@ -159,20 +148,6 @@ export default function RecordPlanPayoutsPage() {
                     setExpandedPatients((prev) =>
                       willExpand ? [...prev, patient.id] : prev.filter((id) => id !== patient.id)
                     );
-
-                    if (willExpand) {
-                      // Fetch transactions for each tracker of this patient
-                      patient.trackers.forEach(async (t) => {
-                        if (!trackerTxs[t.id]) {
-                          try {
-                            const res = await fetchTrackerTransactions(t.id);
-                            setTrackerTxs((prev) => ({ ...prev, [t.id]: res }));
-                          } catch {
-                            // ignore silently or toast
-                          }
-                        }
-                      });
-                    }
                   };
 
                   return (
@@ -243,8 +218,8 @@ export default function RecordPlanPayoutsPage() {
                                 <div className="flex items-start justify-between mb-4">
                                   <div>
                                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mb-2 ${t.payout_type === 'nutritionist'
-                                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
-                                        : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30'
+                                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
+                                      : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30'
                                       }`}>
                                       {t.payout_type?.replace('_', ' ')}
                                     </span>
@@ -284,27 +259,6 @@ export default function RecordPlanPayoutsPage() {
                                     Add Payout
                                   </Button>
                                 </div>
-
-                                {/* Mini Transaction History Link/Section */}
-                                {trackerTxs[t.id] && trackerTxs[t.id].length > 0 && (
-                                  <div className="mt-4 pt-4 border-t border-dashed border-gray-100 dark:border-gray-800">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Recent Payments</p>
-                                    <div className="space-y-2">
-                                      {trackerTxs[t.id].slice(0, 3).map((tx) => (
-                                        <div key={tx.id} className="flex items-center justify-between text-[10px]">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-400">{tx.payout_date}</span>
-                                            <span className="capitalize text-gray-500">{tx.payment_method?.replace('_', ' ')}</span>
-                                          </div>
-                                          <span className="font-black text-gray-700 dark:text-gray-300">₹{parseFloat(tx.amount_paid).toFixed(2)}</span>
-                                        </div>
-                                      ))}
-                                      {trackerTxs[t.id].length > 3 && (
-                                        <p className="text-[8px] text-brand-600 font-bold italic pt-1">+ {trackerTxs[t.id].length - 3} more transactions</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             ))}
                           </div>
