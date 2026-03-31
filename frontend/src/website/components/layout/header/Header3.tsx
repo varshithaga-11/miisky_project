@@ -62,7 +62,7 @@ export default function Header3({
                 <figure className="logo">
                   <Link to="/website">
                     <Image
-                      src="/website/assets/images/logo-miisky.png"
+                      src="/miisky-logo.png"
                       alt="Logo Image"
                       width={203}
                       height={40}
@@ -84,7 +84,7 @@ export default function Header3({
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent3">
                     <ul className="navigation clearfix">
-                       <li>
+                       <li className="current">
                         <Link to="/website">Home</Link>
                       </li>
                       <li>
@@ -140,29 +140,7 @@ export default function Header3({
                 </nav>
               </div>
 
-              <div className="menu-right-content">
-                <div className="support-box" style={{ display: 'flex', alignItems: 'center' }}>
-                  <div className="icon-box" style={{ 
-                      width: '50px', 
-                      height: '50px', 
-                      backgroundColor: '#fba354', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      marginRight: '15px',
-                      flexShrink: 0
-                  }}>
-                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
-                  </div>
-                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
-                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
-                    </h6>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -175,7 +153,7 @@ export default function Header3({
                 <figure className="logo">
                   <Link to="/website">
                     <Image
-                      src="/website/assets/images/logo-miisky.png"
+                      src="/miisky-logo.png"
                       alt="Logo Image"
                       width={203}
                       height={40}
@@ -249,30 +227,7 @@ export default function Header3({
                   </div>
                 </nav>
               </div>
-              <div className="menu-right-content">
-                <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                  <div className="icon-box" style={{ 
-                      width: '50px', 
-                      height: '50px', 
-                      backgroundColor: '#fba354', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      marginRight: '15px',
-                      flexShrink: 0,
-                      position: 'relative'
-                  }}>
-                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
-                  </div>
-                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative' }}>
-                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
-                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
-                    </h6>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
