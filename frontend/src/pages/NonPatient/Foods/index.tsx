@@ -4,19 +4,30 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getAvailableMicroKitchenFoods, getApprovedMicroKitchens, MicroKitchenFoodItem, MicroKitchenProfile } from "./api";
 import { addToCart } from "../orderapi";
+import { getProfile } from "../../ProfileInformation/api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
-import { FiSearch, FiLayers, FiMapPin, FiShoppingCart, FiCheckCircle } from "react-icons/fi";
-import { motion } from "framer-motion";
+import { FiSearch, FiLayers, FiMapPin, FiShoppingCart, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const NonPatientFoodsPage: React.FC = () => {
     const [foods, setFoods] = useState<MicroKitchenFoodItem[]>([]);
     const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
+    const [userProfile, setUserProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedKitchen, setSelectedKitchen] = useState<string>("all");
     const [addingToCart, setAddingToCart] = useState<number | null>(null);
     const [quantities, setQuantities] = useState<Record<number, number>>({});
+
+    const fetchProfile = async () => {
+        try {
+            const data = await getProfile();
+            setUserProfile(data);
+        } catch (err) {
+            console.error("Failed to load user profile for distance calculation", err);
+        }
+    };
 
     const fetchKitchens = async () => {
         try {
@@ -26,6 +37,20 @@ const NonPatientFoodsPage: React.FC = () => {
             console.error(err);
         }
     };
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Radius of earth in km
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Distance in km
+    };
+
+    const hasLocation = userProfile?.latitude && userProfile?.longitude;
 
     const fetchFoods = async () => {
         setLoading(true);
@@ -44,6 +69,7 @@ const NonPatientFoodsPage: React.FC = () => {
     };
 
     useEffect(() => {
+        fetchProfile();
         fetchKitchens();
     }, []);
 
@@ -127,15 +153,46 @@ const NonPatientFoodsPage: React.FC = () => {
                                 className="w-full px-6 py-4 bg-white dark:bg-gray-800 rounded-[30px] border-none shadow-xl shadow-gray-200/40 dark:shadow-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
                             >
                                 <option value="all">All Micro Kitchens</option>
-                                {kitchens.map((k) => (
-                                    <option key={k.id} value={String(k.id)}>
-                                        {k.brand_name || `Kitchen #${k.id}`}
-                                    </option>
-                                ))}
+                                {kitchens.map((k) => {
+                                    let distText = "";
+                                    if (userProfile?.latitude && userProfile?.longitude && k.latitude && k.longitude) {
+                                        const dist = calculateDistance(
+                                            Number(userProfile.latitude), Number(userProfile.longitude),
+                                            Number(k.latitude), Number(k.longitude)
+                                        );
+                                        distText = ` (${dist.toFixed(1)} km)`;
+                                    }
+                                    return (
+                                        <option key={k.id} value={String(k.id)}>
+                                            {k.brand_name || `Kitchen #${k.id}`}{distText}
+                                        </option>
+                                    );
+                                })}
                             </select>
                         </div>
                     </div>
                 </div>
+
+                <AnimatePresence>
+                    {!hasLocation && !loading && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="mb-8 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-[25px] flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                                    <FiAlertCircle size={24} />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-black text-amber-900 dark:text-amber-200 uppercase tracking-tight">Location access required</h4>
+                                    <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Please update your address coordinates in the <Link to="/patient/profile" className="underline font-black">profile section</Link> to see the nearest micro kitchens and distances.</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {loading ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -156,7 +213,17 @@ const NonPatientFoodsPage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                        {foods.map((item, idx) => (
+                        {foods
+                          .sort((a, b) => {
+                            if (!userProfile?.latitude || !userProfile?.longitude) return 0;
+                            const ka = kitchens.find(k => k.id === a.micro_kitchen);
+                            const kb = kitchens.find(k => k.id === b.micro_kitchen);
+                            if (!ka || !kb || ka.latitude === null || kb.latitude === null || ka.longitude === null || kb.longitude === null) return 0;
+                            const da = calculateDistance(Number(userProfile.latitude), Number(userProfile.longitude), Number(ka.latitude), Number(ka.longitude));
+                            const db = calculateDistance(Number(userProfile.latitude), Number(userProfile.longitude), Number(kb.latitude), Number(kb.longitude));
+                            return da - db;
+                          })
+                          .map((item, idx) => (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -178,10 +245,12 @@ const NonPatientFoodsPage: React.FC = () => {
                                 <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter line-clamp-2 leading-tight h-10 mb-2 group-hover:text-indigo-500 transition-colors">
                                     {item.food_details?.name || "Food"}
                                 </h4>
-                                <div className="flex items-center gap-1.5 mb-3 text-[10px] text-gray-400">
-                                    <FiMapPin size={10} />
-                                    <span className="truncate">{item.micro_kitchen_details?.brand_name || "Kitchen"}</span>
-                                </div>
+                                  <div className="flex flex-col gap-1.5 mb-3">
+                                     <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                                         <FiMapPin size={10} />
+                                         <span className="truncate">{item.micro_kitchen_details?.brand_name || "Kitchen"}</span>
+                                     </div>
+                                  </div>
                                 <div className="flex items-center justify-between mb-4">
                                     <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">₹{Number(item.price)}</span>
                                     {item.preparation_time && (

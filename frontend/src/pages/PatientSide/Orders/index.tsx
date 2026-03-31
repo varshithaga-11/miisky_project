@@ -3,7 +3,7 @@ import { getMyOrders, Order, rateMicroKitchen } from "../../NonPatient/orderapi"
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
-import { FiPackage, FiClock, FiMapPin, FiCheckCircle, FiLoader, FiCalendar, FiBox, FiStar, FiMessageSquare } from "react-icons/fi";
+import { FiPackage, FiClock, FiMapPin, FiCheckCircle, FiLoader, FiCalendar, FiBox, FiStar, FiMessageSquare, FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -108,12 +108,16 @@ const OrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [pageSize] = useState(10);
 
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const data = await getMyOrders();
-            setOrders(data);
+            const data = await getMyOrders(currentPage, pageSize);
+            setOrders(data.results);
+            setTotalItems(data.count);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load orders");
@@ -123,8 +127,9 @@ const OrdersPage: React.FC = () => {
     };
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
         fetchOrders();
-    }, []);
+    }, [currentPage]);
 
     const getStatusStyles = (status: string) => {
         switch (status) {
@@ -274,6 +279,33 @@ const OrdersPage: React.FC = () => {
                                 );
                             })}
                         </AnimatePresence>
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {!loading && totalItems > pageSize && (
+                    <div className="mt-20 flex justify-center items-center gap-4">
+                        <button 
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            className="w-14 h-14 rounded-3xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-indigo-500 disabled:opacity-30 disabled:hover:text-gray-400 transition-all shadow-lg shadow-gray-200/20 dark:shadow-none"
+                        >
+                            <FiArrowLeft size={20} />
+                        </button>
+                        
+                        <div className="px-8 py-4 rounded-3xl bg-indigo-500 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 flex items-center gap-3">
+                            <span className="opacity-60">Page</span>
+                            <span className="text-sm">{currentPage}</span>
+                            <span className="opacity-60">of {Math.ceil(totalItems / pageSize)}</span>
+                        </div>
+
+                        <button 
+                            disabled={currentPage >= Math.ceil(totalItems / pageSize)}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className="w-14 h-14 rounded-3xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-indigo-500 disabled:opacity-30 disabled:hover:text-gray-400 transition-all shadow-lg shadow-gray-200/20 dark:shadow-none"
+                        >
+                            <FiArrowRight size={20} />
+                        </button>
                     </div>
                 )}
             </div>

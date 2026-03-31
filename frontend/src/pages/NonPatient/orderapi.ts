@@ -130,11 +130,17 @@ export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
   return response.data;
 };
 
-export const getMyOrders = async (): Promise<Order[]> => {
-  const url = createApiUrl("api/order/");
+export const getMyOrders = async (page = 1, limit = 10): Promise<{ results: Order[]; count: number }> => {
+  const url = createApiUrl(`api/order/?page=${page}&limit=${limit}`);
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   const d = response.data;
-  return Array.isArray(d) ? d : d?.results ?? [];
+  if (Array.isArray(d)) {
+    return { results: d, count: d.length };
+  }
+  return {
+    results: d?.results ?? [],
+    count: d?.count ?? 0,
+  };
 };
 
 export const updateOrderStatus = async (orderId: number, status: string) => {
