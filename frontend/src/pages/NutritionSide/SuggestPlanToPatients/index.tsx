@@ -8,6 +8,7 @@ import {
   suggestPlanToPatient,
   getSuggestedPlansForPatient,
   reassignMicroKitchenForPlan,
+  updatePlanStatus,
   REASSIGN_MICRO_KITCHEN_REASONS,
   MappedPatientResponse,
   NutritionistReview,
@@ -17,7 +18,7 @@ import type { DietPlan } from "./api";
 import { getApprovedMicroKitchens } from "../ListOfMicroKitchens/api";
 import type { MicroKitchenProfile } from "../ListOfMicroKitchens/api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiSend, FiCheckCircle, FiPackage, FiHome } from "react-icons/fi";
+import { FiUsers, FiSend, FiCheckCircle, FiPackage, FiHome, FiStopCircle, FiCheck, FiClock, FiEdit } from "react-icons/fi";
 import DatePicker2 from "../../../components/form/date-picker2";
 
 const SuggestPlanToPatientsPage: React.FC = () => {
@@ -39,6 +40,31 @@ const SuggestPlanToPatientsPage: React.FC = () => {
   const [switchNotes, setSwitchNotes] = useState("");
   const [switchFromDate, setSwitchFromDate] = useState("");
   const [switchingKitchen, setSwitchingKitchen] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
+
+  const handleStatusUpdate = async (id: number, newStatus: string) => {
+    if (submitting) return;
+    if (!window.confirm(`Are you sure you want to mark this plan as ${newStatus}?`)) return;
+    setSubmitting(true);
+    try {
+      const updated = await updatePlanStatus(id, newStatus);
+      setSuggestedPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      toast.success(`Plan marked as ${newStatus}`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to update status");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isCompletionAllowed = (endDate: string | null) => {
+    if (!endDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+    return end <= today;
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -438,9 +464,20 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                                   ₹{udp.diet_plan_details?.final_amount || udp.amount_paid || "0"}
                               </span>
                             </h4>
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
-                                {udp.status.replace("_", " ")}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
+                                  {udp.status.replace("_", " ")}
+                                </span>
+                                {udp.status === "active" && (
+                                  <button
+                                    onClick={() => setEditingPlanId(editingPlanId === udp.id ? null : udp.id)}
+                                    className={`p-1.5 rounded-lg transition-all ${editingPlanId === udp.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-indigo-600'}`}
+                                    title="Edit status"
+                                  >
+                                    <FiEdit size={14} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                             {udp.micro_kitchen_details && (
                               <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
@@ -467,6 +504,40 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                             )}
                             {udp.nutritionist_notes && (
                               <p className="text-sm text-gray-600 dark:text-gray-400 italic line-clamp-2">{udp.nutritionist_notes}</p>
+                            )}
+
+                            {udp.status === "active" && editingPlanId === udp.id && (
+                              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Manage Plan Status</p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleStatusUpdate(udp.id, "stopped")}
+                                    disabled={submitting}
+                                    className="flex-1 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-900/30 transition-all uppercase"
+                                  >
+                                    <FiStopCircle size={14} /> Stop
+                                  </button>
+                                  
+                                  {isCompletionAllowed(udp.end_date) ? (
+                                    <button
+                                      onClick={() => handleStatusUpdate(udp.id, "completed")}
+                                      disabled={submitting}
+                                      className="flex-1 py-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 border border-green-200 dark:border-green-900/30 transition-all uppercase"
+                                    >
+                                      <FiCheck size={14} /> Finish
+                                    </button>
+                                  ) : (
+                                    <div 
+                                      className="flex-1 p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 flex items-center justify-center cursor-help"
+                                      title={`You can mark this plan as completed on or after ${new Date(udp.end_date!).toLocaleDateString()}`}
+                                    >
+                                       <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase flex items-center gap-1 leading-tight text-center">
+                                         <FiClock className="shrink-0" /> Unlock {new Date(udp.end_date!).toLocaleDateString()}
+                                       </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             )}
                           </div>
                         ))

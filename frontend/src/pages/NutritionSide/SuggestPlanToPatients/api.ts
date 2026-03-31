@@ -106,3 +106,8 @@ export const reassignMicroKitchenForPlan = async (planId: number, payload: {
   const response = await axios.post(url, payload, { headers: await getAuthHeaders() });
   return response.data;
 };
+export const updatePlanStatus = async (id: number, status: string): Promise<UserDietPlan> => {
+  const url = createApiUrl(`api/userdietplan/${id}/`);
+  const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
+  return response.data;
+};
