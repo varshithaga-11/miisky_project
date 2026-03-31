@@ -438,12 +438,16 @@ class AdminAllOrdersView(APIView):
 
     def get(self, request):
         search = request.query_params.get('search', '').strip()
+        microkitchen = request.query_params.get('microkitchen', '').strip()
         
         # We'll pull from both Order (non-patient/general) and UserDietPlan (patient plans)
         # to give a comprehensive view, or just Order if that's the primary tracking.
         # For now, let's focus on the 'Order' model as it's the most "standard" order.
         qs = Order.objects.all().select_related('user', 'micro_kitchen', 'delivery_slab').order_by('-created_at')
         
+        if microkitchen:
+            qs = qs.filter(micro_kitchen_id=microkitchen)
+
         if search:
             qs = qs.filter(
                 Q(id__icontains=search) |
