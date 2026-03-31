@@ -2792,7 +2792,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                         'quantity': item.get('quantity'),
                         'user_diet_plan': udp,
                         'notes': item.get('notes'),
-                        'packaging_material_id': item.get('packaging_material'),
+                        'packaging_material': item.get('packaging_material'),
                         'micro_kitchen_id': target_kitchen_id,
                     }
                 )
@@ -2804,7 +2804,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                 meal_obj.quantity = item.get('quantity')
                 meal_obj.user_diet_plan = udp
                 meal_obj.notes = item.get('notes')
-                meal_obj.packaging_material_id = item.get('packaging_material')
+                meal_obj.packaging_material = item.get('packaging_material')
                 # Always align with resolved historical owner for that date.
                 meal_obj.micro_kitchen_id = target_kitchen_id
 

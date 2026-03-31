@@ -19,6 +19,7 @@ from .models import (
     PayoutTracker,
     PlanPaymentSnapshot,
     UserDietPlan,
+    UserMeal,
     UserRegister,
 )
 
@@ -79,6 +80,23 @@ def nutritionist_date_segments(plan: UserDietPlan) -> List[Tuple[int, object, ob
         )
     )
     if not rows:
+        # Fallback: Check if we have original_nutritionist and effective_from on the plan itself
+        if plan.original_nutritionist_id and plan.nutritionist_effective_from:
+            eff = plan.nutritionist_effective_from
+            if eff > sd:
+                out = []
+                # Segment 1: Original nutritionist (from plan start until effective_from - 1)
+                s1_end = eff - timedelta(days=1)
+                seg1 = _intersect_range(sd, ed, sd, s1_end)
+                if seg1:
+                    out.append((plan.original_nutritionist_id, seg1[0], seg1[1]))
+                
+                # Segment 2: New nutritionist (from effective_from until plan end)
+                seg2 = _intersect_range(sd, ed, eff, ed)
+                if seg2 and plan.nutritionist_id:
+                    out.append((plan.nutritionist_id, seg2[0], seg2[1]))
+                return out
+
         if plan.nutritionist_id:
             return [(plan.nutritionist_id, sd, ed)]
         return []
@@ -109,6 +127,23 @@ def kitchen_date_segments(plan: UserDietPlan) -> List[Tuple[int, object, object]
         )
     )
     if not rows:
+        # Fallback: Check if we have original_micro_kitchen and effective_from on the plan itself
+        if plan.original_micro_kitchen_id and plan.micro_kitchen_effective_from:
+            eff = plan.micro_kitchen_effective_from
+            if eff > sd:
+                out = []
+                # Segment 1: Original kitchen (from plan start until effective_from - 1)
+                s1_end = eff - timedelta(days=1)
+                seg1 = _intersect_range(sd, ed, sd, s1_end)
+                if seg1:
+                    out.append((plan.original_micro_kitchen_id, seg1[0], seg1[1]))
+                
+                # Segment 2: New kitchen (from effective_from until plan end)
+                seg2 = _intersect_range(sd, ed, eff, ed)
+                if seg2 and plan.micro_kitchen_id:
+                    out.append((plan.micro_kitchen_id, seg2[0], seg2[1]))
+                return out
+
         if plan.micro_kitchen_id:
             return [(plan.micro_kitchen_id, sd, ed)]
         return []
@@ -161,7 +196,18 @@ def sync_payout_trackers(snapshot: PlanPaymentSnapshot) -> None:
     if not sd or not ed:
         return
 
-    block_nk = _has_blocking_partial_payouts(snapshot)
+    block_nutritionists = PayoutTracker.objects.filter(
+        snapshot=snapshot,
+        payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+        is_closed=False,
+        paid_amount__gt=0,
+    ).exists()
+    block_kitchens = PayoutTracker.objects.filter(
+        snapshot=snapshot,
+        payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
+        is_closed=False,
+        paid_amount__gt=0,
+    ).exists()
 
     # Platform: single open tracker; update while nothing paid
     plat = PayoutTracker.objects.filter(
@@ -188,76 +234,104 @@ def sync_payout_trackers(snapshot: PlanPaymentSnapshot) -> None:
             status=PayoutTracker.STATUS_PENDING,
         )
 
-    if block_nk:
-        logger.warning(
-            "Skipping nutritionist/kitchen tracker resync for snapshot %s: partial payouts exist.",
-            snapshot.pk,
-        )
-        return
-
-    now = timezone.now()
-    PayoutTracker.objects.filter(
-        snapshot=snapshot,
-        payout_type__in=(
-            PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
-            PayoutTracker.PAYOUT_TYPE_KITCHEN,
-        ),
-        is_closed=False,
-        paid_amount=0,
-    ).update(
-        is_closed=True,
-        status=PayoutTracker.STATUS_CLOSED,
-        closed_reason="Period resync (verify or reassignment)",
-        closed_on=now,
-    )
-
+    now_ts = timezone.now()
     total_days = _inclusive_days(sd, ed)
     if total_days <= 0:
         total_days = 1
 
-    n_segments = nutritionist_date_segments(plan)
-    n_weights = [_inclusive_days(a, b) for _, a, b in n_segments]
-    n_amounts = _allocate_pool(snapshot.nutrition_amount, n_weights)
-    for i, (nid, pf, pt) in enumerate(n_segments):
-        amt = n_amounts[i] if i < len(n_amounts) else Decimal("0")
-        if amt <= 0:
-            continue
-        user = UserRegister.objects.filter(pk=nid).first()
-        if not user:
-            continue
-        PayoutTracker.objects.create(
+    # Sync Nutritionists
+    if not block_nutritionists:
+        PayoutTracker.objects.filter(
             snapshot=snapshot,
             payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
-            nutritionist=user,
-            micro_kitchen=None,
-            total_amount=amt,
-            paid_amount=Decimal("0"),
-            period_from=pf,
-            period_to=pt,
-            status=PayoutTracker.STATUS_PENDING,
+            is_closed=False,
+            paid_amount=0,
+        ).update(
+            is_closed=True,
+            status=PayoutTracker.STATUS_CLOSED,
+            closed_reason="Period resync (verify or reassignment)",
+            closed_on=now_ts,
         )
+        n_segments = nutritionist_date_segments(plan)
+        
+        # Calculate weights based on "allotted meals" days
+        n_weights = []
+        for _, pf, pt in n_segments:
+            m_days = UserMeal.objects.filter(
+                user_diet_plan=plan,
+                meal_date__range=(pf, pt)
+            ).values("meal_date").distinct().count()
+            
+            # Use count of meal days if any, otherwise fallback to total calendar days for the segment
+            n_weights.append(m_days if m_days > 0 else _inclusive_days(pf, pt))
 
-    k_segments = kitchen_date_segments(plan)
-    k_weights = [_inclusive_days(a, b) for _, a, b in k_segments]
-    k_amounts = _allocate_pool(snapshot.kitchen_amount, k_weights)
-    for i, (kid, pf, pt) in enumerate(k_segments):
-        amt = k_amounts[i] if i < len(k_amounts) else Decimal("0")
-        if amt <= 0:
-            continue
-        mk = MicroKitchenProfile.objects.filter(pk=kid).first()
-        if not mk:
-            continue
-        PayoutTracker.objects.create(
+        n_amounts = _allocate_pool(snapshot.nutrition_amount, n_weights)
+        for i, (nid, pf, pt) in enumerate(n_segments):
+            amt = n_amounts[i] if i < len(n_amounts) else Decimal("0")
+            if amt <= 0:
+                continue
+            user = UserRegister.objects.filter(pk=nid).first()
+            if user:
+                PayoutTracker.objects.create(
+                    snapshot=snapshot,
+                    payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+                    nutritionist=user,
+                    micro_kitchen=None,
+                    total_amount=amt,
+                    paid_amount=Decimal("0"),
+                    period_from=pf,
+                    period_to=pt,
+                    status=PayoutTracker.STATUS_PENDING,
+                )
+    else:
+        logger.warning("Skipping nutritionist tracker resync for snapshot %s: partial payouts exist.", snapshot.pk)
+
+    # Sync Kitchens
+    if not block_kitchens:
+        PayoutTracker.objects.filter(
             snapshot=snapshot,
             payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
-            nutritionist=None,
-            micro_kitchen=mk,
-            total_amount=amt,
-            paid_amount=Decimal("0"),
-            period_from=pf,
-            period_to=pt,
-            status=PayoutTracker.STATUS_PENDING,
+            is_closed=False,
+            paid_amount=0,
+        ).update(
+            is_closed=True,
+            status=PayoutTracker.STATUS_CLOSED,
+            closed_reason="Period resync (verify or reassignment)",
+            closed_on=now_ts,
         )
+        k_segments = kitchen_date_segments(plan)
+
+        # Calculate weights based on "allotted meals" days
+        k_weights = []
+        for _, pf, pt in k_segments:
+            m_days = UserMeal.objects.filter(
+                user_diet_plan=plan,
+                meal_date__range=(pf, pt)
+            ).values("meal_date").distinct().count()
+            
+            # Use count of meal days if any, otherwise fallback to total calendar days for the segment
+            k_weights.append(m_days if m_days > 0 else _inclusive_days(pf, pt))
+
+        k_amounts = _allocate_pool(snapshot.kitchen_amount, k_weights)
+        for i, (kid, pf, pt) in enumerate(k_segments):
+            amt = k_amounts[i] if i < len(k_amounts) else Decimal("0")
+            if amt <= 0:
+                continue
+            mk = MicroKitchenProfile.objects.filter(pk=kid).first()
+            if mk:
+                PayoutTracker.objects.create(
+                    snapshot=snapshot,
+                    payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                    nutritionist=None,
+                    micro_kitchen=mk,
+                    total_amount=amt,
+                    paid_amount=Decimal("0"),
+                    period_from=pf,
+                    period_to=pt,
+                    status=PayoutTracker.STATUS_PENDING,
+                )
+    else:
+        logger.warning("Skipping kitchen tracker resync for snapshot %s: partial payouts exist.", snapshot.pk)
 
 
 def refresh_payout_trackers_if_exists(plan: Optional[UserDietPlan]) -> None:
