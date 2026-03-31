@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 /* Website Global Styles */
 /* These CSS files are served from public/website/assets/css/ */
 
@@ -60,6 +61,13 @@ body {
   justify-content: space-between !important;
   align-items: center !important;
   gap: 20px !important;
+  padding: 10px 40px !important; /* Added horizontal padding for breathing room */
+}
+
+/* Define the white header against the page content */
+.main-header {
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.05) !important;
 }
 
 .main-header .logo-box {
@@ -82,14 +90,21 @@ body {
 }
 
 .main-header .navigation > li {
-  margin: 0px 10px !important; /* Balanced margin */
+  margin: 0px 22px !important; /* Even more premium spacing */
   position: relative !important;
 }
 
 .main-header .navigation > li > a {
-  font-size: 14px !important; /* Slightly smaller font to ensure fit */
-  font-weight: 700 !important;
+  font-family: 'Outfit', 'Inter', 'Source Sans Pro', sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
   text-transform: uppercase !important;
+  letter-spacing: 0.03em !important; /* Slightly more letter spacing */
+  transition: all 0.3s ease !important;
+}
+
+.main-header .navigation > li > a:hover {
+  color: #0646ac !important;
 }
 
 .main-header .menu-right-content {

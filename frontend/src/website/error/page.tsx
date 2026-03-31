@@ -6,7 +6,7 @@ export default function ErrorPage() {
   const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
 
   useEffect(() => {
-    setHeaderStyle(3);
+    setHeaderStyle(1);
     setBreadcrumbTitle("Page Not Found");
   }, [setHeaderStyle, setBreadcrumbTitle]);
 

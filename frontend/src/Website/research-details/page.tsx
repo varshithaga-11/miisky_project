@@ -11,7 +11,7 @@ export default function ResearchPaperDetailsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Research Details");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

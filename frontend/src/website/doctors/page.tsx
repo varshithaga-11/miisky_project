@@ -12,7 +12,7 @@ export default function DoctorsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Our Doctors");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

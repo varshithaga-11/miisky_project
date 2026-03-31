@@ -11,12 +11,8 @@ export function GlobalLayoutWrapper() {
   const isAuthPage = pathname.includes("/login") || pathname.includes("/register");
 
   useEffect(() => {
-    if (pathname === "/website" || pathname === "/website/") {
-      setHeaderStyle(1);
-    } else {
-      setHeaderStyle(3);
-    }
-  }, [pathname, setHeaderStyle]);
+    setHeaderStyle(1);
+  }, [setHeaderStyle]);
 
   if (isAuthPage) {
     return <Outlet />;

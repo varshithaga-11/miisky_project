@@ -7,7 +7,7 @@ export default function Portfolio_Page_Two() {
   const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
 
   useEffect(() => {
-    setHeaderStyle(3);
+    setHeaderStyle(1);
     setBreadcrumbTitle("Portfolio Two");
   }, [setHeaderStyle, setBreadcrumbTitle]);
 

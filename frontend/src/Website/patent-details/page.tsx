@@ -11,7 +11,7 @@ export default function PatentDetailsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Patent Details");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

@@ -30,7 +30,7 @@ export default function CareerApplyPage() {
     const [resume, setResume] = useState<File | null>(null);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Job Application");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

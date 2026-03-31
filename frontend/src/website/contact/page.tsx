@@ -9,7 +9,7 @@ export default function ContactPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Contact Us");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

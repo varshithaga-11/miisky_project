@@ -9,7 +9,7 @@ export default function CareersPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Join Our Team");
         const fetchJobs = async () => {
             try {

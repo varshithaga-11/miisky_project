@@ -15,7 +15,7 @@ export default function GalleryPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Our Gallery");
         const fetchGalleryData = async () => {
             try {

@@ -9,7 +9,7 @@ export default function FAQPage() {
     const [activeId, setActiveId] = useState<number | null>(null);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Frequently Asked Questions");
         const fetchFaqs = async () => {
             try {

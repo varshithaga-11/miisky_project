@@ -15,7 +15,7 @@ export default function BlogPage() {
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Blog Grid");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

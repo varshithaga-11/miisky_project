@@ -9,7 +9,7 @@ export default function InnovationPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Innovation & Research");
         const fetchPapersData = async () => {
             try {

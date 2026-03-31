@@ -16,7 +16,7 @@ export default function MedicalDevicesPage() {
     const categoryId = queryParams.get("category");
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Innovative Medical Solutions");
         const fetchDevicesData = async () => {
             try {

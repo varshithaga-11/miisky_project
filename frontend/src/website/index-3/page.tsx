@@ -18,7 +18,7 @@ export default function Home_Three() {
     const { setHeaderStyle } = useLayout();
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
     }, [setHeaderStyle]);
 
     return (

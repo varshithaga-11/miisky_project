@@ -11,7 +11,7 @@ export default function PartnersPage() {
     const [selectedPartner, setSelectedPartner] = useState<any>(null);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Our Trusted Partners");
         const fetchPartnersData = async () => {
             try {

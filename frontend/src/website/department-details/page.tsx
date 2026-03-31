@@ -15,7 +15,7 @@ export default function DepartmentDetails() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle(department.name || "Department Details");
     }, [setHeaderStyle, setBreadcrumbTitle, department.name]);
 

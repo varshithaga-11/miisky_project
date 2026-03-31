@@ -13,7 +13,7 @@ export default function DepartmentDetailsFour() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle(department.name || "Department");
     }, [setHeaderStyle, setBreadcrumbTitle, department.name]);
 

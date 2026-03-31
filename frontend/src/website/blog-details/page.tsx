@@ -17,7 +17,7 @@ export default function BlogDetails() {
     const [commentStatus, setCommentStatus] = useState({ type: "", message: "" });
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Blog Details");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

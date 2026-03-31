@@ -28,7 +28,7 @@ export default function DoctorsDetails() {
   };
 
   useEffect(() => {
-    setHeaderStyle(3);
+    setHeaderStyle(1);
     setBreadcrumbTitle("Doctor Details");
   }, [setHeaderStyle, setBreadcrumbTitle]);
 

@@ -12,7 +12,7 @@ export default function PartnerDetailsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Partner Details");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

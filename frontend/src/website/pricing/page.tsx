@@ -46,7 +46,7 @@ export default function Pricing_Page() {
     const [faqs, setFaqs] = useState<any[]>([]);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Pricing");
 
         const fetchData = async () => {

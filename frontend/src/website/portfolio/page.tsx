@@ -12,7 +12,7 @@ export default function Portfolio_Page() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setHeaderStyle(3);
+    setHeaderStyle(1);
     setBreadcrumbTitle("Portfolio One");
   }, [setHeaderStyle, setBreadcrumbTitle]);
 

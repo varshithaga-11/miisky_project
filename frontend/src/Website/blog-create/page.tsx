@@ -18,7 +18,7 @@ const BlogCreatePage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    setHeaderStyle(3);
+    setHeaderStyle(1);
     setBreadcrumbTitle("Share Your Story");
   }, [setHeaderStyle, setBreadcrumbTitle]);
 

@@ -16,7 +16,7 @@ export default function About_Page() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("About Us");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

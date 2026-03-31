@@ -13,7 +13,7 @@ export default function GalleryDetailsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Gallery Item");
     }, [setHeaderStyle, setBreadcrumbTitle]);
 

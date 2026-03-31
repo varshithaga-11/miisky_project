@@ -9,7 +9,7 @@ export default function PatentsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setHeaderStyle(3);
+        setHeaderStyle(1);
         setBreadcrumbTitle("Our Patents");
         const fetchPatentsData = async () => {
             try {
