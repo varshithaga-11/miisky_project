@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { toast } from "react-toastify";
 import { Modal } from "../../../components/ui/modal";
 import {
@@ -26,6 +27,7 @@ const METHODS: { value: string; label: string }[] = [
 
 export default function RecordPlanPayoutsPage() {
   const [patientPage, setPatientPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const [patientData, setPatientData] = useState<{ results: PatientPayoutSummaryRow[]; totalPages: number }>({
     results: [],
     totalPages: 1,
@@ -54,7 +56,7 @@ export default function RecordPlanPayoutsPage() {
   const loadPatients = useCallback(async () => {
     setLoadingPatients(true);
     try {
-      const res = await fetchPayoutPatientSummaries(patientPage, 10);
+      const res = await fetchPayoutPatientSummaries(patientPage, 10, searchTerm);
       setPatientData({ results: res.results || [], totalPages: res.total_pages || 1 });
     } catch {
       toast.error("Failed to load patient payout data");
@@ -62,7 +64,7 @@ export default function RecordPlanPayoutsPage() {
     } finally {
       setLoadingPatients(false);
     }
-  }, [patientPage]);
+  }, [patientPage, searchTerm]);
 
 
   useEffect(() => {
@@ -138,6 +140,34 @@ export default function RecordPlanPayoutsPage() {
 
         <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm space-y-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payable Patients</h2>
+          <div className="relative max-w-md">
+            <input
+              type="text"
+              value={searchTerm}
+              placeholder="Search patient, plan, nutritionist, kitchen..."
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPatientPage(1);
+                setExpandedPatients([]);
+                setPatientDetailsById({});
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            />
+            <svg
+              className="absolute left-3 top-2.5 text-gray-400"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
           {loadingPatients ? (
             <p className="text-sm text-gray-500 py-6">Loading patients…</p>
           ) : patientData.results.length === 0 ? (
@@ -146,7 +176,31 @@ export default function RecordPlanPayoutsPage() {
             </p>
           ) : (
             <>
-              <div className="space-y-3">
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
+                        Patient
+                      </TableCell>
+                      <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
+                        Plan
+                      </TableCell>
+                      <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
+                        Payable Lines
+                      </TableCell>
+                      <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
+                        Plan Total
+                      </TableCell>
+                      <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
+                        Outstanding
+                      </TableCell>
+                      <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-right">
+                        Details
+                      </TableCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                 {patientData.results.map((patient) => {
                   const isExpanded = expandedPatients.includes(patient.id);
                   const toggleExpand = async () => {
@@ -157,7 +211,7 @@ export default function RecordPlanPayoutsPage() {
                     if (willExpand && !patientDetailsById[patient.id]) {
                       setLoadingDetailById((prev) => ({ ...prev, [patient.id]: true }));
                       try {
-                        const detail = await fetchPayoutPatientDetails(patient.id);
+                        const detail = await fetchPayoutPatientDetails(patient.id, searchTerm);
                         if (detail) {
                           setPatientDetailsById((prev) => ({ ...prev, [patient.id]: detail }));
                         }
@@ -173,50 +227,39 @@ export default function RecordPlanPayoutsPage() {
                   const isLoadingDetail = loadingDetailById[patient.id];
 
                   return (
-                    <div
-                      key={patient.id}
-                      className="group flex flex-col rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-800/20 overflow-hidden transition-all hover:border-brand-200 dark:hover:border-brand-900"
-                    >
-                      <div
-                        onClick={toggleExpand}
-                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-white dark:hover:bg-gray-800/40 transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span
-                            className={`flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180 text-brand-600 border-brand-200" : ""
-                              }`}
+                    <Fragment key={patient.id}>
+                      <TableRow className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                        <TableCell className="px-5 py-4 font-semibold text-gray-900 dark:text-white">
+                          {patient.patient_name}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-gray-700 dark:text-gray-300">
+                          {patient.plan_title || "No Plan"}
+                        </TableCell>
+                        <TableCell className="px-5 py-4">{patient.payable_lines}</TableCell>
+                        <TableCell className="px-5 py-4 font-medium">
+                          ₹{parseFloat(patient.plan_total_amount || "0").toFixed(2)}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 font-medium">
+                          ₹{parseFloat(patient.total_remaining || "0").toFixed(2)}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={toggleExpand}
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-brand-600 ${isExpanded ? "rotate-180 text-brand-600 border-brand-200" : ""}`}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
-                          </span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-gray-900 dark:text-white text-base">
-                                {patient.patient_name}
-                              </h3>
-                              <span className="text-gray-300">|</span>
-                              <span className="text-sm font-medium text-gray-500 truncate max-w-[200px] sm:max-w-none">
-                                {patient.plan_title || "No Plan"}
-                              </span>
-                            </div>
-                            <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">
-                              ID: {patient.id} • {patient.payable_lines} Payable Line{patient.payable_lines > 1 ? "s" : ""}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[10px] uppercase font-bold text-gray-400 mb-0.5">Outstanding</span>
-                          <span className="font-black text-gray-900 dark:text-white">
-                            ₹{parseFloat(patient.total_remaining || "0").toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
+                          </button>
+                        </TableCell>
+                      </TableRow>
 
                       {isExpanded && (
-                        <div className="px-4 pb-4 bg-white/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800">
+                        <TableRow>
+                          <TableCell colSpan={6} className="px-5 py-4 bg-gray-50/60 dark:bg-gray-900/20">
                           {isLoadingDetail ? (
-                            <p className="text-sm text-gray-500 pt-4">Loading payout lines...</p>
+                            <p className="text-sm text-gray-500">Loading payout lines...</p>
                           ) : (
                             <>
                           {/* Platform Fee Notice */}
@@ -296,11 +339,14 @@ export default function RecordPlanPayoutsPage() {
                           </div>
                             </>
                           )}
-                        </div>
+                          </TableCell>
+                        </TableRow>
                       )}
-                    </div>
+                    </Fragment>
                   );
                 })}
+                  </TableBody>
+                </Table>
               </div>
 
               {patientData.totalPages > 1 && (

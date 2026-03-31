@@ -652,6 +652,20 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
             .distinct()
             .order_by("first_name", "last_name", "id")
         )
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(username__icontains=search)
+                | Q(email__icontains=search)
+                | Q(diet_plans__diet_plan__title__icontains=search)
+                | Q(diet_plans__diet_plan__code__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__nutritionist__first_name__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__nutritionist__last_name__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__nutritionist__username__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__micro_kitchen__brand_name__icontains=search)
+            ).distinct()
         patient_id = self.request.query_params.get("patient_id")
         if patient_id:
             qs = qs.filter(id=patient_id)

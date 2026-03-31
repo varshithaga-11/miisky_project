@@ -54,6 +54,7 @@ export interface PatientPayoutSummaryRow {
   plan_title: string | null;
   payable_lines: number;
   total_remaining: string;
+  plan_total_amount: string;
 }
 
 export interface PaginatedPatientTrackers {
@@ -68,15 +69,25 @@ export interface PaginatedPatientSummaries {
   total_pages: number;
 }
 
-export async function fetchPayoutPatientSummaries(page = 1, limit = 15): Promise<PaginatedPatientSummaries> {
-  const url = createApiUrl(`api/admin/plan-payout-patients/?page=${page}&limit=${limit}&include_trackers=0`);
+export async function fetchPayoutPatientSummaries(
+  page = 1,
+  limit = 15,
+  search = ""
+): Promise<PaginatedPatientSummaries> {
+  const q = search.trim();
+  const searchPart = q ? `&search=${encodeURIComponent(q)}` : "";
+  const url = createApiUrl(
+    `api/admin/plan-payout-patients/?page=${page}&limit=${limit}&include_trackers=0${searchPart}`
+  );
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data as PaginatedPatientSummaries;
 }
 
-export async function fetchPayoutPatientDetails(patientId: number): Promise<PatientTrackersRow | null> {
+export async function fetchPayoutPatientDetails(patientId: number, search = ""): Promise<PatientTrackersRow | null> {
+  const q = search.trim();
+  const searchPart = q ? `&search=${encodeURIComponent(q)}` : "";
   const url = createApiUrl(
-    `api/admin/plan-payout-patients/?patient_id=${patientId}&page=1&limit=1&include_trackers=1`
+    `api/admin/plan-payout-patients/?patient_id=${patientId}&page=1&limit=1&include_trackers=1${searchPart}`
   );
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   const data = res.data as PaginatedPatientTrackers;

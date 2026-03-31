@@ -935,10 +935,11 @@ class AdminPayoutPatientSummarySerializer(serializers.ModelSerializer):
     plan_title = serializers.SerializerMethodField()
     payable_lines = serializers.SerializerMethodField()
     total_remaining = serializers.SerializerMethodField()
+    plan_total_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = UserRegister
-        fields = ("id", "patient_name", "plan_title", "payable_lines", "total_remaining")
+        fields = ("id", "patient_name", "plan_title", "payable_lines", "total_remaining", "plan_total_amount")
 
     def get_patient_name(self, obj):
         name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
@@ -960,6 +961,15 @@ class AdminPayoutPatientSummarySerializer(serializers.ModelSerializer):
             .select_related("snapshot__user_diet_plan__diet_plan")
         )
 
+    def _all_open_tracker_qs(self, obj):
+        from django.db.models import F
+
+        return (
+            PayoutTracker.objects.filter(snapshot__user_diet_plan__user=obj, is_closed=False)
+            .filter(total_amount__gt=F("paid_amount"))
+            .select_related("snapshot__user_diet_plan__diet_plan")
+        )
+
     def get_plan_title(self, obj):
         tracker = self._open_tracker_qs(obj).order_by("id").first()
         if not tracker or not tracker.snapshot or not tracker.snapshot.user_diet_plan:
@@ -974,6 +984,12 @@ class AdminPayoutPatientSummarySerializer(serializers.ModelSerializer):
         total = Decimal("0.00")
         for tracker in self._open_tracker_qs(obj):
             total += tracker.remaining_amount
+        return str(total)
+
+    def get_plan_total_amount(self, obj):
+        total = Decimal("0.00")
+        for tracker in self._all_open_tracker_qs(obj):
+            total += tracker.total_amount
         return str(total)
 
 
