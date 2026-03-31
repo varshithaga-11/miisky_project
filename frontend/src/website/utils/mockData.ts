@@ -276,3 +276,15 @@ export const CLINIC_INFO = {
   },
 };
 
+// ─── Partners ──────────────────────────────────────────────────────────────────
+import type { Partner } from "./types";
+export const MOCK_PARTNERS: Partner[] = [
+  { id: 1, name: "AARMS Value Chain", logo: "/website/assets/images/logo-2.png" },
+  { id: 2, name: "Miisky SVASTH",     logo: "/website/assets/images/logo-miisky.png" },
+  { id: 3, name: "Partner 1",         logo: "/website/assets/images/logo.png" },
+  { id: 4, name: "Partner 2",         logo: "/website/assets/images/logo-2.png" },
+  { id: 5, name: "Partner 3",         logo: "/website/assets/images/logo-miisky.png" },
+  { id: 6, name: "Partner 4",         logo: "/website/assets/images/logo.png" },
+  { id: 7, name: "Partner 5",         logo: "/website/assets/images/logo-2.png" },
+  { id: 8, name: "Partner 6",         logo: "/website/assets/images/logo-miisky.png" },
+];

@@ -92,7 +92,7 @@ export default function About() {
                                         <div className="shape-1" style={{ backgroundImage: "url(/website/assets/images/shape/shape-9.png)" }}></div>
                                         <div className="shape-2" style={{ backgroundImage: "url(/website/assets/images/shape/shape-10.png)" }}></div>
                                     </div>
-                                    <figure className="image"><Image src="/website/assets/images/resource/about-1.jpg" alt="About Image" width={523} height={399} priority /></figure>
+                                    <figure className="image"><Image src="/website/assets/images/background/company.jpg" alt="Company Overview" width={523} height={399} priority /></figure>
                                     <div className="text-box">
                                         <div className="image-shape"style={{ backgroundImage: "url(/website/assets/images/shape/shape-7.png)" }}></div>
                                         <h2>{stats.years_experience}</h2>

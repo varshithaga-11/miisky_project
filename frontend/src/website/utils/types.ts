@@ -158,3 +158,11 @@ export interface PricingPlan {
   features: string[];
   is_popular?: boolean;
 }
+// ─── Partners ──────────────────────────────────────────────────────────────────
+export interface Partner {
+  id: number;
+  name: string;
+  logo?: string;
+  website_url?: string;
+  position?: number;
+}

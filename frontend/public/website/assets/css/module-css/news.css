@@ -36,6 +36,8 @@
 
 .news-block-one .inner-box .image-box img{
   width: 100%;
+  height: 280px;
+  object-fit: cover;
   transition: all 500ms ease;
 }
 

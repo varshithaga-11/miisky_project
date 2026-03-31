@@ -12,7 +12,7 @@ export default function Cta() {
                             <span>Call: <Link to="tel:112345615523">+1 (123)-456-155-23</Link></span>
                         </div>
                     </div>
-                    <figure className="image-layer"><Image src="/website/assets/images/resource/ambulance-1.png" alt="Image" width={576} height={303} priority /></figure>
+                    <figure className="image-layer"><Image src="/website/assets/images/background/ambulance.jpg" alt="Ambulance Service" width={420} height={220} priority /></figure>
                 </div>
             </div>
         </section>

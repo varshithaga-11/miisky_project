@@ -5,6 +5,22 @@
   position: relative;
 }
 
+.service-details-content .image-box {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 20px;
+  max-height: 450px;
+  width: 100%;
+}
+
+.service-details-content .image-box img {
+  width: 100%;
+  height: 100% !important;
+  object-fit: cover;
+  transition: all 500ms ease;
+}
+
 
 
 /** RTL-CSS **/

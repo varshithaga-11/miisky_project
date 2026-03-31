@@ -14,7 +14,7 @@ export default function Chooseus() {
   const tabContent = [
     {
       id: 1,
-      videoImg: "/website/assets/images/resource/video-1.jpg",
+      videoImg: "/website/assets/images/background/company.jpg",
       heading: "Modern Technology",
       text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
       list: [
@@ -26,7 +26,7 @@ export default function Chooseus() {
     },
     {
       id: 2,
-      videoImg: "/website/assets/images/resource/video-1.jpg",
+      videoImg: "/website/assets/images/background/company.jpg",
       heading: "Success of Treatments",
       text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
       list: [
@@ -38,7 +38,7 @@ export default function Chooseus() {
     },
     {
       id: 3,
-      videoImg: "/website/assets/images/resource/video-1.jpg",
+      videoImg: "/website/assets/images/background/company.jpg",
       heading: "Certified Doctors",
       text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
       list: [

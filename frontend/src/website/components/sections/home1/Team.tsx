@@ -35,7 +35,7 @@ export default function Team({ doctors }: TeamProps) {
           name: member.name || "Unknown",
           specialty: member.designation || "Specialist",
           department: member.department?.name || "Medical",
-          image: member.image_url || member.image || "/website/assets/images/team/team-1.jpg",
+          image: member.photo_url || member.photo || member.image_url || member.image || "/website/assets/images/team/team-1.jpg",
           bio: member.bio || "",
           available: member.available !== false,
         }));
@@ -53,6 +53,9 @@ export default function Team({ doctors }: TeamProps) {
 
     fetchTeamMembers();
   }, [doctors]);
+
+  if (loading && !doctors) return <div className="sec-pad centred"><div className="auto-container"><h3>Loading...</h3></div></div>;
+  if (error && !doctors) return <div className="sec-pad centred"><div className="auto-container"><h3>{error}</h3></div></div>;
 
   // Only show first 3 on the homepage
   const featured = teamMembers.slice(0, 3);
@@ -79,7 +82,7 @@ export default function Team({ doctors }: TeamProps) {
               >
                 <div className="inner-box">
                   <figure className="image-box">
-                    <Link to={`/website/doctor-details?id=${doctor.id}`}>
+                    <Link to={`/website/doctor-details/${doctor.id}`}>
                       <Image
                         src={doctor.image || "/website/assets/images/team/team-1.jpg"}
                         alt={doctor.name}
@@ -91,7 +94,7 @@ export default function Team({ doctors }: TeamProps) {
                   </figure>
                   <div className="content-box">
                     <h3>
-                      <Link to={`/website/doctor-details?id=${doctor.id}`}>{doctor.name}</Link>
+                      <Link to={`/website/doctor-details/${doctor.id}`}>{doctor.name}</Link>
                     </h3>
                     <span className="designation">{doctor.specialty}</span>
                     <ul className="social-links clearfix">

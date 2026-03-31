@@ -109,6 +109,7 @@ export default function Service({ departments }: ServiceProps) {
                       alt={dept.name}
                       width={416}
                       height={358}
+                      style={{ height: '358px', objectFit: 'cover' }}
                     />
                   </figure>
                   <div className="lower-content">

@@ -124,18 +124,16 @@ export default function DepartmentDetailsThree() {
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="service-details-content">
                                     <div className="content-one mb_40">
-                                        <figure className="image-box mb_60"><Image src={department.image_url || "/website/assets/images/service/service-7.jpg"} alt={department.name} width={856} height={525} priority /></figure>
+                                        <figure className="image-box mb_60"><Image src={department.image || "/website/assets/images/service/service-7.jpg"} alt={department.name} width={856} height={525} priority /></figure>
                                         <div className="text-box">
                                             <h2>{department.name || "Department"}</h2>
-                                            <p>{department.description || department.details || "Department information and services available."}</p>
+                                            <p>{department.description || department.short_description || "Department information and services available."}</p>
                                             <p>Professional medical services and expertise in this specialized field.</p>
-                                            {department.additional_info && <p>{department.additional_info}</p>}
-                                            <h3>{department.highlight || "Quality Healthcare Services"}</h3>
                                         </div>
                                     </div>
                                     <div className="content-two">
-                                        <figure className="image-box mb_30"><Image src={department.secondary_image_url || "/website/assets/images/service/service-5.jpg"} alt={department.name} width={856} height={525} priority /></figure>
-                                        <p>{department.extended_description || "Advanced medical treatments and care supported by our expert team."}</p>
+                                        <figure className="image-box mb_30"><Image src={department.image || "/website/assets/images/service/service-5.jpg"} alt={department.name} width={856} height={525} priority /></figure>
+                                        <p>{department.description || "Advanced medical treatments and care supported by our expert team."}</p>
                                         <ul className="list-style-one clearfix">
                                             <li>25-30% estimated savings in implementation when using Mobile Health Clinics</li>
                                             <li>Activate Mobile Health Clinics in just weeks</li>

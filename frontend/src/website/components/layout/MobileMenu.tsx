@@ -17,10 +17,20 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
     const fetchDepartmentsData = async () => {
       try {
         const response = await getDepartments();
-        const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+        let data = [];
+        
+        if (Array.isArray(response?.data)) {
+          data = response.data;
+        } else if (response?.data?.results && Array.isArray(response.data.results)) {
+          data = response.data.results;
+        } else if (response?.data) {
+          data = Array.isArray(response.data) ? response.data : [];
+        }
+        
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for mobile menu:", err);
+        setDepartments([]);
       }
     };
     fetchDepartmentsData();

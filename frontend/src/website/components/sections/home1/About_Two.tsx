@@ -136,7 +136,7 @@ export default function About_Two() {
                 style={{ backgroundImage: "url(/website/assets/images/shape/shape-19.png)" }}
               ></div>
               <figure className="image">
-                <Image src="/website/assets/images/resource/about-2.jpg" alt="About" width={636} height={639} />
+                <Image src="/website/assets/images/background/company.jpg" alt="Company" width={636} height={639} />
               </figure>
             </div>
           </div>

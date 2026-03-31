@@ -26,10 +26,20 @@ export default function Header3({
     const fetchDepartmentsData = async () => {
       try {
         const response = await getDepartments();
-        const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+        let data = [];
+        
+        if (Array.isArray(response?.data)) {
+          data = response.data;
+        } else if (response?.data?.results && Array.isArray(response.data.results)) {
+          data = response.data.results;
+        } else if (response?.data) {
+          data = Array.isArray(response.data) ? response.data : [];
+        }
+        
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for header:", err);
+        setDepartments([]);
       }
     };
     fetchDepartmentsData();
@@ -123,8 +133,6 @@ export default function Header3({
                         <Link to="/website/blog">Blog</Link>
                         <ul>
                           <li><Link to="/website/blog">Blog Grid</Link></li>
-                          {/* <li><Link to="/website/blog-standard">Blog Standard</Link></li> */}
-                          <li><Link to="/website/blog-details">Blog Details</Link></li>
                         </ul>
                       </li>
                       <li>
@@ -247,8 +255,6 @@ export default function Header3({
                         <Link to="/website/blog">Blog</Link>
                         <ul>
                           <li><Link to="/website/blog">Blog Grid</Link></li>
-                          {/* <li><Link to="/website/blog-standard">Blog Standard</Link></li> */}
-                          <li><Link to="/website/blog-details">Blog Details</Link></li>
                         </ul>
                       </li>
                       <li>

@@ -23,19 +23,24 @@ export default function DoctorsDetails() {
       try {
         if (id) {
           const response = await getTeamMemberById(parseInt(id));
-          setDoctor(response.data || MOCK_DOCTORS[0]);
+          const doctorData = response.data || MOCK_DOCTORS[0];
+          setDoctor(doctorData);
+          setBreadcrumbTitle(doctorData.name || "Doctor Details");
         } else {
           setDoctor(MOCK_DOCTORS[0]);
+          setBreadcrumbTitle(MOCK_DOCTORS[0].name || "Doctor Details");
         }
       } catch (err) {
         console.warn('Failed to fetch doctor:', err);
-        setDoctor(MOCK_DOCTORS[0]);
+        const fallbackDoctor = MOCK_DOCTORS[0];
+        setDoctor(fallbackDoctor);
+        setBreadcrumbTitle(fallbackDoctor.name || "Doctor Details");
       } finally {
         setLoading(false);
       }
     };
     fetchDoctor();
-  }, [id]);
+  }, [id, setBreadcrumbTitle]);
 
   if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
@@ -49,7 +54,7 @@ export default function DoctorsDetails() {
                 <div className="col-lg-6 col-md-12 col-sm-12 image-column">
                   <figure className="image-box">
                     <Image
-                      src={doctor.profile_image || "/website/assets/images/team/team-7.jpg"}
+                      src={doctor.photo_url || doctor.photo || doctor.image_url || doctor.image || doctor.profile_image || "/website/assets/images/team/team-7.jpg"}
                       alt={doctor.name}
                       width={633}
                       height={701}

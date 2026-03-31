@@ -69,7 +69,7 @@ export default function Appointment({ phone = CLINIC_INFO.phone }: AppointmentPr
         <div className="left-column">
           <div
             className="bg-layer"
-            style={{ backgroundImage: "url(/website/assets/images/background/appointment-bg.jpg)" }}
+            style={{ backgroundImage: "url(/website/assets/images/background/company.jpg)" }}
           ></div>
           <div className="content-box">
             <div className="icon-box">

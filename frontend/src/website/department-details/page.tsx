@@ -34,7 +34,16 @@ export default function DepartmentDetails() {
         const fetchAllDepartments = async () => {
             try {
                 const response = await getDepartments();
-                const items = Array.isArray(response.data) ? response.data : response.data.results || [];
+                let items = [];
+                
+                if (Array.isArray(response?.data)) {
+                  items = response.data;
+                } else if (response?.data?.results && Array.isArray(response.data.results)) {
+                  items = response.data.results;
+                } else if (Array.isArray(response?.data?.data)) {
+                  items = response.data.data;
+                }
+                
                 setDepartments(items.length > 0 ? items : MOCK_DEPARTMENTS);
             } catch (err) {
                 console.warn('Failed to fetch departments:', err);
@@ -126,18 +135,32 @@ export default function DepartmentDetails() {
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="service-details-content">
                                     <div className="content-one mb_40">
-                                        <figure className="image-box mb_60"><Image src={department.image_url || "/website/assets/images/service/service-4.jpg"} alt={department.name} width={856} height={525} priority /></figure>
+                                        <figure className="image-box mb_60">
+                                            <Image 
+                                                src={department.image || "/website/assets/images/service/service-4.jpg"} 
+                                                alt={department.name} 
+                                                width={856} 
+                                                height={525} 
+                                                priority 
+                                            />
+                                        </figure>
                                         <div className="text-box">
                                             <h2>{department.name || "Department"}</h2>
-                                            <p>{department.description || department.details || "Department information and services available."}</p>
+                                            <p>{department.description || department.short_description || "Department information and services available."}</p>
                                             <p>Professional medical services and expertise in this specialized field.</p>
-                                            {department.additional_info && <p>{department.additional_info}</p>}
-                                            <h3>{department.highlight || "Quality Healthcare Services"}</h3>
                                         </div>
                                     </div>
                                     <div className="content-two">
-                                        <figure className="image-box mb_30"><Image src={department.secondary_image_url || "/website/assets/images/service/service-5.jpg"} alt={department.name} width={856} height={525} priority /></figure>
-                                        <p>{department.extended_description || "Advanced medical treatments and care supported by our expert team."}</p>
+                                        <figure className="image-box mb_30">
+                                            <Image 
+                                                src={department.image || "/website/assets/images/service/service-5.jpg"} 
+                                                alt={department.name} 
+                                                width={856} 
+                                                height={525} 
+                                                priority 
+                                            />
+                                        </figure>
+                                        <p>{department.description || "Advanced medical treatments and care supported by our expert team."}</p>
                                         <ul className="list-style-one clearfix">
                                             <li>Professional medical expertise and care</li>
                                             <li>State-of-the-art facilities and equipment</li>

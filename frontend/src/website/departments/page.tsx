@@ -24,7 +24,16 @@ export default function DepartmentsPage() {
             try {
                 setLoading(true);
                 const response = await getDepartments();
-                const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+                let data = [];
+                
+                if (Array.isArray(response?.data)) {
+                  data = response.data;
+                } else if (response?.data?.results && Array.isArray(response.data.results)) {
+                  data = response.data.results;
+                } else if (Array.isArray(response?.data?.data)) {
+                  data = response.data.data;
+                }
+                
                 setDepartments(data.length > 0 ? data : MOCK_DEPARTMENTS);
                 if (data.length > 0) setActiveTab(data[0].id);
             } catch (err) {
@@ -114,7 +123,7 @@ export default function DepartmentsPage() {
                                     <div className="col-lg-6 col-md-12 col-sm-12 video-column">
                                     <div
                                         className="video-inner"
-                                        style={{ backgroundImage: `url(${content.videoImg})` }}
+                                        style={{ backgroundImage: `url(/website/assets/images/background/company.jpg)` }}
                                     >
                                         <div className="video-btn">
                                         <ModalVideo />

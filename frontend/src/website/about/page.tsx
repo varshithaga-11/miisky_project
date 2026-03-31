@@ -85,7 +85,7 @@ export default function About_Page() {
                                             <div className="shape">
                                                 <div className="shape-2" style={{ backgroundImage: "url(/website/assets/images/shape/shape-10.png)" }}></div>
                                             </div>
-                                            <figure className="image"><Image src="/website/assets/images/resource/about-1.jpg" alt="Image" width={523} height={399} priority /></figure>
+                                            <figure className="image"><Image src="/website/assets/images/background/company.jpg" alt="Company Overview" width={523} height={399} priority /></figure>
                                             <div className="text-box">
                                                 <div className="image-shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-7.png)" }}></div>
                                                 <h2>30</h2>
@@ -115,7 +115,7 @@ export default function About_Page() {
                                     <div key={dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block">
                                         <div className="service-block-one">
                                             <div className="inner-box">
-                                                <figure className="image-box"><Image src={dept.image_url || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority /></figure>
+                                                <figure className="image-box"><Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority /></figure>
                                                 <div className="lower-content">
                                                     <div className="inner">
                                                         <div className="icon-box"><i className="icon-18"></i></div>
@@ -137,7 +137,7 @@ export default function About_Page() {
                     <figure className="image-layer"><Image src="/website/assets/images/resource/women-1.png" alt="Image" width={488} height={591} priority /></figure>
                     <div className="outer-container clearfix">
                         <div className="left-column">
-                            <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/background/appointment-bg.jpg)" }}></div>
+                            <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/background/company.jpg)" }}></div>
                             <div className="content-box">
                                 <div className="icon-box"><Image src="/website/assets/images/icons/icon-4.svg" alt="Icon" width={88} height={88} priority /></div>
                                 <h3>Need a Doctor for Check-up? Call for an Emergency Service!</h3>
