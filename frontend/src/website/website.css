@@ -18,6 +18,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Remove border radius from all header variants */
+.main-header,
+.main-header.header-style-three .header-lower,
+.main-header .header-lower,
+.sticky-header,
+.sticky-header .outer-container {
+  border-radius: 0 !important;
+}
+
+/* Remove dropdown arrow from non-dropdown menu items */
+.main-header .navigation > li:not(.dropdown) > a:after {
+  display: none !important;
+}
+
+.main-header .navigation > li:not(.dropdown) > a:before {
+  display: none !important;
+}
+
 /* Force navigation visibility and prevent wrapping */
 .main-header #navbarSupportedContent,
 .main-header #navbarSupportedContentSticky,
