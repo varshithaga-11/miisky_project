@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiActivity } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getHealthParameterList, deleteHealthParameter, HealthParameter } from "./healthparameterapi";
@@ -160,9 +160,25 @@ const HealthParameterManagement: React.FC = () => {
                       {p.name}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                            {p.normal_ranges?.length || 0} ranges
-                        </span>
+                        <div className="flex flex-col gap-1.5">
+                          {p.normal_ranges && p.normal_ranges.length > 0 ? (
+                            p.normal_ranges.slice(0, 3).map((nr: any, idx: number) => (
+                              <div key={nr.id || idx} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/20 text-[11px] font-black tracking-tight text-brand-700 dark:text-brand-300">
+                                <FiActivity className="text-brand-400" size={12} />
+                                <span>{nr.min_value} - {nr.max_value} {nr.unit}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                                No ranges
+                            </span>
+                          )}
+                          {p.normal_ranges && p.normal_ranges.length > 3 && (
+                            <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest pl-2">
+                                +{p.normal_ranges.length - 3} more
+                            </span>
+                          )}
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm">
                       <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye, FiTarget } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getNormalRangeList, deleteNormalRange, NormalRange } from "./normalrangeapi";
@@ -174,7 +174,10 @@ const NormalRangeManagement: React.FC = () => {
                         <div className="text-xs text-gray-400 italic">{r.qualitative_value} {r.interpretation_flag}</div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm font-medium">
-                        {r.min_value ?? "-"} to {r.max_value ?? "-"}
+                        <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400">
+                            <FiTarget size={14} className="text-brand-400" />
+                            <span>{r.min_value ?? "-"} to {r.max_value ?? "-"}</span>
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm text-primary-500">
                         {r.unit}

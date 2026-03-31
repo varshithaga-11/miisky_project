@@ -702,13 +702,16 @@ class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def create(self, validated_data):
-        hp_name = validated_data.pop('health_parameter_name_input', None)
-        if not hp_name:
-            hp_name = validated_data.get('health_parameter_name', None)
-        if not hp_name:
-            hp_name = 'Unknown Parameter'
-        hp, _ = HealthParameter.objects.get_or_create(name=hp_name.strip())
-        validated_data['health_parameter'] = hp
+        hp_name_input = validated_data.pop('health_parameter_name_input', None)
+        if hp_name_input:
+            hp, _ = HealthParameter.objects.get_or_create(name=hp_name_input.strip())
+            validated_data['health_parameter'] = hp
+        
+        if not validated_data.get('health_parameter'):
+             # If still no parameter, only then use fallback (or better, raise error)
+             hp, _ = HealthParameter.objects.get_or_create(name='Unknown Parameter')
+             validated_data['health_parameter'] = hp
+
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
