@@ -8,8 +8,10 @@ import { toast } from "react-toastify";
 import { Modal } from "../../../components/ui/modal";
 import {
   createPayoutTransaction,
-  fetchPayoutPatients,
+  fetchPayoutPatientDetails,
+  fetchPayoutPatientSummaries,
   PayableTrackerRow,
+  PatientPayoutSummaryRow,
   PatientTrackersRow,
 } from "./api";
 
@@ -24,12 +26,14 @@ const METHODS: { value: string; label: string }[] = [
 
 export default function RecordPlanPayoutsPage() {
   const [patientPage, setPatientPage] = useState(1);
-  const [patientData, setPatientData] = useState<{ results: PatientTrackersRow[]; totalPages: number }>({
+  const [patientData, setPatientData] = useState<{ results: PatientPayoutSummaryRow[]; totalPages: number }>({
     results: [],
     totalPages: 1,
   });
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [expandedPatients, setExpandedPatients] = useState<number[]>([]);
+  const [patientDetailsById, setPatientDetailsById] = useState<Record<number, PatientTrackersRow>>({});
+  const [loadingDetailById, setLoadingDetailById] = useState<Record<number, boolean>>({});
 
 
   // Modal / Form state
@@ -50,7 +54,7 @@ export default function RecordPlanPayoutsPage() {
   const loadPatients = useCallback(async () => {
     setLoadingPatients(true);
     try {
-      const res = await fetchPayoutPatients(patientPage, 10);
+      const res = await fetchPayoutPatientSummaries(patientPage, 10);
       setPatientData({ results: res.results || [], totalPages: res.total_pages || 1 });
     } catch {
       toast.error("Failed to load patient payout data");
@@ -103,6 +107,8 @@ export default function RecordPlanPayoutsPage() {
       toast.success("Payout recorded.");
       closePayout();
       await loadPatients();
+      setPatientDetailsById({});
+      setExpandedPatients([]);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
       const msg =
@@ -148,7 +154,23 @@ export default function RecordPlanPayoutsPage() {
                     setExpandedPatients((prev) =>
                       willExpand ? [...prev, patient.id] : prev.filter((id) => id !== patient.id)
                     );
+                    if (willExpand && !patientDetailsById[patient.id]) {
+                      setLoadingDetailById((prev) => ({ ...prev, [patient.id]: true }));
+                      try {
+                        const detail = await fetchPayoutPatientDetails(patient.id);
+                        if (detail) {
+                          setPatientDetailsById((prev) => ({ ...prev, [patient.id]: detail }));
+                        }
+                      } catch {
+                        toast.error("Failed to load payout lines for this patient");
+                      } finally {
+                        setLoadingDetailById((prev) => ({ ...prev, [patient.id]: false }));
+                      }
+                    }
                   };
+                  const patientDetail = patientDetailsById[patient.id];
+                  const trackers = patientDetail?.trackers ?? [];
+                  const isLoadingDetail = loadingDetailById[patient.id];
 
                   return (
                     <div
@@ -175,20 +197,30 @@ export default function RecordPlanPayoutsPage() {
                               </h3>
                               <span className="text-gray-300">|</span>
                               <span className="text-sm font-medium text-gray-500 truncate max-w-[200px] sm:max-w-none">
-                                {patient.trackers[0]?.plan_title || "No Plan"}
+                                {patient.plan_title || "No Plan"}
                               </span>
                             </div>
                             <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">
-                              ID: {patient.id} • {patient.trackers.filter(t => t.payout_type !== 'platform').length} Payable Line{patient.trackers.filter(t => t.payout_type !== 'platform').length > 1 ? 's' : ''}
+                              ID: {patient.id} • {patient.payable_lines} Payable Line{patient.payable_lines > 1 ? "s" : ""}
                             </p>
                           </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[10px] uppercase font-bold text-gray-400 mb-0.5">Outstanding</span>
+                          <span className="font-black text-gray-900 dark:text-white">
+                            ₹{parseFloat(patient.total_remaining || "0").toFixed(2)}
+                          </span>
                         </div>
                       </div>
 
                       {isExpanded && (
                         <div className="px-4 pb-4 bg-white/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800">
+                          {isLoadingDetail ? (
+                            <p className="text-sm text-gray-500 pt-4">Loading payout lines...</p>
+                          ) : (
+                            <>
                           {/* Platform Fee Notice */}
-                          {patient.trackers.some(t => t.payout_type === 'platform') && (
+                          {trackers.some(t => t.payout_type === 'platform') && (
                             <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 flex items-center justify-between shadow-sm">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600">
@@ -199,7 +231,7 @@ export default function RecordPlanPayoutsPage() {
                                 <div>
                                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Internal Platform Retention</p>
                                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                    Miisky Admin Share: <span className="text-gray-900 dark:text-white">₹{parseFloat(patient.trackers.find(t => t.payout_type === 'platform')?.total_amount || "0").toFixed(2)}</span>
+                                    Miisky Admin Share: <span className="text-gray-900 dark:text-white">₹{parseFloat(trackers.find(t => t.payout_type === 'platform')?.total_amount || "0").toFixed(2)}</span>
                                   </p>
                                 </div>
                               </div>
@@ -210,7 +242,7 @@ export default function RecordPlanPayoutsPage() {
                           )}
 
                           <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {patient.trackers.filter(t => t.payout_type !== 'platform').map((t) => (
+                            {trackers.filter(t => t.payout_type !== 'platform').map((t) => (
                               <div
                                 key={t.id}
                                 className="relative flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm hover:ring-1 hover:ring-brand-200 dark:hover:ring-brand-900 transition-all"
@@ -253,7 +285,7 @@ export default function RecordPlanPayoutsPage() {
                                 <div className="flex gap-2">
                                   <Button
                                     size="sm"
-                                    onClick={() => openPayout(t, patient.trackers)}
+                                    onClick={() => openPayout(t, trackers)}
                                     className="flex-1 shadow-sm h-9 text-[10px] uppercase font-black tracking-widest"
                                   >
                                     Add Payout
@@ -262,6 +294,8 @@ export default function RecordPlanPayoutsPage() {
                               </div>
                             ))}
                           </div>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

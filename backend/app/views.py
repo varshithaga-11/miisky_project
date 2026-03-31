@@ -627,12 +627,18 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
     pagination_class = Pagination
     serializer_class = AdminPayoutPatientTrackersSerializer
 
+    def get_serializer_class(self):
+        include_trackers = str(self.request.query_params.get("include_trackers", "1")).lower()
+        if include_trackers in ("0", "false", "no"):
+            return AdminPayoutPatientSummarySerializer
+        return AdminPayoutPatientTrackersSerializer
+
     def get_queryset(self):
         from .models import PayoutTracker, UserRegister
         from django.db.models import F
 
         # We only want patients who have at least one tracker (nutritionist or kitchen) that is not closed and has money owed.
-        return (
+        qs = (
             UserRegister.objects.filter(
                 diet_plans__payment_snapshot__payouts__payout_type__in=[
                     PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
@@ -646,6 +652,10 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
             .distinct()
             .order_by("first_name", "last_name", "id")
         )
+        patient_id = self.request.query_params.get("patient_id")
+        if patient_id:
+            qs = qs.filter(id=patient_id)
+        return qs
 
 
 class AdminPayoutTransactionListCreateView(APIView):
