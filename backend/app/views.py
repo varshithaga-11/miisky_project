@@ -241,10 +241,12 @@ class PatientServiceProvidersView(APIView):
                 })
                 seen_nuts.add(m.nutritionist.id)
 
-        # 2. Kitchens (Mapped via UserDietPlan -> micro_kitchen)
-        diet_plans = UserDietPlan.objects.filter(user=user).select_related('micro_kitchen__user')
+        # 2. Kitchens (Mapped via UserDietPlan -> micro_kitchen OR via Order -> micro_kitchen)
         kitchens = []
         seen_kitchens = set()
+
+        # Check UserDietPlan (typically for patients)
+        diet_plans = UserDietPlan.objects.filter(user=user).select_related('micro_kitchen__user')
         for p in diet_plans:
             if p.micro_kitchen and p.micro_kitchen.user and p.micro_kitchen.user.id not in seen_kitchens:
                 kitchens.append({
@@ -254,6 +256,18 @@ class PatientServiceProvidersView(APIView):
                     "role": "kitchen"
                 })
                 seen_kitchens.add(p.micro_kitchen.user.id)
+
+        # Check Order (for both patients and non-patients)
+        orders = Order.objects.filter(user=user).select_related('micro_kitchen__user')
+        for o in orders:
+            if o.micro_kitchen and o.micro_kitchen.user and o.micro_kitchen.user.id not in seen_kitchens:
+                kitchens.append({
+                    "id": o.micro_kitchen.user.id,
+                    "name": o.micro_kitchen.brand_name or o.micro_kitchen.user.username,
+                    "is_active": True,
+                    "role": "kitchen"
+                })
+                seen_kitchens.add(o.micro_kitchen.user.id)
 
         return Response({
             "nutritionists": nutritionists,

@@ -142,7 +142,7 @@ const SupportTicketPage: React.FC = () => {
     if (form.target_user_type === "admin") {
       setForm(p => ({ ...p, assigned_to: "" }));
     } else {
-      const list = form.target_user_type === "nutritionist" ? providers.nutritionists : providers.kitchens;
+      const list = providers.kitchens;
       if (list.length === 1) {
         setForm(p => ({ ...p, assigned_to: list[0].id }));
       } else {
@@ -268,9 +268,8 @@ const SupportTicketPage: React.FC = () => {
                 <button
                   key={t.id}
                   onClick={() => setActiveTicket(t)}
-                  className={`w-full text-left px-6 py-5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors relative group ${
-                    activeTicket?.id === t.id ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
-                  }`}
+                  className={`w-full text-left px-6 py-5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors relative group ${activeTicket?.id === t.id ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
+                    }`}
                 >
                   {activeTicket?.id === t.id && (
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
@@ -285,12 +284,10 @@ const SupportTicketPage: React.FC = () => {
                     {t.description}
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                    <span className={`inline-flex items-center gap-1.5 ${
-                        t.priority === 'high' ? 'text-rose-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-blue-500'
-                    }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        t.priority === 'high' ? 'bg-rose-500' : t.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-                      }`} /> 
+                    <span className={`inline-flex items-center gap-1.5 ${t.priority === 'high' ? 'text-rose-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-blue-500'
+                      }`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${t.priority === 'high' ? 'bg-rose-500' : t.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                        }`} />
                       {t.priority}
                     </span>
                     <span className="text-gray-400">{t.created_at ? new Date(t.created_at).toLocaleDateString() : ""}</span>
@@ -342,11 +339,10 @@ const SupportTicketPage: React.FC = () => {
                   return (
                     <div key={`msg-${m.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
                       <div
-                        className={`max-w-[85%] rounded-[28px] px-6 py-4 shadow-sm transition-all duration-300 ${
-                          isMe
+                        className={`max-w-[85%] rounded-[28px] px-6 py-4 shadow-sm transition-all duration-300 ${isMe
                             ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none shadow-blue-500/10"
                             : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
-                        }`}
+                          }`}
                       >
                         <div className={`flex items-center gap-2 mb-2 text-[9px] font-black uppercase tracking-wider ${isMe ? "text-blue-100" : "text-gray-500"}`}>
                           {!isMe && <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />}
@@ -364,9 +360,8 @@ const SupportTicketPage: React.FC = () => {
                   const fileName = a.file.split("/").pop() || "Attachment";
                   return (
                     <div key={`att-${a.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
-                      <div className={`max-w-[85%] rounded-[28px] px-6 py-5 shadow-sm border-2 border-dashed transition-all ${
-                        isMe ? "bg-blue-50/50 border-blue-200 text-blue-900 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
-                      }`}>
+                      <div className={`max-w-[85%] rounded-[28px] px-6 py-5 shadow-sm border-2 border-dashed transition-all ${isMe ? "bg-blue-50/50 border-blue-200 text-blue-900 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
+                        }`}>
                         <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isMe ? "bg-blue-200 text-blue-700" : "bg-gray-200 text-gray-500"}`}>
                             <FiFile className="w-6 h-6" />
@@ -380,9 +375,9 @@ const SupportTicketPage: React.FC = () => {
                           </a>
                         </div>
                         <div className="mt-4 flex justify-end">
-                           <span className="text-[8px] font-black uppercase tracking-tighter opacity-50">
-                             {a.uploaded_at ? new Date(a.uploaded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
-                           </span>
+                          <span className="text-[8px] font-black uppercase tracking-tighter opacity-50">
+                            {a.uploaded_at ? new Date(a.uploaded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -413,9 +408,8 @@ const SupportTicketPage: React.FC = () => {
               )}
 
               <div className="flex gap-4 items-end">
-                <label className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${
-                  pendingFile ? "border-blue-500 bg-blue-100 text-blue-600" : "border-gray-200 dark:border-white/10 hover:border-blue-400 text-gray-400 hover:text-blue-500"
-                }`}>
+                <label className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${pendingFile ? "border-blue-500 bg-blue-100 text-blue-600" : "border-gray-200 dark:border-white/10 hover:border-blue-400 text-gray-400 hover:text-blue-500"
+                  }`}>
                   <FiPaperclip size={20} className={uploading ? "animate-spin" : ""} />
                   <input type="file" className="hidden" onChange={handleFileSelect} />
                 </label>
@@ -451,7 +445,7 @@ const SupportTicketPage: React.FC = () => {
                 <div className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">New Channel</div>
                 <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 italic">Awaiting Priority Specification</div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsNewOpen(false)}
                 className="w-12 h-12 bg-gray-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-gray-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm"
               >
@@ -461,34 +455,32 @@ const SupportTicketPage: React.FC = () => {
 
             <form onSubmit={handleCreate} className="space-y-8">
               <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">Ask To / Recipient Channel</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { id: "admin", label: "MIISKY BASE", icon: "🏢" },
-                      { id: "nutritionist", label: "EXPERT NUTRITION", icon: "🥗" },
-                      { id: "kitchen", label: "MICRO KITCHEN", icon: "👨‍🍳" },
-                    ].map((target) => (
-                      <button
-                        key={target.id}
-                        type="button"
-                        onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
-                        className={`flex flex-col items-center justify-center p-4 rounded-[28px] border-2 transition-all gap-2 ${
-                          form.target_user_type === target.id
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-xl scale-105"
-                            : "border-gray-50 dark:border-white/5 hover:border-blue-200"
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">Ask To / Recipient Channel</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: "admin", label: "MIISKY BASE", icon: "🏢" },
+                    { id: "kitchen", label: "MICRO KITCHEN", icon: "👨‍🍳" },
+                  ].map((target) => (
+                    <button
+                      key={target.id}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      className={`flex flex-col items-center justify-center p-4 rounded-[28px] border-2 transition-all gap-2 ${form.target_user_type === target.id
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-xl scale-105"
+                          : "border-gray-50 dark:border-white/5 hover:border-blue-200"
                         }`}
-                      >
-                        <span className="text-2xl">{target.icon}</span>
-                        <span className="text-[9px] font-black uppercase tracking-tighter text-center">{target.label}</span>
-                      </button>
-                    ))}
-                  </div>
+                    >
+                      <span className="text-2xl">{target.icon}</span>
+                      <span className="text-[9px] font-black uppercase tracking-tighter text-center">{target.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {(form.target_user_type === "nutritionist" || form.target_user_type === "kitchen") && (
+              {(form.target_user_type === "kitchen") && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-top-4">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">
-                    Select {form.target_user_type === "nutritionist" ? "Expert Nutritionist" : "Micro Kitchen"}
+                    Select Micro Kitchen
                   </label>
                   <select
                     value={form.assigned_to}
@@ -496,7 +488,7 @@ const SupportTicketPage: React.FC = () => {
                     className="w-full px-5 py-4 border-2 border-transparent rounded-2xl bg-gray-50 dark:bg-gray-950 font-black text-xs uppercase tracking-tight focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none"
                   >
                     <option value="">-- IDENTIFY RECIPIENT --</option>
-                    {(form.target_user_type === "nutritionist" ? providers.nutritionists : providers.kitchens).map(p => (
+                    {providers.kitchens.map(p => (
                       <option key={p.id} value={p.id}>
                         {p.name} {!p.is_active && "(OFFLINE/INACTIVE)"}
                       </option>
