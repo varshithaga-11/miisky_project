@@ -10,6 +10,7 @@ interface NormalRange {
   max_value: number | null;
   unit: string | null;
   reference_text: string | null;
+  qualitative_value: string | null;
   interpretation_flag: string | null;
   remarks: string | null;
 }
@@ -111,24 +112,50 @@ const ReferenceLibraryPage: React.FC = () => {
                 <div className="space-y-3">
                   {param.normal_ranges.length > 0 ? (
                     param.normal_ranges.map((range, idx) => (
-                      <div key={idx} className="flex flex-col p-4 bg-slate-50/50 dark:bg-gray-800/30 rounded-xl border border-slate-100 dark:border-white/5 h-full">
-                        <div className="flex items-center justify-between mb-2">
-                           <span className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Reference Range</span>
-                           <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{range.unit || "N/A"}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <div className="text-2xl font-black text-slate-700 dark:text-gray-200">
-                             {range.min_value ?? "?"} <span className="text-slate-400 font-normal mx-1">/</span> {range.max_value ?? "?"}
+                      <div key={idx} className="flex flex-col p-4 bg-slate-50/50 dark:bg-gray-800/30 rounded-2xl border border-slate-100 dark:border-white/5 h-full group/range relative overflow-hidden transition-all hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm">
+                        <div className="flex items-center justify-between mb-3">
+                           <div className="flex items-center gap-2">
+                             <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest leading-none">Normal Range</span>
+                             {range.qualitative_value && (
+                               <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/30">
+                                 {range.qualitative_value}
+                               </span>
+                             )}
                            </div>
-                           <div className="h-1.5 flex-1 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
-                              <div className="w-1/3 h-full bg-amber-400 opacity-30" />
-                              <div className="w-1/3 h-full bg-emerald-500" />
-                              <div className="w-1/3 h-full bg-rose-500 opacity-30" />
-                           </div>
+                           <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
+                             {range.unit || "No Unit"}
+                           </span>
                         </div>
+                        
+                        <div className="flex items-end gap-3 flex-wrap">
+                           <div className="text-3xl font-black text-slate-700 dark:text-gray-200 leading-none">
+                             {range.min_value ?? "?"} <span className="text-slate-300 font-bold mx-0.5">-</span> {range.max_value ?? "?"}
+                           </div>
+                           {range.interpretation_flag && (
+                             <div className="p-1 px-2 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30 flex items-center gap-1 scale-90 origin-bottom">
+                               <FiActivity size={10} strokeWidth={3} />
+                               <span className="text-[10px] font-black leading-none uppercase">{range.interpretation_flag}</span>
+                             </div>
+                           )}
+                        </div>
+
+                        <div className="mt-4 h-1.5 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden flex shadow-inner">
+                            <div className="w-1/3 h-full bg-amber-400 opacity-20" />
+                            <div className="w-1/3 h-full bg-emerald-500" />
+                            <div className="w-1/3 h-full bg-rose-500 opacity-20" />
+                        </div>
+
                         {range.reference_text && (
-                          <p className="mt-3 text-sm text-slate-600 dark:text-gray-400 leading-relaxed italic line-clamp-2">
-                            "{range.reference_text}"
+                          <div className="mt-4 p-3 bg-white dark:bg-gray-900/50 rounded-xl border border-slate-100 dark:border-white/5">
+                            <p className="text-[11px] text-slate-600 dark:text-gray-400 leading-relaxed font-medium">
+                              {range.reference_text}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {range.remarks && (
+                          <p className="mt-2 text-[10px] text-slate-400 dark:text-gray-500 italic px-1">
+                            Note: {range.remarks}
                           </p>
                         )}
                       </div>
