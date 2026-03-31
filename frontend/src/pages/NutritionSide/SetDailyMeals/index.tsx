@@ -31,6 +31,7 @@ import { jwtDecode } from "jwt-decode";
 const DRAG_TYPE = "food-item";
 
 const SetDailyMealsPage: React.FC = () => {
+    const todayStr = new Date().toISOString().split("T")[0];
     const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
     const [selectedPatient, setSelectedPatient] = useState<MappedPatientResponse | null>(null);
     const [activePlan, setActivePlan] = useState<UserDietPlan | null>(null);
@@ -109,7 +110,15 @@ const SetDailyMealsPage: React.FC = () => {
                         setEndDate(planEnd);
                         const today = new Date().toISOString().split("T")[0];
                         const inRange = today >= planStart && today <= planEnd;
-                        setSelectedDate(inRange ? today : planStart);
+                        // Default to today if it's within the plan range, or if the plan started in the past
+                        // If plan starts in future, use planStart. If plan ended in past, use planEnd.
+                        if (inRange) {
+                            setSelectedDate(today);
+                        } else if (planStart > today) {
+                            setSelectedDate(planStart);
+                        } else {
+                            setSelectedDate(planEnd);
+                        }
                     } else {
                         setStartDate("");
                         setEndDate("");
@@ -282,21 +291,27 @@ const SetDailyMealsPage: React.FC = () => {
             packaging_material: selectedPackagingMaterialId || (e.packaging_material ?? null),
         })) as UserMeal[];
 
-        // Reassignment Restriction Check: Filter out restricted meals from the save payload
-        if (activePlan?.nutritionist_effective_from && currentUserId) {
-            const effectiveDate = activePlan.nutritionist_effective_from;
-            const isNewNutritionist = currentUserId === activePlan.nutritionist;
-            const isOriginalNutritionist = currentUserId === activePlan.original_nutritionist;
+        // Reassignment & Date Restriction Check: Filter out restricted meals from the save payload
+        if (currentUserId) {
+            const effectiveDate = activePlan?.nutritionist_effective_from;
+            const isNewNutritionist = activePlan && currentUserId === activePlan.nutritionist;
+            const isOriginalNutritionist = activePlan && currentUserId === activePlan.original_nutritionist;
 
             const authorizedMeals = mealsWithPackaging.filter(meal => {
-                if (isNewNutritionist && meal.meal_date < effectiveDate) return false;
-                if (isOriginalNutritionist && meal.meal_date >= effectiveDate) return false;
+                // Past date restriction
+                if (meal.meal_date && meal.meal_date < todayStr) return false;
+
+                // Reassignment restriction
+                if (effectiveDate) {
+                    if (isNewNutritionist && meal.meal_date < effectiveDate) return false;
+                    if (isOriginalNutritionist && meal.meal_date >= effectiveDate) return false;
+                }
                 return true;
             });
 
             // If the user SPECIFICALLY requested to save a date range where they have NO authority, notify them
             if (authorizedMeals.length === 0 && mealsWithPackaging.length > 0) {
-                 toast.error(`You cannot edit meals for these dates based on the effective date (${effectiveDate})`);
+                 toast.error(`You cannot edit meals for past dates or restricted dates.`);
                  return;
             }
 
@@ -528,7 +543,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                 <input
                                                     type="date"
                                                     value={startDate}
-                                                    min={planMinDate}
+                                                    min={planMinDate > todayStr ? planMinDate : todayStr}
                                                     max={planMaxDate}
                                                     onChange={(e) => {
                                                         const v = e.target.value;
@@ -541,7 +556,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                 <input
                                                     type="date"
                                                     value={endDate}
-                                                    min={planMinDate}
+                                                    min={planMinDate > todayStr ? planMinDate : todayStr}
                                                     max={planMaxDate}
                                                     onChange={(e) => {
                                                         const v = e.target.value;
@@ -555,7 +570,7 @@ const SetDailyMealsPage: React.FC = () => {
                                             <input
                                                 type="date"
                                                 value={selectedDate}
-                                                min={planMinDate}
+                                                min={planMinDate > todayStr ? planMinDate : todayStr}
                                                 max={planMaxDate}
                                                 onChange={(e) => setSelectedDate(e.target.value)}
                                                 className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none"
@@ -624,6 +639,7 @@ const SetDailyMealsPage: React.FC = () => {
                                             const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
 
                                             const isReadOnly = (() => {
+                                                if (dateStr < todayStr) return true;
                                                 if (!activePlan?.nutritionist_effective_from || !currentUserId) return false;
                                                 const effectiveDate = activePlan.nutritionist_effective_from;
                                                 if (currentUserId === activePlan.nutritionist) {

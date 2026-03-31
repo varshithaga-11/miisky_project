@@ -50,31 +50,34 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pRaw = String(formData.platform_fee_percent ?? "").trim();
     const nRaw = String(formData.nutritionist_share_percent ?? "").trim();
     const kRaw = String(formData.kitchen_share_percent ?? "").trim();
-    const anySet = pRaw || nRaw || kRaw;
+    const anySet = nRaw || kRaw;
     if (anySet) {
-      const p = parseFloat(pRaw);
       const n = parseFloat(nRaw);
       const k = parseFloat(kRaw);
-      if ([p, n, k].some((x) => Number.isNaN(x))) {
-        toast.warning("Fill all three payment split percentages or clear all to use 15/15/60 defaults.");
+      if ([n, k].some((x) => Number.isNaN(x))) {
+        toast.warning("Fill both payment split percentages (Nutritionist and Kitchen) or clear both to use defaults.");
         return;
       }
-      if (Math.abs(p + n + k - 100) > 0.001) {
-        toast.warning("Payment split percentages must sum to 100.");
+      if (n + k > 100) {
+        toast.warning("Nutritionist and Kitchen share cannot exceed 100%.");
         return;
       }
     }
     setSaveLoading(true);
     try {
       const { features, final_amount, ...cleanData } = formData as any;
-      const splitKeys = ["platform_fee_percent", "nutritionist_share_percent", "kitchen_share_percent"] as const;
-      for (const key of splitKeys) {
-        const v = cleanData[key];
-        if (v === "" || v === undefined) cleanData[key] = null;
-        else if (typeof v === "string") cleanData[key] = parseFloat(v);
+      if (anySet) {
+        const n = parseFloat(nRaw);
+        const k = parseFloat(kRaw);
+        cleanData.platform_fee_percent = 100 - n - k;
+        cleanData.nutritionist_share_percent = n;
+        cleanData.kitchen_share_percent = k;
+      } else {
+        cleanData.platform_fee_percent = null;
+        cleanData.nutritionist_share_percent = null;
+        cleanData.kitchen_share_percent = null;
       }
       await updateDietPlan(id, cleanData);
       toast.success("Diet plan updated successfully!");
@@ -193,20 +196,9 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
                     Payment split override (optional)
                   </p>
                   <p className="text-xs text-gray-500">
-                    Leave blank for 15% platform, 15% nutrition, 60% kitchen. If set, all three must total 100%.
+                    Leave blank for 15% nutritionist & 60% kitchen share. If set, total must not exceed 100%.
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <Label htmlFor="platform_fee_percent">Platform %</Label>
-                      <Input
-                        id="platform_fee_percent"
-                        type="number"
-                        step="0.01"
-                        value={formData.platform_fee_percent ?? ""}
-                        onChange={handlePlanChange}
-                        placeholder="—"
-                      />
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="nutritionist_share_percent">Nutritionist %</Label>
                       <Input

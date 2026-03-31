@@ -23,10 +23,6 @@ const METHODS: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-function fmtDate(s: string | null) {
-  if (!s) return "—";
-  return s;
-}
 
 export default function RecordPlanPayoutsPage() {
   const [patientPage, setPatientPage] = useState(1);
@@ -209,7 +205,7 @@ export default function RecordPlanPayoutsPage() {
                               </span>
                             </div>
                             <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">
-                              ID: {patient.id} • {patient.trackers.length} Payable Line{patient.trackers.length > 1 ? 's' : ''}
+                              ID: {patient.id} • {patient.trackers.filter(t => t.payout_type !== 'platform').length} Payable Line{patient.trackers.filter(t => t.payout_type !== 'platform').length > 1 ? 's' : ''}
                             </p>
                           </div>
                         </div>
@@ -217,8 +213,30 @@ export default function RecordPlanPayoutsPage() {
 
                       {isExpanded && (
                         <div className="px-4 pb-4 bg-white/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800">
+                          {/* Platform Fee Notice */}
+                          {patient.trackers.some(t => t.payout_type === 'platform') && (
+                            <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 flex items-center justify-between shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Internal Platform Retention</p>
+                                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                            Miisky Admin Share: <span className="text-gray-900 dark:text-white">₹{parseFloat(patient.trackers.find(t => t.payout_type === 'platform')?.total_amount || "0").toFixed(2)}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="px-3 py-1 rounded-full bg-brand-50/50 dark:bg-brand-900/10 border border-brand-100 dark:border-brand-900/20">
+                                    <p className="text-[9px] font-bold text-brand-700 uppercase tracking-tight">System Managed</p>
+                                </div>
+                            </div>
+                          )}
+
                           <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {patient.trackers.map((t) => (
+                            {patient.trackers.filter(t => t.payout_type !== 'platform').map((t) => (
                               <div
                                 key={t.id}
                                 className="relative flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm hover:ring-1 hover:ring-brand-200 dark:hover:ring-brand-900 transition-all"
@@ -274,7 +292,7 @@ export default function RecordPlanPayoutsPage() {
                                       {trackerTxs[t.id].slice(0, 3).map((tx) => (
                                         <div key={tx.id} className="flex items-center justify-between text-[10px]">
                                           <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-400">{tx.payout_date ? new Date(tx.payout_date).toLocaleDateString() : '—'}</span>
+                                            <span className="font-medium text-gray-400">{tx.payout_date}</span>
                                             <span className="capitalize text-gray-500">{tx.payment_method?.replace('_', ' ')}</span>
                                           </div>
                                           <span className="font-black text-gray-700 dark:text-gray-300">₹{parseFloat(tx.amount_paid).toFixed(2)}</span>

@@ -1106,15 +1106,17 @@ class AdminPlanPaymentOverviewSerializer(serializers.ModelSerializer):
     def get_payout_trackers(self, obj):
         rows = []
         for t in obj.payouts.all().order_by("payout_type", "id"):
+            if t.payout_type == PayoutTracker.PAYOUT_TYPE_PLATFORM:
+                continue
+
             rem = max(t.total_amount - t.paid_amount, Decimal("0"))
             recipient = "—"
-            if t.payout_type == PayoutTracker.PAYOUT_TYPE_PLATFORM:
-                recipient = "Miisky (platform)"
-            elif t.payout_type == PayoutTracker.PAYOUT_TYPE_NUTRITIONIST and t.nutritionist:
+            if t.payout_type == PayoutTracker.PAYOUT_TYPE_NUTRITIONIST and t.nutritionist:
                 u = t.nutritionist
                 recipient = f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username
             elif t.payout_type == PayoutTracker.PAYOUT_TYPE_KITCHEN and t.micro_kitchen:
                 recipient = t.micro_kitchen.brand_name or f"Kitchen #{t.micro_kitchen_id}"
+
             rows.append(
                 {
                     "id": t.id,
@@ -1135,6 +1137,8 @@ class AdminPlanPaymentOverviewSerializer(serializers.ModelSerializer):
     def get_total_outstanding(self, obj):
         total = Decimal("0")
         for t in obj.payouts.all():
+            if t.payout_type == PayoutTracker.PAYOUT_TYPE_PLATFORM:
+                continue
             total += max(t.total_amount - t.paid_amount, Decimal("0"))
         return str(total)
 

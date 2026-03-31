@@ -617,9 +617,13 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
         from .models import PayoutTracker, UserRegister
         from django.db.models import F
 
-        # We only want patients who have at least one tracker that is not closed and has money owed.
+        # We only want patients who have at least one tracker (nutritionist or kitchen) that is not closed and has money owed.
         return (
             UserRegister.objects.filter(
+                diet_plans__payment_snapshot__payouts__payout_type__in=[
+                    PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+                    PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                ],
                 diet_plans__payment_snapshot__payouts__is_closed=False,
                 diet_plans__payment_snapshot__payouts__total_amount__gt=F(
                     "diet_plans__payment_snapshot__payouts__paid_amount"

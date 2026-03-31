@@ -50,12 +50,14 @@ function RowDetail({ r }: { r: PlanPaymentOverviewRow }) {
           <span className="font-semibold">₹{fmtMoney(r.total_amount)}</span>
         </p>
         <p className="text-xs text-gray-600 dark:text-gray-400">
-          Split % — platform / nutrition / kitchen: {fmtMoney(r.platform_percent)} / {fmtMoney(r.nutrition_percent)} /{" "}
-          {fmtMoney(r.kitchen_percent)}
+          Split % — nutrition / kitchen: {fmtMoney(r.nutrition_percent)} / {fmtMoney(r.kitchen_percent)}
         </p>
         <p className="text-xs">
-          ₹ Platform: {fmtMoney(r.platform_amount)} · ₹ Nutrition: {fmtMoney(r.nutrition_amount)} · ₹ Kitchen:{" "}
-          {fmtMoney(r.kitchen_amount)}
+          Nutrition share: {r.nutrition_percent}% (₹{fmtMoney(r.nutrition_amount)})
+          <br />
+          Kitchen share: {r.kitchen_percent}% (₹{fmtMoney(r.kitchen_amount)})
+          <br />
+          Platform retention: {r.platform_percent}% (₹{fmtMoney(r.platform_amount)})
         </p>
       </DetailBlock>
 
@@ -119,7 +121,7 @@ function RowDetail({ r }: { r: PlanPaymentOverviewRow }) {
       </DetailBlock>
 
       <div className="sm:col-span-2 xl:col-span-3">
-        <DetailBlock title="Payout trackers (platform, nutritionist, kitchen)">
+        <DetailBlock title="Payout trackers (nutritionist & kitchen)">
           {trackers.length === 0 ? (
             <p className="text-sm text-gray-500">No payout trackers linked to this snapshot yet.</p>
           ) : (
@@ -138,24 +140,33 @@ function RowDetail({ r }: { r: PlanPaymentOverviewRow }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {trackers.map((t: PayoutTrackerLine) => (
-                    <tr key={t.id} className="border-b border-slate-100 dark:border-gray-700/80">
-                      <td className="py-1.5 pr-2">{payoutTypeLabel(t.payout_type)}</td>
-                      <td className="py-1.5 pr-2 max-w-[180px]">{t.recipient_label}</td>
+                  {trackers.filter(t => t.payout_type !== 'platform').map((tValue: PayoutTrackerLine) => (
+                    <tr key={tValue.id} className="border-b border-slate-100 dark:border-gray-700/80">
+                      <td className="py-1.5 pr-2">{payoutTypeLabel(tValue.payout_type)}</td>
+                      <td className="py-1.5 pr-2 max-w-[180px]">{tValue.recipient_label}</td>
                       <td className="py-1.5 pr-2 whitespace-nowrap text-gray-600 dark:text-gray-400">
-                        {t.period_from || "—"} → {t.period_to || "—"}
+                        {tValue.period_from || "—"} → {tValue.period_to || "—"}
                       </td>
-                      <td className="py-1.5 pr-2 text-right font-mono">{fmtMoney(t.total_amount)}</td>
-                      <td className="py-1.5 pr-2 text-right font-mono">{fmtMoney(t.paid_amount)}</td>
-                      <td className="py-1.5 pr-2 text-right font-mono">{fmtMoney(t.remaining_amount)}</td>
-                      <td className="py-1.5 pr-2 capitalize">{t.status}</td>
+                      <td className="py-1.5 pr-2 text-right font-mono">{fmtMoney(tValue.total_amount)}</td>
+                      <td className="py-1.5 pr-2 text-right font-mono">{fmtMoney(tValue.paid_amount)}</td>
+                      <td className="py-1.5 pr-2 text-right font-mono">{fmtMoney(tValue.remaining_amount)}</td>
+                      <td className="py-1.5 pr-2 capitalize">{tValue.status}</td>
                       <td className="py-1.5 text-xs">
-                        {t.is_closed ? `Yes${t.closed_reason ? ` — ${t.closed_reason}` : ""}` : "No"}
+                        {tValue.is_closed ? `Yes${tValue.closed_reason ? ` — ${tValue.closed_reason}` : ""}` : "No"}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {trackers.some(t => t.payout_type === 'platform') && (
+                <div className="mt-4 p-2.5 rounded-lg bg-slate-50 dark:bg-gray-800/40 border border-slate-200 dark:border-gray-700 flex justify-between items-center text-[11px]">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider tracking-[0.05em]">Platform Retention (Internal)</span>
+                  <span className="font-mono font-black text-slate-900 dark:text-white bg-slate-200/50 dark:bg-gray-800 px-2 py-0.5 rounded">
+                    ₹{fmtMoney(trackers.find(t => t.payout_type === 'platform')?.total_amount || "0.00")}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </DetailBlock>
