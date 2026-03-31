@@ -438,12 +438,16 @@ class AdminAllOrdersView(APIView):
 
     def get(self, request):
         search = request.query_params.get('search', '').strip()
+        microkitchen = request.query_params.get('microkitchen', '').strip()
         
         # We'll pull from both Order (non-patient/general) and UserDietPlan (patient plans)
         # to give a comprehensive view, or just Order if that's the primary tracking.
         # For now, let's focus on the 'Order' model as it's the most "standard" order.
         qs = Order.objects.all().select_related('user', 'micro_kitchen', 'delivery_slab').order_by('-created_at')
         
+        if microkitchen:
+            qs = qs.filter(micro_kitchen_id=microkitchen)
+
         if search:
             qs = qs.filter(
                 Q(id__icontains=search) |
@@ -627,12 +631,18 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
     pagination_class = Pagination
     serializer_class = AdminPayoutPatientTrackersSerializer
 
+    def get_serializer_class(self):
+        include_trackers = str(self.request.query_params.get("include_trackers", "1")).lower()
+        if include_trackers in ("0", "false", "no"):
+            return AdminPayoutPatientSummarySerializer
+        return AdminPayoutPatientTrackersSerializer
+
     def get_queryset(self):
         from .models import PayoutTracker, UserRegister
         from django.db.models import F
 
         # We only want patients who have at least one tracker (nutritionist or kitchen) that is not closed and has money owed.
-        return (
+        qs = (
             UserRegister.objects.filter(
                 diet_plans__payment_snapshot__payouts__payout_type__in=[
                     PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
@@ -646,6 +656,24 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
             .distinct()
             .order_by("first_name", "last_name", "id")
         )
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(username__icontains=search)
+                | Q(email__icontains=search)
+                | Q(diet_plans__diet_plan__title__icontains=search)
+                | Q(diet_plans__diet_plan__code__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__nutritionist__first_name__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__nutritionist__last_name__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__nutritionist__username__icontains=search)
+                | Q(diet_plans__payment_snapshot__payouts__micro_kitchen__brand_name__icontains=search)
+            ).distinct()
+        patient_id = self.request.query_params.get("patient_id")
+        if patient_id:
+            qs = qs.filter(id=patient_id)
+        return qs
 
 
 class AdminPayoutTransactionListCreateView(APIView):

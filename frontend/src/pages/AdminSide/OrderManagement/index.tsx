@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
-import { getAllOrders } from "./api";
+import { getAllOrders, getMicroKitchens } from "./api";
 
 interface OrderRow {
   id: number;
@@ -26,12 +26,26 @@ const OrderManagementPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [selectedKitchen, setSelectedKitchen] = useState("");
+  const [kitchens, setKitchens] = useState<{ id: number; brand_name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchKitchens = async () => {
+      try {
+        const res = await getMicroKitchens();
+        setKitchens(res.results || []);
+      } catch (err) {
+        console.error("Failed to load kitchens", err);
+      }
+    };
+    fetchKitchens();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getAllOrders(currentPage, pageSize, searchTerm);
+        const res = await getAllOrders(currentPage, pageSize, searchTerm, selectedKitchen);
         setRows(res.results || []);
         setTotalItems(res.count || 0);
         setTotalPages(res.total_pages || 0);
@@ -46,7 +60,7 @@ const OrderManagementPage: React.FC = () => {
       }
     };
     load();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, selectedKitchen]);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -79,7 +93,25 @@ const OrderManagementPage: React.FC = () => {
                 />
                 <FiSearch className="w-5 h-5 text-gray-400 absolute left-3.5 top-3" />
               </div>
-              
+
+              <div className="flex-1 max-w-xs">
+                <Select
+                  value={selectedKitchen}
+                  onChange={(val) => {
+                    setSelectedKitchen(val);
+                    setCurrentPage(1);
+                  }}
+                  options={[
+                    { value: "", label: "All Micro-Kitchens" },
+                    ...kitchens.map((k) => ({
+                      value: String(k.id),
+                      label: k.brand_name || `Kitchen #${k.id}`,
+                    })),
+                  ]}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-all shadow-sm"
+                />
+              </div>
+
               <div className="flex items-center gap-4">
                 <div className="flex flex-col text-sm text-gray-500 dark:text-gray-400">
                   <span className="font-medium">Total Orders: {totalItems}</span>

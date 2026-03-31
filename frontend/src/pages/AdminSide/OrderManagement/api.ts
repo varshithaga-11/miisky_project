@@ -4,10 +4,18 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 /**
  * Fetches all orders (Patient and Non-Patient) for the administrative overview.
  */
-export const getAllOrders = async (page: number = 1, limit: number = 10, search: string = "") => {
+export const getAllOrders = async (page: number = 1, limit: number = 10, search: string = "", microkitchen: string = "") => {
   const url = createApiUrl("api/admin/all-orders/");
   const response = await axios.get(url, {
-    params: { page, limit, search },
+    params: { page, limit, search, microkitchen },
+    headers: await getAuthHeaders()
+  });
+  return response.data;
+};
+
+export const getMicroKitchens = async () => {
+  const url = createApiUrl("api/microkitchenprofile/");
+  const response = await axios.get(url, {
     headers: await getAuthHeaders()
   });
   return response.data;
