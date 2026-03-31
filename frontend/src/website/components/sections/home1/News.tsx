@@ -69,14 +69,7 @@ export default function News({ posts }: NewsProps) {
             Medical care is the practice of providing diagnosis, treatment, and preventive care for various <br />
             illnesses, injuries, and diseases.
           </p>
-          <div className="mt_40">
-             <Link 
-                to="/website/blog-create"
-                className="theme-btn btn-one"
-             >
-                <span>Share Your Story</span>
-             </Link>
-          </div>
+
         </div>
 
         <Swiper

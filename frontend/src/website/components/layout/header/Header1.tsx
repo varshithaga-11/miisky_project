@@ -37,10 +37,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
     fetchDepartmentsData();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("miisky_access_token");
-    window.location.href = "/website/login";
-  };
+
   const scrollToTop = () => {
     window.scrollTo(0, 0);
   };
@@ -57,10 +54,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <i className="icon-46"></i>
                   <a href="mailto:support@miisky.com">support@miisky.com</a>
                 </li>
-                <li>
-                  <i className="icon-2"></i>
-                  <Link to="/website/pricing">Pay your bill</Link>
-                </li>
+
                 <li>
                   <i className="icon-3"></i>
                   Open Hours: <span>Mon - Fri: 9:30am to 6:00pm</span>
@@ -82,11 +76,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <li>
                   <Link to="/website"><i className="fab fa-instagram"></i></Link>
                 </li>
-                <li style={{ marginLeft: "20px", borderLeft: "1px solid rgba(255,255,255,0.2)", paddingLeft: "20px" }}>
-                   <button onClick={logout} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '12px', padding: 0, textTransform: 'uppercase' }}>
-                     <i className="fas fa-sign-out-alt" style={{ marginRight: '8px' }}></i>Logout
-                   </button>
-                </li>
+
               </ul>
             </div>
           </div>
@@ -170,14 +160,27 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               </div>
 
               <div className="menu-right-content">
-                <div className="support-box">
-                  <div className="icon-box">
-                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon Image" width={25} height={25} priority />
+                <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <div className="icon-box" style={{ 
+                      width: '50px', 
+                      height: '50px', 
+                      backgroundColor: '#fba354', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      marginRight: '15px',
+                      flexShrink: 0,
+                      position: 'relative'
+                  }}>
+                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                   </div>
-                  <span>Emergency Call</span>
-                  <h6>
-                    <Link to="/website/contact" style={{ color: "inherit" }}>+91 9845497950</Link>
-                  </h6>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
+                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
+                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
+                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                    </h6>
+                  </div>
                 </div>
               </div>
             </div>
@@ -262,14 +265,27 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               </div>
 
               <div className="menu-right-content">
-                <div className="support-box">
-                  <div className="icon-box">
-                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon Image" width={25} height={25} priority />
+                <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <div className="icon-box" style={{ 
+                      width: '50px', 
+                      height: '50px', 
+                      backgroundColor: '#fba354', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      marginRight: '15px',
+                      flexShrink: 0,
+                      position: 'relative'
+                  }}>
+                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                   </div>
-                  <span>Emergency Call</span>
-                  <h6>
-                     <Link to="/website/contact" style={{ color: "inherit" }}>+91 9845497950</Link>
-                  </h6>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
+                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
+                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
+                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                    </h6>
+                  </div>
                 </div>
               </div>
             </div>

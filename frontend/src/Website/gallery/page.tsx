@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLayout } from "../context/LayoutContext";
-import { Link } from "react-router-dom";
 import Image from "../components/Image";
+import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { getGalleryItems, getGalleryCategories } from "../../utils/api";
 
 export default function GalleryPage() {
@@ -10,6 +10,9 @@ export default function GalleryPage() {
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterCategory, setFilterCategory] = useState<number | null>(null);
+    const [selectedImage, setSelectedImage] = useState<any>(null);
+    const [zoom, setZoom] = useState(1);
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
         setHeaderStyle(3);
@@ -32,8 +35,38 @@ export default function GalleryPage() {
     }, [setHeaderStyle, setBreadcrumbTitle]);
 
     const filteredItems = filterCategory 
-        ? galleryItems.filter(item => item.category_id === filterCategory) 
+        ? galleryItems.filter(item => String(item.category) === String(filterCategory)) 
         : galleryItems;
+
+    const openLightbox = (item: any, index: number) => {
+        setSelectedImage(item);
+        setCurrentIndex(index);
+        setZoom(1);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeLightbox = () => {
+        setSelectedImage(null);
+        document.body.style.overflow = 'auto';
+    };
+
+    const handleNext = () => {
+        const nextIndex = (currentIndex + 1) % filteredItems.length;
+        setSelectedImage(filteredItems[nextIndex]);
+        setCurrentIndex(nextIndex);
+        setZoom(1);
+    };
+
+    const handlePrev = () => {
+        const prevIndex = (currentIndex - 1 + filteredItems.length) % filteredItems.length;
+        setSelectedImage(filteredItems[prevIndex]);
+        setCurrentIndex(prevIndex);
+        setZoom(1);
+    };
+
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 3));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
+    const handleResetZoom = () => setZoom(1);
 
     return (
         <section className="gallery-section p_relative sec-pad-2">
@@ -72,21 +105,35 @@ export default function GalleryPage() {
                     <div className="text-center p-5">No gallery items found for this category.</div>
                 ) : (
                     <div className="row clearfix">
-                        {filteredItems.map((item) => (
+                        {filteredItems.map((item, index) => (
                             <div key={item.id} className="col-lg-4 col-md-6 col-sm-12 gallery-block mb_30">
-                                <div className="gallery-block-one" style={{ position: 'relative', overflow: 'hidden', borderRadius: '15px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 5px 20px rgba(0,0,0,0.08)' }}>
-                                        <Link to={`/website/gallery/${item.id}`} className="inner-box" style={{ height: '100%', display: 'block' }}>
-                                            <figure className="image-box" style={{ height: '100%', marginBottom: 0 }}>
-                                                <Image src={item.image_url || "/website/assets/images/project/project-1.jpg"} alt={item.title} width={400} height={350} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            </figure>
-                                            <div className="overlay-box" style={{ position: 'absolute', left: 0, bottom: '-100%', width: '100%', padding: '25px', backgroundColor: 'rgba(6, 70, 172, 0.95)', transition: 'all 0.4s ease', display: 'flex', flexDirection: 'column', color: '#fff' }}>
-                                                <h4 style={{ color: '#fff', fontSize: '20px', marginBottom: '5px' }}>{item.title}</h4>
-                                                <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>{categories.find(c => c.id === item.category_id)?.name || "Project"}</p>
-                                                <span className="mt_10" style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>VIEW DETAILS <i className="fas fa-arrow-right ml_5"></i></span>
-                                            </div>
-                                        </Link>
+                                <div 
+                                    className="gallery-block-one" 
+                                    onClick={() => openLightbox(item, index)}
+                                    style={{ 
+                                        position: 'relative', 
+                                        borderRadius: '15px', 
+                                        cursor: 'pointer', 
+                                        transition: 'all 0.3s ease', 
+                                        backgroundColor: '#fff',
+                                        overflow: 'hidden',
+                                        boxShadow: '0 5px 20px rgba(0,0,0,0.05)',
+                                        height: '350px'
+                                    }}
+                                >
+                                    <div className="inner-box" style={{ height: '100%', display: 'block' }}>
+                                        <figure className="image-box" style={{ height: '100%', marginBottom: 0, overflow: 'hidden' }}>
+                                            <Image 
+                                                src={item.image_url || "/website/assets/images/project/project-1.jpg"} 
+                                                alt={item.title} 
+                                                width={400} 
+                                                height={350} 
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
+                                            />
+                                        </figure>
+                                    </div>
                                     <style dangerouslySetInnerHTML={{ __html: `
-                                        .gallery-block-one:hover .overlay-box { bottom: 0 !important; }
+                                        .gallery-block-one:hover img { transform: scale(1.05); }
                                     ` }} />
                                 </div>
                             </div>
@@ -94,6 +141,77 @@ export default function GalleryPage() {
                     </div>
                 )}
             </div>
+
+            {/* Custom Lightbox */}
+            {selectedImage && (
+                <div 
+                    className="lightbox-overlay" 
+                    style={{ 
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
+                        backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 9999, 
+                        display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        backdropFilter: 'blur(10px)'
+                    }}
+                    onClick={closeLightbox}
+                >
+                    {/* Controls Bar */}
+                    <div 
+                        className="lightbox-controls" 
+                        style={{ position: 'absolute', top: '20px', right: '30px', display: 'flex', gap: '20px', zIndex: 10000 }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button onClick={handleZoomIn} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer' }} title="Zoom In"><ZoomIn size={28} /></button>
+                        <button onClick={handleResetZoom} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer' }} title="Reset"><RotateCcw size={28} /></button>
+                        <button onClick={handleZoomOut} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer' }} title="Zoom Out"><ZoomOut size={28} /></button>
+                        <button onClick={closeLightbox} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer', marginLeft: '20px' }} title="Close"><X size={32} /></button>
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handlePrev(); }} 
+                        style={{ position: 'absolute', left: '30px', color: '#fff', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }}
+                    >
+                        <ChevronLeft size={36} />
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleNext(); }} 
+                        style={{ position: 'absolute', right: '30px', color: '#fff', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', transition: '0.3s' }}
+                    >
+                        <ChevronRight size={36} />
+                    </button>
+
+                    {/* Image Container */}
+                    <div 
+                        className="lightbox-image-container" 
+                        style={{ 
+                            maxWidth: '90%', maxHeight: '90%', 
+                            display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            overflow: 'hidden', transition: 'all 0.3s ease'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img 
+                            src={selectedImage.image_url || "/website/assets/images/project/project-1.jpg"} 
+                            alt={selectedImage.title} 
+                            style={{ 
+                                maxWidth: '100%', maxHeight: '80vh', 
+                                transform: `scale(${zoom})`, 
+                                transition: 'transform 0.2s ease-out',
+                                borderRadius: '8px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                            }} 
+                        />
+                    </div>
+
+                    {/* Info Bar */}
+                    <div 
+                        className="lightbox-info" 
+                        style={{ position: 'absolute', bottom: '40px', textAlign: 'center', color: '#fff' }}
+                    >
+                        <h3 style={{ color: '#fff', marginBottom: '5px' }}>{selectedImage.title}</h3>
+                        <p style={{ margin: 0, opacity: 0.8 }}>{currentIndex + 1} of {filteredItems.length}</p>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

@@ -143,7 +143,7 @@ import TestimonialPage from "./pages/MasterSide/Testimonial/index";
 import WorkflowStepPage from "./pages/MasterSide/WorkflowStep/index";
 import PricingPlanPage from "./pages/MasterSide/PricingPlan/index";
 // import StatCounterPage from "./pages/MasterSide/StatCounter/index";
-// import WebsiteInquiryPage from "./pages/MasterSide/WebsiteInquiry/index";
+import WebsiteInquiryPage from "./pages/MasterSide/WebsiteInquiry/index";
 
 // Website Pages
 const WebsiteLayout = lazy(() => import("./Website/layout"));
@@ -173,6 +173,7 @@ const WebsiteError = lazy(() => import("./Website/error/page"));
 const WebsiteFAQ = lazy(() => import("./Website/faq/page"));
 const WebsiteCareerDetails = lazy(() => import("./Website/career-details/page"));
 const WebsiteCareers = lazy(() => import("./Website/careers/page"));
+const WebsiteCareerApply = lazy(() => import("./Website/career-apply/page"));
 const WebsiteMedicalDevices = lazy(() => import("./Website/medical-devices/page"));
 const WebsiteMedicalDeviceDetails = lazy(() => import("./Website/medical-device-details/page"));
 const WebsiteDeviceCategories = lazy(() => import("./Website/device-categories/page"));
@@ -235,7 +236,7 @@ export function appRoutes() {
           <Route path="master/workflowstep" element={<WorkflowStepPage />} />
           <Route path="master/pricingplan" element={<PricingPlanPage />} />
           {/* <Route path="master/statcounter" element={<StatCounterPage />} /> */}
-          {/* <Route path="master/websiteinquiry" element={<WebsiteInquiryPage />} /> */}
+          <Route path="master/websiteinquiry" element={<WebsiteInquiryPage />} />
 
           <Route path="master/master-dashboard" element={<MasterDashboard />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />
@@ -386,6 +387,7 @@ export function appRoutes() {
           <Route path="faq" element={<WebsiteFAQ />} />
           <Route path="careers" element={<WebsiteCareers />} />
           <Route path="careers/:id" element={<WebsiteCareerDetails />} />
+          <Route path="careers/apply/:id" element={<WebsiteCareerApply />} />
           <Route path="medical-devices" element={<WebsiteMedicalDevices />} />
           <Route path="medical-devices/:id" element={<WebsiteMedicalDeviceDetails />} />
           <Route path="device-categories" element={<WebsiteDeviceCategories />} />

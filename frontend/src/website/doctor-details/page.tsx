@@ -5,6 +5,7 @@ import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
 import ProgressBar from "../components/elements/ProgressBar";
 import { getTeamMemberById } from "../../utils/api";
+import { contactApi } from "../utils/api";
 import { MOCK_DOCTORS } from "../utils/mockData";
 
 export default function DoctorsDetails() {
@@ -12,6 +13,19 @@ export default function DoctorsDetails() {
   const { id } = useParams<{ id: string }>();
   const [doctor, setDoctor] = useState<any>(MOCK_DOCTORS[0] || {});
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+    subject: `Inquiry for ${doctor.name || 'Medical Professional'}`
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   useEffect(() => {
     setHeaderStyle(3);
@@ -41,6 +55,26 @@ export default function DoctorsDetails() {
     };
     fetchDoctor();
   }, [id, setBreadcrumbTitle]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+
+    try {
+      await contactApi.send({
+        ...formData,
+        subject: `Inquiry regarding Doctor: ${doctor.name || 'General'}`
+      });
+      setSubmitStatus("success");
+      setFormData({ name: "", email: "", phone: "", message: "", subject: "" });
+    } catch (error) {
+      console.error('Submission failed:', error);
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
@@ -162,7 +196,7 @@ export default function DoctorsDetails() {
             {/* Contact Form */}
             <div className="contact-box">
               <h3>Contact Me</h3>
-              <form method="post" action="/website" className="default-form">
+              <form onSubmit={handleSubmit} className="default-form">
                 <div className="row clearfix">
                   <div className="col-lg-6 col-md-6 col-sm-12 single-column">
                     <div className="form-group">
@@ -172,6 +206,8 @@ export default function DoctorsDetails() {
                       <input
                         type="text"
                         name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
                         placeholder="Name"
                         required
                       />
@@ -186,6 +222,8 @@ export default function DoctorsDetails() {
                       <input
                         type="email"
                         name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
                         placeholder="Email"
                         required
                       />
@@ -205,6 +243,8 @@ export default function DoctorsDetails() {
                       <input
                         type="text"
                         name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
                         placeholder="Phone"
                         required
                       />
@@ -216,18 +256,30 @@ export default function DoctorsDetails() {
                       <div className="icon">
                         <i className="icon-48"></i>
                       </div>
-                      <textarea name="message" placeholder="Message"></textarea>
+                      <textarea 
+                        name="message" 
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        placeholder="Message"
+                        required
+                      ></textarea>
                     </div>
                   </div>
 
                   <div className="col-lg-12 col-md-12 col-sm-12 single-column">
                     <div className="form-group message-btn mx-0">
-                      <button type="submit" className="theme-btn btn-two">
-                        <span>Send your message</span>
+                      <button type="submit" className="theme-btn btn-two" disabled={isSubmitting}>
+                        <span>{isSubmitting ? "Sending..." : "Send your message"}</span>
                       </button>
                     </div>
                   </div>
                 </div>
+                {submitStatus === "success" && (
+                    <div className="mt-3 text-success">Message sent successfully!</div>
+                )}
+                {submitStatus === "error" && (
+                    <div className="mt-3 text-danger">Failed to send message. Please try again.</div>
+                )}
               </form>
             </div>
           </div>

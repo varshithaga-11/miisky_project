@@ -78,19 +78,7 @@ export default function Footer1() {
                                 </div>
                             </div>
                         </div>
-                        <div className="footer-menu mt_60">
-                            <figure className="logo-box"><Link to="/website" onClick={() => window.scrollTo(0, 0)}><Image src="/website/assets/images/logo-miisky.png" alt="Footer Logo" width={203} height={40} priority /></Link></figure>
-                            <ul className="menu-list clearfix">
-                                <li><Link to="/website" onClick={() => window.scrollTo(0, 0)}>Home</Link></li>
-                                <li><Link to="/website/about" onClick={() => window.scrollTo(0, 0)}>About</Link></li>
-                                <li><Link to="/website/departments" onClick={() => window.scrollTo(0, 0)}>Departments</Link></li>
-                                <li><Link to="/website/medical-devices" onClick={() => window.scrollTo(0, 0)}>Products</Link></li>
-                                <li><Link to="/website/research" onClick={() => window.scrollTo(0, 0)}>Innovation</Link></li>
-                                <li><Link to="/website/faq" onClick={() => window.scrollTo(0, 0)}>Support</Link></li>
-                                <li><Link to="/website/blog" onClick={() => window.scrollTo(0, 0)}>Blog</Link></li>
-                                <li><Link to="/website/contact" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
-                            </ul>
-                        </div>
+
                     </div>
                 </div>
                 <div className="footer-bottom centred">

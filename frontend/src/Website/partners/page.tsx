@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useLayout } from "../context/LayoutContext";
-import { Link } from "react-router-dom";
 import Image from "../components/Image";
+import { X, Calendar, Award, Info } from "lucide-react";
 import { getPartners } from "../../utils/api";
 
 export default function PartnersPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [partners, setPartners] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedPartner, setSelectedPartner] = useState<any>(null);
 
     useEffect(() => {
         setHeaderStyle(3);
@@ -49,9 +50,13 @@ export default function PartnersPage() {
                                         <h5 className="mt_15" style={{ fontSize: '15px', color: '#111', fontWeight: 600 }}>{partner.name}</h5>
                                     </div>
                                     <div className="btn-box">
-                                        <Link to={`/website/partners/${partner.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                        <button 
+                                            onClick={() => setSelectedPartner(partner)} 
+                                            className="theme-btn btn-one" 
+                                            style={{ padding: '8px 25px', cursor: 'pointer', border: 'none' }}
+                                        >
                                             <span>View Details</span>
-                                        </Link>
+                                        </button>
                                     </div>
                                     <style dangerouslySetInnerHTML={{ __html: `
                                         .partner-block-one:hover { border-color: #0646ac !important; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(6, 70, 172, 0.1) !important; }
@@ -62,6 +67,93 @@ export default function PartnersPage() {
                     </div>
                 )}
             </div>
+
+            {/* Partner Detail Modal */}
+            {selectedPartner && (
+                <div 
+                    className="modal-overlay" 
+                    style={{ 
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
+                        backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999, 
+                        display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        backdropFilter: 'blur(5px)', padding: '20px'
+                    }}
+                    onClick={() => setSelectedPartner(null)}
+                >
+                    <div 
+                        className="modal-content" 
+                        style={{ 
+                            backgroundColor: '#fff', maxWidth: '800px', width: '100%', 
+                            borderRadius: '20px', overflow: 'hidden', position: 'relative',
+                            boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+                            animation: 'modalSlideUp 0.4s ease-out'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => setSelectedPartner(null)} 
+                            style={{ position: 'absolute', top: '20px', right: '20px', border: 'none', background: '#f0f4ff', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', color: '#0646ac', zIndex: 10 }}
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <div className="row g-0">
+                            <div className="col-md-5" style={{ backgroundColor: '#f8faff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                                <div style={{ textAlign: 'center' }}>
+                                    <figure style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
+                                        <Image src={selectedPartner.logo_url || "/website/assets/images/clients/clients-1.png"} alt={selectedPartner.name} width={200} height={120} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }} />
+                                    </figure>
+                                    <span style={{ display: 'inline-block', padding: '5px 15px', backgroundColor: '#eef3ff', color: '#0646ac', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
+                                        {selectedPartner.partner_type?.replace('_', ' ') || 'Partner'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="col-md-7" style={{ padding: '40px' }}>
+                                <h2 style={{ fontSize: '28px', color: '#111', marginBottom: '10px' }}>{selectedPartner.name}</h2>
+                                {selectedPartner.since_year && (
+                                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Calendar size={16} color="#0646ac" /> Partner since {selectedPartner.since_year}
+                                    </p>
+                                )}
+                                
+                                <div className="detail-section mb_20">
+                                    <h6 style={{ fontWeight: 700, color: '#0646ac', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Info size={18} /> About Partner
+                                    </h6>
+                                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#444' }}>
+                                        {selectedPartner.description || "Leading organization collaborating toward innovative healthcare excellence."}
+                                    </p>
+                                </div>
+
+                                {selectedPartner.collaboration_details && (
+                                    <div className="detail-section mb_30">
+                                        <h6 style={{ fontWeight: 700, color: '#0646ac', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Award size={18} /> Collaboration Scope
+                                        </h6>
+                                        <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#444' }}>
+                                            {selectedPartner.collaboration_details}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="modal-footer-btns" style={{ borderTop: '1px solid #eee', paddingTop: '25px', display: 'flex', gap: '15px' }}>
+                                    {selectedPartner.website_url && (
+                                        <a href={selectedPartner.website_url.startsWith('http') ? selectedPartner.website_url : `https://${selectedPartner.website_url}`} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one" style={{ padding: '10px 25px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span>Visit Website</span>
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes modalSlideUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            ` }} />
         </section>
     );
 }

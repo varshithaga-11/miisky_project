@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
-import { getBlogPosts } from "../../utils/api";
+import { getBlogPosts, getBlogCategories } from "../../utils/api";
 import { MOCK_BLOG_POSTS } from "../utils/mockData";
 import Cta from "../components/sections/home2/Cta";
 
 export default function BlogPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [posts, setPosts] = useState(MOCK_BLOG_POSTS);
+    const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
     useEffect(() => {
         setHeaderStyle(3);
@@ -17,21 +20,49 @@ export default function BlogPage() {
     }, [setHeaderStyle, setBreadcrumbTitle]);
 
     useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await getBlogCategories();
+                const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+                setCategories(data);
+            } catch (err) {
+                console.warn('Failed to fetch blog categories:', err);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
         const fetchPosts = async () => {
             try {
                 setLoading(true);
-                const response = await getBlogPosts();
+                const params: any = {};
+                
+                if (searchTerm) params.search = searchTerm;
+                if (selectedCategory) params.category = selectedCategory;
+
+                const response = await getBlogPosts(params);
                 const data = Array.isArray(response.data) ? response.data : response.data.results || [];
-                setPosts(data.length > 0 ? data : MOCK_BLOG_POSTS);
+                setPosts(data.length > 0 ? data : (searchTerm || selectedCategory ? [] : MOCK_BLOG_POSTS));
             } catch (err) {
                 console.warn('Failed to fetch blog posts:', err);
-                setPosts(MOCK_BLOG_POSTS);
+                setPosts(searchTerm || selectedCategory ? [] : MOCK_BLOG_POSTS);
             } finally {
                 setLoading(false);
             }
         };
         fetchPosts();
-    }, []);
+    }, [searchTerm, selectedCategory]);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const formData = new FormData(e.target as HTMLFormElement);
+        setSearchTerm(formData.get("search-field") as string || "");
+    };
+
+    const handleCategoryClick = (categoryId: number | null) => {
+        setSelectedCategory(categoryId);
+    };
 
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
@@ -96,9 +127,9 @@ export default function BlogPage() {
                                 <div className="blog-sidebar">
                                     <div className="search-widget mb_40">
                                         <h3>Search Here</h3>
-                                        <form method="post" action="/website/blog">
+                                        <form onSubmit={handleSearch}>
                                             <div className="form-group">
-                                                <input type="search" name="search-field" placeholder="keywords" required/>
+                                                <input type="search" name="search-field" placeholder="keywords" defaultValue={searchTerm}/>
                                                 <button type="submit"><Image src="/website/assets/images/icons/icon-22.svg" alt="Icon" width={20} height={20} priority /></button>
                                             </div>
                                         </form>
@@ -109,12 +140,18 @@ export default function BlogPage() {
                                         </div>
                                         <div className="widget-content">
                                             <ul className="category-list clearfix">
-                                                <li><Link to="/website/blog-details">Cardiology</Link></li>
-                                                <li><Link to="/website/blog-details">Dental</Link></li>
-                                                <li><Link to="/website/blog-details">Gastroenterology</Link></li>
-                                                <li><Link to="/website/blog-details">Neurology</Link></li>
-                                                <li><Link to="/website/blog-details">Orthopaedics</Link></li>
-                                                <li><Link to="/website/blog-details">Dental Caring</Link></li>
+                                                <li>
+                                                    <Link to="#" onClick={(e) => { e.preventDefault(); handleCategoryClick(null); }} className={selectedCategory === null ? "active font-bold text-blue-600" : ""}>
+                                                        All Categories
+                                                    </Link>
+                                                </li>
+                                                {categories.map((cat: any) => (
+                                                    <li key={cat.id}>
+                                                        <Link to="#" onClick={(e) => { e.preventDefault(); handleCategoryClick(cat.id); }} className={selectedCategory === cat.id ? "active font-bold text-blue-600" : ""}>
+                                                            {cat.name}
+                                                        </Link>
+                                                    </li>
+                                                ))}
                                             </ul>
                                         </div>
                                     </div>

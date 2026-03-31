@@ -24,8 +24,8 @@ const BASE_URL =
 // ─── Token Storage Helpers ───────────────────────────────────────────────────
 
 const COOKIE_KEY  = "miisky_auth";          // Cookie name read by middleware
-const TOKEN_KEY   = "miisky_access_token";
-const REFRESH_KEY = "miisky_refresh_token";
+const TOKEN_KEY   = "access";
+const REFRESH_KEY = "refresh";
 const USER_KEY    = "miisky_user";
 
 /** Write a client-side cookie so the Next.js middleware can check auth. */
@@ -363,8 +363,8 @@ export const authApi = {
 // ─── Contact Endpoint ─────────────────────────────────────────────────────────
 
 export const contactApi = {
-  send: (data: import("./types").ContactPayload) =>
-    post<ApiResponse<null>>("contact/", data, { public: true }),
+  send: (data: any) =>
+    post<ApiResponse<null>>("website/websiteinquiry/", data, { public: true }),
 };
 
 // ─── Appointment Endpoint ────────────────────────────────────────────────────
@@ -413,4 +413,13 @@ export const portfolioApi = {
 
 export const pricingApi = {
   list: () => getList<import("./types").PricingPlan>("pricing/"),
+};
+
+export const careersApi = {
+  list: (params?: Record<string, string | number | boolean | undefined>) =>
+    getList<any>("website/joblisting/", params),
+  detail: (id: string | number) =>
+    get<any>(`website/joblisting/${id}/`),
+  apply: (data: FormData) =>
+    post<any>("website/jobapplication/", data, { public: true }),
 };
