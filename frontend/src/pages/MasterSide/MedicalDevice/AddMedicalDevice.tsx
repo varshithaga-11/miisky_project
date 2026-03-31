@@ -4,6 +4,7 @@ import { createMedicalDevice, MedicalDevice } from "./medicaldeviceapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   onSuccess: () => void;
@@ -110,23 +111,21 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
           </div>
 
           <div className="md:col-span-2">
-            <Label htmlFor="image">Main Image</Label>
-            <Input
+            <ImagePicker
               id="image"
-              type="file"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-              className="py-1.5"
+              label="Main Image"
+              value={imageFile}
+              onChange={(file) => setImageFile(file)}
               disabled={loading}
             />
           </div>
 
           <div className="md:col-span-2">
-            <Label htmlFor="thumbnail">Thumbnail</Label>
-            <Input
+            <ImagePicker
               id="thumbnail"
-              type="file"
-              onChange={(e) => setThumbFile(e.target.files?.[0] || null)}
-              className="py-1.5"
+              label="Thumbnail"
+              value={thumbFile}
+              onChange={(file) => setThumbFile(file)}
               disabled={loading}
             />
           </div>

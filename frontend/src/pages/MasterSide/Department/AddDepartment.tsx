@@ -4,6 +4,7 @@ import { createDepartment, Department } from "./departmentapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface AddDepartmentProps {
   onClose: () => void;
@@ -152,13 +153,11 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
           </div>
 
           <div>
-            <Label htmlFor="image">Department Image</Label>
-            <Input
+            <ImagePicker
               id="image"
-              type="file"
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
-              className="py-1.5"
-              accept="image/*"
+              label="Department Image"
+              value={image}
+              onChange={(file) => setImage(file)}
               disabled={loading}
             />
           </div>

@@ -4,6 +4,7 @@ import { getTestimonialById, updateTestimonial, Testimonial } from "./testimonia
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface EditTestimonialProps {
   id: number;
@@ -171,16 +172,14 @@ const EditTestimonial: React.FC<EditTestimonialProps> = ({ id, onSuccess, onClos
                 />
               </div>
               <div className="md:col-span-2">
-                <Label htmlFor="photo">Profile Photo</Label>
-                <input
+                <ImagePicker
                   id="photo"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhoto(e.target.files ? e.target.files[0] : null)}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300 transition-all"
+                  label="Profile Photo"
+                  value={photo}
+                  previewUrl={formData.photo}
+                  onChange={(file) => setPhoto(file)}
                   disabled={loading}
                 />
-                {formData.photo && <p className="text-xs text-gray-400 mt-2 italic font-mono truncate">Current: {formData.photo}</p>}
               </div>
             </div>
 

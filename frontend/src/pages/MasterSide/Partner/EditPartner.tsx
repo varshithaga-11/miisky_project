@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { updatePartner, getPartnerById, Partner } from "./partnerapi";
+import { updatePartner, getPartnerById } from "./partnerapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   id: number;
@@ -118,21 +119,12 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             </div>
 
             <div>
-              <Label htmlFor="logo">Brand Logo</Label>
-              <div className="flex items-center gap-4 mb-3">
-                 {formData.logo_url && (
-                   <div className="w-12 h-12 rounded border bg-gray-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
-                      <img src={formData.logo_url} alt="current" className="max-w-full max-h-full object-contain" />
-                   </div>
-                 )}
-                 <span className="text-xs text-gray-400">Current logo</span>
-              </div>
-              <Input
+              <ImagePicker
                 id="logo"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                className="py-1.5"
+                label="Brand Logo"
+                value={logoFile}
+                previewUrl={formData.logo_url}
+                onChange={(file) => setLogoFile(file)}
                 disabled={loading}
               />
             </div>

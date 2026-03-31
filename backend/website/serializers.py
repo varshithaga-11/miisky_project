@@ -325,6 +325,9 @@ class PatentSerializer(serializers.ModelSerializer):
 # ===========================================================================
 
 class WorkflowStepSerializer(serializers.ModelSerializer):
+    image_url = serializers.ImageField(source='image', read_only=True)
+    image = serializers.ImageField(required=False, allow_null=True, write_only=True)
+
     class Meta:
         model = WorkflowStep
         fields = '__all__'

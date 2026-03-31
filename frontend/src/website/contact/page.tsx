@@ -24,7 +24,7 @@ export default function ContactPage() {
                                     <div className="inner-box">
                                         <div className="icon-box"><Image src="/website/assets/images/icons/icon-23.svg" alt="Icon" width={50} height={50} priority /></div>
                                         <h3>Office Location</h3>
-                                        <p>2972 Westheimer Rd. Santa Ana, Illinois 85486</p>
+                                        <p>#211, Temple Street, 9th Main Road, BEML III Stage, Rajarajeswarinagar, Bengaluru, Karnataka 560098</p>
                                     </div>
                                 </div>
                             </div>
@@ -33,7 +33,7 @@ export default function ContactPage() {
                                     <div className="inner-box">
                                         <div className="icon-box"><Image src="/website/assets/images/icons/icon-24.svg" alt="Icon" width={50} height={50} priority /></div>
                                         <h3>Company Email</h3>
-                                        <p><Link to="mailto:info@example.com">info@example.com</Link><br /><Link to="mailto:contact@example.com">contact@example.com</Link></p>
+                                        <p><Link to="mailto:support@miisky.com">support@miisky.com</Link><br /><Link to="mailto:g.jagan@aarmsvaluechain.com">g.jagan@aarmsvaluechain.com</Link></p>
                                     </div>
                                 </div>
                             </div>
@@ -42,7 +42,7 @@ export default function ContactPage() {
                                     <div className="inner-box">
                                         <div className="icon-box"><Image src="/website/assets/images/icons/icon-25.svg" alt="Icon" width={50} height={50} priority /></div>
                                         <h3>Contact Us</h3>
-                                        <p><Link to="tel:000111555999">+000 111555999</Link><br /><Link to="tel:000111555888">+000 111555888</Link></p>
+                                        <p><Link to="tel:+919845497950">+91 9845497950</Link></p>
                                     </div>
                                 </div>
                             </div>

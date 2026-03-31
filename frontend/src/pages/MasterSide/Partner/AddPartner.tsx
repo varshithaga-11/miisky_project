@@ -4,6 +4,7 @@ import { createPartner, Partner } from "./partnerapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   onSuccess: () => void;
@@ -100,13 +101,11 @@ const AddPartner: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div>
-            <Label htmlFor="logo">Brand Logo</Label>
-            <Input
+            <ImagePicker
               id="logo"
-              type="file"
-              accept="image/*"
-              onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-              className="py-1.5"
+              label="Brand Logo"
+              value={logoFile}
+              onChange={(file) => setLogoFile(file)}
               disabled={loading}
             />
           </div>

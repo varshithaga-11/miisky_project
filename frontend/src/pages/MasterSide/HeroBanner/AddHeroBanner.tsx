@@ -4,6 +4,7 @@ import { createHeroBanner, HeroBanner } from "./herobannerapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   onSuccess: () => void;
@@ -124,12 +125,11 @@ const AddHeroBanner: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div className="md:col-span-2">
-            <Label htmlFor="image">Background Image</Label>
-            <Input
+            <ImagePicker
               id="image"
-              type="file"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-              className="py-1.5"
+              label="Background Image"
+              value={imageFile}
+              onChange={(file) => setImageFile(file)}
               disabled={loading}
             />
           </div>

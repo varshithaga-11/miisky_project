@@ -70,9 +70,9 @@ export default function Footer1() {
                                     </div>
                                     <div className="widget-content">
                                         <ul className="info-list clearfix">
-                                            <li><Image src="/website/assets/images/icons/icon-5.svg" alt="Icon" width={20} height={15} priority />Email: <Link to="mailto:info@yourmail.com">info@yourmail.com</Link></li>
-                                            <li><Image src="/website/assets/images/icons/icon-6.svg" alt="Icon" width={20} height={21} priority />Call : <Link to="tel:123045615523">+1 (230)-456-155-23</Link></li>
-                                            <li><Image src="/website/assets/images/icons/icon-7.svg" alt="Icon" width={20} height={20} priority />2972 Westheimer Rd. Santa Ana, Illinois 85486 </li>
+                                            <li><Image src="/website/assets/images/icons/icon-5.svg" alt="Icon" width={20} height={15} priority />Email: <Link to="mailto:support@miisky.com">support@miisky.com</Link></li>
+                                            <li><Image src="/website/assets/images/icons/icon-6.svg" alt="Icon" width={20} height={21} priority />Call : <Link to="tel:+919845497950">+91 9845497950</Link></li>
+                                            <li><Image src="/website/assets/images/icons/icon-7.svg" alt="Icon" width={20} height={20} priority />#211, Temple Street, 9th Main Road, BEML III Stage, Rajarajeswarinagar, Bengaluru - 560098 </li>
                                         </ul>
                                     </div>
                                 </div>

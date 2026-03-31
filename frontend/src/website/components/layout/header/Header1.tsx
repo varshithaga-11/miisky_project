@@ -45,7 +45,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               <ul className="info-list clearfix">
                 <li>
                   <i className="icon-46"></i>
-                  <a href="mailto:example@info.com">example@info.com</a>
+                  <a href="mailto:support@miisky.com">support@miisky.com</a>
                 </li>
                 <li>
                   <i className="icon-2"></i>
@@ -53,7 +53,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                 </li>
                 <li>
                   <i className="icon-3"></i>
-                  Open Hours: <span>Mon - Fri: 8:00am to 5:00pm</span>
+                  Open Hours: <span>Mon - Fri: 9:30am to 6:00pm</span>
                 </li>
               </ul>
               <ul className="social-links clearfix">
@@ -168,7 +168,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   </div>
                   <span>Emergency Call</span>
                   <h6>
-                    <Link to="/website/contact" style={{ color: "inherit" }}>+ 1 (246) 333-0088</Link>
+                    <Link to="/website/contact" style={{ color: "inherit" }}>+91 9845497950</Link>
                   </h6>
                 </div>
               </div>
@@ -262,7 +262,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   </div>
                   <span>Emergency Call</span>
                   <h6>
-                     <Link to="/website/contact" style={{ color: "inherit" }}>+ 1 (246) 333-0088</Link>
+                     <Link to="/website/contact" style={{ color: "inherit" }}>+91 9845497950</Link>
                   </h6>
                 </div>
               </div>

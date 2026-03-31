@@ -119,9 +119,9 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
           <div className="contact-info">
               <h4>Contact Info</h4>
               <ul>
-                  <li>Chicago 12, Melborne City, USA</li>
-                  <li><Link to="tel:+8801682648101">+88 01682648101</Link></li>
-                  <li><Link to="mailto:info@example.com">info@example.com</Link></li>
+                  <li>#211, Temple Street, 9th Main Road, BEML III Stage, Rajarajeswarinagar, Bengaluru - 560098</li>
+                  <li><Link to="tel:+919845497950">+91 9845497950</Link></li>
+                  <li><Link to="mailto:support@miisky.com">support@miisky.com</Link></li>
               </ul>
           </div>
 

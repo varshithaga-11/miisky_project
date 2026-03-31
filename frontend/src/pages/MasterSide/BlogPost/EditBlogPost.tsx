@@ -5,6 +5,7 @@ import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import DatePicker2 from "../../../components/form/date-picker2";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   id: number;
@@ -155,34 +156,22 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories }) =
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="image">Featured Image</Label>
-                    {formData.image && (
-                      <div className="w-12 h-12 rounded border mb-2 overflow-hidden shrink-0">
-                        <img src={formData.image} alt="Current" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <Input
+                    <ImagePicker
                       id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                      className="py-1.5"
+                      label="Featured Image"
+                      value={imageFile}
+                      previewUrl={formData.image}
+                      onChange={(file) => setImageFile(file)}
                       disabled={loading}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="author_image">Author Image</Label>
-                    {formData.author_image && (
-                      <div className="w-12 h-12 rounded border mb-2 overflow-hidden shrink-0">
-                        <img src={formData.author_image} alt="Current" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <Input
+                    <ImagePicker
                       id="author_image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setAuthorFile(e.target.files?.[0] || null)}
-                      className="py-1.5"
+                      label="Author Image"
+                      value={authorFile}
+                      previewUrl={formData.author_image}
+                      onChange={(file) => setAuthorFile(file)}
                       disabled={loading}
                     />
                   </div>

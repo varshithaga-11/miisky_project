@@ -7,7 +7,8 @@ export interface WorkflowStep {
   description: string;
   position: number;
   icon_class?: string;
-  image?: string;
+  image?: string | File;
+  image_url?: string;
   is_active: boolean;
   created_at?: string;
 }
@@ -21,10 +22,13 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
-export const createWorkflowStep = async (data: WorkflowStep) => {
+export const createWorkflowStep = async (data: WorkflowStep | FormData) => {
   const url = createApiUrl("api/website/workflowstep/");
   const response = await axios.post(url, data, {
-    headers: await getAuthHeaders(),
+    headers: {
+      ...(await getAuthHeaders()),
+      "Content-Type": "multipart/form-data",
+    },
   });
   return response.data;
 };
@@ -53,10 +57,13 @@ export const getWorkflowStepById = async (id: number) => {
   return response.data;
 };
 
-export const updateWorkflowStep = async (id: number, data: Partial<WorkflowStep>) => {
+export const updateWorkflowStep = async (id: number, data: Partial<WorkflowStep> | FormData) => {
   const url = createApiUrl(`api/website/workflowstep/${id}/`);
   const response = await axios.patch(url, data, {
-    headers: await getAuthHeaders(),
+    headers: {
+      ...(await getAuthHeaders()),
+      "Content-Type": "multipart/form-data",
+    },
   });
   return response.data;
 };

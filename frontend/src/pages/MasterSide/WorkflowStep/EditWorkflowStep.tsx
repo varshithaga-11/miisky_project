@@ -4,6 +4,7 @@ import { updateWorkflowStep, getWorkflowStepById, WorkflowStep } from "./workflo
 import Label from "../../../components/form/Label";
 import Input from "../../../components/form/input/InputField";
 import Button from "../../../components/ui/button/Button";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   id: number;
@@ -36,7 +37,20 @@ const EditWorkflowStep: React.FC<Props> = ({ id, onSuccess, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await updateWorkflowStep(id, formData);
+      const data = new FormData();
+      data.append("title", formData.title || "");
+      data.append("description", formData.description || "");
+      data.append("position", String(formData.position || 1));
+      data.append("is_active", String(formData.is_active));
+      
+      if (formData.image instanceof File) {
+        data.append("image", formData.image);
+      }
+      if (formData.icon_class) {
+        data.append("icon_class", formData.icon_class);
+      }
+
+      await updateWorkflowStep(id, data);
       toast.success("Workflow step updated successfully!");
       onSuccess();
       onClose();
@@ -99,6 +113,17 @@ const EditWorkflowStep: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Detailed description of this step..."
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-28 resize-none"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <ImagePicker
+                  id="image"
+                  label="Step Image"
+                  value={formData.image || null}
+                  previewUrl={formData.image_url}
+                  onChange={(file) => setFormData({ ...formData, image: file || undefined })}
                   disabled={loading}
                 />
               </div>

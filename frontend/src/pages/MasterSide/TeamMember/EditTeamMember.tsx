@@ -4,6 +4,7 @@ import { updateTeamMember, getTeamMemberById, TeamMember } from "./teammemberapi
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   id: number;
@@ -141,23 +142,12 @@ const EditTeamMember: React.FC<Props> = ({ id, onSuccess, onClose, departments }
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="photo">Profile Photo</Label>
-                <div className="flex items-center gap-4 mb-2">
-                   <div className="w-12 h-12 rounded border bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 transition-opacity duration-300">
-                      <img 
-                        src={photoFile ? URL.createObjectURL(photoFile) : (formData.photo_url as string)} 
-                        alt="preview" 
-                        className="w-full h-full object-cover" 
-                      />
-                   </div>
-                   <span className="text-xs text-gray-400">Current photo</span>
-                </div>
-                <Input
+                <ImagePicker
                   id="photo"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="py-1.5"
+                  label="Profile Photo"
+                  value={photoFile}
+                  previewUrl={formData.photo_url as string}
+                  onChange={(file) => setPhotoFile(file)}
                   disabled={loading}
                 />
               </div>

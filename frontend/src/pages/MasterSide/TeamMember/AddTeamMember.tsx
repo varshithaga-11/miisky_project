@@ -4,6 +4,7 @@ import { createTeamMember, TeamMember } from "./teammemberapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   onSuccess: () => void;
@@ -136,13 +137,11 @@ const AddTeamMember: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
             </div>
 
             <div className="md:col-span-2">
-              <Label htmlFor="photo">Profile Photo</Label>
-              <Input
+              <ImagePicker
                 id="photo"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                className="py-1.5"
+                label="Profile Photo"
+                value={photoFile}
+                onChange={(file) => setPhotoFile(file)}
                 disabled={loading}
               />
             </div>

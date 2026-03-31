@@ -4,6 +4,7 @@ import { updateHeroBanner, getHeroBannerById, HeroBanner } from "./herobannerapi
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   id: number;
@@ -129,22 +130,12 @@ const EditHeroBanner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             </div>
 
             <div className="md:col-span-2">
-              <Label htmlFor="image">Background Image</Label>
-              <div className="flex items-center gap-4 mb-2">
-                 {formData.background_image_url && (
-                   <div className="w-16 h-16 rounded border overflow-hidden shrink-0">
-                      <img src={formData.background_image_url as any} alt="current" className="w-full h-full object-cover" />
-                   </div>
-                 )}
-                 <div className="text-xs text-gray-400">
-                    {formData.background_image_url ? "Replace existing image" : "No image set"}
-                 </div>
-              </div>
-              <Input
+              <ImagePicker
                 id="image"
-                type="file"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                className="py-1.5"
+                label="Background Image"
+                value={imageFile}
+                previewUrl={formData.background_image_url as any}
+                onChange={(file) => setImageFile(file)}
                 disabled={loading}
               />
             </div>

@@ -15,24 +15,24 @@ class CompanyInfo(models.Model):
     Stores global company information shown in the header/footer.
     Single-row config table (use pk=1 always).
     """
-    name = models.CharField(max_length=200, default="Miisky Technovation Private Limited")
+    name = models.CharField(max_length=200, default="AARMS Value Chain Private Limited")
     tagline = models.CharField(max_length=300, blank=True, null=True)
     logo = models.ImageField(upload_to='website/company/', null=True, blank=True)
     favicon = models.ImageField(upload_to='website/company/favicons/', null=True, blank=True)
 
     # Contact
-    phone_primary = models.CharField(max_length=20, blank=True, null=True)
+    phone_primary = models.CharField(max_length=20, default="+91 9845497950")
     phone_secondary = models.CharField(max_length=20, blank=True, null=True)
-    email_support = models.CharField(max_length=200, blank=True, null=True)
-    email_general = models.CharField(max_length=200, blank=True, null=True)
-    whatsapp_number = models.CharField(max_length=20, blank=True, null=True)
+    email_support = models.CharField(max_length=200, default="support@miisky.com")
+    email_general = models.CharField(max_length=200, default="g.jagan@aarmsvaluechain.com")
+    whatsapp_number = models.CharField(max_length=20, default="+91 9845497950")
 
     # Address
-    address_line1 = models.CharField(max_length=255, blank=True, null=True)
-    address_line2 = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    pincode = models.CharField(max_length=10, blank=True, null=True)
+    address_line1 = models.CharField(max_length=255, default="#211, Temple Street, 9th Main Road")
+    address_line2 = models.CharField(max_length=255, default="BEML III Stage, Rajarajeswarinagar")
+    city = models.CharField(max_length=100, default="Bengaluru")
+    state = models.CharField(max_length=100, default="Karnataka")
+    pincode = models.CharField(max_length=10, default="560098")
     country = models.CharField(max_length=100, default='India')
     google_maps_url = models.CharField(max_length=500, blank=True, null=True)
     google_maps_embed_url = models.CharField(max_length=1000, blank=True, null=True)
@@ -50,7 +50,7 @@ class CompanyInfo(models.Model):
     meta_keywords = models.TextField(blank=True, null=True)
 
     # Miscellaneous
-    open_hours = models.CharField(max_length=200, blank=True, null=True) # e.g. "Mon-Fri: 8:00am to 5:00pm"
+    open_hours = models.CharField(max_length=200, default="Mon - Fri: 9:30am to 6:00pm, Sat: 9:30am to 2:30pm") # e.g. "Mon-Fri: 8:00am to 5:00pm"
     appointment_link = models.CharField(max_length=500, blank=True, null=True)
 
     # Stat Counters
@@ -933,6 +933,7 @@ class WorkflowStep(models.Model):
     """
     title = models.CharField(max_length=200)
     description = models.TextField()
+    image = models.ImageField(upload_to='website/workflow/', null=True, blank=True)
     icon_class = models.CharField(max_length=100, blank=True, null=True) # e.g. "icon-20"
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)

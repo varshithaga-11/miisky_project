@@ -4,6 +4,7 @@ import { updateGalleryItem, getGalleryItemById, GalleryItem } from "./galleryite
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   id: number;
@@ -118,24 +119,14 @@ const EditGalleryItem: React.FC<Props> = ({ id, onSuccess, onClose, categories }
             </div>
 
             <div>
-              <Label htmlFor="image">Gallery Asset / Image</Label>
-              <div className="flex items-center gap-4">
-                 <div className="w-16 h-16 rounded border overflow-hidden shrink-0">
-                    <img 
-                      src={photoFile ? URL.createObjectURL(photoFile) : (formData.image_url as string)} 
-                      alt="preview" 
-                      className="w-full h-full object-cover" 
-                    />
-                 </div>
-                 <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="py-1.5"
-                  disabled={loading}
-                />
-              </div>
+              <ImagePicker
+                id="image"
+                label="Gallery Asset / Image"
+                value={photoFile}
+                previewUrl={formData.image_url as string}
+                onChange={(file) => setPhotoFile(file)}
+                disabled={loading}
+              />
             </div>
 
             <div>

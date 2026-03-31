@@ -5,6 +5,7 @@ import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import DatePicker2 from "../../../components/form/date-picker2";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface Props {
   onSuccess: () => void;
@@ -144,24 +145,20 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="image">Featured Image</Label>
-                  <Input
+                  <ImagePicker
                     id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="py-1.5"
+                    label="Featured Image"
+                    value={imageFile}
+                    onChange={(file) => setImageFile(file)}
                     disabled={loading}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="author_image">Author Image</Label>
-                  <Input
+                  <ImagePicker
                     id="author_image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setAuthorFile(e.target.files?.[0] || null)}
-                    className="py-1.5"
+                    label="Author Image"
+                    value={authorFile}
+                    onChange={(file) => setAuthorFile(file)}
                     disabled={loading}
                   />
                 </div>

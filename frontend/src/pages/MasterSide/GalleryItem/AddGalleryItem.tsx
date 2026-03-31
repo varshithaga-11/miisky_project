@@ -4,6 +4,7 @@ import { createGalleryItem, GalleryItem } from "./galleryitemapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import { FiPlusCircle } from "react-icons/fi";
 
 interface Props {
   onSuccess: () => void;
@@ -102,22 +103,33 @@ const AddGalleryItem: React.FC<Props> = ({ onSuccess, onClose, categories }) => 
           </div>
 
           <div>
-            <Label htmlFor="images">Select Images (Multiple allowed) *</Label>
-            <Input
-              id="images"
-              type="file"
-              multiple
-              accept="image/*"
-              required
-              onChange={(e) => setSelectedFiles(e.target.files)}
-              className="py-1.5"
-              disabled={loading}
-            />
-            {selectedFiles && (
-              <p className="text-xs text-blue-600 mt-1 font-medium">
-                {selectedFiles.length} files selected
-              </p>
-            )}
+             <Label htmlFor="images">Select Images (Multiple allowed) *</Label>
+             <div 
+               onClick={() => !loading && document.getElementById('images-hidden')?.click()}
+               className="relative group cursor-pointer overflow-hidden rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-gray-50 dark:bg-gray-900/50 transition-all p-6 text-center"
+             >
+                <input
+                  id="images-hidden"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  required
+                  onChange={(e) => setSelectedFiles(e.target.files)}
+                  className="hidden"
+                  disabled={loading}
+                />
+                <div className="flex flex-col items-center gap-2">
+                   <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                      <FiPlusCircle size={24} />
+                   </div>
+                   <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                      {selectedFiles && selectedFiles.length > 0 
+                        ? `${selectedFiles.length} files staged for upload` 
+                        : "Click to select multiple images"}
+                   </p>
+                   <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">PNG, JPG or WEBP (Max 5MB each)</p>
+                </div>
+             </div>
           </div>
 
           <div>

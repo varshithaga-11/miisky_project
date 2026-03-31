@@ -8,6 +8,7 @@ interface WorkflowStep {
     description: string;
     icon_class: string;
     image?: string;
+    image_url?: string;
 }
 
 const MOCK_STEPS = [
@@ -69,12 +70,13 @@ export default function Working() {
                                 <div className="working-block-one">
                                     <div className="inner-box">
                                         <div className="image-box">
-                                            <figure className="image">
+                                            <figure className="image" style={{ width: '250px', height: '250px', borderRadius: '50%', overflow: 'hidden' }}>
                                                 <Image 
-                                                    src={step.image || `/website/assets/images/resource/working-${(index % 3) + 1}.jpg`} 
+                                                    src={step.image_url || step.image || `/website/assets/images/resource/working-${(index % 3) + 1}.jpg`} 
                                                     alt={step.title} 
                                                     width={250} 
                                                     height={250} 
+                                                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                                                     priority 
                                                 />
                                             </figure>

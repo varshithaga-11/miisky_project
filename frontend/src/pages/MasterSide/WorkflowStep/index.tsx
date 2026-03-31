@@ -130,9 +130,18 @@ const WorkflowStepPage: React.FC = () => {
                         {step.position}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <div className="max-w-md">
-                          <div className="font-bold text-gray-900 line-clamp-1 dark:text-white">{step.title}</div>
-                          <div className="text-xs text-gray-500 line-clamp-1">{step.description}</div>
+                        <div className="flex items-center gap-3">
+                          {step.image_url && (
+                            <img 
+                              src={step.image_url} 
+                              alt={step.title} 
+                              className="w-12 h-12 rounded object-cover border border-gray-200 dark:border-gray-700"
+                            />
+                          )}
+                          <div className="max-w-md">
+                            <div className="font-bold text-gray-900 line-clamp-1 dark:text-white">{step.title}</div>
+                            <div className="text-xs text-gray-500 line-clamp-2">{step.description}</div>
+                          </div>
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">

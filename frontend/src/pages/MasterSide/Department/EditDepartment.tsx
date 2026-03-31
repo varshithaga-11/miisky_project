@@ -4,6 +4,7 @@ import { getDepartmentById, updateDepartment, Department } from "./departmentapi
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import ImagePicker from "../../../components/form/ImagePicker";
 
 interface EditDepartmentProps {
   departmentId: number;
@@ -26,6 +27,7 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
   const [icon_class, setIconClass] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [short_description, setShortDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [is_active, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -41,6 +43,7 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
           setPosition(data.position || 1);
           setIconClass(data.icon_class || "");
           setShortDescription(data.short_description || "");
+          setImageUrl(data.image || null);
           setIsActive(data.is_active !== false);
         } catch (error: any) {
           console.error("Error fetching department:", error);
@@ -183,13 +186,12 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="image">Department Image</Label>
-            <Input
+            <ImagePicker
               id="image"
-              type="file"
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
-              className="py-1.5"
-              accept="image/*"
+              label="Department Image"
+              value={image}
+              previewUrl={imageUrl || ""}
+              onChange={(file) => setImage(file)}
               disabled={loading}
             />
           </div>

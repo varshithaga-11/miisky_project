@@ -35,22 +35,13 @@ const swiperOptions = {
 
 interface BannerProps {
   slides?: BannerSlide[];
-  /** Number of doctor thumbnails shown in the social proof strip */
-  doctorThumbCount?: number;
-  /** Stats text shown below the thumbs */
-  statsLabel?: string;
-  statsValue?: string;
 }
 
 export default function Banner({
   slides,
-  doctorThumbCount = 4,
-  statsLabel = "Professional Doctors",
-  statsValue = "100K",
 }: BannerProps) {
   const [bannerSlides, setBannerSlides] = useState<BannerSlide[]>(MOCK_BANNER_SLIDES);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (slides) {
@@ -78,12 +69,14 @@ export default function Banner({
           buttonHref: "/website/appointment",
         }));
 
-        setBannerSlides(formattedBanners.length > 0 ? formattedBanners : MOCK_BANNER_SLIDES);
-        setError(null);
+        if (formattedBanners.length > 0) {
+          setBannerSlides(formattedBanners);
+        } else {
+          setBannerSlides(MOCK_BANNER_SLIDES);
+        }
       } catch (err) {
         console.warn("Failed to fetch banners, using mock data:", err);
         setBannerSlides(MOCK_BANNER_SLIDES);
-        setError(null); // Don't show error to user, just use mock data
       } finally {
         setLoading(false);
       }
@@ -148,24 +141,6 @@ export default function Banner({
                     height={700}
                   />
                 </figure>
-
-                {/* Doctor count social proof */}
-                <div className="doctors-list">
-                  <ul className="thumb-box flex gap-2">
-                    {Array.from({ length: doctorThumbCount }, (_, i) => (
-                      <li key={i + 1}>
-                        <Image
-                          src={`/website/assets/images/banner/thumb-${i + 1}.jpg`}
-                          alt={`Doctor ${i + 1}`}
-                          width={45}
-                          height={45}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                  <h3>{statsValue}</h3>
-                  <span>{statsLabel}</span>
-                </div>
               </div>
 
             </div>
