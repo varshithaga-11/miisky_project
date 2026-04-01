@@ -45,14 +45,16 @@ export interface PaginatedPatientTrackers {
   total_pages: number;
 }
 
-export async function fetchNutritionistPayoutPatients(page = 1, limit = 15): Promise<PaginatedPatientTrackers> {
-  const url = createApiUrl(`api/nutrition/plan-payouts/?page=${page}&limit=${limit}`);
+export async function fetchNutritionistPayoutPatients(page = 1, limit = 15, search?: string): Promise<PaginatedPatientTrackers> {
+  let url = createApiUrl(`api/nutrition/plan-payouts/?page=${page}&limit=${limit}`);
+  if (search) url += `&search=${encodeURIComponent(search)}`;
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data as PaginatedPatientTrackers;
 }
 
-export async function fetchMicroKitchenPayoutPatients(page = 1, limit = 15): Promise<PaginatedPatientTrackers> {
-  const url = createApiUrl(`api/microkitchen/plan-payouts/?page=${page}&limit=${limit}`);
+export async function fetchMicroKitchenPayoutPatients(page = 1, limit = 15, search?: string): Promise<PaginatedPatientTrackers> {
+  let url = createApiUrl(`api/microkitchen/plan-payouts/?page=${page}&limit=${limit}`);
+  if (search) url += `&search=${encodeURIComponent(search)}`;
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data as PaginatedPatientTrackers;
 }

@@ -518,6 +518,8 @@ class NutritionistPlanPayoutsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     pagination_class = Pagination
     serializer_class = AdminPayoutPatientTrackersSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['first_name', 'last_name']
 
     def get_queryset(self):
         if getattr(self.request.user, "role", None) != "nutritionist":
@@ -538,6 +540,8 @@ class MicroKitchenPlanPayoutsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     pagination_class = Pagination
     serializer_class = AdminPayoutPatientTrackersSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['first_name', 'last_name']
 
     def get_queryset(self):
         if getattr(self.request.user, "role", None) != "micro_kitchen":
