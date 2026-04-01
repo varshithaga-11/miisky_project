@@ -18,14 +18,22 @@ export type MicroKitchenFoodItem = {
   preparation_time?: number | null;
 };
 
-export const getMyKitchenFoods = async () => {
-  const url = createApiUrl("api/microkitchenfood/");
-  const response = await axios.get<MicroKitchenFoodItem[] | { results: MicroKitchenFoodItem[] }>(
+export const getMyKitchenFoods = async (page = 1, limit = 10, search?: string): Promise<{ results: MicroKitchenFoodItem[]; count: number }> => {
+  let url = createApiUrl(`api/microkitchenfood/?page=${page}&limit=${limit}`);
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  
+  const response = await axios.get<MicroKitchenFoodItem[] | { results: MicroKitchenFoodItem[]; count: number }>(
     url,
     { headers: await getAuthHeaders() }
   );
   const data = response.data;
-  return Array.isArray(data) ? data : (data as { results: MicroKitchenFoodItem[] }).results || [];
+  if (Array.isArray(data)) {
+    return { results: data, count: data.length };
+  }
+  return {
+    results: data?.results ?? [],
+    count: data?.count ?? 0,
+  };
 };
 
 export const updateKitchenFood = async (

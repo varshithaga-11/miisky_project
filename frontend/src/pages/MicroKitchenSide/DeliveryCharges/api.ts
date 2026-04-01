@@ -19,7 +19,7 @@ function unwrap<T>(data: unknown): T[] {
 
 export const listMyDeliverySlabs = async (): Promise<DeliveryChargeSlab[]> => {
   const url = createApiUrl("api/deliverychargeslab/");
-  const res = await axios.get(url, { headers: await getAuthHeaders(), params: { limit: 100, page: 1 } });
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
   return unwrap<DeliveryChargeSlab>(res.data);
 };
 

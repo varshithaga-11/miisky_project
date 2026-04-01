@@ -894,6 +894,9 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
     queryset = MicroKitchenFood.objects.all().select_related('micro_kitchen', 'food').prefetch_related('food__meal_types', 'food__cuisine_types')
     serializer_class = MicroKitchenFoodSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['food__name', 'micro_kitchen__brand_name']
 
     @action(detail=False, methods=['get'], url_path='menu', permission_classes=[AllowAny])
     def menu(self, request):
@@ -3558,7 +3561,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 class DeliveryChargeSlabViewSet(viewsets.ModelViewSet):
     serializer_class = DeliveryChargeSlabSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = Pagination
+    pagination_class = None
 
     def get_queryset(self):
         user = self.request.user

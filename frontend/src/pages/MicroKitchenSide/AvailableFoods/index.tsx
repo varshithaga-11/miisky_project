@@ -13,6 +13,10 @@ import { createApiUrl } from "../../../access/access";
 const AvailableFoodsPage: React.FC = () => {
   const [items, setItems] = useState<MicroKitchenFoodItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [editAvailable, setEditAvailable] = useState(true);
@@ -28,20 +32,29 @@ const AvailableFoodsPage: React.FC = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const data = await getMyKitchenFoods();
-      setItems(data);
+      const data = await getMyKitchenFoods(currentPage, pageSize, search);
+      setItems(data.results || []);
+      setTotalItems(data.count || 0);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load foods");
       setItems([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchItems();
+    }, search ? 500 : 0);
+    return () => clearTimeout(timer);
+  }, [currentPage, pageSize, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, pageSize]);
 
   const startEdit = (item: MicroKitchenFoodItem) => {
     setEditingId(item.id);
@@ -153,18 +166,48 @@ const AvailableFoodsPage: React.FC = () => {
       <ToastContainer position="bottom-right" />
 
       <div className="px-4 md:px-8 pb-20">
-        <div className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
+        <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex-1 max-w-lg">
             <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
               Available Foods
             </h1>
             <p className="text-gray-500 mt-1 font-medium italic">
-              Add foods to your menu, set price and availability. Micro kitchen manages this — not admin.
+              Add foods to your menu, set price and availability.
             </p>
+            
+            <div className="mt-6 flex flex-col sm:flex-row items-end gap-4">
+              <div className="flex-1 w-full">
+                <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Search Your Menu</label>
+                <div className="relative group/search">
+                  <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors" size={18} />
+                  <input 
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search food name..."
+                    className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all border border-transparent dark:border-white/5"
+                  />
+                </div>
+              </div>
+              <div className="w-full sm:w-auto">
+                <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Rows</label>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="w-full sm:w-32 px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all border border-transparent dark:border-white/5"
+                >
+                  <option value={5}>5 Rows</option>
+                  <option value={10}>10 Rows</option>
+                  <option value={15}>15 Rows</option>
+                  <option value={20}>20 Rows</option>
+                  <option value={25}>25 Rows</option>
+                </select>
+              </div>
+            </div>
           </div>
           <button
             onClick={openAddModal}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black uppercase tracking-wider hover:scale-[1.02] transition-all shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black uppercase tracking-wider hover:scale-[1.02] transition-all shadow-lg self-end"
           >
             <FiPlus size={18} /> Add Food
           </button>
@@ -195,106 +238,165 @@ const AvailableFoodsPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-white/5 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100 dark:border-white/5">
-                    <th className="text-left py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Food</th>
-                    <th className="text-left py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Your Price (₹)</th>
-                    <th className="text-left py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Available</th>
-                    <th className="text-right py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, idx) => (
-                    <motion.tr
-                      key={item.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: idx * 0.03 }}
-                      className={`border-b border-gray-100 dark:border-white/5 last:border-0 ${!item.is_available ? "opacity-60" : ""}`}
-                    >
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-700">
-                            {item.food_details?.image ? (
-                              <img src={getImageUrl(item.food_details.image)} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <FiLayers className="text-gray-400" size={20} />
-                              </div>
-                            )}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-white/5 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-white/5">
+                      <th className="text-left py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Food</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Your Price (₹)</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Available</th>
+                      <th className="text-right py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, idx) => (
+                      <motion.tr
+                        key={item.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className={`border-b border-gray-100 dark:border-white/5 last:border-0 ${!item.is_available ? "opacity-60" : ""}`}
+                      >
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-700">
+                              {item.food_details?.image ? (
+                                <img src={getImageUrl(item.food_details.image)} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <FiLayers className="text-gray-400" size={20} />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight">{item.food_details?.name || `Food #${item.food}`}</p>
+                              {item.food_details?.meal_type_names?.length ? (
+                                <p className="text-xs text-gray-500">{item.food_details.meal_type_names.join(", ")}</p>
+                              ) : null}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight">{item.food_details?.name || `Food #${item.food}`}</p>
-                            {item.food_details?.meal_type_names?.length ? (
-                              <p className="text-xs text-gray-500">{item.food_details.meal_type_names.join(", ")}</p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        {editingId === item.id ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-500 font-bold">₹</span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={editPrice}
-                              onChange={(e) => setEditPrice(e.target.value)}
-                              className="w-28 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold text-sm"
-                              autoFocus
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">₹{item.price}</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6">
-                        {editingId === item.id ? (
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={editAvailable}
-                              onChange={(e) => setEditAvailable(e.target.checked)}
-                              className="rounded"
-                            />
-                            <span className="text-sm font-bold">{editAvailable ? "Available" : "Unavailable"}</span>
-                          </label>
-                        ) : (
-                          <button
-                            onClick={() => toggleAvailable(item)}
-                            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase ${item.is_available ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"}`}
-                          >
-                            {item.is_available ? "Available" : "Unavailable"}
-                          </button>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        {editingId === item.id ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={saveEdit} className="p-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors">
-                              <FiCheck size={18} />
+                        </td>
+                        <td className="py-4 px-6">
+                          {editingId === item.id ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500 font-bold">₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={editPrice}
+                                onChange={(e) => setEditPrice(e.target.value)}
+                                className="w-28 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold text-sm"
+                                autoFocus
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">₹{item.price}</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6">
+                          {editingId === item.id ? (
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editAvailable}
+                                onChange={(e) => setEditAvailable(e.target.checked)}
+                                className="rounded"
+                              />
+                              <span className="text-sm font-bold">{editAvailable ? "Available" : "Unavailable"}</span>
+                            </label>
+                          ) : (
+                            <button
+                              onClick={() => toggleAvailable(item)}
+                              className={`px-4 py-1.5 rounded-full text-xs font-black uppercase ${item.is_available ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"}`}
+                            >
+                              {item.is_available ? "Available" : "Unavailable"}
                             </button>
-                            <button onClick={cancelEdit} className="p-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                              <FiX size={18} />
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          {editingId === item.id ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button onClick={saveEdit} className="p-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors">
+                                <FiCheck size={18} />
+                              </button>
+                              <button onClick={cancelEdit} className="p-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <FiX size={18} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEdit(item)}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all text-xs font-black uppercase tracking-wider"
+                            >
+                              <FiEdit2 size={14} /> Edit Details
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => startEdit(item)}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all text-xs font-black uppercase tracking-wider"
-                          >
-                            <FiEdit2 size={14} /> Edit Details
-                          </button>
-                        )}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
+                          )}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-sm">
+              <p className="text-xs text-gray-400 font-bold">
+                Showing <span className="text-gray-900 dark:text-white">{(currentPage - 1) * pageSize + 1}</span> to{" "}
+                <span className="text-gray-900 dark:text-white">
+                  {Math.min(currentPage * pageSize, totalItems)}
+                </span>{" "}
+                of <span className="text-gray-900 dark:text-white">{totalItems}</span> foods
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-xs font-bold disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {[...Array(Math.ceil(totalItems / pageSize))].map((_, i) => {
+                    const pageNum = i + 1;
+                    if (
+                      pageNum === 1 ||
+                      pageNum === Math.ceil(totalItems / pageSize) ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
+                            currentPage === pageNum
+                              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30"
+                              : "border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      (pageNum === currentPage - 2 && pageNum > 1) ||
+                      (pageNum === currentPage + 2 && pageNum < Math.ceil(totalItems / pageSize))
+                    ) {
+                      return <span key={pageNum} className="text-gray-400">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(totalItems / pageSize) || loading}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-xs font-bold disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
