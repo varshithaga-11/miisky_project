@@ -64,7 +64,7 @@ export default function MasterUserDropdown() {
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-    navigate("/");
+    navigate("/signin");
   };
 
   return (
@@ -86,9 +86,8 @@ export default function MasterUserDropdown() {
           }
         >
           <Bell
-            className={`w-5 h-5 text-gray-600 dark:text-gray-300 ${
-              unreadCount > 0 ? "animate-pulse" : ""
-            }`}
+            className={`w-5 h-5 text-gray-600 dark:text-gray-300 ${unreadCount > 0 ? "animate-pulse" : ""
+              }`}
           />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md border-2 border-white dark:border-gray-900">
@@ -111,9 +110,8 @@ export default function MasterUserDropdown() {
             {userProfile.first_name || userProfile.username || "User"}
           </span>
           <svg
-            className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+              }`}
             width="18"
             height="20"
             viewBox="0 0 18 20"

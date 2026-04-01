@@ -42,7 +42,7 @@ export default function SignUpForm() {
     if (name === 'password' || name === 'password_confirm') {
       const password = name === 'password' ? value : formData.password;
       const confirmPassword = name === 'password_confirm' ? value : formData.password_confirm;
-      
+
       if (confirmPassword.length > 0) {
         const match = password === confirmPassword;
         setPasswordsMatch(match);
@@ -118,9 +118,9 @@ export default function SignUpForm() {
       toast.error("An unexpected error occurred. Please try again.");
       console.error("Registration error:", err);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
-};
+  };
 
 
   return (
@@ -341,7 +341,7 @@ export default function SignUpForm() {
                 </div> */}
                 {/* <!-- Button --> */}
                 <div>
-                  <button 
+                  <button
                     type="submit"
                     disabled={isLoading || !passwordsMatch}
                     className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -356,7 +356,7 @@ export default function SignUpForm() {
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                 Already have an account? {""}
                 <Link
-                  to="/"
+                  to="/signin"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                 >
                   Sign In

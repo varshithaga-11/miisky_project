@@ -360,7 +360,7 @@ export function appRoutes() {
         </Route>
 
         {/* Website Routes */}
-        <Route path="/website" element={<WebsiteLayout />}>
+        <Route path="/" element={<WebsiteLayout />}>
           <Route index element={<WebsiteHome />} />
           <Route path="about" element={<WebsiteAbout />} />
           <Route path="blog" element={<WebsiteBlog />} />
@@ -426,7 +426,7 @@ export function appRoutes() {
         <Route path="videos" element={<Videos />} />
 
         {/* Auth Routes */}
-        <Route path="/" element={<SignIn />} />
+        <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/resetpassword" element={<ForgotPassword />} />
 

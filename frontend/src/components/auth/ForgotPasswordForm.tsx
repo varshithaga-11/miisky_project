@@ -65,7 +65,7 @@ export default function ForgotPasswordForm() {
     const result = await resetPassword(verifiedEmail, otp, newPassword, confirmPassword);
     if (result.success) {
       toast.success("Password reset successful. You can now sign in.");
-      setStep(4); 
+      setStep(4);
     } else {
       toast.error(result.error)
     }
@@ -74,156 +74,156 @@ export default function ForgotPasswordForm() {
 
   return (
     <div className="max-w-md mx-auto p-4">
-        <ToastContainer
-          position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          className="z-[99999]"
-        />
-        {step === 1 && (
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        className="z-[99999]"
+      />
+      {step === 1 && (
         <div className="flex justify-center mt-[250px]">
-            <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
+          <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
             <h2 className="text-xl font-bold mb-4 text-center">Forgot Password</h2>
             <form onSubmit={handleSendOtp}>
-                <Input
+              <Input
                 type="text"
                 placeholder="Enter your email or username"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                />
-                <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
+              />
+              <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Sending OTP..." : "Send OTP"}
-                </Button>
+              </Button>
             </form>
-            </div>
+          </div>
         </div>
-        )}
+      )}
 
-        {step === 2 && (
+      {step === 2 && (
         <div className="flex justify-center mt-[230px]">
-            <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
+          <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
             <h2 className="text-xl font-bold mb-4 text-center">Verify OTP</h2>
 
             <form onSubmit={handleVerifyOtp}>
-                <Input
+              <Input
                 type="text"
                 placeholder="Enter OTP"
                 value={otp}
                 onChange={e => setOtp(e.target.value)}
-                />
-                <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
+              />
+              <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Verifying..." : "Verify OTP"}
-                </Button>
+              </Button>
             </form>
 
             <div className="text-center mt-4">
-                <p className="text-sm text-gray-500 dark:text-gray-300">
+              <p className="text-sm text-gray-500 dark:text-gray-300">
                 Didn't receive OTP?{" "}
                 <button
-                    type="button"
-                    className="text-blue-600 underline hover:text-blue-800"
-                    onClick={async () => {
+                  type="button"
+                  className="text-blue-600 underline hover:text-blue-800"
+                  onClick={async () => {
                     setIsSubmitting(true);
                     const result = await sendOtp(identifier);
                     if (result.success) {
-                        toast.success("OTP resent successfully.");
+                      toast.success("OTP resent successfully.");
                     } else {
-                        toast.error(result.error || "Failed to resend OTP.");
+                      toast.error(result.error || "Failed to resend OTP.");
                     }
                     setIsSubmitting(false);
-                    }}
+                  }}
                 >
-                    Resend OTP
+                  Resend OTP
                 </button>
-                </p>
-            </div>
-            </div>
-        </div>
-        )}
-
-
-        {step === 3 && (
-          <div className="flex justify-center mt-[210px]">
-            <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
-              <h2 className="text-xl font-bold mb-4 text-center">Reset Password</h2>
-              <form onSubmit={handleResetPassword}>
-
-                {/* New Password Field with Eye Icon */}
-                <div className="relative">
-                  <Input
-                    type={showNewPassword ? "text" : "password"}
-                    placeholder="New password"
-                    value={newPassword}
-                    onChange={e => {
-                      setNewPassword(e.target.value);
-                    }}
-                  />
-                  <span
-                    onClick={() => setShowNewPassword(prev => !prev)}
-                    className="absolute right-3 top-3 cursor-pointer text-gray-500"
-                  >
-                    {showNewPassword ? <EyeCloseIcon  className="fill-gray-500 dark:fill-gray-400 size-5"/> : <EyeIcon  className="fill-gray-500 dark:fill-gray-400 size-5"/>}
-                  </span>
-                </div>
-
-                {/* Confirm Password Field with Eye Icon and Validation */}
-                <div className="relative mt-3">
-                  <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={e => {
-                      setConfirmPassword(e.target.value);
-                    }}
-                    className={
-                      confirmPassword && newPassword !== confirmPassword
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : ""
-                    }
-                  />
-                  <span
-                    onClick={() => setShowConfirmPassword(prev => !prev)}
-                    className="absolute right-3 top-3 cursor-pointer text-gray-500"
-                  >
-                    {showConfirmPassword ? <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
-                  </span>
-                </div>
-
-                {/* Validation Feedback */}
-                {confirmPassword && newPassword !== confirmPassword && (
-                  <p className="mt-1 text-sm text-red-500">Passwords do not match</p>
-                )}
-                {confirmPassword && newPassword === confirmPassword && (
-                  <p className="mt-1 text-sm text-green-500">Passwords match ✓</p>
-                )}
-
-                {/* Submit Button */}
-                <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Resetting..." : "Reset Password"}
-                </Button>
-              </form>
+              </p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
 
-        {step === 4 && (
+      {step === 3 && (
         <div className="flex justify-center mt-[210px]">
-            <div className="text-center p-6 bg-white dark:bg-gray-800 rounded shadow w-full max-w-sm">
+          <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
+            <h2 className="text-xl font-bold mb-4 text-center">Reset Password</h2>
+            <form onSubmit={handleResetPassword}>
+
+              {/* New Password Field with Eye Icon */}
+              <div className="relative">
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="New password"
+                  value={newPassword}
+                  onChange={e => {
+                    setNewPassword(e.target.value);
+                  }}
+                />
+                <span
+                  onClick={() => setShowNewPassword(prev => !prev)}
+                  className="absolute right-3 top-3 cursor-pointer text-gray-500"
+                >
+                  {showNewPassword ? <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
+                </span>
+              </div>
+
+              {/* Confirm Password Field with Eye Icon and Validation */}
+              <div className="relative mt-3">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={e => {
+                    setConfirmPassword(e.target.value);
+                  }}
+                  className={
+                    confirmPassword && newPassword !== confirmPassword
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }
+                />
+                <span
+                  onClick={() => setShowConfirmPassword(prev => !prev)}
+                  className="absolute right-3 top-3 cursor-pointer text-gray-500"
+                >
+                  {showConfirmPassword ? <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
+                </span>
+              </div>
+
+              {/* Validation Feedback */}
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="mt-1 text-sm text-red-500">Passwords do not match</p>
+              )}
+              {confirmPassword && newPassword === confirmPassword && (
+                <p className="mt-1 text-sm text-green-500">Passwords match ✓</p>
+              )}
+
+              {/* Submit Button */}
+              <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Resetting..." : "Reset Password"}
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+
+
+      {step === 4 && (
+        <div className="flex justify-center mt-[210px]">
+          <div className="text-center p-6 bg-white dark:bg-gray-800 rounded shadow w-full max-w-sm">
             <h2 className="text-xl font-bold mb-4 text-green-700">Password Reset Successful!</h2>
             <p className="text-gray-700 dark:text-gray-300 mb-2">You can now sign in with your new password.</p>
-            <a href="/" className="text-blue-600 underline">Go to Sign In</a>
-            </div>
+            <a href="/signin" className="text-blue-600 underline">Go to Sign In</a>
+          </div>
         </div>
-        )}
-        
+      )}
+
     </div>
   );
 }
