@@ -5,12 +5,13 @@ import PageMeta from "../../../components/common/PageMeta";
 import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import Label from "../../../components/form/Label";
 import Input from "../../../components/form/input/InputField";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FoodName, getFoodNameList } from "../FoodName/foodnameapi";
+import { FoodGroup, getFoodGroupList } from "../FoodGroup/foodgroupapi";
 
 type Paginated<T> = {
   count: number;
@@ -30,7 +31,7 @@ export type FoodNameBasedRow = {
 };
 
 type CrudApi<T extends FoodNameBasedRow> = {
-  getList: (page: number, limit: number | "all", search?: string) => Promise<Paginated<T>>;
+  getList: (page: number, limit: number | "all", search?: string, food_group?: string) => Promise<Paginated<T>>;
   getById: (id: number) => Promise<T>;
   create: (data: Partial<T>) => Promise<T>;
   update: (id: number, data: Partial<T>) => Promise<T>;
@@ -58,6 +59,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
 
   const [rows, setRows] = useState<T[]>([]);
   const [foodNames, setFoodNames] = useState<FoodName[]>([]);
+  const [foodGroups, setFoodGroups] = useState<FoodGroup[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [totalItems, setTotalItems] = useState(0);
@@ -65,6 +67,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFoodGroup, setSelectedFoodGroup] = useState("");
   const [pageSize, setPageSize] = useState(10);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -83,17 +86,23 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
       .then((res) => {
         setFoodNames(res.results || []);
       })
-      .catch(() => {});
+      .catch(() => { });
+
+    getFoodGroupList(1, "all")
+      .then((res) => {
+        setFoodGroups(res.results || []);
+      })
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, selectedFoodGroup]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.getList(currentPage, pageSize, searchTerm);
+      const res = await api.getList(currentPage, pageSize, searchTerm, selectedFoodGroup);
       setRows(res.results);
       setTotalItems(res.count);
       setTotalPages(res.total_pages);
@@ -115,6 +124,11 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
   const foodNameOptions = useMemo(
     () => [{ value: "", label: "Select Food Name *" }, ...foodNames.map((f) => ({ value: String(f.id), label: f.name }))],
     [foodNames]
+  );
+
+  const foodGroupOptions = useMemo(
+    () => [{ value: "", label: "All Food Groups" }, ...foodGroups.map((g) => ({ value: String(g.id), label: g.name }))],
+    [foodGroups]
   );
 
   const openAdd = () => {
@@ -252,6 +266,20 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
             />
           </div>
 
+          <div className="flex items-center gap-2">
+            <Label className="text-sm dark:text-gray-600 whitespace-nowrap hidden sm:block">Filter by Group:</Label>
+            <SearchableSelect
+              value={selectedFoodGroup}
+              onChange={(val) => {
+                setSelectedFoodGroup(String(val));
+                setCurrentPage(1);
+              }}
+              options={foodGroupOptions}
+              className="w-48"
+              placeholder="All Food Groups"
+            />
+          </div>
+
           <div className="flex items-center gap-6">
             <Button size="sm" className="inline-flex items-center gap-2" onClick={openAdd}>
               <FiPlus /> {addLabel}
@@ -259,7 +287,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
             <ImportButton />
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
-              <Select
+              <SearchableSelect
                 value={String(pageSize)}
                 onChange={(val) => {
                   setPageSize(Number(val));
@@ -271,7 +299,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
                   { value: "25", label: "25" },
                   { value: "50", label: "50" },
                 ]}
-                className="w-20"
+                className="w-24"
               />
               <span className="text-sm text-gray-600 whitespace-nowrap">entries</span>
             </div>
@@ -409,7 +437,14 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="food_name">Food Name *</Label>
-                  <Select value={formFoodNameId} onChange={(val) => setFormFoodNameId(val)} options={foodNameOptions} className="w-full" disabled={saving} />
+                  <SearchableSelect
+                    value={formFoodNameId}
+                    onChange={(val) => setFormFoodNameId(String(val))}
+                    options={foodNameOptions}
+                    className="w-full"
+                    disabled={saving}
+                    placeholder="Select Food Name *"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="base_unit">Base Unit</Label>

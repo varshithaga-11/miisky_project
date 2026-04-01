@@ -1478,6 +1478,13 @@ class FoodProximateViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodproximates(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1492,6 +1499,13 @@ class FoodWaterSolubleVitaminsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodwatersolublevitamins(self, request):
@@ -1508,6 +1522,13 @@ class FoodFatSolubleVitaminsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodfatsolublevitamins(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1522,6 +1543,13 @@ class FoodCarotenoidsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodcarotenoids(self, request):
@@ -1538,6 +1566,13 @@ class FoodMineralsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodminerals(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1552,6 +1587,13 @@ class FoodSugarsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodsugars(self, request):
@@ -1568,6 +1610,13 @@ class FoodAminoAcidsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodaminoacids(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1582,6 +1631,13 @@ class FoodOrganicAcidsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodorganicacids(self, request):
@@ -1598,6 +1654,13 @@ class FoodPolyphenolsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodpolyphenols(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1613,6 +1676,13 @@ class FoodPhytochemicalsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodphytochemicals(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1627,6 +1697,13 @@ class FoodFattyAcidProfileViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food_name__name', 'food_name__code']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_name__food_group_id=food_group)
+        return queryset
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodfattyacidprofiles(self, request):

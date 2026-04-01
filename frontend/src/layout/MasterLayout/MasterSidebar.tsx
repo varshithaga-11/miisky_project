@@ -745,10 +745,7 @@ const MasterSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
-      >
+      <div className="py-8 flex justify-center">
         <Link to="/">
           <img
             src="/miisky-logo.png"

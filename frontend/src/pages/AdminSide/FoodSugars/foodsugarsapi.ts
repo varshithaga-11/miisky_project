@@ -33,11 +33,13 @@ export const createFoodSugars = async (data: Partial<FoodSugars>) => {
 export const getFoodSugarsList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  food_group?: string
 ): Promise<PaginatedResponses<FoodSugars>> => {
   const params: Record<string, any> = { page };
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
+  if (food_group) params.food_group = food_group;
 
   const url = createApiUrl("api/foodsugars/");
   const response = await axios.get<PaginatedResponses<FoodSugars>>(url, {

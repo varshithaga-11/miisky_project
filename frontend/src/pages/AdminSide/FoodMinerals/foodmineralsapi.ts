@@ -46,17 +46,19 @@ export const createFoodMinerals = async (data: Partial<FoodMinerals>) => {
 export const getFoodMineralsList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  food_group?: string
 ): Promise<PaginatedResponses<FoodMinerals>> => {
   const params: Record<string, any> = { page };
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
+  if (food_group) params.food_group = food_group;
 
   const isAll = limit === "all";
   const url = createApiUrl(isAll ? "api/foodminerals/all/" : "api/foodminerals/");
   const response = await axios.get<PaginatedResponses<FoodMinerals> | FoodMinerals[]>(url, {
     headers: await getAuthHeaders(),
-    params: isAll ? { search } : params,
+    params: isAll ? { search, food_group } : params,
   });
 
   if (isAll) {

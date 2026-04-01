@@ -35,17 +35,19 @@ export const createFoodWaterSolubleVitamins = async (data: Partial<FoodWaterSolu
 export const getFoodWaterSolubleVitaminsList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  food_group?: string
 ): Promise<PaginatedResponses<FoodWaterSolubleVitamins>> => {
   const params: Record<string, any> = { page };
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
+  if (food_group) params.food_group = food_group;
 
   const isAll = limit === "all";
   const url = createApiUrl(isAll ? "api/foodwatersolublevitamins/all/" : "api/foodwatersolublevitamins/");
   const response = await axios.get<PaginatedResponses<FoodWaterSolubleVitamins> | FoodWaterSolubleVitamins[]>(url, {
     headers: await getAuthHeaders(),
-    params: isAll ? { search } : params,
+    params: isAll ? { search, food_group } : params,
   });
 
   if (isAll) {
