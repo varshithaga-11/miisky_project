@@ -193,7 +193,9 @@ export default function PatientDashboard() {
           {/* Module Grid Section */}
           <div className="space-y-20 pb-20">
             {["Medical", "Dietary", "Shopping", "Account"].map((category) => {
-              const items = patientMenus.filter(m => m.category === category);
+              const topPaths = topCards.map(c => c.link);
+              const items = patientMenus.filter(m => m.category === category && !topPaths.includes(m.path));
+              if (items.length === 0) return null;
               return (
                 <section key={category} className="space-y-10">
                   <div className="flex items-center gap-4 ml-2">

@@ -169,7 +169,9 @@ export default function NonPatientDashboard() {
           {/* Core Selection Modules */}
           <div className="space-y-16 pb-20">
             {["Discovery", "Orders", "Account"].map((cat) => {
-              const items = nonPatientMenus.filter(m => m.category === cat);
+              const topPaths = topCards.map(c => c.link);
+              const items = nonPatientMenus.filter(m => m.category === cat && !topPaths.includes(m.path));
+              if (items.length === 0) return null;
               return (
                 <section key={cat} className="space-y-8">
                   <div className="flex items-center gap-4 ml-2">

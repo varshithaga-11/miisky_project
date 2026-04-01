@@ -183,7 +183,9 @@ export default function NutritionDashboard() {
           {/* Core Modules Hub */}
           <div className="space-y-20 pb-20">
             {["Patient Care", "Dietary Tools", "Management"].map((category) => {
-              const items = nutritionMenus.filter(m => m.category === category);
+              const summaryPaths = summaryCards.map(c => c.link);
+              const items = nutritionMenus.filter(m => m.category === category && !summaryPaths.includes(m.path));
+              if (items.length === 0) return null;
               return (
                 <section key={category} className="space-y-10">
                   <div className="flex items-center gap-4 ml-2">

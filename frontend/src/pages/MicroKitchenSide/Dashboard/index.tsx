@@ -158,7 +158,9 @@ export default function MicroKitchenDashboard() {
           {/* Module Nodes Section */}
           <div className="space-y-20 pb-20">
             {["Logistics", "Patients", "Management"].map((cat) => {
-              const items = microKitchenMenus.filter(m => m.category === cat);
+              const topPaths = topCards.map(c => c.link);
+              const items = microKitchenMenus.filter(m => m.category === cat && !topPaths.includes(m.path));
+              if (items.length === 0) return null;
               return (
                 <section key={cat} className="space-y-10">
                   <div className="flex items-center gap-4 ml-2">

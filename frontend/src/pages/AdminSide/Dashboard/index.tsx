@@ -31,17 +31,17 @@ type DashboardMenuItem = {
 
 const adminMenus: DashboardMenuItem[] = [
   // Care Management
-  { label: "Users", path: "/admin/usermanagement", icon: UserCog, statKey: "users", color: "blue", category: "Care" },
-  { label: "Patients", path: "/admin/patients-overview", icon: Users, statKey: "patients", color: "indigo", category: "Care" },
-  { label: "Non Patients", path: "/admin/usermanagement", icon: UserCog, statKey: "nonPatients", color: "sky", category: "Care" },
-  { label: "Nutritionists", path: "/admin/nutrition-information", icon: Users, statKey: "nutritionists", color: "violet", category: "Care" },
+  // { label: "Users", path: "/admin/usermanagement", icon: UserCog, statKey: "users", color: "blue", category: "Care" },
+  // { label: "Patients", path: "/admin/patients-overview", icon: Users, statKey: "patients", color: "indigo", category: "Care" },
+  // { label: "Non Patients", path: "/admin/usermanagement", icon: UserCog, statKey: "nonPatients", color: "sky", category: "Care" },
+  // { label: "Nutritionists", path: "/admin/nutrition-information", icon: Users, statKey: "nutritionists", color: "violet", category: "Care" },
   { label: "Allotments", path: "/admin/user-nutrition-mapping", icon: Briefcase, statKey: "allottedPatients", color: "rose", category: "Care" },
   { label: "Verification", path: "/admin/patient-payment-verification", icon: ShieldCheck, statKey: "verifications", color: "emerald", category: "Care" },
   { label: "Record plan payouts", path: "/admin/record-plan-payouts", icon: Send, color: "lime", category: "Care" },
-  { label: "Plan payments overview", path: "/admin/plan-payments-overview", icon: ClipboardList, color: "cyan", category: "Care" },
+  // { label: "Plan payments overview", path: "/admin/plan-payments-overview", icon: ClipboardList, color: "cyan", category: "Care" },
 
   // Food Management
-  { label: "Micro Kitchens", path: "/admin/micro-kitchen-information", icon: UtensilsCrossed, statKey: "microKitchens", color: "amber", category: "Food" },
+  // { label: "Micro Kitchens", path: "/admin/micro-kitchen-information", icon: UtensilsCrossed, statKey: "microKitchens", color: "amber", category: "Food" },
   { label: "Meal Types", path: "/admin/meal-type", icon: Layers, statKey: "mealTypes", color: "orange", category: "Food" },
   { label: "Cuisine Types", path: "/admin/cuisine-type", icon: Layers, statKey: "cuisineTypes", color: "orange", category: "Food" },
   { label: "Packaging", path: "/admin/packaging-material", icon: Package, statKey: "packaging", color: "slate", category: "Food" },
