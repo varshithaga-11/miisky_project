@@ -76,13 +76,13 @@ export const rejectPlan = async (id: number, feedback?: string): Promise<UserDie
 
 export const uploadPaymentScreenshot = async (
   id: number,
-  file: File,
+  file?: File,
   amountPaid?: string,
   transactionId?: string
 ): Promise<UserDietPlan> => {
   const url = createApiUrl(`api/userdietplan/${id}/upload_payment/`);
   const formData = new FormData();
-  formData.append("screenshot", file);
+  if (file) formData.append("screenshot", file);
   if (amountPaid) formData.append("amount_paid", amountPaid);
   if (transactionId) formData.append("transaction_id", transactionId);
   const { "Content-Type": _, ...headers } = (await getAuthHeaders()) as Record<string, string>;

@@ -2463,8 +2463,12 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return Response({"detail": f"Cannot upload payment: status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
         
         screenshot = request.FILES.get('screenshot') or request.FILES.get('payment_screenshot')
-        if not screenshot:
-            return Response({"detail": "Payment screenshot file is required."}, status=status.HTTP_400_BAD_REQUEST)
+        # screenshot is now optional, but transaction_id and amount_paid should be provided if screenshot is missing.
+        transaction_id = request.data.get('transaction_id')
+        amount_paid = request.data.get('amount_paid')
+        
+        if not screenshot and not transaction_id:
+            return Response({"detail": "Either a payment screenshot or a transaction ID is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         amount_paid = request.data.get('amount_paid')
         transaction_id = request.data.get('transaction_id')

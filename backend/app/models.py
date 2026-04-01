@@ -1502,10 +1502,11 @@ class UserDietPlan(models.Model):
         self.decision_on = now()
         self.save()
 
-    def upload_payment(self, screenshot, amount_paid=None, transaction_id=None):
-        """User uploads payment screenshot"""
-        self.payment_screenshot = screenshot
-        self.payment_uploaded_on = now()
+    def upload_payment(self, screenshot=None, amount_paid=None, transaction_id=None):
+        """User uploads payment details (screenshot optional)"""
+        if screenshot:
+            self.payment_screenshot = screenshot
+            self.payment_uploaded_on = now()
         self.amount_paid = amount_paid
         self.transaction_id = transaction_id
         self.payment_status = 'uploaded'

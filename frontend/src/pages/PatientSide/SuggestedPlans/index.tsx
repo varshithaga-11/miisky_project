@@ -120,26 +120,28 @@ const SuggestedPlansPage: React.FC = () => {
     const resolvedAmount =
       amountPaid || paymentModal?.diet_plan_details?.final_amount || "";
 
-    if (!paymentModal || !screenshotFile || !transactionId || !resolvedAmount) {
-      toast.warning("Please fill in the amount, transaction ID, and upload a screenshot");
+    const isReady = !!resolvedAmount && !!transactionId;
+
+    if (!paymentModal || !isReady) {
+      toast.warning("Please fill in the amount and transaction ID");
       return;
     }
     setSubmitting(true);
     try {
       const updated = await uploadPaymentScreenshot(
         paymentModal.id,
-        screenshotFile,
+        screenshotFile || undefined,
         resolvedAmount,
         transactionId
       );
-      setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setPlans((prev: UserDietPlan[]) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setPaymentModal(null);
       setScreenshotFile(null);
       setAmountPaid("");
       setTransactionId("");
-      toast.success("Payment screenshot uploaded. Admin will verify and activate your plan.");
+      toast.success("Payment details submitted. Admin will verify and activate your plan.");
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "Failed to upload screenshot");
+      toast.error(err?.response?.data?.detail || "Failed to upload details");
     } finally {
       setSubmitting(false);
     }
@@ -543,7 +545,7 @@ const SuggestedPlansPage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Payment Screenshot * {paymentModal.payment_screenshot && "(re-upload to replace)"}
+                  Payment Screenshot (optional) {paymentModal.payment_screenshot && "(re-upload to replace)"}
                 </label>
                 <input
                   type="file"
@@ -579,10 +581,10 @@ const SuggestedPlansPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleUploadPayment}
-                  disabled={submitting || !screenshotFile}
+                  disabled={submitting || !transactionId}
                   className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2"
                 >
-                  {submitting ? "..." : <> <FiUpload /> Upload </>}
+                  {submitting ? "..." : <> <FiUpload /> Submit Payment </>}
                 </button>
               </div>
             </div>
