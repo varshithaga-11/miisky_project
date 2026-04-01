@@ -32,7 +32,7 @@ export default function PatentDetailsPage() {
     }, [id]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading patent details...</div>;
-    if (!patent) return <div className="text-center p-5 mt_100">Patent not found. <Link to="/website/patents">Go back</Link></div>;
+    if (!patent) return <div className="text-center p-5 mt_100">Patent not found. <Link to="/patents">Go back</Link></div>;
 
     return (
         <div className="patent-details-page">
@@ -74,10 +74,10 @@ export default function PatentDetailsPage() {
                                 </div>
 
                                 <div className="btn-box d-flex align-items-center mt_40">
-                                    <Link to="/website/contact" className="theme-btn btn-one mr_20">
+                                    <Link to="/contact" className="theme-btn btn-one mr_20">
                                         <span>Inquire about licensing</span>
                                     </Link>
-                                    <Link to="/website/patents" className="theme-btn btn-two" style={{ backgroundColor: 'transparent', border: '1.5px solid #eee', color: '#888' }}>
+                                    <Link to="/patents" className="theme-btn btn-two" style={{ backgroundColor: 'transparent', border: '1.5px solid #eee', color: '#888' }}>
                                         <span>Back to Patents</span>
                                     </Link>
                                 </div>

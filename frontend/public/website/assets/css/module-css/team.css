@@ -159,23 +159,54 @@
     margin-bottom: 30px;
   }
 
+  .team-block-one .inner-box .image-box img{
+    max-height: 450px;
+    object-fit: cover;
+    object-position: top;
+  }
+
 }
 
 @media only screen and (max-width: 767px){
 
+  .team-block-one .inner-box .image-box img{
+    max-height: 400px;
+    object-fit: cover;
+    object-position: top;
+  }
 
+  .team-block-one .inner-box .content-box h3{
+    font-size: 22px;
+    line-height: 30px;
+  }
 
 }
 
 @media only screen and (max-width: 599px){
 
-  
+  .team-block-one .inner-box .image-box img{
+    max-height: 360px;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .team-block-one .inner-box .content-box{
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+
+  .team-block-one .inner-box .content-box h3{
+    font-size: 20px;
+    line-height: 28px;
+  }
 
 }
 
-@media only screen and (max-width: 499px){
+@media only screen and (max-width: 480px){
 
-  
+  .team-block-one .inner-box .image-box img{
+    max-height: 300px;
+  }
 
 }
 

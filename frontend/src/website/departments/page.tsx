@@ -1,18 +1,79 @@
 import { useEffect, useState } from "react";
-import ModalVideo from "../components/elements/VideoPopup";
+import { toast } from "react-toastify";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
-import { getDepartments } from "../../utils/api";
+import { getDepartments, createWebsiteInquiry } from "../../utils/api";
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
-import Video from "../components/sections/home3/Video";
+import { getDepartmentIcon } from "../../utils/departmentIcons";
 import Cta from "../components/sections/home2/Cta";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
+const swiperOptions = {
+    modules: [Autoplay, Pagination, Navigation],
+    slidesPerView: 1,
+    spaceBetween: 30,
+    autoplay: {
+        delay: 5000,
+        disableOnInteraction: false,
+    },
+    loop: true,
+    navigation: {
+        nextEl: "#dept-next",
+        prevEl: "#dept-prev",
+    },
+    pagination: {
+        el: ".swiper-pagination-dept",
+        clickable: true,
+    },
+    breakpoints: {
+        320: { slidesPerView: 1 },
+        575: { slidesPerView: 1 },
+        767: { slidesPerView: 2 },
+        991: { slidesPerView: 3 },
+        1200: { slidesPerView: 3 },
+    },
+};
 
 export default function DepartmentsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const [activeTab, setActiveTab] = useState(1);
+    const [, setActiveTab] = useState(1);
     const [departments, setDepartments] = useState(MOCK_DEPARTMENTS);
     const [loading, setLoading] = useState(true);
+    const [formState, setFormState] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        message: ""
+    });
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setSubmitting(true);
+            await createWebsiteInquiry({
+                ...formState,
+                subject: "Appointment Request from Departments Page"
+            });
+            toast.success("Your request has been sent successfully!");
+            setFormState({
+                name: "",
+                email: "",
+                phone: "",
+                message: ""
+            });
+        } catch (error) {
+            console.error("Failed to send inquiry:", error);
+            toast.error("Failed to send request. Please try again.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -46,10 +107,6 @@ export default function DepartmentsPage() {
         fetchDepts();
     }, []);
 
-    const tabs = departments.map((dept: any) => ({ 
-        id: dept.id, 
-        title: dept.name || "Department" 
-    }));
 
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
 
@@ -57,32 +114,49 @@ export default function DepartmentsPage() {
         <div className="boxed_wrapper">
                 <section className="service-page-section p_relative">
                     <div className="auto-container">
-                        <div className="row clearfix">
-                            {departments.map((dept: any) => (
-                                <div key={dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                    <div className="service-block-one">
-                                        <div className="inner-box">
-                                            <figure className="image-box">
-                                                <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
-                                            </figure>
-                                            <div className="lower-content">
-                                                <div className="inner">
-                                                    <div className="icon-box"><i className={dept.icon || "icon-18"}></i></div>
-                                                    <h3><Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link></h3>
-                                                    <p>{dept.description?.substring(0, 60)}...</p>
+                        <div className="dept-carousel-container p_relative">
+                            <Swiper {...swiperOptions} className="department-carousel">
+                                {departments.map((dept: any) => (
+                                    <SwiperSlide key={dept.id}>
+                                        <div className="service-block-one">
+                                            <div className="inner-box">
+                                                <figure className="image-box">
+                                                    <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
+                                                </figure>
+                                                <div className="lower-content">
+                                                    <div className="inner">
+                                                        <div className="icon-box">
+                                            <img
+                                                src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
+                                                alt={dept.name}
+                                                style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+                                            />
+                                        </div>
+                                                        <h3><Link to={`/department-details/${dept.id}`}>{dept.name}</Link></h3>
+                                                        <p>{dept.description?.substring(0, 60)}...</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                                
+                            {/* Navigation and Pagination */}
+                            <div className="swiper-pagination-dept mt_40 centred"></div>
+                            
+                            <div className="nav-style-one centred mt_40">
+                                <div className="swiper-nav d-flex justify-content-center" style={{gap: '15px'}}>
+                                    <button type="button" id="dept-prev" className="swiper-button-prev-dept swiper-prev"><span className="icon-21"></span></button>
+                                    <button type="button" id="dept-next" className="swiper-button-next-dept swiper-next"><span className="icon-22"></span></button>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
                 </section>
-                <Video/>
+                {/* <Video/> */}
 
-                <section className="chooseus-section service-page sec-pad p_relative">
-
+                {/* <section className="chooseus-section service-page sec-pad p_relative">
                     <div className="auto-container">
                         <div className="sec-title centred mb_55">
                         <span className="sub-title mb_5">Why Choose Us</span>
@@ -93,7 +167,6 @@ export default function DepartmentsPage() {
                         </p>
                         </div>
 
-                        {/* Tabs Buttons */}
                         <div className="tabs-box">
                         <div className="tab-btns tab-buttons clearfix centred mb_40">
                             {tabs.map((tab) => (
@@ -107,7 +180,6 @@ export default function DepartmentsPage() {
                             ))}
                         </div>
 
-                        {/* Tabs Content */}
                         <div className="tabs-content">
                             {departments.map((content: any) => (
                             <div
@@ -145,7 +217,7 @@ export default function DepartmentsPage() {
                                             </ul>
                                         )}
                                         <div className="btn-box">
-                                            <Link to="/website/departments" className="theme-btn btn-two">
+                                            <Link to="/departments" className="theme-btn btn-two">
                                             <span>See All Services</span>
                                             </Link>
                                         </div>
@@ -159,41 +231,68 @@ export default function DepartmentsPage() {
                         </div>
                         </div>
                     </div>
-                </section>
+                </section> */}
 
                 <section className="appointment-style-two p_relative">
                     <div className="auto-container">
                         <div className="inner-box">
                             <h2>Make an Appointment</h2>
-                            <form method="post" action="/website" className="default-form">
+                            <form onSubmit={handleFormSubmit} className="default-form">
                                 <div className="row clearfix">
                                     <div className="col-lg-6 col-md-6 col-sm-12 single-column">
                                         <div className="form-group">
                                             <div className="icon"><i className="icon-45"></i></div>
-                                            <input type="text" name="name" placeholder="Name" required/>
+                                            <input 
+                                                type="text" 
+                                                name="name" 
+                                                placeholder="Name" 
+                                                required
+                                                value={formState.name}
+                                                onChange={(e) => setFormState({...formState, name: e.target.value})}
+                                            />
                                         </div>
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 single-column">
                                         <div className="form-group">
                                             <div className="icon"><i className="icon-46"></i></div>
-                                            <input type="email" name="email" placeholder="Email" required/>
+                                            <input 
+                                                type="email" 
+                                                name="email" 
+                                                placeholder="Email (Optional)" 
+                                                value={formState.email}
+                                                onChange={(e) => setFormState({...formState, email: e.target.value})}
+                                            />
                                         </div>
                                     </div>
                                     <div className="col-lg-12 col-md-12 col-sm-12 single-column">
                                         <div className="form-group">
                                             <div className="icon"><Image src="/website/assets/images/icons/icon-18.svg" alt="Image" width={14} height={15} priority /></div>
-                                            <input type="text" name="phone" placeholder="Phone" required/>
+                                            <input 
+                                                type="text" 
+                                                name="phone" 
+                                                placeholder="Phone" 
+                                                required
+                                                value={formState.phone}
+                                                onChange={(e) => setFormState({...formState, phone: e.target.value})}
+                                            />
                                         </div>
                                     </div>
                                     <div className="col-lg-12 col-md-12 col-sm-12 single-column">
                                         <div className="form-group">
                                             <div className="icon"><i className="icon-48"></i></div>
-                                            <textarea name="message" placeholder="Message"></textarea>
+                                            <textarea 
+                                                name="message" 
+                                                placeholder="Message"
+                                                value={formState.message}
+                                                onChange={(e) => setFormState({...formState, message: e.target.value})}
+                                            ></textarea>
                                         </div>
                                     </div>
                                     <div className="col-lg-12 col-md-12 col-sm-12 single-column">
                                         <div className="form-group message-btn">
-                                            <button type="submit" className="theme-btn btn-two"><span>Send your message</span></button>
+                                            <button type="submit" className="theme-btn btn-two" disabled={submitting}>
+                                                <span>{submitting ? "Sending..." : "Send your message"}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

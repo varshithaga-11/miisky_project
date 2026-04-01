@@ -6,14 +6,16 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import DatePicker2 from "../../../components/form/date-picker2";
 import ImagePicker from "../../../components/form/ImagePicker";
+import MultiSelect from "../../../components/form/MultiSelect";
 
 interface Props {
   onSuccess: () => void;
   onClose: () => void;
   categories: any[];
+  tags: any[];
 }
 
-const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
+const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories, tags }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<BlogPost>>({
     title: "",
@@ -27,6 +29,7 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
     position: 0,
     is_active: true,
     status: "draft",
+    tag_ids: [],
   });
   
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -48,6 +51,10 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
     data.append("status", formData.status || "draft");
     data.append("position", String(formData.position || 0));
     if (formData.published_at) data.append("published_at", formData.published_at);
+    
+    if (formData.tag_ids && formData.tag_ids.length > 0) {
+      formData.tag_ids.forEach(id => data.append("tag_ids", String(id)));
+    }
     
     if (imageFile) data.append("image", imageFile);
     if (authorFile) data.append("author_image", authorFile);
@@ -118,6 +125,16 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
                     disabled={loading}
                   />
                 </div>
+            </div>
+
+            <div>
+              <MultiSelect
+                label="Tags"
+                options={tags.map(tag => ({ value: String(tag.id), text: tag.name }))}
+                onChange={(selected) => setFormData({ ...formData, tag_ids: selected.map(id => parseInt(id)) })}
+                defaultSelected={(formData.tag_ids || []).map(id => String(id))}
+                disabled={loading}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

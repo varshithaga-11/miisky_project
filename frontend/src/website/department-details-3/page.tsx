@@ -72,7 +72,7 @@ export default function DepartmentDetailsThree() {
                                             <h2>Appointment</h2>
                                         </div>
                                         <div className="form-inner">
-                                            <form method="post" action="/website" className="default-form">
+                                            <form method="post" action="/" className="default-form">
                                                 <div className="form-group">
                                                     <div className="icon"><i className="icon-45"></i></div>
                                                     <input type="text" name="name" placeholder="Name" required/>

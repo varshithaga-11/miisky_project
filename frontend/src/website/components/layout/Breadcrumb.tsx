@@ -108,7 +108,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
                 <div className="content-box">
                     <h1>{breadcrumbTitle}</h1>
                     <ul className="bread-crumb clearfix">
-                        <li><Link to="/website">Home</Link></li>
+                        <li><Link to="/">Home</Link></li>
                         <li>{breadcrumbTitle}</li>
                     </ul>
                 </div>

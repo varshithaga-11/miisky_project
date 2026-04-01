@@ -11,6 +11,10 @@ export interface ResearchPaper {
   published_date?: string;
   document?: any;
   document_url?: string;
+  excel_file?: any;
+  excel_file_url?: string;
+  doc_file?: any;
+  doc_file_url?: string;
   pdf_file?: string; // Kept for legacy if needed, but primary is document
   position?: number;
   is_active?: boolean;

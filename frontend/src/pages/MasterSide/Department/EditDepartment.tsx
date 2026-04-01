@@ -5,6 +5,8 @@ import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import ImagePicker from "../../../components/form/ImagePicker";
+import IconPickerDropdown from "../../../components/form/IconPickerDropdown";
+import { DEPARTMENT_ICONS, getDepartmentIcon } from "../../../utils/departmentIcons";
 
 interface EditDepartmentProps {
   departmentId: number;
@@ -149,29 +151,26 @@ const EditDepartment: React.FC<EditDepartmentProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="position">Position</Label>
-              <Input
-                id="position"
-                type="number"
-                value={position}
-                onChange={(e) => setPosition(parseInt(e.target.value))}
-                min="1"
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <Label htmlFor="icon_class">Icon Class</Label>
-              <Input
-                id="icon_class"
-                type="text"
-                value={icon_class}
-                onChange={(e) => setIconClass(e.target.value)}
-                placeholder="e.g. icon-18"
-                disabled={loading}
-              />
-            </div>
+          <div>
+            <Label htmlFor="position">Position</Label>
+            <Input
+              id="position"
+              type="number"
+              value={position}
+              onChange={(e) => setPosition(parseInt(e.target.value))}
+              min="1"
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="icon_class">Department Icon</Label>
+            <IconPickerDropdown
+              value={icon_class}
+              onChange={setIconClass}
+              icons={DEPARTMENT_ICONS}
+              getIcon={getDepartmentIcon}
+              disabled={loading}
+            />
           </div>
 
           <div>

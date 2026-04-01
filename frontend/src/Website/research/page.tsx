@@ -53,7 +53,7 @@ export default function InnovationPage() {
                                             <h3 className="mb_15" style={{ fontSize: '20px', fontWeight: 700, lineHeight: '1.4' }}>{paper.title}</h3>
                                             <p className="mb_20" style={{ color: '#555', fontSize: '15px' }}>{paper.abstract ? paper.abstract.substring(0, 150) + "..." : "Cutting edge research findings from our dedicated innovation team."}</p>
                                             <div className="btn-box">
-                                                <Link to={`/website/research/${paper.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                                <Link to={`/research/${paper.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
                                                     <span>View Details</span>
                                                 </Link>
                                             </div>

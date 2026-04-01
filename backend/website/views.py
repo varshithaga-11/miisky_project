@@ -224,6 +224,8 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         p = self.request.query_params
         if p.get('category'):
             qs = qs.filter(category=p['category'])
+        if p.get('tag'):
+            qs = qs.filter(tags=p['tag'])
         if p.get('status'):
             qs = qs.filter(status=p['status'])
         if p.get('is_featured') is not None:

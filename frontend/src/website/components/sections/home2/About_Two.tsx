@@ -50,7 +50,7 @@ export default function Service() {
                 
                 {/* Button */}
                 <div className="btn-box">
-                  <Link to="/website/about" className="theme-btn btn-two">
+                  <Link to="/about" className="theme-btn btn-two">
                     <span>Read More</span>
                   </Link>
                 </div>

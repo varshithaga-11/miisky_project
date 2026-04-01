@@ -57,7 +57,7 @@ export default function MedicalDevicesPage() {
                 {categoryId && (
                     <div className="mb_30 centred">
                         <span style={{ fontSize: '14px', marginRight: '10px' }}>Filtered by Category: <strong>{activeCategoryName}</strong></span>
-                        <Link to="/website/medical-devices" className="theme-btn btn-two" style={{ padding: '4px 15px', fontSize: '12px' }}>
+                        <Link to="/medical-devices" className="theme-btn btn-two" style={{ padding: '4px 15px', fontSize: '12px' }}>
                             <span>Show All Devices</span>
                         </Link>
                     </div>
@@ -68,7 +68,7 @@ export default function MedicalDevicesPage() {
                 ) : filteredDevices.length === 0 ? (
                     <div className="text-center p-5">
                         <h3 className="mb_20">No products found for this category.</h3>
-                        <Link to="/website/medical-devices" className="theme-btn btn-one">
+                        <Link to="/medical-devices" className="theme-btn btn-one">
                             <span>View All Products</span>
                         </Link>
                     </div>
@@ -85,10 +85,10 @@ export default function MedicalDevicesPage() {
                                             <div className="category-meta mb_10" style={{ color: '#0646ac', fontSize: '13px', fontWeight: 700 }}>
                                                 {categories.find(c => c.id === device.category || c.id === device.category_id)?.name || "Medical Solutions"}
                                             </div>
-                                            <h3 className="mb_15"><Link to={`/website/medical-devices/${device.id}`} style={{ color: '#111' }}>{device.name}</Link></h3>
+                                            <h3 className="mb_15"><Link to={`/medical-devices/${device.id}`} style={{ color: '#111' }}>{device.name}</Link></h3>
                                             <p className="mb_20" style={{ color: '#555', fontSize: '14px', flex: 1 }}>{device.short_description || (device.description ? device.description.substring(0, 100) + "..." : "Advanced medical equipment designed for precision healthcare.")}</p>
                                             <div className="btn-box mt-auto">
-                                                <Link to={`/website/medical-devices/${device.id}`} className="theme-btn btn-one" style={{ padding: '8px 20px', fontSize: '12px' }}>
+                                                <Link to={`/medical-devices/${device.id}`} className="theme-btn btn-one" style={{ padding: '8px 20px', fontSize: '12px' }}>
                                                     <span>View Details</span>
                                                 </Link>
                                             </div>

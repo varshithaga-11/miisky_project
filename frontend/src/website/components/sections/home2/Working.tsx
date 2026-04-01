@@ -63,9 +63,15 @@ export default function Working() {
                 </div>
                 <div className="inner-container p_relative">
                     <div className="arrow-shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-18.png)" }}></div>
+                    {steps.length > 3 && (
+                        <div className="arrow-shape second-row-arrow" style={{ 
+                            backgroundImage: "url(/website/assets/images/shape/shape-18.png)",
+                            top: '550px'
+                        }}></div>
+                    )}
                     <div className="row clearfix">
                         {steps.map((step, index) => (
-                            <div key={step.id || index} className="col-lg-4 col-md-6 col-sm-12 working-block">
+                            <div key={step.id || index} className="col-lg-4 col-md-6 col-sm-12 working-block" style={index >= 3 ? { marginTop: '100px' } : {}}>
                                 <div className="working-block-one">
                                     <div className="inner-box">
                                         <div className="image-box">

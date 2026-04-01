@@ -4,6 +4,8 @@ import { updateMedicalDeviceCategory, getMedicalDeviceCategoryById } from "./med
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import IconPickerDropdown from "../../../components/form/IconPickerDropdown";
+import { DEVICE_CATEGORY_ICONS, getDeviceCategoryIcon } from "../../../utils/deviceCategoryIcons";
 
 interface Props {
   id: number;
@@ -14,7 +16,6 @@ interface Props {
 const EditMedicalDeviceCategory: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [iconFile, setIconFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
@@ -42,7 +43,7 @@ const EditMedicalDeviceCategory: React.FC<Props> = ({ id, onSuccess, onClose }) 
           data.append(key, value.toString());
         }
       });
-      if (iconFile) data.append("icon", iconFile);
+      if (formData.icon_class) data.append("icon_class", formData.icon_class);
 
       await updateMedicalDeviceCategory(id, data as any);
       toast.success("Sector updated successfully!");
@@ -84,30 +85,14 @@ const EditMedicalDeviceCategory: React.FC<Props> = ({ id, onSuccess, onClose }) 
             </div>
 
             <div>
-              <Label htmlFor="icon">Category Icon</Label>
-              <div className="flex items-center gap-4 mb-3">
-                 {formData.icon_url && (
-                   <div className="w-16 h-16 rounded border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-1 overflow-hidden shrink-0 shadow-inner">
-                      <img src={formData.icon_url} alt="current" className="max-w-full max-h-full object-contain" />
-                   </div>
-                 )}
-                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formData.icon_url ? "Replace existing icon" : "Add an icon"}</div>
-              </div>
-              <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
-                <input 
-                  id="icon"
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setIconFile(e.target.files?.[0] || null)}
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                  disabled={loading}
-                />
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-gray-600 dark:text-gray-400 font-bold text-xs truncate max-w-full">
-                    {iconFile ? iconFile.name : "Click or Drag to Upload New Icon"}
-                  </span>
-                </div>
-              </div>
+              <Label htmlFor="icon_class">Category Icon</Label>
+              <IconPickerDropdown
+                value={formData.icon_class || ""}
+                onChange={(val) => setFormData({ ...formData, icon_class: val })}
+                icons={DEVICE_CATEGORY_ICONS}
+                getIcon={getDeviceCategoryIcon}
+                disabled={loading}
+              />
             </div>
 
             <div>

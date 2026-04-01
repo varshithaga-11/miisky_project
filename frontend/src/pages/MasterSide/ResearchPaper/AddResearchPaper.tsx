@@ -24,6 +24,8 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
     is_active: true,
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [docFile, setDocFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +36,8 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
         if (val !== undefined && val !== null && val !== "" && key !== "document") data.append(key, val.toString());
       });
       if (pdfFile) data.append("document", pdfFile);
+      if (excelFile) data.append("excel_file", excelFile);
+      if (docFile) data.append("doc_file", docFile);
 
       await createResearchPaper(data as any);
       toast.success("Research paper added successfully!");
@@ -138,6 +142,41 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
                   {pdfFile ? pdfFile.name : "Click or Drag to Upload PDF"}
                 </span>
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Max Size: 15MB</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="excel_file">Excel File (Optional)</Label>
+              <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
+                <input 
+                  id="excel_file"
+                  type="file" 
+                  accept=".xls,.xlsx"
+                  onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  disabled={loading}
+                />
+                <span className="text-[10px] text-gray-500 font-bold block truncate">
+                  {excelFile ? excelFile.name : "Upload Excel"}
+                </span>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="doc_file">Doc File (Optional)</Label>
+              <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
+                <input 
+                  id="doc_file"
+                  type="file" 
+                  accept=".doc,.docx"
+                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  disabled={loading}
+                />
+                <span className="text-[10px] text-gray-500 font-bold block truncate">
+                  {docFile ? docFile.name : "Upload Doc"}
+                </span>
               </div>
             </div>
           </div>

@@ -99,6 +99,7 @@ export interface Department {
   description?: string;
   image?: string;
   icon?: string;
+  icon_class?: string;
 }
 
 // ─── Blog / News ──────────────────────────────────────────────────────────────

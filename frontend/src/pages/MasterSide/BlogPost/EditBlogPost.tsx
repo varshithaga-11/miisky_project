@@ -6,15 +6,17 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import DatePicker2 from "../../../components/form/date-picker2";
 import ImagePicker from "../../../components/form/ImagePicker";
+import MultiSelect from "../../../components/form/MultiSelect";
 
 interface Props {
   id: number;
   onSuccess: () => void;
   onClose: () => void;
   categories: any[];
+  tags: any[];
 }
 
-const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories }) => {
+const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories, tags }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [formData, setFormData] = useState<Partial<BlogPost>>({});
@@ -27,7 +29,10 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories }) =
       setFetching(true);
       try {
         const data = await getBlogPostById(id);
-        setFormData(data);
+        setFormData({
+          ...data,
+          tag_ids: data.tags ? data.tags.map((tag: any) => tag.id) : []
+        });
       } catch (error) {
         toast.error("Failed to load blog post");
       } finally {
@@ -56,6 +61,13 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories }) =
     if (formData.published_at) {
         const dateOnly = formData.published_at.split("T")[0];
         data.append("published_at", dateOnly);
+    }
+    
+    if (formData.tag_ids && formData.tag_ids.length > 0) {
+      formData.tag_ids.forEach(id => data.append("tag_ids", String(id)));
+    } else {
+      // If no tags selected, we might want to tell the server to clear them
+      // Depending on backend logic, empty list might be ignored in field-based form data
     }
     
     if (imageFile) data.append("image", imageFile);
@@ -129,6 +141,16 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories }) =
                       disabled={loading}
                     />
                   </div>
+              </div>
+
+              <div>
+                <MultiSelect
+                  label="Tags"
+                  options={tags.map(tag => ({ value: String(tag.id), text: tag.name }))}
+                  onChange={(selected) => setFormData({ ...formData, tag_ids: selected.map(id => parseInt(id)) })}
+                  defaultSelected={(formData.tag_ids || []).map(id => String(id))}
+                  disabled={loading}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

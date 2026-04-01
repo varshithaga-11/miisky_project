@@ -613,6 +613,18 @@
     display: none;
   }
 
+  /* Fix banner content box on mobile - ensure full width with padding */
+  .banner-carousel .content-box{
+    max-width: 100%;
+    padding: 0 20px;
+    text-align: center;
+  }
+
+  .banner-carousel .content-box .btn-box{
+    display: flex;
+    justify-content: center;
+  }
+
 }
 
 @media only screen and (max-width: 767px){
@@ -623,7 +635,7 @@
   }
 
   .banner-carousel .slide-item{
-    padding: 90px 0px 100px 0px;
+    padding: 70px 0px 80px 0px;
   }
 
   .banner-style-two{
@@ -648,13 +660,27 @@
 
 @media only screen and (max-width: 599px){
 
-  
+  .banner-carousel .content-box h2{
+    font-size: 28px;
+    line-height: 38px;
+  }
+
+  .banner-carousel .slide-item{
+    padding: 60px 0px 65px 0px;
+  }
 
 }
 
-@media only screen and (max-width: 499px){
+@media only screen and (max-width: 480px){
 
-  
+  .banner-carousel .content-box h2{
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .banner-carousel .slide-item{
+    padding: 50px 0px 55px 0px;
+  }
 
 }
 

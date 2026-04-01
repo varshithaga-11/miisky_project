@@ -4,6 +4,7 @@ import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getDepartmentList, deleteDepartment, Department } from "./departmentapi";
 import AddDepartment from "./AddDepartment";
 import EditDepartment from "./EditDepartment";
+import { getDepartmentIcon } from "../../../utils/departmentIcons";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -125,6 +126,7 @@ const DepartmentPage: React.FC = () => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Icon</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Department Name</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Head</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Order</TableCell>
@@ -135,17 +137,26 @@ const DepartmentPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && departments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
                 </TableRow>
               ) : departments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No departments found</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No departments found</TableCell>
                 </TableRow>
               ) : (
                 departments.map((dept, index) => (
                   <TableRow key={dept.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                        <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center justify-center p-1 border border-gray-100 dark:border-gray-800 shadow-sm">
+                          <img
+                            src={getDepartmentIcon(dept.icon_class || "").src}
+                            alt={dept.name}
+                            className="w-8 h-8 object-contain"
+                          />
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-900 text-theme-sm dark:text-white">
                         {dept.name}

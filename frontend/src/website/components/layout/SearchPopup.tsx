@@ -12,7 +12,7 @@ const SearchPopup: React.FC<SearchPopupProps> = ({ isPopup, handlePopup }) => {
       <div className="popup-inner">
         <div className="upper-box clearfix">
           <figure className="logo-box pull-left">
-            <Link to="/website">
+            <Link to="/">
               <img src="/website/assets/images/logo-miisky.png" alt="Logo" />
             </Link>
           </figure>
@@ -23,7 +23,7 @@ const SearchPopup: React.FC<SearchPopupProps> = ({ isPopup, handlePopup }) => {
         <div className="overlay-layer"></div>
         <div className="auto-container">
           <div className="search-form">
-            <form method="post" action="/website">
+            <form method="post" action="/">
               <div className="form-group">
                 <fieldset>
                   <input

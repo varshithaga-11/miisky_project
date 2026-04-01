@@ -14,7 +14,7 @@ type Header1Props = {
 export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Header1Props) {
   const [departments, setDepartments] = useState<any[]>([]);
   const { pathname } = useLocation();
-  const isHomePage = pathname === "/website" || pathname === "/website/";
+  const isHomePage = pathname === "/" || pathname === "/";
 
   useEffect(() => {
     const fetchDepartmentsData = async () => {
@@ -63,24 +63,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                     Open Hours: <span>Mon - Fri: 9:30am to 6:00pm</span>
                   </li>
                 </ul>
-                <ul className="social-links clearfix">
-                  <li>
-                    <h6>Follow Us</h6>
-                  </li>
-                  <li>
-                    <Link to="/website"><i className="fab fa-facebook-f"></i></Link>
-                  </li>
-                  <li>
-                    <Link to="/website"><i className="fab fa-dribbble"></i></Link>
-                  </li>
-                  <li>
-                    <Link to="/website"><i className="fab fa-twitter"></i></Link>
-                  </li>
-                  <li>
-                    <Link to="/website"><i className="fab fa-instagram"></i></Link>
-                  </li>
-
-                </ul>
               </div>
             </div>
           </div>
@@ -91,8 +73,8 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-box">
               <div className="logo-box">
                 <figure className="logo">
-                  <Link to="/website" onClick={scrollToTop}>
-                    <Image src="/miisky-logo.png" alt="Logo Image" width={203} height={40} priority />
+                  <Link to="/" onClick={scrollToTop}>
+                    <Image src="/miisky-logo.png" alt="Logo Image" width={150} height={30} priority />
                   </Link>
                 </figure>
               </div>
@@ -108,55 +90,55 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent">
                     <ul className="navigation clearfix" onClick={scrollToTop}>
                       <li>
-                        <Link to="/website">Home</Link>
+                        <Link to="/">Home</Link>
                       </li>
                       <li>
-                        <Link to="/website/about">About Us</Link>
+                        <Link to="/about">About Us</Link>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/departments">Departments</Link>
+                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/website/departments">Our Departments</Link></li>
+                          <li><Link to="/departments">Our Departments</Link></li>
                           {departments.map((dept: any) => (
                             <li key={dept.id}>
-                              <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                              <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/medical-devices">Products</Link>
+                        <Link to="/medical-devices">Products</Link>
                         <ul>
-                          <li><Link to="/website/medical-devices">Medical Devices</Link></li>
-                          <li><Link to="/website/device-categories">Device Categories</Link></li>
+                          <li><Link to="/device-categories">Device Categories</Link></li>
+                          <li><Link to="/medical-devices">Medical Devices</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/research">Innovation</Link>
+                        <Link to="/research">Innovation</Link>
                         <ul>
-                          <li><Link to="/website/research">Research Papers</Link></li>
-                          <li><Link to="/website/patents">Patents</Link></li>
+                          <li><Link to="/research">Research Papers</Link></li>
+                          <li><Link to="/patents">Patents</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Support</Link>
+                        <Link to="/">Support</Link>
                         <ul>
-                          <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/careers">Careers</Link></li>
-                          <li><Link to="/website/faq">FAQ</Link></li>
-                          <li><Link to="/website/gallery">Gallery</Link></li>
-                          <li><Link to="/website/partners">Our Partners</Link></li>
-                          <li><Link to="/website/pricing">Pricing</Link></li>
+                          <li><Link to="/doctors">Our Doctors</Link></li>
+                          <li><Link to="/careers">Careers</Link></li>
+                          <li><Link to="/faq">FAQ</Link></li>
+                          <li><Link to="/gallery">Gallery</Link></li>
+                          <li><Link to="/partners">Our Partners</Link></li>
+                          <li><Link to="/pricing">Pricing</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/blog">Blog</Link>
+                        <Link to="/blog">Blog</Link>
                         <ul>
-                          <li><Link to="/website/blog">Blog Grid</Link></li>
+                          <li><Link to="/blog">Blog Grid</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/website/contact">Contact</Link>
+                        <Link to="/contact">Contact</Link>
                       </li>
                     </ul>
                   </div>
@@ -199,8 +181,8 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-box">
               <div className="logo-box">
                 <figure className="logo">
-                  <Link to="/website" onClick={scrollToTop}>
-                    <Image src="/miisky-logo.png" alt="Logo Image" width={203} height={40} priority />
+                  <Link to="/" onClick={scrollToTop}>
+                    <Image src="/miisky-logo.png" alt="Logo Image" width={150} height={30} priority />
                   </Link>
                 </figure>
               </div>
@@ -215,55 +197,55 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContentSticky">
                     <ul className="navigation clearfix" onClick={scrollToTop}>
                       <li>
-                        <Link to="/website">Home</Link>
+                        <Link to="/">Home</Link>
                       </li>
                       <li>
-                        <Link to="/website/about">About Us</Link>
+                        <Link to="/about">About Us</Link>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/departments">Departments</Link>
+                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/website/departments">Our Departments</Link></li>
+                          <li><Link to="/departments">Our Departments</Link></li>
                           {departments.map((dept: any) => (
                             <li key={dept.id}>
-                              <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                              <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/medical-devices">Products</Link>
+                        <Link to="/medical-devices">Products</Link>
                         <ul>
-                          <li><Link to="/website/medical-devices">Medical Devices</Link></li>
-                          <li><Link to="/website/device-categories">Device Categories</Link></li>
+                          <li><Link to="/device-categories">Device Categories</Link></li>
+                          <li><Link to="/medical-devices">Medical Devices</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/research">Innovation</Link>
+                        <Link to="/research">Innovation</Link>
                         <ul>
-                          <li><Link to="/website/research">Research Papers</Link></li>
-                          <li><Link to="/website/patents">Patents</Link></li>
+                          <li><Link to="/research">Research Papers</Link></li>
+                          <li><Link to="/patents">Patents</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Support</Link>
+                        <Link to="/">Support</Link>
                         <ul>
-                          <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/careers">Careers</Link></li>
-                          <li><Link to="/website/faq">FAQ</Link></li>
-                          <li><Link to="/website/gallery">Gallery</Link></li>
-                          <li><Link to="/website/partners">Our Partners</Link></li>
-                          <li><Link to="/website/pricing">Pricing</Link></li>
+                          <li><Link to="/doctors">Our Doctors</Link></li>
+                          <li><Link to="/careers">Careers</Link></li>
+                          <li><Link to="/faq">FAQ</Link></li>
+                          <li><Link to="/gallery">Gallery</Link></li>
+                          <li><Link to="/partners">Our Partners</Link></li>
+                          <li><Link to="/pricing">Pricing</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/blog">Blog</Link>
+                        <Link to="/blog">Blog</Link>
                         <ul>
-                          <li><Link to="/website/blog">Blog Grid</Link></li>
+                          <li><Link to="/blog">Blog Grid</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/website/contact">Contact</Link>
+                        <Link to="/contact">Contact</Link>
                       </li>
                     </ul>
                   </div>

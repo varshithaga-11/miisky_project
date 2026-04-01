@@ -37,7 +37,7 @@ export default function Banner() {
                   check-ups, vaccinations, and lifestyle modifications.
                 </p>
                 <div className="btn-box">
-                  <Link to="/website/" className="theme-btn btn-two">
+                  <Link to="/" className="theme-btn btn-two">
                     <span>Explore Our Service</span>
                   </Link>
                 </div>
@@ -67,7 +67,7 @@ export default function Banner() {
                   check-ups, vaccinations, and lifestyle modifications.
                 </p>
                 <div className="btn-box">
-                  <Link to="/website/" className="theme-btn btn-two">
+                  <Link to="/" className="theme-btn btn-two">
                     <span>Explore Our Service</span>
                   </Link>
                 </div>

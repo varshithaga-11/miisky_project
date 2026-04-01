@@ -107,7 +107,7 @@ export default function RegisterPage() {
                     Your Miisky account has been successfully created. You can now sign in.
                   </p>
                   <div className="message-btn">
-                    <Link to="/website/login" className="theme-btn btn-two">
+                    <Link to="/login" className="theme-btn btn-two">
                       <span>Sign In Now</span>
                     </Link>
                   </div>
@@ -334,7 +334,7 @@ export default function RegisterPage() {
                   {/* Login link */}
                   <p style={{ textAlign: "center", fontSize: "14px", margin: 0 }}>
                     Already have an account?{" "}
-                    <Link to="/website/login" style={{ color: "#f5821f", fontWeight: 600 }}>
+                    <Link to="/login" style={{ color: "#f5821f", fontWeight: 600 }}>
                       Sign in
                     </Link>
                   </p>

@@ -129,7 +129,7 @@ async function request<T>(
       return retryResponse.json() as Promise<T>;
     } else {
       tokenStorage.clear();
-      if (typeof window !== "undefined") window.location.href = "/website/login";
+      if (typeof window !== "undefined") window.location.href = "/login";
       throw new Error("Session expired. Please log in again.");
     }
   }

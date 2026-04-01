@@ -3,7 +3,7 @@ import Image from "../components/Image";
 import { Link, useParams } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
-import { getDepartmentById, getDepartments } from "../../utils/api";
+import { getDepartmentById, getDepartments, getCompanyInfo } from "../../utils/api";
 import AppointmentForm from "../components/elements/AppointmentForm";
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 
@@ -13,6 +13,7 @@ export default function DepartmentDetails() {
     const [department, setDepartment] = useState<any>(MOCK_DEPARTMENTS[0] || {});
     const [departments, setDepartments] = useState<any[]>(MOCK_DEPARTMENTS);
     const [loading, setLoading] = useState(true);
+    const [openHours, setOpenHours] = useState<string>("");
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -54,8 +55,26 @@ export default function DepartmentDetails() {
             }
         };
 
+        const fetchCompanyInfo = async () => {
+            try {
+                const response = await getCompanyInfo();
+                let info = null;
+                if (Array.isArray(response?.data) && response.data.length > 0) {
+                    info = response.data[0];
+                } else if (response?.data && !Array.isArray(response.data)) {
+                    info = response.data;
+                }
+                if (info?.open_hours) {
+                    setOpenHours(info.open_hours);
+                }
+            } catch (err) {
+                console.warn('Failed to fetch company info:', err);
+            }
+        };
+
         fetchDepartment();
         fetchAllDepartments();
+        fetchCompanyInfo();
     }, [id]);
 
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
@@ -75,7 +94,7 @@ export default function DepartmentDetails() {
                                         <div className="widget-content">
                                             <ul className="category-list clearfix">
                                                 {departments.map((dept: any) => (
-                                                    <li key={dept.id}><Link to={`/website/department-details/${dept.id}`} className={department.id === dept.id ? "current" : ""}>{dept.name}</Link></li>
+                                                    <li key={dept.id}><Link to={`/department-details/${dept.id}`} className={department.id === dept.id ? "current" : ""}>{dept.name}</Link></li>
                                                 ))}
                                             </ul>
                                         </div>
@@ -93,15 +112,27 @@ export default function DepartmentDetails() {
                                             <h2>Working Hours</h2>
                                         </div>
                                         <div className="widget-content">
-                                            <ul className="schedule-list clearfix">
-                                                <li>Sunday<span>02 pm to 06 pm</span></li>
-                                                <li>Monday<span>03 pm to 07 pm</span></li>
-                                                <li>Tuesday<span>02 pm to 06 pm</span></li>
-                                                <li>Wednesday<span>02 pm to 06 pm</span></li>
-                                                <li>Thursday<span>04 pm to 06 pm</span></li>
-                                                <li>Friday<span>03 pm to 08 pm</span></li>
-                                                <li>Saturday<span>Closed</span></li>
-                                            </ul>
+                                            {openHours ? (
+                                                <ul className="schedule-list clearfix">
+                                                    {openHours.split(',').map((entry, idx) => {
+                                                        const parts = entry.trim().split(':');
+                                                        const day = parts[0]?.trim();
+                                                        const time = parts.slice(1).join(':').trim();
+                                                        return (
+                                                            <li key={idx}>
+                                                                {day}
+                                                                {time && <span>{time}</span>}
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            ) : (
+                                                <ul className="schedule-list clearfix">
+                                                    <li>Mon - Fri<span>9:30am to 6:00pm</span></li>
+                                                    <li>Saturday<span>9:30am to 2:30pm</span></li>
+                                                    <li>Sunday<span>Closed</span></li>
+                                                </ul>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -109,15 +140,6 @@ export default function DepartmentDetails() {
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="service-details-content">
                                     <div className="content-one mb_40">
-                                        <figure className="image-box mb_60">
-                                            <Image 
-                                                src={department.image || "/website/assets/images/service/service-4.jpg"} 
-                                                alt={department.name} 
-                                                width={856} 
-                                                height={525} 
-                                                priority 
-                                            />
-                                        </figure>
                                         <div className="text-box">
                                             <h2>{department.name || "Department"}</h2>
                                             <p>{department.description || department.short_description || "Department information and services available."}</p>
@@ -125,12 +147,17 @@ export default function DepartmentDetails() {
                                         </div>
                                     </div>
                                     <div className="content-two">
-                                        <figure className="image-box mb_30">
+                                        <figure className="image-box mb_30 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
                                             <Image 
                                                 src={department.image || "/website/assets/images/service/service-5.jpg"} 
                                                 alt={department.name} 
-                                                width={856} 
-                                                height={525} 
+                                                className="w-100"
+                                                style={{ 
+                                                    maxHeight: '450px', 
+                                                    objectFit: 'contain', 
+                                                    display: 'block', 
+                                                    margin: '0 auto' 
+                                                }}
                                                 priority 
                                             />
                                         </figure>

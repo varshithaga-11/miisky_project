@@ -4,6 +4,8 @@ import { createMedicalDeviceCategory, MedicalDeviceCategory } from "./medicaldev
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import IconPickerDropdown from "../../../components/form/IconPickerDropdown";
+import { DEVICE_CATEGORY_ICONS, getDeviceCategoryIcon } from "../../../utils/deviceCategoryIcons";
 
 interface Props {
   onSuccess: () => void;
@@ -12,10 +14,10 @@ interface Props {
 
 const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
-  const [iconFile, setIconFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Partial<MedicalDeviceCategory>>({
     name: "",
     description: "",
+    icon_class: "device-general",
     position: 0,
     is_active: true,
   });
@@ -30,7 +32,7 @@ const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
           data.append(key, value.toString());
         }
       });
-      if (iconFile) data.append("icon", iconFile);
+      if (formData.icon_class) data.append("icon_class", formData.icon_class);
 
       await createMedicalDeviceCategory(data as any);
       toast.success("Medical device category added successfully!");
@@ -69,22 +71,14 @@ const AddMedicalDeviceCategory: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div>
-            <Label htmlFor="icon">Category Icon</Label>
-            <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
-              <input 
-                id="icon"
-                type="file" 
-                accept="image/*"
-                onChange={(e) => setIconFile(e.target.files?.[0] || null)}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                disabled={loading}
-              />
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-gray-600 dark:text-gray-400 font-bold text-xs truncate max-w-full">
-                  {iconFile ? iconFile.name : "Click or Drag to Upload Icon"}
-                </span>
-              </div>
-            </div>
+            <Label htmlFor="icon_class">Category Icon</Label>
+            <IconPickerDropdown
+              value={formData.icon_class || ""}
+              onChange={(val) => setFormData({ ...formData, icon_class: val })}
+              icons={DEVICE_CATEGORY_ICONS}
+              getIcon={getDeviceCategoryIcon}
+              disabled={loading}
+            />
           </div>
 
           <div>

@@ -4,6 +4,37 @@ import { useEffect, useState } from "react";
 import { getTeamMembers } from "@/utils/api";
 import type { Doctor } from "@/Website/utils/types";
 import { MOCK_DOCTORS } from "@/Website/utils/mockData";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
+const swiperOptions = {
+  modules: [Autoplay, Pagination, Navigation],
+  slidesPerView: 1,
+  spaceBetween: 30,
+  autoplay: {
+    delay: 5000,
+    disableOnInteraction: false,
+  },
+  loop: true,
+  navigation: {
+    nextEl: ".swiper-button-next-team",
+    prevEl: ".swiper-button-prev-team",
+  },
+  pagination: {
+    el: ".swiper-pagination-team",
+    clickable: true,
+  },
+  breakpoints: {
+    320: { slidesPerView: 1 },
+    575: { slidesPerView: 1 },
+    767: { slidesPerView: 2 },
+    991: { slidesPerView: 3 },
+    1200: { slidesPerView: 3 },
+  },
+};
 
 interface TeamProps {
   /** Pass real API doctors here; falls back to mock data */
@@ -57,12 +88,9 @@ export default function Team({ doctors }: TeamProps) {
   if (loading && !doctors) return <div className="sec-pad centred"><div className="auto-container"><h3>Loading...</h3></div></div>;
   if (error && !doctors) return <div className="sec-pad centred"><div className="auto-container"><h3>{error}</h3></div></div>;
 
-  // Only show first 3 on the homepage
-  const featured = teamMembers.slice(0, 3);
-
   return (
-    <section className="team-section sec-pad centred">
-      <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/background/team-bg.jpg)" }}></div>
+    <section className="team-section sec-pad centred p_relative">
+      <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-8.png)" }}></div>
       <div className="auto-container">
         <div className="sec-title mb_60">
           <span className="sub-title mb_5">Our Team</span>
@@ -72,44 +100,48 @@ export default function Team({ doctors }: TeamProps) {
             <br />illnesses, injuries, and diseases.
           </p>
         </div>
-        <div className="row clearfix">
-          {featured.map((doctor, idx) => (
-            <div key={doctor.id} className="col-lg-4 col-md-6 col-sm-12 team-block">
-              <div
-                className="team-block-one wow fadeInUp animated"
-                data-wow-delay={`${idx * 300}ms`}
-                data-wow-duration="1500ms"
-              >
-                <div className="inner-box">
-                  <figure className="image-box">
-                    <Link to={`/website/doctor-details/${doctor.id}`}>
-                      <Image
-                        src={doctor.image || "/website/assets/images/team/team-1.jpg"}
-                        alt={doctor.name}
-                        width={416}
-                        height={430}
-                        priority
-                      />
-                    </Link>
-                  </figure>
-                  <div className="content-box">
-                    <h3>
-                      <Link to={`/website/doctor-details/${doctor.id}`}>{doctor.name}</Link>
-                    </h3>
-                    <span className="designation">{doctor.specialty}</span>
-                    <ul className="social-links clearfix">
-                      <li><Link to="/website"><i className="fab fa-facebook-f"></i></Link></li>
-                      <li><Link to="/website"><i className="fab fa-twitter"></i></Link></li>
-                      <li><Link to="/website"><i className="fab fa-dribbble"></i></Link></li>
-                      <li><Link to="/website"><i className="fab fa-behance"></i></Link></li>
-                    </ul>
+
+        <div className="team-carousel-container p_relative">
+          <Swiper {...swiperOptions} className="team-carousel">
+            {teamMembers.map((doctor) => (
+              <SwiperSlide key={doctor.id}>
+                <div
+                  className="team-block-one"
+                >
+                  <div className="inner-box">
+                    <figure className="image-box">
+                      <Link to={`/website/doctor-details/${doctor.id}`}>
+                        <Image
+                          src={doctor.image || "/website/assets/images/team/team-1.jpg"}
+                          alt={doctor.name}
+                          width={416}
+                          height={430}
+                          priority
+                        />
+                      </Link>
+                    </figure>
+                    <div className="content-box">
+                      <h3>
+                        <Link to={`/website/doctor-details/${doctor.id}`}>{doctor.name}</Link>
+                      </h3>
+                      <span className="designation">{doctor.specialty}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {/* Navigation and Pagination */}
+          <div className="swiper-pagination-team mt_40"></div>
+          
+          <div className="nav-style-one section-nav">
+             <div className="swiper-button-prev-team swiper-prev"><span className="icon-21"></span></div>
+             <div className="swiper-button-next-team swiper-next"><span className="icon-22"></span></div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
+

@@ -17,6 +17,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [fetching, setFetching] = useState(false);
   const [formData, setFormData] = useState<Partial<ResearchPaper>>({});
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [docFile, setDocFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +33,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             published_date: data.published_date,
             document: data.document,
             document_url: data.document_url,
+            excel_file_url: data.excel_file_url,
+            doc_file_url: data.doc_file_url,
             position: data.position,
             is_active: data.is_active
         });
@@ -54,6 +58,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
         }
       });
       if (pdfFile) data.append("document", pdfFile);
+      if (excelFile) data.append("excel_file", excelFile);
+      if (docFile) data.append("doc_file", docFile);
 
       await updateResearchPaper(id, data as any);
       toast.success("Research paper updated successfully!");
@@ -163,6 +169,51 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                     )}
                   </div>
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Max Size: 15MB</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="excel_file">Excel File (Optional)</Label>
+                <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
+                  <input 
+                    id="excel_file"
+                    type="file" 
+                    accept=".xls,.xlsx"
+                    onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    disabled={loading}
+                  />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] text-gray-500 font-bold block truncate max-w-full">
+                      {excelFile ? excelFile.name : formData.excel_file_url ? "Update Excel" : "Upload Excel"}
+                    </span>
+                    {formData.excel_file_url && !excelFile && (
+                      <span className="text-[8px] text-green-600 font-black uppercase tracking-widest">Already Saved</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="doc_file">Doc File (Optional)</Label>
+                <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
+                  <input 
+                    id="doc_file"
+                    type="file" 
+                    accept=".doc,.docx"
+                    onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    disabled={loading}
+                  />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] text-gray-500 font-bold block truncate max-w-full">
+                      {docFile ? docFile.name : formData.doc_file_url ? "Update Doc" : "Upload Doc"}
+                    </span>
+                    {formData.doc_file_url && !docFile && (
+                      <span className="text-[8px] text-green-600 font-black uppercase tracking-widest">Already Saved</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

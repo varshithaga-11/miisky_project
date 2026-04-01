@@ -12,12 +12,25 @@
 @import url("/website/assets/css/color.css");
 @import url("/website/assets/css/responsive.css");
 
+/* ── Prevent horizontal overflow on mobile ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 /* Additional global styles for website */
 body {
   font-family: 'Source Sans Pro', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100%;
 }
+
 
 /* Remove border radius from all header variants */
 .main-header,
@@ -180,13 +193,88 @@ body {
   overflow: visible !important;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MOBILE / RESPONSIVE OVERRIDES
+   These !important rules override the desktop-first header
+   styles defined above.
+═══════════════════════════════════════════════════════════ */
+
 @media only screen and (max-width: 991px) {
+
+  /* Hide desktop nav bars */
   .main-header #navbarSupportedContent,
   .main-header #navbarSupportedContentSticky,
   .main-header #navbarSupportedContent3,
   .main-header #navbarSupportedContent3Sticky {
     display: none !important;
   }
+
+  /* Show hamburger toggler */
+  .menu-area .mobile-nav-toggler {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  .menu-area .mobile-nav-toggler .icon-bar {
+    display: block !important;
+    width: 24px;
+    height: 2px;
+    background: #111;
+    border-radius: 1px;
+  }
+
+  /* Slim down header row on mobile */
+  .main-header .header-lower .outer-box {
+    padding: 0 15px !important;
+    gap: 8px !important;
+  }
+
+  /* Logo auto width on smaller screens */
+  .main-header .logo-box {
+    flex-shrink: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .main-header .logo-box img {
+    max-width: 140px;
+    height: auto;
+  }
+
+  /* Navigation takes no space on mobile */
+  .main-header .menu-area {
+    flex-grow: 0 !important;
+    margin-left: auto;
+  }
+
+  /* Hide support box & btn box on tablet */
+  .main-header .support-box,
+  .main-header .btn-box {
+    display: none !important;
+  }
+
+  /* Prevent nav <ul> from overflowing */
+  .main-header .navigation {
+    white-space: normal !important;
+  }
+
+}
+
+@media only screen and (max-width: 575px) {
+
+  /* Tighten header further */
+  .main-header .logo-box img {
+    max-width: 110px;
+  }
+
+  /* Section title responsive */
+  .main-header .navigation > li {
+    margin: 0 10px !important;
+  }
+
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -340,4 +428,150 @@ body {
   background-color: #0646ac !important;
   color: #fff !important;
   border-radius: 50% !important;
+}
+
+/* Team Carousel Custom Styles */
+.team-carousel-container {
+  padding: 0 50px;
+  position: relative;
+}
+
+.team-carousel-container .team-block-one {
+  margin-bottom: 50px;
+}
+
+.team-carousel-container .section-nav {
+  position: absolute;
+  top: 45%;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.team-carousel-container .section-nav .swiper-prev,
+.team-carousel-container .section-nav .swiper-next {
+  pointer-events: auto;
+  position: absolute;
+}
+
+.team-carousel-container .section-nav .swiper-prev {
+  left: -20px;
+}
+
+.team-carousel-container .section-nav .swiper-next {
+  right: -20px;
+}
+
+.swiper-pagination-team {
+  bottom: -20px !important;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.swiper-pagination-team .swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background: var(--secondary-color);
+  opacity: 0.3;
+  margin: 0 !important;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+}
+
+.swiper-pagination-team .swiper-pagination-bullet-active {
+  background: var(--theme-color);
+  opacity: 1;
+  width: 30px;
+  border-radius: 6px;
+}
+
+@media only screen and (max-width: 991px) {
+  .team-carousel-container {
+    padding: 0;
+  }
+  .team-carousel-container .section-nav {
+    display: none;
+  }
+}
+
+/* Team and Portfolio Spacing and Patterns */
+.team-section {
+  padding-bottom: 20px !important;
+}
+
+.portfolio-section .pattern-layer {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.portfolio-section .outer-container {
+  position: relative;
+  z-index: 1;
+  padding: 50px 0 !important;
+}
+
+.portfolio-block-one .inner-box .text-box {
+  background: rgba(6, 70, 172, 0.9) !important;
+  padding: 20px !important;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Make hover text box non-interactive so it doesn't block underlying links if any */
+}
+
+.portfolio-block-one .inner-box .text-box span {
+  display: block;
+  font-size: 16px !important;
+  line-height: 24px !important;
+  color: #ffffff !important;
+  font-family: 'Outfit', sans-serif !important;
+}
+
+.portfolio-section.p_relative {
+  overflow: hidden;
+}
+
+/* Footer Full Deep Black Style */
+.main-footer {
+  background-color: #111 !important;
+}
+
+.main-footer .widget-section:before {
+  background-color: #111 !important;
+}
+
+.footer-bottom {
+  background-color: #111 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+
+
+
+/* Selected department Noticeable styling - Orange */
+.service-sidebar .category-widget .category-list li a.current {
+    color: #ff8c00 !important; /* Orange color */
+    background: transparent !important;
+    padding-left: 20px;
+    border-radius: 0;
+    font-weight: 800;
+    margin-left: 20px;
+    box-shadow: none !important;
+}
+
+.service-sidebar .category-widget .category-list li a.current:before {
+    color: #ff8c00 !important;
+    left: -10px;
 }

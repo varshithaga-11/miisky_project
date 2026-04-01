@@ -6,6 +6,7 @@ export interface MedicalDeviceCategory {
   name: string;
   description?: string;
   icon?: string;
+  icon_class?: string;
   position?: number;
   is_active?: boolean;
 }

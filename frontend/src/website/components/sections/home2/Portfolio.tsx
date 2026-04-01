@@ -17,7 +17,7 @@ export default function Portfolio() {
                                 <figure className="image-box"><Image src="/website/assets/images/gallery/portfolio-1.jpg" alt="Image" width={480} height={600} priority /></figure>
                                 <div className="view-btn"><Link to="/website/assets/images/gallery/portfolio-1.jpg" className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                 <div className="text-box">
-                                    <h3><Link to="/website/index-2">Regular Dental Cleaning</Link></h3>
+                                    <h3><Link to="/">Regular Dental Cleaning</Link></h3>
                                     <span>Residential</span>
                                 </div>
                             </div>
@@ -29,7 +29,7 @@ export default function Portfolio() {
                                 <figure className="image-box"><Image src="/website/assets/images/gallery/portfolio-2.jpg" alt="Image" width={480} height={600} priority /></figure>
                                 <div className="view-btn"><Link to="/website/assets/images/gallery/portfolio-2.jpg" className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                 <div className="text-box">
-                                    <h3><Link to="/website/index-2">Prepare to Speak</Link></h3>
+                                    <h3><Link to="/">Prepare to Speak</Link></h3>
                                     <span>Residential</span>
                                 </div>
                             </div>
@@ -41,7 +41,7 @@ export default function Portfolio() {
                                 <figure className="image-box"><Image src="/website/assets/images/gallery/portfolio-3.jpg" alt="Image" width={480} height={600} priority /></figure>
                                 <div className="view-btn"><Link to="/website/assets/images/gallery/portfolio-3.jpg" className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                 <div className="text-box">
-                                    <h3><Link to="/website/index-2">From Diagnosis to Cure</Link></h3>
+                                    <h3><Link to="/">From Diagnosis to Cure</Link></h3>
                                     <span>Residential</span>
                                 </div>
                             </div>
@@ -53,7 +53,7 @@ export default function Portfolio() {
                                 <figure className="image-box"><Image src="/website/assets/images/gallery/portfolio-4.jpg" alt="Image" width={480} height={600} priority /></figure>
                                 <div className="view-btn"><Link to="/website/assets/images/gallery/portfolio-4.jpg" className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                 <div className="text-box">
-                                    <h3><Link to="/website/index-2">Empowering Patients</Link></h3>
+                                    <h3><Link to="/">Empowering Patients</Link></h3>
                                     <span>Residential</span>
                                 </div>
                             </div>
@@ -65,7 +65,7 @@ export default function Portfolio() {
                                 <figure className="image-box"><Image src="/website/assets/images/gallery/portfolio-5.jpg" alt="Image" width={480} height={600} priority /></figure>
                                 <div className="view-btn"><Link to="/website/assets/images/gallery/portfolio-5.jpg" className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                 <div className="text-box">
-                                    <h3><Link to="/website/index-2">From Healthcare Provider</Link></h3>
+                                    <h3><Link to="/">From Healthcare Provider</Link></h3>
                                     <span>Residential</span>
                                 </div>
                             </div>
@@ -77,7 +77,7 @@ export default function Portfolio() {
                                 <figure className="image-box"><Image src="/website/assets/images/gallery/portfolio-6.jpg" alt="Image" width={480} height={600} priority /></figure>
                                 <div className="view-btn"><Link to="/website/assets/images/gallery/portfolio-6.jpg" className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                 <div className="text-box">
-                                    <h3><Link to="/website/index-2">Transforming Health</Link></h3>
+                                    <h3><Link to="/">Transforming Health</Link></h3>
                                     <span>Residential</span>
                                 </div>
                             </div>

@@ -17,7 +17,7 @@ export default function ErrorPage() {
                 <div className="content-box">
                     <h1>404</h1>
                     <h2>Oops! that page can not <br />be found.</h2>
-                    <Link to="/website" className="theme-btn btn-two"><span>Back to Homepage</span></Link>
+                    <Link to="/" className="theme-btn btn-two"><span>Back to Homepage</span></Link>
                 </div>
             </div>
         </section>

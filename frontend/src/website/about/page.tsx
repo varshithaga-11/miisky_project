@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import CountUp from "react-countup";
+// import CountUp from "react-countup";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
@@ -9,6 +9,33 @@ import Team from "../components/sections/home1/Team";
 import Cta from "../components/sections/home2/Cta";
 import { getDepartments } from "../../utils/api";
 import { MOCK_DEPARTMENTS } from "../../Website/utils/mockData";
+import { getDepartmentIcon } from "../../utils/departmentIcons";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
+const swiperOptions = {
+    modules: [Autoplay, Pagination, Navigation],
+    slidesPerView: 1,
+    spaceBetween: 30,
+    autoplay: {
+        delay: 5000,
+        disableOnInteraction: false,
+    },
+    loop: true,
+    pagination: {
+        clickable: true,
+    },
+    breakpoints: {
+        320:  { slidesPerView: 1 },
+        575:  { slidesPerView: 1 },
+        767:  { slidesPerView: 2 },
+        991:  { slidesPerView: 3 },
+        1200: { slidesPerView: 3 },
+    },
+};
 
 export default function About_Page() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
@@ -111,28 +138,36 @@ export default function About_Page() {
                             {loading ? (
                                 <div style={{padding: '40px', textAlign: 'center', width: '100%'}}>Loading departments...</div>
                             ) : (
-                                departments.slice(0, 3).map((dept: any) => (
-                                    <div key={dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block">
-                                        <div className="service-block-one">
-                                            <div className="inner-box">
-                                                <figure className="image-box"><Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority /></figure>
-                                                <div className="lower-content">
-                                                    <div className="inner">
-                                                        <div className="icon-box"><i className="icon-18"></i></div>
-                                                        <h3><Link to="/website/departments">{dept.name}</Link></h3>
-                                                        <p>{dept.description || "Professional healthcare services for your well-being."}</p>
+                                <Swiper {...swiperOptions} className="three-item-carousel owl-theme nav-style-one">
+                                    {departments.map((dept: any) => (
+                                        <SwiperSlide key={dept.id}>
+                                            <div className="service-block-one">
+                                                <div className="inner-box">
+                                                    <figure className="image-box"><Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority /></figure>
+                                                    <div className="lower-content">
+                                                        <div className="inner">
+                                                            <div className="icon-box">
+                                                                <img
+                                                                    src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
+                                                                    alt={dept.name}
+                                                                    style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+                                                                />
+                                                            </div>
+                                                            <h3><Link to="/departments">{dept.name}</Link></h3>
+                                                            <p>{dept.description || "Professional healthcare services for your well-being."}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                ))
+                                        </SwiperSlide>
+                                    ))}
+                                </Swiper>
                             )}
                         </div>
                     </div>
                 </section>
 
-                <section className="appointment-section about-page">
+{/* <section className="appointment-section about-page">
                     <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-17.png)" }}></div>
                     <figure className="image-layer"><Image src="/website/assets/images/resource/women-1.png" alt="Image" width={488} height={591} priority /></figure>
                     <div className="outer-container clearfix">
@@ -148,7 +183,7 @@ export default function About_Page() {
                             <div className="form-inner">
                                 <div className="shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-16.png)" }}></div>
                                 <h3>Make an Appointment </h3>
-                                <form action="/website" method="post">
+                                <form action="/" method="post">
                                     <div className="form-group">
                                         <div className="icon"><i className="icon-45"></i></div>
                                         <input type="text" name="name" placeholder="Name" required/>
@@ -168,9 +203,8 @@ export default function About_Page() {
                             </div>
                         </div>
                     </div>
-                </section>
-                <section className="funfact-section">
-                {/* Background patterns */}
+                </section> */}
+{/* <section className="funfact-section">
                 <div className="pattern-layer">
                     <div className="pattern-1">
                     <svg
@@ -201,7 +235,6 @@ export default function About_Page() {
                     ></div>
 
                     <div className="row clearfix">
-                        {/* Block 1 */}
                         <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
                         <div className="funfact-block-two">
                             <div className="inner-box">
@@ -217,7 +250,6 @@ export default function About_Page() {
                         </div>
                         </div>
 
-                        {/* Block 2 */}
                         <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
                         <div className="funfact-block-two">
                             <div className="inner-box">
@@ -233,7 +265,6 @@ export default function About_Page() {
                         </div>
                         </div>
 
-                        {/* Block 3 */}
                         <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
                         <div className="funfact-block-two">
                             <div className="inner-box">
@@ -249,7 +280,6 @@ export default function About_Page() {
                         </div>
                         </div>
 
-                        {/* Block 4 */}
                         <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
                         <div className="funfact-block-two">
                             <div className="inner-box">
@@ -266,7 +296,7 @@ export default function About_Page() {
                     </div>
                     </div>
                 </div>
-                </section>
+                </section> */}
                 <Working/>
                 <Clients/>
                 <Team/>

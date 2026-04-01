@@ -63,25 +63,25 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
         </div>
         <nav className="menu-box">
           <div className="nav-logo">
-            <Link to="/website"><Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={203} height={40} priority /></Link>
+            <Link to="/"><Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={150} height={30} priority /></Link>
           </div>
           <div className="menu-outer">
             <ul className="navigation clearfix" onClick={handleClick}>
 
               {/* Home */}
-              <li><Link to="/website">Home</Link></li>
+              <li><Link to="/">Home</Link></li>
 
               {/* About */}
-              <li><Link to="/website/about">About Us</Link></li>
+              <li><Link to="/about">About Us</Link></li>
 
               {/* Services */}
               <li className={`dropdown ${activeDropdown === 2 ? "current" : ""}`}>
-                <Link to="/website">Departments</Link>
+                <Link to="/">Departments</Link>
                 <ul style={{ display: activeDropdown === 2 ? "block" : "none" }}>
-                  <li><Link to="/website/departments">Our Departments</Link></li>
+                  <li><Link to="/departments">Our Departments</Link></li>
                   {departments.map((dept: any) => (
                     <li key={dept.id}>
-                      <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                      <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
                     </li>
                   ))}
                 </ul>
@@ -92,14 +92,14 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
 
               {/* Pages */}
               <li className={`dropdown ${activeDropdown === 3 ? "current" : ""}`}>
-                <Link to="/website">Pages</Link>
+                <Link to="/">Pages</Link>
                 <ul style={{ display: activeDropdown === 3 ? "block" : "none" }}>
-                  <li><Link to="/website/doctors">Our Doctors</Link></li>
-                  <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                  <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                  {/* <li><Link to="/website/portfolio-2">Portfolio Two</Link></li> */}
-                  <li><Link to="/website/pricing">Pricing</Link></li>
-                  <li><Link to="/website/error">Page Not Found</Link></li>
+                  <li><Link to="/doctors">Our Doctors</Link></li>
+                  <li><Link to="/doctor-details">Doctor Details</Link></li>
+                  <li><Link to="/portfolio">Portfolio One</Link></li>
+                  {/* <li><Link to="/portfolio-2">Portfolio Two</Link></li> */}
+                  <li><Link to="/pricing">Pricing</Link></li>
+                  <li><Link to="/error">Page Not Found</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 3 ? "open" : ""}`} onClick={() => toggleDropdown(3)}>
                   <span className="fa fa-angle-right" />
@@ -108,11 +108,11 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
 
               {/* Shop */}
               <li className={`dropdown ${activeDropdown === 4 ? "current" : ""}`}>
-                <Link to="/website">Blog</Link>
+                <Link to="/">Blog</Link>
                 <ul style={{ display: activeDropdown === 4 ? "block" : "none" }}>
-                  <li><Link to="/website/blog">Blog Grid</Link></li>
-                  {/* <li><Link to="/website/blog-2">Blog Standard</Link></li> */}
-                  <li><Link to="/website/blog-details">Blog Details</Link></li>
+                  <li><Link to="/blog">Blog Grid</Link></li>
+                  {/* <li><Link to="/blog-2">Blog Standard</Link></li> */}
+                  <li><Link to="/blog-details">Blog Details</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 4 ? "open" : ""}`} onClick={() => toggleDropdown(4)}>
                   <span className="fa fa-angle-right" />
@@ -120,7 +120,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
               </li>
 
               {/* Contact */}
-              <li><Link to="/website/contact" onClick={handleMobileMenu}>Contact</Link></li>
+              <li><Link to="/contact" onClick={handleMobileMenu}>Contact</Link></li>
 
 
             </ul>
@@ -138,11 +138,11 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
           {/* Social Links */}
           <div className="social-links">
             <ul className="clearfix">
-              <li><Link to="/website"><span className="fab fa-twitter" /></Link></li>
-              <li><Link to="/website"><span className="fab fa-facebook-square" /></Link></li>
-              <li><Link to="/website"><span className="fab fa-pinterest-p" /></Link></li>
-              <li><Link to="/website"><span className="fab fa-instagram" /></Link></li>
-              <li><Link to="/website"><span className="fab fa-youtube" /></Link></li>
+              <li><Link to="/"><span className="fab fa-twitter" /></Link></li>
+              <li><Link to="/"><span className="fab fa-facebook-square" /></Link></li>
+              <li><Link to="/"><span className="fab fa-pinterest-p" /></Link></li>
+              <li><Link to="/"><span className="fab fa-instagram" /></Link></li>
+              <li><Link to="/"><span className="fab fa-youtube" /></Link></li>
             </ul>
           </div>
 
