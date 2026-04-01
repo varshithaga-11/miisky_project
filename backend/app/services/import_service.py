@@ -48,9 +48,9 @@ class ImportService:
         # Specific check for join models without single name/title field
         if module == "food":
             if submenu == "recipe":
-                from app.models import FoodIngredient
-                existing_values = set(FoodIngredient.objects.select_related('food', 'ingredient').values_list('food__name', 'ingredient__name'))
-                check_field = ('food_name', 'ingredient_name')
+                from app.models import FoodIngredient, FoodStep
+                existing_values = set(FoodIngredient.objects.values_list('food__name', flat=True)) | set(FoodStep.objects.values_list('food__name', flat=True))
+                check_field = 'food_name'
             elif submenu == "food-step":
                 from app.models import FoodStep
                 existing_values = set(FoodStep.objects.select_related('food').values_list('food__name', 'step_number'))
@@ -106,9 +106,17 @@ class ImportService:
 
             # Replace NaN/Inf values in numeric fields with None early to prevent JSON errors
             import math
+            nutrition_fields = {
+                'calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'saturated_fat', 'trans_fat',
+                'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12',
+                'cholesterol', 'glycemic_index', 'serving_size'
+            }
             for key, value in mapped_row_data.items():
                 if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
-                    mapped_row_data[key] = None
+                    if submenu == 'food' and key in nutrition_fields:
+                        mapped_row_data[key] = "N/A"
+                    else:
+                        mapped_row_data[key] = None
 
             # Extra validation for NormalRangeForHealthParameter
             if module == "health" and submenu in ["normal-range", "normalrange"]:
@@ -140,23 +148,55 @@ class ImportService:
                     if original_val and original_val in existing_values:
                         is_old = True
 
-            serializer = Serializer(data=mapped_row_data)
             row_errors = []
-            
-            # If it's an old record, mark it as a warning (not a fatal error for submission)
-            if is_old:
-                # User requested specific phrasing: "Already exists (this will be skipped)"
-                row_errors.append("Already exists (this will be skipped)")
+            if submenu == "recipe":
+                food_name = row_data.get('food_name')
+                from app.models import Food
+                if not food_name:
+                    row_errors.append("food_name: This field is required.")
+                elif not Food.objects.filter(name=str(food_name).strip()).exists():
+                    row_errors.append(f"food_name: Food '{food_name}' does not exist.")
+                
+                # Check for at least one ingredient or step
+                has_content = False
+                for i in range(1, 4):
+                    if mapped_row_data.get(f'ingredient_name{i}'):
+                        has_content = True
+                        temp_data = {
+                            "food_name_input": food_name,
+                            "ingredient_name_input": mapped_row_data.get(f'ingredient_name{i}'),
+                            "quantity": mapped_row_data.get(f'quantity{i}'),
+                            "unit_name_input": mapped_row_data.get(f'unit_name{i}'),
+                            "notes": mapped_row_data.get(f'notes{i}')
+                        }
+                        s = Serializer(data=temp_data)
+                        if not s.is_valid():
+                            for f, errs in s.errors.items():
+                                row_errors.append(f"Ingr {i} - {f}: {errs}")
+                
+                for j in range(1, 6):
+                    if mapped_row_data.get(f'step{j}'):
+                        has_content = True
+                
+                if not has_content:
+                    row_errors.append("Row must have at least one ingredient or one step.")
+                    
             else:
-                # Only validate new records via the serializer
-                if not serializer.is_valid():
-                    # Format errors into a list of strings
-                    for field, errors in serializer.errors.items():
-                        if isinstance(errors, list):
-                            for error in errors:
-                                row_errors.append(f"{field}: {error}")
-                        else:
-                            row_errors.append(f"{field}: {errors}")
+                # If it's an old record, mark it as a warning (not a fatal error for submission)
+                if is_old:
+                    # User requested specific phrasing: "Already exists (this will be skipped)"
+                    row_errors.append("Already exists (this will be skipped)")
+                else:
+                    serializer = Serializer(data=mapped_row_data)
+                    # Only validate new records via the serializer
+                    if not serializer.is_valid():
+                        # Format errors into a list of strings
+                        for field, errors in serializer.errors.items():
+                            if isinstance(errors, list):
+                                for error in errors:
+                                    row_errors.append(f"{field}: {error}")
+                            else:
+                                row_errors.append(f"{field}: {errors}")
             
             # Create a copy for analysis table display
             row_copy = mapped_row_data.copy()
@@ -222,24 +262,60 @@ class ImportService:
                                 val = val.replace(" (new)", "")
                             clean_row[check_field] = val
 
-                        serializer = Serializer(data=clean_row)
-                        if serializer.is_valid():
-                            instance = serializer.save()
-                            created_count += 1
-                            # Create FoodStep records from 'steps' column if present
-                            steps_str = clean_row.get('steps', '')
-                            if steps_str and hasattr(instance, 'food') and instance.food:
-                                from app.models import FoodStep
-                                steps_list = [s.strip() for s in steps_str.split(';') if s.strip()]
-                                for idx, step_text in enumerate(steps_list, start=1):
+                        if submenu == "recipe":
+                            from app.models import Food, Ingredient, Unit, FoodIngredient, FoodStep
+                            food_name = row_data.get('food_name_input')
+                            food_obj = Food.objects.get(name=str(food_name).strip())
+                            
+                            # Process Ingredients 1-3
+                            for i in range(1, 4):
+                                ing_name = clean_row.get(f'ingredient_name{i}')
+                                if ing_name:
+                                    ing_obj, _ = Ingredient.objects.get_or_create(name=ing_name)
+                                    unit_name = clean_row.get(f'unit_name{i}')
+                                    unit_obj = None
+                                    if unit_name:
+                                        unit_obj, _ = Unit.objects.get_or_create(name=unit_name)
+                                    
+                                    FoodIngredient.objects.update_or_create(
+                                        food=food_obj,
+                                        ingredient=ing_obj,
+                                        defaults={
+                                            "quantity": float(clean_row.get(f'quantity{i}', 0) or 0),
+                                            "unit": unit_obj,
+                                            "notes": clean_row.get(f'notes{i}', '')
+                                        }
+                                    )
+                            
+                            # Process Steps 1-5
+                            for j in range(1, 6):
+                                step_text = clean_row.get(f'step{j}')
+                                if step_text:
                                     FoodStep.objects.update_or_create(
-                                        food=instance.food,
-                                        step_number=idx,
+                                        food=food_obj,
+                                        step_number=j,
                                         defaults={"instruction": step_text}
                                     )
+                            created_count += 1
                         else:
-                            # If it somehow fails now, raise the specific errors
-                            raise Exception(f"Row validation failed: {serializer.errors}")
+                            serializer = Serializer(data=clean_row)
+                            if serializer.is_valid():
+                                instance = serializer.save()
+                                created_count += 1
+                                # Create FoodStep records from 'steps' column if present
+                                steps_str = clean_row.get('steps', '')
+                                if steps_str and hasattr(instance, 'food') and instance.food:
+                                    from app.models import FoodStep
+                                    steps_list = [s.strip() for s in steps_str.split(';') if s.strip()]
+                                    for idx, step_text in enumerate(steps_list, start=1):
+                                        FoodStep.objects.update_or_create(
+                                            food=instance.food,
+                                            step_number=idx,
+                                            defaults={"instruction": step_text}
+                                        )
+                            else:
+                                # If it somehow fails now, raise the specific errors
+                                raise Exception(f"Row validation failed: {serializer.errors}")
             except Exception as e:
                 return {
                     "success": False,

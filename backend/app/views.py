@@ -1873,7 +1873,7 @@ class TemplateDownloadView(APIView):
                 ],
                 "unit": ["name"],
                 "ingredient": ["name"],
-                "recipe": ["food_name", "ingredient_name", "quantity", "unit_name", "notes", "steps"],
+                "recipe": ["food_name", "ingredient_name1", "quantity1", "unit_name1", "notes1", "ingredient_name2", "quantity2", "unit_name2", "notes2", "ingredient_name3", "quantity3", "unit_name3", "notes3", "step1", "step2", "step3", "step4", "step5"],
                 "food-step": ["food_name", "step_number", "instruction"],
                 "foodwatersolublevitamins": [
                     "food_name", "base_unit", "water_soluble_index", "thiamine_b1", "riboflavin_b2", "niacin_b3", "pantothenic_acid_b5", "biotin_b7", "folate_b9", "vitamin_b6", "vitamin_c"
@@ -1954,16 +1954,16 @@ class TemplateDownloadView(APIView):
                 ["Butter"], ["Noodles"], ["Beef"], ["Lettuce"], ["Carrot"]
             ],
             "recipe": [
-                ["Masala Dosa", "Rice", "200", "Gram", "Soaked and ground", "1. Soak rice and urad dal for 6 hours; 2. Grind to paste; 3. Cook on tawa"],
-                ["Pizza Margherita", "Tomato", "100", "Gram", "Sliced", "1. Prepare dough; 2. Add toppings; 3. Bake"],
-                ["Sushi", "Fish", "50", "Gram", "Fresh", "1. Cook rice; 2. Slice fish; 3. Roll sushi"],
-                ["Tacos", "Corn", "80", "Gram", "Roasted", "1. Prepare tortillas; 2. Add filling; 3. Serve"],
-                ["Croissant", "Butter", "60", "Gram", "Chilled", "1. Prepare dough; 2. Add butter; 3. Bake"],
-                ["Pad Thai", "Noodles", "150", "Gram", "Boiled", "1. Prepare sauce; 2. Stir-fry noodles; 3. Serve"],
-                ["Cheeseburger", "Beef", "120", "Gram", "Grilled", "1. Prepare patty; 2. Add cheese; 3. Assemble burger"],
-                ["Green Salad", "Lettuce", "50", "Gram", "Fresh", "1. Wash greens; 2. Chop vegetables; 3. Toss salad"],
-                ["Spring Rolls", "Carrot", "40", "Gram", "Julienned", "1. Prepare filling; 2. Roll; 3. Fry"],
-                ["Ramen", "Noodles", "100", "Gram", "Boiled", "1. Prepare broth; 2. Cook noodles; 3. Assemble bowl"]
+                ["Masala Dosa", "Rice", "200", "Gram", "Soaked", "Urad Dal", "100", "Gram", "Soaked", "Potato", "100", "Gram", "Boiled", "Soak rice and urad dal", "Grind to paste", "Ferment for 8 hours", "Cook on tawa", "Add potato masala"],
+                ["Pizza Margherita", "Flour", "200", "Gram", "Sieved", "Tomato", "50", "Gram", "Pureed", "Mozzarella", "50", "Gram", "Grated", "Prepare dough", "Add sauce and cheese", "Bake at 250C", "Add basil", ""],
+                ["Sushi", "Sushi Rice", "100", "Gram", "Cooked", "Fish", "50", "Gram", "Sliced", "Seaweed", "1", "Piece", "Sheet", "Cook rice", "Slice fish", "Roll sushi", "Slice into pieces", ""],
+                ["Tacos", "Tortilla", "2", "Piece", "Warm", "Corn", "50", "Gram", "Roasted", "Beans", "30", "Gram", "Cooked", "Warm tortillas", "Add corn and beans", "Add salsa", "Serve with lime", ""],
+                ["Croissant", "Flour", "150", "Gram", "Dough", "Butter", "70", "Gram", "Chilled", "Sugar", "10", "Gram", "Fine", "Prepare dough", "Layer with butter", "Fold and chill", "Shape croissants", "Bake until golden"],
+                ["Pad Thai", "Noodles", "100", "Gram", "Boiled", "Tofu", "50", "Gram", "Cubed", "Peanuts", "10", "Gram", "Crushed", "Boil noodles", "Fry tofu", "Mix sauce", "Stir-fry everything", "Serve hot"],
+                ["Cheeseburger", "Beef Patty", "1", "Piece", "Grilled", "Cheese", "1", "Slice", "Melted", "Bun", "1", "Piece", "Toasted", "Grill patty", "Melt cheese on top", "Toast bun", "Assemble burger", "Serve with fries"],
+                ["Green Salad", "Lettuce", "50", "Gram", "Fresh", "Tomato", "30", "Gram", "Diced", "Cucumber", "30", "Gram", "Sliced", "Wash greens", "Chop veggies", "Toss with dressing", "", ""],
+                ["Spring Rolls", "Wrappers", "2", "Piece", "Rice paper", "Cabbage", "50", "Gram", "Shredded", "Carrot", "20", "Gram", "Julienned", "Prepare filling", "Wrap tightly", "Deep fry", "Drain oil", "Serve with sauce"],
+                ["Ramen", "Noodles", "100", "Gram", "Boiled", "Broth", "200", "Milliliter", "Hot", "Egg", "1", "Piece", "Soft boiled", "Prepare broth", "Boil noodles", "Add toppings", "Serve hot", ""]
             ],
             "food-step": [
                 ["Masala Dosa", "1", "Soak rice and urad dal for 6 hours."],

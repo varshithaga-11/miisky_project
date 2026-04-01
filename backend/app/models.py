@@ -591,32 +591,32 @@ class FoodNutrition(models.Model):
     food = models.OneToOneField(Food, on_delete=models.SET_NULL,null=True,blank=True, related_name='nutrition')
 
     # 🔥 MACRONUTRIENTS
-    calories = models.FloatField(null=True, blank=True)  # e.g. 120 kcal
-    protein = models.FloatField(null=True, blank=True)   # grams
-    carbs = models.FloatField(null=True, blank=True)     # grams
-    fat = models.FloatField(null=True, blank=True)       # grams
-    fiber = models.FloatField(null=True, blank=True)     # grams
+    calories = models.CharField(max_length=50, null=True, blank=True, default="N/A")  # e.g. 120 kcal
+    protein = models.CharField(max_length=50, null=True, blank=True, default="N/A")   # grams
+    carbs = models.CharField(max_length=50, null=True, blank=True, default="N/A")     # grams
+    fat = models.CharField(max_length=50, null=True, blank=True, default="N/A")       # grams
+    fiber = models.CharField(max_length=50, null=True, blank=True, default="N/A")     # grams
 
     # 🔥 ADVANCED MACROS
-    sugar = models.FloatField(null=True, blank=True)     # grams
-    saturated_fat = models.FloatField(null=True, blank=True)  # grams
-    trans_fat = models.FloatField(null=True, blank=True)      # grams
+    sugar = models.CharField(max_length=50, null=True, blank=True, default="N/A")     # grams
+    saturated_fat = models.CharField(max_length=50, null=True, blank=True, default="N/A")  # grams
+    trans_fat = models.CharField(max_length=50, null=True, blank=True, default="N/A")      # grams
 
     # 🔥 MINERALS
-    sodium = models.FloatField(null=True, blank=True)    # mg
-    potassium = models.FloatField(null=True, blank=True) # mg
-    calcium = models.FloatField(null=True, blank=True)   # mg
-    iron = models.FloatField(null=True, blank=True)      # mg
+    sodium = models.CharField(max_length=50, null=True, blank=True, default="N/A")    # mg
+    potassium = models.CharField(max_length=50, null=True, blank=True, default="N/A") # mg
+    calcium = models.CharField(max_length=50, null=True, blank=True, default="N/A")   # mg
+    iron = models.CharField(max_length=50, null=True, blank=True, default="N/A")      # mg
 
     # 🔥 VITAMINS
-    vitamin_a = models.FloatField(null=True, blank=True)
-    vitamin_c = models.FloatField(null=True, blank=True)
-    vitamin_d = models.FloatField(null=True, blank=True)
-    vitamin_b12 = models.FloatField(null=True, blank=True)
+    vitamin_a = models.CharField(max_length=50, null=True, blank=True, default="N/A")
+    vitamin_c = models.CharField(max_length=50, null=True, blank=True, default="N/A")
+    vitamin_d = models.CharField(max_length=50, null=True, blank=True, default="N/A")
+    vitamin_b12 = models.CharField(max_length=50, null=True, blank=True, default="N/A")
 
     # 🔥 OTHER USEFUL
-    cholesterol = models.FloatField(null=True, blank=True)  # mg
-    glycemic_index = models.FloatField(null=True, blank=True)  # important for diabetes
+    cholesterol = models.CharField(max_length=50, null=True, blank=True, default="N/A")  # mg
+    glycemic_index = models.CharField(max_length=50, null=True, blank=True, default="N/A")  # important for diabetes
 
     # 🔥 META
     serving_size = models.CharField(max_length=100, null=True, blank=True)  
@@ -2297,6 +2297,8 @@ class PlanPaymentSnapshot(models.Model):
         "UserDietPlan",
         on_delete=models.CASCADE,
         related_name="payment_snapshot",
+        null=True,
+        blank=True,
     )
 
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
