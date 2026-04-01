@@ -148,7 +148,7 @@ const UserNutritionMappingPage: React.FC = () => {
                         </TableCell>
                         <TableCell className="px-5 py-4">
                           <div className="flex flex-wrap gap-2">
-                            {patients.map((p) => (
+                            {patients.map((p: any) => (
                               <span
                                 key={p.id}
                                 className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-gray-100"

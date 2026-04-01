@@ -10,7 +10,7 @@ import { getCountryList, Country } from "../Country/countryapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCityList, City } from "../City/cityapi";
 import DatePicker2 from "../../../components/form/date-picker2";
-import { FiMapPin } from "react-icons/fi";
+import { FiMapPin, FiEye, FiEyeOff } from "react-icons/fi";
 import { MapLocationPicker } from "../../../components/common/MapLocationPicker";
 
 interface EditUserProps {
@@ -27,6 +27,8 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
@@ -494,26 +496,44 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
           {/* Password */}
           <div>
             <Label htmlFor="password">New Password (optional)</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={saving}
-              placeholder="Leave blank to keep current password"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={saving}
+                placeholder="Leave blank to keep current password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </button>
+            </div>
           </div>
 
           <div>
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={saving}
-              placeholder="Confirm new password"
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={saving}
+                placeholder="Confirm new password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </button>
+            </div>
           </div>
 
           {/* Active */}

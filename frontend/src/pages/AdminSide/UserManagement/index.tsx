@@ -59,7 +59,7 @@ const UserManagementPage: React.FC = () => {
   >("all");
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [nonPatientDetailUser, setNonPatientDetailUser] = useState<UserRegister | null>(null);
+  const [viewUser, setViewUser] = useState<UserRegister | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -301,16 +301,14 @@ const UserManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        {user.role === "non_patient" && (
-                          <button
-                            type="button"
-                            title="Profile, address, coordinates & orders"
-                            className="text-emerald-600 hover:text-emerald-800 p-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                            onClick={() => setNonPatientDetailUser(user)}
-                          >
-                            <FiEye />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="text-emerald-600 hover:text-emerald-800 p-1"
+                          onClick={() => setViewUser(user)}
+                          title="View user registrations info"
+                        >
+                          <FiEye />
+                        </button>
                         <button
                           type="button"
                           className="text-blue-600 hover:text-blue-800 p-1"
@@ -368,12 +366,85 @@ const UserManagementPage: React.FC = () => {
         />
       )}
 
-      {nonPatientDetailUser && (
-        <NonPatientUserDetailModal
-          user={nonPatientDetailUser}
-          open={!!nonPatientDetailUser}
-          onClose={() => setNonPatientDetailUser(null)}
-        />
+      {viewUser && (
+        <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-2xl relative shadow-xl max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setViewUser(null)}
+              className="absolute top-2 right-4 text-3xl text-gray-500 hover:text-gray-900 dark:hover:text-white"
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">User Registration Info</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Username</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.username}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Email</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.email}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Full Name</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {viewUser.first_name || ""} {viewUser.last_name || ""}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Role</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-xs">
+                    {viewUser.role}
+                  </span>
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Status</span>
+                <p className="text-sm font-medium">
+                   {viewUser.is_active ? (
+                     <span className="text-green-600">Active</span>
+                   ) : (
+                     <span className="text-red-600">Inactive</span>
+                   )}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Mobile</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.mobile || "—"}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">WhatsApp</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.whatsapp || "—"}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">DOB</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.dob || "—"}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Gender</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">{viewUser.gender || "—"}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Joined Date</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.joined_date || "—"}</p>
+              </div>
+              <div className="md:col-span-2 space-y-1 border-t border-gray-100 dark:border-white/[0.05] pt-4">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Address</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">
+                  {viewUser.address || "No address provided"}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex justify-end">
+              <Button onClick={() => setViewUser(null)} variant="outline">
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
