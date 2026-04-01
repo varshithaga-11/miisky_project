@@ -98,50 +98,31 @@ const adminNavItems: NavItem[] = [
     path: "/admin/usermanagement",
   },
   {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Mappings",
-    path: "/admin/user-nutrition-mapping",
-  },
-  {
-    icon: <ClipboardList className="w-5 h-5" />,
-    name: "Reassignment Logs",
-    path: "/admin/reassignment-logs",
-  },
-  {
-
-    icon: <ClipboardList className="w-5 h-5" />,
-    name: "Patients Overview",
-    path: "/admin/patients-overview",
-  },
-  {
-    icon: <ShoppingCart className="w-5 h-5" />,
-    name: "Non-Patient Users",
-    path: "/admin/non-patient-information",
-  },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Micro Kitchens",
-    path: "/admin/micro-kitchen-information",
-  },
-  {
     icon: <Users className="w-5 h-5" />,
-    name: "Nutritionists",
-    path: "/admin/nutrition-information",
-  },
-  {
-    icon: <CheckCircle className="w-5 h-5" />,
-    name: "Payment Verification",
-    path: "/admin/patient-payment-verification",
-  },
-  {
-    icon: <Send className="w-5 h-5" />,
-    name: "Record plan payouts",
-    path: "/admin/record-plan-payouts",
+    name: "Nutrition Mapping",
+    subItems: [
+      { name: "User Mapping", path: "/admin/user-nutrition-mapping" },
+      { name: "Reassignment Logs", path: "/admin/reassignment-logs" },
+    ],
   },
   {
     icon: <ClipboardList className="w-5 h-5" />,
-    name: "Plan payments overview",
-    path: "/admin/plan-payments-overview",
+    name: "Overview Information",
+    subItems: [
+      { name: "Patients Overview", path: "/admin/patients-overview" },
+      { name: "Non-Patient Users", path: "/admin/non-patient-information" },
+      { name: "Micro Kitchens", path: "/admin/micro-kitchen-information" },
+      { name: "Nutritionists", path: "/admin/nutrition-information" },
+    ],
+  },
+  {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Finance & Payments",
+    subItems: [
+      { name: "Payment Verification", path: "/admin/patient-payment-verification" },
+      { name: "Record Plan Payouts", path: "/admin/record-plan-payouts" },
+      { name: "Plan Payments Overview", path: "/admin/plan-payments-overview" },
+    ],
   },
   {
     icon: <ShoppingCart className="w-5 h-5" />,
