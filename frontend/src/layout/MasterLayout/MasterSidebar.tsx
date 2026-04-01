@@ -21,7 +21,6 @@ import {
   Bell,
   BookOpen,
   Wallet,
-  Send,
   Calendar,
   Mail,
   Search,

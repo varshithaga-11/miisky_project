@@ -3449,12 +3449,31 @@ class OrderViewSet(viewsets.ModelViewSet):
             order_user_id = self.request.query_params.get('user')
             if order_user_id:
                 qs = qs.filter(user_id=order_user_id)
-            return qs
+        elif user.role == 'micro_kitchen':
+            qs = base.filter(micro_kitchen__user=user)
+        else:
+            qs = base.filter(user=user)
 
-        if user.role == 'micro_kitchen':
-            return base.filter(micro_kitchen__user=user)
-
-        return base.filter(user=user)
+        # Common filters for all roles
+        status = self.request.query_params.get('status')
+        if status and status != 'all':
+            qs = qs.filter(status=status)
+            
+        order_type = self.request.query_params.get('order_type')
+        if order_type and order_type != 'all':
+            qs = qs.filter(order_type=order_type)
+            
+        search = self.request.query_params.get('search')
+        if search:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(delivery_address__icontains=search) |
+                Q(id__icontains=search)
+            )
+            
+        return qs
 
     @action(detail=False, methods=['post'], url_path='place-order')
     def place_order(self, request):

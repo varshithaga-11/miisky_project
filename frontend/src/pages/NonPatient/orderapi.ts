@@ -130,8 +130,12 @@ export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
   return response.data;
 };
 
-export const getMyOrders = async (page = 1, limit = 10): Promise<{ results: Order[]; count: number }> => {
-  const url = createApiUrl(`api/order/?page=${page}&limit=${limit}`);
+export const getMyOrders = async (page = 1, limit = 10, status?: string, type?: string, search?: string): Promise<{ results: Order[]; count: number }> => {
+  let url = createApiUrl(`api/order/?page=${page}&limit=${limit}`);
+  if (status && status !== "all") url += `&status=${status}`;
+  if (type && type !== "all") url += `&order_type=${type}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   const d = response.data;
   if (Array.isArray(d)) {
