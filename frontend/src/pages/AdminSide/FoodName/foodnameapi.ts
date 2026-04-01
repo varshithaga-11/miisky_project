@@ -30,18 +30,20 @@ export const createFoodName = async (data: FoodName) => {
 export const getFoodNameList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  food_group?: number | string
 ): Promise<PaginatedResponses<FoodName>> => {
   const params: Record<string, any> = { page };
   if (limit !== "all") params.limit = limit;
   if (search) params.search = search;
+  if (food_group) params.food_group = food_group;
 
   const isAll = limit === "all";
   const url = createApiUrl(isAll ? "api/foodname/all/" : "api/foodname/");
   console.log(`FoodName API Call: ${isAll ? "Fetching all" : "Page " + page}, URL: ${url}`);
   const response = await axios.get<PaginatedResponses<FoodName> | FoodName[]>(url, {
     headers: await getAuthHeaders(),
-    params: isAll ? { search } : params,
+    params: isAll ? { search, food_group } : params,
   });
 
   console.log(`FoodName API Response Status: ${response.status}, Data type: ${Array.isArray(response.data) ? "Array" : typeof response.data}`);

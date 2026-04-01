@@ -139,6 +139,7 @@ const NutritionKitchenReassignment: React.FC = () => {
                   </>
                 )}
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Reason</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Plan Duration</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Effective From</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Reassigned On</TableCell>
               </TableRow>
@@ -162,7 +163,7 @@ const NutritionKitchenReassignment: React.FC = () => {
                   <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">
-                      {activeTab === "nutritionist" ? item.user?.username : item.user_diet_plan?.user_details?.first_name || item.user_diet_plan?.user_details?.username}
+                      {activeTab === "nutritionist" ? item.user_name : item.patient_name}
                     </TableCell>
                     
                     {activeTab === "nutritionist" ? (
@@ -172,7 +173,7 @@ const NutritionKitchenReassignment: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <TableCell className="px-5 py-4">{item.user_diet_plan?.diet_plan_details?.title}</TableCell>
+                        <TableCell className="px-5 py-4">{item.diet_plan_title}</TableCell>
                         <TableCell className="px-5 py-4 text-gray-600 dark:text-gray-400">{item.previous_kitchen_name || "N/A"}</TableCell>
                         <TableCell className="px-5 py-4 text-gray-800 dark:text-white/80">{item.new_kitchen_name}</TableCell>
                       </>
@@ -182,6 +183,17 @@ const NutritionKitchenReassignment: React.FC = () => {
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                         {item.reason?.replace(/_/g, " ")}
                       </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-xs">
+                      {item.plan_start_date && item.plan_end_date ? (
+                        <div className="flex flex-col">
+                          <span className="text-gray-700 dark:text-gray-300">{item.plan_start_date}</span>
+                          <span className="text-gray-400">to</span>
+                          <span className="text-gray-700 dark:text-gray-300">{item.plan_end_date}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic">Not set</span>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4">{item.effective_from}</TableCell>
                     <TableCell className="px-5 py-4 text-xs text-gray-500">

@@ -1456,6 +1456,13 @@ class FoodNameViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code', 'food_group__name']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        food_group = self.request.query_params.get('food_group')
+        if food_group:
+            queryset = queryset.filter(food_group_id=food_group)
+        return queryset
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodnames(self, request):
         queryset = self.filter_queryset(self.get_queryset())

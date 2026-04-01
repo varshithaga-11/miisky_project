@@ -28,10 +28,11 @@ const FoodNameManagementPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
+  const [selectedFoodGroup, setSelectedFoodGroup] = useState<string>("");
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, selectedFoodGroup]);
 
   useEffect(() => {
     getFoodGroupList(1, "all")
@@ -42,7 +43,7 @@ const FoodNameManagementPage: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await getFoodNameList(currentPage, pageSize, searchTerm);
+      const res = await getFoodNameList(currentPage, pageSize, searchTerm, selectedFoodGroup);
       setItems(res.results);
       setTotalItems(res.count);
       setTotalPages(res.total_pages);
@@ -86,6 +87,25 @@ const FoodNameManagementPage: React.FC = () => {
                 setCurrentPage(1);
               }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Filter by Group:</Label>
+            <Select
+              value={selectedFoodGroup}
+              onChange={(val) => {
+                setSelectedFoodGroup(val);
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: "", label: "All Groups" },
+                ...foodGroups.map((g) => ({
+                  value: String(g.id),
+                  label: g.name,
+                })),
+              ]}
+              className="w-48"
             />
           </div>
           <div className="flex items-center gap-6">

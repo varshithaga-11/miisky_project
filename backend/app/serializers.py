@@ -1539,23 +1539,65 @@ class ReassignMicroKitchenSerializer(serializers.Serializer):
 
 
 class NutritionistReassignmentSerializer(serializers.ModelSerializer):
-    previous_nutritionist_name = serializers.CharField(source="previous_nutritionist.username", read_only=True)
-    new_nutritionist_name = serializers.CharField(source="new_nutritionist.username", read_only=True)
-    reassigned_by_name = serializers.CharField(source="reassigned_by.username", read_only=True)
+    previous_nutritionist_name = serializers.SerializerMethodField()
+    new_nutritionist_name = serializers.SerializerMethodField()
+    reassigned_by_name = serializers.SerializerMethodField()
+    user_name = serializers.SerializerMethodField()
+    plan_start_date = serializers.DateField(source="active_diet_plan.start_date", read_only=True)
+    plan_end_date = serializers.DateField(source="active_diet_plan.end_date", read_only=True)
 
     class Meta:
         model = NutritionistReassignment
         fields = "__all__"
 
+    def get_user_name(self, obj):
+        if not obj.user: return "N/A"
+        name = f"{obj.user.first_name or ''} {obj.user.last_name or ''}".strip()
+        return name or obj.user.username
+
+    def get_previous_nutritionist_name(self, obj):
+        if not obj.previous_nutritionist: return "System"
+        name = f"{obj.previous_nutritionist.first_name or ''} {obj.previous_nutritionist.last_name or ''}".strip()
+        return name or obj.previous_nutritionist.username
+
+    def get_new_nutritionist_name(self, obj):
+        if not obj.new_nutritionist: return "N/A"
+        name = f"{obj.new_nutritionist.first_name or ''} {obj.new_nutritionist.last_name or ''}".strip()
+        return name or obj.new_nutritionist.username
+
+    def get_reassigned_by_name(self, obj):
+        if not obj.reassigned_by: return "System"
+        name = f"{obj.reassigned_by.first_name or ''} {obj.reassigned_by.last_name or ''}".strip()
+        return name or obj.reassigned_by.username
+
 
 class MicroKitchenReassignmentSerializer(serializers.ModelSerializer):
     previous_kitchen_name = serializers.CharField(source="previous_kitchen.brand_name", read_only=True)
     new_kitchen_name = serializers.CharField(source="new_kitchen.brand_name", read_only=True)
-    reassigned_by_name = serializers.CharField(source="reassigned_by.username", read_only=True)
+    reassigned_by_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    diet_plan_title = serializers.SerializerMethodField()
+    plan_start_date = serializers.DateField(source="user_diet_plan.start_date", read_only=True)
+    plan_end_date = serializers.DateField(source="user_diet_plan.end_date", read_only=True)
 
     class Meta:
         model = MicroKitchenReassignment
         fields = "__all__"
+
+    def get_reassigned_by_name(self, obj):
+        if not obj.reassigned_by: return "System"
+        name = f"{obj.reassigned_by.first_name or ''} {obj.reassigned_by.last_name or ''}".strip()
+        return name or obj.reassigned_by.username
+
+    def get_patient_name(self, obj):
+        if not obj.user_diet_plan or not obj.user_diet_plan.user: return "N/A"
+        u = obj.user_diet_plan.user
+        name = f"{u.first_name or ''} {u.last_name or ''}".strip()
+        return name or u.username
+
+    def get_diet_plan_title(self, obj):
+        if not obj.user_diet_plan or not obj.user_diet_plan.diet_plan: return "N/A"
+        return obj.user_diet_plan.diet_plan.title
 
 
 # ── Food Composition (FoodName-based) Serializers ──────────────────────────────
