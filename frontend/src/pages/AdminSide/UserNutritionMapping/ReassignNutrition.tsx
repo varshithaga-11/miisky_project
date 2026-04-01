@@ -1,22 +1,20 @@
 import React, { useMemo, useState } from "react";
 import Button from "../../../components/ui/button/Button";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import {
   REASSIGN_REASONS,
   reassignNutritionist,
+  getAllNutritionists,
   SimpleUser,
-  UserNutritionMapping,
 } from "./api";
 import DatePicker2 from "../../../components/form/date-picker2";
 
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
-  users: SimpleUser[];
-  mappings: UserNutritionMapping[];
-  nutritionists: SimpleUser[];
+  allotments: { nutritionist: SimpleUser; patients: SimpleUser[] }[];
 }
 
 const labelForUser = (u: SimpleUser) =>
@@ -27,15 +25,32 @@ const labelForUser = (u: SimpleUser) =>
 const ReassignNutrition: React.FC<Props> = ({
   onClose,
   onSuccess,
-  users,
-  mappings,
-  nutritionists,
+  allotments,
 }) => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [fetchingNuts, setFetchingNuts] = useState(false);
+  const [nutritionists, setNutritionists] = useState<SimpleUser[]>([]);
 
-  const [patientId, setPatientId] = useState("");
-  const [newNutritionistId, setNewNutritionistId] = useState("");
+  React.useEffect(() => {
+    const fetchNuts = async () => {
+      setFetchingNuts(true);
+      try {
+        const data = await getAllNutritionists();
+        setNutritionists(data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load nutritionists");
+      } finally {
+        setFetchingNuts(false);
+      }
+    };
+    fetchNuts();
+  }, []);
+
+
+  const [patientId, setPatientId] = useState<number | undefined>(undefined);
+  const [newNutritionistId, setNewNutritionistId] = useState<number | undefined>(undefined);
   const [reason, setReason] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState(() =>
@@ -44,35 +59,43 @@ const ReassignNutrition: React.FC<Props> = ({
 
   const usersById = useMemo(() => {
     const m: Record<number, SimpleUser> = {};
-    users.forEach((u) => {
-      m[u.id] = u;
+    allotments.forEach((allot) => {
+      m[allot.nutritionist.id] = allot.nutritionist;
+      allot.patients.forEach((p) => {
+        m[p.id] = p;
+      });
+    });
+    // Also include nutritionists from the full list
+    nutritionists.forEach((n) => {
+      m[n.id] = n;
     });
     return m;
-  }, [users]);
+  }, [allotments, nutritionists]);
 
-  const activeMappingsByUser = useMemo(() => {
-    const m: Record<number, UserNutritionMapping> = {};
-    mappings.filter((x) => x.is_active).forEach((x) => {
-      m[x.user] = x;
+  const patientToNutritionistIdMap = useMemo(() => {
+    const m: Record<number, number> = {};
+    allotments.forEach((allot) => {
+      allot.patients.forEach((p) => {
+        m[p.id] = allot.nutritionist.id;
+      });
     });
     return m;
-  }, [mappings]);
+  }, [allotments]);
 
   const mappedPatientOptions = useMemo(() => {
-    return users
-      .filter((u) => u.role === "patient" && activeMappingsByUser[u.id])
-      .sort((a, b) => labelForUser(a).localeCompare(labelForUser(b)));
-  }, [users, activeMappingsByUser]);
+    const patients: SimpleUser[] = [];
+    allotments.forEach((allot) => {
+      patients.push(...allot.patients);
+    });
+    return patients.sort((a, b) => labelForUser(a).localeCompare(labelForUser(b)));
+  }, [allotments]);
 
-  const currentMapping = patientId ? activeMappingsByUser[Number(patientId)] : undefined;
-  const currentNutritionist = currentMapping
-    ? usersById[currentMapping.nutritionist]
-    : undefined;
+  const currentNutritionistId = patientId ? patientToNutritionistIdMap[patientId] : undefined;
+  const currentNutritionist = currentNutritionistId ? usersById[currentNutritionistId] : undefined;
 
   const newNutritionistOptions = useMemo(() => {
-    const curId = currentMapping?.nutritionist;
-    return nutritionists.filter((n) => n.id !== curId);
-  }, [nutritionists, currentMapping]);
+    return nutritionists.filter((n) => n.id !== currentNutritionistId);
+  }, [nutritionists, currentNutritionistId]);
 
   const canGoStep2 = Boolean(patientId);
   const canSubmit =
@@ -156,16 +179,14 @@ const ReassignNutrition: React.FC<Props> = ({
           {step === 1 && (
             <div>
               <Label>Patient (currently mapped)</Label>
-              <Select
+              <SearchableSelect
                 value={patientId}
-                onChange={(val) => setPatientId(val)}
-                options={[
-                  { value: "", label: "Select patient" },
-                  ...mappedPatientOptions.map((p) => ({
-                    value: String(p.id),
-                    label: labelForUser(p),
-                  })),
-                ]}
+                onChange={(val) => setPatientId(val as number)}
+                options={mappedPatientOptions.map((p) => ({
+                  value: p.id,
+                  label: labelForUser(p),
+                }))}
+                placeholder="Select patient"
                 className="w-full"
               />
               {mappedPatientOptions.length === 0 && (
@@ -184,17 +205,16 @@ const ReassignNutrition: React.FC<Props> = ({
               </div>
               <div>
                 <Label>New nutritionist</Label>
-                <Select
+                <SearchableSelect
                   value={newNutritionistId}
-                  onChange={(val) => setNewNutritionistId(val)}
-                  options={[
-                    { value: "", label: "Select nutritionist" },
-                    ...newNutritionistOptions.map((n) => ({
-                      value: String(n.id),
-                      label: labelForUser(n),
-                    })),
-                  ]}
+                  onChange={(val) => setNewNutritionistId(val as number)}
+                  options={newNutritionistOptions.map((n) => ({
+                    value: n.id,
+                    label: labelForUser(n),
+                  }))}
+                  placeholder={fetchingNuts ? "Loading nutritionists..." : "Select nutritionist"}
                   className="w-full"
+                  disabled={fetchingNuts}
                 />
               </div>
             </>
@@ -204,10 +224,11 @@ const ReassignNutrition: React.FC<Props> = ({
             <>
               <div>
                 <Label>Reason</Label>
-                <Select
+                <SearchableSelect
                   value={reason}
-                  onChange={(val) => setReason(val)}
-                  options={[{ value: "", label: "Select reason" }, ...REASSIGN_REASONS.map((r) => ({ value: r.value, label: r.label }))]}
+                  onChange={(val) => setReason(val as string)}
+                  options={REASSIGN_REASONS.map((r) => ({ value: r.value, label: r.label }))}
+                  placeholder="Select reason"
                   className="w-full"
                 />
               </div>

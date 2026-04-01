@@ -1154,6 +1154,90 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
             }
         )
 
+    @action(detail=False, methods=["get"], url_path="grouped-mappings")
+    def grouped_mappings(self, request):
+        if request.user.role != "admin":
+            return Response({"detail": "Admin only."}, status=403)
+
+        mappings = UserNutritionistMapping.objects.filter(is_active=True).select_related(
+            "user", "nutritionist"
+        )
+        by_nut = {}
+        for m in mappings:
+            nid = m.nutritionist_id
+            if nid not in by_nut:
+                by_nut[nid] = {
+                    "nutritionist": {
+                        "id": m.nutritionist.id,
+                        "username": m.nutritionist.username,
+                        "first_name": m.nutritionist.first_name,
+                        "last_name": m.nutritionist.last_name,
+                        "email": m.nutritionist.email,
+                    },
+                    "patients": [],
+                }
+            by_nut[nid]["patients"].append(
+                {
+                    "id": m.user.id,
+                    "username": m.user.username,
+                    "first_name": m.user.first_name,
+                    "last_name": m.user.last_name,
+                    "email": m.user.email,
+                    "mobile": m.user.mobile,
+                }
+            )
+
+        results = sorted(
+            by_nut.values(),
+            key=lambda x: (
+                x["nutritionist"]["first_name"] or "",
+                x["nutritionist"]["last_name"] or "",
+                x["nutritionist"]["username"],
+            ),
+        )
+        return Response(results)
+
+    @action(detail=False, methods=["get"], url_path="unmapped-patients")
+    def unmapped_patients(self, request):
+        if request.user.role != "admin":
+            return Response({"detail": "Admin only."}, status=403)
+
+        unmapped = UserRegister.objects.filter(
+            role="patient", is_patient_mapped=False
+        ).order_by("username")
+        results = []
+        for p in unmapped:
+            results.append(
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "email": p.email,
+                    "mobile": p.mobile,
+                }
+            )
+        return Response(results)
+
+    @action(detail=False, methods=["get"], url_path="all-nutritionists")
+    def all_nutritionists(self, request):
+        if request.user.role != "admin":
+            return Response({"detail": "Admin only."}, status=403)
+
+        nuts = UserRegister.objects.filter(role="nutritionist").order_by("username")
+        results = []
+        for n in nuts:
+            results.append(
+                {
+                    "id": n.id,
+                    "username": n.username,
+                    "first_name": n.first_name,
+                    "last_name": n.last_name,
+                    "email": n.email,
+                }
+            )
+        return Response(results)
+
     @action(
         detail=False,
         methods=["post"],

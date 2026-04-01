@@ -1,26 +1,43 @@
 import React, { useState } from "react";
 import Button from "../../../components/ui/button/Button";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
-import { createUserNutritionMapping, SimpleUser, UserNutritionMapping } from "./api";
+import { createUserNutritionMapping, getAllNutritionists, SimpleUser, UserNutritionMapping } from "./api";
 
 interface Props {
   onClose: () => void;
   onAssign: (mapping: UserNutritionMapping) => void;
   unmappedPatients: SimpleUser[];
-  nutritionists: SimpleUser[];
 }
 
 const AssignNutritionistModal: React.FC<Props> = ({
   onClose,
   onAssign,
   unmappedPatients,
-  nutritionists,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedNutritionistId, setSelectedNutritionistId] = useState<string>("");
+  const [fetchingNuts, setFetchingNuts] = useState(false);
+  const [nutritionists, setNutritionists] = useState<SimpleUser[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<number | undefined>(undefined);
+  const [selectedNutritionistId, setSelectedNutritionistId] = useState<number | undefined>(undefined);
+
+  React.useEffect(() => {
+    const fetchNuts = async () => {
+      setFetchingNuts(true);
+      try {
+        const data = await getAllNutritionists();
+        setNutritionists(data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load nutritionists");
+      } finally {
+        setFetchingNuts(false);
+      }
+    };
+    fetchNuts();
+  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,32 +71,29 @@ const AssignNutritionistModal: React.FC<Props> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Patient (unmapped)</Label>
-            <Select
+            <SearchableSelect
               value={selectedPatientId}
-              onChange={(val) => setSelectedPatientId(val)}
-              options={[
-                { value: "", label: "Select Patient" },
-                ...unmappedPatients.map((p) => ({
-                  value: String(p.id),
-                  label: `${p.first_name || ""} ${p.last_name || ""} (${p.username})`,
-                })),
-              ]}
+              onChange={(val) => setSelectedPatientId(val as number)}
+              options={unmappedPatients.map((p) => ({
+                value: p.id,
+                label: `${p.first_name || ""} ${p.last_name || ""} (${p.username})`,
+              }))}
+              placeholder="Select Patient"
               className="w-full"
             />
           </div>
           <div>
             <Label>Nutritionist</Label>
-            <Select
+            <SearchableSelect
               value={selectedNutritionistId}
-              onChange={(val) => setSelectedNutritionistId(val)}
-              options={[
-                { value: "", label: "Select Nutritionist" },
-                ...nutritionists.map((n) => ({
-                  value: String(n.id),
-                  label: `${n.first_name || ""} ${n.last_name || ""} (${n.username})`,
-                })),
-              ]}
+              onChange={(val) => setSelectedNutritionistId(val as number)}
+              options={nutritionists.map((n) => ({
+                value: n.id,
+                label: `${n.first_name || ""} ${n.last_name || ""} (${n.username})`,
+              }))}
+              placeholder={fetchingNuts ? "Loading nutritionists..." : "Select Nutritionist"}
               className="w-full"
+              disabled={fetchingNuts}
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">

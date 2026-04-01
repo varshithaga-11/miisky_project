@@ -6,18 +6,17 @@ import Button from "../../../components/ui/button/Button";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  getAllUserNutritionMappings,
-  getAllUsers,
+  getGroupedMappings,
+  getUnmappedPatients,
   SimpleUser,
-  UserNutritionMapping,
 } from "./api";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import AssignNutritionistModal from "./AssignNutritionistModal";
 import ReassignNutrition from "./ReassignNutrition";
 
 const UserNutritionMappingPage: React.FC = () => {
-  const [users, setUsers] = useState<SimpleUser[]>([]);
-  const [mappings, setMappings] = useState<UserNutritionMapping[]>([]);
+  const [mappings, setMappings] = useState<any[]>([]); // Grouped mappings from backend
+  const [unmappedPatients, setUnmappedPatients] = useState<SimpleUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReassignOpen, setIsReassignOpen] = useState(false);
@@ -26,12 +25,15 @@ const UserNutritionMappingPage: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [usersRes, mappingsRes] = await Promise.all([getAllUsers(), getAllUserNutritionMappings()]);
-      setUsers(usersRes.results);
-      setMappings(mappingsRes);
+      const [groupedRes, unmappedRes] = await Promise.all([
+        getGroupedMappings(),
+        getUnmappedPatients(),
+      ]);
+      setMappings(groupedRes);
+      setUnmappedPatients(unmappedRes);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load users or mappings");
+      toast.error("Failed to load mappings or users");
     } finally {
       setLoading(false);
     }
@@ -41,58 +43,17 @@ const UserNutritionMappingPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const unmappedPatients = useMemo(
-    () => users.filter((u) => u.role === "patient" && !u.is_patient_mapped),
-    [users]
-  );
-
-  const nutritionists = useMemo(
-    () => users.filter((u) => u.role === "nutritionist"),
-    [users]
-  );
-
-  const usersById = useMemo(() => {
-    const map: Record<number, SimpleUser> = {};
-    users.forEach((u) => {
-      map[u.id] = u;
-    });
-    return map;
-  }, [users]);
-
-  const groupedMappings = useMemo(() => {
-    const activeMappings = mappings.filter((m) => m.is_active);
-    const byNutritionistMap: Record<number, { nutritionist: SimpleUser; patients: SimpleUser[] }> = {};
-
-    activeMappings.forEach((m) => {
-      const nutritionist = usersById[m.nutritionist];
-      const patient = usersById[m.user];
-      if (!nutritionist || !patient) return;
-
-      if (!byNutritionistMap[nutritionist.id]) {
-        byNutritionistMap[nutritionist.id] = { nutritionist, patients: [patient] };
-      } else {
-        byNutritionistMap[nutritionist.id].patients.push(patient);
-      }
-    });
-
-    return Object.values(byNutritionistMap).sort((a, b) => {
-      const an = `${a.nutritionist.first_name || ""} ${a.nutritionist.last_name || ""} ${a.nutritionist.username}`;
-      const bn = `${b.nutritionist.first_name || ""} ${b.nutritionist.last_name || ""} ${b.nutritionist.username}`;
-      return an.localeCompare(bn);
-    });
-  }, [mappings, usersById]);
-
   const filteredGroupedMappings = useMemo(() => {
-    if (!searchTerm) return groupedMappings;
+    if (!searchTerm) return mappings;
     const lower = searchTerm.toLowerCase();
-    return groupedMappings.filter(g => {
+    return mappings.filter((g: any) => {
       const nutName = `${g.nutritionist.first_name || ""} ${g.nutritionist.last_name || ""} ${g.nutritionist.username}`.toLowerCase();
-      const patientMatch = g.patients.some(p =>
+      const patientMatch = g.patients.some((p: any) =>
         `${p.first_name || ""} ${p.last_name || ""} ${p.username}`.toLowerCase().includes(lower)
       );
       return nutName.includes(lower) || patientMatch;
     });
-  }, [groupedMappings, searchTerm]);
+  }, [mappings, searchTerm]);
 
   const handleAssignSuccess = () => {
     setIsModalOpen(false);
@@ -261,9 +222,7 @@ const UserNutritionMappingPage: React.FC = () => {
         <ReassignNutrition
           onClose={() => setIsReassignOpen(false)}
           onSuccess={handleReassignSuccess}
-          users={users}
-          mappings={mappings}
-          nutritionists={nutritionists}
+          allotments={mappings}
         />
       )}
 
@@ -272,7 +231,6 @@ const UserNutritionMappingPage: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           onAssign={handleAssignSuccess}
           unmappedPatients={unmappedPatients}
-          nutritionists={nutritionists}
         />
       )}
     </>

@@ -82,3 +82,30 @@ export const reassignNutritionist = async (payload: ReassignNutritionistPayload)
   return response.data as UserNutritionMapping;
 };
 
+export const getGroupedMappings = async (): Promise<
+  { nutritionist: SimpleUser; patients: SimpleUser[] }[]
+> => {
+  const url = createApiUrl("api/usernutritionistmapping/grouped-mappings/");
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+export const getUnmappedPatients = async (): Promise<SimpleUser[]> => {
+  const url = createApiUrl("api/usernutritionistmapping/unmapped-patients/");
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+export const getAllNutritionists = async (): Promise<SimpleUser[]> => {
+  const url = createApiUrl("api/usernutritionistmapping/all-nutritionists/");
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+
