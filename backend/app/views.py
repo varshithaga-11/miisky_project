@@ -847,6 +847,11 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['brand_name', 'kitchen_code', 'user__username', 'user__email']
 
+    @action(detail=False, methods=['get'], url_path='list_minimal', pagination_class=None)
+    def list_minimal(self, request):
+        qs = self.get_queryset().values('id', 'brand_name', 'cuisine_type')
+        return Response(list(qs))
+
     def get_queryset(self):
         qs = MicroKitchenProfile.objects.select_related('user').all().order_by('-id')
         status_param = self.request.query_params.get('status')
@@ -1935,6 +1940,22 @@ class DietPlanViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
 
+    @action(detail=False, methods=['get'], url_path='list_minimal', pagination_class=None)
+    def list_minimal(self, request):
+        # final_amount is a property, so we can't use .values() on it.
+        qs = self.get_queryset()
+        data = [
+            {
+                "id": p.id,
+                "title": p.title,
+                "code": p.code,
+                "final_amount": p.final_amount,
+                "no_of_days": p.no_of_days
+            }
+            for p in qs
+        ]
+        return Response(data)
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_dietplans(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -2516,6 +2537,15 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
     ).prefetch_related('diet_plan__features')
     serializer_class = UserDietPlanSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = [
+        "user__first_name", "user__last_name", "user__email", "user__mobile",
+        "diet_plan__title", "diet_plan__code",
+        "micro_kitchen__brand_name", "micro_kitchen__kitchen_code",
+        "status", "payment_status"
+    ]
+    ordering_fields = ["suggested_on", "created_on", "status", "payment_status"]
 
     @action(detail=False, methods=["get"], url_path="kitchen-history")
     def kitchen_history(self, request):

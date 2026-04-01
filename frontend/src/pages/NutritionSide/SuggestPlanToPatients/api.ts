@@ -111,3 +111,18 @@ export const updatePlanStatus = async (id: number, status: string): Promise<User
   const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
   return response.data;
 };
+
+export type MinimalDietPlan = { id: number; title: string; code: string; final_amount: string; no_of_days: number | null };
+export type MinimalMicroKitchen = { id: number; brand_name: string; cuisine_type: string | null };
+
+export const getDietPlansMinimal = async (): Promise<MinimalDietPlan[]> => {
+  const url = createApiUrl("api/dietplan/list_minimal/");
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const getMicroKitchensMinimal = async (): Promise<MinimalMicroKitchen[]> => {
+  const url = createApiUrl("api/microkitchenprofile/list_minimal/");
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};

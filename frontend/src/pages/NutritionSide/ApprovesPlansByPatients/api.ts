@@ -2,11 +2,31 @@ import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import type { UserDietPlan } from "../SuggestPlanToPatients/api";
 
-export const getApprovedPlansForNutritionist = async (status?: string): Promise<UserDietPlan[]> => {
-    const url = createApiUrl(status ? `api/userdietplan/?status=${status}` : "api/userdietplan/");
-    const response = await axios.get(url, { headers: await getAuthHeaders() });
-    
-    const data = response.data;
-    // Handle DRF pagination if present, though ModelViewSet with default settings might return array or object
-    return Array.isArray(data) ? data : data?.results ?? [];
+export interface PaginatedUserDietPlan {
+    count: number;
+    next: number | null;
+    previous: number | null;
+    current_page: number;
+    total_pages: number;
+    results: UserDietPlan[];
+}
+
+export const getApprovedPlansForNutritionist = async (
+    status?: string,
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+): Promise<PaginatedUserDietPlan> => {
+    const url = createApiUrl("api/userdietplan/");
+    const params = {
+        status,
+        page,
+        limit,
+        search
+    };
+    const response = await axios.get(url, { 
+        params,
+        headers: await getAuthHeaders() 
+    });
+    return response.data;
 };

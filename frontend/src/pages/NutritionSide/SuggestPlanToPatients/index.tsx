@@ -3,20 +3,21 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
   getMyPatients,
-  getDietPlanList,
   getPatientReviews,
   suggestPlanToPatient,
   getSuggestedPlansForPatient,
   reassignMicroKitchenForPlan,
   updatePlanStatus,
+  getDietPlansMinimal,
+  getMicroKitchensMinimal,
   REASSIGN_MICRO_KITCHEN_REASONS,
   MappedPatientResponse,
   NutritionistReview,
   UserDietPlan,
+  MinimalDietPlan,
+  MinimalMicroKitchen,
 } from "./api";
-import type { DietPlan } from "./api";
-import { getApprovedMicroKitchens } from "../ListOfMicroKitchens/api";
-import type { MicroKitchenProfile } from "../ListOfMicroKitchens/api";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiSend, FiCheckCircle, FiPackage, FiHome, FiStopCircle, FiCheck, FiClock, FiEdit } from "react-icons/fi";
 import DatePicker2 from "../../../components/form/date-picker2";
@@ -24,8 +25,8 @@ import DatePicker2 from "../../../components/form/date-picker2";
 const SuggestPlanToPatientsPage: React.FC = () => {
   const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<MappedPatientResponse | null>(null);
-  const [plans, setPlans] = useState<DietPlan[]>([]);
-  const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
+  const [plans, setPlans] = useState<MinimalDietPlan[]>([]);
+  const [kitchens, setKitchens] = useState<MinimalMicroKitchen[]>([]);
   const [reviews, setReviews] = useState<NutritionistReview[]>([]);
   const [suggestedPlans, setSuggestedPlans] = useState<UserDietPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,8 +73,8 @@ const SuggestPlanToPatientsPage: React.FC = () => {
       try {
         const [patientsData, plansData, kitchensData] = await Promise.all([
           getMyPatients(),
-          getDietPlanList(1, 100).then((r) => r.results),
-          getApprovedMicroKitchens().then((r) => r.results),
+          getDietPlansMinimal(),
+          getMicroKitchensMinimal(),
         ]);
         setPatients(patientsData);
         setPlans(plansData);
@@ -291,81 +292,76 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 border border-transparent dark:border-white/[0.05]">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <FiHome className="text-amber-500" /> Switch Kitchen (Mid-plan)
-                  </h3>
-                  <form onSubmit={handleSwitchKitchen} className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    <select
-                      value={switchKitchenPlanId}
-                      onChange={(e) => {
-                        const id = e.target.value ? Number(e.target.value) : "";
-                        setSwitchKitchenPlanId(id);
-                        const plan = switchablePlans.find((p) => p.id === Number(id));
-                        setSwitchFromDate(plan?.start_date || "");
-                      }}
-                      className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl text-sm font-bold outline-none dark:text-white"
-                    >
-                      <option value="">Select plan</option>
-                      {switchablePlans.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.diet_plan_details?.title || `Plan #${p.id}`}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={switchKitchenId}
-                      onChange={(e) => setSwitchKitchenId(e.target.value ? Number(e.target.value) : "")}
-                      className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl text-sm font-bold outline-none dark:text-white"
-                    >
-                      <option value="">Select new kitchen</option>
-                      {kitchens
-                        .filter((k) => k.id !== selectedSwitchPlan?.micro_kitchen)
-                        .map((k) => (
-                          <option key={k.id} value={k.id}>
-                            {k.brand_name || `Kitchen #${k.id}`}
+                  <form onSubmit={handleSwitchKitchen} className="bg-white dark:bg-gray-800 rounded-[32px] p-6 border border-transparent dark:border-white/[0.05]">
+                    <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <FiHome className="text-amber-500" /> Switch Kitchen (Mid-plan)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                      <SearchableSelect
+                        options={switchablePlans.map(p => ({
+                          value: p.id,
+                          label: p.diet_plan_details?.title || `Plan #${p.id}`
+                        }))}
+                        value={switchKitchenPlanId}
+                        onChange={(val) => {
+                          setSwitchKitchenPlanId(val);
+                          const plan = switchablePlans.find((p) => p.id === Number(val));
+                          setSwitchFromDate(plan?.start_date || "");
+                        }}
+                        placeholder="Select plan"
+                        className="md:col-span-1"
+                      />
+                      <SearchableSelect
+                        options={kitchens
+                          .filter((k) => k.id !== selectedSwitchPlan?.micro_kitchen)
+                          .map(k => ({
+                            value: k.id,
+                            label: k.brand_name
+                          }))}
+                        value={switchKitchenId}
+                        onChange={(val) => setSwitchKitchenId(val)}
+                        placeholder="Select new kitchen"
+                        className="md:col-span-1"
+                      />
+                      <select
+                        value={switchReason}
+                        onChange={(e) => setSwitchReason(e.target.value)}
+                        className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl text-sm font-bold outline-none dark:text-white"
+                      >
+                        <option value="">Reason</option>
+                        {REASSIGN_MICRO_KITCHEN_REASONS.map((r) => (
+                          <option key={r.value} value={r.value}>
+                            {r.label}
                           </option>
                         ))}
-                    </select>
-                    <select
-                      value={switchReason}
-                      onChange={(e) => setSwitchReason(e.target.value)}
-                      className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl text-sm font-bold outline-none dark:text-white"
-                    >
-                      <option value="">Reason</option>
-                      {REASSIGN_MICRO_KITCHEN_REASONS.map((r) => (
-                        <option key={r.value} value={r.value}>
-                          {r.label}
-                        </option>
-                      ))}
-                    </select>
-                    <DatePicker2
-                      id="switchFromDate"
-                      label=""
-                      value={switchFromDate}
-                      onChange={(val) => setSwitchFromDate(val)}
-                      minDate={selectedSwitchPlan?.start_date || undefined}
-                      maxDate={selectedSwitchPlan?.end_date || undefined}
-                      placeholder="Switch from date"
-                    />
-                    <button
-                      type="submit"
-                      disabled={switchingKitchen || !switchKitchenPlanId || !switchKitchenId || !switchReason || !switchFromDate}
-                      className="px-4 py-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-wider"
-                    >
-                      {switchingKitchen ? "Switching..." : "Switch"}
-                    </button>
-                    <div className="md:col-span-5">
-                      <textarea
-                        rows={2}
-                        placeholder="Optional notes"
-                        value={switchNotes}
-                        onChange={(e) => setSwitchNotes(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 dark:text-white font-medium"
+                      </select>
+                      <DatePicker2
+                        id="switchFromDate"
+                        label=""
+                        value={switchFromDate}
+                        onChange={(val) => setSwitchFromDate(val)}
+                        minDate={selectedSwitchPlan?.start_date || undefined}
+                        maxDate={selectedSwitchPlan?.end_date || undefined}
+                        placeholder="Switch from date"
                       />
+                      <button
+                        type="submit"
+                        disabled={switchingKitchen || !switchKitchenPlanId || !switchKitchenId || !switchReason || !switchFromDate}
+                        className="px-4 py-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-wider"
+                      >
+                        {switchingKitchen ? "Switching..." : "Switch"}
+                      </button>
+                      <div className="md:col-span-5">
+                        <textarea
+                          rows={2}
+                          placeholder="Optional notes"
+                          value={switchNotes}
+                          onChange={(e) => setSwitchNotes(e.target.value)}
+                          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 dark:text-white font-medium"
+                        />
+                      </div>
                     </div>
                   </form>
-                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Suggest Form */}
@@ -376,35 +372,29 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                     <form onSubmit={handleSuggest} className="space-y-6">
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Diet Plan *</label>
-                        <select
+                        <SearchableSelect
+                          options={plans.map(p => ({
+                            value: p.id,
+                            label: `${p.title} (${p.code}) - ₹${p.final_amount} / ${p.no_of_days} days`
+                          }))}
                           value={selectedPlanId}
-                          onChange={(e) => setSelectedPlanId(e.target.value ? Number(e.target.value) : "")}
+                          onChange={(val) => setSelectedPlanId(val)}
+                          placeholder="Select plan"
                           required
-                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                        >
-                          <option value="">Select plan</option>
-                          {plans.filter((p) => p.is_active !== false).map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.title} ({p.code}) - ₹{p.final_amount} / {p.no_of_days} days
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Micro Kitchen *</label>
-                        <select
+                        <SearchableSelect
+                          options={kitchens.map(k => ({
+                            value: k.id,
+                            label: `${k.brand_name} – ${k.cuisine_type || "Kitchen"}`
+                          }))}
                           value={selectedKitchenId}
-                          onChange={(e) => setSelectedKitchenId(e.target.value ? Number(e.target.value) : "")}
+                          onChange={(val) => setSelectedKitchenId(val)}
+                          placeholder="Select kitchen"
                           required
-                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                        >
-                          <option value="">Select kitchen</option>
-                          {kitchens.map((k) => (
-                            <option key={k.id} value={k.id}>
-                              {k.brand_name} – {k.cuisine_type || "Kitchen"}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link to review (optional)</label>
