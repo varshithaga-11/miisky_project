@@ -93,7 +93,7 @@ export default function CareerApplyPage() {
 
             await careersApi.apply(data);
             setStatus("success");
-            setTimeout(() => navigate("/website/careers"), 5000);
+            setTimeout(() => navigate("/careers"), 5000);
         } catch (err) {
             console.error("Application error:", err);
             setStatus("error");
@@ -102,7 +102,7 @@ export default function CareerApplyPage() {
     };
 
     if (loading) return <div className="text-center p-5 mt_100">Loading application form...</div>;
-    if (!job) return <div className="text-center p-5 mt_100">Job not found. <Link to="/website/careers">Go back</Link></div>;
+    if (!job) return <div className="text-center p-5 mt_100">Job not found. <Link to="/careers">Go back</Link></div>;
 
     if (status === "success") {
         return (
@@ -116,7 +116,7 @@ export default function CareerApplyPage() {
                         <p className="mb_30" style={{ color: '#666', fontSize: '16px' }}>
                             Thank you, <strong>{formData.applicant_name}</strong>. Your application for <strong>{job.title}</strong> has been successfully submitted. Our HR team will review your profile and contact you if it matches our requirements.
                         </p>
-                        <Link to="/website/careers" className="theme-btn btn-one">
+                        <Link to="/careers" className="theme-btn btn-one">
                             <span>Back to Careers</span>
                         </Link>
                     </div>

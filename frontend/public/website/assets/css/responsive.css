@@ -1,210 +1,556 @@
 /* Responsive Css */
 
+/* ═══════════════════════════════════════════════════════════
+   BREAKPOINT MAP
+   1499px  Large laptops
+   1399px  Standard laptops
+   1199px  Small laptops / large tablets landscape
+    991px  Tablets landscape / small laptops
+    767px  Tablets portrait
+    575px  Large phones
+    480px  Medium phones
+    375px  Small phones
+═══════════════════════════════════════════════════════════ */
 
-@media only screen and (max-width: 1749px){
+/* ─── 1499px ─── */
+@media only screen and (max-width: 1499px) {
 
-
-
-}
-
-
-@media only screen and (max-width: 1499px){
-
-  .main-header .outer-box{
+  .main-header .outer-box {
     padding: 0px 30px;
   }
 
-  .header-top .outer-container{
+  .header-top .outer-container {
     padding: 10px 30px;
   }
 
 }
 
+/* ─── 1399px ─── */
+@media only screen and (max-width: 1399px) {
 
-@media only screen and (max-width: 1399px){
-
-  .main-header .menu-right-content .support-box{
+  .main-header .menu-right-content .support-box {
     display: none;
   }
 
 }
 
-
-@media only screen and (max-width: 1299px){
-
-
-
+/* ─── Desktop dropdown show on hover ─── */
+@media only screen and (min-width: 992px) {
+  .main-menu .navigation > li > ul,
+  .main-menu .navigation > li > ul > li > ul,
+  .main-menu .navigation > li > .megamenu {
+    display: block !important;
+    visibility: hidden;
+    opacity: 0;
+  }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   991px — Tablets / Small Laptops
+═══════════════════════════════════════════════════════════ */
+@media only screen and (max-width: 991px) {
 
-
-@media only screen and (max-width: 991px){
+  /* ── Header ── */
   .main-menu,
   .sticky-header,
-  .main-header.style-one .outer-container:before{
+  .main-header.style-one .outer-container:before {
     display: none !important;
   }
 
   .menu-area .mobile-nav-toggler {
-    display: block;
+    display: block !important;
     padding: 10px;
+    cursor: pointer;
   }
 
-  .megamenu ul li:first-child{
+  .main-header .logo-box {
+    padding: 20px 0px;
+  }
+
+  .main-header .header-lower .outer-box {
+    padding: 0 20px !important;
+    gap: 10px !important;
+  }
+
+  /* ── Global Section Title ── */
+  .sec-title h2 br,
+  .sec-title p br {
     display: none;
   }
 
-  .main-header .logo-box{
-    padding: 25px 0px;
+  .sec-title h2 {
+    font-size: 30px;
+    line-height: 40px;
   }
 
-  .header-top .info-list li{
-    margin-right: 30px;
+  .sec-title {
+    margin-bottom: 40px !important;
   }
 
-  .rtl .header-top .info-list li{
-    margin-left: 30px;
+  /* ── Banner Section ── */
+  .banner-section .slide-item {
+    padding: 80px 0 60px;
+    min-height: auto;
   }
-}
 
-
-
-@media only screen and (min-width: 768px){
-  .main-menu .navigation > li > ul,
-  .main-menu .navigation > li > ul > li > ul,
-  .main-menu .navigation > li > .megamenu{
-    display:block !important;
-    visibility:hidden;
-    opacity:0;
+  .banner-section .content-box {
+    text-align: center;
+    padding: 0 20px;
+    margin-bottom: 40px;
   }
-}
 
+  .banner-section .content-box h2 {
+    font-size: 36px;
+    line-height: 48px;
+  }
 
+  .banner-section .content-box .title-text {
+    font-size: 16px;
+  }
 
-@media only screen and (max-width: 991px){
+  .banner-section .content-box p {
+    font-size: 15px;
+  }
 
-  .sec-title h2 br{
+  .banner-section .image-box {
     display: none;
   }
 
-  .header-top .top-inner{
+  .banner-section .shape-layer,
+  .banner-section .pattern-layer {
+    display: none;
+  }
+
+  .banner-section .btn-box {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ── Contact Info Section ── */
+  .contact-info-section .info-block-one .inner-box {
+    text-align: center;
+    padding: 25px 20px;
+    margin-bottom: 15px;
+  }
+
+  /* ── About Section ── */
+  .about-section .image-block-one {
+    margin-top: 40px;
+  }
+
+  .about-section .wave-layer {
+    display: none;
+  }
+
+  /* ── Service Section ── */
+  .service-section .big-text {
+    display: none;
+  }
+
+  /* ── Choose Us Section ── */
+  .chooseus-section .tab-btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .chooseus-section .tab-btn {
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+
+  .chooseus-section .tab-btn h3 {
+    font-size: 15px;
+  }
+
+  .chooseus-section .content-block-two .content-box {
+    margin-left: 0 !important;
+    margin-top: 30px;
+    text-align: left;
+  }
+
+  /* ── Working Section ── */
+  .working-section .inner-container .arrow-shape {
+    display: none;
+  }
+
+  .working-section .row {
+    row-gap: 40px;
+  }
+
+  /* ── About Two Section ── */
+  .about-style-two {
+    padding-top: 70px !important;
+  }
+
+  .about-style-two .image-box {
+    margin-top: 40px;
+  }
+
+  .about-style-two .image-box figure img {
+    width: 100%;
+    height: auto;
+  }
+
+  .about-style-two .image-shape {
+    display: none;
+  }
+
+  /* ── Team Section ── */
+  .team-section .team-block-one {
+    margin-bottom: 30px;
+  }
+
+  /* ── Footer ── */
+  .main-footer .footer-widget {
+    margin: 0px 0px 30px 0px !important;
+  }
+
+  .main-footer .footer-menu {
+    display: block;
+    text-align: center;
+    padding: 37px 40px;
+  }
+
+  .main-footer .footer-menu .logo-box {
+    margin-bottom: 20px;
+  }
+
+  .main-footer .footer-menu .menu-list li {
+    margin-right: 20px;
+  }
+
+  .main-footer .footer-menu .menu-list {
+    justify-content: center;
+  }
+
+  .header-top .top-inner {
     display: block;
     text-align: center;
   }
 
   .header-top .info-list li,
-  .header-top .social-links li{
+  .header-top .social-links li {
     float: none;
   }
 
-  .sec-title p br{
+  .header-top .info-list li {
+    margin-right: 30px;
+  }
+
+}
+
+/* ═══════════════════════════════════════════════════════════
+   767px — Tablets Portrait
+═══════════════════════════════════════════════════════════ */
+@media only screen and (max-width: 767px) {
+
+  /* ── Global ── */
+  .sec-title h2 {
+    font-size: 26px;
+    line-height: 34px;
+  }
+
+  .sec-pad {
+    padding: 60px 0px;
+  }
+
+  /* ── Banner ── */
+  .banner-section .content-box h2 {
+    font-size: 28px;
+    line-height: 38px;
+  }
+
+  .banner-section .content-box p {
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  .banner-section .slide-item {
+    padding: 70px 0 50px;
+  }
+
+  /* ── Contact Info ── */
+  .contact-info-section {
+    padding: 30px 0;
+  }
+
+  .contact-info-section .info-block-one .inner-box h4 {
+    font-size: 16px;
+  }
+
+  /* ── About ── */
+  .about-section .content-block-one .sec-title h2 {
+    font-size: 26px;
+    line-height: 34px;
+  }
+
+  .about-section .image-box {
+    margin-top: 30px;
+  }
+
+  /* ── Working ── */
+  .working-section .working-block-one .inner-box .image-box figure {
+    width: 180px !important;
+    height: 180px !important;
+    margin: 0 auto;
+  }
+
+  .working-section .lower-content h3 {
+    font-size: 18px;
+  }
+
+  /* ── About Two ── */
+  .about-style-two {
+    padding: 60px 0 !important;
+  }
+
+  .about-style-two .tab-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+
+  /* ── Team ── */
+  .team-section .sec-title h2 br {
     display: none;
   }
 
-  .main-footer .footer-widget{
-    margin: 0px 0px 30px 0px !important;
+  /* ── News ── */
+  .news-section .sec-title h2 br {
+    display: none;
   }
 
-  .main-footer .footer-menu{
-    display: block;
-    text-align: center;
+  /* ── Footer ── */
+  .main-footer .footer-menu {
+    padding: 30px 20px;
   }
-
-  .main-footer .footer-menu .logo-box{
-    margin-bottom: 20px;
-  }
-
-  .main-footer .footer-menu{
-    padding: 37px 40px;
-  }
-
-  .main-footer .footer-menu .menu-list li{
-    margin-right: 20px;
-  }
-
-  .main-footer .footer-menu .menu-list{
-    justify-content: center;
-  }
-
 
 }
 
+/* ═══════════════════════════════════════════════════════════
+   575px — Large Phones
+═══════════════════════════════════════════════════════════ */
+@media only screen and (max-width: 575px) {
 
-@media only screen and (max-width: 767px){
-
-  .sec-title h2{
-    font-size: 28px;
-    line-height: 36px;
+  /* ── Global ── */
+  .auto-container {
+    padding: 0 15px;
   }
 
-  .sec-pad{
-    padding: 64px 0px 70px 0px;
+  .sec-title h2 {
+    font-size: 24px;
+    line-height: 32px;
   }
 
-
-
-}
-
-@media only screen and (max-width: 599px){
-
-  .main-header .outer-box{
-    padding: 0px 15px;
+  .sec-title .sub-title {
+    font-size: 13px;
   }
 
-  .main-footer .footer-menu .menu-list{
+  /* ── Header ── */
+  .main-header .outer-box {
+    padding: 0 15px !important;
+  }
+
+  .main-header .logo-box img {
+    max-width: 130px;
+    height: auto;
+  }
+
+  /* ── Banner ── */
+  .banner-section .content-box h2 {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .banner-section .content-box .title-text {
+    font-size: 14px;
+  }
+
+  .banner-section .slide-item {
+    padding: 60px 0 40px;
+  }
+
+  .banner-section .btn-box .theme-btn {
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+
+  /* ── Contact Info ── */
+  .contact-info-section .info-block-one .inner-box {
+    padding: 20px 15px;
+  }
+
+  .contact-info-section .info-block-one .inner-box h4 {
+    font-size: 15px;
+  }
+
+  .contact-info-section .info-block-one .inner-box span {
+    font-size: 13px;
+  }
+
+  /* ── About ── */
+  .about-section .text-box p {
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  .about-section .specialities-box h4 {
+    font-size: 16px;
+  }
+
+  /* ── Chooseus ── */
+  .chooseus-section .tab-btns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chooseus-section .tab-btn {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .chooseus-section .video-inner {
+    height: 220px;
+  }
+
+  .chooseus-section .content-box .list-style-one li {
+    font-size: 14px;
+  }
+
+  .chooseus-section .btn-box .theme-btn {
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+
+  /* ── Working ── */
+  .working-section .working-block-one .inner-box .image-box figure {
+    width: 160px !important;
+    height: 160px !important;
+  }
+
+  .working-section .lower-content h3 {
+    font-size: 17px;
+  }
+
+  .working-section .lower-content p {
+    font-size: 14px;
+  }
+
+  /* ── Team ── */
+  .team-section .team-block-one .inner-box .content-box h3 {
+    font-size: 18px;
+  }
+
+  /* ── News ── */
+  .news-block-one .lower-content h3 {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  .news-block-one .lower-content p {
+    font-size: 13px;
+  }
+
+  /* ── Footer ── */
+  .main-footer .footer-menu .menu-list {
     display: block;
   }
 
-  .main-footer .footer-menu .menu-list li{
-    margin: 0px;
+  .main-footer .footer-menu .menu-list li {
+    margin: 0;
     margin-bottom: 15px;
     display: block;
   }
 
-  .main-footer .footer-menu .menu-list li:last-child{
-    margin-bottom: 0px;
+  .main-footer .footer-menu .menu-list li:last-child {
+    margin-bottom: 0;
   }
-
 
 }
 
+/* ═══════════════════════════════════════════════════════════
+   480px — Medium Phones
+═══════════════════════════════════════════════════════════ */
+@media only screen and (max-width: 480px) {
 
-@media only screen and (max-width: 499px){
-
-  .mobile-menu{
+  /* ── Mobile Menu full width ── */
+  .mobile-menu {
     width: 100%;
   }
 
-  .main-header .menu-right-content{
+  .main-header .menu-right-content {
+    display: none !important;
+  }
+
+  .header-style-three .header-lower .outer-box {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+
+  /* ── Banner ── */
+  .banner-section .content-box h2 {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .banner-section .content-box p {
     display: none;
   }
 
-  .header-style-three .header-lower .outer-box{
-    padding-left: 15px;
-    padding-right: 15px;
+  .banner-section .slide-item {
+    padding: 50px 0 35px;
   }
 
-  
+  /* ── Section padding compacted ── */
+  .sec-pad {
+    padding: 50px 0;
+  }
 
+  /* ── Google Map ── */
+  .map-section iframe,
+  .google-map-section iframe {
+    height: 250px !important;
+  }
 
 }
 
+/* ═══════════════════════════════════════════════════════════
+   375px — Small Phones
+═══════════════════════════════════════════════════════════ */
+@media only screen and (max-width: 375px) {
 
+  .sec-title h2 {
+    font-size: 21px;
+    line-height: 29px;
+  }
 
+  .banner-section .content-box h2 {
+    font-size: 20px;
+    line-height: 28px;
+  }
 
+  .banner-section .btn-box .theme-btn {
+    padding: 9px 18px;
+    font-size: 13px;
+  }
 
+  .contact-info-section .info-block-one .inner-box h4 {
+    font-size: 14px;
+  }
 
+  .working-section .working-block-one .inner-box .image-box figure {
+    width: 140px !important;
+    height: 140px !important;
+  }
 
+  .news-block-one .lower-content h3 {
+    font-size: 15px;
+    line-height: 22px;
+  }
 
+  .auto-container {
+    padding: 0 12px;
+  }
 
-
-
-
-
-
-
-
-
-
-
-
+}

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { getDepartments } from "@/utils/api";
 import type { Department } from "@/Website/utils/types";
 import { MOCK_DEPARTMENTS, DEPARTMENT_SLUGS } from "@/Website/utils/mockData";
+import { getDepartmentIcon } from "@/utils/departmentIcons";
 
 const swiperOptions = {
   modules: [Autoplay, Pagination, Navigation],
@@ -109,16 +110,20 @@ export default function Service({ departments }: ServiceProps) {
                       alt={dept.name}
                       width={416}
                       height={358}
-                      style={{ height: '358px', objectFit: 'cover' }}
+                      style={{ height: 'clamp(220px, 30vw, 358px)', objectFit: 'cover', width: '100%' }}
                     />
                   </figure>
                   <div className="lower-content">
                     <div className="inner">
                       <div className="icon-box">
-                        <i className={dept.icon || "icon-18"}></i>
+                        <img
+                          src={getDepartmentIcon(dept.icon || dept.icon_class || "").src}
+                          alt={dept.name}
+                          style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+                        />
                       </div>
                       <h3>
-                        <Link to={DEPARTMENT_SLUGS[dept.id] || "/website/departments"}>
+                        <Link to={DEPARTMENT_SLUGS[dept.id] || "/departments"}>
                           {dept.name}
                         </Link>
                       </h3>

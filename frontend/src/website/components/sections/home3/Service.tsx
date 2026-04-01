@@ -17,7 +17,7 @@ export default function Service() {
                                         <div className="icon"><Image src="/website/assets/images/icons/icon-11.svg" alt="Icon" width={60} height={60} priority /></div>
                                         <span className="count-text">01</span>
                                     </div>
-                                    <h3><Link to="/website/department-details">Cardiology</Link></h3>
+                                    <h3><Link to="/department-details">Cardiology</Link></h3>
                                     <p>Cardiology is the medical specialty that focuses on the diagnosis.</p>
                                 </div>
                             </div>
@@ -29,7 +29,7 @@ export default function Service() {
                                         <div className="icon"><Image src="/website/assets/images/icons/icon-12.svg" alt="Icon" width={60} height={60} priority /></div>
                                         <span className="count-text">02</span>
                                     </div>
-                                    <h3><Link to="/website/department-details-2">Dental</Link></h3>
+                                    <h3><Link to="/department-details">Dental</Link></h3>
                                     <p>Cardiology is the medical specialty that focuses on the diagnosis.</p>
                                 </div>
                             </div>
@@ -41,7 +41,7 @@ export default function Service() {
                                         <div className="icon"><Image src="/website/assets/images/icons/icon-13.svg" alt="Icon" width={62} height={60} priority /></div>
                                         <span className="count-text">03</span>
                                     </div>
-                                    <h3><Link to="/website/department-details-3">Gastroenterology</Link></h3>
+                                    <h3><Link to="/department-details">Gastroenterology</Link></h3>
                                     <p>Cardiology is the medical specialty that focuses on the diagnosis.</p>
                                 </div>
                             </div>

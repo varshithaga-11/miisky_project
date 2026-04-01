@@ -18,7 +18,7 @@ export default function Service() {
                                 <div className="lower-content">
                                     <div className="inner">
                                         <div className="icon-box"><i className="icon-18"></i></div>
-                                        <h3><Link to="/website/department-details">Cardiology</Link></h3>
+                                        <h3><Link to="/department-details">Cardiology</Link></h3>
                                         <p>Cardiologists are healthcare professionals.</p>
                                     </div>
                                 </div>
@@ -32,7 +32,7 @@ export default function Service() {
                                 <div className="lower-content">
                                     <div className="inner">
                                         <div className="icon-box"><i className="icon-19"></i></div>
-                                        <h3><Link to="/website/department-details-2">Dental</Link></h3>
+                                        <h3><Link to="/department-details">Dental</Link></h3>
                                         <p>Cardiologists are healthcare professionals.</p>
                                     </div>
                                 </div>
@@ -46,7 +46,7 @@ export default function Service() {
                                 <div className="lower-content">
                                     <div className="inner">
                                         <div className="icon-box"><i className="icon-20"></i></div>
-                                        <h3><Link to="/website/department-details-3">Gastroenterology</Link></h3>
+                                        <h3><Link to="/department-details">Gastroenterology</Link></h3>
                                         <p>Cardiologists are healthcare professionals.</p>
                                     </div>
                                 </div>

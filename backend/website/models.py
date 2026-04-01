@@ -133,6 +133,7 @@ class MedicalDeviceCategory(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
     icon = models.ImageField(upload_to='website/devices/categories/', null=True, blank=True)
+    icon_class = models.CharField(max_length=100, blank=True, null=True) # e.g. "device-wearables"
     position = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
 
@@ -257,6 +258,8 @@ class ResearchPaper(models.Model):
     journal_conference = models.CharField(max_length=300, blank=True, null=True)
     abstract = models.TextField(blank=True, null=True)
     document = models.FileField(upload_to='website/research_papers/', null=True, blank=True)
+    excel_file = models.FileField(upload_to='website/research_papers/excel/', null=True, blank=True)
+    doc_file = models.FileField(upload_to='website/research_papers/doc/', null=True, blank=True)
     external_url = models.CharField(max_length=500, blank=True, null=True)
     device = models.ForeignKey(
         MedicalDevice, on_delete=models.SET_NULL, null=True, blank=True, related_name='research_papers'
@@ -1000,7 +1003,7 @@ class WebsiteInquiry(models.Model):
 
     inquiry_type = models.CharField(max_length=30, choices=INQUIRY_TYPE_CHOICES, default='general_inquiry')
     name = models.CharField(max_length=200)
-    email = models.EmailField()
+    email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     
     subject = models.CharField(max_length=300, blank=True, null=True)

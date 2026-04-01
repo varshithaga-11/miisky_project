@@ -64,13 +64,19 @@ export default function Working() {
                 </div>
                 <div className="inner-container p_relative">
                     <div className="arrow-shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-18.png)" }}></div>
+                    {steps.length > 3 && (
+                        <div className="arrow-shape second-row-arrow" style={{ 
+                            backgroundImage: "url(/website/assets/images/shape/shape-18.png)",
+                            top: '550px' // Adjust based on height of first row
+                        }}></div>
+                    )}
                     <div className="row clearfix">
                         {steps.map((step, index) => (
-                            <div key={step.id || index} className="col-lg-4 col-md-6 col-sm-12 working-block">
+                            <div key={step.id || index} className="col-lg-4 col-md-6 col-sm-12 working-block" style={index >= 3 ? { marginTop: '80px' } : {}}>
                                 <div className="working-block-one">
                                     <div className="inner-box">
                                         <div className="image-box">
-                                            <figure className="image" style={{ width: '250px', height: '250px', borderRadius: '50%', overflow: 'hidden' }}>
+                                            <figure className="image" style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', borderRadius: '50%', overflow: 'hidden', margin: '0 auto' }}>
                                                 <Image 
                                                     src={step.image_url || step.image || `/website/assets/images/resource/working-${(index % 3) + 1}.jpg`} 
                                                     alt={step.title} 

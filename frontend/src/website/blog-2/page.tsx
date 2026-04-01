@@ -47,21 +47,21 @@ export default function BlogStandardPage() {
                                         <div key={post.id} className="news-block-one mb_30">
                                             <div className="inner-box">
                                                 <figure className="image-box">
-                                                    <Link to={`/website/blog-details/${post.id}`}>
+                                                    <Link to={`/blog-details/${post.id}`}>
                                                         <Image src={post.featured_image || post.image || "/website/assets/images/news/news-7.jpg"} alt={post.title} width={856} height={425} priority />
                                                     </Link>
                                                     {post.has_video && <ModalVideo />}
                                                 </figure>
                                                 <div className="lower-content">
                                                     <span className="comment-box">{post.comment_count || 0} Comment</span>
-                                                    <h3><Link to={`/website/blog-details/${post.id}`}>{post.title}</Link></h3>
+                                                    <h3><Link to={`/blog-details/${post.id}`}>{post.title}</Link></h3>
                                                     <ul className="post-info clearfix">
                                                         <li><i className="icon-59"></i>{new Date(post.published_at || post.created_at || new Date()).toLocaleDateString()}</li>
-                                                        <li><i className="icon-60"></i><Link to={`/website/blog-details/${post.id}`}>{post.author || "Admin"}</Link></li>
+                                                        <li><i className="icon-60"></i><Link to={`/blog-details/${post.id}`}>{post.author || "Admin"}</Link></li>
                                                     </ul>
                                                     <p>{post.excerpt || post.description || (post.content && post.content.substring(0, 200) + "...") || "No content available."}</p>
                                                     <div className="link">
-                                                        <Link to={`/website/blog-details/${post.id}`}>Read More</Link>
+                                                        <Link to={`/blog-details/${post.id}`}>Read More</Link>
                                                     </div>
                                                 </div>
                                             </div>
@@ -69,11 +69,11 @@ export default function BlogStandardPage() {
                                     ))}
                                     <div className="pagination-wrapper centred mt_40">
                                         <ul className="pagination clearfix">
-                                            <li><Link to="/website/blog-standard"><i className="icon-21"></i></Link></li>
-                                            <li><Link to="/website/blog-standard" className="current">01</Link></li>
-                                            <li><Link to="/website/blog-standard">02</Link></li>
+                                            <li><Link to="/blog-standard"><i className="icon-21"></i></Link></li>
+                                            <li><Link to="/blog-standard" className="current">01</Link></li>
+                                            <li><Link to="/blog-standard">02</Link></li>
                                             <li className="dotted"><Image src="/website/assets/images/icons/icon-21.svg" alt="Image" width={23} height={5} priority /></li>
-                                            <li><Link to="/website/blog-standard"><i className="icon-22"></i></Link></li>
+                                            <li><Link to="/blog-standard"><i className="icon-22"></i></Link></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -82,7 +82,7 @@ export default function BlogStandardPage() {
                                 <div className="blog-sidebar">
                                     <div className="search-widget mb_40">
                                         <h3>Search Here</h3>
-                                        <form method="post" action="/website/blog-standard">
+                                        <form method="post" action="/blog-standard">
                                             <div className="form-group">
                                                 <input type="search" name="search-field" placeholder="keywords" required/>
                                                 <button type="submit"><Image src="/website/assets/images/icons/icon-22.svg" alt="Icon" width={20} height={20} priority /></button>
@@ -95,12 +95,12 @@ export default function BlogStandardPage() {
                                         </div>
                                         <div className="widget-content">
                                             <ul className="category-list clearfix">
-                                                <li><Link to="/website/blog">Cardiology</Link></li>
-                                                <li><Link to="/website/blog">Dental</Link></li>
-                                                <li><Link to="/website/blog">Gastroenterology</Link></li>
-                                                <li><Link to="/website/blog">Neurology</Link></li>
-                                                <li><Link to="/website/blog">Orthopaedics</Link></li>
-                                                <li><Link to="/website/blog">Dental Caring</Link></li>
+                                                <li><Link to="/blog">Cardiology</Link></li>
+                                                <li><Link to="/blog">Dental</Link></li>
+                                                <li><Link to="/blog">Gastroenterology</Link></li>
+                                                <li><Link to="/blog">Neurology</Link></li>
+                                                <li><Link to="/blog">Orthopaedics</Link></li>
+                                                <li><Link to="/blog">Dental Caring</Link></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -111,11 +111,11 @@ export default function BlogStandardPage() {
                                         <div className="post-inner">
                                             {posts.slice(0, 3).map((latestPost: any) => (
                                                 <div key={latestPost.id} className="post">
-                                                    <figure className="post-thumb"><Link to={`/website/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || latestPost.image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
-                                                    <h3><Link to={`/website/blog-details/${latestPost.id}`}>{latestPost.title}</Link></h3>
+                                                    <figure className="post-thumb"><Link to={`/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || latestPost.image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
+                                                    <h3><Link to={`/blog-details/${latestPost.id}`}>{latestPost.title}</Link></h3>
                                                     <ul className="post-info clearfix">
                                                         <li><i className="icon-59"></i>{new Date(latestPost.published_at || latestPost.created_at || new Date()).toLocaleDateString()}</li>
-                                                        <li><i className="icon-60"></i><Link to="/website/blog">{latestPost.author || "Author"}</Link></li>
+                                                        <li><i className="icon-60"></i><Link to="/blog">{latestPost.author || "Author"}</Link></li>
                                                     </ul>
                                                 </div>
                                             ))}
@@ -125,7 +125,7 @@ export default function BlogStandardPage() {
                                         <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/resource/sidebar-1.jpg)" }}></div>
                                         <h3>Get Free <br />Consultations Today!</h3>
                                         <p>Speak with our expert team and receive professional advice on your next project. No obligation, no cost. Schedule your consultation now!</p>
-                                        <Link to="/website/contact" className="theme-btn btn-two"><span>get a quote</span></Link>
+                                        <Link to="/contact" className="theme-btn btn-two"><span>get a quote</span></Link>
                                     </div>
                                 </div>
                             </div>

@@ -61,10 +61,10 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <li>
                   <h6>Follow Us</h6>
                 </li>
-                <li><Link to="/website"><i className="fab fa-facebook-f"></i></Link></li>
-                <li><Link to="/website"><i className="fab fa-dribbble"></i></Link></li>
-                <li><Link to="/website"><i className="fab fa-twitter"></i></Link></li>
-                <li><Link to="/website"><i className="fab fa-instagram"></i></Link></li>
+                <li><Link to="/"><i className="fab fa-facebook-f"></i></Link></li>
+                <li><Link to="/"><i className="fab fa-dribbble"></i></Link></li>
+                <li><Link to="/"><i className="fab fa-twitter"></i></Link></li>
+                <li><Link to="/"><i className="fab fa-instagram"></i></Link></li>
               </ul>
             </div>
           </div>
@@ -75,8 +75,8 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-box">
               <div className="logo-box">
                 <figure className="logo">
-                  <Link to="/website">
-                    <Image src="/miisky-logo.png" alt="Logo Image" width={203} height={40} priority />
+                  <Link to="/">
+                    <Image src="/miisky-logo.png" alt="Logo Image" width={150} height={30} priority />
                   </Link>
                 </figure>
               </div>
@@ -91,41 +91,41 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent2">
                     <ul className="navigation clearfix">
                        <li>
-                        <Link to="/website">Home</Link>
+                        <Link to="/">Home</Link>
                       </li>
                       <li>
-                        <Link to="/website/about">About Us</Link>
+                        <Link to="/about">About Us</Link>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/departments">Departments</Link>
+                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/website/departments">Our Departments</Link></li>
+                          <li><Link to="/departments">Our Departments</Link></li>
                           {departments.map((dept: any) => (
                             <li key={dept.id}>
-                              <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                              <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Pages</Link>
+                        <Link to="/">Pages</Link>
                         <ul>
-                          <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/website/portfolio-2">Portfolio Two</Link></li>
-                          <li><Link to="/website/pricing">Pricing</Link></li>
-                          <li><Link to="/website/error">Not Found</Link></li>
+                          <li><Link to="/doctors">Our Doctors</Link></li>
+                          <li><Link to="/doctor-details">Doctor Details</Link></li>
+                          <li><Link to="/portfolio">Portfolio One</Link></li>
+                          <li><Link to="/portfolio-2">Portfolio Two</Link></li>
+                          <li><Link to="/pricing">Pricing</Link></li>
+                          <li><Link to="/error">Not Found</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/blog">Blog</Link>
+                        <Link to="/blog">Blog</Link>
                         <ul>
-                          <li><Link to="/website/blog">Blog Grid</Link></li>
+                          <li><Link to="/blog">Blog Grid</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/website/contact">Contact</Link>
+                        <Link to="/contact">Contact</Link>
                       </li>
                     </ul>
                   </div>
@@ -166,8 +166,8 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-box">
               <div className="logo-box">
                 <figure className="logo">
-                  <Link to="/website">
-                    <Image src="/miisky-logo.png" alt="Logo Image" width={203} height={40} priority />
+                  <Link to="/">
+                    <Image src="/miisky-logo.png" alt="Logo Image" width={150} height={30} priority />
                   </Link>
                 </figure>
               </div>
@@ -182,41 +182,41 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent2Sticky">
                     <ul className="navigation clearfix">
                        <li>
-                        <Link to="/website">Home</Link>
+                        <Link to="/">Home</Link>
                       </li>
                       <li>
-                        <Link to="/website/about">About Us</Link>
+                        <Link to="/about">About Us</Link>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/departments">Departments</Link>
+                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/website/departments">Our Departments</Link></li>
+                          <li><Link to="/departments">Our Departments</Link></li>
                           {departments.map((dept: any) => (
                             <li key={dept.id}>
-                              <Link to={`/website/department-details/${dept.id}`}>{dept.name}</Link>
+                              <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website">Pages</Link>
+                        <Link to="/">Pages</Link>
                         <ul>
-                          <li><Link to="/website/doctors">Our Doctors</Link></li>
-                          <li><Link to="/website/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/website/portfolio">Portfolio One</Link></li>
-                          {/* <li><Link to="/website/portfolio-2">Portfolio Two</Link></li> */}
-                          <li><Link to="/website/pricing">Pricing</Link></li>
-                          <li><Link to="/website/error">Not Found</Link></li>
+                          <li><Link to="/doctors">Our Doctors</Link></li>
+                          <li><Link to="/doctor-details">Doctor Details</Link></li>
+                          <li><Link to="/portfolio">Portfolio One</Link></li>
+                          {/* <li><Link to="/portfolio-2">Portfolio Two</Link></li> */}
+                          <li><Link to="/pricing">Pricing</Link></li>
+                          <li><Link to="/error">Not Found</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/website/blog">Blog</Link>
+                        <Link to="/blog">Blog</Link>
                         <ul>
-                          <li><Link to="/website/blog">Blog Grid</Link></li>
+                          <li><Link to="/blog">Blog Grid</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/website/contact">Contact</Link>
+                        <Link to="/contact">Contact</Link>
                       </li>
                     </ul>
                   </div>

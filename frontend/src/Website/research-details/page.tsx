@@ -32,7 +32,7 @@ export default function ResearchPaperDetailsPage() {
     }, [id]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading research paper details...</div>;
-    if (!paper) return <div className="text-center p-5 mt_100">Research paper not found. <Link to="/website/research">Go back</Link></div>;
+    if (!paper) return <div className="text-center p-5 mt_100">Research paper not found. <Link to="/research">Go back</Link></div>;
 
     return (
         <div className="research-paper-details-page">
@@ -44,7 +44,6 @@ export default function ResearchPaperDetailsPage() {
                                 <div className="paper-meta mb_25" style={{ color: '#777', fontSize: '15px' }}>
                                     <span className="mr_30"><i className="far fa-calendar-alt" style={{ color: '#0646ac', marginRight: '5px' }}></i> {paper.published_date || "Coming Soon"}</span>
                                     <span className="mr_30"><i className="far fa-user" style={{ color: '#0646ac', marginRight: '5px' }}></i> {paper.author || "Miisky Team"}</span>
-                                    <span><i className="far fa-eye" style={{ color: '#0646ac', marginRight: '5px' }}></i> {paper.views || "120"} Views</span>
                                 </div>
                                 <h1 className="mb_40" style={{ fontSize: '36px', fontWeight: 800, color: '#111', lineHeight: '1.3' }}>{paper.title}</h1>
                                 
@@ -83,7 +82,7 @@ export default function ResearchPaperDetailsPage() {
                                     <a href={paper.document_url || "#"} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one mr_20">
                                         <span>Download Full PDF</span>
                                     </a>
-                                    <Link to="/website/research" className="theme-btn btn-two" style={{ backgroundColor: 'transparent', border: '1.5px solid #eee', color: '#777' }}>
+                                    <Link to="/research" className="theme-btn btn-two" style={{ backgroundColor: 'transparent', border: '1.5px solid #eee', color: '#777' }}>
                                         <span>Back to Research</span>
                                     </Link>
                                 </div>

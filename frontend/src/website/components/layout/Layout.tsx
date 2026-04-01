@@ -8,6 +8,8 @@ import Header1 from "./header/Header1";
 import Header2 from "./header/Header2";
 import Header3 from "./header/Header3";
 import Footer1 from "./footer/Footer1";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type LayoutProps = {
   headerStyle?: 1 | 2 | 3;
@@ -113,6 +115,7 @@ export default function Layout({
         {renderFooter()}
       </div>
       <BackToTop scroll={isScrolled} />
+      <ToastContainer position="top-right" autoClose={3000} />
     </>
   );
 }

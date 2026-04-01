@@ -48,7 +48,7 @@ export default function MedicalDeviceDetailsPage() {
     }, [id]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading device details...</div>;
-    if (!device) return <div className="text-center p-5 mt_100">Device not found. <Link to="/website/medical-devices">Go back</Link></div>;
+    if (!device) return <div className="text-center p-5 mt_100">Device not found. <Link to="/medical-devices">Go back</Link></div>;
 
     return (
         <div className="medical-device-details-page">
@@ -105,7 +105,7 @@ export default function MedicalDeviceDetailsPage() {
                                     </ul>
                                 </div>
                                 <div className="btn-box">
-                                    <Link to="/website/contact" className="theme-btn btn-one">
+                                    <Link to="/contact" className="theme-btn btn-one">
                                         <span>Request Quote</span>
                                     </Link>
                                 </div>

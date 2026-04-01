@@ -15,7 +15,7 @@ export default function Banner() {
                     <h2>Stay Healthy, <span>Stay Happy</span></h2>
                     <p>In addition to treating illnesses and injuries, medical care also emphasizes the importance of preventive care, such as regular check-ups, vaccinations, and lifestyle modifications.</p>
                     <div className="lower-box">
-                        <div className="btn-box"><Link to="/website/index-2" className="theme-btn btn-two"><span>Read More</span></Link></div>
+                        <div className="btn-box"><Link to="/" className="theme-btn btn-two"><span>Read More</span></Link></div>
                     </div>
                 </div>
             </div>

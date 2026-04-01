@@ -117,7 +117,7 @@ export default function Chooseus() {
                             ))}
                           </ul>
                           <div className="btn-box">
-                            <Link to="/website/departments" className="theme-btn btn-two">
+                            <Link to="/departments" className="theme-btn btn-two">
                               <span>See All Services</span>
                             </Link>
                           </div>

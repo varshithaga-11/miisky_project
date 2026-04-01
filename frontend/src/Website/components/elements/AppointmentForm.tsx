@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { contactApi } from "../../utils/api";
 import Image from "../Image";
 
@@ -14,7 +15,7 @@ export default function AppointmentForm({ departmentName }: AppointmentFormProps
     message: "",
   });
 
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,18 +23,21 @@ export default function AppointmentForm({ departmentName }: AppointmentFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus("loading");
+    setSubmitting(true);
 
     try {
       await contactApi.send({
         ...formData,
+        inquiry_type: "appointment",
         subject: `Appointment Inquiry: ${departmentName || "General"}`
       });
-      setStatus("success");
+      toast.success("Appointment request sent successfully! ✅");
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err) {
       console.error(err);
-      setStatus("error");
+      toast.error("Something went wrong. Please try again! ❌");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -58,11 +62,9 @@ export default function AppointmentForm({ departmentName }: AppointmentFormProps
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Email"
-            required
+            placeholder="Email (Optional)"
           />
         </div>
-        {/* Only show Phone if we want to expand for the sidebar version specifically */}
         <div className="form-group">
           <div className="icon">
             <Image src="/website/assets/images/icons/icon-15.svg" alt="Phone" width={15} height={15} />
@@ -72,7 +74,8 @@ export default function AppointmentForm({ departmentName }: AppointmentFormProps
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="Phone (Optional)"
+            placeholder="Phone Number"
+            required
           />
         </div>
         <div className="form-group">
@@ -86,16 +89,10 @@ export default function AppointmentForm({ departmentName }: AppointmentFormProps
           ></textarea>
         </div>
         <div className="form-group message-btn mt_20">
-          <button type="submit" className="theme-btn btn-two" disabled={status === "loading"}>
-            <span>{status === "loading" ? "Sending..." : "Send your message"}</span>
+          <button type="submit" className="theme-btn btn-two" disabled={submitting}>
+            <span>{submitting ? "Sending..." : "Send Appointment"}</span>
           </button>
         </div>
-        {status === "success" && (
-          <p className="mt-2 text-success">Message sent successfully! ✅</p>
-        )}
-        {status === "error" && (
-          <p className="mt-2 text-danger">Something went wrong. ❌</p>
-        )}
       </form>
     </div>
   );

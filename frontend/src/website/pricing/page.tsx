@@ -92,7 +92,7 @@ export default function Pricing_Page() {
                                             </div>
                                         </div>
                                         <div className="table-content">
-                                            <div className="btn-box"><Link to="/website/pricing" className="theme-btn btn-one">Choose Plan +</Link></div>
+                                            <div className="btn-box"><Link to="/pricing" className="theme-btn btn-one">Choose Plan +</Link></div>
                                             <ul className="feature-list clearfix">
                                                 {(plan.features || []).map((feature: string, fIdx: number) => (
                                                     <li key={fIdx}>{feature}</li>

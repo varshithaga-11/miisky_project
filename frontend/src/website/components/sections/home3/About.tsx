@@ -41,7 +41,7 @@ export default function About() {
                                     </div>
                                 </div>
                                 <div className="btn-box">
-                                    <Link to="/website/about" className="theme-btn btn-two"><span>Read More</span></Link>
+                                    <Link to="/about" className="theme-btn btn-two"><span>Read More</span></Link>
                                 </div>
                             </div>
                         </div>

@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import Image from "../../Image";
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -13,6 +12,7 @@ interface PortfolioItem {
   img: string;
   title: string;
   category: string;
+  description: string;
 }
 
 const defaultPortfolioItems: PortfolioItem[] = [
@@ -21,36 +21,37 @@ const defaultPortfolioItems: PortfolioItem[] = [
     img: '/website/assets/images/gallery/portfolio-1.jpg',
     title: 'Regular Dental Cleaning',
     category: 'Residential',
+    description: 'Professional dental cleaning for a healthy smile.',
   },
   {
     id: 2,
     img: '/website/assets/images/gallery/portfolio-2.jpg',
     title: 'Prepare to Speak',
     category: 'Residential',
+    description: 'Expert consultation and preparation.',
   },
   {
     id: 3,
     img: '/website/assets/images/gallery/portfolio-3.jpg',
     title: 'From Diagnosis',
     category: 'Residential',
+    description: 'Comprehensive diagnosis and treatment planning.',
   },
   {
     id: 4,
     img: '/website/assets/images/gallery/portfolio-4.jpg',
     title: 'Empowering Patients',
     category: 'Residential',
+    description: 'Patient-centered care and education.',
   },
 ];
 
 export default function Portfolio() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(defaultPortfolioItems);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGalleryItems = async () => {
       try {
-        setLoading(true);
         const response = await getGalleryItems();
         const data = response.data;
 
@@ -61,28 +62,26 @@ export default function Portfolio() {
           img: item.image_url || item.image || '/website/assets/images/gallery/portfolio-1.jpg',
           title: item.title || item.name || "Gallery Item",
           category: item.category?.name || item.category || "Gallery",
+          description: item.description || item.title || "Gallery Item Description",
         }));
 
         setPortfolioItems(formattedItems.length > 0 ? formattedItems : defaultPortfolioItems);
-        setError(null);
       } catch (err) {
         console.warn("Failed to fetch gallery items, using default portfolio items:", err);
         setPortfolioItems(defaultPortfolioItems);
-        setError(null);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchGalleryItems();
   }, []);
   return (
-    <section className="portfolio-section">
+    <section className="portfolio-section p_relative">
+      <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-8.png)" }}></div>
       <div className="outer-container">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
           slidesPerView={1}
-          spaceBetween={0}
+          spaceBetween={15}
           loop={true}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
           breakpoints={{
@@ -101,16 +100,8 @@ export default function Portfolio() {
                   <figure className="image-box">
                     <Image src={item.img} alt={item.title} width={400} height={300} />
                   </figure>
-                  <div className="view-btn">
-                    <a href={item.img} className="lightbox-image" data-fancybox="gallery">
-                      <i className="icon-24"></i>
-                    </a>
-                  </div>
                   <div className="text-box">
-                    <h3>
-                      <Link to="#"> {item.title} </Link>
-                    </h3>
-                    <span>{item.category}</span>
+                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{item.description}</span>
                   </div>
                 </div>
               </div>

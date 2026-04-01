@@ -20,6 +20,7 @@ export interface BlogPost {
   likes_count?: number;
   is_active?: boolean;
   status?: "draft" | "published";
+  tag_ids?: number[];
   created_at?: string;
 }
 
@@ -43,11 +44,15 @@ export const createBlogPost = async (data: FormData | BlogPost) => {
 export const getBlogPostList = async (
   page: number = 1,
   limit: number = 10,
-  search?: string
+  search?: string,
+  category?: string,
+  tag?: string
 ) => {
   const url = createApiUrl("api/website/blogpost/");
   const params: any = { page, limit };
   if (search) params.search = search;
+  if (category) params.category = category;
+  if (tag) params.tag = tag;
 
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),

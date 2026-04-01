@@ -40,7 +40,7 @@ export default function GalleryDetailsPage() {
     }, [id]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading gallery item...</div>;
-    if (!item) return <div className="text-center p-5 mt_100">Gallery item not found. <Link to="/website/gallery">Go back</Link></div>;
+    if (!item) return <div className="text-center p-5 mt_100">Gallery item not found. <Link to="/gallery">Go back</Link></div>;
 
     return (
         <div className="gallery-details-page">
@@ -76,7 +76,7 @@ export default function GalleryDetailsPage() {
                                     <span className="ml_15 mr_15"><i className="far fa-user mr_5" style={{ color: '#0646ac' }}></i> By: Miisky Team</span>
                                 </div>
                                 <div className="btn-box">
-                                    <Link to="/website/gallery" className="theme-btn btn-two">
+                                    <Link to="/gallery" className="theme-btn btn-two">
                                         <span>Back to Gallery</span>
                                     </Link>
                                 </div>

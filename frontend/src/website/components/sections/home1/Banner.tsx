@@ -66,7 +66,7 @@ export default function Banner({
           description: banner.description || "Experience world-class medical care",
           image: banner.background_image_url || banner.background_image || "/website/assets/images/banner/banner-1.jpg",
           buttonLabel: "Appointment",
-          buttonHref: "/website/appointment",
+          buttonHref: "/",
         }));
 
         if (formattedBanners.length > 0) {

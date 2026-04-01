@@ -33,7 +33,7 @@ export default function PartnerDetailsPage() {
     }, [id]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading partner details...</div>;
-    if (!partner) return <div className="text-center p-5 mt_100">Partner not found. <Link to="/website/partners">Go back</Link></div>;
+    if (!partner) return <div className="text-center p-5 mt_100">Partner not found. <Link to="/partners">Go back</Link></div>;
 
     return (
         <div className="partner-details-page">
@@ -79,7 +79,7 @@ export default function PartnerDetailsPage() {
                                     </ul>
                                 </div>
                                 <div className="btn-box">
-                                    <a href={partner.website_url || "/website/contact"} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one" style={{ padding: '12px 35px' }}>
+                                    <a href={partner.website_url || "/contact"} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one" style={{ padding: '12px 35px' }}>
                                         <span>Visit Partner Website</span>
                                     </a>
                                 </div>

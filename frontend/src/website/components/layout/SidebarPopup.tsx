@@ -28,7 +28,7 @@ const SidebarPopup: React.FC<SidebarPopupProps> = ({ isOpen, onClose }) => {
               <div className="content-inner">
                 {/* Logo */}
                 <div className="logo">
-                  <Link to="/website">
+                  <Link to="/">
                     <img src="/website/assets/images/logo-miisky.png" alt="Logo" />
                   </Link>
                 </div>
@@ -40,7 +40,7 @@ const SidebarPopup: React.FC<SidebarPopupProps> = ({ isOpen, onClose }) => {
                     Sed ut perspiciatis unde omnis iste natus error sit
                     voluptatem accusantium doloremque laudantium.
                   </p>
-                  <Link to="/website/about" className="theme-btn btn-one">
+                  <Link to="/about" className="theme-btn btn-one">
                     <span>About Us</span>
                   </Link>
                 </div>

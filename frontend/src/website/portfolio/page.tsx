@@ -46,7 +46,7 @@ export default function Portfolio_Page() {
                                     <figure className="image-box"><Image src={item.image_url || item.image || "/website/assets/images/gallery/portfolio-1.jpg"} alt={item.title || item.name} width={480} height={600} priority /></figure>
                                     <div className="view-btn"><Link to={item.image_url || item.image || "/website/assets/images/gallery/portfolio-1.jpg"} className="lightbox-image" data-fancybox="gallery"><i className="icon-24"></i></Link></div>
                                     <div className="text-box">
-                                        <h3><Link to="/website">{item.title || item.name}</Link></h3>
+                                        <h3><Link to="/">{item.title || item.name}</Link></h3>
                                         <span>{item.category || "Medical"}</span>
                                     </div>
                                 </div>

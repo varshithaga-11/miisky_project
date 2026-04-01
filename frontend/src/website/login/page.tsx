@@ -28,7 +28,7 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirect to the requested page or home
-      const nextUrl = searchParams.get("next") || "/website";
+      const nextUrl = searchParams.get("next") || "/";
       console.log("Redirecting to:", nextUrl);
       navigate(nextUrl);
     } catch (err) {
@@ -126,7 +126,7 @@ export default function LoginPage() {
 
                   {/* Forgot password */}
                   <div style={{ textAlign: "right", marginBottom: "22px" }}>
-                    <Link to="/website/forgot-password" style={{ fontSize: "13px", color: "#f5821f" }}>
+                    <Link to="/resetpassword" style={{ fontSize: "13px", color: "#f5821f" }}>
                       Forgot password?
                     </Link>
                   </div>
@@ -160,12 +160,12 @@ export default function LoginPage() {
                   </div>
 
                   {/* Register link */}
-                  {/* <p style={{ textAlign: "center", fontSize: "14px", margin: 0 }}>
+                  <p style={{ textAlign: "center", fontSize: "14px", margin: 0 }}>
                     Don&apos;t have an account?{" "}
-                    <Link to="/website/register" style={{ color: "#f5821f", fontWeight: 600 }}>
+                    <Link to="/register" style={{ color: "#f5821f", fontWeight: 600 }}>
                       Create one
                     </Link>
-                  </p> */}
+                  </p>
                 </form>
               </div>
             </div>

@@ -57,6 +57,8 @@ class DeviceFeatureSerializer(serializers.ModelSerializer):
 
 class ResearchPaperSerializer(serializers.ModelSerializer):
     document_url = serializers.FileField(source='document', read_only=True)
+    excel_file_url = serializers.FileField(source='excel_file', read_only=True)
+    doc_file_url = serializers.FileField(source='doc_file', read_only=True)
     
     class Meta:
         model = ResearchPaper

@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getBlogPostList, deleteBlogPost, BlogPost } from "./blogpostapi";
 import { getBlogCategoryList } from "../BlogCategory/blogcategoryapi";
+import { getBlogTagList } from "../BlogTag/blogtagapi";
 import AddBlogPost from "./AddBlogPost";
 import EditBlogPost from "./EditBlogPost";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
@@ -15,19 +16,22 @@ import Label from "../../../components/form/Label";
 const BlogPostPage: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTag, setSelectedTag] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getBlogPostList(currentPage, pageSize, search);
+      const data = await getBlogPostList(currentPage, pageSize, search, selectedCategory !== "all" ? selectedCategory : undefined, selectedTag !== "all" ? selectedTag : undefined);
       setPosts(data.results);
       setTotalItems(data.count);
       setTotalPages(data.total_pages);
@@ -36,7 +40,7 @@ const BlogPostPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, search]);
+  }, [currentPage, pageSize, search, selectedCategory, selectedTag]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -47,10 +51,20 @@ const BlogPostPage: React.FC = () => {
     }
   }, []);
 
+  const fetchTags = useCallback(async () => {
+    try {
+      const data = await getBlogTagList(1, 100);
+      setTags(data.results);
+    } catch (error) {
+      console.error("Failed to fetch tags", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPosts();
     fetchCategories();
-  }, [fetchPosts, fetchCategories]);
+    fetchTags();
+  }, [fetchPosts, fetchCategories, fetchTags]);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("Archive this blog post? It will no longer be visible on the public site.")) return;
@@ -81,7 +95,33 @@ const BlogPostPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Category:</Label>
+              <Select
+                value={selectedCategory}
+                onChange={(val) => { setSelectedCategory(val); setCurrentPage(1); }}
+                options={[
+                  { value: "all", label: "All" },
+                  ...categories.map(c => ({ value: String(c.id), label: c.name }))
+                ]}
+                className="w-40"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Tag:</Label>
+              <Select
+                value={selectedTag}
+                onChange={(val) => { setSelectedTag(val); setCurrentPage(1); }}
+                options={[
+                  { value: "all", label: "All" },
+                  ...tags.map(t => ({ value: String(t.id), label: t.name }))
+                ]}
+                className="w-40"
+              />
+            </div>
+
             <Button 
                 size="sm" 
                 className="inline-flex items-center gap-2"
@@ -230,6 +270,7 @@ const BlogPostPage: React.FC = () => {
       {isAddModalOpen && (
         <AddBlogPost 
           categories={categories}
+          tags={tags}
           onSuccess={() => fetchPosts()} 
           onClose={() => setIsAddModalOpen(false)} 
         />
@@ -239,6 +280,7 @@ const BlogPostPage: React.FC = () => {
         <EditBlogPost 
           id={editingId} 
           categories={categories}
+          tags={tags}
           onSuccess={() => fetchPosts()} 
           onClose={() => setEditingId(null)} 
         />

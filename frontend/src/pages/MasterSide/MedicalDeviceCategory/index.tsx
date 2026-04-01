@@ -4,6 +4,7 @@ import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getMedicalDeviceCategoryList, deleteMedicalDeviceCategory, MedicalDeviceCategory } from "./medicaldevicecategoryapi";
 import AddMedicalDeviceCategory from "./AddMedicalDeviceCategory";
 import EditMedicalDeviceCategory from "./EditMedicalDeviceCategory";
+import { getDeviceCategoryIcon } from "../../../utils/deviceCategoryIcons";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -128,15 +129,13 @@ const MedicalDeviceCategoryPage: React.FC = () => {
                 categories.map((cat) => (
                   <TableRow key={cat.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">
-                        {cat.icon ? (
-                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-mono text-[10px] break-all p-1 text-center dark:bg-blue-900/10 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
-                              {cat.icon}
-                            </div>
-                        ) : (
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 font-bold text-[10px] uppercase dark:bg-white/5 dark:text-gray-600">
-                              NO ICON
-                            </div>
-                        )}
+                        <div className="w-12 h-12 bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center justify-center p-1 border border-gray-100 dark:border-gray-800 shadow-sm">
+                          <img
+                            src={getDeviceCategoryIcon(cat.icon_class || "").src}
+                            alt={cat.name}
+                            className="w-10 h-10 object-contain"
+                          />
+                        </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-900 text-theme-sm dark:text-white uppercase tracking-tight">
                         {cat.name}

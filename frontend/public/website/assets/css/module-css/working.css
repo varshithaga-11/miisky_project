@@ -28,6 +28,7 @@
   display: inline-block;
   width: 286px;
   height: 286px;
+  max-width: 100%;
   background: #fff;
   border-radius: 50%;
   padding: 17px;
@@ -140,22 +141,66 @@
   .working-section{
     padding-bottom: 90px;
   }
+
+  .working-block-one .inner-box{
+    max-width: 260px;
+  }
+
+  .working-block-one .inner-box .image-box{
+    width: 260px;
+    height: 260px;
+  }
+
 }
 
 @media only screen and (max-width: 767px){
 
+  .working-block-one .inner-box{
+    max-width: 220px;
+  }
+
+  .working-block-one .inner-box .image-box{
+    width: 220px;
+    height: 220px;
+  }
+
+  .working-block-one .inner-box .lower-content h3{
+    font-size: 22px;
+    line-height: 30px;
+  }
 
 }
 
 @media only screen and (max-width: 599px){
 
-  
+  .working-block-one .inner-box{
+    max-width: 180px;
+  }
+
+  .working-block-one .inner-box .image-box{
+    width: 180px;
+    height: 180px;
+    padding: 12px;
+  }
+
+  .working-block-one .inner-box .lower-content h3{
+    font-size: 18px;
+    line-height: 26px;
+  }
 
 }
 
-@media only screen and (max-width: 499px){
+@media only screen and (max-width: 480px){
 
-  
+  .working-block-one .inner-box{
+    max-width: 160px;
+  }
+
+  .working-block-one .inner-box .image-box{
+    width: 160px;
+    height: 160px;
+    padding: 10px;
+  }
 
 }
 

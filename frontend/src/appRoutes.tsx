@@ -167,7 +167,7 @@ const WebsitePortfolio = lazy(() => import("./Website/portfolio/page"));
 // const WebsitePortfolio2 = lazy(() => import("./Website/portfolio-2/page"));
 const WebsitePricing = lazy(() => import("./Website/pricing/page"));
 const WebsiteLogin = lazy(() => import("./Website/login/page"));
-// const WebsiteRegister = lazy(() => import("./Website/register/page"));
+const WebsiteRegister = lazy(() => import("./Website/register/page"));
 // const WebsiteIndex2 = lazy(() => import("./Website/index-2/page"));
 // const WebsiteIndex3 = lazy(() => import("./Website/index-3/page"));
 const WebsiteError = lazy(() => import("./Website/error/page"));
@@ -384,7 +384,7 @@ export function appRoutes() {
           {/* <Route path="portfolio-2" element={<WebsitePortfolio2 />} /> */}
           <Route path="pricing" element={<WebsitePricing />} />
           <Route path="login" element={<WebsiteLogin />} />
-          {/* <Route path="register" element={<WebsiteRegister />} /> */}
+          <Route path="register" element={<WebsiteRegister />} />
           {/* <Route path="index-2" element={<WebsiteIndex2 />} />
           <Route path="index-3" element={<WebsiteIndex3 />} /> */}
           <Route path="error" element={<WebsiteError />} />

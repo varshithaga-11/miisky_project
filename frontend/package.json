@@ -19,8 +19,8 @@
     "@fullcalendar/list": "^6.1.15",
     "@fullcalendar/react": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
-    "@react-jvectormap/core": "^1.0.4",
     "@react-google-maps/api": "^2.20.7",
+    "@react-jvectormap/core": "^1.0.4",
     "@react-jvectormap/world": "^1.1.2",
     "@types/leaflet": "^1.9.21",
     "@types/react-datepicker": "^6.2.0",
@@ -59,6 +59,7 @@
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@tailwindcss/postcss": "^4.0.8",
+    "@types/isotope-layout": "^3.0.15",
     "@types/jquery": "^3.5.33",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",

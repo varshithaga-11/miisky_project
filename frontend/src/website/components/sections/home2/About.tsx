@@ -7,7 +7,7 @@ export default function About() {
                 <div className="appointment-box">
                     <h4>Book an Appointment</h4>
                     <div className="form-inner">
-                        <form method="post" action="/website" className="clearfix">
+                        <form method="post" action="/" className="clearfix">
                             <div className="form-group">
                                 <div className="icon-box"><i className="icon-15"></i></div>
                                 <span>Chose services</span>
