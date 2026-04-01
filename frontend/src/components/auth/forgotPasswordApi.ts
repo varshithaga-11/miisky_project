@@ -5,6 +5,7 @@ interface OtpResponse {
   success: boolean;
   message?: string;
   error?: string;
+  email?: string;
 }
 
 interface VerifyOtpResponse {
@@ -21,15 +22,15 @@ interface ResetPasswordResponse {
 
 export const sendOtp = async (email: string): Promise<OtpResponse> => {
   try {
-    const response = await fetch(createApiUrl('/sendotp/'), {
+    const response = await fetch(createApiUrl('api/sendotp/'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
     const data = await response.json();
     return response.ok
-      ? { success: true, message: data.message }
-      : { success: false, error: data.message || "Failed to send OTP" };
+      ? { success: true, message: data.message, email: data.email }
+      : { success: false, error: data.error || data.message || "Failed to send OTP" };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
@@ -37,7 +38,7 @@ export const sendOtp = async (email: string): Promise<OtpResponse> => {
 
 export const verifyOtp = async (email: string, otp: string): Promise<VerifyOtpResponse> => {
   try {
-    const response = await fetch(createApiUrl('/verifyotp/'), {
+    const response = await fetch(createApiUrl('api/verifyotp/'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, otp }),
@@ -68,7 +69,7 @@ export const resetPassword = async (
   confirm_password: string
 ): Promise<ResetPasswordResponse> => {
   try {
-    const response = await fetch(createApiUrl('/resetpassword/'), {
+    const response = await fetch(createApiUrl('api/resetpassword/'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

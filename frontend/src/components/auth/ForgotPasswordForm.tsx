@@ -8,7 +8,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function ForgotPasswordForm() {
   const [step, setStep] = useState(1);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [verifiedEmail, setVerifiedEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,9 +21,10 @@ export default function ForgotPasswordForm() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const result = await sendOtp(email);
-    if (result.success) {
-      toast.success("OTP sent to your email.");
+    const result = await sendOtp(identifier);
+    if (result.success && result.email) {
+      toast.success(result.message || "OTP sent successfully.");
+      setVerifiedEmail(result.email);
       setStep(2);
     } else {
       toast.error(result.error)
@@ -34,7 +36,7 @@ export default function ForgotPasswordForm() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const result = await verifyOtp(email, otp);
+    const result = await verifyOtp(verifiedEmail, otp);
     if (result.success) {
       toast.success("OTP verified. Please enter new password.");
       setStep(3);
@@ -56,11 +58,11 @@ export default function ForgotPasswordForm() {
     }
 
     if (newPassword !== confirmPassword) {
-      toast.success("Passwords do not match.");
+      toast.error("Passwords do not match.");
       setIsSubmitting(false);
       return;
     }
-    const result = await resetPassword(email, otp, newPassword, confirmPassword);
+    const result = await resetPassword(verifiedEmail, otp, newPassword, confirmPassword);
     if (result.success) {
       toast.success("Password reset successful. You can now sign in.");
       setStep(4); 
@@ -91,10 +93,10 @@ export default function ForgotPasswordForm() {
             <h2 className="text-xl font-bold mb-4 text-center">Forgot Password</h2>
             <form onSubmit={handleSendOtp}>
                 <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text"
+                placeholder="Enter your email or username"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 />
                 <Button type="submit" className="mt-4 w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Sending OTP..." : "Send OTP"}
@@ -129,7 +131,7 @@ export default function ForgotPasswordForm() {
                     className="text-blue-600 underline hover:text-blue-800"
                     onClick={async () => {
                     setIsSubmitting(true);
-                    const result = await sendOtp(email);
+                    const result = await sendOtp(identifier);
                     if (result.success) {
                         toast.success("OTP resent successfully.");
                     } else {

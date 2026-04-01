@@ -79,6 +79,9 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('sendotp/', SendOtpView.as_view(),name='sendotp'),
+    path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),
+    path('resetpassword/', ResetPasswordView.as_view(), name='resetpassword'),
     path("dashboard-counts/admin/", views.AdminDashboardCountsView.as_view(), name="dashboard-counts-admin"),
     path("dashboard-counts/patient/", views.PatientDashboardCountsView.as_view(), name="dashboard-counts-patient"),
     path("dashboard-counts/nutrition/", views.NutritionDashboardCountsView.as_view(), name="dashboard-counts-nutrition"),

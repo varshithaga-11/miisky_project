@@ -4077,3 +4077,131 @@ class MicroKitchenReassignmentViewSet(viewsets.ReadOnlyModelViewSet):
         if user_id:
             qs = qs.filter(user_diet_plan__user_id=user_id)
         return qs
+
+
+
+
+
+class SendOtpView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        identifier = request.data.get("email") # Identifier can be email or username
+        if not identifier:
+            return Response({"error": "Email or Username is required"})
+
+        user = UserRegister.objects.filter(Q(email=identifier) | Q(username=identifier)).first()
+        if not user:
+            return Response({"error": "User with this email or username not found"})
+
+        email = user.email
+        if not email:
+            return Response({"error": "User has no email address associated. Please contact support."})
+
+        otp = str(random.randint(100000, 999999))
+
+        otp_obj, created = EmailOTP.objects.get_or_create(email=email)
+        otp_obj.otp = otp
+        otp_obj.created_at = timezone.now()  
+        otp_obj.verified = False
+        otp_obj.save()
+
+        # Send OTP via Email
+        try:
+            from django.core.mail import send_mail
+            from django.conf import settings
+            
+            subject = "Your Password Reset OTP"
+            message = f"Hello,\n\nYour OTP for resetting your password is: {otp}.\n\nThis OTP is valid for 5 minutes.\n\nIf you did not request this, please ignore this email."
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [email]
+            
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            
+            obfuscated_email = f"{email[:3]}...@{email.split('@')[-1]}"
+            return Response({
+                "message": f"OTP sent successfully to your registered email ({obfuscated_email})",
+                "email": email 
+            })
+        except Exception as e:
+            return Response({"error": f"Failed to send email: {str(e)}"})
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp_input = request.data.get('otp')
+
+        try:
+            otp_obj = EmailOTP.objects.get(email=email)
+
+            if otp_obj.is_expired():
+                return Response({'error': 'OTP expired'})
+
+            if otp_obj.otp == otp_input:
+                otp_obj.verified = True  
+                otp_obj.save()
+                return Response({'message': 'OTP verified successfully'})
+            else:
+                return Response({'error': 'Invalid OTP'})
+
+        except EmailOTP.DoesNotExist:
+            return Response({'error': 'OTP not found'})
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email_or_mobile = request.data.get("email")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+
+        if not all([email_or_mobile, new_password, confirm_password]):
+            return Response({"error": "All fields are required."})
+
+        if new_password != confirm_password:
+            return Response({"error": "Passwords do not match."})
+
+        # ===============================
+        #    OTP CHECK
+        # ===============================
+        try:
+            otp_obj = EmailOTP.objects.get(email=email_or_mobile)
+            if not otp_obj.verified:
+                return Response({"error": "OTP not verified for this email."})
+        except EmailOTP.DoesNotExist:
+            return Response({"error": "OTP not found. Please verify OTP first."})
+
+        # ===============================
+        #   USER LOOKUP PRIORITY
+        # ===============================
+
+        # 1️⃣ check customer email field
+        user = UserRegister.objects.filter(c_email=email_or_mobile).first()
+
+        # 2️⃣ if not found → main email field
+        if not user:
+            user = UserRegister.objects.filter(email=email_or_mobile).first()
+
+        # 3️⃣ if not found → customer phone number
+        if not user:
+            user = UserRegister.objects.filter(c_phone_no=email_or_mobile).first()
+
+        # 4️⃣ if still not found
+        if not user:
+            return Response({"error": "User not found."})
+
+        # ===============================
+        #   UPDATE PASSWORD
+        # ===============================
+        user.set_password(new_password)
+        user.save()
+
+        # Reset OTP flag
+        otp_obj.verified = False
+        otp_obj.save()
+
+        return Response({"message": "Password reset successful."})
+
