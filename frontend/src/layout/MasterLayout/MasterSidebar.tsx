@@ -24,6 +24,8 @@ import {
   Send,
   Calendar,
   Mail,
+  Search,
+  X,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -548,6 +550,7 @@ const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
+  const [searchTerm, setSearchTerm] = useState("");
   const [openSubmenu, setOpenSubmenu] = useState<{
     index: number;
   } | null>(null);
@@ -556,14 +559,36 @@ const MasterSidebar: React.FC = () => {
 
   const navItems = useMemo<NavItem[]>(() => {
     const role = getUserRoleFromToken();
-    if (role === "master") return masterNavItems;
-    if (role === "patient") return patientNavItems;
-    if (role === "non_patient") return nonPatientNavItems;
-    if (role === "nutritionist") return nutritionistNavItems;
-    if (role === "micro_kitchen") return microKitchenNavItems;
-    if (role === "supply_chain") return supplyChainNavItems;
-    return adminNavItems;
-  }, []);
+    let items: NavItem[] = [];
+
+    if (role === "master") items = masterNavItems;
+    else if (role === "patient") items = patientNavItems;
+    else if (role === "non_patient") items = nonPatientNavItems;
+    else if (role === "nutritionist") items = nutritionistNavItems;
+    else if (role === "micro_kitchen") items = microKitchenNavItems;
+    else if (role === "supply_chain") items = supplyChainNavItems;
+    else items = adminNavItems;
+
+    if (!searchTerm) return items;
+
+    const lowerSearch = searchTerm.toLowerCase();
+    return items
+      .map((item): NavItem | null => {
+        const matchesName = item.name.toLowerCase().includes(lowerSearch);
+        const matchedSubItems = item.subItems?.filter((sub) =>
+          sub.name.toLowerCase().includes(lowerSearch)
+        );
+
+        if (matchesName || (matchedSubItems && matchedSubItems.length > 0)) {
+          return {
+            ...item,
+            subItems: matchedSubItems?.length ? matchedSubItems : item.subItems,
+          };
+        }
+        return null;
+      })
+      .filter((item): item is NavItem => item !== null);
+  }, [searchTerm]);
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
@@ -732,6 +757,30 @@ const MasterSidebar: React.FC = () => {
           />
         </Link>
       </div>
+
+      {(isExpanded || isHovered || isMobileOpen) && (
+        <div className="px-4 mb-6">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-gray-400"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
           <h2
