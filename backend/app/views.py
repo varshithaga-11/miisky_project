@@ -4175,23 +4175,16 @@ class ResetPasswordView(APIView):
             return Response({"error": "OTP not found. Please verify OTP first."})
 
         # ===============================
-        #   USER LOOKUP PRIORITY
+        #   USER LOOKUP
         # ===============================
+        # Check by email or mobile
+        user = UserRegister.objects.filter(email=email_or_mobile).first()
 
-        # 1️⃣ check customer email field
-        user = UserRegister.objects.filter(c_email=email_or_mobile).first()
-
-        # 2️⃣ if not found → main email field
         if not user:
-            user = UserRegister.objects.filter(email=email_or_mobile).first()
+            user = UserRegister.objects.filter(mobile=email_or_mobile).first()
 
-        # 3️⃣ if not found → customer phone number
         if not user:
-            user = UserRegister.objects.filter(c_phone_no=email_or_mobile).first()
-
-        # 4️⃣ if still not found
-        if not user:
-            return Response({"error": "User not found."})
+            return Response({"error": "User with this email or mobile not found."})
 
         # ===============================
         #   UPDATE PASSWORD

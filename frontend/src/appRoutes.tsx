@@ -341,7 +341,7 @@ export function appRoutes() {
           <Route path="/blank" element={<Blank />} />
 
 
-          <Route path="/resetpassword" element={<ForgotPassword />} />
+
 
           {/* Forms */}
           {/* <Route path="/form-elements" element={<FormElements />} /> */}
@@ -428,6 +428,7 @@ export function appRoutes() {
         {/* Auth Routes */}
         <Route path="/" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/resetpassword" element={<ForgotPassword />} />
 
         {/* Fallback Route */}
         <Route path="*" element={<NotFound />} />

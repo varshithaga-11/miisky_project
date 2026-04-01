@@ -111,12 +111,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }, [fetchNotifications]);
 
   useEffect(() => {
-    fetchNotifications();
+    const access = localStorage.getItem('access');
+    if (access) {
+      fetchNotifications();
+    }
   }, [fetchNotifications]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchNotifications();
+      const access = localStorage.getItem('access');
+      if (access) {
+        fetchNotifications();
+      }
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
