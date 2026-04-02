@@ -123,9 +123,8 @@ const SupportTicketPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadCategories();
-    loadProviders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // loadTickets is called via the statusFilter effect or handleOpenNewTicket
+    // we no longer load categories or providers here
   }, []);
 
   useEffect(() => {
@@ -150,6 +149,13 @@ const SupportTicketPage: React.FC = () => {
       }
     }
   }, [form.target_user_type, providers]);
+
+  const handleOpenNewTicket = () => {
+    loadCategories();
+    loadProviders();
+    // loadTickets();
+    setIsNewOpen(true);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,7 +261,7 @@ const SupportTicketPage: React.FC = () => {
           </Button>
         </div>
 
-        <Button size="sm" onClick={() => setIsNewOpen(true)} className="inline-flex items-center gap-2">
+        <Button size="sm" onClick={handleOpenNewTicket} className="inline-flex items-center gap-2">
           <FiPlus /> New Ticket
         </Button>
       </div>
@@ -275,9 +281,8 @@ const SupportTicketPage: React.FC = () => {
                 <button
                   key={t.id}
                   onClick={() => setActiveTicket(t)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${
-                    activeTicket?.id === t.id ? "bg-blue-50 dark:bg-blue-900/10" : ""
-                  }`}
+                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${activeTicket?.id === t.id ? "bg-blue-50 dark:bg-blue-900/10" : ""
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -330,11 +335,10 @@ const SupportTicketPage: React.FC = () => {
                   return (
                     <div key={`msg-${m.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
                       <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-300 ${
-                          isMe
-                            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none"
-                            : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
-                        }`}
+                        className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-300 ${isMe
+                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none"
+                          : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
+                          }`}
                       >
                         <div className={`flex items-center gap-2 mb-1 text-[10px] font-medium uppercase tracking-wider ${isMe ? "text-blue-100" : "text-gray-500"}`}>
                           {!isMe && <FiUser className="animate-pulse" />}
@@ -352,9 +356,8 @@ const SupportTicketPage: React.FC = () => {
                   const fileName = a.file.split("/").pop() || "Attachment";
                   return (
                     <div key={`att-${a.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm border border-dashed transition-all ${
-                        isMe ? "bg-blue-50 border-blue-200 text-blue-800 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
-                      }`}>
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm border border-dashed transition-all ${isMe ? "bg-blue-50 border-blue-200 text-blue-800 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
+                        }`}>
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isMe ? "bg-blue-100 text-blue-600" : "bg-gray-200 text-gray-500"}`}>
                             <FiFile className="w-5 h-5" />
@@ -368,9 +371,9 @@ const SupportTicketPage: React.FC = () => {
                           </a>
                         </div>
                         <div className="mt-2 flex justify-end">
-                           <span className="text-[9px] font-medium opacity-60">
-                             {a.uploaded_at ? new Date(a.uploaded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
-                           </span>
+                          <span className="text-[9px] font-medium opacity-60">
+                            {a.uploaded_at ? new Date(a.uploaded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -401,9 +404,8 @@ const SupportTicketPage: React.FC = () => {
               )}
 
               <div className="flex gap-2 items-end">
-                <label className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${
-                  pendingFile ? "border-blue-500 bg-blue-50 text-blue-600" : "border-gray-200 hover:border-blue-400 text-gray-400 hover:text-blue-500"
-                }`}>
+                <label className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${pendingFile ? "border-blue-500 bg-blue-50 text-blue-600" : "border-gray-200 hover:border-blue-400 text-gray-400 hover:text-blue-500"
+                  }`}>
                   <FiPaperclip className={uploading ? "animate-spin" : ""} />
                   <input type="file" className="hidden" onChange={handleFileSelect} />
                 </label>
@@ -457,11 +459,10 @@ const SupportTicketPage: React.FC = () => {
                       key={target.id}
                       type="button"
                       onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${
-                        form.target_user_type === target.id
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"
-                          : "border-gray-100 dark:border-white/5 hover:border-blue-200"
-                      }`}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${form.target_user_type === target.id
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"
+                        : "border-gray-100 dark:border-white/5 hover:border-blue-200"
+                        }`}
                     >
                       <span className="text-xl">{target.icon}</span>
                       <span className="text-[10px] font-bold uppercase tracking-tight">{target.label}</span>

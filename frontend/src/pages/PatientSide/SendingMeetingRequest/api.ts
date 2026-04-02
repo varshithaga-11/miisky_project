@@ -42,7 +42,7 @@ export interface AvailabilitySlot {
 // -------------------------------------------------------------
 
 export const getMyActivePlan = async () => {
-    const url = createApiUrl(`api/userdietplan/`);
+    const url = createApiUrl(`api/userdietplan/all-user-plans/`);
     const resp = await axios.get(url, { headers: await getAuthHeaders() });
     const plans = Array.isArray(resp.data) ? resp.data : resp.data?.results ?? [];
     // find the active one
