@@ -52,12 +52,7 @@ export default function DoctorsPage() {
                                             <div className="content-box">
                                                 <h3><Link to={`/doctor-details/${doctor.id}`}>{doctor.name}</Link></h3>
                                                 <span className="designation">{doctor.designation}</span>
-                                                <ul className="social-links clearfix">
-                                                    <li><Link to="/"><i className="fab fa-facebook-f"></i></Link></li>
-                                                    <li><Link to="/"><i className="fab fa-twitter"></i></Link></li>
-                                                    <li><Link to="/"><i className="fab fa-dribbble"></i></Link></li>
-                                                    <li><Link to="/"><i className="fab fa-behance"></i></Link></li>
-                                                </ul>
+
                                             </div>
                                         </div>
                                     </div>

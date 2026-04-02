@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { FiSearch, FiCheckCircle } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getDietPlanList, DietPlan } from "../../AdminSide/DietPlan/dietplanapi";
+import { getDietPlans as getDietPlanList } from "../../../utils/api";
+import { DietPlan } from "../../AdminSide/DietPlan/dietplanapi";
 import { toast, ToastContainer } from 'react-toastify';
 
 const PatientPlansPage: React.FC = () => {
@@ -17,8 +18,9 @@ const PatientPlansPage: React.FC = () => {
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const response = await getDietPlanList(1, 100); // Get all active plans
-      setPlans(response.results);
+      const resp = await getDietPlanList({ page: 1, limit: 100 });
+      const data = resp.data;
+      setPlans(Array.isArray(data) ? data : data.results);
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to load diet plans");

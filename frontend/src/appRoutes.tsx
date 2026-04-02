@@ -382,7 +382,7 @@ export function appRoutes() {
           <Route path="doctor-details/:id" element={<WebsiteDoctorDetails />} />
           <Route path="portfolio" element={<WebsitePortfolio />} />
           {/* <Route path="portfolio-2" element={<WebsitePortfolio2 />} /> */}
-          <Route path="pricing" element={<WebsitePricing />} />
+          <Route path="plans" element={<WebsitePricing />} />
           <Route path="login" element={<WebsiteLogin />} />
           <Route path="register" element={<WebsiteRegister />} />
           {/* <Route path="index-2" element={<WebsiteIndex2 />} />

@@ -17,6 +17,15 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [fetching, setFetching] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<any>({});
+  const partnerTypes = [
+    { value: 'academic', label: 'Academic / Research' },
+    { value: 'technology', label: 'Technology' },
+    { value: 'healthcare', label: 'Healthcare' },
+    { value: 'supply_chain', label: 'Supply Chain' },
+    { value: 'government', label: 'Government' },
+    { value: 'investor', label: 'Investor' },
+    { value: 'other', label: 'Other' },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,12 +35,13 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
         setFormData({
             name: data.name,
             description: data.description,
+            partner_type: data.partner_type || "other",
+            collaboration_details: data.collaboration_details,
+            since_year: data.since_year,
             website_url: data.website_url,
-            logo_alt_text: data.logo_alt_text,
-            display_on_home: data.display_on_home,
             position: data.position,
             is_active: data.is_active,
-            logo_url: data.logo_url
+            logo_url: data.logo
         });
       } catch (error) {
         toast.error("Failed to load data");
@@ -95,13 +105,53 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="partner_type">Partner Category *</Label>
+                <select
+                  id="partner_type"
+                  required
+                  value={formData.partner_type || "other"}
+                  onChange={(e) => setFormData({ ...formData, partner_type: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                  disabled={loading}
+                >
+                  {partnerTypes.map((type) => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="since_year">Partner Since (Year)</Label>
+                <Input
+                  id="since_year"
+                  type="number"
+                  value={formData.since_year || ""}
+                  onChange={(e) => setFormData({ ...formData, since_year: parseInt(e.target.value) || undefined })}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Brief Description</Label>
               <textarea
                 id="description"
                 value={formData.description || ""}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                rows={2}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="collaboration_details">Full Collaboration Scope</Label>
+              <textarea
+                id="collaboration_details"
+                value={formData.collaboration_details || ""}
+                onChange={(e) => setFormData({ ...formData, collaboration_details: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
                 rows={3}
                 disabled={loading}
               />
@@ -130,17 +180,6 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             </div>
 
             <div>
-              <Label htmlFor="logo_alt_text">Logo Alt Text</Label>
-              <Input
-                id="logo_alt_text"
-                type="text"
-                value={formData.logo_alt_text || ""}
-                onChange={(e) => setFormData({ ...formData, logo_alt_text: e.target.value })}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
               <Label htmlFor="position">Position</Label>
               <Input
                 id="position"
@@ -161,16 +200,6 @@ const EditPartner: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                   className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <Label htmlFor="is_active" className="mb-0 cursor-pointer">Active Status</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="display_on_home"
-                  checked={formData.display_on_home || false}
-                  onChange={(e) => setFormData({ ...formData, display_on_home: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
-                <Label htmlFor="display_on_home" className="mb-0 cursor-pointer">Show on Home Page</Label>
               </div>
             </div>
 

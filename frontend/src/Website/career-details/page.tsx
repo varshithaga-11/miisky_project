@@ -48,7 +48,7 @@ export default function CareerDetailsPage() {
                                             {job.type || "Full Time"}
                                         </span>
                                         <span className="mr_30 mt_10"><i className="fas fa-map-marker-alt mr_5" style={{ color: '#0646ac' }}></i> {job.location || "Remote/Office"}</span>
-                                        <span className="mr_30 mt_10"><i className="far fa-calendar-alt mr_5" style={{ color: '#0646ac' }}></i> Posted on: {job.posted_date || "Coming Soon"}</span>
+                                        <span className="mr_30 mt_10"><i className="far fa-calendar-alt mr_5" style={{ color: '#0646ac' }}></i> Posted on: {job.created_at ? new Date(job.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "Recently"}</span>
                                     </div>
                                 </div>
                                 

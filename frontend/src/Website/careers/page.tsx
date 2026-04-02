@@ -7,15 +7,36 @@ export default function CareersPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const PAGE_SIZE = 6;
 
     useEffect(() => {
         setHeaderStyle(1);
         setBreadcrumbTitle("Join Our Team");
+    }, [setHeaderStyle, setBreadcrumbTitle]);
+
+    useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const response = await getJobListings();
-                const data = Array.isArray(response.data) ? response.data : response.data.results || [];
-                setJobs(data);
+                setLoading(true);
+                // Passing limit and page to API (if backend supports)
+                const response = await getJobListings({ page: currentPage, limit: PAGE_SIZE });
+                
+                const isPaginated = !!response.data.results;
+                const rawData = response.data.results || response.data;
+                const total = response.data.count || (Array.isArray(rawData) ? rawData.length : 0);
+                
+                let displayJobs = Array.isArray(rawData) ? rawData : [];
+                
+                // Client-side fallback if backend returns unpaginated data or more than PAGE_SIZE
+                if (!isPaginated || displayJobs.length > PAGE_SIZE) {
+                    const start = isPaginated ? 0 : (currentPage - 1) * PAGE_SIZE;
+                    displayJobs = displayJobs.slice(start, start + PAGE_SIZE);
+                }
+
+                setJobs(displayJobs);
+                setTotalPages(Math.ceil(total / PAGE_SIZE) || 1);
             } catch (err) {
                 console.error("Failed to fetch jobs:", err);
             } finally {
@@ -23,7 +44,7 @@ export default function CareersPage() {
             }
         };
         fetchJobs();
-    }, [setHeaderStyle, setBreadcrumbTitle]);
+    }, [currentPage]);
 
     return (
         <section className="careers-section p_relative sec-pad-2">
@@ -38,27 +59,56 @@ export default function CareersPage() {
                 ) : jobs.length === 0 ? (
                     <div className="text-center p-5">No open positions at the moment. Please check back later.</div>
                 ) : (
-                    <div className="row clearfix">
-                        {jobs.map((job) => (
-                            <div key={job.id} className="col-lg-6 col-md-12 col-sm-12 career-block">
-                                <div className="career-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '10px', backgroundColor: '#fff', marginBottom: '30px', transition: 'all 0.3s ease', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
-                                    <div className="inner-box">
-                                        <div className="job-meta mb_10">
-                                            <span style={{ backgroundColor: '#0646ac', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{job.type || "Full Time"}</span>
-                                            <span style={{ marginLeft: '10px', color: '#777', fontSize: '14px' }}><i className="fas fa-map-marker-alt"></i> {job.location || "Remote/Office"}</span>
-                                        </div>
-                                        <h3 className="mb_15"><Link to={`/website/careers/${job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
-                                        <p className="mb_20" style={{ color: '#555' }}>{job.description ? job.description.substring(0, 150) + "..." : "Excellent opportunity to grow your career in a dynamic environment."}</p>
-                                        <div className="btn-box">
-                                            <Link to={`/website/careers/apply/${job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
-                                                <span>Apply Now</span>
-                                            </Link>
+                    <>
+                        <div className="row clearfix">
+                            {jobs.map((job) => (
+                                <div key={job.id} className="col-lg-6 col-md-12 col-sm-12 career-block">
+                                    <div className="career-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '10px', backgroundColor: '#fff', marginBottom: '30px', transition: 'all 0.3s ease', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
+                                        <div className="inner-box">
+                                            <div className="job-meta mb_10">
+                                                <span style={{ backgroundColor: '#0646ac', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{job.type || "Full Time"}</span>
+                                                <span style={{ marginLeft: '10px', color: '#777', fontSize: '14px' }}><i className="fas fa-map-marker-alt"></i> {job.location || "Remote/Office"}</span>
+                                                <span style={{ marginLeft: '10px', color: '#777', fontSize: '14px' }}>
+                                                    <i className="far fa-calendar-alt"></i> {job.created_at ? new Date(job.created_at).toLocaleDateString() : "Recent"}
+                                                </span>
+                                            </div>
+                                            <h3 className="mb_15"><Link to={`/careers/${job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
+                                            <p className="mb_20" style={{ color: '#555' }}>{job.description ? job.description.substring(0, 150) + "..." : "Excellent opportunity to grow your career in a dynamic environment."}</p>
+                                            <div className="btn-box">
+                                                <Link to={`/careers/${job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                                    <span>View Details</span>
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                        
+                        {totalPages > 1 && (
+                            <div className="pagination-wrapper centred mt_40">
+                                <ul className="pagination clearfix">
+                                    <li>
+                                        <Link to="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
+                                            <i className="icon-21"></i>
+                                        </Link>
+                                    </li>
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <li key={i+1}>
+                                            <Link to="#" className={currentPage === i + 1 ? "current" : ""} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                                                {(i + 1).toString().padStart(2, '0')}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                    <li>
+                                        <Link to="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>
+                                            <i className="icon-22"></i>
+                                        </Link>
+                                    </li>
+                                </ul>
                             </div>
-                        ))}
-                    </div>
+                        )}
+                    </>
                 )}
             </div>
         </section>

@@ -129,17 +129,6 @@ const EditGalleryItem: React.FC<Props> = ({ id, onSuccess, onClose, categories }
               />
             </div>
 
-            <div>
-              <Label htmlFor="position">Display Position</Label>
-              <Input
-                id="position"
-                type="number"
-                value={formData.position || 0}
-                onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                disabled={loading}
-              />
-            </div>
-
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"

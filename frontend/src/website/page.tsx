@@ -4,7 +4,6 @@ import About from "./components/sections/home1/About";
 import About_Two from "./components/sections/home1/About_Two";
 import Banner from "./components/sections/home1/Banner";
 import Chooseus from "./components/sections/home1/Chooseus";
-import Contact_Info from "./components/sections/home1/Contact_Info";
 import News from "./components/sections/home1/News";
 import Portfolio from "./components/sections/home1/Portfolio";
 import Service from "./components/sections/home1/Service";
@@ -23,7 +22,6 @@ export default function HomePage() {
     return (
         <div className="boxed_wrapper">
             <Banner/>
-            <Contact_Info/>
             <About/>
             <Service/>
             <Chooseus/>

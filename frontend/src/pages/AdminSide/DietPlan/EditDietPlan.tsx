@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { 
-    updateDietPlan, getDietPlanById, DietPlan, 
-    createDietPlanFeature, updateDietPlanFeature, deleteDietPlanFeature, DietPlanFeature 
-} from "./dietplanapi";
+    updateDietPlan, getDietPlanById, 
+    createDietPlanFeature, updateDietPlanFeature, deleteDietPlanFeature 
+} from "../../../utils/api";
+import { DietPlan, DietPlanFeature } from "./dietplanapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
@@ -30,8 +31,8 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
 
   const fetchPlan = async () => {
     try {
-      const data = await getDietPlanById(id);
-      setFormData(data);
+      const resp = await getDietPlanById(id);
+      setFormData(resp.data);
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to load details");
@@ -103,7 +104,7 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
           });
           setFormData(prev => ({
               ...prev,
-              features: [...(prev.features || []), resp]
+              features: [...(prev.features || []), resp.data]
           }));
           setNewFeatureText("");
           toast.success("Feature added");

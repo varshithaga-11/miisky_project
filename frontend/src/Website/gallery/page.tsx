@@ -13,6 +13,8 @@ export default function GalleryPage() {
     const [selectedImage, setSelectedImage] = useState<any>(null);
     const [zoom, setZoom] = useState(1);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const PAGE_SIZE = 6;
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -23,7 +25,9 @@ export default function GalleryPage() {
                     getGalleryItems(),
                     getGalleryCategories()
                 ]);
-                setGalleryItems(Array.isArray(itemsRes.data) ? itemsRes.data : itemsRes.data.results || []);
+                const rawItems = Array.isArray(itemsRes.data) ? itemsRes.data : itemsRes.data.results || [];
+                const sortedItems = [...rawItems].sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+                setGalleryItems(sortedItems);
                 setCategories(Array.isArray(catsRes.data) ? catsRes.data : catsRes.data.results || []);
             } catch (err) {
                 console.error("Failed to fetch gallery data:", err);
@@ -38,9 +42,27 @@ export default function GalleryPage() {
         ? galleryItems.filter(item => String(item.category) === String(filterCategory)) 
         : galleryItems;
 
-    const openLightbox = (item: any, index: number) => {
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE);
+    const paginatedItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    const handlePageChange = (pageNum: number) => {
+        setCurrentPage(pageNum);
+        // Using immediate scroll for paginated clicks to feel more responsive
+        window.scrollTo({ top: document.getElementById('gallery-top')?.offsetTop || 0, behavior: 'smooth' });
+    };
+
+    const handleCategorySelect = (categoryId: number | null) => {
+        setFilterCategory(categoryId);
+        setCurrentPage(1);
+        window.scrollTo({ top: document.getElementById('gallery-top')?.offsetTop || 0, behavior: 'smooth' });
+    };
+
+    const openLightbox = (item: any, globalIndex: number) => {
         setSelectedImage(item);
-        setCurrentIndex(index);
+        // Map the current paginated index back to the filtered index for correct navigation
+        const actualIndex = (currentPage - 1) * PAGE_SIZE + globalIndex;
+        setCurrentIndex(actualIndex);
         setZoom(1);
         document.body.style.overflow = 'hidden';
     };
@@ -69,7 +91,7 @@ export default function GalleryPage() {
     const handleResetZoom = () => setZoom(1);
 
     return (
-        <section className="gallery-section p_relative sec-pad-2">
+        <section id="gallery-top" className="gallery-section p_relative sec-pad-2">
             <div className="auto-container">
                 <div className="sec-title mb_50 centred">
                     <span className="sub-title mb_5">Visuals of Excellence</span>
@@ -80,7 +102,7 @@ export default function GalleryPage() {
                 <div className="filter-box mb_50 centred">
                     <ul className="project-filter clearfix" style={{ display: 'flex', justifyContent: 'center', listStyle: 'none', padding: 0, flexWrap: 'wrap' }}>
                         <li 
-                            onClick={() => setFilterCategory(null)} 
+                            onClick={() => handleCategorySelect(null)} 
                             className={!filterCategory ? "active" : ""} 
                             style={{ cursor: 'pointer', padding: '10px 25px', margin: '5px', borderRadius: '30px', backgroundColor: !filterCategory ? '#0646ac' : '#f0f4ff', color: !filterCategory ? '#fff' : '#0646ac', fontWeight: 600, transition: 'all 0.3s ease' }}
                         >
@@ -89,7 +111,7 @@ export default function GalleryPage() {
                         {categories.map(cat => (
                             <li 
                                 key={cat.id} 
-                                onClick={() => setFilterCategory(cat.id)} 
+                                onClick={() => handleCategorySelect(cat.id)} 
                                 className={filterCategory === cat.id ? "active" : ""} 
                                 style={{ cursor: 'pointer', padding: '10px 25px', margin: '5px', borderRadius: '30px', backgroundColor: filterCategory === cat.id ? '#0646ac' : '#f0f4ff', color: filterCategory === cat.id ? '#fff' : '#0646ac', fontWeight: 600, transition: 'all 0.3s ease' }}
                             >
@@ -101,44 +123,111 @@ export default function GalleryPage() {
 
                 {loading ? (
                     <div className="text-center p-5">Loading gallery...</div>
-                ) : filteredItems.length === 0 ? (
+                ) : paginatedItems.length === 0 ? (
                     <div className="text-center p-5">No gallery items found for this category.</div>
                 ) : (
-                    <div className="row clearfix">
-                        {filteredItems.map((item, index) => (
-                            <div key={item.id} className="col-lg-4 col-md-6 col-sm-12 gallery-block mb_30">
-                                <div 
-                                    className="gallery-block-one" 
-                                    onClick={() => openLightbox(item, index)}
-                                    style={{ 
-                                        position: 'relative', 
-                                        borderRadius: '15px', 
-                                        cursor: 'pointer', 
-                                        transition: 'all 0.3s ease', 
-                                        backgroundColor: '#fff',
-                                        overflow: 'hidden',
-                                        boxShadow: '0 5px 20px rgba(0,0,0,0.05)',
-                                        height: '350px'
-                                    }}
-                                >
-                                    <div className="inner-box" style={{ height: '100%', display: 'block' }}>
-                                        <figure className="image-box" style={{ height: '100%', marginBottom: 0, overflow: 'hidden' }}>
-                                            <Image 
-                                                src={item.image_url || "/website/assets/images/project/project-1.jpg"} 
-                                                alt={item.title} 
-                                                width={400} 
-                                                height={350} 
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
-                                            />
-                                        </figure>
+                    <>
+                        <div className="row clearfix">
+                            {paginatedItems.map((item, index) => (
+                                <div key={item.id} className="col-lg-4 col-md-6 col-sm-12 gallery-block mb_30">
+                                    <div 
+                                        className="gallery-block-one" 
+                                        onClick={() => openLightbox(item, index)}
+                                        style={{ 
+                                            position: 'relative', 
+                                            borderRadius: '15px', 
+                                            cursor: 'pointer', 
+                                            transition: 'all 0.3s ease', 
+                                            backgroundColor: '#fff',
+                                            overflow: 'hidden',
+                                            boxShadow: '0 5px 20px rgba(0,0,0,0.05)',
+                                            height: '350px'
+                                        }}
+                                    >
+                                        <div className="inner-box" style={{ height: '100%', display: 'block' }}>
+                                            <figure className="image-box" style={{ height: '100%', marginBottom: 0, overflow: 'hidden' }}>
+                                                <Image 
+                                                    src={item.image_url || "/website/assets/images/project/project-1.jpg"} 
+                                                    alt={item.title || "Gallery Image"} 
+                                                    width={400} 
+                                                    height={350} 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
+                                                />
+                                            </figure>
+                                        </div>
                                     </div>
-                                    <style dangerouslySetInnerHTML={{ __html: `
-                                        .gallery-block-one:hover img { transform: scale(1.05); }
-                                    ` }} />
                                 </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination UI */}
+                        {totalPages > 1 && (
+                            <div className="pagination-wrapper centred mt_60">
+                                <ul className="pagination flex items-center justify-center gap-3 list-none p-0">
+                                    <li>
+                                        <button 
+                                            onClick={() => { if (currentPage > 1) handlePageChange(currentPage - 1); }}
+                                            style={{ 
+                                                width: '50px', height: '50px', borderRadius: '15px',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                backgroundColor: '#fff', border: '1px solid #eee',
+                                                color: currentPage === 1 ? '#ccc' : '#111', 
+                                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                                transition: 'all 0.3s ease',
+                                                boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
+                                            }}
+                                            disabled={currentPage === 1}
+                                            className="hover-scale"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                    </li>
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <li key={i+1}>
+                                            <button 
+                                                onClick={() => handlePageChange(i + 1)}
+                                                style={{ 
+                                                    width: '50px', height: '50px', borderRadius: '15px',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    backgroundColor: currentPage === i + 1 ? '#0646ac' : '#fff',
+                                                    color: currentPage === i + 1 ? '#fff' : '#111',
+                                                    border: currentPage === i + 1 ? 'none' : '1px solid #eee',
+                                                    fontWeight: 700,
+                                                    fontSize: '16px',
+                                                    transition: 'all 0.3s ease',
+                                                    boxShadow: currentPage === i + 1 ? '0 10px 20px rgba(6,70,172,0.2)' : '0 4px 10px rgba(0,0,0,0.03)'
+                                                }}
+                                                className={currentPage === i + 1 ? "" : "hover-scale"}
+                                            >
+                                                {(i + 1).toString().padStart(2, '0')}
+                                            </button>
+                                        </li>
+                                    ))}
+                                    <li>
+                                        <button 
+                                            onClick={() => { if (currentPage < totalPages) handlePageChange(currentPage + 1); }}
+                                            style={{ 
+                                                width: '50px', height: '50px', borderRadius: '15px',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                backgroundColor: '#fff', border: '1px solid #eee',
+                                                color: currentPage === totalPages ? '#ccc' : '#111', 
+                                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                                transition: 'all 0.3s ease',
+                                                boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
+                                            }}
+                                            disabled={currentPage === totalPages}
+                                            className="hover-scale"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </li>
+                                </ul>
+                                <style dangerouslySetInnerHTML={{ __html: `
+                                    .hover-scale:hover { transform: translateY(-3px); border-color: #0646ac !important; color: #0646ac !important; }
+                                ` }} />
                             </div>
-                        ))}
-                    </div>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -180,35 +269,85 @@ export default function GalleryPage() {
                         <ChevronRight size={36} />
                     </button>
 
-                    {/* Image Container */}
+                    {/* Main Container */}
                     <div 
-                        className="lightbox-image-container" 
+                        className="lightbox-content-wrapper" 
                         style={{ 
-                            maxWidth: '90%', maxHeight: '90%', 
-                            display: 'flex', justifyContent: 'center', alignItems: 'center',
-                            overflow: 'hidden', transition: 'all 0.3s ease'
+                            display: 'flex', flexDirection: 'column', 
+                            width: '100%', height: '100%', 
+                            justifyContent: 'space-between', alignItems: 'center',
+                            padding: '60px 0 20px 0'
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <img 
-                            src={selectedImage.image_url || "/website/assets/images/project/project-1.jpg"} 
-                            alt={selectedImage.title} 
+                        {/* Image Container */}
+                        <div 
+                            className="lightbox-image-container" 
                             style={{ 
-                                maxWidth: '100%', maxHeight: '80vh', 
-                                transform: `scale(${zoom})`, 
-                                transition: 'transform 0.2s ease-out',
-                                borderRadius: '8px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-                            }} 
-                        />
-                    </div>
+                                flex: 1, width: '100%',
+                                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <img 
+                                src={selectedImage.image_url || "/website/assets/images/project/project-1.jpg"} 
+                                alt={selectedImage.title || "Gallery Image"} 
+                                style={{ 
+                                    maxWidth: '90%', maxHeight: '100%', 
+                                    transform: `scale(${zoom})`, 
+                                    transition: 'transform 0.2s ease-out',
+                                    borderRadius: '12px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                                }} 
+                            />
+                        </div>
 
-                    {/* Info Bar */}
-                    <div 
-                        className="lightbox-info" 
-                        style={{ position: 'absolute', bottom: '40px', textAlign: 'center', color: '#fff' }}
-                    >
-                        <h3 style={{ color: '#fff', marginBottom: '5px' }}>{selectedImage.title}</h3>
-                        <p style={{ margin: 0, opacity: 0.8 }}>{currentIndex + 1} of {filteredItems.length}</p>
+                        {/* Info Bar - Guaranteed visibility on dark background */}
+                        <div 
+                            className="lightbox-info-bar" 
+                            style={{ 
+                                width: '100%', textAlign: 'center', 
+                                color: '#fff', padding: '30px 20px',
+                                background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)'
+                            }}
+                        >
+                            {selectedImage.title && (
+                                <h3 style={{ 
+                                    margin: '0 0 8px 0', 
+                                    fontSize: '32px', 
+                                    fontWeight: 800, 
+                                    color: '#fff',
+                                    letterSpacing: '1px'
+                                }}>
+                                    {selectedImage.title}
+                                </h3>
+                            )}
+                            {selectedImage.description && (
+                                <p style={{ 
+                                    margin: '0 0 15px 0', 
+                                    fontSize: '20px', 
+                                    fontWeight: 500, 
+                                    color: '#ccc',
+                                    maxWidth: '800px',
+                                    marginInline: 'auto'
+                                }}>
+                                    {selectedImage.description}
+                                </p>
+                            )}
+                            <div 
+                                style={{ 
+                                    display: 'inline-block',
+                                    padding: '5px 15px',
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                    borderRadius: '20px',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: '#fff',
+                                    opacity: 0.7
+                                }}
+                            >
+                                {currentIndex + 1} / {filteredItems.length}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLayout } from "../context/LayoutContext";
-import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import Cta from "../components/sections/home2/Cta";
-import Appointment from "../components/sections/home1/Appointment";
-import { getPricingPlans, getFAQs } from "@/utils/api";
+import { getDietPlans } from "@/utils/api";
+import { FiCheck } from "react-icons/fi";
 
 const MOCK_PLANS = [
     {
@@ -16,88 +15,135 @@ const MOCK_PLANS = [
         features: ["COVID-19", "Eye Infections", "Senior Care", "Cardiology", "Family"],
         icon_class: "icon-20",
         is_popular: false
-    },
-    {
-        id: 2,
-        name: "Silver Plan",
-        price: "50.00",
-        period: "monthly",
-        savings_text: "Save 30%",
-        features: ["COVID-19", "Eye Infections", "Senior Care", "Cardiology", "Family"],
-        icon_class: "icon-20",
-        is_popular: true
-    },
-    {
-        id: 3,
-        name: "Gold Plan",
-        price: "65.00",
-        period: "monthly",
-        savings_text: "Save 20%",
-        features: ["COVID-19", "Eye Infections", "Senior Care", "Cardiology", "Family"],
-        icon_class: "icon-20",
-        is_popular: false
     }
 ];
 
 export default function Pricing_Page() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const [activeIndex, setActiveIndex] = useState<number | null>(0);
-    const [plans, setPlans] = useState<any[]>(MOCK_PLANS);
-    const [faqs, setFaqs] = useState<any[]>([]);
+    const [plans, setPlans] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setHeaderStyle(1);
-        setBreadcrumbTitle("Pricing");
+        setBreadcrumbTitle("Plans");
 
         const fetchData = async () => {
             try {
-                const planRes = await getPricingPlans();
-                const planData = Array.isArray(planRes.data) ? planRes.data : planRes.data.results || [];
-                if (planData.length > 0) setPlans(planData);
+                setLoading(true);
+                const planRes = await getDietPlans({ limit: 100, is_active: true });
+                const planData = Array.isArray(planRes.data) ? planRes.data : (planRes.data.results || []);
 
-                const faqRes = await getFAQs();
-                const faqData = Array.isArray(faqRes.data) ? faqRes.data : faqRes.data.results || [];
-                setFaqs(faqData);
+                if (planData.length > 0) {
+                    const mappedPlans = planData.map((p: any) => {
+                        const amount = parseFloat(p.amount) || 0;
+                        const discount = parseFloat(p.discount_amount) || 0;
+                        const savingsPercent = amount > 0 ? Math.round((discount / amount) * 100) : 0;
+
+                        return {
+                            id: p.id,
+                            name: p.title,
+                            price: p.final_amount,
+                            period: `${p.no_of_days} Days`,
+                            savings_text: savingsPercent > 0 ? `Save ${savingsPercent}%` : "Best Value",
+                            features: p.features?.map((f: any) => f.feature) || [],
+                            icon_class: "icon-20", // Default icon
+                            is_popular: p.is_popular || false
+                        };
+                    });
+                    setPlans(mappedPlans);
+                } else {
+                    setPlans(MOCK_PLANS);
+                }
             } catch (error) {
-                console.error("Failed to fetch pricing or faqs:", error);
+                console.error("Failed to fetch pricing:", error);
+                setPlans(MOCK_PLANS);
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
     }, [setHeaderStyle, setBreadcrumbTitle]);
 
-    const toggleAccordion = (index: number) => {
-        setActiveIndex(activeIndex === index ? null : index);
-    };
+    if (loading) {
+        return (
+            <div className="boxed_wrapper">
+                <section className="pricing-section pt_120 pb_120 text-center">
+                    <div className="auto-container">
+                        <div className="title-text">
+                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Discover Our Plans</h2>
+                        </div>
+                        <div className="mt-16 flex justify-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        );
+    }
 
     return (
         <div className="boxed_wrapper">
-            <section className="pricing-section pt_120 pb_90">
+            <section className="pricing-section pt_120 pb_120 centred">
                 <div className="auto-container">
-                    <div className="row clearfix">
+                    <div className="title-text text-center mb-24">
+                        <h2 className="text-4xl font-bold text-gray-900 dark:text-white">Professional Diet Plans</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-4 rounded-full"></div>
+                    </div>
+
+                    <div className="row flex flex-wrap justify-center -mx-4">
                         {plans.map((plan, index) => (
-                            <div key={plan.id || index} className="col-lg-4 col-md-6 col-sm-12 pricing-block">
-                                <div className="pricing-block-one wow fadeInUp animated" data-wow-delay={`${index * 300}ms`} data-wow-duration="1500ms">
-                                    <div className="pricing-table">
-                                        {plan.is_popular && <span className="popular-tags">Popular</span>}
-                                        <div className="table-header centred">
-                                            <div className="title-box">
-                                                <div className="icon-box">
-                                                    <i className={plan.icon_class || "icon-20"} style={{ fontSize: '50px', color: '#1a4966' }}></i>
-                                                </div>
-                                                <h3>{plan.name}</h3>
-                                                <span>{plan.savings_text}</span>
+                            <div key={plan.id || index} className="col-lg-3 col-md-6 col-sm-12 info-block px-4 mb-12">
+                                <div className="info-block-two wow fadeInUp animated h-full" data-wow-delay={`${index * 200}ms`} data-wow-duration="1500ms">
+                                    <div className="inner-box shadow-xl hover:shadow-2xl transition-all duration-300 rounded-[28px] bg-white dark:bg-gray-800/80 backdrop-blur-sm group border border-gray-100 dark:border-white/5"
+                                        style={{ minHeight: '380px', display: 'flex', flexDirection: 'column', padding: '40px 25px 35px 25px', position: 'relative' }}>
+
+                                        {plan.is_popular && (
+                                            <div className="absolute top-4 right-4">
+                                                <span className="bg-blue-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-md">
+                                                    Best
+                                                </span>
                                             </div>
-                                            <div className="price-box">
-                                                <h2>{plan.price} <span className="symble">$</span> <span className="text">{plan.period}</span></h2>
+                                        )}
+
+                                        <div className="text-center mb-6">
+                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                                                {plan.name}
+                                            </h3>
+                                            <div className="inline-block bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
+                                                <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none">
+                                                    {plan.savings_text}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="table-content">
-                                            <div className="btn-box"><Link to="/pricing" className="theme-btn btn-one">Choose Plan +</Link></div>
-                                            <ul className="feature-list clearfix">
+
+                                        <div className="text-center mb-8 pb-6 border-b border-gray-50 dark:border-white/5">
+                                            <div className="flex items-center justify-center text-gray-900 dark:text-white leading-none">
+                                                <span className="text-xl font-bold mr-0.5 mt-1 opacity-50">₹</span>
+                                                <span className="text-4xl font-black">{plan.price}</span>
+                                            </div>
+                                            <p className="text-[11px] text-gray-400 mt-2 font-black uppercase tracking-[0.2em]">{plan.period}</p>
+                                        </div>
+
+                                        <div className="flex-grow mb-10 text-left overflow-y-auto custom-scrollbar pr-1">
+                                            <ul className="space-y-4">
                                                 {(plan.features || []).map((feature: string, fIdx: number) => (
-                                                    <li key={fIdx}>{feature}</li>
+                                                    <li key={fIdx} className="flex items-start gap-3">
+                                                        <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                            <FiCheck size={12} className="text-blue-600 dark:text-blue-400" />
+                                                        </div>
+                                                        <span className="text-[13px] text-gray-600 dark:text-gray-400 font-medium leading-tight">{feature}</span>
+                                                    </li>
                                                 ))}
                                             </ul>
+                                        </div>
+
+                                        <div className="mt-auto pt-2">
+                                            <Link
+                                                to="/plans"
+                                                className="block w-full py-4 rounded-[18px] bg-[#0646ac] hover:bg-blue-700 text-white font-bold text-center transition-all shadow-lg hover:shadow-blue-500/40 text-[11px] uppercase tracking-[0.2em]"
+                                            >
+                                                Get Started
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
@@ -106,127 +152,7 @@ export default function Pricing_Page() {
                     </div>
                 </div>
             </section>
-
-        <Appointment />
-        <section className="faq-section pricing-page p_relative sec-pad">
-        
-              <div className="auto-container">
-                <div className="row clearfix">
-                  {/* Left Image */}
-                  <div className="col-lg-6 col-md-12 col-sm-12 image-column">
-                    <div className="image_block_four">
-                      <div className="image-box">
-                        <figure className="image">
-                          <Image
-                            src="/website/assets/images/resource/faq-1.jpg"
-                            alt="FAQ"
-                            width={500}
-                            height={600}
-                          />
-                        </figure>
-                        <div className="experience-box">
-                          <div className="inner">
-                            <h2>30</h2>
-                            <span>Years of Experience in This Field</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-        
-                  {/* Right Content */}
-                  <div className="col-lg-6 col-md-12 col-sm-12 content-column">
-                    <div className="content_block_five">
-                      <div className="content-box ml_100">
-                        <div className="sec-title mb_30">
-                          <span className="sub-title mb_5">About the company</span>
-                          <h2>Health service for you</h2>
-                          <p>
-                            The medical professionals who treated me showed unmatched
-                            expertise, compassion, and dedication. Their care and support
-                            helped me overcome a serious health challenge and get back
-                            to living my life.
-                          </p>
-                        </div>
-        
-                        {/* Accordion */}
-                        <ul className="accordion-box">
-                          {faqs.length > 0 ? faqs.map((item: any, index: number) => (
-                            <li
-                              key={item.id || index}
-                              className={`accordion block ${
-                                activeIndex === index ? "active-block" : ""
-                              }`}
-                            >
-                              <div
-                                className={`acc-btn ${
-                                  activeIndex === index ? "active" : ""
-                                }`}
-                                onClick={() => toggleAccordion(index)}
-                              >
-                                <div className="icon-box">
-                                  <i className="icon-22"></i>
-                                </div>
-                                <h4>
-                                  <span>{String(index + 1).padStart(2, "0")}</span>
-                                  {item.question}
-                                </h4>
-                              </div>
-        
-                              {activeIndex === index && (
-                                <div className="acc-content current">
-                                  <p>{item.answer}</p>
-                                </div>
-                              )}
-                            </li>
-                          )) : [
-                            {
-                              title: "Emergency Departments",
-                              content:
-                                "The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life.",
-                            },
-                            {
-                              title: "Covid-19 Testing Clinics",
-                              content:
-                                "The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life.",
-                            },
-                          ].map((item, index) => (
-                            <li
-                              key={index}
-                              className={`accordion block ${
-                                activeIndex === index ? "active-block" : ""
-                              }`}
-                            >
-                              <div
-                                className={`acc-btn ${
-                                  activeIndex === index ? "active" : ""
-                                }`}
-                                onClick={() => toggleAccordion(index)}
-                              >
-                                <div className="icon-box">
-                                  <i className="icon-22"></i>
-                                </div>
-                                <h4>
-                                  <span>{String(index + 1).padStart(2, "0")}</span>
-                                  {item.title}
-                                </h4>
-                              </div>
-        
-                              {activeIndex === index && (
-                                <div className="acc-content current">
-                                  <p>{item.content}</p>
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-        <Cta />
-    </div>
-  );
+            <Cta />
+        </div>
+    );
 }

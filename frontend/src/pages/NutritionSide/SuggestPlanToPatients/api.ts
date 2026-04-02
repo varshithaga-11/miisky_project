@@ -6,11 +6,16 @@ import {
   getPatientReviews,
   NutritionistReview,
 } from "../UploadedDocumentsByPatient/api";
+import { getDietPlans } from "../../../utils/api";
 import type { DietPlan } from "../../AdminSide/DietPlan/dietplanapi";
-import { getDietPlanList } from "../../AdminSide/DietPlan/dietplanapi";
 
-export { getMyPatients, getPatientReviews, getDietPlanList };
+export { getMyPatients, getPatientReviews };
 export type { MappedPatientResponse, NutritionistReview, DietPlan };
+
+export const getDietPlanList = async (page: number, limit: number) => {
+    const resp = await getDietPlans({ page, limit });
+    return resp.data;
+};
 
 export const REASSIGN_MICRO_KITCHEN_REASONS = [
   { value: "kitchen_closed", label: "Kitchen closed" },

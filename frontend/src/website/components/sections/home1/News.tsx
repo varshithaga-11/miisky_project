@@ -40,8 +40,8 @@ export default function News({ posts }: NewsProps) {
           slug: post.slug || `post-${post.id}`,
           excerpt: post.excerpt || post.content?.substring(0, 150) || "",
           image: post.image || post.featured_image_url || post.featured_image || "/website/assets/images/news/news-1.jpg",
-          author: post.author?.name || post.author || "Admin",
-          category: post.category?.name || post.category || "General",
+          author: post.author_name || post.author?.name || post.author || "Admin",
+          category: post.category_name || post.category?.name || (typeof post.category === 'string' ? post.category : null),
           published_at: post.published_at || new Date().toISOString(),
         }));
 
@@ -102,9 +102,9 @@ export default function News({ posts }: NewsProps) {
                     </Link>
                   </figure>
                   <div className="lower-content">
-                    {post.category && (
+                    {/* {post.category && (
                       <span className="comment-box">{post.category}</span>
-                    )}
+                    )} */}
                     <h3>
                       <Link to={`/blog-details/${post.id}`}>{post.title}</Link>
                     </h3>

@@ -98,7 +98,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                   <li><Link to="/doctor-details">Doctor Details</Link></li>
                   <li><Link to="/portfolio">Portfolio One</Link></li>
                   {/* <li><Link to="/portfolio-2">Portfolio Two</Link></li> */}
-                  <li><Link to="/pricing">Pricing</Link></li>
+                  <li><Link to="/plans">Plans</Link></li>
                   <li><Link to="/error">Page Not Found</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 3 ? "open" : ""}`} onClick={() => toggleDropdown(3)}>
@@ -121,6 +121,18 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
 
               {/* Contact */}
               <li><Link to="/contact" onClick={handleMobileMenu}>Contact</Link></li>
+              <li style={{ padding: '15px 25px 0 25px' }}>
+                <button className="theme-btn btn-one" style={{ 
+                  width: '100%', 
+                  padding: '10px 0', 
+                  borderRadius: '5px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase'
+                }}>
+                  Login
+                </button>
+              </li>
 
 
             </ul>

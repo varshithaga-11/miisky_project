@@ -3,10 +3,10 @@ import { useParams } from "react-router-dom";
 import Image from "../components/Image";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
-import ProgressBar from "../components/elements/ProgressBar";
 import { getTeamMemberById } from "../../utils/api";
 import { contactApi } from "../utils/api";
 import { MOCK_DOCTORS } from "../utils/mockData";
+import { toast } from "react-toastify";
 
 export default function DoctorsDetails() {
   const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
@@ -67,9 +67,11 @@ export default function DoctorsDetails() {
         subject: `Inquiry regarding Doctor: ${doctor.name || 'General'}`
       });
       setSubmitStatus("success");
+      toast.success("Message sent successfully!");
       setFormData({ name: "", email: "", phone: "", message: "", subject: "" });
     } catch (error) {
       console.error('Submission failed:', error);
+      toast.error("Failed to send message. Please try again.");
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -110,7 +112,7 @@ export default function DoctorsDetails() {
               </div>
             </div>
 
-            {/* Education & Experience */}
+            {/* 
             <div className="team-info-box mb_40">
               <div className="row clearfix">
                 <div className="col-lg-6 col-md-12 col-sm-12 left-column">
@@ -152,7 +154,6 @@ export default function DoctorsDetails() {
                       </li>
                     </ul>
 
-                    {/* Skills */}
                     <h3>My Skills</h3>
                     <div className="progress-inner">
                       <ProgressBar label="Empathy" percent={90} />
@@ -161,7 +162,6 @@ export default function DoctorsDetails() {
                   </div>
                 </div>
 
-                {/* Working Hours */}
                 <div className="col-lg-6 col-md-12 col-sm-12 left-column">
                   <div className="right-column">
                     <h3>Working Hours</h3>
@@ -192,6 +192,7 @@ export default function DoctorsDetails() {
                 </div>
               </div>
             </div>
+            */}
 
             {/* Contact Form */}
             <div className="contact-box">
@@ -224,8 +225,7 @@ export default function DoctorsDetails() {
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="Email"
-                        required
+                        placeholder="Email (Optional)"
                       />
                     </div>
                   </div>
@@ -274,9 +274,6 @@ export default function DoctorsDetails() {
                     </div>
                   </div>
                 </div>
-                {submitStatus === "success" && (
-                    <div className="mt-3 text-success">Message sent successfully!</div>
-                )}
                 {submitStatus === "error" && (
                     <div className="mt-3 text-danger">Failed to send message. Please try again.</div>
                 )}

@@ -110,7 +110,7 @@ export default function Team({ doctors }: TeamProps) {
                 >
                   <div className="inner-box">
                     <figure className="image-box">
-                      <Link to={`/website/doctor-details/${doctor.id}`}>
+                      <Link to={`/doctor-details/${doctor.id}`}>
                         <Image
                           src={doctor.image || "/website/assets/images/team/team-1.jpg"}
                           alt={doctor.name}
@@ -122,7 +122,7 @@ export default function Team({ doctors }: TeamProps) {
                     </figure>
                     <div className="content-box">
                       <h3>
-                        <Link to={`/website/doctor-details/${doctor.id}`}>{doctor.name}</Link>
+                        <Link to={`/doctor-details/${doctor.id}`}>{doctor.name}</Link>
                       </h3>
                       <span className="designation">{doctor.specialty}</span>
                     </div>

@@ -103,6 +103,19 @@ const AddGalleryItem: React.FC<Props> = ({ onSuccess, onClose, categories }) => 
           </div>
 
           <div>
+            <Label htmlFor="description">Global Description (Optional)</Label>
+            <textarea
+              id="description"
+              placeholder="Description for these images..."
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={3}
+              disabled={loading}
+            />
+          </div>
+
+          <div>
              <Label htmlFor="images">Select Images (Multiple allowed) *</Label>
              <div 
                onClick={() => !loading && document.getElementById('images-hidden')?.click()}
@@ -130,17 +143,6 @@ const AddGalleryItem: React.FC<Props> = ({ onSuccess, onClose, categories }) => 
                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">PNG, JPG or WEBP (Max 5MB each)</p>
                 </div>
              </div>
-          </div>
-
-          <div>
-            <Label htmlFor="position">Starting Position</Label>
-            <Input
-              id="position"
-              type="number"
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 1 })}
-              disabled={loading}
-            />
           </div>
 
           <div className="flex items-center gap-3">

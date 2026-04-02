@@ -98,7 +98,13 @@ export default function Portfolio() {
               <div className="portfolio-block-one">
                 <div className="inner-box">
                   <figure className="image-box">
-                    <Image src={item.img} alt={item.title} width={400} height={300} />
+                    <Image 
+                      src={item.img} 
+                      alt={item.title} 
+                      width={400} 
+                      height={300} 
+                      style={{ width: '100%', height: '300px', objectFit: 'cover' }}
+                    />
                   </figure>
                   <div className="text-box">
                     <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{item.description}</span>

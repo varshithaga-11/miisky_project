@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getDietPlanById, DietPlan } from "./dietplanapi";
+import { getDietPlanById } from "../../../utils/api";
+import { DietPlan } from "./dietplanapi";
 
 interface ViewProps {
   id: number;
@@ -15,7 +16,7 @@ const ViewDietPlan: React.FC<ViewProps> = ({ id, onClose }) => {
     if (id) {
       setLoading(true);
       getDietPlanById(id)
-        .then(setData)
+        .then(resp => setData(resp.data))
         .catch(() => setError("Failed to load details"))
         .finally(() => setLoading(false));
     }
@@ -44,11 +45,11 @@ const ViewDietPlan: React.FC<ViewProps> = ({ id, onClose }) => {
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
-                <p className="font-medium text-gray-900 dark:text-white">${data.amount || "0"}</p>
+                <p className="font-medium text-gray-900 dark:text-white">₹{data.amount || "0"}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Discount</p>
-                <p className="font-medium text-gray-900 dark:text-white">${data.discount_amount || "0"}</p>
+                <p className="font-medium text-gray-900 dark:text-white">₹{data.discount_amount || "0"}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">No. of Days</p>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { createDietPlan, createDietPlanFeature, DietPlan } from "./dietplanapi";
+import { createDietPlan, createDietPlanFeature } from "../../../utils/api";
+import { DietPlan } from "./dietplanapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
@@ -93,7 +94,8 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
         payload.nutritionist_share_percent = n;
         payload.kitchen_share_percent = k;
       }
-      const planResp = await createDietPlan(payload as Partial<DietPlan>);
+      const planResp = await createDietPlan(payload);
+      const planData = planResp.data;
       
       // Add features if any
       if (features.length > 0) {
@@ -101,7 +103,7 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
         const sortedFeatures = [...features].sort((a, b) => a.order - b.order);
         await Promise.all(sortedFeatures.map((f) => 
           createDietPlanFeature({
-            diet_plan: planResp.id,
+            diet_plan: planData.id,
             feature: f.feature,
             order: f.order
           })
@@ -109,7 +111,7 @@ const AddDietPlan: React.FC<AddDietPlanProps> = ({ onClose, onAdd }) => {
       }
 
       toast.success("Diet Plan created successfully!");
-      onAdd(planResp);
+      onAdd(planData);
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to create diet plan.");

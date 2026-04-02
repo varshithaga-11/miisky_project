@@ -58,21 +58,21 @@ export default function Clients() {
                 <Link to={partner.website_url || "#"}>
                   <div className="image-box" style={{ 
                     background: '#ffffff', 
-                    padding: '10px', 
-                    borderRadius: '10px',
-                    width: '160px',
-                    height: '70px',
+                    padding: '12px', 
+                    borderRadius: '12px',
+                    width: '200px',
+                    height: '110px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                    boxShadow: '0 6px 15px rgba(0,0,0,0.1)'
                   }}>
                     <Image
                       src={partner.logo || "/website/assets/images/logo.png"}
                       alt={partner.name}
                       style={{ 
-                        width: '90%', 
-                        height: '90%',
+                        width: '95%', 
+                        height: '95%',
                         objectFit: 'contain'
                       }}
                       priority

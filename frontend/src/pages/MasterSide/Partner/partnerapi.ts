@@ -9,6 +9,9 @@ export interface Partner {
   website_url?: string;
   logo_alt_text?: string;
   display_on_home?: boolean;
+  partner_type?: string;
+  collaboration_details?: string;
+  since_year?: number;
   position?: number;
   is_active?: boolean;
 }

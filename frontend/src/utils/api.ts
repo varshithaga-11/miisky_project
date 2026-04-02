@@ -159,7 +159,7 @@ export const deleteTestimonial = (id: number) => API.delete(`/website/testimonia
 // ============================================================================
 // FAQ CATEGORIES
 // ============================================================================
-export const getFAQCategories = () => API.get('/website/faqcategory/');
+export const getFAQCategories = (params: any = {}) => API.get('/website/faqcategory/', { params });
 export const getFAQCategoryById = (id: number) => API.get(`/website/faqcategory/${id}/`);
 export const createFAQCategory = (data: any) => API.post('/website/faqcategory/', data);
 export const updateFAQCategory = (id: number, data: any) => API.put(`/website/faqcategory/${id}/`, data);
@@ -168,7 +168,7 @@ export const deleteFAQCategory = (id: number) => API.delete(`/website/faqcategor
 // ============================================================================
 // FAQs
 // ============================================================================
-export const getFAQs = () => API.get('/website/faq/');
+export const getFAQs = (params: any = {}) => API.get('/website/faq/', { params });
 export const getFAQById = (id: number) => API.get(`/website/faq/${id}/`);
 export const createFAQ = (data: any) => API.post('/website/faq/', data);
 export const updateFAQ = (id: number, data: any) => API.put(`/website/faq/${id}/`, data);
@@ -195,7 +195,7 @@ export const deleteTeamMember = (id: number) => API.delete(`/website/teammember/
 // ============================================================================
 // JOB LISTINGS
 // ============================================================================
-export const getJobListings = () => API.get('/website/joblisting/');
+export const getJobListings = (params: any = {}) => API.get('/website/joblisting/', { params });
 export const getJobListingById = (id: number) => API.get(`/website/joblisting/${id}/`);
 export const createJobListing = (data: any) => API.post('/website/joblisting/', data);
 export const updateJobListing = (id: number, data: any) => API.put(`/website/joblisting/${id}/`, data);
@@ -222,7 +222,7 @@ export const deleteGalleryCategory = (id: number) => API.delete(`/website/galler
 // ============================================================================
 // GALLERY ITEMS
 // ============================================================================
-export const getGalleryItems = () => API.get('/website/galleryitem/');
+export const getGalleryItems = (params: any = {}) => API.get('/website/galleryitem/', { params });
 export const getGalleryItemById = (id: number) => API.get(`/website/galleryitem/${id}/`);
 export const createGalleryItem = (data: any) => API.post('/website/galleryitem/', data);
 export const updateGalleryItem = (id: number, data: any) => API.put(`/website/galleryitem/${id}/`, data);
@@ -281,6 +281,23 @@ export const getPricingPlanById = (id: number) => API.get(`/website/pricingplan/
 export const createPricingPlan = (data: any) => API.post('/website/pricingplan/', data);
 export const updatePricingPlan = (id: number, data: any) => API.put(`/website/pricingplan/${id}/`, data);
 export const deletePricingPlan = (id: number) => API.delete(`/website/pricingplan/${id}/`);
+
+// ============================================================================
+// DIET PLANS
+// ============================================================================
+export const getDietPlans = (params: any = {}) => API.get('/dietplan/', { params });
+export const getDietPlanById = (id: number) => API.get(`/dietplan/${id}/`);
+export const createDietPlan = (data: any) => API.post('/dietplan/', data);
+export const updateDietPlan = (id: number, data: any) => API.put(`/dietplan/${id}/`, data);
+export const deleteDietPlan = (id: number) => API.delete(`/dietplan/${id}/`);
+
+// ============================================================================
+// DIET PLAN FEATURES
+// ============================================================================
+export const getDietPlanFeatures = (params: any = {}) => API.get('/dietplanfeature/', { params });
+export const createDietPlanFeature = (data: any) => API.post('/dietplanfeature/', data);
+export const updateDietPlanFeature = (id: number, data: any) => API.put(`/dietplanfeature/${id}/`, data);
+export const deleteDietPlanFeature = (id: number) => API.delete(`/dietplanfeature/${id}/`);
 
 // ============================================================================
 // WEBSITE INQUIRIES

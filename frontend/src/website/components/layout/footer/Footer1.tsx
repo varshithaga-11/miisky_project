@@ -31,8 +31,8 @@ export default function Footer1() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-lg-3 col-md-6 col-sm-12 footer-column">
-                                <div className="footer-widget links-widget ml_70">
+                            <div className="col-lg-2 col-md-6 col-sm-12 footer-column">
+                                <div className="footer-widget links-widget">
                                     <div className="widget-title">
                                         <h3>Links</h3>
                                     </div>
@@ -40,25 +40,23 @@ export default function Footer1() {
                                         <ul className="links-list clearfix">
                                             <li><Link to="/about" onClick={() => window.scrollTo(0, 0)}>About</Link></li>
                                             <li><Link to="/medical-devices" onClick={() => window.scrollTo(0, 0)}>Products</Link></li>
-                                            <li><Link to="/research" onClick={() => window.scrollTo(0, 0)}>Innovation</Link></li>
                                             <li><Link to="/gallery" onClick={() => window.scrollTo(0, 0)}>Our Gallery</Link></li>
                                             <li><Link to="/partners" onClick={() => window.scrollTo(0, 0)}>Our Partners</Link></li>
                                         </ul>
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-lg-3 col-md-6 col-sm-12 footer-column">
-                                <div className="footer-widget links-widget ml_70">
+                            <div className="col-lg-2 col-md-6 col-sm-12 footer-column">
+                                <div className="footer-widget links-widget">
                                     <div className="widget-title">
                                         <h3>Services</h3>
                                     </div>
                                     <div className="widget-content">
                                         <ul className="links-list clearfix">
-                                            <li><Link to="/medical-devices" onClick={() => window.scrollTo(0, 0)}>Medical Devices</Link></li>
-                                            <li><Link to="/research" onClick={() => window.scrollTo(0, 0)}>Research Papers</Link></li>
+                                            <li><Link to="/medical-devices" onClick={() => window.scrollTo(0, 0)}>Devices</Link></li>
                                             <li><Link to="/patents" onClick={() => window.scrollTo(0, 0)}>Patents</Link></li>
                                             <li><Link to="/careers" onClick={() => window.scrollTo(0, 0)}>Careers</Link></li>
-                                            <li><Link to="/faq" onClick={() => window.scrollTo(0, 0)}>FAQ Support</Link></li>
+                                            <li><Link to="/faq" onClick={() => window.scrollTo(0, 0)}>Support</Link></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -72,7 +70,21 @@ export default function Footer1() {
                                         <ul className="info-list clearfix">
                                             <li><Image src="/website/assets/images/icons/icon-5.svg" alt="Icon" width={20} height={15} priority />Email: <Link to="mailto:support@miisky.com">support@miisky.com</Link></li>
                                             <li><Image src="/website/assets/images/icons/icon-6.svg" alt="Icon" width={20} height={21} priority />Call : <Link to="tel:+919845497950">+91 9845497950</Link></li>
-                                            <li><Image src="/website/assets/images/icons/icon-7.svg" alt="Icon" width={20} height={20} priority />#211, Temple Street, 9th Main Road, BEML III Stage, Rajarajeswarinagar, Bengaluru - 560098 </li>
+                                            <li><Image src="/website/assets/images/icons/icon-7.svg" alt="Icon" width={20} height={20} priority />#211, Rajarajeswarinagar, Bengaluru-560098 </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-lg-2 col-md-6 col-sm-12 footer-column">
+                                <div className="footer-widget contact-widget">
+                                    <div className="widget-title">
+                                        <h3>Working Hours</h3>
+                                    </div>
+                                    <div className="widget-content">
+                                        <ul className="info-list clearfix">
+                                            <li style={{ whiteSpace: 'nowrap', fontSize: '15px' }}>Mon - Fri: 9:30AM - 6:00PM</li>
+                                            <li style={{ whiteSpace: 'nowrap', fontSize: '15px' }}>Sat: 9:30AM - 2:30PM</li>
+                                            <li style={{ whiteSpace: 'nowrap', fontSize: '15px' }}>Sun: Closed</li>
                                         </ul>
                                     </div>
                                 </div>

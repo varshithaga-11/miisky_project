@@ -2,7 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getDietPlanList, deleteDietPlan, DietPlan } from "./dietplanapi";
+import { getDietPlans as getDietPlanList, deleteDietPlan } from "../../../utils/api";
+import { DietPlan } from "./dietplanapi";
 import AddDietPlan from "./AddDietPlan";
 import EditDietPlan from "./EditDietPlan";
 import ViewDietPlan from "./ViewDietPlan";
@@ -37,10 +38,11 @@ const DietPlanManagement: React.FC = () => {
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const response = await getDietPlanList(currentPage, pageSize, searchTerm);
-      setPlans(response.results);
-      setTotalItems(response.count);
-      setTotalPages(response.total_pages);
+      const response = await getDietPlanList({ page: currentPage, limit: pageSize, search: searchTerm });
+      const data = response.data;
+      setPlans(Array.isArray(data) ? data : data.results);
+      setTotalItems(data.count || (Array.isArray(data) ? data.length : 0));
+      setTotalPages(data.total_pages || 1);
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to load diet plans");

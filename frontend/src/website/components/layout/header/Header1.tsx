@@ -21,7 +21,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
       try {
         const response = await getDepartments();
         let data = [];
-        
+
         if (Array.isArray(response?.data)) {
           data = response.data;
         } else if (response?.data?.results && Array.isArray(response.data.results)) {
@@ -29,7 +29,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
         } else if (response?.data) {
           data = Array.isArray(response.data) ? response.data : [];
         }
-        
+
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for header:", err);
@@ -128,7 +128,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/faq">FAQ</Link></li>
                           <li><Link to="/gallery">Gallery</Link></li>
                           <li><Link to="/partners">Our Partners</Link></li>
-                          <li><Link to="/pricing">Pricing</Link></li>
+                          <li><Link to="/plans">Plans</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -140,6 +140,20 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li>
                         <Link to="/contact">Contact</Link>
                       </li>
+                      <li className="login-li" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
+                        <button className="theme-btn btn-one" style={{
+                          padding: '8px 25px',
+                          fontSize: '14px',
+                          borderRadius: '5px',
+                          height: 'auto',
+                          lineHeight: '1.5',
+                          textTransform: 'uppercase',
+                          fontWeight: '600',
+                          marginTop: '0'
+                        }}>
+                          Login
+                        </button>
+                      </li>
                     </ul>
                   </div>
                 </nav>
@@ -148,17 +162,17 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               {isHomePage && (
                 <div className="menu-right-content">
                   <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                    <div className="icon-box" style={{ 
-                        width: '50px', 
-                        height: '50px', 
-                        backgroundColor: '#fba354', 
-                        borderRadius: '50%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        marginRight: '15px',
-                        flexShrink: 0,
-                        position: 'relative'
+                    <div className="icon-box" style={{
+                      width: '50px',
+                      height: '50px',
+                      backgroundColor: '#fba354',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '15px',
+                      flexShrink: 0,
+                      position: 'relative'
                     }}>
                       <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                     </div>
@@ -235,7 +249,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/faq">FAQ</Link></li>
                           <li><Link to="/gallery">Gallery</Link></li>
                           <li><Link to="/partners">Our Partners</Link></li>
-                          <li><Link to="/pricing">Pricing</Link></li>
+                          <li><Link to="/plans">Plans</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
@@ -247,6 +261,20 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li>
                         <Link to="/contact">Contact</Link>
                       </li>
+                      <li className="login-li" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
+                        <button className="theme-btn btn-one" style={{
+                          padding: '8px 25px',
+                          fontSize: '14px',
+                          borderRadius: '5px',
+                          height: 'auto',
+                          lineHeight: '1.5',
+                          textTransform: 'uppercase',
+                          fontWeight: '600',
+                          marginTop: '0'
+                        }}>
+                          Login
+                        </button>
+                      </li>
                     </ul>
                   </div>
                 </nav>
@@ -255,17 +283,17 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               {isHomePage && (
                 <div className="menu-right-content">
                   <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                    <div className="icon-box" style={{ 
-                        width: '50px', 
-                        height: '50px', 
-                        backgroundColor: '#fba354', 
-                        borderRadius: '50%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        marginRight: '15px',
-                        flexShrink: 0,
-                        position: 'relative'
+                    <div className="icon-box" style={{
+                      width: '50px',
+                      height: '50px',
+                      backgroundColor: '#fba354',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '15px',
+                      flexShrink: 0,
+                      position: 'relative'
                     }}>
                       <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                     </div>
