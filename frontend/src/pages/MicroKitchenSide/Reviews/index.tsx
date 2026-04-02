@@ -4,23 +4,37 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getMicroKitchenRatings, MicroKitchenRating } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiStar, FiMessageSquare, FiUser, FiCalendar, FiHome } from "react-icons/fi";
+import { FiStar, FiMessageSquare, FiUser, FiCalendar, FiHome, FiSearch } from "react-icons/fi";
 import Select from "../../../components/form/Select";
+import Button from "../../../components/ui/button/Button";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 const ReviewsPage: React.FC = () => {
   const [ratings, setRatings] = useState<MicroKitchenRating[]>([]);
   const [loading, setLoading] = useState(true);
   const [userTypeFilter, setUserTypeFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 10;
 
   const fetchRatings = async () => {
     setLoading(true);
     try {
-      const data = await getMicroKitchenRatings();
-      setRatings(Array.isArray(data) ? data : (data as { results?: MicroKitchenRating[] }).results || []);
+      const data = await getMicroKitchenRatings({
+        search: debouncedSearch,
+        order_type: userTypeFilter,
+        page: currentPage,
+        limit: pageSize,
+      });
+      setRatings(data.results || []);
+      setTotalItems(data.count || 0);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load kitchen reviews");
       setRatings([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -28,17 +42,14 @@ const ReviewsPage: React.FC = () => {
 
   useEffect(() => {
     fetchRatings();
-  }, []);
+  }, [debouncedSearch, userTypeFilter, currentPage]);
 
-  // Apply Filter
-  const filteredRatings = ratings.filter((r) => {
-    if (userTypeFilter === "patient") return r.order_type === "patient" || r.order_type === "general";
-    if (userTypeFilter === "non_patient") return r.order_type === "non_patient";
-    return true;
-  });
+  useEffect(() => {
+     setCurrentPage(1);
+  }, [debouncedSearch, userTypeFilter]);
 
   // Group by kitchen
-  const byKitchen = filteredRatings.reduce<Record<number, MicroKitchenRating[]>>((acc, r) => {
+  const byKitchen = ratings.reduce<Record<number, MicroKitchenRating[]>>((acc, r) => {
     const id = r.micro_kitchen;
     if (!acc[id]) acc[id] = [];
     acc[id].push(r);
@@ -72,18 +83,35 @@ const ReviewsPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-72">
-            <Select
-              value={userTypeFilter}
-              onChange={setUserTypeFilter}
-              options={[
-                { value: "all", label: "All Feedback" },
-                { value: "patient", label: "General Patient Ratings" },
-                { value: "non_patient", label: "Non-Patient (Orders)" },
-              ]}
-              placeholder="Filter by type"
-              className="w-full"
-            />
+          <div className="flex flex-wrap items-end gap-6 w-full lg:w-auto">
+            <div className="flex-1 lg:w-80 min-w-[300px]">
+              <label className="text-[10px] font-black text-gray-400 uppercase block mb-1.5 ml-1">Search feedback or customer</label>
+              <div className="relative group/search">
+                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors" size={18} />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Review contents, Order ID, or Customer name..."
+                  className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-2xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                />
+              </div>
+            </div>
+            
+            <div className="w-64">
+              <label className="text-[10px] font-black text-gray-400 uppercase block mb-1.5 ml-1">Category</label>
+              <Select
+                value={userTypeFilter}
+                onChange={setUserTypeFilter}
+                options={[
+                  { value: "all", label: "All Feedback" },
+                  { value: "patient", label: "Patient Only" },
+                  { value: "non_patient", label: "Direct Orders Only" },
+                ]}
+                placeholder="Filter by type"
+                className="w-full !rounded-2xl"
+              />
+            </div>
           </div>
         </div>
 
@@ -201,6 +229,49 @@ const ReviewsPage: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Pagination Controls */}
+            {totalItems > pageSize && (
+                <div className="pt-10 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100 dark:border-white/5">
+                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                       Showing <span className="text-gray-900 dark:text-white">{(currentPage - 1) * pageSize + 1}</span> to{" "}
+                       <span className="text-gray-900 dark:text-white">{Math.min(currentPage * pageSize, totalItems)}</span> of {totalItems} entries
+                   </p>
+                   <div className="flex items-center gap-2">
+                       <Button 
+                           variant="outline" 
+                           onClick={() => setCurrentPage(prev => prev - 1)} 
+                           disabled={currentPage === 1 || loading}
+                           className="!rounded-xl h-10 px-6 font-black text-[10px] uppercase tracking-widest"
+                       >
+                           Previous
+                       </Button>
+                       <div className="flex items-center gap-1">
+                           {[...Array(Math.ceil(totalItems / pageSize))].map((_, i) => (
+                               <button
+                                   key={i}
+                                   onClick={() => setCurrentPage(i + 1)}
+                                   className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
+                                       currentPage === i + 1 
+                                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                                       : "bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                   }`}
+                               >
+                                   {i + 1}
+                               </button>
+                           ))}
+                       </div>
+                       <Button 
+                           variant="outline" 
+                           onClick={() => setCurrentPage(prev => prev + 1)} 
+                           disabled={currentPage >= Math.ceil(totalItems / pageSize) || loading}
+                           className="!rounded-xl h-10 px-6 font-black text-[10px] uppercase tracking-widest"
+                       >
+                           Next
+                       </Button>
+                   </div>
+                </div>
+            )}
           </div>
         )}
       </div>

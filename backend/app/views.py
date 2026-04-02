@@ -3244,6 +3244,7 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
     queryset = MicroKitchenRating.objects.all().select_related('user', 'micro_kitchen', 'order')
     serializer_class = MicroKitchenRatingSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
 
     @action(detail=False, methods=['post'], url_path='rate')
     def rate(self, request):
@@ -3287,7 +3288,22 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
         micro_kitchen_id = self.request.query_params.get('micro_kitchen')
         if micro_kitchen_id:
             qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
-        return qs
+
+        # Add search and order_type filters
+        search = self.request.query_params.get('search')
+        if search:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(review__icontains=search) |
+                Q(order__id__icontains=search)
+            )
+        order_type = self.request.query_params.get('order_type')
+        if order_type and order_type != 'all':
+            qs = qs.filter(order__order_type=order_type)
+
+        return qs.order_by('-created_at')
 
     def perform_create(self, serializer):
         rating_obj = serializer.save(user=self.request.user)

@@ -45,13 +45,13 @@ const ProfileInformation: React.FC = () => {
     useEffect(() => {
         getCountryList(1, "all")
             .then((res) => setCountries(res.results || []))
-            .catch(() => {});
+            .catch(() => { });
         getStateList(1, "all")
             .then((res) => setStates(res.results || []))
-            .catch(() => {});
+            .catch(() => { });
         getCityList(1, "all")
             .then((res) => setCities(res.results || []))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -155,7 +155,7 @@ const ProfileInformation: React.FC = () => {
                     formData.append(key, typeof val === 'number' ? String(val) : val);
                 }
             });
-            
+
             if (photo) {
                 formData.append('photo', photo);
             }
@@ -204,16 +204,16 @@ const ProfileInformation: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                         {/* Profile Photo Sidebar */}
                         <div className="lg:col-span-1 space-y-8">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="bg-white dark:bg-gray-800 rounded-[50px] p-10 border border-gray-100 dark:border-white/5 shadow-2xl shadow-gray-200/40 dark:shadow-none text-center relative overflow-hidden group"
                             >
                                 <div className="relative z-10">
                                     <div className="w-40 h-40 mx-auto rounded-[40px] overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-inner mb-6 relative border-4 border-indigo-50 dark:border-white/5">
-                                        <img 
-                                            src={photo ? URL.createObjectURL(photo) : getImageUrl(profile?.photo)} 
-                                            alt="Profile" 
+                                        <img
+                                            src={photo ? URL.createObjectURL(photo) : getImageUrl(profile?.photo)}
+                                            alt="Profile"
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                         <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
@@ -248,7 +248,7 @@ const ProfileInformation: React.FC = () => {
                         {/* Profile Info Form */}
                         <div className="lg:col-span-2 space-y-10">
                             {/* Basic Details */}
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="bg-white dark:bg-gray-800 rounded-[50px] p-10 md:p-12 border border-gray-100 dark:border-white/5 shadow-2xl shadow-gray-200/40 dark:shadow-none"
@@ -277,9 +277,9 @@ const ProfileInformation: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Gender</Label>
-                                        <select 
-                                            name="gender" 
-                                            value={profile.gender || ""} 
+                                        <select
+                                            name="gender"
+                                            value={profile.gender || ""}
                                             onChange={handleChange}
                                             className="w-full px-6 h-11 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-900 dark:text-white focus:ring-3 focus:ring-brand-500/20 focus:border-brand-300 outline-none transition-all"
                                         >
@@ -310,7 +310,7 @@ const ProfileInformation: React.FC = () => {
                             </motion.div>
 
                             {/* Contact Details */}
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
@@ -342,7 +342,7 @@ const ProfileInformation: React.FC = () => {
                             </motion.div>
 
                             {/* Residency Details */}
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
@@ -394,7 +394,7 @@ const ProfileInformation: React.FC = () => {
                                                 <FiMapPin size={14} />
                                                 Use my location
                                             </button>
-                                            <button
+                                            {/* <button
                                                 type="button"
                                                 onClick={handleGetFromAddress}
                                                 disabled={
@@ -405,7 +405,7 @@ const ProfileInformation: React.FC = () => {
                                                 className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-sm font-medium disabled:opacity-50"
                                             >
                                                 Get from address
-                                            </button>
+                                            </button> */}
                                             <button
                                                 type="button"
                                                 onClick={() => setMapPickerOpen(true)}
@@ -469,12 +469,12 @@ const ProfileInformation: React.FC = () => {
                             </motion.div>
 
                             {/* Save Actions */}
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 className="flex justify-end"
                             >
-                                <button 
+                                <button
                                     type="submit"
                                     disabled={saving}
                                     className="px-12 py-5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-[25px] flex items-center gap-3 shadow-xl shadow-indigo-500/30 transition-all disabled:opacity-50 text-[10px] font-black uppercase tracking-[0.2em]"
