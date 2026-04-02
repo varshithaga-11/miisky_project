@@ -3,8 +3,9 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getMyNutritionist, NutritionistWithProfile, submitRating, getMyRatings, NutritionistRating } from "./api";
-import { FiStar } from "react-icons/fi";
+import { getMyNutritionist, NutritionistWithProfile, submitRating, getMyRatings, NutritionistRating, getNutritionistReviews } from "./api";
+import { FiStar, FiUser, FiX } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const NutritionAllotedPage: React.FC = () => {
   const [data, setData] = useState<NutritionistWithProfile | null>(null);
@@ -14,6 +15,9 @@ const NutritionAllotedPage: React.FC = () => {
   const [review, setReview] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [myExistingRating, setMyExistingRating] = useState<NutritionistRating | null>(null);
+  const [reviews, setReviews] = useState<NutritionistRating[]>([]);
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -34,6 +38,20 @@ const NutritionAllotedPage: React.FC = () => {
       toast.error("Failed to load details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadNutritionistReviews = async () => {
+    if (!data?.nutritionist?.id) return;
+    setLoadingReviews(true);
+    try {
+      const res = await getNutritionistReviews(data.nutritionist.id);
+      setReviews(res);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load reviews");
+    } finally {
+      setLoadingReviews(false);
     }
   };
 
@@ -96,14 +114,23 @@ const NutritionAllotedPage: React.FC = () => {
               )}
             </div>
             {p?.rating !== undefined && (
-              <div className="text-right">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Rating</p>
+              <div className="text-right flex flex-col items-end gap-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Reviews</p>
                 <p className="text-xl font-semibold text-yellow-500">
                   {p.rating?.toFixed(1)}{" "}
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     ({p.total_reviews ?? 0} reviews)
                   </span>
                 </p>
+                <button 
+                  onClick={() => {
+                    setIsReviewsOpen(true);
+                    loadNutritionistReviews();
+                  }}
+                  className="px-4 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 text-[10px] font-black uppercase tracking-wider rounded-lg border border-yellow-200/50 dark:border-yellow-400/20 hover:bg-yellow-100 transition-all"
+                >
+                  View Reviews
+                </button>
               </div>
             )}
           </div>
@@ -216,6 +243,79 @@ const NutritionAllotedPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Reviews Modal */}
+      <AnimatePresence>
+        {isReviewsOpen && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsReviewsOpen(false)}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-[40px] shadow-2xl overflow-hidden border border-gray-100 dark:border-white/5"
+            >
+              <div className="p-8 border-b border-gray-50 dark:border-white/5 flex items-center justify-between bg-gray-50/50 dark:bg-black/20">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Community Feedback</h3>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 italic">Verified Patient Reviews</p>
+                </div>
+                <button 
+                  onClick={() => setIsReviewsOpen(false)}
+                  className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-700/50 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all shadow-sm"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar space-y-6">
+                {loadingReviews ? (
+                  <div className="text-center py-10">
+                    <div className="animate-spin text-yellow-500 mx-auto mb-4"><FiStar size={32} /></div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gathering feedback...</p>
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="text-center py-10 text-gray-400 font-bold italic">No reviews found yet.</div>
+                ) : (
+                  reviews.map((rev) => (
+                    <div key={rev.id} className="bg-gray-50 dark:bg-white/[0.02] p-6 rounded-[32px] border border-gray-100 dark:border-white/5 group hover:border-yellow-500/20 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-yellow-600">
+                            <FiUser size={18} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                              {rev.patient_details ? `${rev.patient_details.first_name} ${rev.patient_details.last_name || ""}` : "Patient"}
+                            </div>
+                            <div className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{rev.created_at ? new Date(rev.created_at).toLocaleDateString() : ""}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <FiStar key={s} size={12} className={s <= rev.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-200 dark:text-gray-700"} />
+                          ))}
+                        </div>
+                      </div>
+                      {rev.review && (
+                        <div className="relative pl-4 border-l-2 border-yellow-500/20">
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed italic">"{rev.review}"</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FiSearch, FiCheckCircle } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getDietPlans as getDietPlanList } from "../../../utils/api";
+import { getAllDietPlans } from "../../../utils/api";
 import { DietPlan } from "../../AdminSide/DietPlan/dietplanapi";
 import { toast, ToastContainer } from 'react-toastify';
 
@@ -18,9 +18,8 @@ const PatientPlansPage: React.FC = () => {
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const resp = await getDietPlanList({ page: 1, limit: 100 });
-      const data = resp.data;
-      setPlans(Array.isArray(data) ? data : data.results);
+      const resp = await getAllDietPlans();
+      setPlans(resp.data);
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to load diet plans");

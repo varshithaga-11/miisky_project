@@ -37,6 +37,11 @@ export type NutritionistRating = {
   review?: string;
   diet_plan?: number | null;
   created_at?: string;
+  patient_details?: {
+    id: number;
+    first_name: string;
+    last_name?: string;
+  };
 };
 
 export const getMyNutritionist = async (): Promise<NutritionistWithProfile> => {
@@ -54,6 +59,15 @@ export const submitRating = async (data: NutritionistRating): Promise<Nutritioni
 export const getMyRatings = async (): Promise<NutritionistRating[]> => {
   const url = createApiUrl("api/nutritionistrating/");
   const response = await axios.get<NutritionistRating[]>(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const getNutritionistReviews = async (nutritionistId: number): Promise<NutritionistRating[]> => {
+  const url = createApiUrl("api/nutritionistrating/");
+  const response = await axios.get<NutritionistRating[]>(url, { 
+    headers: await getAuthHeaders(),
+    params: { nutritionist: nutritionistId }
+  });
   return response.data;
 };
 
