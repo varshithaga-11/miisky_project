@@ -3476,6 +3476,7 @@ def _compute_checkout_for_cart(user, cart):
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
+    pagination_class = Pagination
 
     def get_queryset(self):
         user = self.request.user

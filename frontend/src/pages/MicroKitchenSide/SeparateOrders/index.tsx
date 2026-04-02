@@ -7,7 +7,6 @@ import { toast, ToastContainer } from "react-toastify";
 import { FiPackage, FiLoader, FiMapPin, FiUser, FiCalendar, FiDollarSign, FiStar, FiMessageSquare, FiChevronDown, FiChevronUp, FiEye, FiSearch } from "react-icons/fi";
 import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { coordsFromFields, distanceKmBetween } from "../../../components/orders/orderGeo";
-import { getMyMicroKitchenProfile } from "../MicroKitchenQuestionare/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -16,10 +15,6 @@ import Button from "../../../components/ui/button/Button";
 const SeparateOrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const [kitchenProfile, setKitchenProfile] = useState<{ latitude?: number | null; longitude?: number | null } | null>(
-        null
-    );
-    const [kitchenProfileLoaded, setKitchenProfileLoaded] = useState(false);
     const [updating, setUpdating] = useState<number | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -54,22 +49,6 @@ const SeparateOrdersPage: React.FC = () => {
     useEffect(() => {
         setCurrentPage(1);
     }, [statusFilter, typeFilter, pageSize, search]);
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const p = await getMyMicroKitchenProfile();
-                setKitchenProfile(p ?? null);
-            } catch {
-                setKitchenProfile(null);
-            } finally {
-                setKitchenProfileLoaded(true);
-            }
-        })();
-    }, []);
-
-    const kitchenAccountCoords = coordsFromFields(kitchenProfile?.latitude, kitchenProfile?.longitude);
-    const showKitchenCoordsBanner = kitchenProfileLoaded && !kitchenAccountCoords;
 
     const handleStatusUpdate = async (orderId: number, status: string) => {
         setUpdating(orderId);
@@ -130,30 +109,6 @@ const SeparateOrdersPage: React.FC = () => {
                     <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Orders from Users</h1>
                     <p className="text-gray-500 mt-1 font-medium">All orders placed by customers for your micro kitchen.</p>
                 </div>
-
-                {showKitchenCoordsBanner && (
-                    <div className="mb-8 rounded-[28px] border border-amber-200/80 bg-amber-50/90 dark:bg-amber-950/30 dark:border-amber-500/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                            <FiMapPin className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="text-xs font-black text-amber-900 dark:text-amber-200 uppercase tracking-tight">
-                                    Set your kitchen GPS for delivery charges
-                                </p>
-                                <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-1 leading-relaxed">
-                                    Your kitchen account has no latitude/longitude. Add them under{" "}
-                                    <strong>Profile</strong> (or your kitchen questionnaire flow) so customer distance and slab
-                                    pricing apply at checkout.
-                                </p>
-                            </div>
-                        </div>
-                        <Link
-                            to="/profile-info"
-                            className="shrink-0 text-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5"
-                        >
-                            Open profile
-                        </Link>
-                    </div>
-                )}
 
                 {/* Filters */}
                 <div className="flex flex-wrap items-end gap-4 mb-8">
@@ -328,9 +283,9 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 className="!p-0"
                                                                                 liveDistanceKm={distanceKmBetween(
                                                                                     coordsFromFields(order.user_details?.latitude, order.user_details?.longitude),
-                                                                                    coordsFromFields(order.kitchen_details?.latitude || kitchenProfile?.latitude, order.kitchen_details?.longitude || kitchenProfile?.longitude)
+                                                                                    coordsFromFields(order.kitchen_details?.latitude, order.kitchen_details?.longitude)
                                                                                 )}
-                                                                                liveDistanceLabel="Straight-line distance"
+                                                                                liveDistanceLabel="Straight-line distance (Kitchen to Patient)"
                                                                             />
                                                                         </div>
                                                                     </div>
