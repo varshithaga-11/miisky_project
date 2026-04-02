@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMyMeals, markAsConsumed, updateMealNote } from "./api";
+import { markAsConsumed, updateMealNote, getTimelineMeals, getMonthlyMeals } from "./api";
 import type { UserMeal } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiClock, FiCheckCircle, FiActivity, FiCalendar, FiList, FiPackage, FiEdit2, FiX, FiCheck } from "react-icons/fi";
@@ -17,6 +17,8 @@ const MealsAllotedPage: React.FC = () => {
     const [allMeals, setAllMeals] = useState<UserMeal[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+    const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
+    const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
     
     // Hover State for Calendar
     const [hoveredEvent, setHoveredEvent] = useState<UserMeal | null>(null);
@@ -29,12 +31,18 @@ const MealsAllotedPage: React.FC = () => {
 
     useEffect(() => {
         fetchMeals();
-    }, []);
+    }, [viewMode, calendarMonth, calendarYear]);
 
     const fetchMeals = async () => {
         setLoading(true);
         try {
-            const meals = await getMyMeals();
+            let meals: UserMeal[] = [];
+            if (viewMode === "list") {
+                meals = await getTimelineMeals();
+            } else {
+                meals = await getMonthlyMeals(calendarMonth, calendarYear);
+            }
+            
             const sorted = [...meals].sort((a, b) => {
                 const dateCompare = b.meal_date.localeCompare(a.meal_date);
                 if (dateCompare !== 0) return dateCompare;
@@ -45,6 +53,16 @@ const MealsAllotedPage: React.FC = () => {
             toast.error("Failed to sync your nutrition plan");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCalendarChange = (info: any) => {
+        const date = info.view.currentStart;
+        const newMonth = date.getMonth() + 1;
+        const newYear = date.getFullYear();
+        if (newMonth !== calendarMonth || newYear !== calendarYear) {
+            setCalendarMonth(newMonth);
+            setCalendarYear(newYear);
         }
     };
 
@@ -189,6 +207,7 @@ const MealsAllotedPage: React.FC = () => {
                                     center: "title",
                                     right: "dayGridMonth,timeGridWeek"
                                 }}
+                                datesSet={handleCalendarChange}
                                 events={allMeals.map(m => ({
                                     id: m.id.toString(),
                                     title: `${m.meal_type_details?.name}: ${m.food_details?.name}`,

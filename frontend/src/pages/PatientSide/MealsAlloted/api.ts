@@ -40,6 +40,24 @@ export const getMyMeals = async (): Promise<UserMeal[]> => {
     return Array.isArray(data) ? data : data?.results ?? [];
 };
 
+export const getTimelineMeals = async (startDate?: string, endDate?: string): Promise<UserMeal[]> => {
+    let url = createApiUrl(`api/usermeal/timeline/`);
+    if (startDate || endDate) {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        url += `?${params.toString()}`;
+    }
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getMonthlyMeals = async (month: number, year: number): Promise<UserMeal[]> => {
+    const url = createApiUrl(`api/usermeal/monthly/?month=${month}&year=${year}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
 export const markAsConsumed = async (mealId: number): Promise<UserMeal> => {
     const url = createApiUrl(`api/usermeal/${mealId}/`);
     const response = await axios.patch(url, { is_consumed: true, consumed_at: new Date().toISOString() }, { headers: await getAuthHeaders() });

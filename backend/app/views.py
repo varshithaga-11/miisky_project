@@ -2932,7 +2932,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
             })
         return Response(patients)
 
-    @action(detail=False, methods=['get'], url_path='monthly')
+    @action(detail=False, methods=['get'], url_path='monthly', pagination_class=None)
     def monthly_meals(self, request):
         """Fetch all meals for a month in one call. For micro_kitchen: only meals of allotted patients.
         Params: year, month. Optional: user (patient id)."""
@@ -2976,6 +2976,30 @@ class UserMealViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_id=patient_id)
 
         queryset = queryset.order_by('meal_date', 'meal_type__id')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='timeline', pagination_class=None)
+    def timeline_meals(self, request):
+        """Fetch all meals for a date range (defaults to today to end of month)."""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        
+        from datetime import date
+        import calendar
+        
+        today = date.today()
+        
+        if not start_date_str:
+            queryset = queryset.filter(meal_date__gte=today)
+        
+        if not end_date_str and not start_date_str:
+            _, last_day = calendar.monthrange(today.year, today.month)
+            end_date = date(today.year, today.month, last_day)
+            queryset = queryset.filter(meal_date__lte=end_date)
+            
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
