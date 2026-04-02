@@ -2547,6 +2547,13 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
     ]
     ordering_fields = ["suggested_on", "created_on", "status", "payment_status"]
 
+    @action(detail=False, methods=['get'], url_path='all-user-plans', pagination_class=None)
+    def all_user_plans(self, request):
+        """Fetches all diet plans for the logged-in user without pagination."""
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=["get"], url_path="kitchen-history")
     def kitchen_history(self, request):
         patient_id = request.query_params.get('user')

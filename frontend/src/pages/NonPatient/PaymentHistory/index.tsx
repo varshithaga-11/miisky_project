@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
-import { FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiCalendar, FiCreditCard, FiSearch, FiTrendingUp, FiShoppingBag, FiEye, FiMapPin, FiHash, FiTruck } from "react-icons/fi";
+import { FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiCalendar, FiCreditCard, FiSearch, FiTrendingUp, FiShoppingBag, FiEye, FiMapPin, FiHash, FiTruck, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { getOrderPaymentHistory } from "./api";
 import { getApprovedMicroKitchens, MicroKitchenProfile } from "../../PatientSide/ListOfMicroKitchen/api";
@@ -350,9 +350,9 @@ const NonPatientPaymentHistoryPage: React.FC = () => {
                                     </div>
                                     <button 
                                         onClick={() => setSelectedOrder(null)}
-                                        className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 text-gray-400 hover:text-gray-900 transition-colors"
+                                        className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 text-gray-400 hover:text-rose-500 transition-colors"
                                     >
-                                        <FiAlertCircle size={24} />
+                                        <FiX size={24} />
                                     </button>
                                 </div>
 
