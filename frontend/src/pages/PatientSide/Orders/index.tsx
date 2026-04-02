@@ -3,7 +3,7 @@ import { getMyOrders, Order, rateMicroKitchen } from "../../NonPatient/orderapi"
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
-import { FiPackage, FiClock, FiMapPin, FiCheckCircle, FiLoader, FiCalendar, FiBox, FiStar, FiMessageSquare, FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import { FiPackage, FiClock, FiMapPin, FiCheckCircle, FiLoader, FiCalendar, FiBox, FiStar, FiMessageSquare } from "react-icons/fi";
 import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -48,7 +48,7 @@ const RatingModal: React.FC<{
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-md">
-            <motion.div 
+            <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-white dark:bg-gray-800 w-full max-w-xl rounded-[50px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5"
@@ -63,8 +63,8 @@ const RatingModal: React.FC<{
 
                     <div className="flex justify-center gap-4">
                         {[1, 2, 3, 4, 5].map((star) => (
-                            <button 
-                                key={star} 
+                            <button
+                                key={star}
                                 onClick={() => setRating(star)}
                                 className={`p-4 rounded-3xl transition-all ${rating >= star ? 'bg-amber-100 text-amber-500 shadow-xl scale-110' : 'bg-gray-50 text-gray-300 dark:bg-white/[0.03]'}`}
                             >
@@ -75,7 +75,7 @@ const RatingModal: React.FC<{
 
                     <div className="relative group">
                         <FiMessageSquare className="absolute left-6 top-6 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                        <textarea 
+                        <textarea
                             value={review}
                             onChange={(e) => setReview(e.target.value)}
                             placeholder="Share your thoughts on the meal quality, taste, and presentation..."
@@ -84,13 +84,13 @@ const RatingModal: React.FC<{
                     </div>
 
                     <div className="flex gap-4">
-                        <button 
+                        <button
                             onClick={onClose}
                             className="flex-1 py-5 rounded-[25px] border-2 border-gray-100 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
                         >
                             Later
                         </button>
-                        <button 
+                        <button
                             onClick={handleSubmit}
                             disabled={submitting}
                             className="flex-[2] flex items-center justify-center gap-3 px-12 py-5 bg-indigo-500 hover:bg-indigo-600/90 text-white rounded-[25px] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 transition-all disabled:opacity-50"
@@ -107,29 +107,58 @@ const RatingModal: React.FC<{
 const OrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchingMore, setFetchingMore] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [pageSize] = useState(10);
+    const [hasMore, setHasMore] = useState(true);
 
-    const fetchOrders = async () => {
-        setLoading(true);
+    const fetchOrders = async (page: number = 1) => {
+        if (page === 1) setLoading(true);
+        else setFetchingMore(true);
+
         try {
-            const data = await getMyOrders(currentPage, pageSize);
-            setOrders(data.results);
+            const data = await getMyOrders(page, pageSize);
+            const newOrders = data.results;
+
+            if (page === 1) {
+                setOrders(newOrders);
+            } else {
+                setOrders(prev => [...prev, ...newOrders]);
+            }
+
             setTotalItems(data.count);
+            setHasMore(orders.length + newOrders.length < data.count);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load orders");
         } finally {
             setLoading(false);
+            setFetchingMore(false);
         }
     };
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        fetchOrders();
+        fetchOrders(currentPage);
     }, [currentPage]);
+
+    // Infinite Scroll Observer logic
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading && !fetchingMore) {
+                    setCurrentPage(prev => prev + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const sentinel = document.getElementById("scroll-sentinel");
+        if (sentinel) observer.observe(sentinel);
+
+        return () => observer.disconnect();
+    }, [hasMore, loading, fetchingMore]);
 
     const getStatusStyles = (status: string) => {
         switch (status) {
@@ -171,7 +200,7 @@ const OrdersPage: React.FC = () => {
                             {orders.map((order, idx) => {
                                 const userRating = order.ratings && order.ratings.length > 0 ? order.ratings[0] : null;
                                 return (
-                                    <motion.div 
+                                    <motion.div
                                         key={order.id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -254,17 +283,16 @@ const OrdersPage: React.FC = () => {
                                                     <FiClock className="size-10 text-indigo-100 dark:text-indigo-900/30 mb-4 group-hover/side:text-indigo-500 transition-colors" />
                                                     <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest text-center mb-1">Status Update</p>
                                                     <p className="text-xs font-black text-gray-400 dark:text-gray-500 text-center uppercase mb-6">Kitchen is {order.status}</p>
-                                                    
+
                                                     {order.status === 'delivered' && (
-                                                        <motion.button 
+                                                        <motion.button
                                                             whileHover={{ scale: 1.05 }}
                                                             whileTap={{ scale: 0.95 }}
                                                             onClick={() => setSelectedOrder(order)}
-                                                            className={`px-8 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/5 transition-all flex items-center gap-2 ${
-                                                                userRating 
-                                                                ? "bg-amber-500 text-white border-transparent hover:bg-amber-600" 
+                                                            className={`px-8 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/5 transition-all flex items-center gap-2 ${userRating
+                                                                ? "bg-amber-500 text-white border-transparent hover:bg-amber-600"
                                                                 : "bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white"
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <FiStar className="size-3" /> {userRating ? "Edit Review" : "Rate Food"}
                                                         </motion.button>
@@ -282,40 +310,31 @@ const OrdersPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Pagination Controls */}
-                {!loading && totalItems > pageSize && (
-                    <div className="mt-20 flex justify-center items-center gap-4">
-                        <button 
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                            className="w-14 h-14 rounded-3xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-indigo-500 disabled:opacity-30 disabled:hover:text-gray-400 transition-all shadow-lg shadow-gray-200/20 dark:shadow-none"
-                        >
-                            <FiArrowLeft size={20} />
-                        </button>
-                        
-                        <div className="px-8 py-4 rounded-3xl bg-indigo-500 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 flex items-center gap-3">
-                            <span className="opacity-60">Page</span>
-                            <span className="text-sm">{currentPage}</span>
-                            <span className="opacity-60">of {Math.ceil(totalItems / pageSize)}</span>
+                <div id="scroll-sentinel" className="h-40 flex items-center justify-center mt-10">
+                    {fetchingMore && (
+                        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-8 py-4 rounded-full shadow-2xl border border-gray-100 dark:border-white/5 animate-bounce">
+                            <FiLoader className="animate-spin text-indigo-500" size={20} />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Loading more delicacies...</span>
                         </div>
-
-                        <button 
-                            disabled={currentPage >= Math.ceil(totalItems / pageSize)}
-                            onClick={() => setCurrentPage(prev => prev + 1)}
-                            className="w-14 h-14 rounded-3xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-indigo-500 disabled:opacity-30 disabled:hover:text-gray-400 transition-all shadow-lg shadow-gray-200/20 dark:shadow-none"
-                        >
-                            <FiArrowRight size={20} />
-                        </button>
-                    </div>
-                )}
+                    )}
+                    {!hasMore && orders.length >= totalItems && (
+                        <div className="text-center space-y-2 opacity-40">
+                            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 mx-auto rounded-full" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Reached the end of your culinary history</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {selectedOrder && (
-                <RatingModal 
+                <RatingModal
                     order={selectedOrder}
                     isOpen={!!selectedOrder}
                     onClose={() => setSelectedOrder(null)}
-                    onSuccess={fetchOrders}
+                    onSuccess={() => {
+                        setCurrentPage(1);
+                        fetchOrders(1);
+                    }}
                 />
             )}
         </div>
