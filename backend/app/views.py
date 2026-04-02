@@ -3542,8 +3542,61 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Q(delivery_address__icontains=search) |
                 Q(id__icontains=search)
             )
-            
+
+        # Date range filtering
+        period = self.request.query_params.get('period')
+        if period and period != 'all':
+            from .utils.date_utils import get_period_range
+            start_date = self.request.query_params.get('start_date')
+            end_date = self.request.query_params.get('end_date')
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except Exception as ex:
+                print(f"Error calculating date range: {ex}")
+
         return qs
+
+    def list(self, request, *args, **kwargs):
+        """Overrides list to include stats for the current filter."""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Calculate stats for the full filtered queryset (before pagination)
+        from django.db.models import Sum, Count
+        stats = queryset.aggregate(
+            total_orders=Count('id'),
+            total_amount=Sum('final_amount')
+        )
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            # Add stats to the paginated response
+            response.data['total_orders'] = stats['total_orders'] or 0
+            response.data['total_amount'] = stats['total_amount'] or 0
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'results': serializer.data,
+            'total_orders': stats['total_orders'] or 0,
+            'total_amount': stats['total_amount'] or 0
+        })
+
+    @action(detail=False, methods=['get'], url_path='payment-stats')
+    def payment_stats(self, request):
+        """Calculate summary stats (total count, total amount) for the filtered orders."""
+        qs = self.get_queryset()
+        from django.db.models import Sum, Count
+        stats = qs.aggregate(
+            total_orders=Count('id'),
+            total_amount=Sum('final_amount')
+        )
+        return Response({
+            'total_orders': stats['total_orders'] or 0,
+            'total_amount': stats['total_amount'] or 0
+        })
 
     @action(detail=False, methods=['post'], url_path='place-order')
     def place_order(self, request):

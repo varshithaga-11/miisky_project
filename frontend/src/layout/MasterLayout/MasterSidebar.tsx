@@ -430,8 +430,8 @@ const nonPatientNavItems: NavItem[] = [
   },
   {
     icon: <Wallet className="w-5 h-5" />,
-    name: "Payment History",
-    path: "/patient/payment-history",
+    name: "Order History",
+    path: "/non-patient/payment-history",
   },
   {
     icon: <UserCog className="w-5 h-5" />,

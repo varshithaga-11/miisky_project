@@ -111,6 +111,7 @@ import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
 import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
 import AvailabilityCalendar from "./pages/NutritionSide/AvailabilityCalendar/index";
 import PaymentHistoryPage from "./pages/PatientSide/PaymentHistory/index";
+import NonPatientPaymentHistoryPage from "./pages/NonPatient/PaymentHistory/index";
 
 
 // Master Side Pages
@@ -330,6 +331,7 @@ export function appRoutes() {
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
+          <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 
