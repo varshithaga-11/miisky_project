@@ -117,7 +117,7 @@ const OrdersPage: React.FC = () => {
         setLoading(true);
         try {
             const data = await getMyOrders();
-            setOrders(data);
+            setOrders((data as any).results || data);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load orders");

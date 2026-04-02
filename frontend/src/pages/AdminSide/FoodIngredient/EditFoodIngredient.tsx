@@ -29,17 +29,18 @@ const EditFoodIngredient: React.FC<EditFoodIngredientProps> = ({ editId, isOpen,
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getFoodList().then(setFoods).catch(console.error);
-    getIngredientList().then(setIngredients).catch(console.error);
-    getUnitList().then(setUnits).catch(console.error);
+    getFoodList().then(res => setFoods((res as any).results || res)).catch(console.error);
+    getIngredientList().then(res => setIngredients((res as any).results || res)).catch(console.error);
+    getUnitList().then(res => setUnits((res as any).results || res)).catch(console.error);
   }, []);
 
   useEffect(() => {
     if (isOpen && editId) {
         setLoading(true);
         // Using getFoodIngredientList to find the specific item since we don't have getById yet
-        getFoodIngredientList().then(list => {
-            const item = list.find(fi => fi.id === editId);
+        getFoodIngredientList().then(res => {
+            const list = (res as any).results || res;
+            const item = (list as any[]).find((fi: any) => fi.id === editId);
             if (item) {
                 setFoodId(String(item.food));
                 setIngredientId(String(item.ingredient));

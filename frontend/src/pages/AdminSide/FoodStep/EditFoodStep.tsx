@@ -24,14 +24,15 @@ const EditFoodStep: React.FC<EditFoodStepProps> = ({ editId, isOpen, onClose, on
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getFoodList().then(setFoods).catch(console.error);
+    getFoodList().then(res => setFoods((res as any).results || res)).catch(console.error);
   }, []);
 
   useEffect(() => {
     if (isOpen && editId) {
         setLoading(true);
-        getFoodStepList().then(list => {
-            const item = list.find(s => s.id === editId);
+        getFoodStepList().then(res => {
+            const list = (res as any).results || res;
+            const item = (list as any[]).find((s: any) => s.id === editId);
             if (item) {
                 setFoodId(String(item.food));
                 setStepNumber(String(item.step_number));

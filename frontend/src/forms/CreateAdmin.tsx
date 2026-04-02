@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../pages/Dashboard/api";
+import { axiosInstance } from "../components/auth/api";
 
 export default function CreateAdmin() {
   const [username, setUsername] = useState("");

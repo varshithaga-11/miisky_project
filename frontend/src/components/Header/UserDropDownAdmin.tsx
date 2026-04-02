@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { Link } from "react-router-dom";
-import { axiosInstance } from "../../pages/Dashboard/api";
+import { axiosInstance } from "../auth/api";
 
 export default function AdminUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +12,7 @@ export default function AdminUserDropdown() {
 
   useEffect(() => {
     axiosInstance.get("company-logo/")
-      .then(res => {
+      .then((res: any) => {
         setCompanyLogo(res.data.logo_url || "");
         setAdminUsername(res.data.admin_username || "");
         setAdminEmail(res.data.admin_email || "");

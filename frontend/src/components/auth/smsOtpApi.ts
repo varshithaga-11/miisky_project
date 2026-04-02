@@ -1,5 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
-import { createApiUrl } from '../../access/api.ts';
+import { createApiUrl } from '../../access/access';
 
 // Types for the SMS OTP API
 interface SendOTPData {

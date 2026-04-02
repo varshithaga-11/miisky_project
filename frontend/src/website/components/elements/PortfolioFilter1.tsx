@@ -1,5 +1,6 @@
 import Image from "../Image";
 import { Link } from "react-router-dom";
+// @ts-ignore
 import Isotope from "isotope-layout";
 import { useEffect, useRef, useState, useCallback } from "react";
 
