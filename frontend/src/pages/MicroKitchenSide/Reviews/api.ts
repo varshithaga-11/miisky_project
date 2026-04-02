@@ -49,3 +49,11 @@ export const getMicroKitchenRatings = async (params?: {
   });
   return response.data;
 };
+
+export const getAllKitchenReviews = async (kitchenId: number): Promise<MicroKitchenRating[]> => {
+    const url = createApiUrl(`api/microkitchenrating/all-reviews/?kitchen_id=${kitchenId}`);
+    const response = await axios.get<MicroKitchenRating[]>(url, {
+        headers: await getAuthHeaders(),
+    });
+    return response.data;
+};

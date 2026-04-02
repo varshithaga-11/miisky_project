@@ -3272,6 +3272,17 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
         self._recalculate_kitchen_stats(obj.micro_kitchen)
         return Response(self.get_serializer(obj).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'], url_path='all-reviews')
+    def all_reviews(self, request):
+        """Get all reviews for a kitchen without pagination."""
+        kitchen_id = request.query_params.get('kitchen_id')
+        if not kitchen_id:
+            return Response({'error': 'kitchen_id is required'}, status=400)
+        
+        qs = MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).select_related('user').order_by('-created_at')
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
     def get_queryset(self):
         user = self.request.user
         qs = self.queryset
