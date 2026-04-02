@@ -3,12 +3,13 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyHealthReports, uploadHealthReport, deleteHealthReport, PatientHealthReport } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiInfo, FiMessageSquare } from "react-icons/fi";
+import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiInfo, FiMessageSquare, FiSearch, FiX } from "react-icons/fi";
 
 const HealthReportUploadPage: React.FC = () => {
     const [reports, setReports] = useState<PatientHealthReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const [newReport, setNewReport] = useState({
         title: "",
@@ -75,6 +76,15 @@ const HealthReportUploadPage: React.FC = () => {
             toast.error("Delete failed");
         }
     };
+
+    const filteredReports = React.useMemo(() => {
+        if (!searchTerm.trim()) return reports;
+        const q = searchTerm.toLowerCase();
+        return reports.filter(r => 
+            (r.title && r.title.toLowerCase().includes(q)) || 
+            (r.report_type && r.report_type.toLowerCase().includes(q))
+        );
+    }, [reports, searchTerm]);
 
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
@@ -151,10 +161,29 @@ const HealthReportUploadPage: React.FC = () => {
 
                     {/* Dashboard/List Section */}
                     <div className="xl:col-span-2">
-                        <div className="mb-6 flex justify-between items-end">
+                        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <h1 className="text-3xl font-black text-gray-900 dark:text-white">My Library</h1>
-                                <p className="text-gray-500 mt-1 font-medium">Access and manage all your secure medical documents.</p>
+                                <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">My Library</h1>
+                                <p className="text-gray-500 mt-1 font-medium italic">Your secure digital medical archive.</p>
+                            </div>
+
+                            <div className="relative w-full md:w-80 group">
+                                <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by title or type..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-14 pr-12 py-4 bg-white dark:bg-gray-800 border-2 border-transparent focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 rounded-[22px] outline-none transition-all font-bold text-sm shadow-xl shadow-gray-200/40 dark:shadow-none dark:text-white placeholder:font-medium placeholder:text-gray-400"
+                                />
+                                {searchTerm && (
+                                    <button 
+                                        onClick={() => setSearchTerm("")}
+                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <FiX size={16} />
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -163,14 +192,14 @@ const HealthReportUploadPage: React.FC = () => {
                                 [1, 2, 3, 4].map(i => (
                                     <div key={i} className="h-32 bg-white dark:bg-gray-800 rounded-3xl animate-pulse"></div>
                                 ))
-                            ) : reports.length === 0 ? (
+                            ) : filteredReports.length === 0 ? (
                                 <div className="md:col-span-2 text-center py-20 bg-white dark:bg-gray-800 rounded-[40px] border border-dashed border-gray-200 dark:border-white/10">
                                     <FiFileText className="size-16 mx-auto text-gray-200 dark:text-gray-700 mb-6" />
-                                    <h3 className="text-xl font-bold dark:text-white">No reports yet</h3>
-                                    <p className="text-gray-500">Your uploaded records will appear here.</p>
+                                    <h3 className="text-xl font-bold dark:text-white">No matches found</h3>
+                                    <p className="text-gray-500">Try adjusting your search query.</p>
                                 </div>
                             ) : (
-                                reports.map((report) => (
+                                filteredReports.map((report) => (
                                     <div key={report.id} className="bg-white dark:bg-gray-800 p-6 rounded-[32px] flex flex-col gap-5 shadow-sm border border-transparent hover:shadow-xl hover:border-blue-500/20 transition-all group">
                                         <div className="flex items-center gap-4">
                                             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600">

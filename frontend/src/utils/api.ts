@@ -287,6 +287,7 @@ export const deletePricingPlan = (id: number) => API.delete(`/website/pricingpla
 // DIET PLANS
 // ============================================================================
 export const getDietPlans = (params: any = {}) => API.get('/dietplan/', { params });
+export const getAllDietPlans = () => API.get('/dietplan/all/');
 export const getDietPlanById = (id: number) => API.get(`/dietplan/${id}/`);
 export const createDietPlan = (data: any) => API.post('/dietplan/', data);
 export const updateDietPlan = (id: number, data: any) => API.put(`/dietplan/${id}/`, data);

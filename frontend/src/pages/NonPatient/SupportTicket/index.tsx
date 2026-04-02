@@ -123,8 +123,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadCategories();
-    loadProviders();
+    // Modal-specific data (categories, providers) is now fetched on-demand
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -150,6 +149,12 @@ const SupportTicketPage: React.FC = () => {
       }
     }
   }, [form.target_user_type, providers]);
+
+  const handleOpenCreateModal = () => {
+    setIsNewOpen(true);
+    loadProviders();
+    loadCategories();
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,7 +248,7 @@ const SupportTicketPage: React.FC = () => {
           </Button>
         </div>
 
-        <Button size="sm" onClick={() => setIsNewOpen(true)} className="inline-flex items-center gap-2 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20">
+        <Button size="sm" onClick={handleOpenCreateModal} className="inline-flex items-center gap-2 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20">
           <FiPlus /> Create Ticket
         </Button>
       </div>

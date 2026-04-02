@@ -2,13 +2,21 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getApprovedMicroKitchens, MicroKitchenProfile } from "./api";
+import { getAllKitchenReviews, MicroKitchenRating } from "../../MicroKitchenSide/Reviews/api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiStar, FiMapPin, FiClock, FiSearch, FiInfo, FiCheckCircle } from "react-icons/fi";
+import { FiStar, FiMapPin, FiClock, FiSearch, FiInfo, FiCheckCircle, FiX, FiMessageSquare, FiUser, FiCalendar } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ListOfMicroKitchenPage: React.FC = () => {
     const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    
+    // Reviews Modal States
+    const [showReviewsModal, setShowReviewsModal] = useState(false);
+    const [selectedKitchen, setSelectedKitchen] = useState<MicroKitchenProfile | null>(null);
+    const [reviews, setReviews] = useState<MicroKitchenRating[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
 
     const fetchKitchens = async (search = "") => {
         setLoading(true);
@@ -24,8 +32,25 @@ const ListOfMicroKitchenPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchKitchens(searchTerm);
+        const timer = setTimeout(() => {
+            fetchKitchens(searchTerm);
+        }, 300);
+        return () => clearTimeout(timer);
     }, [searchTerm]);
+
+    const fetchReviews = async (kitchen: MicroKitchenProfile) => {
+        setSelectedKitchen(kitchen);
+        setShowReviewsModal(true);
+        setLoadingReviews(true);
+        try {
+            const data = await getAllKitchenReviews(kitchen.id);
+            setReviews(data);
+        } catch (error) {
+            toast.error("Failed to load reviews");
+        } finally {
+            setLoadingReviews(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
@@ -141,14 +166,22 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex justify-between items-center bg-gray-50/50 dark:bg-white/[0.02] p-3 rounded-2xl">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                                                <FiClock className="size-3" />
-                                                <span>{kitchen.time_available || "9 AM - 9 PM"}</span>
+                                        <div className="flex flex-col gap-3 bg-gray-50/50 dark:bg-white/[0.02] p-4 rounded-3xl border border-gray-100/50 dark:border-white/5">
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                                                    <FiClock className="size-3" />
+                                                    <span>{kitchen.time_available || "9 AM - 9 PM"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest cursor-help group-hover:translate-x-1 transition-transform">
+                                                    Explore <FiInfo size={12} />
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest cursor-help group-hover:translate-x-1 transition-transform">
-                                                Explore <FiInfo size={12} />
-                                            </div>
+                                            <button 
+                                                onClick={() => fetchReviews(kitchen)}
+                                                className="w-full py-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm text-[10px] font-black uppercase text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <FiStar size={14} /> User Reviews
+                                            </button>
                                         </div>
                                         
                                         {/* Latest Inspection Note */}
@@ -169,6 +202,89 @@ const ListOfMicroKitchenPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Reviews Modal */}
+            <AnimatePresence>
+                {showReviewsModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowReviewsModal(false)}
+                            className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+                        >
+                            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
+                                        {selectedKitchen?.brand_name || "Kitchen"} Feedback
+                                    </h3>
+                                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Verified Experiences</p>
+                                </div>
+                                <button 
+                                    onClick={() => setShowReviewsModal(false)}
+                                    className="p-3 rounded-2xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                >
+                                    <FiX size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto no-scrollbar p-8">
+                                {loadingReviews ? (
+                                    <div className="py-20 flex flex-col items-center justify-center">
+                                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest animate-pulse">Summoning Reviews...</p>
+                                    </div>
+                                ) : reviews.length === 0 ? (
+                                    <div className="py-20 flex flex-col items-center justify-center text-center opacity-50">
+                                        <FiMessageSquare size={48} className="text-gray-300 mb-4" />
+                                        <p className="text-gray-500 font-bold">No verified reviews for this kitchen yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-8">
+                                        {reviews.map((r, i) => (
+                                            <div key={r.id} className="flex gap-6 animate-in slide-in-from-bottom-4 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                                                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex-shrink-0 flex items-center justify-center">
+                                                    <FiUser className="text-blue-400" size={20} />
+                                                </div>
+                                                <div className="flex-1 border-b border-gray-50 dark:border-white/5 pb-8 last:border-0">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                                                            {r.user_details?.first_name} {r.user_details?.last_name}
+                                                        </span>
+                                                        <div className="flex gap-0.5">
+                                                            {[1, 2, 3, 4, 5].map(s => (
+                                                                <FiStar key={s} size={12} className={s <= r.rating ? "text-amber-500 fill-amber-500" : "text-gray-200"} />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                                                            <FiCalendar size={10} /> {new Date(r.created_at).toLocaleDateString()}
+                                                        </span>
+                                                        <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[8px] font-black text-gray-500 uppercase tracking-tighter">
+                                                            Order #{r.order}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium italic leading-relaxed">
+                                                        "{r.review || "No written feedback provided, but shared a positive rating!"}"
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

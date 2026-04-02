@@ -55,10 +55,9 @@ export interface UserDietPlan {
 }
 
 export const getMySuggestedPlans = async (): Promise<UserDietPlan[]> => {
-  const url = createApiUrl("api/userdietplan/?limit=100");
+  const url = createApiUrl("api/userdietplan/all-user-plans/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
-  const data = response.data;
-  return Array.isArray(data) ? data : data?.results ?? [];
+  return response.data;
 };
 
 export const approvePlan = async (id: number, startDate?: string): Promise<UserDietPlan> => {
