@@ -184,14 +184,27 @@ export const getCuisineTypeList = async (
   limit: number | "all" = 10,
   search?: string
 ): Promise<PaginatedResponses<CuisineType>> => {
+  const isAll = limit === "all";
+  const url = createApiUrl(isAll ? "api/cuisinetype/all/" : "api/cuisinetype/");
   const params: Record<string, any> = { page };
-  if (limit !== "all") params.limit = limit;
+  if (!isAll) params.limit = limit;
   if (search) params.search = search;
 
-  const url = createApiUrl("api/cuisinetype/");
-  const response = await axios.get<PaginatedResponses<CuisineType>>(url, {
+  const response = await axios.get<PaginatedResponses<CuisineType> | CuisineType[]>(url, {
     headers: await getAuthHeaders(),
-    params: limit === "all" ? { ...params, limit: 10 } : params,
+    params: isAll ? { search } : params,
   });
-  return response.data;
+
+  if (isAll) {
+    return {
+      count: (response.data as CuisineType[]).length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: response.data as CuisineType[],
+    };
+  }
+
+  return response.data as PaginatedResponses<CuisineType>;
 };

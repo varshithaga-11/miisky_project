@@ -16,6 +16,7 @@ interface SearchableSelectProps<T = string | number> {
   disabled?: boolean;
   error?: string;
   required?: boolean;
+  onFocus?: () => void | Promise<void>;
 }
 
 const SearchableSelect = <T extends string | number>({
@@ -28,6 +29,7 @@ const SearchableSelect = <T extends string | number>({
   disabled = false,
   error,
   required = false,
+  onFocus,
 }: SearchableSelectProps<T>) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -63,6 +65,7 @@ const SearchableSelect = <T extends string | number>({
         onClick={() => {
           setOpen((o) => !o);
           setTouched(true);
+          if (onFocus) onFocus();
         }}
         disabled={disabled}
         className={`h-11 w-full rounded-lg border border-gray-300 dark:border-gray-700

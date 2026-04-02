@@ -42,6 +42,7 @@ const FoodManagementPage: React.FC = () => {
   const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
   const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
+  const [filterOptionsLoaded, setFilterOptionsLoaded] = useState(false);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,20 +57,29 @@ const FoodManagementPage: React.FC = () => {
   const fetchFoods = async () => {
     setLoading(true);
     try {
-      const [foodRes, mealRes, cuisineRes] = await Promise.all([
-        getFoodList(currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId),
-        getMealTypeList(1, "all"),
-        getCuisineTypeList(1, "all")
-      ]);
+      const foodRes = await getFoodList(currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId);
       setFoods(foodRes.results);
       setTotalItems(foodRes.count);
       setTotalPages(foodRes.total_pages);
-      setMealTypes(mealRes.results);
-      setCuisineTypes(cuisineRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFilterOptions = async () => {
+    if (filterOptionsLoaded) return;
+    try {
+      const [mealRes, cuisineRes] = await Promise.all([
+        getMealTypeList(1, "all"),
+        getCuisineTypeList(1, "all")
+      ]);
+      setMealTypes(mealRes.results);
+      setCuisineTypes(cuisineRes.results);
+      setFilterOptionsLoaded(true);
+    } catch (err) {
+      console.error("Error loading filter options:", err);
     }
   };
 
@@ -132,6 +142,7 @@ const FoodManagementPage: React.FC = () => {
               type="text"
               placeholder="Search food or meal type..."
               value={searchTerm}
+              onFocus={loadFilterOptions}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
@@ -146,6 +157,7 @@ const FoodManagementPage: React.FC = () => {
                   ...mealTypes.map(m => ({ value: m.id!, label: m.name }))
                 ]}
                 value={selectedMealTypeId}
+                onFocus={loadFilterOptions}
                 onChange={(val) => {
                   setSelectedMealTypeId(val as number | "");
                   setCurrentPage(1);
@@ -161,6 +173,7 @@ const FoodManagementPage: React.FC = () => {
                   ...cuisineTypes.map(c => ({ value: c.id!, label: c.name }))
                 ]}
                 value={selectedCuisineTypeId}
+                onFocus={loadFilterOptions}
                 onChange={(val) => {
                   setSelectedCuisineTypeId(val as number | "");
                   setCurrentPage(1);
