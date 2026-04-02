@@ -1,38 +1,27 @@
 import { useState, useEffect } from "react";
 import Image from "../../Image";
-import { getCompanyInfo } from "@/utils/api";
+import { getAboutSections } from "@/utils/api";
 
 export default function About() {
-    const [stats, setStats] = useState({
-        years_experience: 30,
-        doctors_count: "180+",
-        services_count: "200+",
-        satisfied_patients: "10k+",
-        specialities: ["Preventive care", "Diagnostic testing", "Mental health services"],
-        vision: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
-    });
+    const [config, setConfig] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const infoRes = await getCompanyInfo();
-                const info = Array.isArray(infoRes.data) ? infoRes.data[0] : infoRes.data;
-                if (info) {
-                    setStats({
-                        years_experience: info.years_experience || 30,
-                        doctors_count: info.doctors_count || "180+",
-                        services_count: info.services_count || "200+",
-                        satisfied_patients: info.satisfied_patients || "10k+",
-                        specialities: info.our_specialities || ["Preventive care", "Diagnostic testing", "Mental health services"],
-                        vision: info.our_vision || ["To provide accessible and equitable", "To use innovative technology", "To empower patients"]
-                    });
+                const res = await getAboutSections() as any;
+                // Pick the first active config from results
+                const sections = res.data?.results || [];
+                if (sections.length > 0) {
+                    setConfig(sections[0]);
                 }
             } catch (err) {
-                console.error("Failed to fetch info:", err);
+                console.error("Failed to fetch about config:", err);
             }
         };
         fetchData();
     }, []);
+
+    if (!config) return null;
 
   return (
         <section className="about-section p_relative">
@@ -56,11 +45,11 @@ export default function About() {
                             <div className="content-block-one">
                                 <div className="content-box">
                                     <div className="sec-title mb_15">
-                                        <span className="sub-title mb_5">About the company</span>
-                                        <h2>Expertise and compassion saved my life</h2>
+                                        <span className="sub-title mb_5">{config.about_tagline}</span>
+                                        <h2>{config.about_title}</h2>
                                     </div>
                                     <div className="text-box mb_30 pb_30">
-                                        <p>The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life. I am forever grateful for everything they did for me</p>
+                                        <p>{config.about_description}</p>
                                     </div>
                                     <div className="inner-box">
                                         <div className="row clearfix">
@@ -68,7 +57,7 @@ export default function About() {
                                                 <div className="specialities-box">
                                                     <h4>Our Specialities</h4>
                                                     <ul className="list-style-one clearfix">
-                                                        {stats.specialities.map((item: any, i: number) => <li key={i}>{item}</li>)}
+                                                        {config.about_specialties?.map((item: string, i: number) => <li key={i}>{item}</li>)}
                                                     </ul>
                                                 </div>
                                             </div>
@@ -76,7 +65,7 @@ export default function About() {
                                                 <div className="specialities-box">
                                                     <h4>Our Vision</h4>
                                                     <ul className="list-style-one clearfix">
-                                                        {stats.vision.map((item: any, i: number) => <li key={i}>{item}</li>)}
+                                                        {config.about_vision?.map((item: string, i: number) => <li key={i}>{item}</li>)}
                                                     </ul>
                                                 </div>
                                             </div>
@@ -92,11 +81,13 @@ export default function About() {
                                         <div className="shape-1" style={{ backgroundImage: "url(/website/assets/images/shape/shape-9.png)" }}></div>
                                         <div className="shape-2" style={{ backgroundImage: "url(/website/assets/images/shape/shape-10.png)" }}></div>
                                     </div>
-                                    <figure className="image"><Image src="/website/assets/images/background/company.jpg" alt="Company Overview" width={523} height={399} priority /></figure>
+                                    <figure className="image">
+                                        <Image src={config.about_image_1_url || "/website/assets/images/background/company.jpg"} alt="Company Overview" width={523} height={399} priority />
+                                    </figure>
                                     <div className="text-box">
-                                        <div className="image-shape"style={{ backgroundImage: "url(/website/assets/images/shape/shape-7.png)" }}></div>
-                                        <h2>{stats.years_experience}</h2>
-                                        <span>Years of Experience in This Field</span>
+                                        <div className="image-shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-7.png)" }}></div>
+                                        <h2>{config.about_experience_years}</h2>
+                                        <span>{config.about_experience_text}</span>
                                     </div>
                                 </div>
                             </div>

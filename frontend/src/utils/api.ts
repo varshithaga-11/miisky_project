@@ -241,6 +241,7 @@ export const deletePartner = (id: number) => API.delete(`/website/partner/${id}/
 // COMPANY ABOUT SECTIONS
 // ============================================================================
 export const getCompanyAboutSections = () => API.get('/website/companyaboutsection/');
+export const getAboutSections = () => API.get('/website/companyaboutsection/', { params: { is_active: true } });
 export const getCompanyAboutSectionById = (id: number) => API.get(`/website/companyaboutsection/${id}/`);
 export const createCompanyAboutSection = (data: any) => API.post('/website/companyaboutsection/', data);
 export const updateCompanyAboutSection = (id: number, data: any) => API.put(`/website/companyaboutsection/${id}/`, data);

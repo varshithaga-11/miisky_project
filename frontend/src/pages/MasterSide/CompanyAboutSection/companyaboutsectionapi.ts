@@ -3,17 +3,29 @@ import { createApiUrl, getAuthHeaders, getAuthHeadersFile } from "../../../acces
 
 export interface CompanyAboutSection {
   id?: number;
-  section_type: string;
-  title: string;
-  subtitle?: string;
-  content: string;
-  bullet_points?: string[];
-  icon_class?: string;
-  image?: string;
-  entity_name?: string;
-  entity_description?: string;
-  entity_website?: string;
-  position: number;
+  // About Us
+  about_tagline: string;
+  about_title: string;
+  about_description?: string;
+  about_specialties?: string[];
+  about_vision?: string[];
+  about_experience_years: number;
+  about_experience_text: string;
+  about_image_1?: string | File | null;
+  about_image_1_url?: string;
+
+  // Why Choose Us
+  choose_tagline: string;
+  choose_title: string;
+  choose_description?: string;
+  speciality_label: string;
+  speciality_title: string;
+  speciality_description?: string;
+  speciality_points?: string[];
+  video_url?: string;
+  video_image?: string | File | null;
+  video_image_url?: string;
+
   is_active: boolean;
   created_at?: string;
   updated_at?: string;

@@ -413,18 +413,34 @@ class PartnerAdmin(admin.ModelAdmin):
 
 @admin.register(CompanyAboutSection)
 class CompanyAboutSectionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'section_type', 'position', 'is_active')
-    list_filter = ('section_type', 'is_active')
-    search_fields = ('title', 'subtitle', 'content', 'entity_name')
-    list_editable = ('position', 'is_active')
+    list_display = ('about_title', 'about_tagline', 'is_active', 'updated_at')
+    list_filter = ('is_active',)
+    search_fields = ('about_title', 'about_tagline', 'about_description', 'choose_title')
     readonly_fields = ('created_at', 'updated_at')
-    ordering = ('position',)
+    
     fieldsets = (
-        ('Section Info', {'fields': ('section_type', 'title', 'subtitle', 'content', 'bullet_points')}),
-        ('Media', {'fields': ('icon_class', 'image')}),
-        ('Entity Info', {'fields': ('entity_name', 'entity_description', 'entity_website')}),
-        ('Display', {'fields': ('position', 'is_active')}),
-        ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
+        ('About Us Configuration', {
+            'fields': (
+                'about_tagline', 'about_title', 'about_description', 
+                'about_specialties', 'about_vision',
+                'about_experience_years', 'about_experience_text',
+                'about_image_1'
+            )
+        }),
+        ('Why Choose Us Section (Image 2)', {
+            'fields': (
+                'choose_tagline', 'choose_title', 'choose_description',
+                'speciality_label', 'speciality_title', 'speciality_description',
+                'speciality_points', 'video_url', 'video_image'
+            )
+        }),
+        ('Status', {
+            'fields': ('is_active',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'), 
+            'classes': ('collapse',)
+        }),
     )
 
 

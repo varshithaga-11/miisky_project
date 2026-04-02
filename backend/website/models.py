@@ -53,17 +53,6 @@ class CompanyInfo(models.Model):
     open_hours = models.CharField(max_length=200, default="Mon - Fri: 9:30am to 6:00pm, Sat: 9:30am to 2:30pm") # e.g. "Mon-Fri: 8:00am to 5:00pm"
     appointment_link = models.CharField(max_length=500, blank=True, null=True)
 
-    # Stat Counters
-    years_experience = models.PositiveIntegerField(default=30)
-    doctors_count = models.CharField(max_length=50, default="180+")
-    services_count = models.CharField(max_length=50, default="200+")
-    satisfied_patients = models.CharField(max_length=50, default="10k+")
-
-    # Mission & Vision (JSON format for bullet points)
-    our_specialities = models.JSONField(blank=True, null=True)
-    our_vision = models.JSONField(blank=True, null=True)
-    mission_statement = models.TextField(blank=True, null=True)
-
     # Audit
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -797,44 +786,49 @@ class Partner(models.Model):
 
 class CompanyAboutSection(models.Model):
     """
-    Detailed sections for the About Us page.
+    Refined About Us & Why Choose Us configuration.
+    Contains fields for the two primary home page sections.
     """
-    SECTION_CHOICES = [
-        ('quality_statement', 'Quality Statement'),
-        ('service_concept', 'Service Concept'),
-        ('social_commitment', 'Social Commitment / CSR'),
-        ('company_overview', 'Company Overview'),
-        ('promoter_intro', 'Promoter Introduction'),
-        ('milestone', 'Milestone / Achievement'),
-        ('other', 'Other'),
-    ]
-
-    section_type = models.CharField(max_length=30, choices=SECTION_CHOICES)
-    title = models.CharField(max_length=300)
-    subtitle = models.CharField(max_length=300, blank=True, null=True)
-    content = models.TextField()
-    bullet_points = models.JSONField(blank=True, null=True)  # List of strings
-    icon_class = models.CharField(max_length=100, blank=True, null=True)
-    image = models.ImageField(upload_to='website/about/sections/', null=True, blank=True)
+    # ─── ABOUT US SECTION (Image 1) ──────────────────────────────────────────
+    about_tagline = models.CharField(max_length=200, default="About the company")
+    about_title = models.CharField(max_length=500, default="EXPERTISE AND COMPASSION SAVED MY LIFE")
+    about_description = models.TextField(blank=True, null=True)
     
-    # For Promoter/Entity specific info
-    entity_name = models.CharField(max_length=300, blank=True, null=True)
-    entity_description = models.TextField(blank=True, null=True)
-    entity_website = models.CharField(max_length=500, blank=True, null=True)
+    # JSON list of strings
+    about_specialties = models.JSONField(default=list, blank=True)
+    about_vision = models.JSONField(default=list, blank=True)
+    
+    about_experience_years = models.IntegerField(default=30)
+    about_experience_text = models.CharField(max_length=200, default="Years of Experience in This Field")
+    about_image_1 = models.ImageField(upload_to='website/about/', null=True, blank=True)
+    
+    # 🔥 WHY CHOOSE US SECTION (Image 2) ─────────────────────────────────────
+    choose_tagline = models.CharField(max_length=200, default="Why Choose Us")
+    choose_title = models.CharField(max_length=500, default="WHAT'S OUR SPECIALITY")
+    choose_description = models.TextField(blank=True, null=True)
+    
+    # Tabs/Features
+    speciality_label = models.CharField(max_length=200, default="Modern Technology")
+    speciality_title = models.CharField(max_length=300, default="Modern Technology")
+    speciality_description = models.TextField(blank=True, null=True)
+    
+    # JSON list of strings
+    speciality_points = models.JSONField(default=list, blank=True)
+    
+    video_url = models.CharField(max_length=500, blank=True, null=True)
+    video_image = models.ImageField(upload_to='website/about/choose/', null=True, blank=True)
 
-    position = models.PositiveIntegerField(default=1)
+    # ─── META ───────────────────────────────────────────────────────────────
     is_active = models.BooleanField(default=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['position']
         verbose_name = "Company About Section"
         verbose_name_plural = "Company About Sections"
 
     def __str__(self):
-        return f"{self.get_section_type_display()} – {self.title}"
+        return f"About Section Config ({self.about_title[:30]}...)"
 
 
 # ===========================================================================

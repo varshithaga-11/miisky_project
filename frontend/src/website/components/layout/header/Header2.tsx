@@ -108,6 +108,12 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                         </ul>
                       </li>
                       <li className="dropdown">
+                        <Link to="/device-categories">Products</Link>
+                        <ul>
+                          <li><Link to="/device-categories">Device Categories</Link></li>
+                        </ul>
+                      </li>
+                      <li className="dropdown">
                         <Link to="/">Pages</Link>
                         <ul>
                           <li><Link to="/doctors">Our Doctors</Link></li>
@@ -196,6 +202,12 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                               <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
+                        </ul>
+                      </li>
+                      <li className="dropdown">
+                        <Link to="/device-categories">Products</Link>
+                        <ul>
+                          <li><Link to="/device-categories">Device Categories</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">

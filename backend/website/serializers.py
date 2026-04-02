@@ -303,6 +303,10 @@ class PartnerSerializer(serializers.ModelSerializer):
 
 
 class CompanyAboutSectionSerializer(serializers.ModelSerializer):
+    about_image_1_url = serializers.ImageField(source='about_image_1', read_only=True)
+    about_image_2_url = serializers.ImageField(source='about_image_2', read_only=True)
+    video_image_url = serializers.ImageField(source='video_image', read_only=True)
+
     class Meta:
         model = CompanyAboutSection
         fields = '__all__'

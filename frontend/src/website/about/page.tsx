@@ -7,7 +7,7 @@ import Working from "../components/sections/home2/Working";
 import Clients from "../components/sections/home3/Clients";
 import Team from "../components/sections/home1/Team";
 import Cta from "../components/sections/home2/Cta";
-import { getDepartments } from "../../utils/api";
+import { getDepartments, getAboutSections } from "../../utils/api";
 import { MOCK_DEPARTMENTS } from "../../Website/utils/mockData";
 import { getDepartmentIcon } from "../../utils/departmentIcons";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
@@ -41,6 +41,7 @@ export default function About_Page() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [departments, setDepartments] = useState(MOCK_DEPARTMENTS);
     const [loading, setLoading] = useState(true);
+    const [aboutConfig, setAboutConfig] = useState<any>(null);
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -48,20 +49,40 @@ export default function About_Page() {
     }, [setHeaderStyle, setBreadcrumbTitle]);
 
     useEffect(() => {
-        const fetchDepts = async () => {
+        const fetchData = async () => {
             try {
-                const response = await getDepartments();
-                const items = Array.isArray(response.data) ? response.data : response.data.results || [];
-                setDepartments(items.length > 0 ? items : MOCK_DEPARTMENTS);
+                // Fetch Departments
+                const deptRes = await getDepartments();
+                const deptItems = Array.isArray(deptRes.data) ? deptRes.data : deptRes.data.results || [];
+                setDepartments(deptItems.length > 0 ? deptItems : MOCK_DEPARTMENTS);
+
+                // Fetch About Config
+                const aboutRes = await getAboutSections() as any;
+                const configItems = aboutRes.data?.results || [];
+                if (configItems.length > 0) {
+                    setAboutConfig(configItems[0]);
+                }
             } catch (err) {
-                console.warn('Failed to fetch departments:', err);
+                console.warn('Failed to fetch dynamic content:', err);
                 setDepartments(MOCK_DEPARTMENTS);
             } finally {
                 setLoading(false);
             }
         };
-        fetchDepts();
+        fetchData();
     }, []);
+
+    // Placeholder data for "First Glance" if no config is in DB
+    const displayConfig = aboutConfig || {
+        about_tagline: "About the company",
+        about_title: "Expertise and compassion saved my life",
+        about_description: "The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life. I am forever grateful for everything they did for me",
+        about_specialties: ["Preventive care", "Diagnostic testing", "Mental health services"],
+        about_vision: ["To provide accessible and equitable", "To use innovative technology", "To empower patients"],
+        about_experience_years: 30,
+        about_experience_text: "Years of Experience in This Field",
+        about_image_1_url: "/website/assets/images/background/company.jpg"
+    };
 
     return (
         <div className="boxed_wrapper">
@@ -73,11 +94,11 @@ export default function About_Page() {
                                     <div className="content-block-one">
                                         <div className="content-box">
                                             <div className="sec-title mb_15">
-                                                <span className="sub-title mb_5">About the company</span>
-                                                <h2>Expertise and compassion saved my life</h2>
+                                                <span className="sub-title mb_5">{displayConfig.about_tagline}</span>
+                                                <h2>{displayConfig.about_title}</h2>
                                             </div>
                                             <div className="text-box mb_30 pb_30">
-                                                <p>The medical professionals who treated me showed unmatched expertise, compassion, and dedication. Their care and support helped me overcome a serious health challenge and get back to living my life. I am forever grateful for everything they did for me</p>
+                                                <p>{displayConfig.about_description}</p>
                                             </div>
                                             <div className="inner-box">
                                                 <div className="row clearfix">
@@ -85,9 +106,7 @@ export default function About_Page() {
                                                         <div className="specialities-box">
                                                             <h4>Our Specialities</h4>
                                                             <ul className="list-style-one clearfix">
-                                                                <li>Preventive care</li>
-                                                                <li>Diagnostic testing</li>
-                                                                <li>Mental health services</li>
+                                                                {displayConfig.about_specialties?.map((item: any, i: number) => <li key={i}>{item}</li>)}
                                                             </ul>
                                                         </div>
                                                     </div>
@@ -95,9 +114,7 @@ export default function About_Page() {
                                                         <div className="specialities-box">
                                                             <h4>Our Vision</h4>
                                                             <ul className="list-style-one clearfix">
-                                                                <li>To provide accessible and equitable</li>
-                                                                <li>To use innovative technology</li>
-                                                                <li>To empower patients</li>
+                                                                {displayConfig.about_vision?.map((item: any, i: number) => <li key={i}>{item}</li>)}
                                                             </ul>
                                                         </div>
                                                     </div>
@@ -112,11 +129,13 @@ export default function About_Page() {
                                             <div className="shape">
                                                 <div className="shape-2" style={{ backgroundImage: "url(/website/assets/images/shape/shape-10.png)" }}></div>
                                             </div>
-                                            <figure className="image"><Image src="/website/assets/images/background/company.jpg" alt="Company Overview" width={523} height={399} priority /></figure>
+                                            <figure className="image">
+                                                <Image src={displayConfig.about_image_1_url || "/website/assets/images/background/company.jpg"} alt="Company Overview" width={523} height={399} priority />
+                                            </figure>
                                             <div className="text-box">
                                                 <div className="image-shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-7.png)" }}></div>
-                                                <h2>30</h2>
-                                                <span>Years of Experience in This Field</span>
+                                                <h2>{displayConfig.about_experience_years}</h2>
+                                                <span>{displayConfig.about_experience_text}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -166,137 +185,6 @@ export default function About_Page() {
                         </div>
                     </div>
                 </section>
-
-{/* <section className="appointment-section about-page">
-                    <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-17.png)" }}></div>
-                    <figure className="image-layer"><Image src="/website/assets/images/resource/women-1.png" alt="Image" width={488} height={591} priority /></figure>
-                    <div className="outer-container clearfix">
-                        <div className="left-column">
-                            <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/background/company.jpg)" }}></div>
-                            <div className="content-box">
-                                <div className="icon-box"><Image src="/website/assets/images/icons/icon-4.svg" alt="Icon" width={88} height={88} priority /></div>
-                                <h3>Need a Doctor for Check-up? Call for an Emergency Service!</h3>
-                                <span><Link to="tel:112345615523">Call: +1 (123)-456-155-23</Link></span>
-                            </div>
-                        </div>
-                        <div className="right-column">
-                            <div className="form-inner">
-                                <div className="shape" style={{ backgroundImage: "url(/website/assets/images/shape/shape-16.png)" }}></div>
-                                <h3>Make an Appointment </h3>
-                                <form action="/" method="post">
-                                    <div className="form-group">
-                                        <div className="icon"><i className="icon-45"></i></div>
-                                        <input type="text" name="name" placeholder="Name" required/>
-                                    </div>
-                                    <div className="form-group">
-                                        <div className="icon"><i className="icon-46"></i></div>
-                                        <input type="email" name="email" placeholder="Email" required/>
-                                    </div>
-                                    <div className="form-group">
-                                        <div className="icon"><i className="icon-48"></i></div>
-                                        <textarea name="message" placeholder="Message"></textarea>
-                                    </div>
-                                    <div className="message-btn">
-                                        <button type="submit" className="theme-btn btn-two"><span>Send your message</span></button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </section> */}
-{/* <section className="funfact-section">
-                <div className="pattern-layer">
-                    <div className="pattern-1">
-                    <svg
-                        width="318"
-                        height="131"
-                        viewBox="0 0 318 131"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                        d="M0 69.0468L74.0685 69.0468L98.2276 40.7213L125.459 121L164.762 10L191.919 105.268L208.417 57.4162L233.167 87.0291L249.076 69.0468L308 69.0468"
-                        stroke="#BDBDBD"
-                        strokeOpacity="0.15"
-                        strokeWidth="20"
-                        strokeMiterlimit="10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        />
-                    </svg>
-                    </div>
-                </div>
-
-                <div className="auto-container">
-                    <div className="inner-container">
-                    <div
-                        className="shape"
-                        style={{ backgroundImage: "url(/website/assets/images/shape/shape-34.png)" }}
-                    ></div>
-
-                    <div className="row clearfix">
-                        <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
-                        <div className="funfact-block-two">
-                            <div className="inner-box">
-                            <div className="icon-box">
-                                <i className="icon-37"></i>
-                            </div>
-                            <div className="count-outer count-box">
-                                <CountUp end={180} duration={1.5} />
-                                <span>+</span>
-                            </div>
-                            <p>Expert Doctors</p>
-                            </div>
-                        </div>
-                        </div>
-
-                        <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
-                        <div className="funfact-block-two">
-                            <div className="inner-box">
-                            <div className="icon-box">
-                                <i className="icon-38"></i>
-                            </div>
-                            <div className="count-outer count-box">
-                                <CountUp end={12.2} duration={1.5} decimals={1} />
-                                <span>+</span>
-                            </div>
-                            <p>Different Services</p>
-                            </div>
-                        </div>
-                        </div>
-
-                        <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
-                        <div className="funfact-block-two">
-                            <div className="inner-box">
-                            <div className="icon-box">
-                                <i className="icon-39"></i>
-                            </div>
-                            <div className="count-outer count-box">
-                                <CountUp end={200} duration={1.5} />
-                                <span>+</span>
-                            </div>
-                            <p>Multi Services</p>
-                            </div>
-                        </div>
-                        </div>
-
-                        <div className="col-lg-3 col-md-6 col-sm-12 funfact-block">
-                        <div className="funfact-block-two">
-                            <div className="inner-box">
-                            <div className="icon-box">
-                                <i className="icon-40"></i>
-                            </div>
-                            <div className="count-outer count-box">
-                                <CountUp end={8} duration={1.5} />
-                            </div>
-                            <p>Awards Win</p>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                </section> */}
                 <Working/>
                 <Clients/>
                 <Team/>

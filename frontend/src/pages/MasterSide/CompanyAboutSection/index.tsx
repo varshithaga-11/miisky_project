@@ -109,9 +109,9 @@ const CompanyAboutSectionList: React.FC = () => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Title & Subtitle</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Type</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Order</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">About Section Title</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Why Choose Us Title</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Experience</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
@@ -132,22 +132,21 @@ const CompanyAboutSectionList: React.FC = () => {
                         {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <div className="font-bold text-gray-800 dark:text-white">{section.title}</div>
-                        <div className="text-xs text-gray-400 line-clamp-1 italic">{section.subtitle || "-"}</div>
+                        <div className="font-bold text-gray-800 dark:text-white line-clamp-1">{section.about_title}</div>
+                        <div className="text-xs text-blue-500 font-bold uppercase tracking-wider">{section.about_tagline}</div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium dark:bg-indigo-900/30 dark:text-indigo-400">
-                            {section.section_type.replace(/_/g, " ")}
-                        </span>
+                        <div className="text-gray-600 dark:text-gray-300 line-clamp-1">{section.choose_title}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase">{section.choose_tagline}</div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-mono text-sm text-gray-400">
-                        {section.position}
+                        {section.about_experience_years} Years
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            section.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
+                            section.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30 font-black" : "bg-red-50 text-red-600 dark:bg-red-900/30 font-black"
                         }`}>
-                            {section.is_active ? "Live" : "Draft"}
+                            {section.is_active ? "ACTIVE" : "DISABLED"}
                         </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">

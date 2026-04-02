@@ -1,26 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ModalVideo from "../../elements/VideoPopup";
 import { Link } from "react-router-dom";
+import { getAboutSections } from "@/utils/api";
 
 export default function Chooseus() {
   const [activeTab, setActiveTab] = useState(1);
+  const [config, setConfig] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const res = await getAboutSections() as any;
+            const sections = res.data?.results || [];
+            if (sections.length > 0) {
+                setConfig(sections[0]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch choose highlights:", err);
+        }
+    };
+    fetchData();
+  }, []);
+
+  if (!config) return null;
 
   const tabs = [
-    { id: 1, title: "Modern Technology" },
+    { id: 1, title: config.speciality_label || "Modern Technology" },
   ];
 
   const tabContent = [
     {
       id: 1,
-      videoImg: "/website/assets/images/background/company.jpg",
-      heading: "Modern Technology",
-      text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
-      list: [
-        "Your Health is Our Top Priority",
-        "Compassionate Care, Innovative Treatments",
-        "We Treat You Like Family",
-        "Leading the Way in Medical Excellence",
-      ],
+      videoImg: config.video_image_url || "/website/assets/images/background/company.jpg",
+      heading: config.speciality_title || "Modern Technology",
+      text: config.speciality_description || "The phrase emphasizes the importance of healthcare providers...",
+      list: config.speciality_points || [],
+      video_url: config.video_url
     },
   ];
 
@@ -33,11 +48,10 @@ export default function Chooseus() {
 
       <div className="auto-container">
         <div className="sec-title centred mb_55">
-          <span className="sub-title mb_5">Why Choose Us</span>
-          <h2>What&apos;s Our Speciality</h2>
+          <span className="sub-title mb_5">{config.choose_tagline}</span>
+          <h2>{config.choose_title}</h2>
           <p>
-            Medical care is the practice of providing diagnosis, treatment, and
-            preventive care for various <br /> illnesses, injuries, and diseases. It
+            {config.choose_description}
           </p>
         </div>
 
@@ -74,7 +88,11 @@ export default function Chooseus() {
                         style={{ backgroundImage: `url(${content.videoImg})` }}
                       >
                         <div className="video-btn">
-                          <ModalVideo />
+                          {content.video_url ? (
+                              <ModalVideo videoId={content.video_url} />
+                          ) : (
+                              <ModalVideo />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -86,7 +104,7 @@ export default function Chooseus() {
                             <p>{content.text}</p>
                           </div>
                           <ul className="list-style-one clearfix">
-                            {content.list.map((item, index) => (
+                            {content.list.map((item: string, index: number) => (
                               <li key={index}>{item}</li>
                             ))}
                           </ul>

@@ -102,10 +102,10 @@ export default function Header3({
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/medical-devices">Products</Link>
+                        <Link to="/device-categories">Products</Link>
                         <ul>
-                          <li><Link to="/medical-devices">Medical Devices</Link></li>
                           <li><Link to="/device-categories">Device Categories</Link></li>
+                          <li><Link to="/medical-devices">Medical Devices</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">

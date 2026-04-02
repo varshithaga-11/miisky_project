@@ -599,14 +599,12 @@ class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', 'subtitle', 'content']
-    ordering = ['position']
+    search_fields = ['about_title', 'choose_title', 'about_description', 'choose_description']
+    ordering = ['-updated_at']
 
     def get_queryset(self):
         qs = CompanyAboutSection.objects.all()
         p = self.request.query_params
-        if p.get('section_type'):
-            qs = qs.filter(section_type=p['section_type'])
             
         is_active = p.get('is_active')
         if is_active is not None:
