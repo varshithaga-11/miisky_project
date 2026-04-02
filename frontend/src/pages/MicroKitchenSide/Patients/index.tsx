@@ -65,6 +65,7 @@ interface PatientAllotted {
     suggested_on: string;
     approved_on: string;
     micro_kitchen_effective_from?: string | null;
+    distance_km?: number | null;
 }
 
 const MicroKitchenPatientsPage: React.FC = () => {
@@ -77,13 +78,15 @@ const MicroKitchenPatientsPage: React.FC = () => {
     const [showCalendar, setShowCalendar] = useState(false);
     const [patientMeals, setPatientMeals] = useState<UserMeal[]>([]);
     const [loadingMeals, setLoadingMeals] = useState(false);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [currentCalMonth, setCurrentCalMonth] = useState(new Date().getMonth() + 1);
+    const [currentCalYear, setCurrentCalYear] = useState(new Date().getFullYear());
 
     const fetchAllotments = async () => {
         setLoading(true);
         try {
             const url = createApiUrl("api/micro-kitchen-patients/");
             const response = await axios.get(url, { headers: await getAuthHeaders() });
-            // API is paginated, so take results
             setAllotments(response.data.results || []);
         } catch (error) {
             console.error(error);
@@ -93,11 +96,25 @@ const MicroKitchenPatientsPage: React.FC = () => {
         }
     };
 
-    const fetchPatientMeals = async (patientId: number) => {
-        setLoadingMeals(true);
-        setShowCalendar(true);
+    const fetchPatientDetail = async (id: number) => {
+        setDetailLoading(true);
         try {
-            const url = createApiUrl(`api/usermeal/?user=${patientId}`);
+            const url = createApiUrl(`api/micro-kitchen-patients/${id}/`);
+            const response = await axios.get(url, { headers: await getAuthHeaders() });
+            setSelectedPatient(response.data);
+        } catch (error) {
+            toast.error("Failed to load patient details");
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
+    const fetchPatientMeals = async (patientId: number, month?: number, year?: number) => {
+        setLoadingMeals(true);
+        try {
+            const m = month || currentCalMonth;
+            const y = year || currentCalYear;
+            const url = createApiUrl(`api/usermeal/?user=${patientId}&month=${m}&year=${y}`);
             const response = await axios.get(url, { headers: await getAuthHeaders() });
             setPatientMeals(response.data);
         } catch (error) {
@@ -164,7 +181,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                 ) : filteredAllotments.map(a => (
                                     <button
                                         key={a.id}
-                                        onClick={() => setSelectedPatient(a)}
+                                        onClick={() => fetchPatientDetail(a.id)}
                                         className={`w-full p-5 rounded-[28px] text-left transition-all group border ${selectedPatient?.id === a.id
                                             ? "bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-600/20 translate-x-2"
                                             : "bg-gray-50/50 dark:bg-white/[0.02] border-transparent hover:border-indigo-500/30 hover:bg-white dark:hover:bg-white/[0.05]"
@@ -200,6 +217,11 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                 <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Profile Access Point</h3>
                                 <p className="text-gray-400 mt-2 font-medium">Select a patient from the list to view their dietary requirements and contact information.</p>
                             </div>
+                        ) : detailLoading ? (
+                            <div className="bg-white dark:bg-gray-800 rounded-[50px] p-20 flex flex-col items-center justify-center text-center">
+                                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] animate-pulse">Fetching Patient Dossier...</h3>
+                            </div>
                         ) : (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -219,6 +241,11 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <div className="flex items-center gap-4 mt-3">
                                                 <span className="px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100/50">Active Allotment</span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Since {new Date(selectedPatient.suggested_on).toLocaleDateString()}</span>
+                                                {selectedPatient.distance_km !== null && selectedPatient.distance_km !== undefined && (
+                                                    <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100/50 flex items-center gap-2">
+                                                        <FiMapPin size={10} /> {selectedPatient.distance_km} km away
+                                                    </span>
+                                                )}
                                                 {selectedPatient.original_micro_kitchen_details && (
                                                     <span className="px-4 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-100/50">
                                                         Kitchen Switched from {selectedPatient.original_micro_kitchen_details.brand_name} on {selectedPatient.micro_kitchen_effective_from}
@@ -230,15 +257,12 @@ const MicroKitchenPatientsPage: React.FC = () => {
 
                                     <div className="flex gap-4">
                                         <button
-                                            onClick={() => fetchPatientMeals(selectedPatient.patient_details.id)}
+                                            onClick={() => setShowCalendar(true)}
                                             className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white hover:scale-110 transition-all shadow-lg shadow-indigo-600/20"
                                             title="View Meal Calendar"
                                         >
                                             <FiCalendar size={20} />
                                         </button>
-                                        <a href={`tel:${selectedPatient.patient_details.mobile}`} className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-all shadow-sm">
-                                            <FiInfo size={20} />
-                                        </a>
                                     </div>
                                 </div>
 
@@ -471,41 +495,56 @@ const MicroKitchenPatientsPage: React.FC = () => {
                             </div>
 
                             {/* Calendar Content */}
-                            <div className="flex-1 p-8 overflow-y-auto no-scrollbar custom-calendar-lite">
-                                {loadingMeals ? (
-                                    <div className="h-full flex flex-col items-center justify-center">
+                            <div className="flex-1 p-8 overflow-y-auto no-scrollbar custom-calendar-lite relative">
+                                {loadingMeals && (
+                                    <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm flex flex-col items-center justify-center">
                                         <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
                                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] animate-pulse">Syncing Meal Schedule...</p>
                                     </div>
-                                ) : (
-                                    <FullCalendar
-                                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                                        initialView="dayGridMonth"
-                                        headerToolbar={{
-                                            left: 'prev,next today',
-                                            center: 'title',
-                                            right: 'dayGridMonth,timeGridWeek'
-                                        }}
-                                        height="100%"
-                                        events={patientMeals.map(m => ({
-                                            id: String(m.id),
-                                            title: m.meal_type_details.name,
-                                            start: m.meal_date,
-                                            backgroundColor: m.is_consumed ? '#10b981' : '#4f46e5',
-                                            borderColor: 'transparent',
-                                            extendedProps: { food: m.food_details.name }
-                                        }))}
-                                        eventContent={(eventInfo) => (
-                                            <div className="p-1 px-2 flex items-center gap-1.5 overflow-hidden">
-                                                {getMealIcon(eventInfo.event.title)}
-                                                <div className="truncate">
-                                                    <div className="text-[10px] font-black uppercase leading-none">{eventInfo.event.title}</div>
-                                                    <div className="text-[8px] font-medium opacity-80 truncate">{eventInfo.event.extendedProps.food}</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    />
                                 )}
+                                
+                                <FullCalendar
+                                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                    initialView="dayGridMonth"
+                                    headerToolbar={{
+                                        left: 'prev,next today',
+                                        center: 'title',
+                                        right: 'dayGridMonth,timeGridWeek'
+                                    }}
+                                    datesSet={(dateInfo) => {
+                                        const centerDate = new Date(dateInfo.view.currentStart);
+                                        centerDate.setDate(centerDate.getDate() + 15);
+                                        const m = centerDate.getMonth() + 1;
+                                        const y = centerDate.getFullYear();
+                                        
+                                        // Only fetch if month or year actually changed OR it's the first load for this patient
+                                        if (m !== currentCalMonth || y !== currentCalYear || patientMeals.length === 0) {
+                                            setCurrentCalMonth(m);
+                                            setCurrentCalYear(y);
+                                            if (selectedPatient) {
+                                                fetchPatientMeals(selectedPatient.patient_details.id, m, y);
+                                            }
+                                        }
+                                    }}
+                                    height="100%"
+                                    events={patientMeals.map(m => ({
+                                        id: String(m.id),
+                                        title: m.meal_type_details.name,
+                                        start: m.meal_date,
+                                        backgroundColor: m.is_consumed ? '#10b981' : '#4f46e5',
+                                        borderColor: 'transparent',
+                                        extendedProps: { food: m.food_details.name }
+                                    }))}
+                                    eventContent={(eventInfo) => (
+                                        <div className="p-1 px-2 flex items-center gap-1.5 overflow-hidden">
+                                            {getMealIcon(eventInfo.event.title)}
+                                            <div className="truncate">
+                                                <div className="text-[10px] font-black uppercase leading-none">{eventInfo.event.title}</div>
+                                                <div className="text-[8px] font-medium opacity-80 truncate">{eventInfo.event.extendedProps.food}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                />
                                 { /* CSS Injections for Calendar */}
                                 <style>{`
                                     .fc-theme-standard .fc-scrollgrid { border: none !important; }

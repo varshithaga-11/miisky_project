@@ -1,4 +1,5 @@
 from decimal import Decimal
+import math
 
 from rest_framework import serializers
 from .models import *
@@ -2448,6 +2449,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
     original_nutritionist_details = serializers.SerializerMethodField()
     original_micro_kitchen_details = serializers.SerializerMethodField()
     patient_questionnaire = serializers.SerializerMethodField()
+    distance_km = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
@@ -2456,7 +2458,8 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'patient_details', 'diet_plan_details', 'nutritionist_details',
             'patient_questionnaire', 'nutritionist_notes',
             'original_nutritionist_details', 'nutritionist_effective_from',
-            'original_micro_kitchen_details', 'micro_kitchen_effective_from'
+            'original_micro_kitchen_details', 'micro_kitchen_effective_from',
+            'distance_km'
         ]
 
     def get_patient_details(self, obj):
@@ -2515,19 +2518,69 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
                 'age': q.age,
                 'weight_kg': q.weight_kg,
                 'work_type': q.work_type,
+                'meals_per_day': q.meals_per_day,
+                'diet_pattern': q.diet_pattern,
+                'consumes_egg': q.consumes_egg,
+                'consumes_dairy': q.consumes_dairy,
                 'food_allergy': q.food_allergy,
                 'food_allergy_details': q.food_allergy_details,
-                'diet_pattern': q.diet_pattern,
-                'food_source': q.food_source,
+                'food_preferences': q.food_preferences,
                 'has_diabetes': q.has_diabetes,
                 'has_bp': q.has_bp,
                 'has_cardiac_issues': q.has_cardiac_issues,
                 'health_conditions': q.health_conditions,
-                'food_preferences': q.food_preferences,
-                'consumes_egg': q.consumes_egg,
-                'consumes_dairy': q.consumes_dairy,
+                'food_source': q.food_source,
             }
         return None
+
+    def get_distance_km(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user:
+            return None
+        
+        kitchen_user = request.user
+        patient_user = obj.user
+        
+        if not kitchen_user.latitude or not kitchen_user.longitude or \
+           not patient_user or not patient_user.latitude or not patient_user.longitude:
+            return None
+            
+        lat1, lon1 = kitchen_user.latitude, kitchen_user.longitude
+        lat2, lon2 = patient_user.latitude, patient_user.longitude
+        
+        R = 6371.0 # Radius of the Earth in km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return round(R * c, 2)
+
+
+class MicroKitchenPatientSummarySerializer(serializers.ModelSerializer):
+    """
+    Lightweight serializer for listing patients in the sidebar.
+    """
+    patient_details = serializers.SerializerMethodField()
+    diet_plan_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = ['id', 'patient_details', 'diet_plan_details']
+
+    def get_patient_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+                'email': obj.user.email,
+            }
+        return None
+
+    def get_diet_plan_details(self, obj):
+        return {
+            'plan_name': obj.diet_plan.title if obj.diet_plan else "No Plan"
+        }
 
 
 class AdminNutritionistDetailSerializer(serializers.ModelSerializer):

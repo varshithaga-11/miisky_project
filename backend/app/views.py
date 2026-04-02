@@ -2885,6 +2885,11 @@ class UserMealViewSet(viewsets.ModelViewSet):
         if start_date and end_date:
             queryset = queryset.filter(meal_date__range=[start_date, end_date])
 
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+        if month and year:
+            queryset = queryset.filter(meal_date__month=month, meal_date__year=year)
+
         return queryset.order_by('meal_date', 'meal_type__id')
 
     def perform_create(self, serializer):
@@ -3726,8 +3731,12 @@ class MicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
     Allows a Micro-Kitchen to view patients currently allotted to them via diet plans.
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = AdminMicroKitchenPatientSlotSerializer
     pagination_class = Pagination
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return MicroKitchenPatientSummarySerializer
+        return AdminMicroKitchenPatientSlotSerializer
 
     def get_queryset(self):
         user = self.request.user
