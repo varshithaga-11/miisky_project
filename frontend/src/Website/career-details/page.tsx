@@ -45,27 +45,45 @@ export default function CareerDetailsPage() {
                                     <h1 className="mb_20" style={{ fontSize: '38px', fontWeight: 800 }}>{job.title}</h1>
                                     <div className="job-meta-list d-flex align-items-center flex-wrap" style={{ color: '#777', fontSize: '15px' }}>
                                         <span className="mr_30 mt_10" style={{ backgroundColor: '#0646ac', color: '#fff', padding: '5px 15px', borderRadius: '25px', fontSize: '13px', fontWeight: 700 }}>
-                                            {job.type || "Full Time"}
+                                            {(job.job_type || "full_time").split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                                         </span>
                                         <span className="mr_30 mt_10"><i className="fas fa-map-marker-alt mr_5" style={{ color: '#0646ac' }}></i> {job.location || "Remote/Office"}</span>
-                                        <span className="mr_30 mt_10"><i className="far fa-calendar-alt mr_5" style={{ color: '#0646ac' }}></i> Posted on: {job.created_at ? new Date(job.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "Recently"}</span>
+                                        <span className="mr_30 mt_10"><i className="far fa-calendar-alt mr_5" style={{ color: '#0646ac' }}></i> Posted: {job.created_at ? new Date(job.created_at).toLocaleDateString() : "Recent"}</span>
+                                        {job.application_deadline && (
+                                            <span className="mr_30 mt_10" style={{ color: '#e74c3c', fontWeight: 700 }}><i className="far fa-clock mr_5"></i> Deadline: {new Date(job.application_deadline).toLocaleDateString()}</span>
+                                        )}
                                     </div>
                                 </div>
                                 
                                 <div className="job-description mb_50">
-                                    <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>Responsibilities</h3>
+                                    <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>Job Overview</h3>
                                     <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#555', marginBottom: '30px' }}>
-                                        {job.description || "As a key member of our team, you will be responsible for leading several important clinical and technical projects. We are seeking a highly motivated individual who is dedicated to patient health and innovation within the medical sector."}
+                                        {job.job_description || "Detailed overview of the role and its impact within the organization."}
+                                    </p>
+
+                                    <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>{job.tagline || "Role Overview"}</h3>
+                                    <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#555', marginBottom: '30px' }}>
+                                        {job.expertise_text || job.short_description || "Professional medical expertise and dedication to patient care. We are seeking a highly motivated individual who is dedicated to patient health and innovation within the medical sector."}
+                                    </p>
+                                    
+                                    <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>Detailed Scope & Research</h3>
+                                    <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#555', marginBottom: '30px' }}>
+                                        {job.detailed_description || "Their practitioners use a range of techniques and technologies to diagnose and treat illnesses and injuries, and medical research is an essential component of advancing healthcare."}
+                                    </p>
+                                    
+                                    <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>Core Responsibilities</h3>
+                                    <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#555', marginBottom: '30px' }}>
+                                        {job.responsibilities || job.job_description || "As a key member of our team, you will be responsible for leading several important clinical and technical projects."}
                                     </p>
                                     
                                     <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>Requirements & Skills</h3>
                                     <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#555', marginBottom: '30px' }}>
-                                        {job.requirements || "We require strong communication skills and experience in healthcare technology. A background in data analysis or medical research is preferrable, as is a commitment to excellence and teamwork in a fast-paced environment."}
+                                        {job.requirements || "We require strong communication skills and experience in healthcare technology. A background in data analysis or medical research is preferrable."}
                                     </p>
                                     
                                     <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>What We Offer</h3>
                                     <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#555', marginBottom: '30px' }}>
-                                        {job.benefits || "Competitive salary and benefits package that includes healthcare, retirement plans, and flexible working arrangements. We believe in providing an environment that fosters growth and learning for all our team members."}
+                                        {job.benefits || "Competitive salary and benefits package that includes healthcare, retirement plans, and flexible working arrangements."}
                                     </p>
                                 </div>
 
@@ -88,17 +106,23 @@ export default function CareerDetailsPage() {
                                     <hr style={{ borderColor: 'rgba(255,255,255,0.1)', marginBottom: '20px' }} />
                                     <ul style={{ listStyle: 'none', padding: '0' }}>
                                         <li className="mb_15 pb_10" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                            <span style={{ color: 'rgba(255,255,255,0.6)', display: 'block', fontSize: '13px' }}>Salary</span>
+                                            <span style={{ color: 'rgba(255,255,255,0.6)', display: 'block', fontSize: '13px' }}>Salary Range</span>
                                             <span style={{ fontWeight: 600 }}>{job.salary_range || "Competitive"}</span>
                                         </li>
                                         <li className="mb_15 pb_10" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                                             <span style={{ color: 'rgba(255,255,255,0.6)', display: 'block', fontSize: '13px' }}>Education Required</span>
-                                            <span style={{ fontWeight: 600 }}>Bachelor's or Higher</span>
+                                            <span style={{ fontWeight: 600 }}>{job.qualification_required || "Bachelor's or Higher"}</span>
                                         </li>
                                         <li className="mb_15 pb_10" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                                             <span style={{ color: 'rgba(255,255,255,0.6)', display: 'block', fontSize: '13px' }}>Experience Range</span>
-                                            <span style={{ fontWeight: 600 }}>{job.experience_required || "3-5 years"}</span>
+                                            <span style={{ fontWeight: 600 }}>{job.experience_required || "Not specified"}</span>
                                         </li>
+                                        {job.application_deadline && (
+                                            <li className="mb_15 pb_10">
+                                                <span style={{ color: 'rgba(255,255,255,0.6)', display: 'block', fontSize: '13px' }}>Application Deadline</span>
+                                                <span style={{ fontWeight: 700, color: '#f8d2d2' }}>{new Date(job.application_deadline).toLocaleDateString()}</span>
+                                            </li>
+                                        )}
                                     </ul>
                                 </div>
                                 <div className="sidebar-widget p-4 mt_30" style={{ backgroundColor: '#f0f4ff', borderRadius: '20px' }}>

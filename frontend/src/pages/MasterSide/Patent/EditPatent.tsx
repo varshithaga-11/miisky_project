@@ -131,6 +131,30 @@ const EditPatent: React.FC<Props> = ({ patent, onSuccess, onClose }) => {
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="innovation_summary">Innovation Summary</Label>
+            <textarea
+              id="innovation_summary"
+              value={formData.innovation_summary || ""}
+              onChange={(e) => setFormData({ ...formData, innovation_summary: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm h-24 resize-none"
+              placeholder="Elevate quality of life globally through leading-edge medical tech..."
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="technical_specifications">Technical Specifications</Label>
+            <textarea
+              id="technical_specifications"
+              value={formData.technical_specifications || ""}
+              onChange={(e) => setFormData({ ...formData, technical_specifications: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm h-28 resize-none"
+              placeholder="Describe biometric feedback loops, machine learning models, etc."
+              disabled={loading}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="device">Linked Medical Device</Label>

@@ -41,8 +41,18 @@ const EditTeamMember: React.FC<Props> = ({ id, onSuccess, onClose, departments }
     
     try {
       const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && key !== 'photo_url') {
+      
+      // Fields to include in the update
+      const fieldsToInclude = [
+        'name', 'designation', 'department', 'bio', 'tagline', 
+        'expertise_text', 'detailed_description', 'qualification', 
+        'experience_years', 'linkedin_url', 'email', 'phone', 
+        'position', 'is_doctor', 'is_active'
+      ];
+
+      fieldsToInclude.forEach(key => {
+        const value = (formData as any)[key];
+        if (value !== undefined && value !== null) {
           data.append(key, value.toString());
         }
       });
@@ -153,14 +163,53 @@ const EditTeamMember: React.FC<Props> = ({ id, onSuccess, onClose, departments }
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="bio">Professional Bio</Label>
+                <Label htmlFor="tagline">Tagline (e.g. Healthcare Expert)</Label>
+                <Input
+                  id="tagline"
+                  type="text"
+                  value={formData.tagline || ""}
+                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  disabled={loading}
+                  placeholder="Short catchy professional hook..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="bio">Introductory Bio</Label>
                 <textarea
                   id="bio"
                   value={formData.bio || ""}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                  rows={2}
+                  disabled={loading}
+                  placeholder="Professional medical expertise and dedication to patient care..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="expertise_text">Professional Expertise Text</Label>
+                <textarea
+                  id="expertise_text"
+                  value={formData.expertise_text || ""}
+                  onChange={(e) => setFormData({ ...formData, expertise_text: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                  rows={3}
+                  disabled={loading}
+                  placeholder="Medical professionals include doctors, nurses..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="detailed_description">Detailed Research/Clinical Narrative</Label>
+                <textarea
+                  id="detailed_description"
+                  value={formData.detailed_description || ""}
+                  onChange={(e) => setFormData({ ...formData, detailed_description: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
                   rows={4}
                   disabled={loading}
+                  placeholder="Their practitioners use a range of techniques..."
                 />
               </div>
 

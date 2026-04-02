@@ -246,6 +246,9 @@ class ResearchPaper(models.Model):
     published_date = models.DateField(blank=True, null=True)
     journal_conference = models.CharField(max_length=300, blank=True, null=True)
     abstract = models.TextField(blank=True, null=True)
+    methodology = models.TextField(blank=True, null=True)
+    key_findings = models.JSONField(default=list, blank=True)
+    references = models.TextField(blank=True, null=True)
     document = models.FileField(upload_to='website/research_papers/', null=True, blank=True)
     document_1 = models.FileField(upload_to='website/research_papers/doc1/', null=True, blank=True)
     document_2 = models.FileField(upload_to='website/research_papers/doc2/', null=True, blank=True)
@@ -372,10 +375,11 @@ class BlogComment(models.Model):
     Comments on blog posts (with Name field as seen on live site).
     """
     blog_post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='comments')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     name = models.CharField(max_length=200)
     email = models.EmailField(blank=True, null=True)
     comment = models.TextField()
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -536,8 +540,11 @@ class Department(models.Model):
     E.g.: Leadership, Technology, Medical, Nutrition, Operations, Sales & Marketing, HR.
     """
     name = models.CharField(max_length=150, unique=True)
+    tagline = models.CharField(max_length=300, blank=True, null=True)
     short_description = models.CharField(max_length=300, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    expertise_text = models.TextField(blank=True, null=True)
+    key_features = models.JSONField(default=list, blank=True)
     image = models.ImageField(upload_to='website/departments/', null=True, blank=True)
     head_name = models.CharField(max_length=200, blank=True, null=True)
     head_email = models.CharField(max_length=150, blank=True, null=True)
@@ -571,6 +578,9 @@ class TeamMember(models.Model):
         Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='team_members'
     )
     bio = models.TextField(blank=True, null=True)
+    tagline = models.CharField(max_length=300, blank=True, null=True)
+    expertise_text = models.TextField(blank=True, null=True)
+    detailed_description = models.TextField(blank=True, null=True)
     qualification = models.CharField(max_length=300, blank=True, null=True)
     experience_years = models.PositiveIntegerField(null=True, blank=True)
     photo = models.ImageField(upload_to='team_photos/', null=True, blank=True)
@@ -620,10 +630,13 @@ class JobListing(models.Model):
     openings = models.PositiveIntegerField(default=1)
 
     short_description = models.CharField(max_length=300, blank=True, null=True)
+    tagline = models.CharField(max_length=300, blank=True, null=True)
+    expertise_text = models.TextField(blank=True, null=True)
+    detailed_description = models.TextField(blank=True, null=True) # Will be labeled "Detailed Scope & Research"
     job_description = models.TextField()
-    responsibilities = models.TextField(blank=True, null=True)
-    requirements = models.TextField(blank=True, null=True)
-    benefits = models.TextField(blank=True, null=True)
+    responsibilities = models.TextField(blank=True, null=True) # Will be labeled "Core Responsibilities"
+    requirements = models.TextField(blank=True, null=True) # Will be labeled "Requirements & Skills"
+    benefits = models.TextField(blank=True, null=True) # Will be labeled "What We Offer"
 
     application_form_link = models.CharField(max_length=500, blank=True, null=True) # For external job portals
     application_deadline = models.DateField(null=True, blank=True)
@@ -895,6 +908,8 @@ class Patent(models.Model):
     application_number = models.CharField(max_length=100, blank=True, null=True)
     inventors = models.CharField(max_length=500, blank=True, null=True)
     abstract = models.TextField(blank=True, null=True)
+    innovation_summary = models.TextField(blank=True, null=True)
+    technical_specifications = models.TextField(blank=True, null=True)
     
     filing_date = models.DateField(blank=True, null=True)
     grant_date = models.DateField(blank=True, null=True)

@@ -7,6 +7,9 @@ export interface ResearchPaper {
   title: string;
   authors?: string;
   abstract?: string;
+  methodology?: string;
+  references?: string;
+  key_findings?: any; // JSON standard or string for form
   publication_date?: string;
   published_date?: string;
   document?: any;

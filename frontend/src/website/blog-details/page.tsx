@@ -17,6 +17,8 @@ export default function BlogDetails() {
     const [loading, setLoading] = useState(true);
     const [commentData, setCommentData] = useState({ name: "", email: "", message: "" });
     const [commentStatus, setCommentStatus] = useState({ type: "", message: "" });
+    const [replyTo, setReplyTo] = useState<any>(null);
+    const [expandedComments, setExpandedComments] = useState<number[]>([]);
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -87,10 +89,16 @@ export default function BlogDetails() {
                 blog_post: parseInt(id),
                 name: commentData.name,
                 email: commentData.email,
-                comment: commentData.message
+                comment: commentData.message,
+                parent: replyTo ? replyTo.id : null
             });
-            setCommentStatus({ type: "success", message: "Your comment has been submitted and is awaiting approval!" });
+            setCommentStatus({ type: "success", message: "Your comment has been submitted successfully!" });
             setCommentData({ name: "", email: "", message: "" });
+            setReplyTo(null);
+            
+            // Refresh post to show new comment
+            const response = await getBlogPostById(parseInt(id));
+            setPost(response.data);
         } catch (err) {
             console.error("Failed to submit comment:", err);
             setCommentStatus({ type: "danger", message: "Failed to submit comment. Please try again later." });
@@ -114,7 +122,7 @@ export default function BlogDetails() {
                                                 <h3>{post.title || "Blog Post"}</h3>
                                                 <ul className="post-info clearfix">
                                                     <li><i className="icon-59"></i>{post.created_at || post.published_at ? new Date(post.created_at || post.published_at).toLocaleDateString() : "Date"}</li>
-                                                    <li><i className="icon-60"></i><Link to="/blog-details">{post.author_name || post.author || "Admin"}</Link></li>
+                                                    <li><i className="icon-60"></i><Link to="">{post.author_name || post.author || "Admin"}</Link></li>
                                                 </ul>
                                                 <p>{post.content || post.description || post.excerpt || "No content available"}</p>
                                                 {post.additional_content && (
@@ -141,30 +149,82 @@ export default function BlogDetails() {
                                             )}
                                         </ul>
                                     </div>
-                                    <div className="author-box mb_60">
+                                    {/* <div className="author-box mb_60">
                                         <figure className="author-thumb"><Image src={post.author_image || "/website/assets/images/news/author-1.jpg"} alt={post.author_name || post.author || "Author"} width={172} height={172} priority /></figure>
                                         <div className="author-info">
                                             <h3>{post.author_name || post.author || "Author"}</h3>
+                                            {post.author_designation && (
+                                                <span style={{ fontSize: '14px', color: '#0646ac', fontWeight: 600, display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                    {post.author_designation}
+                                                </span>
+                                            )}
                                             <p>{post.author_bio || "Professional healthcare expert with years of experience"}</p>
                                         </div>
-                                    </div>
+                                    </div> */}
                                     <div className="comment-box mb_60">
                                         <h3>Comments({post.comments?.length || 0})</h3>
                                         {post.comments && post.comments.length > 0 ? (
-                                            post.comments.map((comment: any) => (
-                                                <div key={comment.id} className="comment">
-                                                    {/* <figure className="thumb-box"><Image src="/website/assets/images/news/comment-1.jpg" alt="Commenter" width={88} height={86} priority /></figure> */}
-                                                    <h4>{comment.name}<span>{new Date(comment.created_at).toLocaleDateString()}</span></h4>
-                                                    <p>{comment.comment}</p>
-                                                    <Link to="#" className="reply-btn" onClick={(e) => e.preventDefault()}><i className="icon-58"></i></Link>
-                                                </div>
-                                            ))
+                                            post.comments.filter((c: any) => !c.parent).map((parentComment: any) => {
+                                                const replies = post.comments.filter((c: any) => c.parent === parentComment.id);
+                                                const isExpanded = expandedComments.includes(parentComment.id);
+
+                                                return (
+                                                    <div key={parentComment.id} className="comment-group">
+                                                        {/* Parent Comment */}
+                                                        <div className="comment" style={{ paddingLeft: '0px', marginBottom: '15px' }}>
+                                                            <h4>{parentComment.name}<span>{new Date(parentComment.created_at).toLocaleDateString()}</span></h4>
+                                                            <p>{parentComment.comment}</p>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '10px' }}>
+                                                                <Link 
+                                                                    to="#comment-form" 
+                                                                    style={{ fontSize: '13px', color: '#0646ac', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}
+                                                                    onClick={() => {
+                                                                        setReplyTo(parentComment);
+                                                                        document.getElementById('comment-form')?.scrollIntoView({ behavior: 'smooth' });
+                                                                    }}
+                                                                >
+                                                                    <i className="icon-58"></i> Reply
+                                                                </Link>
+                                                                
+                                                                {replies.length > 0 && (
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            setExpandedComments(prev => 
+                                                                                isExpanded ? prev.filter(id => id !== parentComment.id) : [...prev, parentComment.id]
+                                                                            );
+                                                                        }}
+                                                                        style={{ fontSize: '13px', color: '#666', fontWeight: 600, border: 'none', background: 'none' }}
+                                                                    >
+                                                                        {isExpanded ? 'Hide Replies' : `View ${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}`}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Replies (Toggleable) */}
+                                                        {isExpanded && replies.map((reply: any) => (
+                                                            <div key={reply.id} className="comment" style={{ paddingLeft: '50px', marginBottom: '20px' }}>
+                                                                <h4>{reply.name}<span>{new Date(reply.created_at).toLocaleDateString()}</span></h4>
+                                                                <p>{reply.comment}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })
                                         ) : (
                                             <p>No comments yet. Be the first to comment!</p>
                                         )}
                                     </div>
-                                    <div className="comment-form">
-                                        <h3>Leave a Reply</h3>
+                                    <div className="comment-form" id="comment-form">
+                                        <h3>{replyTo ? `Replying to ${replyTo.name}` : 'Leave a Reply'}</h3>
+                                        {replyTo && (
+                                            <button 
+                                                onClick={() => setReplyTo(null)}
+                                                style={{ fontSize: '13px', color: '#ff4d4d', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}
+                                            >
+                                                ✕ Cancel Reply
+                                            </button>
+                                        )}
                                         {commentStatus.message && (
                                             <div className={`alert alert-${commentStatus.type}`} role="alert">
                                                 {commentStatus.message}
@@ -274,12 +334,7 @@ export default function BlogDetails() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="consulting-widget">
-                                        <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/resource/sidebar-1.jpg)" }}></div>
-                                        <h3>Get Free <br />Consultations Today!</h3>
-                                        <p>Speak with our expert team and receive professional advice on your next project. No obligation, no cost. Schedule your consultation now!</p>
-                                        <Link to="/contact" className="theme-btn btn-two"><span>get a quote</span></Link>
-                                    </div>
+
                                 </div>
                             </div>
                         </div>

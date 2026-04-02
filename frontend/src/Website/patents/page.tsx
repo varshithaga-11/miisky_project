@@ -40,11 +40,11 @@ export default function PatentsPage() {
                     <div className="row clearfix">
                         {patents.map((patent) => (
                             <div key={patent.id} className="col-lg-12 col-md-12 col-sm-12 patent-block mb_30">
-                                <div className="patent-block-one" style={{ padding: '40px', border: '1px solid #eee', borderRadius: '15px', backgroundColor: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.04)', borderLeft: '5px solid #0646ac' }}>
+                                <div className="patent-block-one hover-pop" style={{ padding: '40px', border: '1px solid #eee', borderRadius: '15px', backgroundColor: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.04)', borderLeft: '5px solid #0646ac' }}>
                                     <div className="inner-box d-flex flex-wrap align-items-center">
                                         <div className="content-box flex-grow-1">
                                             <div className="patent-meta mb_10" style={{ color: '#0646ac', fontSize: '14px', fontWeight: 700 }}>
-                                                <span className="mr_20"><i className="fas fa-certificate"></i> No: {patent.registration_number || "PENDING"}</span>
+                                                <span className="mr_20"><i className="fas fa-certificate"></i> No: {patent.patent_number || patent.application_number || "PENDING"}</span>
                                                 <span><i className="far fa-calendar-check"></i> Date: {patent.filing_date || "Coming Soon"}</span>
                                             </div>
                                             <h3 className="mb_15" style={{ fontSize: '26px', fontWeight: 700 }}>{patent.title}</h3>

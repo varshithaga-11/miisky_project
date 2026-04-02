@@ -29,6 +29,9 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             title: data.title,
             authors: data.authors,
             abstract: data.abstract,
+            methodology: data.methodology,
+            references: data.references,
+            key_findings: Array.isArray(data.key_findings) ? data.key_findings.join('\n') : data.key_findings,
             publication_date: data.publication_date,
             published_date: data.published_date,
             document: data.document,
@@ -54,7 +57,12 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
       const data = new FormData();
       Object.entries(formData).forEach(([key, val]) => {
         if (val !== undefined && val !== null && key !== "document" && key !== "document_url") {
-          data.append(key, val.toString());
+          if (key === "key_findings") {
+            const findingsArray = (val as string).split('\n').filter(line => line.trim() !== "");
+            data.append(key, JSON.stringify(findingsArray));
+          } else {
+            data.append(key, val.toString());
+          }
         }
       });
       if (pdfFile) data.append("document", pdfFile);
@@ -138,7 +146,43 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                 id="abstract"
                 value={formData.abstract || ""}
                 onChange={(e) => setFormData({ ...formData, abstract: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-none"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-20 resize-none"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="methodology">Methodology</Label>
+              <textarea
+                id="methodology"
+                value={formData.methodology || ""}
+                onChange={(e) => setFormData({ ...formData, methodology: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-28 resize-none"
+                placeholder="Describe the research methodology & introduction"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="key_findings">Key Findings (One per line)</Label>
+              <textarea
+                id="key_findings"
+                value={formData.key_findings || ""}
+                onChange={(e) => setFormData({ ...formData, key_findings: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-none font-mono"
+                placeholder="Result A&#10;Result B&#10;Result C"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="references">References</Label>
+              <textarea
+                id="references"
+                value={formData.references || ""}
+                onChange={(e) => setFormData({ ...formData, references: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-20 resize-none"
+                placeholder="Cite sources or provide a summary of references"
                 disabled={loading}
               />
             </div>

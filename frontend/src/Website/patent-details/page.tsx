@@ -43,7 +43,7 @@ export default function PatentDetailsPage() {
                             <div className="content-box p_relative d_block" style={{ padding: '60px', border: '1px solid #eee', borderRadius: '30px', backgroundColor: '#fff', boxShadow: '0 20px 50px rgba(0,0,0,0.06)', borderLeft: '10px solid #0646ac' }}>
                                 <div className="patent-meta mb_25 d-flex align-items-center flex-wrap" style={{ color: '#777', fontSize: '15px' }}>
                                     <span className="mr_40 p-2" style={{ backgroundColor: '#f0f4ff', borderRadius: '10px', color: '#0646ac', fontWeight: 700 }}>
-                                        <i className="fas fa-certificate mr_5"></i> No: {patent.registration_number || "US-2026-X123"}
+                                        <i className="fas fa-certificate mr_5"></i> No: {patent.patent_number || patent.application_number || "PENDING"}
                                     </span>
                                     <span className="mr_40"><i className="far fa-calendar-check mr_5" style={{ color: '#0646ac' }}></i> Filed: {patent.filing_date || "Coming Soon"}</span>
                                     <span style={{ 
@@ -62,13 +62,13 @@ export default function PatentDetailsPage() {
                                 <div className="description-box mb_50">
                                     <h3 className="mb_20" style={{ fontSize: '24px', fontWeight: 700 }}>Innovation Summary</h3>
                                     <p style={{ fontSize: '18px', lineHeight: '1.9', color: '#555', marginBottom: '30px' }}>
-                                        {patent.abstract || patent.description || "Leading-edge medical device technology and clinical procedures meant to elevate the quality of life for patients globally. Our patents ensure that our intellectual property stays secure and provides unique value to our healthcare partners."}
+                                        {patent.innovation_summary || patent.abstract || "Leading-edge medical device technology and clinical procedures meant to elevate the quality of life for patients globally. Our patents ensure that our intellectual property stays secure and provides unique value to our healthcare partners."}
                                     </p>
                                     
                                     <div className="detailed-tech p-4" style={{ backgroundColor: '#fdfdfd', borderRadius: '15px', border: '1px dashed #eee' }}>
                                         <h4 className="mb_15" style={{ fontWeight: 700 }}>Technical Specifications</h4>
                                         <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.7' }}>
-                                            {patent.technical_details || "A novel approach involving biometric feedback loops and advanced machine learning models integrated within a portable healthcare solution. Designed to maximize diagnostic precision while minimizing patient discomfort during lengthy clinical observations."}
+                                            {patent.technical_specifications || "A novel approach involving biometric feedback loops and advanced machine learning models integrated within a portable healthcare solution. Designed to maximize diagnostic precision while minimizing patient discomfort during lengthy clinical observations."}
                                         </p>
                                     </div>
                                 </div>

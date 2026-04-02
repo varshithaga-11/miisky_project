@@ -977,3 +977,116 @@ body {
   opacity: 1 !important;
   background: var(--theme-color) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Medical Device Specification Cards
+   ───────────────────────────────────────────────────────────────────────────── */
+.spec-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  cursor: default;
+}
+
+.spec-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 12px 30px rgba(6, 70, 172, 0.08) !important;
+  border-color: rgba(6, 70, 172, 0.2) !important;
+  background-color: #fcfdfe !important;
+}
+
+.spec-card .fas {
+  transition: all 0.3s ease;
+}
+
+.spec-card:hover .fas {
+  transform: scale(1.1);
+  color: #053b92 !important;
+}
+
+.spec-card h4 {
+  transition: color 0.3s ease;
+}
+
+.spec-card:hover h4 {
+  color: #0646ac !important;
+}
+
+@media only screen and (max-width: 767px) {
+  .spec-card {
+    margin-bottom: 15px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Universal Hover Pop Effect
+   ───────────────────────────────────────────────────────────────────────────── */
+.hover-pop {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  cursor: default;
+}
+
+.hover-pop:hover {
+  transform: translateY(-10px) !important;
+  box-shadow: 0 15px 40px rgba(6, 70, 172, 0.12) !important;
+  border-color: rgba(6, 70, 172, 0.2) !important;
+}
+
+/* Modern Medical Device Card & Button Animations */
+.view-details-btn {
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.view-details-btn:hover {
+  background-color: #053a8f !important;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(6, 70, 172, 0.3) !important;
+}
+
+.view-details-btn:hover i {
+  transform: translateX(5px);
+  transition: transform 0.3s ease;
+}
+
+.device-card-premium {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.device-card-premium:hover {
+  transform: translateY(-12px);
+  box-shadow: 0 35px 70px rgba(0,0,0,0.08) !important;
+}
+
+.device-card-premium:hover .image-wrapper img {
+  transform: scale(1.08);
+}
+
+/* Infinite Marquee Animation for Doctors */
+.marquee-content {
+  animation: marquee-scroll 40s linear infinite;
+  width: max-content;
+  display: flex !important;
+}
+
+.marquee-container:hover .marquee-content {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.mx_20 {
+  margin-left: 20px !important;
+  margin-right: 20px !important;
+}
+
+.p_20 {
+  padding: 20px !important;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0 !important;
+}
+
+
+

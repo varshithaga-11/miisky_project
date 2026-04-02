@@ -131,34 +131,79 @@ export default function GalleryPage() {
                             {paginatedItems.map((item, index) => (
                                 <div key={item.id} className="col-lg-4 col-md-6 col-sm-12 gallery-block mb_30">
                                     <div 
-                                        className="gallery-block-one" 
+                                        className="portfolio-block-one" 
                                         onClick={() => openLightbox(item, index)}
                                         style={{ 
-                                            position: 'relative', 
-                                            borderRadius: '15px', 
                                             cursor: 'pointer', 
-                                            transition: 'all 0.3s ease', 
-                                            backgroundColor: '#fff',
-                                            overflow: 'hidden',
-                                            boxShadow: '0 5px 20px rgba(0,0,0,0.05)',
-                                            height: '350px'
+                                            marginBottom: '30px'
                                         }}
                                     >
-                                        <div className="inner-box" style={{ height: '100%', display: 'block' }}>
-                                            <figure className="image-box" style={{ height: '100%', marginBottom: 0, overflow: 'hidden' }}>
+                                        <div className="inner-box" style={{ 
+                                            position: 'relative',
+                                            height: '350px',
+                                            overflow: 'hidden',
+                                            borderRadius: '15px'
+                                        }}>
+                                            <figure className="image-box" style={{ position: 'relative', height: '100%', marginBottom: 0, overflow: 'hidden' }}>
                                                 <Image 
                                                     src={item.image_url || "/website/assets/images/project/project-1.jpg"} 
                                                     alt={item.title || "Gallery Image"} 
                                                     width={400} 
                                                     height={350} 
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
+                                                    className="gallery-img-target"
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'all 500ms ease' }} 
                                                 />
                                             </figure>
+                                            
+                                            {/* Replicating the :before overlay effect */}
+                                            <div className="overlay-mask" style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                background: 'linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(14, 54, 114, 0.8) 68.75%)',
+                                                opacity: 0,
+                                                transition: 'all 500ms ease',
+                                                zIndex: 1
+                                            }}></div>
+
+                                            <div className="text-box" style={{
+                                                position: 'absolute',
+                                                left: '0px',
+                                                bottom: '0px',
+                                                width: '100%',
+                                                padding: '0 50px 0 50px',
+                                                zIndex: 2,
+                                                opacity: 0,
+                                                transition: 'all 500ms ease',
+                                                textAlign: 'left'
+                                            }}>
+                                                <h3 style={{ fontSize: '28px', lineHeight: '38px', fontWeight: 600, marginBottom: '4px', color: '#fff' }}>
+                                                    {item.title}
+                                                </h3>
+                                                <span style={{ fontSize: '16px', color: '#fff', display: 'block' }}>
+                                                    {item.description || "View Details"}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
+
+                        <style dangerouslySetInnerHTML={{ __html: `
+                            .portfolio-block-one:hover .overlay-mask {
+                                opacity: 1 !important;
+                            }
+                            .portfolio-block-one:hover .text-box {
+                                opacity: 1 !important;
+                                bottom: 45px !important;
+                            }
+                            .portfolio-block-one:hover .gallery-img-target {
+                                transform: scale(1.05) !important;
+                            }
+                        ` }} />
 
                         {/* Pagination UI */}
                         {totalPages > 1 && (

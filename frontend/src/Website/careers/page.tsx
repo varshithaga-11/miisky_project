@@ -66,14 +66,23 @@ export default function CareersPage() {
                                     <div className="career-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '10px', backgroundColor: '#fff', marginBottom: '30px', transition: 'all 0.3s ease', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
                                         <div className="inner-box">
                                             <div className="job-meta mb_10">
-                                                <span style={{ backgroundColor: '#0646ac', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{job.type || "Full Time"}</span>
+                                                <span style={{ backgroundColor: '#0646ac', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
+                                                    {(job.job_type || "full_time").split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                                </span>
                                                 <span style={{ marginLeft: '10px', color: '#777', fontSize: '14px' }}><i className="fas fa-map-marker-alt"></i> {job.location || "Remote/Office"}</span>
                                                 <span style={{ marginLeft: '10px', color: '#777', fontSize: '14px' }}>
-                                                    <i className="far fa-calendar-alt"></i> {job.created_at ? new Date(job.created_at).toLocaleDateString() : "Recent"}
+                                                    <i className="far fa-calendar-alt"></i> Posted: {job.created_at ? new Date(job.created_at).toLocaleDateString() : "Recent"}
                                                 </span>
+                                                {job.application_deadline && (
+                                                    <span style={{ marginLeft: '10px', color: '#e74c3c', fontSize: '14px', fontWeight: 600 }}>
+                                                        <i className="far fa-clock"></i> Deadline: {new Date(job.application_deadline).toLocaleDateString()}
+                                                    </span>
+                                                )}
                                             </div>
                                             <h3 className="mb_15"><Link to={`/careers/${job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
-                                            <p className="mb_20" style={{ color: '#555' }}>{job.description ? job.description.substring(0, 150) + "..." : "Excellent opportunity to grow your career in a dynamic environment."}</p>
+                                            <p className="mb_20" style={{ color: '#555' }}>
+                                                {job.short_description || (job.job_description ? job.job_description.substring(0, 120) + "..." : "Join our team to make a real impact on patient outcomes globally using cutting-edge medical technology.")}
+                                            </p>
                                             <div className="btn-box">
                                                 <Link to={`/careers/${job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
                                                     <span>View Details</span>

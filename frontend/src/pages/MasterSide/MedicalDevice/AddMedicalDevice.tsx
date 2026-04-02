@@ -15,7 +15,6 @@ interface Props {
 const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) => {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Partial<MedicalDevice>>({
     name: "",
     description: "",
@@ -23,7 +22,6 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
     short_description: "",
     category: undefined,
     primary_technology: "",
-    connectivity: "",
     position: 0,
     price: undefined,
     is_active: true,
@@ -43,7 +41,6 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
       });
       
       if (imageFile) data.append("image", imageFile);
-      if (thumbFile) data.append("thumbnail", thumbFile);
 
       await createMedicalDevice(data as any);
       toast.success("Medical device added successfully!");
@@ -99,7 +96,7 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
           </div>
 
           <div>
-            <Label htmlFor="price">Price (USD)</Label>
+            <Label htmlFor="price">Price (INR)</Label>
             <Input
               id="price"
               type="number"
@@ -119,25 +116,15 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
               disabled={loading}
             />
           </div>
-
           <div className="md:col-span-2">
-            <ImagePicker
-              id="thumbnail"
-              label="Thumbnail"
-              value={thumbFile}
-              onChange={(file) => setThumbFile(file)}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="short_description">Short Description</Label>
+            <Label htmlFor="short_description">Short Description (Tagline)</Label>
             <textarea
               id="short_description"
               value={formData.short_description || ""}
               onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
               rows={2}
+              placeholder="A brief catchy summary..."
               disabled={loading}
             />
           </div>
@@ -162,18 +149,6 @@ const AddMedicalDevice: React.FC<Props> = ({ onSuccess, onClose, categories }) =
               value={formData.primary_technology || ""}
               onChange={(e) => setFormData({ ...formData, primary_technology: e.target.value })}
               placeholder="e.g. Biosensors"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="connectivity">Connectivity</Label>
-            <Input
-              id="connectivity"
-              type="text"
-              value={formData.connectivity || ""}
-              onChange={(e) => setFormData({ ...formData, connectivity: e.target.value })}
-              placeholder="e.g. Bluetooth, Wi-Fi"
               disabled={loading}
             />
           </div>

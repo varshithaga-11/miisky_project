@@ -22,6 +22,9 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
   const [icon_class, setIconClass] = useState("dept-medical");
   const [image, setImage] = useState<File | null>(null);
   const [short_description, setShortDescription] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [expertise_text, setExpertiseText] = useState("");
+  const [key_features, setKeyFeatures] = useState("");
   const [is_active, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -39,6 +42,12 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
       formData.append("name", name);
       if (description) formData.append("description", description);
       if (short_description) formData.append("short_description", short_description);
+      if (tagline) formData.append("tagline", tagline);
+      if (expertise_text) formData.append("expertise_text", expertise_text);
+      if (key_features) {
+        const featuresArray = key_features.split('\n').filter(line => line.trim() !== "");
+        formData.append("key_features", JSON.stringify(featuresArray));
+      }
       if (head_name) formData.append("head_name", head_name);
       if (head_email) formData.append("head_email", head_email);
       formData.append("position", String(position));
@@ -84,13 +93,52 @@ const AddDepartment: React.FC<AddDepartmentProps> = ({ onClose, onAdd }) => {
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Main Description</Label>
             <textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
               rows={3}
+              placeholder="Detailed treatment and care overview..."
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="tagline">Tagline / Brief Subtitle</Label>
+            <Input
+              id="tagline"
+              type="text"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="e.g. Operations and logistics"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="expertise_text">Professional Expertise Overview</Label>
+            <textarea
+              id="expertise_text"
+              value={expertise_text}
+              onChange={(e) => setExpertiseText(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={2}
+              placeholder="Professional medical services and expertise..."
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="key_features">Key Department Features (One per line)</Label>
+            <textarea
+              id="key_features"
+              value={key_features}
+              onChange={(e) => setKeyFeatures(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm font-mono"
+              rows={4}
+              placeholder="State-of-the-art facilities&#10;Dedicated professionals"
               disabled={loading}
             />
           </div>

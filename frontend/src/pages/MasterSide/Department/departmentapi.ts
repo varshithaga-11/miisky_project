@@ -10,6 +10,9 @@ export interface Department {
   position?: number;
   icon_class?: string;
   image?: any;
+  tagline?: string;
+  expertise_text?: string;
+  key_features?: any;
   short_description?: string;
   is_active?: boolean;
   created_at?: string;

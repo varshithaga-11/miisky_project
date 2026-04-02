@@ -40,15 +40,12 @@ export default function InnovationPage() {
                     <div className="row clearfix">
                         {papers.map((paper) => (
                             <div key={paper.id} className="col-lg-6 col-md-6 col-sm-12 paper-block mb_30">
-                                <div className="paper-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '15px', backgroundColor: '#fff', boxShadow: '0 5px 25px rgba(0,0,0,0.05)', height: '100%' }}>
+                                <div className="paper-block-one hover-pop" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '15px', backgroundColor: '#fff', boxShadow: '0 5px 25px rgba(0,0,0,0.05)', height: '100%' }}>
                                     <div className="inner-box d-flex flex-wrap align-items-start">
-                                        <div className="icon-box mr_30 mb_20" style={{ width: '70px', height: '100px', flexShrink: 0, backgroundColor: '#f0f4ff', color: '#0646ac', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', fontSize: '36px', overflow: 'hidden' }}>
-                                            <i className="far fa-file-pdf"></i>
-                                        </div>
                                         <div className="content-box flex-grow-1">
                                             <div className="paper-meta mb_10" style={{ color: '#777', fontSize: '14px' }}>
                                                 <span className="mr_20"><i className="far fa-calendar-alt"></i> {paper.published_date || "Coming Soon"}</span>
-                                                <span><i className="far fa-user"></i> {paper.author || "Miisky Team"}</span>
+                                                <span><i className="far fa-user"></i> {paper.authors || "Miisky Team"}</span>
                                             </div>
                                             <h3 className="mb_15" style={{ fontSize: '20px', fontWeight: 700, lineHeight: '1.4' }}>{paper.title}</h3>
                                             <p className="mb_20" style={{ color: '#555', fontSize: '15px' }}>{paper.abstract ? paper.abstract.substring(0, 150) + "..." : "Cutting edge research findings from our dedicated innovation team."}</p>

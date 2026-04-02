@@ -50,7 +50,11 @@ export default function Pricing_Page() {
                             is_popular: p.is_popular || false
                         };
                     });
-                    setPlans(mappedPlans);
+                    // Sort plans alphabetically and numerically by name
+                    const sortedPlans = mappedPlans.sort((a: any, b: any) => 
+                        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+                    );
+                    setPlans(sortedPlans);
                 } else {
                     setPlans(MOCK_PLANS);
                 }
@@ -90,12 +94,12 @@ export default function Pricing_Page() {
                         <div className="w-16 h-1 bg-blue-600 mx-auto mt-4 rounded-full"></div>
                     </div>
 
-                    <div className="row flex flex-wrap justify-center -mx-4">
+                    <div className="row flex flex-wrap justify-start -mx-4">
                         {plans.map((plan, index) => (
                             <div key={plan.id || index} className="col-lg-3 col-md-6 col-sm-12 info-block px-4 mb-12">
                                 <div className="info-block-two wow fadeInUp animated h-full" data-wow-delay={`${index * 200}ms`} data-wow-duration="1500ms">
-                                    <div className="inner-box shadow-xl hover:shadow-2xl transition-all duration-300 rounded-[28px] bg-white dark:bg-gray-800/80 backdrop-blur-sm group border border-gray-100 dark:border-white/5"
-                                        style={{ minHeight: '380px', display: 'flex', flexDirection: 'column', padding: '40px 25px 35px 25px', position: 'relative' }}>
+                                    <div className="inner-box shadow-xl hover:shadow-2xl transition-all duration-400 rounded-[28px] bg-white dark:bg-gray-800/80 backdrop-blur-sm group border border-gray-100 dark:border-white/5 hover:-translate-y-2.5"
+                                        style={{ minHeight: '380px', display: 'flex', flexDirection: 'column', padding: '40px 25px 35px 25px', position: 'relative', transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
 
                                         {plan.is_popular && (
                                             <div className="absolute top-4 right-4">

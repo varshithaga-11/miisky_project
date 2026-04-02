@@ -152,14 +152,116 @@ const AddJobListing: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
           </div>
 
           <div className="md:col-span-2">
-            <Label htmlFor="short_description">Short Description</Label>
+            <Label htmlFor="short_description">Short Description (for Listing Page)</Label>
             <textarea
               id="short_description"
               value={formData.short_description || ""}
               onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
               rows={2}
-              placeholder="Brief summary for list views..."
+              placeholder="Brief summary shown on the careers list page..."
+              disabled={loading}
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="tagline">Job/Department Tagline</Label>
+            <Input
+              id="tagline"
+              type="text"
+              value={formData.tagline || ""}
+              onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+              disabled={loading}
+              placeholder="e.g. Healthcare Expert / Professional Expertise"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="expertise_text">Expertise Overview</Label>
+            <textarea
+              id="expertise_text"
+              value={formData.expertise_text || ""}
+              onChange={(e) => setFormData({ ...formData, expertise_text: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={3}
+              disabled={loading}
+              placeholder="Medical professionals include doctors, nurses, pharmacists..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="detailed_description">Detailed Scope & Research</Label>
+            <textarea
+              id="detailed_description"
+              value={formData.detailed_description || ""}
+              onChange={(e) => setFormData({ ...formData, detailed_description: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={4}
+              disabled={loading}
+              placeholder="Their practitioners use a range of techniques and technologies..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="responsibilities">Core Responsibilities</Label>
+            <textarea
+              id="responsibilities"
+              value={formData.responsibilities || ""}
+              onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={4}
+              disabled={loading}
+              placeholder="We are looking for a Data Scientist..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="requirements">Requirements & Skills</Label>
+            <textarea
+              id="requirements"
+              value={formData.requirements || ""}
+              onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={3}
+              disabled={loading}
+              placeholder="e.g. bsc tholvi..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="benefits">What We Offer</Label>
+            <textarea
+              id="benefits"
+              value={formData.benefits || ""}
+              onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={3}
+              disabled={loading}
+              placeholder="Competitive salary and benefits..."
+            />
+          </div>
+
+          <div>
+             <Label htmlFor="qualification_required">Education Required</Label>
+             <Input
+               id="qualification_required"
+               type="text"
+               value={formData.qualification_required || ""}
+               onChange={(e) => setFormData({ ...formData, qualification_required: e.target.value })}
+               placeholder="e.g. Bachelor's or Higher"
+               disabled={loading}
+             />
+          </div>
+
+          <div className="md:col-span-2">
+            <Label htmlFor="job_description">Full Job Description (Internal Notes)</Label>
+            <textarea
+              id="job_description"
+              required
+              value={formData.job_description || ""}
+              onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+              rows={3}
               disabled={loading}
             />
           </div>
@@ -172,31 +274,6 @@ const AddJobListing: React.FC<Props> = ({ onSuccess, onClose, departments }) => 
               value={formData.application_form_link || ""}
               onChange={(e) => setFormData({ ...formData, application_form_link: e.target.value })}
               placeholder="https://forms.gle/..."
-              disabled={loading}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="job_description">Full Job Description *</Label>
-            <textarea
-              id="job_description"
-              required
-              value={formData.job_description || ""}
-              onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
-              rows={5}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="requirements">Requirements / Qualifications</Label>
-            <textarea
-              id="requirements"
-              value={formData.requirements || ""}
-              onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
-              rows={3}
               disabled={loading}
             />
           </div>

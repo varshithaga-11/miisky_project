@@ -103,10 +103,10 @@ export default function DoctorsDetails() {
                 <div className="col-lg-6 col-md-12 col-sm-12 content-column">
                   <div className="content-box">
                     <h2>{doctor.name || "Medical Professional"}</h2>
-                    <span className="designation">{doctor.title || doctor.specialization || "Healthcare Expert"}</span>
-                    <p>{doctor.biography || doctor.description || "Professional medical expertise and dedication to patient care"}</p>
-                    <p>Medical professionals include doctors, nurses, pharmacists, and other healthcare workers who work together to provide patient care. They may work in hospitals, clinics, private practices, or other healthcare settings.</p>
-                    <p>Their practitioners use a range of techniques and technologies to diagnose and treat illnesses and injuries, and medical research is an essential component of advancing healthcare.</p>
+                    <span className="designation">{doctor.tagline || doctor.designation || "Healthcare Expert"}</span>
+                    <p>{doctor.bio || "Professional medical expertise and dedication to patient care"}</p>
+                    <p>{doctor.expertise_text || "Medical professionals include doctors, nurses, pharmacists, and other healthcare workers who work together to provide patient care. They may work in hospitals, clinics, private practices, or other healthcare settings."}</p>
+                    <p>{doctor.detailed_description || "Their practitioners use a range of techniques and technologies to diagnose and treat illnesses and injuries, and medical research is an essential component of advancing healthcare."}</p>
                   </div>
                 </div>
               </div>

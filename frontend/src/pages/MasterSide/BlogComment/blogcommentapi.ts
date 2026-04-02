@@ -4,6 +4,8 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 export interface BlogComment {
   id?: number;
   blog_post: number | string;
+  parent?: number;
+  parent_name?: string;
   name: string;
   email: string;
   comment: string;

@@ -22,6 +22,13 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const [internalPreview, setInternalPreview] = useState<string | null>(previewUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync internal preview when previewUrl prop changes (e.g. after async fetch)
+  React.useEffect(() => {
+    if (previewUrl && !fileInputRef.current?.value) {
+      setInternalPreview(previewUrl);
+    }
+  }, [previewUrl]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {

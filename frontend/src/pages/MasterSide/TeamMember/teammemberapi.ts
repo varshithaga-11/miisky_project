@@ -8,6 +8,9 @@ export interface TeamMember {
   department?: number;
   department_name?: string;
   bio?: string;
+  tagline?: string;
+  expertise_text?: string;
+  detailed_description?: string;
   qualification?: string;
   experience_years?: number;
   photo?: File | string | null;

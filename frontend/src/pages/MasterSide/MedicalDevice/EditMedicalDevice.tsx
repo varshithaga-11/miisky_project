@@ -17,7 +17,6 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
@@ -40,18 +39,25 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
     setLoading(true);
     try {
       const data = new FormData();
+      
+      // Fields to exclude from the automatic loop (handling manually or ignoring if not updated)
+      const fileFields = ["image", "thumbnail", "presentation_file", "brochure_file", "research_paper_file", "patent_document"];
+
       Object.entries(formData).forEach(([key, value]) => {
-        if (!key.endsWith('_url') && value !== undefined && value !== null) {
+        // Skip URL helpers and fixed file paths
+        if (key.endsWith('_url') || fileFields.includes(key)) return;
+
+        if (value !== undefined && value !== null) {
           if (typeof value === 'object') {
             data.append(key, JSON.stringify(value));
           } else {
+            // Append everything else (including empty strings for clearing)
             data.append(key, value.toString());
           }
         }
       });
       
       if (imageFile) data.append("image", imageFile);
-      if (thumbFile) data.append("thumbnail", thumbFile);
 
       await updateMedicalDevice(id, data);
       toast.success("Medical device updated successfully!");
@@ -109,7 +115,7 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
             </div>
 
             <div>
-              <Label htmlFor="price">Price (USD)</Label>
+              <Label htmlFor="price">Price (INR)</Label>
               <Input
                 id="price"
                 type="number"
@@ -130,25 +136,19 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
               />
             </div>
 
-            <div className="md:col-span-2">
-              <ImagePicker
-                id="thumbnail"
-                label="Thumbnail"
-                value={thumbFile}
-                previewUrl={formData.thumbnail_url}
-                onChange={(file) => setThumbFile(file)}
-                disabled={loading}
-              />
-            </div>
+
+
+
 
             <div className="md:col-span-2">
-              <Label htmlFor="short_description">Short Description</Label>
+              <Label htmlFor="short_description">Short Description (Tagline)</Label>
               <textarea
                 id="short_description"
                 value={formData.short_description || ""}
                 onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
                 rows={2}
+                placeholder="A brief catchy summary..."
                 disabled={loading}
               />
             </div>
@@ -188,16 +188,7 @@ const EditMedicalDevice: React.FC<Props> = ({ id, onSuccess, onClose, categories
               />
             </div>
 
-            <div>
-              <Label htmlFor="connectivity">Connectivity</Label>
-              <Input
-                id="connectivity"
-                type="text"
-                value={formData.connectivity || ""}
-                onChange={(e) => setFormData({ ...formData, connectivity: e.target.value })}
-                disabled={loading}
-              />
-            </div>
+
 
             <div>
               <Label htmlFor="position">Display Priority</Label>

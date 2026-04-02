@@ -8,6 +8,8 @@ export interface Patent {
   application_number?: string;
   inventors?: string;
   abstract?: string;
+  innovation_summary?: string;
+  technical_specifications?: string;
   filing_date?: string;
   grant_date?: string;
   expiry_date?: string;

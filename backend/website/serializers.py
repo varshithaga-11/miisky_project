@@ -103,6 +103,7 @@ class BlogTagSerializer(serializers.ModelSerializer):
 
 
 class BlogCommentSerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
     class Meta:
         model = BlogComment
         fields = '__all__'
@@ -204,8 +205,10 @@ class TeamMemberSerializer(serializers.ModelSerializer):
         model = TeamMember
         fields = [
             'id', 'name', 'designation', 'department', 'department_name',
-            'bio', 'qualification', 'experience_years', 'photo', 'photo_url',
-            'linkedin_url', 'email', 'phone', 'position', 'is_active', 'created_at'
+            'bio', 'tagline', 'expertise_text', 'detailed_description',
+            'qualification', 'experience_years', 'photo', 'photo_url',
+            'linkedin_url', 'email', 'phone', 'position', 'is_doctor',
+            'is_active', 'created_at'
         ]
 
     def get_photo_url(self, obj):

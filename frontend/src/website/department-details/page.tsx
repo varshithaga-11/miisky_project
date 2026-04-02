@@ -139,35 +139,64 @@ export default function DepartmentDetails() {
                             </div>
                             <div className="col-lg-8 col-md-12 col-sm-12 content-side">
                                 <div className="service-details-content">
-                                    <div className="content-one mb_40">
-                                        <div className="text-box">
-                                            <h2>{department.name || "Department"}</h2>
-                                            <p>{department.description || department.short_description || "Department information and services available."}</p>
-                                            <p>Professional medical services and expertise in this specialized field.</p>
+                                    <div className="content-one mb_50">
+                                        <div className="text-box p_relative d_block">
+                                            <span className="p-2 mb_15 d-inline-block" style={{ backgroundColor: '#f0f4ff', borderRadius: '8px', color: '#0646ac', fontWeight: 700, fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                                                {department.tagline || department.short_description || "Specialized Expertise"}
+                                            </span>
+                                            <h2 className="mb_30" style={{ fontSize: '42px', fontWeight: 900, color: '#111' }}>{department.name}</h2>
+                                            
+                                            <div className="expertise-card p-4 mb_40" style={{ backgroundColor: '#fff', border: '1px solid #eee', borderRadius: '20px', boxShadow: '0 15px 40px rgba(0,0,0,0.05)', borderLeft: '6px solid #0646ac' }}>
+                                                <h4 className="mb_15" style={{ fontWeight: 800, color: '#111' }}>Strategic Expertise</h4>
+                                                <p style={{ fontSize: '18px', color: '#444', lineHeight: '1.8' }}>
+                                                    {department.expertise_text || "Our dedicated team combines advanced methodology with deep industry expertise to provide reliable solutions and exceptional care quality."}
+                                                </p>
+                                            </div>
+
+                                            <div className="main-image mb_50">
+                                                <figure className="image-box overflow-hidden" style={{ borderRadius: '25px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
+                                                    <Image 
+                                                        src={department.image || "/website/assets/images/service/service-5.jpg"} 
+                                                        alt={department.name} 
+                                                        className="w-100"
+                                                        style={{ 
+                                                            maxHeight: '500px', 
+                                                            objectFit: 'cover', 
+                                                            display: 'block'
+                                                        }}
+                                                        priority 
+                                                    />
+                                                </figure>
+                                            </div>
+
+                                            <div className="description-section mb_50">
+                                                <h3 className="mb_20" style={{ fontWeight: 800 }}>Departmental Overview</h3>
+                                                <p style={{ fontSize: '17px', color: '#555', lineHeight: '1.9' }}>
+                                                    {department.description || "Consistently pushing the boundaries of medical science, this department focuses on integrating state-of-the-art technologies with compassionate care to elevate patient outcomes and operational efficiency."}
+                                                </p>
+                                            </div>
+
+                                            <div className="features-grid">
+                                                <h3 className="mb_25" style={{ fontWeight: 800 }}>Key Capabilities</h3>
+                                                <div className="row clearfix">
+                                                    {(department.key_features && department.key_features.length > 0 ? department.key_features : [
+                                                        "Professional medical expertise and care",
+                                                        "State-of-the-art facilities and equipment",
+                                                        "Comprehensive patient support and treatment",
+                                                        "Dedicated healthcare professionals on staff"
+                                                    ]).map((feature: string, index: number) => (
+                                                        <div key={index} className="col-lg-6 col-md-6 col-sm-12 mb_20">
+                                                            <div className="feature-item p-3 d-flex align-items-center" style={{ backgroundColor: '#fcfcfc', border: '1px solid #f0f0f0', borderRadius: '12px' }}>
+                                                                <div className="icon-box mr_15" style={{ width: '30px', height: '30px', backgroundColor: '#e1f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dcc70', fontSize: '12px' }}>
+                                                                    <i className="fas fa-check"></i>
+                                                                </div>
+                                                                <span style={{ fontWeight: 600, color: '#444', fontSize: '15px' }}>{feature}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="content-two">
-                                        <figure className="image-box mb_30 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-                                            <Image 
-                                                src={department.image || "/website/assets/images/service/service-5.jpg"} 
-                                                alt={department.name} 
-                                                className="w-100"
-                                                style={{ 
-                                                    maxHeight: '450px', 
-                                                    objectFit: 'contain', 
-                                                    display: 'block', 
-                                                    margin: '0 auto' 
-                                                }}
-                                                priority 
-                                            />
-                                        </figure>
-                                        <p>{department.description || "Advanced medical treatments and care supported by our expert team."}</p>
-                                        <ul className="list-style-one clearfix">
-                                            <li>Professional medical expertise and care</li>
-                                            <li>State-of-the-art facilities and equipment</li>
-                                            <li>Comprehensive patient support and treatment</li>
-                                            <li>Dedicated healthcare professionals on staff</li>
-                                        </ul>
                                     </div>
                                 </div>
                             </div>

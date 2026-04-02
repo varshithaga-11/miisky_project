@@ -122,6 +122,7 @@ const BlogCommentPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Context / Post</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Message Type</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Contributor</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Statement</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
@@ -131,11 +132,11 @@ const BlogCommentPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && comments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
                 </TableRow>
               ) : comments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No comments found</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No comments found</TableCell>
                 </TableRow>
               ) : (
                 comments.map((comment, index) => (
@@ -146,6 +147,11 @@ const BlogCommentPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start">
                         <div className="text-theme-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tighter">
                             {posts.find(p => p.id === comment.blog_post)?.title || "Unknown Cluster"}
+                        </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                        <div className={`text-theme-xs font-bold uppercase tracking-tight ${comment.parent ? 'text-blue-500 underline decoration-dotted' : 'text-gray-500'}`}>
+                            {comment.parent ? `Reply to ${comment.parent_name || 'Previous Comment'}` : "Comment"}
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
