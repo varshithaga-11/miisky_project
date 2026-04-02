@@ -20,9 +20,8 @@ const swiperOptions = {
     disableOnInteraction: false,
   },
   loop: true,
-  navigation: {
-    nextEl: ".swiper-prev",
-    prevEl: ".swiper-next",
+  pagination: {
+    clickable: true,
   },
   breakpoints: {
     320:  { slidesPerView: 1 },
@@ -85,7 +84,9 @@ export default function Service({ departments }: ServiceProps) {
         className="pattern-layer"
         style={{ backgroundImage: "url(/website/assets/images/shape/shape-13.png)" }}
       ></div>
-      <span className="big-text">Central Hospital Central Hospital</span>
+      <span className="big-text">
+        Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky Miisky 
+      </span>
       <div className="auto-container">
         <div className="sec-title mb_60">
           <span className="sub-title mb_5">What we do for our patients</span>
@@ -99,7 +100,7 @@ export default function Service({ departments }: ServiceProps) {
           </p>
         </div>
 
-        <Swiper {...swiperOptions} className="three-item-carousel owl-theme nav-style-one">
+        <Swiper {...swiperOptions} className="three-item-carousel owl-theme">
           {departmentsList.map((dept) => (
             <SwiperSlide key={dept.id}>
               <div className="service-block-one">
@@ -135,17 +136,6 @@ export default function Service({ departments }: ServiceProps) {
             </SwiperSlide>
           ))}
         </Swiper>
-
-        <div className="nav-style-one">
-          <div className="swiper-nav">
-            <button type="button" className="swiper-prev">
-              <span className="icon-21"></span>
-            </button>
-            <button type="button" className="swiper-next">
-              <span className="icon-22"></span>
-            </button>
-          </div>
-        </div>
       </div>
     </section>
   );

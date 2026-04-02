@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLayout } from "./context/LayoutContext";
 import About from "./components/sections/home1/About";
-import About_Two from "./components/sections/home1/About_Two";
+// import About_Two from "./components/sections/home1/About_Two";
 import Banner from "./components/sections/home1/Banner";
 import Chooseus from "./components/sections/home1/Chooseus";
 import News from "./components/sections/home1/News";
@@ -26,7 +26,7 @@ export default function HomePage() {
             <Service/>
             <Chooseus/>
             <Working/>
-            <About_Two/>
+            {/* <About_Two/> */}
             <Team/>
             <Portfolio/>
             <News/>

@@ -24,8 +24,8 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
     is_active: true,
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [excelFile, setExcelFile] = useState<File | null>(null);
-  const [docFile, setDocFile] = useState<File | null>(null);
+  const [document1File, setDocument1File] = useState<File | null>(null);
+  const [document2File, setDocument2File] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +36,8 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
         if (val !== undefined && val !== null && val !== "" && key !== "document") data.append(key, val.toString());
       });
       if (pdfFile) data.append("document", pdfFile);
-      if (excelFile) data.append("excel_file", excelFile);
-      if (docFile) data.append("doc_file", docFile);
+      if (document1File) data.append("document_1", document1File);
+      if (document2File) data.append("document_2", document2File);
 
       await createResearchPaper(data as any);
       toast.success("Research paper added successfully!");
@@ -121,12 +121,11 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
           </div>
 
           <div>
-            <Label htmlFor="document">Research Paper (PDF) *</Label>
+            <Label htmlFor="document">Research Document *</Label>
             <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-6 text-center">
               <input 
                 id="document"
                 type="file" 
-                accept=".pdf"
                 required
                 onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
@@ -139,7 +138,7 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
                   </svg>
                 </div>
                 <span className="text-gray-600 dark:text-gray-400 font-bold text-xs truncate max-w-full">
-                  {pdfFile ? pdfFile.name : "Click or Drag to Upload PDF"}
+                  {pdfFile ? pdfFile.name : "Click or Drag to Upload Document"}
                 </span>
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Max Size: 15MB</p>
               </div>
@@ -148,34 +147,32 @@ const AddResearchPaper: React.FC<Props> = ({ onSuccess, onClose }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="excel_file">Excel File (Optional)</Label>
+              <Label htmlFor="document_1">Document 1 (Optional)</Label>
               <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
                 <input 
-                  id="excel_file"
+                  id="document_1"
                   type="file" 
-                  accept=".xls,.xlsx"
-                  onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                  onChange={(e) => setDocument1File(e.target.files?.[0] || null)}
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
                   disabled={loading}
                 />
                 <span className="text-[10px] text-gray-500 font-bold block truncate">
-                  {excelFile ? excelFile.name : "Upload Excel"}
+                  {document1File ? document1File.name : "Upload Document 1"}
                 </span>
               </div>
             </div>
             <div>
-              <Label htmlFor="doc_file">Doc File (Optional)</Label>
+              <Label htmlFor="document_2">Document 2 (Optional)</Label>
               <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
                 <input 
-                  id="doc_file"
+                  id="document_2"
                   type="file" 
-                  accept=".doc,.docx"
-                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  onChange={(e) => setDocument2File(e.target.files?.[0] || null)}
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
                   disabled={loading}
                 />
                 <span className="text-[10px] text-gray-500 font-bold block truncate">
-                  {docFile ? docFile.name : "Upload Doc"}
+                  {document2File ? document2File.name : "Upload Document 2"}
                 </span>
               </div>
             </div>

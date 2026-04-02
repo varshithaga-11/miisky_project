@@ -115,19 +115,10 @@ export default function MedicalDeviceDetailsPage() {
                     
                     <div className="row clearfix mt_60">
                         <div className="col-lg-12">
-                            <div className="tabs-box">
-                                <div className="tab-buttons-box">
-                                    <ul className="tab-buttons clearfix" style={{ listStyle: 'none', padding: '0', display: 'flex', borderBottom: '1px solid #eee' }}>
-                                        <li className="tab-btn active-btn" style={{ padding: '15px 30px', cursor: 'pointer', fontWeight: 700, borderBottom: '3px solid #0646ac' }}>Overview</li>
-                                        <li className="tab-btn" style={{ padding: '15px 30px', cursor: 'pointer', fontWeight: 600, color: '#777' }}>Additional Info</li>
-                                    </ul>
-                                </div>
-                                <div className="tabs-content" style={{ padding: '30px 0' }}>
-                                    <div className="tab active-tab">
-                                        <div className="text">
-                                            <p>{device.long_description || "This medical device represents the pinnacle of our engineering and clinical research. Designed to meet the demanding needs of modern healthcare facilities, it combines robust performance with intuitive operation. Every aspect has been meticulously tested to ensure patient safety and clinical accuracy."}</p>
-                                        </div>
-                                    </div>
+                            <div className="content-box" style={{ padding: '40px 0', borderTop: '1px solid #eee' }}>
+                                <h3 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '20px' }}>Product Overview</h3>
+                                <div className="text" style={{ fontSize: '16px', lineHeight: '1.8', color: '#555' }}>
+                                    <p>{device.long_description || "This medical device represents the pinnacle of our engineering and clinical research. Designed to meet the demanding needs of modern healthcare facilities, it combines robust performance with intuitive operation. Every aspect has been meticulously tested to ensure patient safety and clinical accuracy."}</p>
                                 </div>
                             </div>
                         </div>

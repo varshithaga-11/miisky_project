@@ -15,6 +15,11 @@ export default function Footer1() {
                         <div className="pattern-4"  style={{ backgroundImage: "url(/website/assets/images/shape/shape-24.png)" }}></div>
                     </div>
                     <div className="auto-container">
+                        <div className="footer-logo mb_40">
+                             <Link to="/">
+                                 <Image src="/miisky-logo.png" alt="Miisky Logo" width={180} height={40} />
+                             </Link>
+                        </div>
                         <div className="row clearfix">
                             <div className="col-lg-3 col-md-6 col-sm-12 footer-column">
                                 <div className="footer-widget about-widget">

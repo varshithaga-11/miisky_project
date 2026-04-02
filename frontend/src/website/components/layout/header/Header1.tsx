@@ -13,8 +13,7 @@ type Header1Props = {
 
 export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Header1Props) {
   const [departments, setDepartments] = useState<any[]>([]);
-  const { pathname } = useLocation();
-  const isHomePage = pathname === "/" || pathname === "/";
+  useLocation();
 
   useEffect(() => {
     const fetchDepartmentsData = async () => {
@@ -48,7 +47,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
     <>
       {/* main header */}
       <header className={`main-header ${scroll ? "fixed-header" : ""}`}>
-        {isHomePage && (
           <div className="header-top">
             <div className="outer-container">
               <div className="top-inner">
@@ -66,7 +64,6 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
               </div>
             </div>
           </div>
-        )}
 
         <div className="header-lower">
           <div className="outer-container">
@@ -141,7 +138,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/contact">Contact</Link>
                       </li>
                       <li className="login-li" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
-                        <button className="theme-btn btn-one" style={{
+                        <Link to="/signin" className="theme-btn btn-one" style={{
                           padding: '8px 25px',
                           fontSize: '14px',
                           borderRadius: '5px',
@@ -149,42 +146,41 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           lineHeight: '1.5',
                           textTransform: 'uppercase',
                           fontWeight: '600',
-                          marginTop: '0'
+                          marginTop: '0',
+                          color: '#fff',
+                          display: 'inline-block'
                         }}>
                           Login
-                        </button>
+                        </Link>
                       </li>
                     </ul>
                   </div>
                 </nav>
               </div>
-
-              {isHomePage && (
-                <div className="menu-right-content">
-                  <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                    <div className="icon-box" style={{
-                      width: '50px',
-                      height: '50px',
-                      backgroundColor: '#fba354',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '15px',
-                      flexShrink: 0,
-                      position: 'relative'
-                    }}>
-                      <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
-                    </div>
-                    <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
-                      <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
-                      <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                        <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
-                      </h6>
-                    </div>
+              <div className="menu-right-content">
+                <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <div className="icon-box" style={{
+                    width: '50px',
+                    height: '50px',
+                    backgroundColor: '#fba354',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    flexShrink: 0,
+                    position: 'relative'
+                  }}>
+                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
+                  </div>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
+                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
+                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
+                      <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                    </h6>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -262,7 +258,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/contact">Contact</Link>
                       </li>
                       <li className="login-li" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
-                        <button className="theme-btn btn-one" style={{
+                        <Link to="/signin" className="theme-btn btn-one" style={{
                           padding: '8px 25px',
                           fontSize: '14px',
                           borderRadius: '5px',
@@ -270,42 +266,41 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           lineHeight: '1.5',
                           textTransform: 'uppercase',
                           fontWeight: '600',
-                          marginTop: '0'
+                          marginTop: '0',
+                          color: '#fff',
+                          display: 'inline-block'
                         }}>
                           Login
-                        </button>
+                        </Link>
                       </li>
                     </ul>
                   </div>
                 </nav>
               </div>
-
-              {isHomePage && (
-                <div className="menu-right-content">
-                  <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                    <div className="icon-box" style={{
-                      width: '50px',
-                      height: '50px',
-                      backgroundColor: '#fba354',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '15px',
-                      flexShrink: 0,
-                      position: 'relative'
-                    }}>
-                      <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
-                    </div>
-                    <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
-                      <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
-                      <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                        <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
-                      </h6>
-                    </div>
+              <div className="menu-right-content">
+                <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <div className="icon-box" style={{
+                    width: '50px',
+                    height: '50px',
+                    backgroundColor: '#fba354',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    flexShrink: 0,
+                    position: 'relative'
+                  }}>
+                    <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
+                  </div>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
+                    <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
+                    <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
+                      <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                    </h6>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>

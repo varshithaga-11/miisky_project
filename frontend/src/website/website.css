@@ -13,7 +13,9 @@
 @import url("/website/assets/css/responsive.css");
 
 /* ── Prevent horizontal overflow on mobile ── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -42,11 +44,11 @@ body {
 }
 
 /* Remove dropdown arrow from non-dropdown menu items */
-.main-header .navigation > li:not(.dropdown) > a:after {
+.main-header .navigation>li:not(.dropdown)>a:after {
   display: none !important;
 }
 
-.main-header .navigation > li:not(.dropdown) > a:before {
+.main-header .navigation>li:not(.dropdown)>a:before {
   display: none !important;
 }
 
@@ -58,7 +60,8 @@ body {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  overflow: visible !important; /* Prevent clipping of dropdowns */
+  overflow: visible !important;
+  /* Prevent clipping of dropdowns */
 }
 
 /* Ensure all parents allow dropdowns to overflow */
@@ -74,13 +77,14 @@ body {
   justify-content: space-between !important;
   align-items: center !important;
   gap: 20px !important;
-  padding: 10px 40px !important; /* Added horizontal padding for breathing room */
+  padding: 10px 40px !important;
+  /* Added horizontal padding for breathing room */
 }
 
 /* Define the white header against the page content */
 .main-header {
   background-color: #ffffff !important;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.05) !important;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05) !important;
 }
 
 .main-header .logo-box {
@@ -102,21 +106,23 @@ body {
   margin: 0 !important;
 }
 
-.main-header .navigation > li {
-  margin: 0px 22px !important; /* Even more premium spacing */
+.main-header .navigation>li {
+  margin: 0px 22px !important;
+  /* Even more premium spacing */
   position: relative !important;
 }
 
-.main-header .navigation > li > a {
+.main-header .navigation>li>a {
   font-family: 'Outfit', 'Inter', 'Source Sans Pro', sans-serif !important;
   font-size: 16px !important;
   font-weight: 500 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.03em !important; /* Slightly more letter spacing */
+  letter-spacing: 0.03em !important;
+  /* Slightly more letter spacing */
   transition: all 0.3s ease !important;
 }
 
-.main-header .navigation > li > a:hover {
+.main-header .navigation>li>a:hover {
   color: #0646ac !important;
 }
 
@@ -124,21 +130,25 @@ body {
   flex-shrink: 0 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 15px !important; /* Smaller gap */
+  gap: 15px !important;
+  /* Smaller gap */
   margin-left: 10px !important;
 }
 
 /* Ensure no overlap with the support box */
 .main-header .support-box {
-  padding-left: 35px !important; /* Save space on the icon side */
+  padding-left: 35px !important;
+  /* Save space on the icon side */
   margin-right: 10px !important;
   flex-shrink: 0 !important;
-  min-width: 170px !important; /* Ensure enough space for the number */
+  min-width: 170px !important;
+  /* Ensure enough space for the number */
 }
 
 .main-header .support-box h6 {
   font-size: 15px !important;
-  white-space: nowrap !important; /* Keep on one line */
+  white-space: nowrap !important;
+  /* Keep on one line */
 }
 
 .main-header .btn-box {
@@ -146,14 +156,14 @@ body {
 }
 
 /* Ensure dropdowns are visible on hover */
-.main-header .navigation li.dropdown > ul {
+.main-header .navigation li.dropdown>ul {
   display: block !important;
   visibility: hidden !important;
   opacity: 0 !important;
   transition: all 0.3s ease !important;
   position: absolute !important;
   background-color: #ffffff !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
   z-index: 1000 !important;
   padding: 10px 0 !important;
   top: 100% !important;
@@ -162,7 +172,7 @@ body {
   border-top: 3px solid #0646ac !important;
 }
 
-.main-header .navigation li.dropdown:hover > ul {
+.main-header .navigation li.dropdown:hover>ul {
   visibility: visible !important;
   opacity: 1 !important;
   margin-top: 0px !important;
@@ -271,7 +281,7 @@ body {
   }
 
   /* Section title responsive */
-  .main-header .navigation > li {
+  .main-header .navigation>li {
     margin: 0 10px !important;
   }
 
@@ -346,7 +356,7 @@ body {
   font-family: inherit !important;
   border: 1px solid #e5e5e5 !important;
   border-radius: 8px !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
 .react-datepicker__header {
@@ -360,7 +370,7 @@ body {
   font-weight: 700 !important;
 }
 
-.react-datepicker__day--selected, 
+.react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
   background-color: #0646ac !important;
   border-radius: 50% !important;
@@ -380,7 +390,7 @@ body {
   padding: 20px !important;
   border-radius: 12px !important;
   border: 1px solid #e5e5e5 !important;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
   display: block !important;
 }
 
@@ -492,6 +502,7 @@ body {
   .team-carousel-container {
     padding: 0;
   }
+
   .team-carousel-container .section-nav {
     display: none;
   }
@@ -528,7 +539,8 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  pointer-events: none; /* Make hover text box non-interactive so it doesn't block underlying links if any */
+  pointer-events: none;
+  /* Make hover text box non-interactive so it doesn't block underlying links if any */
 }
 
 .portfolio-block-one .inner-box .text-box span {
@@ -562,16 +574,406 @@ body {
 
 /* Selected department Noticeable styling - Orange */
 .service-sidebar .category-widget .category-list li a.current {
-    color: #ff8c00 !important; /* Orange color */
-    background: transparent !important;
-    padding-left: 20px;
-    border-radius: 0;
-    font-weight: 800;
-    margin-left: 20px;
-    box-shadow: none !important;
+  color: #ff8c00 !important;
+  /* Orange color */
+  background: transparent !important;
+  padding-left: 20px;
+  border-radius: 0;
+  font-weight: 800;
+  margin-left: 20px;
+  box-shadow: none !important;
 }
 
 .service-sidebar .category-widget .category-list li a.current:before {
-    color: #ff8c00 !important;
-    left: -10px;
+  color: #ff8c00 !important;
+  left: -10px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HOME PAGE RESPONSIVE SPACING
+   Reduce padding and margins between sections on smaller screens
+   ═══════════════════════════════════════════════════════════ */
+
+@media only screen and (max-width: 991px) {
+  .sec-pad {
+    padding: 60px 0px !important;
+  }
+
+  .about-section {
+    padding: 60px 0px !important;
+  }
+
+  .service-section {
+    padding: 60px 0px !important;
+  }
+
+  .portfolio-section .outer-container {
+    padding: 40px 0 !important;
+  }
+
+  .about-style-two {
+    padding: 60px 0 !important;
+  }
+
+  .about-style-two.pt_140 {
+    padding-top: 60px !important;
+  }
+
+  .banner-section {
+    min-height: 600px !important;
+    /* Ensures the section is tall enough for the images */
+  }
+
+  .banner-section .slide-item {
+    padding: 100px 0 60px !important;
+  }
+
+  .banner-carousel .content-box {
+    max-width: 100% !important;
+    padding: 0 15px !important;
+    text-align: center !important;
+    margin-bottom: 20px !important;
+  }
+
+  .banner-section .image-box {
+    display: block !important;
+    position: relative !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    margin-top: 15px !important;
+    text-align: center !important;
+  }
+
+  .banner-section .image-box .image,
+  .banner-section .image-box .image img {
+    max-width: 90% !important;
+    width: 100% !important;
+    aspect-ratio: 3 / 2 !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    opacity: 1 !important;
+    transform: none !important;
+    object-fit: cover !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GLOBAL BANNER IMAGE TWEAKS (DESKTOP)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media only screen and (min-width: 1201px) {
+  .banner-section {
+    min-height: 700px !important;
+    /* Ensure enough room for desktop content and images */
+  }
+
+  .banner-section .image-box {
+    width: 600px !important;
+    height: 400px !important;
+    right: 50px !important;
+    top: 50% !important;
+    /* Center vertically */
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    overflow: hidden !important;
+    border-radius: 20px !important;
+    display: block !important;
+    z-index: 10 !important;
+  }
+
+  .banner-section .image-box .image,
+  .banner-section .image-box img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 20px !important;
+    display: block !important;
+  }
+}
+
+@media only screen and (max-width: 991px) {
+
+  /* Compact spacing utility classes for tablets */
+  .mb_60 {
+    margin-bottom: 40px !important;
+  }
+
+  .mt_60 {
+    margin-top: 40px !important;
+  }
+
+  .mb_55 {
+    margin-bottom: 35px !important;
+  }
+
+  .mb_50 {
+    margin-bottom: 30px !important;
+  }
+
+  .mb_40 {
+    margin-bottom: 25px !important;
+  }
+
+  .mt_40 {
+    margin-top: 25px !important;
+  }
+
+  .mb_30 {
+    margin-bottom: 20px !important;
+  }
+
+  .mt_30 {
+    margin-top: 20px !important;
+  }
+
+  .sec-title {
+    margin-bottom: 35px !important;
+  }
+
+  .main-footer .widget-section {
+    padding-top: 50px !important;
+  }
+
+  .working-block-one .inner-box .image-box {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .working-block-one .inner-box .image-box .image {
+    background: transparent !important;
+  }
+}
+
+@media only screen and (max-width: 575px) {
+  .sec-pad {
+    padding: 40px 0px !important;
+  }
+
+  .about-section {
+    padding: 40px 0px !important;
+  }
+
+  .service-section {
+    padding: 40px 0px !important;
+  }
+
+  .portfolio-section .outer-container {
+    padding: 30px 0 !important;
+  }
+
+  .about-style-two {
+    padding: 40px 0 !important;
+  }
+
+  .about-style-two.pt_140 {
+    padding-top: 40px !important;
+  }
+
+  .banner-section .slide-item {
+    padding: 40px 0 30px !important;
+  }
+
+  /* Minimize utility spacing for mobile */
+  .mb_60 {
+    margin-bottom: 30px !important;
+  }
+
+  .mt_60 {
+    margin-top: 30px !important;
+  }
+
+  .mb_55 {
+    margin-bottom: 25px !important;
+  }
+
+  .mb_50 {
+    margin-bottom: 25px !important;
+  }
+
+  .mb_40 {
+    margin-bottom: 20px !important;
+  }
+
+  .mt_40 {
+    margin-top: 20px !important;
+  }
+
+  .mb_30 {
+    margin-bottom: 15px !important;
+  }
+
+  .mt_30 {
+    margin-top: 15px !important;
+  }
+
+  .pb_30 {
+    padding-bottom: 15px !important;
+  }
+
+  .sec-title {
+    margin-bottom: 25px !important;
+  }
+
+  .main-footer .widget-section {
+    padding-top: 40px !important;
+  }
+
+  .team-block-one .inner-box .image-box img {
+    max-height: 450px !important;
+    /* Prevents zooming in by allowing more height on mobile */
+  }
+
+  .row {
+    row-gap: 25px !important;
+  }
+
+  /* Force sections to remove top margin if doubled up */
+  section+section {
+    margin-top: 0 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAP TO FOOTER GAP FIX
+   ───────────────────────────────────────────────────────────────────────────── */
+.google-map-section {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+}
+
+.google-map-section .map-inner {
+  height: auto !important;
+  /* Prevents empty space if iframe is smaller than default 570px */
+}
+
+.google-map-section iframe {
+  display: block !important;
+  /* Removes space below inline element */
+}
+
+.main-footer {
+  margin-top: 0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UNLIMITED MARQUEE (SERVICE SECTION)
+   ───────────────────────────────────────────────────────────────────────────── */
+.service-section .big-text {
+  width: auto !important;
+  white-space: nowrap !important;
+  display: flex !important;
+  animation: miisky-scroll 90s linear infinite !important;
+  top: 50px !important;
+  left: 0 !important;
+  -webkit-text-stroke-width: 2px !important;
+  -webkit-text-stroke-color: rgba(189, 189, 189, 0.6) !important;
+  color: rgba(189, 189, 189, 0.1) !important;
+  opacity: 1 !important;
+  z-index: 0 !important;
+}
+
+@keyframes miisky-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PAGE TITLE & BREADCRUMB (EXTREME TOP LEFT)
+   ───────────────────────────────────────────────────────────────────────────── */
+.page-title {
+  padding: 80px 0px 250px 0px !important; /* Increased bottom padding for a taller banner */
+  text-align: left !important;
+  min-height: 450px !important;           /* Ensure it remains consistently tall */
+}
+
+.page-title .bg-layer {
+  background-position: center !important;
+}
+
+.page-title .auto-container {
+  padding-top: 0 !important;
+  margin-left: 0 !important;    /* Pull more to the left */
+  padding-left: 50px !important; /* Some safety padding from the edge */
+  max-width: 100% !important;   /* Allow it to use full width if needed */
+}
+
+.page-title .content-box {
+  text-align: left !important;
+  margin: 0 !important;
+}
+
+.page-title h1 {
+  text-align: left !important;
+  margin-bottom: 5px !important;
+  font-size: 54px !important;  /* Increased from 38px */
+  color: #111 !important;
+  font-weight: 800 !important;
+}
+
+.page-title .bread-crumb {
+  justify-content: flex-start !important;
+  display: flex !important;
+  margin-top: 5px !important;
+}
+
+.page-title .bread-crumb li {
+  padding-right: 20px !important;
+  color: #555 !important;
+  font-size: 22px !important; /* Increased from 16px */
+}
+
+.page-title .bread-crumb li a {
+  color: var(--theme-color) !important;
+}
+
+@media only screen and (max-width: 767px) {
+  .page-title {
+    padding: 60px 0px 30px 0px !important;
+  }
+  .page-title .auto-container {
+    padding-left: 30px !important;
+  }
+  .page-title h1 {
+    font-size: 30px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CAROUSEL NAV CLEANUP (REMOVE DASHES)
+   ───────────────────────────────────────────────────────────────────────────── */
+.nav-style-one .swiper-nav button:before {
+  display: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DEPARTMENT SECTION - PAGINATION DOTS MOVE DOWN
+   ───────────────────────────────────────────────────────────────────────────── */
+.service-section .three-item-carousel {
+  padding-bottom: 80px !important;
+}
+
+.service-section .swiper-pagination {
+  bottom: 10px !important;
+}
+
+.service-section .swiper-pagination-bullet {
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--theme-color) !important;
+  opacity: 0.3 !important;
+  margin: 0 4px !important;
+}
+
+.service-section .swiper-pagination-bullet-active {
+  opacity: 1 !important;
+  background: var(--theme-color) !important;
 }
