@@ -2,19 +2,20 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
-import { FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiCalendar, FiCreditCard, FiSearch, FiTrendingUp, FiShoppingBag } from "react-icons/fi";
+import { FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiCalendar, FiCreditCard, FiSearch, FiTrendingUp, FiShoppingBag, FiEye, FiMapPin, FiHash, FiTruck } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { getOrderPaymentHistory, Transaction } from "./api";
+import { getOrderPaymentHistory } from "./api";
 import { getApprovedMicroKitchens, MicroKitchenProfile } from "../../PatientSide/ListOfMicroKitchen/api";
 import { useDebounce } from "../../../hooks/useDebounce";
 import Select from "../../../components/form/Select";
 import Button from "../../../components/ui/button/Button";
 
 const NonPatientPaymentHistoryPage: React.FC = () => {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [transactions, setTransactions] = useState<any[]>([]);
     const [stats, setStats] = useState({ total_orders: 0, total_amount: 0 });
     const [loading, setLoading] = useState(true);
     const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
     // Filter states
     const [search, setSearch] = useState("");
@@ -251,14 +252,23 @@ const NonPatientPaymentHistoryPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center md:items-end flex-row md:flex-col justify-between md:justify-center gap-4">
+                                        <div className="flex items-center md:items-end flex-row md:flex-col justify-between md:justify-center gap-8">
                                             <div className="text-right">
                                                 <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">₹{Number(tx.amount).toFixed(2)}</p>
                                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Total inclusive GST</p>
                                             </div>
-                                            <div className={`px-5 py-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${getStatusStyles(tx.status)}`}>
-                                                {getStatusIcon(tx.status)}
-                                                {tx.status}
+                                            <div className="flex items-center gap-4">
+                                                <button 
+                                                    onClick={() => setSelectedOrder(tx.originalData)}
+                                                    className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-700/50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-all flex items-center justify-center shadow-inner"
+                                                    title="View Full Details"
+                                                >
+                                                    <FiEye size={20} />
+                                                </button>
+                                                <div className={`px-5 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${getStatusStyles(tx.status)}`}>
+                                                    {getStatusIcon(tx.status)}
+                                                    {tx.status}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -311,6 +321,116 @@ const NonPatientPaymentHistoryPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Order Detail Modal */}
+            <AnimatePresence>
+                {selectedOrder && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedOrder(null)}
+                            className="absolute inset-0 bg-gray-900/80 backdrop-blur-md"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden"
+                        >
+                            <div className="p-8 md:p-10">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 text-[10px] font-black uppercase tracking-widest">Order Details</span>
+                                            <span className="text-xs font-bold text-gray-400">#{selectedOrder.id}</span>
+                                        </div>
+                                        <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Transaction Log</h2>
+                                    </div>
+                                    <button 
+                                        onClick={() => setSelectedOrder(null)}
+                                        className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 text-gray-400 hover:text-gray-900 transition-colors"
+                                    >
+                                        <FiAlertCircle size={24} />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6 mb-10">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-400">
+                                                <FiCalendar size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ordered On</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{new Date(selectedOrder.created_at).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-400">
+                                                <FiHash size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</p>
+                                                <p className={`text-sm font-black uppercase tracking-tight ${selectedOrder.status === 'delivered' ? 'text-emerald-500' : 'text-amber-500'}`}>{selectedOrder.status}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-400">
+                                                <FiMapPin size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Micro-Kitchen</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedOrder.kitchen_details?.brand_name}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center text-gray-400">
+                                                <FiTruck size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order Type</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white uppercase">{selectedOrder.order_type}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 mb-10">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 border-b border-gray-100 dark:border-white/5 pb-2">Item Breakdown</h3>
+                                    <div className="bg-gray-50 dark:bg-gray-900/30 rounded-3xl p-6 space-y-4 max-h-[200px] overflow-y-auto no-scrollbar">
+                                        {selectedOrder.items?.map((item: any) => (
+                                            <div key={item.id} className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center text-[10px] font-black">
+                                                        {item.quantity}x
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.food_details?.name}</p>
+                                                </div>
+                                                <p className="text-sm font-black text-gray-900 dark:text-white">₹{item.subtotal}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-indigo-600 rounded-[30px] p-8 text-white flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Final Settlement</p>
+                                        <p className="text-3xl font-black tracking-tighter">₹{selectedOrder.final_amount}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold opacity-60">Subtotal: ₹{selectedOrder.total_amount}</p>
+                                        <p className="text-[10px] font-bold opacity-60">Delivery: ₹{selectedOrder.delivery_charge}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

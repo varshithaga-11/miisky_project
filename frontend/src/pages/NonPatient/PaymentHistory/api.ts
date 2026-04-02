@@ -48,7 +48,7 @@ export const getOrderPaymentHistory = async (params?: {
 
     const results = response.data.results || [];
 
-    const orderTransactions: Transaction[] = results.map((o: any) => ({
+    const orderTransactions: any[] = results.map((o: any) => ({
         id: `order-${o.id}`,
         date: o.created_at,
         amount: o.final_amount || o.total_amount,
@@ -56,6 +56,7 @@ export const getOrderPaymentHistory = async (params?: {
         type: "Meal Order",
         reference: `#${o.id}`,
         details: o.kitchen_details?.brand_name || "Meal Order",
+        originalData: o  // Attach the full order object for modal details
     }));
 
     return {
