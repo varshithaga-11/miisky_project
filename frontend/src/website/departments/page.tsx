@@ -22,10 +22,6 @@ const swiperOptions = {
         disableOnInteraction: false,
     },
     loop: true,
-    navigation: {
-        nextEl: "#dept-next",
-        prevEl: "#dept-prev",
-    },
     pagination: {
         el: ".swiper-pagination-dept",
         clickable: true,
@@ -144,13 +140,6 @@ export default function DepartmentsPage() {
                                 
                             {/* Navigation and Pagination */}
                             <div className="swiper-pagination-dept mt_40 centred"></div>
-                            
-                            <div className="nav-style-one centred mt_40">
-                                <div className="swiper-nav d-flex justify-content-center" style={{gap: '15px'}}>
-                                    <button type="button" id="dept-prev" className="swiper-button-prev-dept swiper-prev"><span className="icon-21"></span></button>
-                                    <button type="button" id="dept-next" className="swiper-button-next-dept swiper-next"><span className="icon-22"></span></button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </section>

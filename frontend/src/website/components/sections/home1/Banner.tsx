@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import Image from "../../Image";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -123,11 +122,6 @@ export default function Banner({
                     {slide.title}<span>{slide.highlight}</span>
                   </h2>
                   <p>{slide.description}</p>
-                  <div className="btn-box">
-                    <Link to={slide.buttonHref} className="theme-btn btn-two">
-                      <span>{slide.buttonLabel}</span>
-                    </Link>
-                  </div>
                 </div>
               </div>
 

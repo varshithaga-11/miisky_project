@@ -88,7 +88,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
     const bgImage = getBackgroundImage(breadcrumbTitle);
     
     return (
-        <section className="page-title p_relative centred" style={{ position: 'relative', overflow: 'hidden' }}>
+        <section className="page-title p_relative" style={{ position: 'relative', overflow: 'hidden', textAlign: 'left' }}>
             <div 
                 className="bg-layer" 
                 style={{ 
@@ -105,12 +105,12 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
                 }}
             ></div>
             
-            <div className="auto-container" style={{ position: 'relative', zIndex: 1 }}>
-                <div className="content-box">
-                    <h1>{breadcrumbTitle}</h1>
-                    <ul className="bread-crumb clearfix">
-                        <li><Link to="/">Home</Link></li>
-                        <li>{breadcrumbTitle}</li>
+            <div className="auto-container" style={{ position: 'relative', zIndex: 1, paddingTop: '40px', paddingBottom: '40px' }}>
+                <div className="content-box" style={{ textAlign: 'left' }}>
+                    <h1 style={{ marginBottom: '10px' }}>{breadcrumbTitle}</h1>
+                    <ul className="bread-crumb clearfix" style={{ justifyContent: 'flex-start' }}>
+                        <li style={{ float: 'left', marginRight: '10px' }}><Link to="/">Home</Link></li>
+                        <li style={{ float: 'left' }}>{breadcrumbTitle}</li>
                     </ul>
                 </div>
             </div>

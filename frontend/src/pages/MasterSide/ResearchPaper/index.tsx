@@ -111,9 +111,9 @@ const ResearchPaperPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Paper Details</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Authors</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Pub. Date</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">PDF</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Excel</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Doc</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Main Doc</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Doc 1</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Doc 2</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
@@ -151,38 +151,38 @@ const ResearchPaperPage: React.FC = () => {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 transition-colors text-xs font-bold"
                           >
-                            <FiFileText className="text-sm" /> PDF
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 text-[10px] uppercase font-bold italic tracking-widest leading-none">No PDF</span>
-                        )}
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-medium text-theme-sm">
-                        {paper.excel_file_url ? (
-                          <a 
-                            href={paper.excel_file_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 transition-colors text-xs font-bold"
-                          >
-                            <FiFileText className="text-sm" /> Excel
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 text-[10px] uppercase font-bold italic tracking-widest leading-none">No Excel</span>
-                        )}
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-medium text-theme-sm">
-                        {paper.doc_file_url ? (
-                          <a 
-                            href={paper.doc_file_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-400 transition-colors text-xs font-bold"
-                          >
                             <FiFileText className="text-sm" /> Doc
                           </a>
                         ) : (
                           <span className="text-gray-400 text-[10px] uppercase font-bold italic tracking-widest leading-none">No Doc</span>
+                        )}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-theme-sm">
+                        {paper.document_1_url ? (
+                          <a 
+                            href={paper.document_1_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 transition-colors text-xs font-bold"
+                          >
+                            <FiFileText className="text-sm" /> Doc 1
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-[10px] uppercase font-bold italic tracking-widest leading-none">No Doc 1</span>
+                        )}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-theme-sm">
+                        {paper.document_2_url ? (
+                          <a 
+                            href={paper.document_2_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-400 transition-colors text-xs font-bold"
+                          >
+                            <FiFileText className="text-sm" /> Doc 2
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-[10px] uppercase font-bold italic tracking-widest leading-none">No Doc 2</span>
                         )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">

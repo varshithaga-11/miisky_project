@@ -114,7 +114,7 @@ class ImportService:
             for key, value in mapped_row_data.items():
                 if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
                     if submenu == 'food' and key in nutrition_fields:
-                        mapped_row_data[key] = "N/A"
+                        mapped_row_data[key] = None
                     else:
                         mapped_row_data[key] = None
 

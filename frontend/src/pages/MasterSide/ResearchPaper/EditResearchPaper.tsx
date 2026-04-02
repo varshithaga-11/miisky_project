@@ -17,8 +17,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
   const [fetching, setFetching] = useState(false);
   const [formData, setFormData] = useState<Partial<ResearchPaper>>({});
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [excelFile, setExcelFile] = useState<File | null>(null);
-  const [docFile, setDocFile] = useState<File | null>(null);
+  const [document1File, setDocument1File] = useState<File | null>(null);
+  const [document2File, setDocument2File] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,8 +33,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             published_date: data.published_date,
             document: data.document,
             document_url: data.document_url,
-            excel_file_url: data.excel_file_url,
-            doc_file_url: data.doc_file_url,
+            document_1_url: data.document_1_url,
+            document_2_url: data.document_2_url,
             position: data.position,
             is_active: data.is_active
         });
@@ -58,8 +58,8 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
         }
       });
       if (pdfFile) data.append("document", pdfFile);
-      if (excelFile) data.append("excel_file", excelFile);
-      if (docFile) data.append("doc_file", docFile);
+      if (document1File) data.append("document_1", document1File);
+      if (document2File) data.append("document_2", document2File);
 
       await updateResearchPaper(id, data as any);
       toast.success("Research paper updated successfully!");
@@ -144,12 +144,11 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
             </div>
 
             <div>
-              <Label htmlFor="document">Research Paper (PDF)</Label>
+              <Label htmlFor="document">Research Document</Label>
               <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-6 text-center">
                 <input 
                   id="document"
                   type="file" 
-                  accept=".pdf"
                   onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
                   disabled={loading}
@@ -157,7 +156,7 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
                     <span className="truncate max-w-[12rem]">
-                      {pdfFile ? pdfFile.name : formData.document_url ? "Update Existing PDF" : "Attach File..."}
+                      {pdfFile ? pdfFile.name : formData.document_url ? "Update Existing Document" : "Attach File..."}
                     </span>
                     {formData.document_url && !pdfFile && (
                       <span className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest flex items-center gap-1">
@@ -175,42 +174,40 @@ const EditResearchPaper: React.FC<Props> = ({ id, onSuccess, onClose }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="excel_file">Excel File (Optional)</Label>
+                <Label htmlFor="document_1">Document 1 (Optional)</Label>
                 <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
                   <input 
-                    id="excel_file"
+                    id="document_1"
                     type="file" 
-                    accept=".xls,.xlsx"
-                    onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                    onChange={(e) => setDocument1File(e.target.files?.[0] || null)}
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     disabled={loading}
                   />
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-[10px] text-gray-500 font-bold block truncate max-w-full">
-                      {excelFile ? excelFile.name : formData.excel_file_url ? "Update Excel" : "Upload Excel"}
+                      {document1File ? document1File.name : formData.document_1_url ? "Update Document 1" : "Upload Document 1"}
                     </span>
-                    {formData.excel_file_url && !excelFile && (
+                    {formData.document_1_url && !document1File && (
                       <span className="text-[8px] text-green-600 font-black uppercase tracking-widest">Already Saved</span>
                     )}
                   </div>
                 </div>
               </div>
               <div>
-                <Label htmlFor="doc_file">Doc File (Optional)</Label>
+                <Label htmlFor="document_2">Document 2 (Optional)</Label>
                 <div className="relative group overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all p-4 text-center">
                   <input 
-                    id="doc_file"
+                    id="document_2"
                     type="file" 
-                    accept=".doc,.docx"
-                    onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                    onChange={(e) => setDocument2File(e.target.files?.[0] || null)}
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     disabled={loading}
                   />
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-[10px] text-gray-500 font-bold block truncate max-w-full">
-                      {docFile ? docFile.name : formData.doc_file_url ? "Update Doc" : "Upload Doc"}
+                      {document2File ? document2File.name : formData.document_2_url ? "Update Document 2" : "Upload Document 2"}
                     </span>
-                    {formData.doc_file_url && !docFile && (
+                    {formData.document_2_url && !document2File && (
                       <span className="text-[8px] text-green-600 font-black uppercase tracking-widest">Already Saved</span>
                     )}
                   </div>

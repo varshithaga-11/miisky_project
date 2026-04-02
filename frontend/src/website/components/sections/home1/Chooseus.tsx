@@ -7,8 +7,6 @@ export default function Chooseus() {
 
   const tabs = [
     { id: 1, title: "Modern Technology" },
-    { id: 2, title: "Success of Treatments" },
-    { id: 3, title: "Certified Doctors" },
   ];
 
   const tabContent = [
@@ -16,30 +14,6 @@ export default function Chooseus() {
       id: 1,
       videoImg: "/website/assets/images/background/company.jpg",
       heading: "Modern Technology",
-      text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
-      list: [
-        "Your Health is Our Top Priority",
-        "Compassionate Care, Innovative Treatments",
-        "We Treat You Like Family",
-        "Leading the Way in Medical Excellence",
-      ],
-    },
-    {
-      id: 2,
-      videoImg: "/website/assets/images/background/company.jpg",
-      heading: "Success of Treatments",
-      text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
-      list: [
-        "Your Health is Our Top Priority",
-        "Compassionate Care, Innovative Treatments",
-        "We Treat You Like Family",
-        "Leading the Way in Medical Excellence",
-      ],
-    },
-    {
-      id: 3,
-      videoImg: "/website/assets/images/background/company.jpg",
-      heading: "Certified Doctors",
       text: "The phrase emphasizes the importance of healthcare providers, researchers, and innovators working together to create positive change in healthcare.",
       list: [
         "Your Health is Our Top Priority",

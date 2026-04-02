@@ -560,26 +560,26 @@ class FoodSerializer(serializers.ModelSerializer):
     cuisine_type_names_input = serializers.CharField(write_only=True, required=False)
 
     # Nutrition fields for easy import
-    calories = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    protein = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    carbs = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    fat = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    fiber = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    calories = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    protein = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    carbs = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    fat = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    fiber = serializers.FloatField(write_only=True, required=False, allow_null=True)
     serving_size = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
 
-    glycemic_index = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    sugar = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    saturated_fat = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    trans_fat = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    cholesterol = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    sodium = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    potassium = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    calcium = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    iron = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    vitamin_a = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    vitamin_c = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    vitamin_d = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
-    vitamin_b12 = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    glycemic_index = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    sugar = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    saturated_fat = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    trans_fat = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    cholesterol = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    sodium = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    potassium = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    calcium = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    iron = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    vitamin_a = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    vitamin_c = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    vitamin_d = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    vitamin_b12 = serializers.FloatField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = Food
@@ -621,10 +621,6 @@ class FoodSerializer(serializers.ModelSerializer):
 
         # Create nutrition if data is provided
         if any(v is not None and v != "" for v in nutrition_data.values()):
-            # Fill blanks with "N/A" as requested
-            for k, v in nutrition_data.items():
-                if v is None or str(v).strip() == "":
-                    nutrition_data[k] = "N/A"
             FoodNutrition.objects.update_or_create(food=food, defaults=nutrition_data)
 
         if meal_names:
@@ -670,10 +666,6 @@ class FoodSerializer(serializers.ModelSerializer):
 
         # Update nutrition if data is provided
         if any(v is not None and v != "" for v in nutrition_data.values()):
-            # Fill blanks with "N/A" as requested
-            for k, v in nutrition_data.items():
-                if v is None or str(v).strip() == "":
-                    nutrition_data[k] = "N/A"
             FoodNutrition.objects.update_or_create(food=food, defaults=nutrition_data)
 
         if meal_names is not None:

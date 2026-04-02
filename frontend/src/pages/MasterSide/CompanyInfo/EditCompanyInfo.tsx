@@ -246,53 +246,6 @@ const EditCompanyInfo: React.FC<Props> = ({ id, onSuccess, onClose }) => {
               </div>
             </section>
 
-            {/* Stats */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
-               <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4">Institutional Stats</h3>
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="years_experience">Years Experience</Label>
-                    <Input
-                      id="years_experience"
-                      type="number"
-                      value={formData.years_experience || ""}
-                      onChange={(e) => setFormData({ ...formData, years_experience: parseInt(e.target.value) })}
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="doctors_count">Doctors Count</Label>
-                    <Input
-                      id="doctors_count"
-                      type="text"
-                      value={formData.doctors_count || ""}
-                      onChange={(e) => setFormData({ ...formData, doctors_count: e.target.value })}
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="services_count">Services Count</Label>
-                    <Input
-                      id="services_count"
-                      type="text"
-                      value={formData.services_count || ""}
-                      onChange={(e) => setFormData({ ...formData, services_count: e.target.value })}
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="satisfied_patients">Satisfied Patients</Label>
-                    <Input
-                      id="satisfied_patients"
-                      type="text"
-                      value={formData.satisfied_patients || ""}
-                      onChange={(e) => setFormData({ ...formData, satisfied_patients: e.target.value })}
-                      disabled={loading}
-                    />
-                  </div>
-               </div>
-            </section>
-
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
                 Cancel
