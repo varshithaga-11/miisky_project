@@ -88,32 +88,86 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
     const bgImage = getBackgroundImage(breadcrumbTitle);
     
     return (
-        <section className="page-title p_relative" style={{ position: 'relative', overflow: 'hidden', textAlign: 'left' }}>
+        <section className="page-title p_relative" style={{ 
+            position: 'relative', 
+            overflow: 'hidden', 
+            textAlign: 'left',
+            paddingTop: '100px',
+            paddingBottom: '100px',
+            backgroundColor: '#000' 
+        }}>
+            {/* Background Image Layer with Blur and Opacity */}
             <div 
                 className="bg-layer" 
                 style={{ 
                     backgroundImage: `url("/website/assets/images/background/${bgImage}")`,
                     zIndex: 0,
                     position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
+                    top: '-10px',
+                    left: '-10px',
+                    width: 'calc(100% + 20px)',
+                    height: 'calc(100% + 20px)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
+                    backgroundRepeat: 'no-repeat',
+                    filter: 'blur(5px)',
+                    opacity: '0.5'
+                }}
+            ></div>
+
+            {/* Dark Gradient Overlay for better text separation */}
+            <div 
+                style={{ 
+                    position: 'absolute', 
+                    top: 0, 
+                    left: 0, 
+                    width: '100%', 
+                    height: '100%', 
+                    background: 'linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)',
+                    zIndex: 1
                 }}
             ></div>
             
-            <div className="auto-container" style={{ position: 'relative', zIndex: 1, paddingTop: '40px', paddingBottom: '40px' }}>
+            <div className="auto-container" style={{ position: 'relative', zIndex: 2 }}>
                 <div className="content-box" style={{ textAlign: 'left' }}>
-                    <h1 style={{ marginBottom: '10px' }}>{breadcrumbTitle}</h1>
-                    <ul className="bread-crumb clearfix" style={{ justifyContent: 'flex-start' }}>
-                        <li style={{ float: 'left', marginRight: '10px' }}><Link to="/">Home</Link></li>
-                        <li style={{ float: 'left' }}>{breadcrumbTitle}</li>
+                    <h1 style={{ 
+                        marginBottom: '15px', 
+                        fontSize: '56px', 
+                        fontWeight: '900', 
+                        color: '#ffffff !important',
+                        letterSpacing: '-1px',
+                        textTransform: 'uppercase'
+                    }}>
+                        {breadcrumbTitle}
+                    </h1>
+                    <ul className="bread-crumb clearfix" style={{ 
+                        justifyContent: 'flex-start',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        listStyle: 'none'
+                    }}>
+                        <li style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            <Link to="/" style={{ color: '#ffffff !important', textDecoration: 'none' }}>Home</Link>
+                        </li>
+                        {/* <li style={{ color: '#ffffff !important' }}>/</li> */}
+                        <li style={{ color: '#ffffff !important', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            {breadcrumbTitle}
+                        </li>
                     </ul>
                 </div>
             </div>
+            
+            <style>{`
+                .page-title h1 { 
+                    animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+                    color: #ffffff !important;
+                }
+                .bread-crumb li, .bread-crumb li a {
+                    color: #ffffff !important;
+                }
+                @keyframes slideInLeft { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            `}</style>
         </section>
     );
 };

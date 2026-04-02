@@ -54,14 +54,7 @@ export default function MedicalDevicesPage() {
                     <p>Revolutionizing healthcare with precision instruments and innovative medical technology.</p>
                 </div>
 
-                {categoryId && (
-                    <div className="mb_30 centred">
-                        <span style={{ fontSize: '14px', marginRight: '10px' }}>Filtered by Category: <strong>{activeCategoryName}</strong></span>
-                        <Link to="/medical-devices" className="theme-btn btn-two" style={{ padding: '4px 15px', fontSize: '12px' }}>
-                            <span>Show All Devices</span>
-                        </Link>
-                    </div>
-                )}
+
 
                 {loading ? (
                     <div className="text-center p-5">Loading medical devices...</div>

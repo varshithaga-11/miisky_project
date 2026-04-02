@@ -14,13 +14,17 @@ export default function Footer1() {
                         <div className="pattern-3"  style={{ backgroundImage: "url(/website/assets/images/shape/shape-23.png)" }}></div>
                         <div className="pattern-4"  style={{ backgroundImage: "url(/website/assets/images/shape/shape-24.png)" }}></div>
                     </div>
-                    <div className="auto-container">
-                        <div className="footer-logo mb_40">
-                             <Link to="/">
-                                 <Image src="/miisky-logo.png" alt="Miisky Logo" width={180} height={40} />
-                             </Link>
-                        </div>
+                    <div className="container-fluid px-10">
                         <div className="row clearfix">
+                            <div className="col-lg-2 col-md-6 col-sm-12 footer-column">
+                                <div className="footer-widget logo-widget">
+                                    <div className="footer-logo">
+                                        <Link to="/">
+                                            <Image src="/miisky-logo.png" alt="Miisky Logo" width={180} height={40} />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="col-lg-3 col-md-6 col-sm-12 footer-column">
                                 <div className="footer-widget about-widget">
                                     <div className="widget-title">
@@ -36,7 +40,7 @@ export default function Footer1() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-lg-2 col-md-6 col-sm-12 footer-column">
+                            <div className="col-lg-1 col-md-6 col-sm-12 footer-column">
                                 <div className="footer-widget links-widget">
                                     <div className="widget-title">
                                         <h3>Links</h3>
@@ -51,7 +55,7 @@ export default function Footer1() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-lg-2 col-md-6 col-sm-12 footer-column">
+                            <div className="col-lg-1 col-md-6 col-sm-12 footer-column">
                                 <div className="footer-widget links-widget">
                                     <div className="widget-title">
                                         <h3>Services</h3>
@@ -99,7 +103,7 @@ export default function Footer1() {
                     </div>
                 </div>
                 <div className="footer-bottom centred">
-                    <div className="auto-container">
+                    <div className="container-fluid px-10">
                         <div className="copyright">
                             <p><Link to="/" onClick={() => window.scrollTo(0, 0)}>Miisky</Link> &copy; {new Date().getFullYear()} All Right Reserved</p>
                         </div>

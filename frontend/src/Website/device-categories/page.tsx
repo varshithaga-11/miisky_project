@@ -53,7 +53,7 @@ export default function DeviceCategoriesPage() {
                                         <h3 className="mb_15" style={{ fontWeight: '700', color: '#1a2b3c', fontSize: '24px' }}>{cat.name}</h3>
                                         <p className="mb_30" style={{ color: '#6b7280', fontSize: '15px', lineHeight: '1.6' }}>{cat.description || "Leading-edge medical solutions for this specialty."}</p>
                                         <Link to={`/medical-devices?category=${cat.id}`} className="theme-btn btn-one" style={{ padding: '12px 30px', borderRadius: '30px', background: '#1a89dc', borderColor: '#1a89dc', fontSize: '13px', fontWeight: '600' }}>
-                                            <span>VIEW PRODUCTS <i className="fas fa-chevron-right ml-2" style={{ fontSize: '10px' }}></i></span>
+                                            <span>VIEW PRODUCTS</span>
                                         </Link>
                                     </div>
                                     <style dangerouslySetInnerHTML={{ __html: `
