@@ -423,3 +423,7 @@ export const careersApi = {
   apply: (data: FormData) =>
     post<any>("website/jobapplication/", data, { public: true }),
 };
+
+export const getAboutSections = () => getList<any>("website/companyaboutsection/", { is_active: true });
+
+export const getCompanyInfo = () => get<any>("website/companyinfo/1/");
