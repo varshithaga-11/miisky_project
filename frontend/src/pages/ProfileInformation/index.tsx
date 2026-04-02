@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from "react";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { getProfile, updateProfile } from "./api";
+import { getProfile, updateProfile, getCountries, getStates, getCities } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUser, FiPhone, FiMapPin, FiCamera, FiSave, FiLoader } from "react-icons/fi";
+import { FiUser, FiPhone, FiMapPin, FiCamera, FiSave, FiLoader, FiGlobe, FiMap } from "react-icons/fi";
 import { motion } from "framer-motion";
 import InputField from "../../components/form/input/InputField";
 import TextArea from "../../components/form/input/TextArea";
 import { createApiUrl } from "../../access/access";
 import Label from "../../components/form/Label";
 import { MapLocationPicker } from "../../components/common/MapLocationPicker";
-import { getCountryList, Country } from "../AdminSide/Country/countryapi";
-import { getStateList, State } from "../AdminSide/State/stateapi";
-import { getCityList, City } from "../AdminSide/City/cityapi";
 
 const ProfileInformation: React.FC = () => {
     const [profile, setProfile] = useState<any>(null);
@@ -21,9 +18,14 @@ const ProfileInformation: React.FC = () => {
     const [photo, setPhoto] = useState<File | null>(null);
     const [locationLoading, setLocationLoading] = useState(false);
     const [mapPickerOpen, setMapPickerOpen] = useState(false);
-    const [countries, setCountries] = useState<Country[]>([]);
-    const [states, setStates] = useState<State[]>([]);
-    const [cities, setCities] = useState<City[]>([]);
+    const [countries, setCountries] = useState<any[]>([]);
+    const [states, setStates] = useState<any[]>([]);
+    const [cities, setCities] = useState<any[]>([]);
+    const [loadingLocations, setLoadingLocations] = useState({
+        countries: false,
+        states: false,
+        cities: false
+    });
 
     const fetchProfileData = async () => {
         setLoading(true);
@@ -42,17 +44,66 @@ const ProfileInformation: React.FC = () => {
         fetchProfileData();
     }, []);
 
-    useEffect(() => {
-        getCountryList(1, "all")
-            .then((res) => setCountries(res.results || []))
-            .catch(() => { });
-        getStateList(1, "all")
-            .then((res) => setStates(res.results || []))
-            .catch(() => { });
-        getCityList(1, "all")
-            .then((res) => setCities(res.results || []))
-            .catch(() => { });
-    }, []);
+    // On-demand fetch handlers
+    const handleCountryClick = async () => {
+        if (countries.length > 0) return;
+        setLoadingLocations(prev => ({ ...prev, countries: true }));
+        try {
+            const data = await getCountries();
+            setCountries(data);
+        } catch (e) {
+            toast.error("Error loading countries");
+        } finally {
+            setLoadingLocations(prev => ({ ...prev, countries: false }));
+        }
+    };
+
+    const handleStateClick = async () => {
+        if (!profile?.country) {
+            toast.warning("Please select a country first");
+            return;
+        }
+        if (states.length > 0 && states[0].country === profile.country) return;
+        setLoadingLocations(prev => ({ ...prev, states: true }));
+        try {
+            const data = await getStates(profile.country);
+            setStates(data);
+        } catch (e) {
+            toast.error("Error loading states");
+        } finally {
+            setLoadingLocations(prev => ({ ...prev, states: false }));
+        }
+    };
+
+    const handleCityClick = async () => {
+        if (!profile?.state) {
+            toast.warning("Please select a state first");
+            return;
+        }
+        if (cities.length > 0 && cities[0].state === profile.state) return;
+        setLoadingLocations(prev => ({ ...prev, cities: true }));
+        try {
+            const data = await getCities(profile.state);
+            setCities(data);
+        } catch (e) {
+            toast.error("Error loading cities");
+        } finally {
+            setLoadingLocations(prev => ({ ...prev, cities: false }));
+        }
+    };
+
+    const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        setProfile((prev: any) => ({ ...prev, country: val, state: "", city: "" }));
+        setStates([]);
+        setCities([]);
+    };
+
+    const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        setProfile((prev: any) => ({ ...prev, state: val, city: "" }));
+        setCities([]);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -363,6 +414,66 @@ const ProfileInformation: React.FC = () => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
+                                            <Label>Country</Label>
+                                            <div className="relative">
+                                                <select
+                                                    name="country"
+                                                    value={profile.country || ""}
+                                                    onFocus={handleCountryClick}
+                                                    onChange={handleCountryChange}
+                                                    className="w-full px-6 h-11 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-900 dark:text-white focus:ring-3 focus:ring-brand-500/20 focus:border-brand-300 outline-none appearance-none transition-all"
+                                                >
+                                                    <option value="">{loadingLocations.countries ? "Loading..." : "Select Country"}</option>
+                                                    {countries.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    {profile.country && !countries.find(c => String(c.id) === String(profile.country)) && (
+                                                        <option value={profile.country}>{profile.country_details?.name || "Selected Country"}</option>
+                                                    )}
+                                                </select>
+                                                <FiGlobe className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>State</Label>
+                                            <div className="relative">
+                                                <select
+                                                    name="state"
+                                                    value={profile.state || ""}
+                                                    onFocus={handleStateClick}
+                                                    onChange={handleStateChange}
+                                                    className="w-full px-6 h-11 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-900 dark:text-white focus:ring-3 focus:ring-brand-500/20 focus:border-brand-300 outline-none appearance-none transition-all"
+                                                >
+                                                    <option value="">{loadingLocations.states ? "Loading..." : "Select State"}</option>
+                                                    {states.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                    {profile.state && !states.find(s => String(s.id) === String(profile.state)) && (
+                                                        <option value={profile.state}>{profile.state_details?.name || "Selected State"}</option>
+                                                    )}
+                                                </select>
+                                                <FiMap className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>City</Label>
+                                            <div className="relative">
+                                                <select
+                                                    name="city"
+                                                    value={profile.city || ""}
+                                                    onFocus={handleCityClick}
+                                                    onChange={handleChange}
+                                                    className="w-full px-6 h-11 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-900 dark:text-white focus:ring-3 focus:ring-brand-500/20 focus:border-brand-300 outline-none appearance-none transition-all"
+                                                >
+                                                    <option value="">{loadingLocations.cities ? "Loading..." : "Select City"}</option>
+                                                    {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    {profile.city && !cities.find(c => String(c.id) === String(profile.city)) && (
+                                                        <option value={profile.city}>{profile.city_details?.name || "Selected City"}</option>
+                                                    )}
+                                                </select>
+                                                <FiMapPin className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
                                             <Label>Zip Code</Label>
                                             <InputField
                                                 name="zip_code"
@@ -370,12 +481,6 @@ const ProfileInformation: React.FC = () => {
                                                 onChange={handleChange}
                                                 placeholder="XXXXXX"
                                             />
-                                        </div>
-                                        <div className="flex flex-col justify-end opacity-50">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1 mb-2">Location Information</p>
-                                            <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-[10px] font-black uppercase text-gray-400 border border-gray-200 dark:border-white/5">
-                                                ID: {profile.city || "N/A"} (City) | ID: {profile.state || "N/A"} (State)
-                                            </div>
                                         </div>
                                     </div>
 

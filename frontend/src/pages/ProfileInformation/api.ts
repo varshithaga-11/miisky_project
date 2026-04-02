@@ -28,12 +28,29 @@ export const updateProfile = async (data: any) => {
     const userId = getUserIdFromToken();
     if (!userId) throw new Error("No user ID found in token");
     const url = createApiUrl(`api/profile/${userId}/`);
-    // Use PATCH for partial updates if the viewset supports it (which it does via ModelViewSet)
     const response = await axios.patch(url, data, {
         headers: {
             ...(await getAuthHeaders()),
-            "Content-Type": "multipart/form-data", // Support photo upload
+            "Content-Type": "multipart/form-data",
         },
     });
+    return response.data;
+};
+
+export const getCountries = async () => {
+    const url = createApiUrl("api/country/all/");
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getStates = async (countryId: string | number) => {
+    const url = createApiUrl(`api/state/all/?country=${countryId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getCities = async (stateId: string | number) => {
+    const url = createApiUrl(`api/city/all/?state=${stateId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
