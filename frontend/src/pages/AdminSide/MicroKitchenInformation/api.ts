@@ -242,11 +242,56 @@ export const getMicroKitchenAvailableFoodsNoPagination = async (microKitchenId: 
   return response.data;
 };
 
-export const getMicroKitchenDailyMealsNoPagination = async (microKitchenId: number) => {
+export const getMicroKitchenDailyMealsNoPagination = async (
+  microKitchenId: number,
+  month?: number,
+  year?: number
+) => {
   const url = createApiUrl(`api/admin-microkitchen-meals-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId },
+    params: { micro_kitchen: microKitchenId, month, year },
+  });
+  return response.data;
+};
+
+// --- Paginated versions for Infinite Scroll ---
+
+export const getMicroKitchenReviewsPaginated = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<any>> => {
+  const url = createApiUrl(`api/microkitchenrating/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, page, limit },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenOrdersPaginated = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<any>> => {
+  const url = createApiUrl(`api/order/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, page, limit },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenFoodsPaginated = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<MicroKitchenFoodRow>> => {
+  const url = createApiUrl(`api/microkitchenfood/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, page, limit },
   });
   return response.data;
 };

@@ -3935,8 +3935,12 @@ class AdminMicroKitchenPatientsNoPaginationView(APIView):
         if not micro_kitchen_id:
             return Response([])
 
-        qs = UserDietPlan.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
-            "user", "diet_plan"
+        from django.db.models import Q
+        # Include patients currently or originally allotted to this kitchen
+        qs = UserDietPlan.objects.filter(
+            Q(micro_kitchen_id=micro_kitchen_id) | Q(original_micro_kitchen_id=micro_kitchen_id)
+        ).select_related(
+            "user", "diet_plan", "nutritionist", "original_nutritionist", "micro_kitchen", "original_micro_kitchen"
         )
 
         if status_param:
@@ -3945,7 +3949,10 @@ class AdminMicroKitchenPatientsNoPaginationView(APIView):
             qs = qs.filter(status__in=["active", "payment_pending", "approved"])
 
         qs = qs.order_by("-suggested_on")
-        serializer = AdminMicroKitchenPatientSlotSerializer(qs, many=True)
+        # Target micro kitchen id for distance calculation in serializer
+        serializer = AdminMicroKitchenPatientSlotSerializer(
+            qs, many=True, context={'request': request, 'target_micro_kitchen_id': micro_kitchen_id}
+        )
         return Response(serializer.data)
 
 
@@ -4016,15 +4023,20 @@ class AdminMicroKitchenMealsNoPaginationView(APIView):
 
     def get(self, request):
         micro_kitchen_id = request.query_params.get("micro_kitchen")
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
+
         if not micro_kitchen_id:
             return Response([])
 
-        qs = UserMeal.objects.filter(
-            micro_kitchen_id=micro_kitchen_id
-        ).select_related(
-            "user", "user_diet_plan", "meal_type", "food", "packaging_material", "micro_kitchen"
-        ).order_by("meal_date", "meal_type__id")
+        qs = UserMeal.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
+            "user", "meal_type", "food", "packaging_material"
+        )
 
+        if month and year:
+            qs = qs.filter(meal_date__month=month, meal_date__year=year)
+
+        qs = qs.order_by("-meal_date", "meal_type")
         serializer = UserMealSerializer(qs, many=True)
         return Response(serializer.data)
 
@@ -4170,6 +4182,23 @@ class AdminPatientKitchenRatingsNoPaginationView(APIView):
             .order_by("-created_at")
         )
         serializer = MicroKitchenRatingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminOrderPaymentsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        user_id = request.query_params.get("user")
+        if not user_id:
+            return Response([])
+
+        qs = (
+            Order.objects.filter(user_id=user_id)
+            .select_related("user", "micro_kitchen")
+            .order_by("-created_at")
+        )
+        serializer = OrderSerializer(qs, many=True)
         return Response(serializer.data)
 
 

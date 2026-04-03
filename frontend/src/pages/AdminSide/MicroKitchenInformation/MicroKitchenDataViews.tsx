@@ -156,147 +156,165 @@ export function DisplayKitchenPatients({
   kitchen,
 }: {
   items: any[];
-  kitchen?: { latitude?: number | null; longitude?: number | null; brand_name?: string | null };
+  kitchen?: { brand_name?: string | null };
 }) {
-  const [resolvedPatientCoords, setResolvedPatientCoords] = useState<
-    Record<number, { latitude: number; longitude: number }>
-  >({});
-  const [coordsLoading, setCoordsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!items?.length) {
-      setResolvedPatientCoords({});
-      return;
-    }
-
-    const userIdsNeedingFetch = new Set<number>();
-    for (const x of items) {
-      const pd = x.patient_details || x.user_details;
-      const uid = typeof pd?.id === "number" ? pd.id : typeof x.user === "number" ? x.user : null;
-      if (uid === null) continue;
-      const inlineOk =
-        parseGeoCoord(pd?.latitude) !== null && parseGeoCoord(pd?.longitude) !== null;
-      if (!inlineOk) userIdsNeedingFetch.add(uid);
-    }
-
-    if (userIdsNeedingFetch.size === 0) {
-      setResolvedPatientCoords({});
-      return;
-    }
-
-    let cancelled = false;
-    setCoordsLoading(true);
-    const ids = [...userIdsNeedingFetch];
-    Promise.all(
-      ids.map(async (id) => {
-        try {
-          const u = await fetchUserById(id);
-          const latitude = parseGeoCoord(u.latitude);
-          const longitude = parseGeoCoord(u.longitude);
-          if (latitude !== null && longitude !== null) return [id, { latitude, longitude }] as const;
-        } catch {
-          /* ignore */
-        }
-        return [id, null] as const;
-      })
-    )
-      .then((rows) => {
-        if (cancelled) return;
-        const next: Record<number, { latitude: number; longitude: number }> = {};
-        for (const [id, pair] of rows) {
-          if (pair) next[id] = pair;
-        }
-        setResolvedPatientCoords(next);
-      })
-      .finally(() => {
-        if (!cancelled) setCoordsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [items]);
-
   if (!items || items.length === 0) return <EmptyState message="No patients assigned to this kitchen." />;
-  const kitchenCoordsOk =
-    parseGeoCoord(kitchen?.latitude) !== null && parseGeoCoord(kitchen?.longitude) !== null;
 
   return (
     <div className="space-y-4">
-      {!kitchenCoordsOk && (
-        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-xl px-4 py-3">
-          This kitchen has no latitude/longitude on file. Set location on the kitchen account to see straight-line distances to patients.
-        </p>
-      )}
-      {coordsLoading && kitchenCoordsOk && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">Loading patient coordinates…</p>
-      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map((x: any) => {
           const pd = x.patient_details || x.user_details;
-          const patientUserId =
-            typeof pd?.id === "number" ? pd.id : typeof x.user === "number" ? x.user : null;
-          const resolved = patientUserId != null ? resolvedPatientCoords[patientUserId] : undefined;
-          const plat = parseGeoCoord(pd?.latitude) ?? resolved?.latitude;
-          const plng = parseGeoCoord(pd?.longitude) ?? resolved?.longitude;
-          const km = distanceFromKitchen(kitchen, plat, plng);
           return (
-        <div key={x.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div>
-              <div className="font-bold text-gray-900 dark:text-white text-base">
-                {[pd?.first_name, pd?.last_name].filter(Boolean).join(" ") || "Patient"}
-              </div>
-              <div className="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
-                <span className={`px-2 py-0.5 rounded-full font-bold ${x.status === 'active' ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                  }`}>
-                  {String(x.status || "").replace("_", " ")}
-                </span>
-                <span>User id: {pd?.id ?? x.user}</span>
-              </div>
-            </div>
-            <div className="text-right flex flex-col items-end gap-2">
-              {km !== null ? (
-                <div className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/25 border border-indigo-100 dark:border-indigo-800/40 px-3 py-2">
-                  <FiNavigation2 className="text-indigo-500 shrink-0" size={14} />
-                  <div>
-                    <div className="text-[10px] font-black text-indigo-400 uppercase leading-none">Distance</div>
-                    <div className="text-sm font-black text-indigo-700 dark:text-indigo-300">{km.toFixed(2)} km</div>
+            <div key={x.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-white text-base">
+                    {[pd?.first_name, pd?.last_name].filter(Boolean).join(" ") || "Patient"}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+                    <span className={`px-2 py-0.5 rounded-full font-bold ${x.status === 'active' ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                      }`}>
+                      {String(x.status || "").replace("_", " ")}
+                    </span>
+                    <span>ID: {pd?.id ?? x.user}</span>
                   </div>
                 </div>
-              ) : (
-                <div className="text-[10px] font-bold text-gray-400 uppercase text-right max-w-[9rem]">
-                  {kitchenCoordsOk ? "Patient coords missing" : "Distance n/a"}
+                <div className="text-right flex flex-col items-end gap-2">
+                  {x.distance_km != null ? (
+                    <div className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/25 border border-indigo-100 dark:border-indigo-800/40 px-3 py-2">
+                      <FiNavigation2 className="text-indigo-500 shrink-0" size={14} />
+                      <div>
+                        <div className="text-[10px] font-black text-indigo-400 uppercase leading-none">Distance</div>
+                        <div className="text-sm font-black text-indigo-700 dark:text-indigo-300">{Number(x.distance_km).toFixed(2)} km</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[10px] font-bold text-gray-400 uppercase text-right max-w-[9rem]">
+                      Distance n/a (check coords)
+                    </div>
+                  )}
+                  <div className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Period</div>
+                  <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.start_date || "—"}</div>
+                  <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.end_date || "—"}</div>
                 </div>
-              )}
-              <div className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Period</div>
-              <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.start_date || "—"}</div>
-              <div className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{x.end_date || "—"}</div>
-              
-              {x.original_micro_kitchen_details && (
-                <div className="mt-2 text-right">
-                  <div className="text-[8px] font-black text-amber-500 uppercase tracking-tighter italic">Kitchen Switched</div>
-                  <div className="text-[10px] text-gray-400 line-through decoration-amber-400/50">{x.original_micro_kitchen_details.brand_name}</div>
-                  <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Effect: {x.micro_kitchen_effective_from || 'N/A'}</div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 dark:border-white/5 space-y-3">
+                <div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase mb-1 flex items-center gap-1">
+                    <FiUser className="text-blue-500" /> Assigned Nutritionist
+                  </div>
+                  <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {x.nutritionist_details ? `${x.nutritionist_details.first_name} ${x.nutritionist_details.last_name}` : "Not assigned"}
+                  </div>
+                  {x.original_nutritionist_details && (
+                    <div className="mt-1 text-[10px] text-gray-500 italic">
+                      Was: {x.original_nutritionist_details.first_name} {x.original_nutritionist_details.last_name} 
+                      {x.nutritionist_effective_from && ` (until ${x.nutritionist_effective_from})`}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase mb-1">Diet Plan</div>
+                  <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{x.diet_plan_details?.plan_name || "—"}</div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="pt-3 border-t border-gray-100 dark:border-white/5">
-            <div className="text-[10px] font-black text-gray-400 uppercase mb-1">Diet Plan</div>
-            <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{x.diet_plan_details?.title || "—"}</div>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {(x.meal_dates || []).slice(0, 5).map((d: string, idx: number) => (
-                <span key={idx} className="text-[9px] bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-500">{d}</span>
-              ))}
-              {(x.meal_dates || []).length > 5 && <span className="text-[9px] text-gray-400">+{x.meal_dates.length - 5} more</span>}
-            </div>
-          </div>
-        </div>
           );
         })}
       </div>
-      <p className="text-[10px] text-gray-400 italic">Straight-line (Haversine) distance; not driving distance.</p>
+    </div>
+  );
+}
+
+export function DisplayKitchenDailyPrep({ 
+  items, 
+  onMonthChange 
+}: { 
+  items: any[]; 
+  onMonthChange?: (m: number, y: number) => void;
+}) {
+  const [viewType, setViewType] = useState<"list" | "calendar">("calendar");
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const handlePrev = () => {
+    const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    setCurrentDate(d);
+    onMonthChange?.(d.getMonth() + 1, d.getFullYear());
+  };
+  const handleNext = () => {
+    const d = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    setCurrentDate(d);
+    onMonthChange?.(d.getMonth() + 1, d.getFullYear());
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/60 dark:bg-white/[0.02] p-4 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-sm backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <div className="flex bg-gray-100 dark:bg-gray-950 p-1 rounded-2xl border border-gray-200 dark:border-white/5">
+            <button onClick={handlePrev} className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-xl transition-all font-black text-gray-500">&lt;</button>
+            <div className="px-4 py-2 text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest min-w-[140px] text-center">
+              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </div>
+            <button onClick={handleNext} className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-xl transition-all font-black text-gray-500">&gt;</button>
+          </div>
+        </div>
+
+        <div className="flex bg-gray-100 dark:bg-gray-950 p-1.5 rounded-2xl border border-gray-200 dark:border-white/5">
+          <button
+            onClick={() => setViewType("list")}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${viewType === 'list' ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+          >
+            <FiList size={16} /> List
+          </button>
+          <button
+            onClick={() => setViewType("calendar")}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${viewType === 'calendar' ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+          >
+            <FiCalendar size={16} /> Monthly Grid
+          </button>
+        </div>
+      </div>
+
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        {viewType === "list" ? (
+          items.length === 0 ? <EmptyState message="No prep found for this month." /> : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+              {items.map(m => <div key={m.id} className="p-4 border rounded-xl">{m.meal_type_details?.name}: {m.food_details?.name}</div>)}
+            </div>
+          )
+        ) : (
+          <div className="bg-white dark:bg-gray-900/50 p-8 rounded-[40px] border border-gray-100 dark:border-white/5 shadow-2xl relative">
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              initialDate={currentDate.toISOString().split('T')[0]}
+              headerToolbar={false}
+              events={items.map(m => ({
+                id: String(m.id),
+                title: `${m.meal_type_details?.name}: ${m.food_details?.name}`,
+                start: m.meal_date,
+                allDay: true,
+                backgroundColor: '#4f46e5',
+                borderColor: 'transparent',
+                extendedProps: { m }
+              }))}
+              eventContent={(arg) => (
+                <div
+                  title={`${arg.event.title}\nPatient: ${arg.event.extendedProps.m.user_details?.first_name} ${arg.event.extendedProps.m.user_details?.last_name}\nQty: ${arg.event.extendedProps.m.quantity}`}
+                  className="px-2 py-1 rounded-lg text-[9px] font-black uppercase overflow-hidden truncate transition-all hover:bg-amber-500 cursor-pointer"
+                >
+                  {arg.event.title}
+                </div>
+              )}
+              height="auto"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

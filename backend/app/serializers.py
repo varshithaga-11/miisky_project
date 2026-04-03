@@ -2526,26 +2526,30 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
         return None
 
     def get_distance_km(self, obj):
-        request = self.context.get('request')
-        if not request or not request.user:
-            return None
-        
-        kitchen_user = request.user
+        target_mk_id = self.context.get('target_micro_kitchen_id')
         patient_user = obj.user
         
-        if not kitchen_user.latitude or not kitchen_user.longitude or \
-           not patient_user or not patient_user.latitude or not patient_user.longitude:
+        if not target_mk_id or not patient_user or not patient_user.latitude or not patient_user.longitude:
             return None
-            
-        lat1, lon1 = kitchen_user.latitude, kitchen_user.longitude
-        lat2, lon2 = patient_user.latitude, patient_user.longitude
         
-        R = 6371.0 # Radius of the Earth in km
-        dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lon2 - lon1)
-        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return round(R * c, 2)
+        try:
+            from .models import MicroKitchenProfile
+            mk = MicroKitchenProfile.objects.filter(id=target_mk_id).select_related('user').first()
+            if not mk or not mk.user or not mk.user.latitude or not mk.user.longitude:
+                return None
+            
+            lat1, lon1 = mk.user.latitude, mk.user.longitude
+            lat2, lon2 = patient_user.latitude, patient_user.longitude
+            
+            import math
+            R = 6371.0
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+            return round(R * c, 2)
+        except:
+            return None
 
 
 class MicroKitchenPatientSummarySerializer(serializers.ModelSerializer):

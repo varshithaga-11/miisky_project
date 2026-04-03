@@ -3,7 +3,7 @@ import { FiEye, FiSearch } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { fetchNonPatientUserList, type UserRegister } from "./api";
-import { NonPatientUserDetailModal } from "../UserManagement/NonPatientUserDetailModal";
+import { NonPatientUserDetailModal } from "./NonPatientUserDetailModal";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
@@ -170,11 +170,10 @@ export default function NonPatientInformationPage() {
                       </TableCell>
                       <TableCell className="px-5 py-4">
                         <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            u.is_active
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${u.is_active
                               ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
                               : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                          }`}
+                            }`}
                         >
                           {u.is_active ? "Yes" : "No"}
                         </span>

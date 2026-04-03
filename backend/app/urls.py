@@ -160,6 +160,11 @@ urlpatterns = [
         views.AdminPatientKitchenRatingsNoPaginationView.as_view(),
         name="admin-patient-kitchen-ratings-nopaginate",
     ),
+    path(
+        "admin-order-payments-nopaginate/",
+        views.AdminOrderPaymentsNoPaginationView.as_view(),
+        name="admin-order-payments-nopaginate",
+    ),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),
