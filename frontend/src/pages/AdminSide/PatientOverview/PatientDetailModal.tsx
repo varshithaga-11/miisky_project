@@ -13,6 +13,10 @@ import {
   fetchKitchenHistoryForPatient,
   fetchDietPlanPaymentsForPatient,
   fetchOrderPaymentsForUserAdmin,
+  fetchMeetingsForPatient,
+  fetchSupportTicketsForPatient,
+  fetchNutritionistRatingsForPatient,
+  fetchKitchenRatingsForPatient,
   PatientUserRow,
 } from "./api";
 import { fetchOrdersForUserAdmin } from "../shared/adminOrderApi";
@@ -29,6 +33,10 @@ import {
   DisplayNutritionistHistory,
   DisplayKitchenHistory,
   DisplayPaymentHistory,
+  DisplayMeetings,
+  DisplaySupportTickets,
+  DisplayNutritionistRatings,
+  DisplayKitchenRatings,
   type UserDetailRecord,
   type HealthReportRow,
   type MappingRow,
@@ -52,7 +60,11 @@ export type DataView =
   | "meals"
   | "orders"
   | "dietPlanPayments"
-  | "orderPayments";
+  | "orderPayments"
+  | "meetings"
+  | "tickets"
+  | "nutritionistRatings"
+  | "kitchenRatings";
 
 const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   profile: "User profile",
@@ -68,6 +80,10 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   orders: "Food orders (delivery)",
   dietPlanPayments: "Diet plan payment history",
   orderPayments: "Order payment history",
+  meetings: "Consultation & meetings",
+  tickets: "Support tickets & issues",
+  nutritionistRatings: "Expert feedback & ratings",
+  kitchenRatings: "Kitchen feedback & ratings",
 };
 
 const MENU_ITEMS: { key: DataView; description: string }[] = [
@@ -84,6 +100,10 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "orders", description: "Food orders: kitchen, totals, delivery distance & address" },
   { key: "dietPlanPayments", description: "Financial logs for diet plan purchases" },
   { key: "orderPayments", description: "Financial logs for individual meal orders" },
+  { key: "meetings", description: "History of scheduled nutritionist consultations" },
+  { key: "tickets", description: "Raised support cases and technical issues" },
+  { key: "nutritionistRatings", description: "Reviews given to nutritionists" },
+  { key: "kitchenRatings", description: "Reviews given to micro-kitchens" },
 ];
 
 type Props = {
@@ -207,7 +227,23 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
           case "orderPayments": {
             const data = await fetchOrderPaymentsForUserAdmin(id, 1, 20);
             setPayload(data.results);
-            setTotalItems(data.count); // Reuse or add state if needed
+            setTotalItems(data.count);
+            break;
+          }
+          case "meetings": {
+            setPayload(await fetchMeetingsForPatient(id));
+            break;
+          }
+          case "tickets": {
+            setPayload(await fetchSupportTicketsForPatient(id));
+            break;
+          }
+          case "nutritionistRatings": {
+            setPayload(await fetchNutritionistRatingsForPatient(id));
+            break;
+          }
+          case "kitchenRatings": {
+            setPayload(await fetchKitchenRatingsForPatient(id));
             break;
           }
           default:
@@ -392,6 +428,18 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                   </div>
                   <DisplayPaymentHistory items={payload as PaymentEntry[]} />
                 </div>
+              )}
+              {!loading && !error && screen === "meetings" && Array.isArray(payload) && (
+                <DisplayMeetings items={payload} />
+              )}
+              {!loading && !error && screen === "tickets" && Array.isArray(payload) && (
+                <DisplaySupportTickets items={payload} />
+              )}
+              {!loading && !error && screen === "nutritionistRatings" && Array.isArray(payload) && (
+                <DisplayNutritionistRatings ratings={payload} />
+              )}
+              {!loading && !error && screen === "kitchenRatings" && Array.isArray(payload) && (
+                <DisplayKitchenRatings ratings={payload} />
               )}
             </>
           )}

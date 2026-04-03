@@ -139,6 +139,27 @@ urlpatterns = [
         views.AdminNutritionistMeetingsNoPaginationView.as_view(),
         name="admin-nutritionist-meetings-nopaginate",
     ),
+    # Admin patient panels (no pagination for modal display)
+    path(
+        "admin-patient-meetings-nopaginate/",
+        views.AdminPatientMeetingsNoPaginationView.as_view(),
+        name="admin-patient-meetings-nopaginate",
+    ),
+    path(
+        "admin-patient-tickets-nopaginate/",
+        views.AdminPatientTicketsNoPaginationView.as_view(),
+        name="admin-patient-tickets-nopaginate",
+    ),
+    path(
+        "admin-patient-nutritionist-ratings-nopaginate/",
+        views.AdminPatientNutritionistRatingsNoPaginationView.as_view(),
+        name="admin-patient-nutritionist-ratings-nopaginate",
+    ),
+    path(
+        "admin-patient-kitchen-ratings-nopaginate/",
+        views.AdminPatientKitchenRatingsNoPaginationView.as_view(),
+        name="admin-patient-kitchen-ratings-nopaginate",
+    ),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
     path('register/', UserRegisterView.as_view(), name='register'),

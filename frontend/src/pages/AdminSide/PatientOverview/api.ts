@@ -275,3 +275,35 @@ export const fetchOrderPaymentsForUserAdmin = async (
   }));
   return { ...data, results };
 };
+
+/** Meeting requests for patient (No Pagination) */
+export const fetchMeetingsForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  const data = await getJson<unknown>("api/admin-patient-meetings-nopaginate/", {
+    patient: patientUserId,
+  });
+  return unwrapResults(data);
+};
+
+/** Support tickets for patient (No Pagination) */
+export const fetchSupportTicketsForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  const data = await getJson<unknown>("api/admin-patient-tickets-nopaginate/", {
+    user: patientUserId,
+  });
+  return unwrapResults(data);
+};
+
+/** Nutritionist ratings given by patient (No Pagination) */
+export const fetchNutritionistRatingsForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  const data = await getJson<unknown>("api/admin-patient-nutritionist-ratings-nopaginate/", {
+    patient: patientUserId,
+  });
+  return unwrapResults(data);
+};
+
+/** Kitchen ratings given by patient (No Pagination) */
+export const fetchKitchenRatingsForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  const data = await getJson<unknown>("api/admin-patient-kitchen-ratings-nopaginate/", {
+    user: patientUserId,
+  });
+  return unwrapResults(data);
+};

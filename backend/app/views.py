@@ -4103,6 +4103,76 @@ class AdminNutritionistMeetingsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+# ---- Admin Patient panels (NO pagination for modal display) -----------------------------
+
+class AdminPatientMeetingsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        patient_id = request.query_params.get("patient")
+        if not patient_id:
+            return Response([])
+
+        qs = (
+            MeetingRequest.objects.filter(patient_id=patient_id)
+            .select_related("patient", "nutritionist", "user_diet_plan")
+            .order_by("-preferred_date", "-preferred_time")
+        )
+        serializer = MeetingRequestSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminPatientTicketsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        patient_id = request.query_params.get("user")
+        if not patient_id:
+            return Response([])
+
+        qs = (
+            SupportTicket.objects.filter(created_by_id=patient_id)
+            .select_related("created_by", "assigned_to", "category")
+            .order_by("-created_at")
+        )
+        serializer = SupportTicketSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminPatientNutritionistRatingsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        patient_id = request.query_params.get("patient")
+        if not patient_id:
+            return Response([])
+
+        qs = (
+            NutritionistRating.objects.filter(patient_id=patient_id)
+            .select_related("patient", "nutritionist", "diet_plan")
+            .order_by("-created_at")
+        )
+        serializer = NutritionistRatingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminPatientKitchenRatingsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        patient_id = request.query_params.get("user")
+        if not patient_id:
+            return Response([])
+
+        qs = (
+            MicroKitchenRating.objects.filter(user_id=patient_id)
+            .select_related("user", "micro_kitchen", "order")
+            .order_by("-created_at")
+        )
+        serializer = MicroKitchenRatingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
 class AdminNutritionistOverviewViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Admin-only: list users with role=nutritionist; 

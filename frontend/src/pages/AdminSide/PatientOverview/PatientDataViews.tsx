@@ -7,7 +7,10 @@ import {
   FiCreditCard, FiEye, FiUser, FiActivity, FiShield, FiSearch, FiTrendingUp, 
   FiShoppingBag, FiMapPin, FiTruck, FiX,
   FiChevronRight,
-  FiExternalLink
+  FiExternalLink,
+  FiMessageSquare,
+  FiStar,
+  FiHelpCircle
 } from "react-icons/fi";
 
 /** Definition list row */
@@ -1189,6 +1192,190 @@ function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClo
           </div>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+export function DisplayMeetings({ items }: { items: any[] }) {
+  if (!items.length) return <EmptyState message="No consultation meetings scheduled." />;
+  return (
+    <div className="space-y-4">
+      {items.map((m, idx) => (
+        <motion.div
+          key={m.id || idx}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: idx * 0.05 }}
+          className="relative pl-6 pb-6 last:pb-0"
+        >
+          <div className="absolute left-[7px] top-2 bottom-0 w-px bg-gray-100 dark:bg-white/5" />
+          <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 bg-white dark:bg-gray-900 z-10 ${
+            m.status === 'completed' ? 'border-emerald-500' : m.status === 'pending' ? 'border-amber-500' : 'border-indigo-500'
+          }`} />
+          
+          <div className="rounded-2xl border border-gray-100 dark:border-white/5 bg-white dark:bg-gray-800/40 p-4 shadow-sm hover:shadow-md transition-all">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+               <div className="flex items-center gap-2">
+                 <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-none">
+                   {new Date(m.preferred_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                 </span>
+                 <span className="text-[10px] text-gray-400 font-bold uppercase">• {m.preferred_time}</span>
+               </div>
+               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                 m.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                 m.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
+                 'bg-indigo-50 text-indigo-600 border-indigo-100'
+               }`}>{m.status}</span>
+            </div>
+            
+            <div className="flex items-start gap-3">
+               <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 shrink-0">
+                 <FiCalendar size={18} />
+               </div>
+               <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">Consultation with {m.nutritionist_details?.first_name || 'Nutritionist'}</h4>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2 italic">"{m.reason || 'No reason provided'}"</p>
+               </div>
+            </div>
+
+            {m.meeting_link && (
+               <div className="mt-4 pt-3 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                    <FiActivity size={10} className="text-emerald-500" /> Recorded Session
+                  </div>
+                  <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:underline flex items-center gap-1">
+                    Join / View Link <FiChevronRight />
+                  </a>
+               </div>
+            )}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplaySupportTickets({ items }: { items: any[] }) {
+  if (!items.length) return <EmptyState message="No support tickets raised by this patient." />;
+  return (
+    <div className="space-y-4">
+      {items.map((t, idx) => (
+        <motion.div
+           key={t.id || idx}
+           initial={{ opacity: 0, y: 10 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: idx * 0.05 }}
+           className="group bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-4 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all"
+        >
+           <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="flex-1 min-w-0">
+                 <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter leading-none">Ticket #{t.id}</span>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
+                      t.priority === 'high' ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500'
+                    }`}>{t.priority} priority</span>
+                 </div>
+                 <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{t.title}</h4>
+              </div>
+              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                t.status === 'open' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
+                t.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                'bg-gray-50 text-gray-500 border-gray-100'
+              }`}>{t.status}</span>
+           </div>
+           
+           <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">{t.description}</p>
+           
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                 <FiMessageSquare size={12} className="text-indigo-400" /> {t.category_details?.name || 'General Support'}
+              </div>
+              <p className="text-[10px] text-gray-400 font-medium">Updated: {new Date(t.updated_at || t.created_at).toLocaleDateString()}</p>
+           </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayNutritionistRatings({ ratings }: { ratings: any[] }) {
+  if (!ratings.length) return <EmptyState message="Patient hasn't submitted any expert reviews yet." />;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {ratings.map((r, idx) => (
+        <motion.div
+           key={idx}
+           initial={{ opacity: 0, scale: 0.98 }}
+           animate={{ opacity: 1, scale: 1 }}
+           className="bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-5 relative overflow-hidden"
+        >
+           <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
+              <FiStar size={40} className="text-amber-500 fill-current" />
+           </div>
+           
+           <div className="flex items-center gap-1 mb-3">
+              {[...Array(5)].map((_, i) => (
+                <FiStar key={i} size={12} className={i < r.rating ? 'text-amber-400 fill-current' : 'text-gray-200 dark:text-gray-700'} />
+              ))}
+           </div>
+
+           <p className="text-xs text-gray-600 dark:text-gray-300 italic mb-4 leading-relaxed font-medium">"{r.review || 'No written feedback provided.'}"</p>
+           
+           <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                 <FiUser size={14} />
+              </div>
+              <div>
+                 <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
+                    {r.nutritionist_details?.first_name || 'Nutritionist'}
+                 </p>
+                 <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Expert Feedback</p>
+              </div>
+           </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenRatings({ ratings }: { ratings: any[] }) {
+  if (!ratings.length) return <EmptyState message="Patient hasn't submitted any kitchen reviews yet." />;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {ratings.map((r, idx) => (
+        <motion.div
+           key={idx}
+           initial={{ opacity: 0, scale: 0.98 }}
+           animate={{ opacity: 1, scale: 1 }}
+           className="bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-5 relative overflow-hidden"
+        >
+           <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
+              <FiStar size={40} className="text-amber-500 fill-current" />
+           </div>
+           
+           <div className="flex items-center gap-1 mb-3">
+              {[...Array(5)].map((_, i) => (
+                <FiStar key={i} size={12} className={i < r.rating ? 'text-amber-400 fill-current' : 'text-gray-200 dark:text-gray-700'} />
+              ))}
+           </div>
+
+           <p className="text-xs text-gray-600 dark:text-gray-300 italic mb-4 leading-relaxed font-medium">"{r.review || 'No written feedback provided.'}"</p>
+           
+           <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                 <FiUser size={14} />
+              </div>
+              <div>
+                 <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
+                    {r.kitchen_details?.brand_name || 'Kitchen'}
+                 </p>
+                 <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Kitchen Feedback</p>
+              </div>
+           </div>
+        </motion.div>
+      ))}
     </div>
   );
 }
