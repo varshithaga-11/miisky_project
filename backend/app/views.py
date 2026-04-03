@@ -34,7 +34,7 @@ class Pagination(PageNumberPagination):
     page_query_param = "page"
     page_size_query_param = "limit"
     page_size = 10
-    max_page_size = 10
+    max_page_size = 500
 
     def get_paginated_response(self, data):
         current_page = self.page.number
@@ -4050,6 +4050,7 @@ class AdminNutritionistPatientsNoPaginationView(APIView):
         if not nutritionist_id:
             return Response([])
 
+        # Active mappings
         mappings = UserNutritionistMapping.objects.filter(
             nutritionist_id=nutritionist_id, is_active=True
         ).select_related("user")
@@ -4057,6 +4058,25 @@ class AdminNutritionistPatientsNoPaginationView(APIView):
         results = []
         for m in mappings:
             p = m.user
+            # Get latest active diet plan for this patient to find their current kitchen
+            plan = UserDietPlan.objects.filter(user=p, status='active').select_related('micro_kitchen', 'micro_kitchen__user').first()
+            
+            # Reassignments for this user to this nutritionist
+            reassignments = NutritionistReassignment.objects.filter(
+                user=p, new_nutritionist_id=nutritionist_id
+            ).select_related('previous_nutritionist', 'reassigned_by').order_by('-reassigned_on')
+            
+            history = []
+            for r in reassignments:
+                history.append({
+                    "from": f"{r.previous_nutritionist.first_name} {r.previous_nutritionist.last_name}" if r.previous_nutritionist else "None",
+                    "reason": r.reason,
+                    "notes": r.notes,
+                    "by": f"{r.reassigned_by.first_name} {r.reassigned_by.last_name}" if r.reassigned_by else "Admin",
+                    "date": r.reassigned_on,
+                    "effective_from": r.effective_from
+                })
+
             results.append({
                 "id": p.id,
                 "first_name": p.first_name,
@@ -4064,6 +4084,9 @@ class AdminNutritionistPatientsNoPaginationView(APIView):
                 "email": p.email,
                 "mobile": p.mobile,
                 "assigned_on": m.assigned_on,
+                "kitchen_brand": plan.micro_kitchen.brand_name if plan and plan.micro_kitchen else "Not Assigned",
+                "kitchen_id": plan.micro_kitchen.id if plan and plan.micro_kitchen else None,
+                "reassignment_history": history
             })
         return Response(results)
 
@@ -4079,8 +4102,23 @@ class AdminNutritionistDietPlansNoPaginationView(APIView):
         qs = UserDietPlan.objects.filter(nutritionist_id=nutritionist_id).select_related(
             "user", "diet_plan", "micro_kitchen"
         ).order_by("-suggested_on")
-        serializer = UserDietPlanSerializer(qs, many=True)
-        return Response(serializer.data)
+        
+        data = UserDietPlanSerializer(qs, many=True).data
+        # Inject reassignment context if any
+        for plan_data in data:
+            plan_id = plan_data['id']
+            # Kitchen reassignments for this plan
+            kreas = MicroKitchenReassignment.objects.filter(user_diet_plan_id=plan_id).select_related('previous_kitchen', 'new_kitchen', 'reassigned_by').order_by('-reassigned_on')
+            plan_data['kitchen_reassignments'] = [{
+                "from": kr.previous_kitchen.brand_name if kr.previous_kitchen else "None",
+                "to": kr.new_kitchen.brand_name if kr.new_kitchen else "None",
+                "reason": kr.reason,
+                "date": kr.reassigned_on,
+                "effective_from": kr.effective_from,
+                "by": kr.reassigned_by.username if kr.reassigned_by else "Admin"
+            } for kr in kreas]
+            
+        return Response(data)
 
 
 class AdminNutritionistMealsNoPaginationView(APIView):
@@ -4088,14 +4126,22 @@ class AdminNutritionistMealsNoPaginationView(APIView):
 
     def get(self, request):
         nutritionist_id = request.query_params.get("nutritionist")
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
+        
         if not nutritionist_id:
             return Response([])
 
         qs = UserMeal.objects.filter(
             user_diet_plan__nutritionist_id=nutritionist_id
         ).select_related(
-            "user", "user_diet_plan", "meal_type", "food", "packaging_material"
-        ).order_by("-meal_date", "meal_type__id")
+            "user", "user_diet_plan", "user_diet_plan__micro_kitchen", "meal_type", "food", "packaging_material"
+        )
+        
+        if month and year:
+            qs = qs.filter(meal_date__month=month, meal_date__year=year)
+            
+        qs = qs.order_by("-meal_date", "meal_type__id")
         serializer = UserMealSerializer(qs, many=True)
         return Response(serializer.data)
 
@@ -4110,8 +4156,32 @@ class AdminNutritionistMeetingsNoPaginationView(APIView):
 
         qs = MeetingRequest.objects.filter(
             nutritionist_id=nutritionist_id
-        ).select_related("patient").order_by("-created_on")
+        ).select_related("patient", "user_diet_plan").order_by("-created_on")
         serializer = MeetingRequestSerializer(qs, many=True)
+        return Response(serializer.data)
+
+class AdminNutritionistReviewsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+        
+        qs = NutritionistRating.objects.filter(nutritionist_id=nutritionist_id).select_related('patient').order_by('-created_at')
+        serializer = NutritionistRatingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+class AdminNutritionistTicketsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        user_id = request.query_params.get("user")
+        if not user_id:
+            return Response([])
+        
+        qs = SupportTicket.objects.filter(created_by_id=user_id).select_related('category', 'assigned_to').order_by('-id')
+        serializer = SupportTicketSerializer(qs, many=True)
         return Response(serializer.data)
 
 
@@ -4697,34 +4767,3 @@ class ResetPasswordView(APIView):
         return Response({"message": "Password reset successful."})
 
 
-class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
-    queryset = MicroKitchenRating.objects.all().select_related('user', 'micro_kitchen', 'order').order_by('-created_at')
-    serializer_class = MicroKitchenRatingSerializer
-    pagination_class = Pagination
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        mk = self.request.query_params.get('micro_kitchen')
-        user = self.request.query_params.get('user')
-        if mk:
-            qs = qs.filter(micro_kitchen_id=mk)
-        if user:
-            qs = qs.filter(user_id=user)
-        return qs
-
-class NutritionistRatingViewSet(viewsets.ModelViewSet):
-    queryset = NutritionistRating.objects.all().select_related('user', 'nutritionist').order_by('-created_at')
-    serializer_class = NutritionistRatingSerializer
-    pagination_class = Pagination
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        nutri = self.request.query_params.get('nutritionist')
-        user = self.request.query_params.get('user')
-        if nutri:
-            qs = qs.filter(nutritionist_id=nutri)
-        if user:
-            qs = qs.filter(user_id=user)
-        return qs

@@ -139,6 +139,16 @@ urlpatterns = [
         views.AdminNutritionistMeetingsNoPaginationView.as_view(),
         name="admin-nutritionist-meetings-nopaginate",
     ),
+    path(
+        "admin-nutritionist-reviews-nopaginate/",
+        views.AdminNutritionistReviewsNoPaginationView.as_view(),
+        name="admin-nutritionist-reviews-nopaginate",
+    ),
+    path(
+        "admin-nutritionist-tickets-nopaginate/",
+        views.AdminNutritionistTicketsNoPaginationView.as_view(),
+        name="admin-nutritionist-tickets-nopaginate",
+    ),
     # Admin patient panels (no pagination for modal display)
     path(
         "admin-patient-meetings-nopaginate/",

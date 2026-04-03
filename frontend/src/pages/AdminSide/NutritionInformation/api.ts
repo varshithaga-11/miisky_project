@@ -43,8 +43,8 @@ export const getNutritionistInformation = async (): Promise<NutritionistProfile[
   return response.data.results || [];
 };
 
-export const getAdminNutritionistList = async (page: number = 1, search: string = ""): Promise<any> => {
-    const url = createApiUrl(`api/admin-nutritionists/?page=${page}&search=${search}`);
+export const getAdminNutritionistList = async (page: number = 1, search: string = "", limit: number = 10): Promise<any> => {
+    const url = createApiUrl(`api/admin-nutritionists/?page=${page}&search=${search}&limit=${limit}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
@@ -79,28 +79,20 @@ export const getNutritionistMeetingsNoPaginate = async (nutritionistId: number):
     return response.data;
 };
 
-export const getNutritionistReviewsPaginated = async (
-    nutritionistId: number,
-    page: number = 1,
-    limit: number = 10
-): Promise<any> => {
-    const url = createApiUrl(`api/nutritionistrating/`);
-    const response = await axios.get(url, {
-        headers: await getAuthHeaders(),
-        params: { nutritionist: nutritionistId, page, limit },
-    });
+export const getNutritionistReviewsNoPaginate = async (nutritionistId: number): Promise<any[]> => {
+    const url = createApiUrl(`api/admin-nutritionist-reviews-nopaginate/?nutritionist=${nutritionistId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
 
-export const getNutritionistSupportTickets = async (
-    userId: number,
-    page: number = 1,
-    limit: number = 10
-): Promise<any> => {
-    const url = createApiUrl(`api/supportticket/`);
-    const response = await axios.get(url, {
-        headers: await getAuthHeaders(),
-        params: { created_by: userId, page, limit },
-    });
+export const getNutritionistTicketsNoPaginate = async (userId: number): Promise<any[]> => {
+    const url = createApiUrl(`api/admin-nutritionist-tickets-nopaginate/?user=${userId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getNutritionistMealsWithMonth = async (nutritionistId: number, month: number, year: number): Promise<any[]> => {
+    const url = createApiUrl(`api/admin-nutritionist-meals-nopaginate/?nutritionist=${nutritionistId}&month=${month}&year=${year}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };

@@ -2551,23 +2551,4 @@ class EmailOTP(models.Model):
     
 
 
-class MicroKitchenRating(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name="kitchen_ratings")
-    micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.CASCADE, related_name="ratings")
-    order = models.ForeignKey('Order', on_delete=models.SET_NULL, null=True, blank=True)
-    rating = models.IntegerField(default=5)
-    review = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.username} - {self.micro_kitchen.brand_name} ({self.rating})"
-
-class NutritionistRating(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name="nutritionist_ratings")
-    nutritionist = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name="as_nutritionist_ratings")
-    rating = models.IntegerField(default=5)
-    review = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.nutritionist.username} ({self.rating})"

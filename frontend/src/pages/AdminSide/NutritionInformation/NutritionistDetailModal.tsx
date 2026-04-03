@@ -6,10 +6,10 @@ import {
     getAdminNutritionistDetails,
     getNutritionistPatientsNoPaginate,
     getNutritionistDietPlansNoPaginate,
-    getNutritionistMealsNoPaginate,
+    getNutritionistMealsWithMonth,
     getNutritionistMeetingsNoPaginate,
-    getNutritionistReviewsPaginated,
-    getNutritionistSupportTickets
+    getNutritionistReviewsNoPaginate,
+    getNutritionistTicketsNoPaginate
 } from "./api";
 import {
     DisplayNutritionistInfo,
@@ -22,7 +22,7 @@ import {
 } from "./NutritionistDataViews";
 
 interface NutritionistDetailModalProps {
-    nutritionistId: number;
+    nutritionist: any;
     open: boolean;
     onClose: () => void;
 }
@@ -31,7 +31,7 @@ type TabKey = "profile" | "patients" | "plans" | "meals" | "meetings" | "reviews
 
 const TABS: { key: TabKey; label: string; icon: any; description: string }[] = [
     { key: "profile", label: "Profile", icon: <FiUser />, description: "Education, exp & specialty" },
-    { key: "patients", label: "Clients", icon: <FiUsers />, description: "Live patient allotments" },
+    { key: "patients", label: "Patients", icon: <FiUsers />, description: "Live patient allotments" },
     { key: "plans", label: "Diet Plans", icon: <FiFileText />, description: "Suggested & active plans" },
     { key: "meals", label: "Meal Sets", icon: <FiCalendar />, description: "Daily prep for clients" },
     { key: "meetings", label: "Meetings", icon: <FiVideo />, description: "Consultation history" },
@@ -39,55 +39,42 @@ const TABS: { key: TabKey; label: string; icon: any; description: string }[] = [
     { key: "tickets", label: "Tickets", icon: <FiClipboard />, description: "Support & tech issues" },
 ];
 
-export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = ({ nutritionistId, open, onClose }) => {
+export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = ({ nutritionist, open, onClose }) => {
     const [screen, setScreen] = useState<"hub" | TabKey>("hub");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [dossier, setDossier] = useState<any>(null);
+    const [profileData, setProfileData] = useState<any>(null);
     const [payload, setPayload] = useState<any>(null);
 
-    // Pagination
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(false);
-    const [loadingMore, setLoadingMore] = useState(false);
+    const nutritionistId = nutritionist?.id;
 
     useEffect(() => {
-        if (open && nutritionistId) {
+        if (open) {
             setScreen("hub");
             setPayload(null);
             setError(null);
-            setLoading(true);
-            fetchInitialData();
-        }
-    }, [open, nutritionistId]);
-
-    const fetchInitialData = async () => {
-        try {
-            const data = await getAdminNutritionistDetails(nutritionistId);
-            setDossier(data);
-        } catch (error) {
-            setError("Failed to fetch profile");
-        } finally {
             setLoading(false);
+            setProfileData(null);
         }
-    };
+    }, [open]);
 
-    const loadView = useCallback(async (view: TabKey, p = 1, isLoadMore = false) => {
-        if (!isLoadMore) {
-            setScreen(view);
-            setLoading(true);
-            setPayload(null);
-            setPage(1);
-        } else {
-            setLoadingMore(true);
-        }
+    const loadView = useCallback(async (view: TabKey) => {
+        setScreen(view);
+        setLoading(true);
+        setPayload(null);
         setError(null);
 
         try {
-            let res: any;
             switch (view) {
                 case "profile":
-                    setPayload(dossier);
+                    // CALL DETAIL API ONLY ON PROFILE TAB AS REQUESTED
+                    if (!profileData) {
+                        const data = await getAdminNutritionistDetails(nutritionistId);
+                        setProfileData(data);
+                        setPayload(data);
+                    } else {
+                        setPayload(profileData);
+                    }
                     break;
                 case "patients":
                     setPayload(await getNutritionistPatientsNoPaginate(nutritionistId));
@@ -96,35 +83,25 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                     setPayload(await getNutritionistDietPlansNoPaginate(nutritionistId));
                     break;
                 case "meals":
-                    setPayload(await getNutritionistMealsNoPaginate(nutritionistId));
+                    const now = new Date();
+                    setPayload(await getNutritionistMealsWithMonth(nutritionistId, now.getMonth() + 1, now.getFullYear()));
                     break;
                 case "meetings":
                     setPayload(await getNutritionistMeetingsNoPaginate(nutritionistId));
                     break;
                 case "reviews":
-                    res = await getNutritionistReviewsPaginated(nutritionistId, p, 10);
-                    setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-                    setHasMore(res.current_page < res.total_pages);
+                    setPayload(await getNutritionistReviewsNoPaginate(nutritionistId));
                     break;
                 case "tickets":
-                    res = await getNutritionistSupportTickets(dossier?.id || nutritionistId, p, 10);
-                    setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-                    setHasMore(res.current_page < res.total_pages);
+                    setPayload(await getNutritionistTicketsNoPaginate(nutritionistId));
                     break;
             }
         } catch (e: any) {
-            setError(e.message || "Failed to load");
+            setError(e.message || "Failed to load session data");
         } finally {
             setLoading(false);
-            setLoadingMore(false);
         }
-    }, [nutritionistId, dossier]);
-
-    const handleLoadMore = () => {
-        const nextP = page + 1;
-        setPage(nextP);
-        loadView(screen as TabKey, nextP, true);
-    };
+    }, [nutritionistId, profileData]);
 
     if (!open) return null;
 
@@ -133,24 +110,28 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
             <div className="bg-white dark:bg-gray-950 rounded-[40px] w-full max-w-6xl max-h-[92vh] overflow-hidden shadow-2xl relative border border-white/10 flex flex-col">
 
                 {/* Header */}
-                <header className="px-8 py-6 shrink-0 bg-gray-50/50 dark:bg-white/[0.02] border-b dark:border-white/5 flex items-center justify-between">
+                <header className="px-8 py-6 shrink-0 bg-gray-50/50 dark:bg-white/[0.02] border-b dark:border-white/5 flex items-center justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-[0.03] transition-all duration-700 text-6xl font-black italic select-none">
+                        Details
+                    </div>
+
                     <div>
                         {screen !== "hub" && (
                             <button
                                 onClick={() => setScreen("hub")}
                                 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-2 hover:translate-x-1 transition-transform flex items-center gap-1"
                             >
-                                ← Back to dossier hub
+                                ← Back to terminal hub
                             </button>
                         )}
                         <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase leading-none">
-                            {screen === "hub" ? "Nutritionist Dossier" : TABS.find(t => t.key === screen)?.label}
+                            {screen === "hub" ? "Nutritionist Hub" : TABS.find(t => t.key === screen)?.label}
                         </h2>
                         <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-widest italic leading-none">
-                            {dossier?.first_name} {dossier?.last_name} · Expert Management
+                            {nutritionist?.first_name} {nutritionist?.last_name} · Professional Details #{nutritionist?.id}
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-400 hover:text-red-500">
+                    <button onClick={onClose} className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-400 hover:text-red-500 relative z-10">
                         <FiXCircle size={28} />
                     </button>
                 </header>
@@ -179,41 +160,41 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                     ) : (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {loading && !payload && (
-                                <div className="py-20 flex flex-col items-center justify-center gap-4 text-gray-400">
-                                    <FiLoader className="size-10 animate-spin text-indigo-600" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] italic">Accessing database...</p>
+                                <div className="py-24 flex flex-col items-center justify-center gap-6">
+                                    <div className="relative">
+                                        <div className="size-16 rounded-[22px] border-4 border-indigo-100 dark:border-indigo-900/20 border-t-indigo-600 animate-spin"></div>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <FiLoader className="size-6 text-indigo-600" />
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-xs font-black uppercase tracking-[0.3em] text-gray-500 italic">Synchronizing Terminal</p>
+                                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Please wait while we fetch high-density datasets</p>
+                                    </div>
                                 </div>
                             )}
 
                             {error && (
-                                <div className="p-6 rounded-3xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 font-bold text-sm italic">
-                                    {error}
+                                <div className="p-8 rounded-[32px] bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 flex items-center gap-4">
+                                    <div className="size-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+                                        <FiXCircle size={20} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="font-black uppercase tracking-tighter italic leading-tight">Access Error</div>
+                                        <p className="text-xs font-medium opacity-80">{error}</p>
+                                    </div>
                                 </div>
                             )}
 
-                            {payload && (
+                            {payload && !loading && (
                                 <>
                                     {screen === "profile" && <DisplayNutritionistInfo nutritionist={payload} />}
                                     {screen === "patients" && <DisplayNutritionistPatients items={payload} />}
                                     {screen === "plans" && <DisplayNutritionistDietPlans items={payload} />}
-                                    {screen === "meals" && <DisplayNutritionistMeals items={payload} patients={dossier?.allotted_patients || []} />}
+                                    {screen === "meals" && <DisplayNutritionistMeals items={payload} nutritionistId={nutritionistId} />}
                                     {screen === "meetings" && <DisplayNutritionistMeetings items={payload} />}
-                                    {screen === "reviews" && (
-                                        <DisplayNutritionistReviews 
-                                            items={payload} 
-                                            onLoadMore={handleLoadMore} 
-                                            hasMore={hasMore} 
-                                            loadingMore={loadingMore} 
-                                        />
-                                    )}
-                                    {screen === "tickets" && (
-                                        <DisplayNutritionistTickets 
-                                            items={payload} 
-                                            onLoadMore={handleLoadMore} 
-                                            hasMore={hasMore} 
-                                            loadingMore={loadingMore} 
-                                        />
-                                    )}
+                                    {screen === "reviews" && <DisplayNutritionistReviews items={payload} />}
+                                    {screen === "tickets" && <DisplayNutritionistTickets items={payload} />}
                                 </>
                             )}
                         </div>
@@ -223,8 +204,8 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                 {/* Footer */}
                 <footer className="px-8 py-4 shrink-0 bg-gray-50/50 dark:bg-white/[0.02] border-t dark:border-white/5 flex items-center justify-between">
                     <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] italic flex items-center gap-3">
-                         <span className="size-2 bg-indigo-500 rounded-full animate-pulse shadow-lg shadow-indigo-500/50"></span>
-                         Secure Data Terminal · Nutrition Domain v4.2
+                        <span className="size-2 bg-indigo-500 rounded-full animate-pulse shadow-lg shadow-indigo-500/50"></span>
+                        Secure Data Terminal · Nutrition Domain v5.5
                     </div>
                 </footer>
             </div>
