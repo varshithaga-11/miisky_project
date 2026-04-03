@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { resolveMediaUrl } from "./api";
 import { motion, AnimatePresence } from "framer-motion";
+import { 
+  FiClock, FiCheckCircle, FiAlertCircle, FiTag, FiCalendar, 
+  FiCreditCard, FiEye, FiUser, FiActivity, FiShield, FiSearch, FiTrendingUp, 
+  FiShoppingBag, FiMapPin, FiTruck, FiX,
+  FiChevronRight,
+  FiExternalLink
+} from "react-icons/fi";
 
 /** Definition list row */
 export function InfoRow({ label, value }: { label: string; value: ReactNode }) {
@@ -975,6 +982,213 @@ function MealsCalendarView({
           </table>
         </div>
       </div> */}
+    </div>
+  );
+}
+
+export interface PaymentEntry {
+  id: string | number;
+  date: string;
+  amount: number | string;
+  status: string;
+  type: string;
+  reference: string;
+  details: string;
+  screenshot?: string | null;
+  originalData?: any;
+}
+
+export function DisplayPaymentHistory({ items }: { items: PaymentEntry[] }) {
+  const [selectedItem, setSelectedItem] = useState<PaymentEntry | null>(null);
+
+  if (!items.length) return <EmptyState message="No payment transactions found." />;
+
+  const getStatusStyles = (status: string) => {
+    const s = status.toLowerCase();
+    if (s.includes("verified") || s === "paid" || s === "delivered" || s === "success") 
+      return "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/10";
+    if (s.includes("pending")) 
+      return "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border-amber-100 dark:border-amber-500/10";
+    if (s.includes("failed") || s.includes("rejected") || s === "cancelled") 
+      return "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border-rose-100 dark:border-rose-500/10";
+    return "bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-100 dark:border-white/5";
+  };
+
+  return (
+    <div className="space-y-4">
+      <AnimatePresence mode="popLayout">
+        {items.map((tx, idx) => (
+          <motion.div
+            key={`${tx.type}-${tx.id}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.03 }}
+            className="group relative bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-4 hover:border-indigo-200 dark:hover:border-indigo-900/40 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1 min-w-[240px]">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+                  tx.type.includes("Plan") ? "bg-indigo-50 text-indigo-500 dark:bg-indigo-900/20" : "bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20"
+                }`}>
+                  {tx.type.includes("Plan") ? <FiTag size={20} /> : <FiCreditCard size={20} />}
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">ID: {tx.id}</span>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                      tx.type.includes("Plan") ? "bg-indigo-100/50 text-indigo-600" : "bg-emerald-100/50 text-emerald-600"
+                    }`}>{tx.type}</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-md">{tx.details}</h4>
+                  <div className="flex items-center gap-4 text-[11px] text-gray-400 font-medium">
+                    <span className="flex items-center gap-1"><FiCalendar className="text-indigo-500" /> {new Date(tx.date).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1"><FiShield className="text-indigo-500" /> Ref: {tx.reference}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <div className="text-lg font-black text-gray-900 dark:text-white tracking-tighter tabular-nums">
+                    ₹{Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className={`mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${getStatusStyles(tx.status)}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${tx.status.toLowerCase().includes('verified') || tx.status.toLowerCase() === 'paid' ? 'bg-emerald-500' : 'bg-current'}`} />
+                    {tx.status}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedItem(tx)}
+                  className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex items-center justify-center border border-transparent hover:border-indigo-100 dark:hover:border-indigo-500/20"
+                >
+                  <FiEye size={18} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedItem && (
+          <TransactionDetailModal entry={selectedItem} onClose={() => setSelectedItem(null)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClose: () => void }) {
+  const d = entry.originalData || {};
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-[30px] border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden"
+      >
+        <div className="p-8 space-y-8">
+          <div className="flex justify-between items-start">
+            <div>
+               <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 ${
+                 entry.type.includes("Plan") ? "bg-indigo-50 text-indigo-500" : "bg-emerald-50 text-emerald-500"
+               }`}>
+                 {entry.type}
+               </div>
+               <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Transaction Log</h2>
+            </div>
+            <button onClick={onClose} className="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-rose-500 transition-all">
+              <FiX size={20} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+               <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiCalendar size={18} /></div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase">Date</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">{new Date(entry.date).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiShield size={18} /></div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase">Status</p>
+                      <p className="text-sm font-bold text-indigo-500 uppercase">{entry.status}</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+            <div>
+               <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiTag size={18} /></div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase">Reference</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[140px]">{entry.reference}</p>
+                    </div>
+                  </div>
+                  {entry.type.includes("Plan") && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiActivity size={18} /></div>
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Validity</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{d.diet_plan_details?.no_of_days ?? '—'} Days</p>
+                      </div>
+                    </div>
+                  )}
+               </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+             <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Financial Summary</span>
+                <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+             </div>
+             
+             <div className="rounded-[25px] bg-slate-50 dark:bg-white/[0.02] p-6 space-y-3">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-gray-400 uppercase text-[10px] font-black">Description</span>
+                  <span className="text-gray-900 dark:text-white">{entry.details}</span>
+                </div>
+                {entry.type.includes("Order") && d.order_type && (
+                   <div className="flex justify-between text-sm font-medium">
+                    <span className="text-gray-400 uppercase text-[10px] font-black">Order Type</span>
+                    <span className="text-gray-900 dark:text-white uppercase">{d.order_type}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-4 border-t border-gray-200/50 dark:border-white/5">
+                  <span className="text-gray-500 font-bold uppercase text-xs">Total Amount</span>
+                  <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">₹{Number(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+             </div>
+          </div>
+
+          {entry.screenshot && (
+            <div className="space-y-3">
+               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Proof</span>
+               <a href={resolveMediaUrl(entry.screenshot)} target="_blank" rel="noreferrer" className="block relative group overflow-hidden rounded-2xl border-4 border-gray-50 dark:border-gray-800 shadow-lg">
+                  <img src={resolveMediaUrl(entry.screenshot)} alt="Proof" className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-indigo-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                     <FiExternalLink className="text-white text-2xl" />
+                  </div>
+               </a>
+            </div>
+          )}
+
+          <div className="flex gap-4">
+             <button onClick={onClose} className="flex-1 py-4 rounded-2xl border-2 border-gray-100 dark:border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-colors">Dismiss</button>
+             {entry.type.includes("Order") && (
+               <button className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20">Print Receipt</button>
+             )}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

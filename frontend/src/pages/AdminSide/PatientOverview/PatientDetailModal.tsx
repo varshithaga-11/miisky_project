@@ -11,6 +11,8 @@ import {
   fetchUserMealsForPatient,
   fetchNutritionistHistoryForPatient,
   fetchKitchenHistoryForPatient,
+  fetchDietPlanPaymentsForPatient,
+  fetchOrderPaymentsForUserAdmin,
   PatientUserRow,
 } from "./api";
 import { fetchOrdersForUserAdmin } from "../shared/adminOrderApi";
@@ -26,12 +28,14 @@ import {
   DisplayMeals,
   DisplayNutritionistHistory,
   DisplayKitchenHistory,
+  DisplayPaymentHistory,
   type UserDetailRecord,
   type HealthReportRow,
   type MappingRow,
   type ReviewRow,
   type DietPlanRow,
   type MealRow,
+  type PaymentEntry,
 } from "./PatientDataViews";
 
 export type HubView = "hub";
@@ -46,7 +50,9 @@ export type DataView =
   // | "reviews"
   | "dietPlans"
   | "meals"
-  | "orders";
+  | "orders"
+  | "dietPlanPayments"
+  | "orderPayments";
 
 const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   profile: "User profile",
@@ -60,6 +66,8 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   dietPlans: "Diet plans",
   meals: "Meals & packaging",
   orders: "Food orders (delivery)",
+  dietPlanPayments: "Diet plan payment history",
+  orderPayments: "Order payment history",
 };
 
 const MENU_ITEMS: { key: DataView; description: string }[] = [
@@ -74,6 +82,8 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "dietPlans", description: "Suggested and active diet plans" },
   { key: "meals", description: "Planned meals, foods, packaging" },
   { key: "orders", description: "Food orders: kitchen, totals, delivery distance & address" },
+  { key: "dietPlanPayments", description: "Financial logs for diet plan purchases" },
+  { key: "orderPayments", description: "Financial logs for individual meal orders" },
 ];
 
 type Props = {
@@ -93,6 +103,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
   const [orderPage, setOrderPage] = useState(1);
   const [hasMoreOrders, setHasMoreOrders] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -187,6 +198,16 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             setPayload(data.results);
             setOrderPage(1);
             setHasMoreOrders(!!data.next);
+            break;
+          }
+          case "dietPlanPayments": {
+            setPayload(await fetchDietPlanPaymentsForPatient(id));
+            break;
+          }
+          case "orderPayments": {
+            const data = await fetchOrderPaymentsForUserAdmin(id, 1, 20);
+            setPayload(data.results);
+            setTotalItems(data.count); // Reuse or add state if needed
             break;
           }
           default:
@@ -350,7 +371,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                   }}
                 />
               )}
-              {!loading && !error && screen === "orders" && Array.isArray(payload) && (
+               {!loading && !error && screen === "orders" && Array.isArray(payload) && (
                 <div className="space-y-6">
                   <AdminOrderList items={payload} hideCustomer />
                   <div id="order-scroll-sentinel" className="h-20 flex items-center justify-center">
@@ -359,6 +380,17 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                       <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
                     )}
                   </div>
+                </div>
+              )}
+              {!loading && !error && (screen === "dietPlanPayments" || screen === "orderPayments") && Array.isArray(payload) && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                      Audit Logs {screen === "orderPayments" && totalItems > 0 && `· (Total ${totalItems})`}
+                    </p>
+                    <div className="h-px flex-1 bg-gray-100 dark:bg-white/5 mx-4" />
+                  </div>
+                  <DisplayPaymentHistory items={payload as PaymentEntry[]} />
                 </div>
               )}
             </>

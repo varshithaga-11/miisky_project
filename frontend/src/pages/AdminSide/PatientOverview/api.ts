@@ -221,3 +221,57 @@ export const fetchAdminPatientListFallback = async (
     return getJson<PaginatedResponse<PatientUserRow>>("api/admin-patients/", params);
   }
 };
+
+/** Diet plans payment history — filtered by patient user ID */
+export const fetchDietPlanPaymentsForPatient = async (patientUserId: number): Promise<unknown[]> => {
+  const data = await getJson<unknown>("api/userdietplan/", {
+    user: patientUserId,
+  });
+  const plans = unwrapResults(data);
+  // Transform to payment entries similar to Transaction interface
+  return plans
+    .filter((p: any) => p.amount_paid || p.payment_status)
+    .map((p: any) => ({
+      id: p.id,
+      date: p.payment_uploaded_on || p.created_on,
+      amount: p.amount_paid || 0,
+      status: p.payment_status || "—",
+      type: "Diet Plan Status",
+      reference: p.transaction_id || "—",
+      details: p.diet_plan_details?.title || "Plan Purchase",
+      screenshot: p.payment_screenshot,
+      originalData: p,
+    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+/** Order payment history — filtered by patient user ID, supports pagination */
+export const fetchOrderPaymentsForUserAdmin = async (
+  patientUserId: number,
+  page: number = 1,
+  limit: number = 10,
+  filters?: { search?: string; start_date?: string; end_date?: string }
+): Promise<{ count: number; results: unknown[]; next: string | null }> => {
+  const url = createApiUrl("api/order/");
+  const res = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: {
+      user: patientUserId,
+      page,
+      limit,
+      ...filters,
+    },
+  });
+  const data = res.data;
+  const results = (data.results || []).map((o: any) => ({
+    id: o.id,
+    date: o.created_at,
+    amount: o.final_amount || o.total_amount || 0,
+    status: o.status || "—",
+    type: "Meal Order",
+    reference: `#${o.id}`,
+    details: o.kitchen_details?.brand_name || "Food Order",
+    originalData: o,
+  }));
+  return { ...data, results };
+};
