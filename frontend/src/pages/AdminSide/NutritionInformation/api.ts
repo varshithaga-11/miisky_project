@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import type { AllottedPlanPayoutPatientRow } from "../shared/AdminAllottedPlanPayoutsPanel";
 
 export type NutritionistProfile = {
   id: number;
@@ -96,3 +97,22 @@ export const getNutritionistMealsWithMonth = async (nutritionistId: number, mont
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
+export const getNutritionistPayoutsNoPaginate = async (nutritionistId: number): Promise<any[]> => {
+    const url = createApiUrl(`api/admin-nutritionist-payouts-nopaginate/?nutritionist=${nutritionistId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+/** Admin hub: allotted patients only, diet-plan payout lines for this nutritionist (user id). */
+export async function getNutritionAllottedPlanPayouts(
+    nutritionUserId: number,
+    search = ""
+): Promise<AllottedPlanPayoutPatientRow[]> {
+    const q = search.trim();
+    const sp = q ? `&search=${encodeURIComponent(q)}` : "";
+    const url = createApiUrl(
+        `api/admin/nutrition-allotted-plan-payouts/?nutrition_id=${nutritionUserId}${sp}`
+    );
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return (response.data?.results ?? []) as AllottedPlanPayoutPatientRow[];
+}

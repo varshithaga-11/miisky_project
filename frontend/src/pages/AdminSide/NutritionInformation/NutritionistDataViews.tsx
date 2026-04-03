@@ -605,3 +605,88 @@ export function DisplayNutritionistTickets({ items }: { items: any[] }) {
         </div>
     );
 }
+
+export function DisplayNutritionistPayouts({ items }: { items: any[] }) {
+    if (!items || items.length === 0) return <EmptyState message="No patient-linked payout records found." />;
+    return (
+        <div className="space-y-8 pb-12">
+            {items.map((group: any) => {
+                if (!group || !group.patient) return null;
+                return (
+                    <div key={group.patient.id} className="p-8 rounded-[44px] bg-white border border-gray-100 dark:bg-gray-800/30 dark:border-white/5 shadow-sm overflow-hidden relative group">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b dark:border-white/5">
+                            <div className="flex items-center gap-5">
+                                <div className="size-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-black text-xl shadow-inner uppercase italic">
+                                    {group.patient.name?.[0]}
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2">{group.patient.name}</h3>
+                                    <div className="flex flex-wrap gap-4">
+                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiUser size={12} /> ID: #{group.patient.id}</span>
+                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiList size={12} /> {group.trackers.length} Active Records</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 italic">Recipient: Nutritionist</div>
+                                 <div className="px-5 py-2 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase italic tracking-widest border border-blue-100 dark:border-blue-900/30 shadow-sm">
+                                     Financial Audit Tracked
+                                 </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {group.trackers.map((p: any) => (
+                                 <div key={p.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-6 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-white dark:hover:bg-white/[0.03] transition-all relative overflow-hidden group/card shadow-sm hover:shadow-xl">
+                                      <div className="flex justify-between items-start gap-4 mb-4">
+                                           <div className="min-w-0">
+                                                <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1 italic">
+                                                    #{p.id} · {p.payout_type?.toUpperCase()} · SNAPSHOT: {p.snapshot}
+                                                </div>
+                                                <div className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-tight truncate overflow-visible">
+                                                    {p.recipient_label}
+                                                </div>
+                                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-1.5 opacity-60">
+                                                    <FiCalendar size={10} /> {p.period_from} → {p.period_to}
+                                                </div>
+                                           </div>
+                                           <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase italic shadow-sm border ${
+                                                p.status === 'paid' ? "text-green-600 bg-green-50/50 border-green-100" : p.status === 'pending' ? "text-amber-600 bg-amber-50/50 border-amber-100" : "text-blue-600 bg-blue-50/50 border-blue-100"
+                                           }`}>
+                                                {p.status}
+                                           </div>
+                                      </div>
+
+                                      <div className="flex items-end justify-between gap-4 mt-6">
+                                           <div className="space-y-1">
+                                                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Remaining</div>
+                                                <div className={`text-lg font-black ${parseFloat(p.remaining_amount) > 0 ? 'text-amber-600' : 'text-green-600'}`}>₹{parseFloat(p.remaining_amount).toFixed(2)}</div>
+                                           </div>
+                                           <div className="text-right space-y-1">
+                                                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Share (%{p.shared_percentage})</div>
+                                                <div className="text-lg font-black text-gray-900 dark:text-white italic">₹{parseFloat(p.total_amount).toFixed(2)}</div>
+                                           </div>
+                                      </div>
+
+                                      {p.nutritionist_reassignments && p.nutritionist_reassignments.length > 0 && (
+                                           <div className="mt-4 pt-4 border-t dark:border-white/5">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                     <FiRefreshCcw size={10} className="text-amber-500 animate-spin-slow" />
+                                                     <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Migration Log</span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {p.nutritionist_reassignments.map((nr: any, idx: number) => (
+                                                        <div key={idx} className="text-[9px] text-gray-400 italic font-medium"> {nr.from} → {nr.to} · {nr.reason} ({new Date(nr.date).toLocaleDateString()})</div>
+                                                    ))}
+                                                </div>
+                                           </div>
+                                      )}
+                                 </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}

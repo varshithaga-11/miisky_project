@@ -10,6 +10,8 @@ import {
   FiMenu,
   FiTruck,
   FiDollarSign,
+  FiPackage,
+  FiPieChart,
 } from "react-icons/fi";
 import {
   getMicroKitchenPatientsNoPagination,
@@ -20,8 +22,11 @@ import {
   getMicroKitchenDailyMealsNoPagination,
   getMicroKitchenDeliverySlabs,
   getKitchenSupportTickets,
+  getMicroKitchenPayoutsNoPagination,
+  getMicroKitchenAllottedPlanPayouts,
   MicroKitchenProfile,
 } from "./api";
+import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
 import {
   DisplayKitchenInfo,
   DisplayKitchenPatients,
@@ -32,6 +37,7 @@ import {
   DisplayKitchenDailyPrep,
   DisplayKitchenDeliverySlabs,
   DisplayKitchenTickets,
+  DisplayKitchenPayouts,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
@@ -42,6 +48,8 @@ export type KitchenDataView =
   | "reviews"
   | "orders"
   | "delivery"
+  | "payouts"
+  | "allotted_plan_payouts"
   | "foods"
   | "tickets";
 
@@ -53,6 +61,8 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   reviews: "Patient Reviews",
   orders: "Micro Kitchen Orders",
   delivery: "Delivery charges & distance slabs",
+  payouts: "Partner Payouts & Transfers",
+  allotted_plan_payouts: "Allotted diet plan payouts",
   foods: "Food Available (Menu)",
   tickets: "Kitchen Support Tickets",
 };
@@ -65,6 +75,8 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "reviews", description: "Ratings and feedback from patients", icon: <FiStar /> },
   { key: "orders", description: "Orders with address, distance, delivery & line items", icon: <FiShoppingCart /> },
   { key: "delivery", description: "Distance slabs and charge amounts for this kitchen", icon: <FiDollarSign /> },
+  { key: "payouts", description: "Earnings & patient billing trackers", icon: <FiPackage /> },
+  { key: "allotted_plan_payouts", description: "Kitchen share from verified plan payments (allotted patients)", icon: <FiPieChart /> },
   { key: "foods", description: "Menu items currently provided by the kitchen", icon: <FiMenu /> },
   { key: "tickets", description: "Technical and operational support requests", icon: <FiClipboard /> },
 ];
@@ -108,6 +120,14 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   const loadView = useCallback(
     async (view: KitchenDataView, p = 1, isLoadMore = false) => {
       const id = kitchen.id;
+      if (view === "allotted_plan_payouts") {
+        setScreen(view);
+        setLoading(false);
+        setPayload(null);
+        setError(null);
+        setPage(1);
+        return;
+      }
       if (!isLoadMore) {
         setScreen(view);
         setLoading(true);
@@ -149,6 +169,9 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             res = await getKitchenSupportTickets(kitchen.user, p, 10);
             setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
             setHasMore(res.current_page < res.total_pages);
+            break;
+          case "payouts":
+            setPayload(await getMicroKitchenPayoutsNoPagination(id));
             break;
           case "delivery":
             setPayload(await getMicroKitchenDeliverySlabs(id));
@@ -249,57 +272,67 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
 
           {screen !== "hub" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {loading && !payload && (
-                <div className="py-20 flex flex-col items-center justify-center gap-4">
-                  <div className="size-12 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
-                  <span className="text-sm font-bold text-gray-400 uppercase tracking-widest italic">Gathering data...</span>
-                </div>
-              )}
-              
-              {!loading && error && (
-                <div className="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900 px-6 py-4 text-sm text-red-600 dark:text-red-400 font-medium">
-                  Oops! {error}
-                </div>
-              )}
-
-              {payload && (
+              {screen === "allotted_plan_payouts" ? (
+                <AdminAllottedPlanPayoutsPanel
+                  partnerRoleLabel="micro kitchen"
+                  loadRows={(search) => getMicroKitchenAllottedPlanPayouts(kitchen.id, search)}
+                />
+              ) : (
                 <>
-                  {screen === "info" && <DisplayKitchenInfo kitchen={payload} />}
-                  {screen === "patients" && <DisplayKitchenPatients items={payload} kitchen={kitchen} />}
-                  {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
-                  {screen === "reviews" && (
-                    <DisplayKitchenReviews 
-                      items={payload} 
-                      onLoadMore={handleLoadMore} 
-                      hasMore={hasMore} 
-                      loadingMore={loadingMore} 
-                    />
+                  {loading && !payload && (
+                    <div className="py-20 flex flex-col items-center justify-center gap-4">
+                      <div className="size-12 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
+                      <span className="text-sm font-bold text-gray-400 uppercase tracking-widest italic">Gathering data...</span>
+                    </div>
                   )}
-                  {screen === "orders" && (
-                    <DisplayKitchenOrders 
-                      items={payload} 
-                      onLoadMore={handleLoadMore} 
-                      hasMore={hasMore} 
-                      loadingMore={loadingMore} 
-                    />
+
+                  {!loading && error && (
+                    <div className="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900 px-6 py-4 text-sm text-red-600 dark:text-red-400 font-medium">
+                      Oops! {error}
+                    </div>
                   )}
-                  {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload} />}
-                  {screen === "foods" && (
-                    <DisplayKitchenFoods 
-                      items={payload} 
-                      onLoadMore={handleLoadMore} 
-                      hasMore={hasMore} 
-                      loadingMore={loadingMore} 
-                    />
-                  )}
-                  {screen === "prep" && <DisplayKitchenDailyPrep items={payload} onMonthChange={handlePrepMonthChange} />}
-                  {screen === "tickets" && (
-                    <DisplayKitchenTickets 
-                      items={payload} 
-                      onLoadMore={handleLoadMore} 
-                      hasMore={hasMore} 
-                      loadingMore={loadingMore} 
-                    />
+
+                  {payload && (
+                    <>
+                      {screen === "info" && <DisplayKitchenInfo kitchen={payload} />}
+                      {screen === "patients" && <DisplayKitchenPatients items={payload} kitchen={kitchen} />}
+                      {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
+                      {screen === "reviews" && (
+                        <DisplayKitchenReviews
+                          items={payload}
+                          onLoadMore={handleLoadMore}
+                          hasMore={hasMore}
+                          loadingMore={loadingMore}
+                        />
+                      )}
+                      {screen === "orders" && (
+                        <DisplayKitchenOrders
+                          items={payload}
+                          onLoadMore={handleLoadMore}
+                          hasMore={hasMore}
+                          loadingMore={loadingMore}
+                        />
+                      )}
+                      {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload} />}
+                      {screen === "foods" && (
+                        <DisplayKitchenFoods
+                          items={payload}
+                          onLoadMore={handleLoadMore}
+                          hasMore={hasMore}
+                          loadingMore={loadingMore}
+                        />
+                      )}
+                      {screen === "prep" && <DisplayKitchenDailyPrep items={payload} onMonthChange={handlePrepMonthChange} />}
+                      {screen === "tickets" && (
+                        <DisplayKitchenTickets
+                          items={payload}
+                          onLoadMore={handleLoadMore}
+                          hasMore={hasMore}
+                          loadingMore={loadingMore}
+                        />
+                      )}
+                      {screen === "payouts" && <DisplayKitchenPayouts items={payload} />}
+                    </>
                   )}
                 </>
               )}

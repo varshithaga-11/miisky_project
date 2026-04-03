@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import type { AllottedPlanPayoutPatientRow } from "../shared/AdminAllottedPlanPayoutsPanel";
 
 export type MicroKitchenProfile = {
   id: number;
@@ -328,3 +329,25 @@ export const getMicroKitchenDeliverySlabs = async (microKitchenId: number): Prom
   if (Array.isArray(d)) return d;
   return d?.results ?? [];
 };
+export const getMicroKitchenPayoutsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-payouts-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
+
+/** Admin hub: patients allotted to this kitchen (via diet plan), kitchen share payout lines only. */
+export async function getMicroKitchenAllottedPlanPayouts(
+  microKitchenId: number,
+  search = ""
+): Promise<AllottedPlanPayoutPatientRow[]> {
+  const q = search.trim();
+  const sp = q ? `&search=${encodeURIComponent(q)}` : "";
+  const url = createApiUrl(
+    `api/admin/microkitchen-allotted-plan-payouts/?microkitchen_id=${microKitchenId}${sp}`
+  );
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return (response.data?.results ?? []) as AllottedPlanPayoutPatientRow[];
+}

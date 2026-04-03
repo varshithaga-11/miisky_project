@@ -816,6 +816,226 @@ class AdminPlanPaymentsOverviewView(APIView):
         return paginator.get_paginated_response(ser.data)
 
 
+class AdminNutritionAllottedPlanPayoutsView(APIView):
+    """
+    Admin: diet-plan payout lines for one nutritionist, only for patients currently
+    mapped to that nutritionist (active UserNutritionistMapping).
+    Query: nutrition_id = UserRegister id of the nutritionist.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nid = request.query_params.get("nutrition_id")
+        if not nid:
+            return Response({"results": []})
+
+        search = (request.query_params.get("search") or "").strip().lower()
+        mappings = UserNutritionistMapping.objects.filter(
+            nutritionist_id=nid, is_active=True
+        ).select_related("user")
+
+        results = []
+        for m in mappings:
+            p = m.user
+            if not p:
+                continue
+            if search:
+                blob = " ".join(
+                    [
+                        (p.first_name or ""),
+                        (p.last_name or ""),
+                        (p.username or ""),
+                        (p.email or ""),
+                    ]
+                ).lower()
+                if search not in blob:
+                    continue
+
+            trackers_list = list(
+                PayoutTracker.objects.filter(
+                    payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST,
+                    nutritionist_id=nid,
+                    snapshot__user_diet_plan__user_id=p.id,
+                )
+                .select_related(
+                    "nutritionist",
+                    "snapshot__user_diet_plan__diet_plan",
+                )
+                .order_by("-created_at")
+            )
+
+            total_paid = sum((t.paid_amount for t in trackers_list), Decimal("0.00"))
+            total_remaining = sum((t.remaining_amount for t in trackers_list), Decimal("0.00"))
+            total_share = sum((t.total_amount for t in trackers_list), Decimal("0.00"))
+            payable_lines = sum(
+                1
+                for t in trackers_list
+                if not t.is_closed and t.total_amount > t.paid_amount
+            )
+
+            trackers_data = []
+            for tracker in trackers_list:
+                t_data = AdminPayoutTrackerForPayoutSerializer(tracker).data
+                udp = tracker.snapshot.user_diet_plan
+                uid = udp.user_id if udp else None
+                nreas = NutritionistReassignment.objects.filter(user_id=uid).select_related(
+                    "previous_nutritionist", "new_nutritionist"
+                ).order_by("-reassigned_on")
+                t_data["nutritionist_reassignments"] = [
+                    {
+                        "from": nr.previous_nutritionist.username if nr.previous_nutritionist else "None",
+                        "to": nr.new_nutritionist.username if nr.new_nutritionist else "None",
+                        "reason": nr.reason,
+                        "date": nr.reassigned_on,
+                    }
+                    for nr in nreas
+                ]
+                trackers_data.append(t_data)
+
+            plan_title = None
+            for t in trackers_list:
+                if not t.is_closed and t.total_amount > t.paid_amount:
+                    dp = getattr(t.snapshot.user_diet_plan, "diet_plan", None)
+                    plan_title = dp.title if dp else None
+                    break
+            if plan_title is None and trackers_list:
+                dp = getattr(trackers_list[0].snapshot.user_diet_plan, "diet_plan", None)
+                plan_title = dp.title if dp else None
+
+            results.append(
+                {
+                    "id": p.id,
+                    "patient_name": f"{p.first_name or ''} {p.last_name or ''}".strip() or p.username,
+                    "email": p.email,
+                    "mobile": getattr(p, "mobile", None),
+                    "assigned_on": m.assigned_on,
+                    "plan_title": plan_title,
+                    "payable_lines": payable_lines,
+                    "total_remaining": str(total_remaining),
+                    "total_paid": str(total_paid),
+                    "plan_share_total": str(total_share),
+                    "trackers": trackers_data,
+                }
+            )
+
+        results.sort(key=lambda r: (r["patient_name"] or "").lower())
+        return Response({"results": results})
+
+
+class AdminMicroKitchenAllottedPlanPayoutsView(APIView):
+    """
+    Admin: diet-plan kitchen payout lines for one micro kitchen, only for patients
+    allotted to that kitchen via UserDietPlan (current or original kitchen).
+    Query: microkitchen_id = MicroKitchenProfile id.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        mk_id = request.query_params.get("microkitchen_id")
+        if not mk_id:
+            return Response({"results": []})
+
+        search = (request.query_params.get("search") or "").strip().lower()
+
+        patient_ids = (
+            UserDietPlan.objects.filter(
+                Q(micro_kitchen_id=mk_id) | Q(original_micro_kitchen_id=mk_id),
+                status__in=["active", "payment_pending", "approved"],
+            )
+            .values_list("user_id", flat=True)
+            .distinct()
+        )
+        patients = UserRegister.objects.filter(id__in=patient_ids).order_by(
+            "first_name", "last_name", "id"
+        )
+
+        results = []
+        for p in patients:
+            if search:
+                blob = " ".join(
+                    [
+                        (p.first_name or ""),
+                        (p.last_name or ""),
+                        (p.username or ""),
+                        (p.email or ""),
+                    ]
+                ).lower()
+                if search not in blob:
+                    continue
+
+            trackers_list = list(
+                PayoutTracker.objects.filter(
+                    payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN,
+                    micro_kitchen_id=mk_id,
+                    snapshot__user_diet_plan__user_id=p.id,
+                )
+                .select_related(
+                    "micro_kitchen",
+                    "snapshot__user_diet_plan__diet_plan",
+                )
+                .order_by("-created_at")
+            )
+
+            total_paid = sum((t.paid_amount for t in trackers_list), Decimal("0.00"))
+            total_remaining = sum((t.remaining_amount for t in trackers_list), Decimal("0.00"))
+            total_share = sum((t.total_amount for t in trackers_list), Decimal("0.00"))
+            payable_lines = sum(
+                1
+                for t in trackers_list
+                if not t.is_closed and t.total_amount > t.paid_amount
+            )
+
+            trackers_data = []
+            for tracker in trackers_list:
+                t_data = AdminPayoutTrackerForPayoutSerializer(tracker).data
+                udp = tracker.snapshot.user_diet_plan
+                t_data["kitchen_reassignments"] = []
+                if udp:
+                    kreas = MicroKitchenReassignment.objects.filter(
+                        user_diet_plan_id=udp.id
+                    ).select_related("previous_kitchen", "new_kitchen").order_by("-reassigned_on")
+                    t_data["kitchen_reassignments"] = [
+                        {
+                            "from": kr.previous_kitchen.brand_name if kr.previous_kitchen else "None",
+                            "to": kr.new_kitchen.brand_name if kr.new_kitchen else "None",
+                            "reason": kr.reason,
+                            "date": kr.reassigned_on,
+                        }
+                        for kr in kreas
+                    ]
+                trackers_data.append(t_data)
+
+            plan_title = None
+            for t in trackers_list:
+                if not t.is_closed and t.total_amount > t.paid_amount:
+                    dp = getattr(t.snapshot.user_diet_plan, "diet_plan", None)
+                    plan_title = dp.title if dp else None
+                    break
+            if plan_title is None and trackers_list:
+                dp = getattr(trackers_list[0].snapshot.user_diet_plan, "diet_plan", None)
+                plan_title = dp.title if dp else None
+
+            results.append(
+                {
+                    "id": p.id,
+                    "patient_name": f"{p.first_name or ''} {p.last_name or ''}".strip() or p.username,
+                    "email": p.email,
+                    "mobile": getattr(p, "mobile", None),
+                    "assigned_on": None,
+                    "plan_title": plan_title,
+                    "payable_lines": payable_lines,
+                    "total_remaining": str(total_remaining),
+                    "total_paid": str(total_paid),
+                    "plan_share_total": str(total_share),
+                    "trackers": trackers_data,
+                }
+            )
+
+        return Response({"results": results})
+
+
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
 
 class UserQuestionnaireViewSet(viewsets.ModelViewSet):
@@ -4005,17 +4225,67 @@ class AdminMicroKitchenFoodsNoPaginationView(APIView):
         if not micro_kitchen_id:
             return Response([])
 
-        qs = (
-            MicroKitchenFood.objects.filter(
-                micro_kitchen_id=micro_kitchen_id,
-                is_available=True,
-            )
-            .select_related("micro_kitchen", "food")
-            .prefetch_related("food__meal_types", "food__cuisine_types")
-            .order_by("micro_kitchen__brand_name", "food__name")
-        )
-        serializer = MicroKitchenFoodSerializer(qs, many=True)
+        qs = Food.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related("cuisine", "meal_type", "food_group").order_by("-id")
+        serializer = FoodSerializer(qs, many=True)
         return Response(serializer.data)
+
+
+class AdminMicroKitchenPayoutsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        mk_id = request.query_params.get("micro_kitchen")
+        if not mk_id:
+            return Response([])
+
+        # Filter trackers specifically for this Micro-Kitchen
+        trackers = PayoutTracker.objects.filter(
+            micro_kitchen_id=mk_id
+        ).select_related(
+            "snapshot__user_diet_plan__user",
+            "snapshot__user_diet_plan__diet_plan",
+            "snapshot__user_diet_plan__nutritionist",
+            "micro_kitchen"
+        ).order_by("-created_at")
+
+        from collections import defaultdict
+        patient_groups = defaultdict(lambda: {
+            "patient": None,
+            "trackers": []
+        })
+
+        for tracker in trackers:
+            try:
+                udp = tracker.snapshot.user_diet_plan
+                patient = udp.user
+                p_id = patient.id
+                
+                if not patient_groups[p_id]["patient"]:
+                    patient_groups[p_id]["patient"] = {
+                        "id": p_id,
+                        "name": f"{patient.first_name} {patient.last_name}".strip(),
+                        "email": patient.email,
+                        "mobile": patient.mobile
+                    }
+                
+                t_data = AdminPayoutTrackerForPayoutSerializer(tracker).data
+                t_data['payout_type'] = tracker.payout_type
+                t_data['recipient_label'] = tracker.micro_kitchen.brand_name if tracker.micro_kitchen else "—"
+                
+                # Reassignment logic
+                kreas = MicroKitchenReassignment.objects.filter(user_diet_plan_id=udp.id).select_related('previous_kitchen', 'new_kitchen').order_by('-reassigned_on')
+                t_data['kitchen_reassignments'] = [{
+                    "from": kr.previous_kitchen.brand_name if kr.previous_kitchen else "None",
+                    "to": kr.new_kitchen.brand_name if kr.new_kitchen else "None",
+                    "reason": kr.reason,
+                    "date": kr.reassigned_on
+                } for kr in kreas]
+                
+                patient_groups[p_id]["trackers"].append(t_data)
+            except:
+                continue
+
+        return Response(list(patient_groups.values()))
 
 
 class AdminMicroKitchenMealsNoPaginationView(APIView):
@@ -4184,6 +4454,63 @@ class AdminNutritionistTicketsNoPaginationView(APIView):
         serializer = SupportTicketSerializer(qs, many=True)
         return Response(serializer.data)
 
+
+class AdminNutritionistPayoutsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        # Filter trackers specifically for this Nutritionist
+        trackers = PayoutTracker.objects.filter(
+            nutritionist_id=nutritionist_id
+        ).select_related(
+            "snapshot__user_diet_plan__user",
+            "snapshot__user_diet_plan__diet_plan",
+            "snapshot__user_diet_plan__micro_kitchen",
+            "nutritionist"
+        ).order_by("-created_at")
+
+        from collections import defaultdict
+        patient_groups = defaultdict(lambda: {
+            "patient": None,
+            "trackers": []
+        })
+
+        for tracker in trackers:
+            try:
+                udp = tracker.snapshot.user_diet_plan
+                patient = udp.user
+                p_id = patient.id
+                
+                if not patient_groups[p_id]["patient"]:
+                    patient_groups[p_id]["patient"] = {
+                        "id": p_id,
+                        "name": f"{patient.first_name} {patient.last_name}".strip(),
+                        "email": patient.email,
+                        "mobile": patient.mobile
+                    }
+                
+                t_data = AdminPayoutTrackerForPayoutSerializer(tracker).data
+                t_data['payout_type'] = tracker.payout_type
+                t_data['recipient_label'] = f"{tracker.nutritionist.first_name} {tracker.nutritionist.last_name}".strip() if tracker.nutritionist else "—"
+
+                # Nutritionist reassignments
+                nreas = NutritionistReassignment.objects.filter(user_id=udp.user_id).select_related('previous_nutritionist', 'new_nutritionist').order_by('-reassigned_on')
+                t_data['nutritionist_reassignments'] = [{
+                    "from": nr.previous_nutritionist.username if nr.previous_nutritionist else "None",
+                    "to": nr.new_nutritionist.username if nr.new_nutritionist else "None",
+                    "reason": nr.reason,
+                    "date": nr.reassigned_on
+                } for nr in nreas]
+                
+                patient_groups[p_id]["trackers"].append(t_data)
+            except:
+                continue
+
+        return Response(list(patient_groups.values()))
 
 # ---- Admin Patient panels (NO pagination for modal display) -----------------------------
 

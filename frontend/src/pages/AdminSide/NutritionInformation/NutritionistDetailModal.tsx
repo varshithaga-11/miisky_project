@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-    FiXCircle, FiUser, FiUsers, FiFileText, FiCalendar, FiVideo, FiLoader, FiBriefcase, FiStar, FiClipboard
+    FiXCircle, FiUser, FiUsers, FiFileText, FiCalendar, FiVideo, FiLoader, FiBriefcase, FiStar, FiClipboard, FiPackage, FiPieChart
 } from "react-icons/fi";
 import {
     getAdminNutritionistDetails,
@@ -9,8 +9,11 @@ import {
     getNutritionistMealsWithMonth,
     getNutritionistMeetingsNoPaginate,
     getNutritionistReviewsNoPaginate,
-    getNutritionistTicketsNoPaginate
+    getNutritionistTicketsNoPaginate,
+    getNutritionistPayoutsNoPaginate,
+    getNutritionAllottedPlanPayouts
 } from "./api";
+import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
 import {
     DisplayNutritionistInfo,
     DisplayNutritionistPatients,
@@ -18,7 +21,8 @@ import {
     DisplayNutritionistMeals,
     DisplayNutritionistMeetings,
     DisplayNutritionistReviews,
-    DisplayNutritionistTickets
+    DisplayNutritionistTickets,
+    DisplayNutritionistPayouts
 } from "./NutritionistDataViews";
 
 interface NutritionistDetailModalProps {
@@ -27,7 +31,7 @@ interface NutritionistDetailModalProps {
     onClose: () => void;
 }
 
-type TabKey = "profile" | "patients" | "plans" | "meals" | "meetings" | "reviews" | "tickets";
+type TabKey = "profile" | "patients" | "plans" | "meals" | "meetings" | "reviews" | "tickets" | "payouts" | "allotted_plan_payouts";
 
 const TABS: { key: TabKey; label: string; icon: any; description: string }[] = [
     { key: "profile", label: "Profile", icon: <FiUser />, description: "Education, exp & specialty" },
@@ -37,6 +41,8 @@ const TABS: { key: TabKey; label: string; icon: any; description: string }[] = [
     { key: "meetings", label: "Meetings", icon: <FiVideo />, description: "Consultation history" },
     { key: "reviews", label: "Reviews", icon: <FiStar />, description: "Feedback from patients" },
     { key: "tickets", label: "Tickets", icon: <FiClipboard />, description: "Support & tech issues" },
+    { key: "payouts", label: "Payouts", icon: <FiPackage />, description: "Earnings & patient billing" },
+    { key: "allotted_plan_payouts", label: "Allotted plan payouts", icon: <FiPieChart />, description: "Diet plan shares for mapped patients only" },
 ];
 
 export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = ({ nutritionist, open, onClose }) => {
@@ -95,6 +101,9 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                 case "tickets":
                     setPayload(await getNutritionistTicketsNoPaginate(nutritionistId));
                     break;
+                case "payouts":
+                    setPayload(await getNutritionistPayoutsNoPaginate(nutritionistId));
+                    break;
             }
         } catch (e: any) {
             setError(e.message || "Failed to load session data");
@@ -143,7 +152,16 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                             {TABS.map((tab) => (
                                 <button
                                     key={tab.key}
-                                    onClick={() => loadView(tab.key)}
+                                    onClick={() => {
+                                        if (tab.key === "allotted_plan_payouts") {
+                                            setScreen("allotted_plan_payouts");
+                                            setLoading(false);
+                                            setPayload(null);
+                                            setError(null);
+                                        } else {
+                                            loadView(tab.key);
+                                        }
+                                    }}
                                     className="group text-left p-7 rounded-[32px] border border-gray-100 dark:border-white/5 bg-white dark:bg-gray-900/50 hover:border-indigo-400 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all relative overflow-hidden"
                                 >
                                     <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity text-indigo-600">
@@ -156,6 +174,13 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed italic">{tab.description}</p>
                                 </button>
                             ))}
+                        </div>
+                    ) : screen === "allotted_plan_payouts" && nutritionistId ? (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
+                            <AdminAllottedPlanPayoutsPanel
+                                partnerRoleLabel="nutritionist"
+                                loadRows={(search) => getNutritionAllottedPlanPayouts(nutritionistId, search)}
+                            />
                         </div>
                     ) : (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -195,6 +220,7 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                                     {screen === "meetings" && <DisplayNutritionistMeetings items={payload} />}
                                     {screen === "reviews" && <DisplayNutritionistReviews items={payload} />}
                                     {screen === "tickets" && <DisplayNutritionistTickets items={payload} />}
+                                    {screen === "payouts" && <DisplayNutritionistPayouts items={payload} />}
                                 </>
                             )}
                         </div>

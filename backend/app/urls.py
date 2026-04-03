@@ -109,6 +109,11 @@ urlpatterns = [
         name="admin-microkitchen-orders-nopaginate",
     ),
     path(
+        "admin-microkitchen-payouts-nopaginate/",
+        views.AdminMicroKitchenPayoutsNoPaginationView.as_view(),
+        name="admin-microkitchen-payouts-nopaginate",
+    ),
+    path(
         "admin-microkitchen-foods-nopaginate/",
         views.AdminMicroKitchenFoodsNoPaginationView.as_view(),
         name="admin-microkitchen-foods-nopaginate",
@@ -148,6 +153,11 @@ urlpatterns = [
         "admin-nutritionist-tickets-nopaginate/",
         views.AdminNutritionistTicketsNoPaginationView.as_view(),
         name="admin-nutritionist-tickets-nopaginate",
+    ),
+    path(
+        "admin-nutritionist-payouts-nopaginate/",
+        views.AdminNutritionistPayoutsNoPaginationView.as_view(),
+        name="admin-nutritionist-payouts-nopaginate",
     ),
     # Admin patient panels (no pagination for modal display)
     path(
@@ -215,6 +225,16 @@ urlpatterns = [
         "admin/plan-payments-overview/",
         views.AdminPlanPaymentsOverviewView.as_view(),
         name="admin-plan-payments-overview",
+    ),
+    path(
+        "admin/nutrition-allotted-plan-payouts/",
+        views.AdminNutritionAllottedPlanPayoutsView.as_view(),
+        name="admin-nutrition-allotted-plan-payouts",
+    ),
+    path(
+        "admin/microkitchen-allotted-plan-payouts/",
+        views.AdminMicroKitchenAllottedPlanPayoutsView.as_view(),
+        name="admin-microkitchen-allotted-plan-payouts",
     ),
     path(
         "admin/patient-microkitchen-distances/<int:patient_id>/",
