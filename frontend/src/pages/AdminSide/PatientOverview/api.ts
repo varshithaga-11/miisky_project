@@ -54,23 +54,25 @@ export type MicroKitchenForDistance = {
   status?: string;
 };
 
-type MicroKitchenListPage = {
-  results: MicroKitchenForDistance[];
-  next: number | null;
-};
+export interface MicroKitchenDistanceRow {
+  id: number;
+  user_id: number;
+  brand_name: string;
+  latitude: number | null;
+  longitude: number | null;
+  distance_km: number | null;
+  city: string | null;
+  status: string;
+}
 
-/** All micro-kitchen profiles (any status), for admin distance views. */
-export const fetchAllMicroKitchenProfiles = async (): Promise<MicroKitchenForDistance[]> => {
-  const all: MicroKitchenForDistance[] = [];
-  let page = 1;
-  for (;;) {
-    const data = await getJson<MicroKitchenListPage>("api/microkitchenprofile/", { page, limit: 10 });
-    const { results, next } = data;
-    all.push(...(results || []));
-    if (!next) break;
-    page = next;
-  }
-  return all;
+/** 
+ * Fetch distances from a specific patient to all approved micro-kitchens.
+ * Calculated entirely on backend; no pagination.
+ */
+export const fetchMicroKitchenDistancesForPatient = async (
+  patientId: number
+): Promise<MicroKitchenDistanceRow[]> => {
+  return getJson<MicroKitchenDistanceRow[]>(`api/admin/patient-microkitchen-distances/${patientId}/`);
 };
 
 async function getJson<T>(path: string, params?: Record<string, string | number>): Promise<T> {
@@ -184,13 +186,24 @@ export const fetchUserDietPlansForPatient = async (patientUserId: number): Promi
   return unwrapResults(data);
 };
 
-/** UserMeal model — food + packaging for this patient */
-export const fetchUserMealsForPatient = async (patientUserId: number): Promise<unknown[]> => {
-  const data = await getJson<unknown>("api/usermeal/", {
+/** UserMeal model — food + packaging for this patient, optionally filtered by month and year */
+export const fetchUserMealsForPatient = async (
+  patientUserId: number,
+  month?: number,
+  year?: number
+): Promise<unknown[]> => {
+  const params: Record<string, string | number> = {
     user: patientUserId,
-    limit: 500,
-    page: 1,
-  });
+  };
+  if (month && year) {
+    params.month = month;
+    params.year = year;
+  } else {
+    params.limit = 500;
+    params.page = 1;
+  }
+
+  const data = await getJson<unknown>("api/usermeal/", params);
   return unwrapResults(data);
 };
 

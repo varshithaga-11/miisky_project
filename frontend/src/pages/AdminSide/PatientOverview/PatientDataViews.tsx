@@ -587,6 +587,7 @@ export type MealRow = {
   meal_type_details?: { name?: string | null };
   food_details?: { name?: string | null };
   packaging_material_details?: { name?: string | null };
+  micro_kitchen_details?: { id?: number; brand_name?: string | null };
   quantity?: number | null;
 };
 
@@ -597,9 +598,26 @@ function padDateKey(y: number, m: number, day: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-export function DisplayMeals({ meals }: { meals: MealRow[] }) {
-  if (!meals.length) return <EmptyState message="No meals recorded for this patient." />;
-  return <MealsCalendarView meals={meals} />;
+export function DisplayMeals({
+  meals,
+  month,
+  year,
+  onMonthChange,
+}: {
+  meals: MealRow[];
+  month: number;
+  year: number;
+  onMonthChange: (m: number, y: number) => void;
+}) {
+  if (!meals.length) {
+    return (
+      <div className="space-y-4">
+        <MealsHeader month={month - 1} year={year} onMonthChange={onMonthChange} />
+        <EmptyState message={`No meals found for ${MONTH_NAMES[month - 1]} ${year}.`} />
+      </div>
+    );
+  }
+  return <MealsCalendarView meals={meals} month={month} year={year} onMonthChange={onMonthChange} />;
 }
 
 export function DisplayNutritionistHistory({ items }: { items: any[] }) {
@@ -714,7 +732,74 @@ export function DisplayKitchenHistory({ items }: { items: any[] }) {
   );
 }
 
-function MealsCalendarView({ meals }: { meals: MealRow[] }) {
+function MealsHeader({
+  month,
+  year,
+  onMonthChange,
+}: {
+  month: number;
+  year: number;
+  onMonthChange: (m: number, y: number) => void;
+}) {
+  const prevMonth = () => {
+    const d = new Date(year, month - 1, 1);
+    onMonthChange(d.getMonth() + 1, d.getFullYear());
+  };
+  const nextMonth = () => {
+    const d = new Date(year, month + 1, 1);
+    onMonthChange(d.getMonth() + 1, d.getFullYear());
+  };
+  const goToday = () => {
+    const d = new Date();
+    onMonthChange(d.getMonth() + 1, d.getFullYear());
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+          {MONTH_NAMES[month]} {year}
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Meals & packaging by day</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={prevMonth}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          ← Prev
+        </button>
+        <button
+          type="button"
+          onClick={goToday}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-cyan-600 text-white shadow hover:bg-cyan-700"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={nextMonth}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MealsCalendarView({
+  meals,
+  month: targetMonth,
+  year: targetYear,
+  onMonthChange,
+}: {
+  meals: MealRow[];
+  month: number;
+  year: number;
+  onMonthChange: (m: number, y: number) => void;
+}) {
   const byDate = useMemo(() => {
     const m = new Map<string, MealRow[]>();
     for (const meal of meals) {
@@ -726,19 +811,10 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
     return m;
   }, [meals]);
 
-  const [viewDate, setViewDate] = useState(() => {
-    const first = meals.find((x) => x.meal_date)?.meal_date;
-    if (first) {
-      const [y, mo, dd] = first.split("-").map(Number);
-      if (!Number.isNaN(y) && !Number.isNaN(mo)) return new Date(y, mo - 1, dd || 1);
-    }
-    return new Date();
-  });
-
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
+  const year = targetYear;
+  const month = targetMonth - 1; // 0-indexed for JS Date
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -750,45 +826,12 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
-  const goToday = () => setViewDate(new Date());
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-cyan-200/70 dark:border-cyan-900/50 bg-gradient-to-br from-cyan-50/90 via-white to-sky-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-cyan-950/30 p-4 sm:p-6 shadow-md">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              {MONTH_NAMES[month]} {year}
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Meals & packaging by day</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={prevMonth}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              ← Prev
-            </button>
-            <button
-              type="button"
-              onClick={goToday}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-cyan-600 text-white shadow hover:bg-cyan-700"
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              onClick={nextMonth}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
+        <MealsHeader month={month} year={year} onMonthChange={onMonthChange} />
 
         <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
           {WEEKDAYS.map((w) => (
@@ -866,6 +909,11 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
                             <div className="text-sm text-gray-900 dark:text-white font-bold leading-tight">
                               {m.food_details?.name || "—"}
                             </div>
+                            {m.micro_kitchen_details?.brand_name && (
+                              <div className="mt-1 text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-tighter">
+                                🏢 {m.micro_kitchen_details.brand_name}
+                              </div>
+                            )}
                             {(m.packaging_material_details?.name || m.quantity != null) && (
                               <div className="mt-1.5 flex flex-wrap gap-2">
                                 {m.packaging_material_details?.name && (
@@ -907,6 +955,7 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
                 <th className="px-3 py-2 font-medium">Food</th>
                 <th className="px-3 py-2 font-medium">Qty</th>
                 <th className="px-3 py-2 font-medium">Packaging</th>
+                <th className="px-3 py-2 font-medium">Kitchen</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -919,6 +968,7 @@ function MealsCalendarView({ meals }: { meals: MealRow[] }) {
                     <td className="px-3 py-2">{m.food_details?.name || "—"}</td>
                     <td className="px-3 py-2">{m.quantity ?? "—"}</td>
                     <td className="px-3 py-2">{m.packaging_material_details?.name || "—"}</td>
+                    <td className="px-3 py-2">{m.micro_kitchen_details?.brand_name || "—"}</td>
                   </tr>
                 ))}
             </tbody>

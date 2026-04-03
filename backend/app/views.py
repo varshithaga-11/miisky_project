@@ -93,6 +93,61 @@ class IsAdminRole(BasePermission):
         return bool(u and u.is_authenticated and getattr(u, 'role', None) == 'admin')
 
 
+class PatientToMicroKitchenDistanceView(APIView):
+    """
+    Calculate distances between a specific patient and all approved micro-kitchens.
+    Returns a sorted list of kitchen names, lat/lng, and calculated distance.
+    Used for the distance finding between microkitchen and patients in admin panel.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request, patient_id):
+        try:
+            patient = UserRegister.objects.get(id=patient_id)
+        except UserRegister.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        p_lat = patient.latitude
+        p_lng = patient.longitude
+
+        if p_lat is None or p_lng is None:
+             return Response({
+                 "error": "Patient has no coordinates (latitude/longitude)",
+                 "name": f"{patient.first_name} {patient.last_name}"
+             }, status=400)
+
+        # Get all approved micro-kitchens with their profiles
+        kitchens = MicroKitchenProfile.objects.select_related('user').filter(status='approved')
+        
+        # Helper to calculate distances. Note: _haversine_km is defined later in the file.
+        # It's okay because methods are looked up at runtime, but we'll manually implement here
+        # or refer it if we can. Actually, we'll use it since it's in the module.
+
+        results = []
+        for mk in kitchens:
+            k_lat = mk.user.latitude
+            k_lng = mk.user.longitude
+            
+            # Using the helper from below
+            dist = _haversine_km(p_lat, p_lng, k_lat, k_lng)
+            
+            results.append({
+                "id": mk.id,
+                "user_id": mk.user.id,
+                "brand_name": mk.brand_name or mk.user.username,
+                "latitude": k_lat,
+                "longitude": k_lng,
+                "distance_km": round(dist, 2) if dist is not None else None,
+                "city": mk.user.city.name if mk.user.city else None,
+                "status": mk.status
+            })
+
+        # Sort by distance (shorter first). None (infinite) moves to the end.
+        results.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else float('inf'))
+
+        return Response(results)
+
+
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]  
     
@@ -2850,6 +2905,12 @@ class UserMealViewSet(viewsets.ModelViewSet):
     )
     serializer_class = UserMealSerializer
     permission_classes = [IsAuthenticated]
+
+    @property
+    def pagination_class(self):
+        if self.request.query_params.get('month') and self.request.query_params.get('year'):
+            return None
+        return Pagination
 
     def get_queryset(self):
         user = self.request.user

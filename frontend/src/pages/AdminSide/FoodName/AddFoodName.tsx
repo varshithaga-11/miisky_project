@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
-import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from "react-toastify";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import "react-toastify/dist/ReactToastify.css";
 import { createFoodName, FoodName } from "./foodnameapi";
 import { FoodGroup, getFoodGroupList } from "../FoodGroup/foodgroupapi";
@@ -75,7 +75,14 @@ const AddFoodName: React.FC<AddFoodNameProps> = ({ onClose, onAdd }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="food_group">Food Group</Label>
-            <Select value={foodGroupId} onChange={(val) => setFoodGroupId(val)} options={groupOptions} className="w-full" disabled={loading} />
+            <SearchableSelect
+              value={foodGroupId}
+              onChange={(val) => setFoodGroupId(String(val))}
+              options={groupOptions}
+              className="w-full"
+              disabled={loading}
+              placeholder="Select Food Group"
+            />
           </div>
 
           <div>

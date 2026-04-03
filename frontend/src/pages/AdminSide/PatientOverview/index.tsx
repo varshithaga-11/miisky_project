@@ -2,8 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FiSearch, FiEye, FiNavigation2, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { fetchPatientUserList, PatientUserRow, fetchAllMicroKitchenProfiles, MicroKitchenForDistance } from "./api";
-import { haversineKm } from "../../../utils/haversineKm";
+import { fetchPatientUserList, PatientUserRow, fetchMicroKitchenDistancesForPatient, MicroKitchenDistanceRow } from "./api";
 import { PatientDetailModal } from "./PatientDetailModal";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
@@ -23,19 +22,19 @@ const PatientOverviewPage: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientUserRow | null>(null);
 
   const [distanceModalPatient, setDistanceModalPatient] = useState<PatientUserRow | null>(null);
-  const [microKitchens, setMicroKitchens] = useState<MicroKitchenForDistance[] | null>(null);
+  const [distances, setDistances] = useState<MicroKitchenDistanceRow[] | null>(null);
   const [kitchensLoading, setKitchensLoading] = useState(false);
   const [kitchensFetchError, setKitchensFetchError] = useState(false);
 
-  const loadMicroKitchens = async () => {
+  const loadDistances = async (patientId: number) => {
     setKitchensLoading(true);
     setKitchensFetchError(false);
     try {
-      setMicroKitchens(await fetchAllMicroKitchenProfiles());
+      setDistances(await fetchMicroKitchenDistancesForPatient(patientId));
     } catch (e) {
       console.error(e);
       setKitchensFetchError(true);
-      setMicroKitchens(null);
+      setDistances(null);
     } finally {
       setKitchensLoading(false);
     }
@@ -43,46 +42,14 @@ const PatientOverviewPage: React.FC = () => {
 
   const openDistanceModal = async (p: PatientUserRow) => {
     setDistanceModalPatient(p);
-    if (microKitchens !== null) return;
-    await loadMicroKitchens();
+    setDistances(null); // Clear previous
+    await loadDistances(p.id);
   };
 
-  const closeDistanceModal = () => setDistanceModalPatient(null);
-
-  const distanceRows = useMemo(() => {
-    if (!distanceModalPatient || microKitchens === null) return [];
-    const plat = distanceModalPatient.latitude;
-    const plng = distanceModalPatient.longitude;
-    const patientOk =
-      plat != null &&
-      plng != null &&
-      !Number.isNaN(Number(plat)) &&
-      !Number.isNaN(Number(plng));
-
-    return microKitchens
-      .map((k) => {
-        const klat = k.latitude;
-        const klng = k.longitude;
-        const kitchenOk =
-          klat != null &&
-          klng != null &&
-          !Number.isNaN(Number(klat)) &&
-          !Number.isNaN(Number(klng));
-        let km: number | null = null;
-        if (patientOk && kitchenOk) {
-          km = haversineKm(Number(plat), Number(plng), Number(klat), Number(klng));
-        }
-        return { kitchen: k, km };
-      })
-      .sort((a, b) => {
-        if (a.km === null && b.km === null) {
-          return (a.kitchen.brand_name || "").localeCompare(b.kitchen.brand_name || "");
-        }
-        if (a.km === null) return 1;
-        if (b.km === null) return -1;
-        return a.km - b.km;
-      });
-  }, [distanceModalPatient, microKitchens]);
+  const closeDistanceModal = () => {
+    setDistanceModalPatient(null);
+    setDistances(null);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -336,7 +303,7 @@ const PatientOverviewPage: React.FC = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-300">Could not load micro kitchens.</p>
                   <button
                     type="button"
-                    onClick={() => loadMicroKitchens()}
+                    onClick={() => distanceModalPatient && loadDistances(distanceModalPatient.id)}
                     className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-blue-700"
                   >
                     Retry
@@ -354,28 +321,28 @@ const PatientOverviewPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {distanceRows.length === 0 ? (
+                      {(!distances || distances.length === 0) ? (
                         <tr>
                           <td colSpan={4} className="px-4 py-10 text-center text-gray-500 italic">
                             No micro kitchens found.
                           </td>
                         </tr>
                       ) : (
-                        distanceRows.map(({ kitchen, km }) => (
-                          <tr key={kitchen.id} className="border-b border-gray-50 last:border-0 dark:border-gray-800">
+                        distances.map((row) => (
+                          <tr key={row.id} className="border-b border-gray-50 last:border-0 dark:border-gray-800">
                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                              {kitchen.brand_name || `Kitchen #${kitchen.id}`}
+                              {row.brand_name || `Kitchen #${row.id}`}
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                              {kitchen.status || "—"}
+                              {row.status || "—"}
                             </td>
                             <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">
-                              {kitchen.latitude != null && kitchen.longitude != null
-                                ? `${Number(kitchen.latitude).toFixed(5)}, ${Number(kitchen.longitude).toFixed(5)}`
+                              {row.latitude != null && row.longitude != null
+                                ? `${Number(row.latitude).toFixed(5)}, ${Number(row.longitude).toFixed(5)}`
                                 : "—"}
                             </td>
                             <td className="px-4 py-3 text-end font-semibold text-indigo-600 dark:text-indigo-400">
-                              {km !== null ? `${km.toFixed(2)} km` : "—"}
+                              {row.distance_km !== null ? `${row.distance_km.toFixed(2)} km` : "—"}
                             </td>
                           </tr>
                         ))

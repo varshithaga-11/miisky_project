@@ -43,7 +43,7 @@ export type DataView =
   | "nutritionistHistory"
   | "kitchenHistory"
   | "nutritionistProfile"
-  | "reviews"
+  // | "reviews"
   | "dietPlans"
   | "meals"
   | "orders";
@@ -56,7 +56,7 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   nutritionistHistory: "Nutritionist change history",
   kitchenHistory: "Kitchen change history",
   nutritionistProfile: "Nutritionist profile",
-  reviews: "Nutritionist reviews",
+  // reviews: "Nutritionist reviews",
   dietPlans: "Diet plans",
   meals: "Meals & packaging",
   orders: "Food orders (delivery)",
@@ -70,7 +70,7 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "nutritionistHistory", description: "Audit trail of nutritionist reassignments" },
   { key: "kitchenHistory", description: "Audit trail of micro-kitchen reassignments" },
   { key: "nutritionistProfile", description: "Professional profile of active nutritionist" },
-  { key: "reviews", description: "Comments on health documents" },
+  // { key: "reviews", description: "Comments on health documents" },
   { key: "dietPlans", description: "Suggested and active diet plans" },
   { key: "meals", description: "Planned meals, foods, packaging" },
   { key: "orders", description: "Food orders: kitchen, totals, delivery distance & address" },
@@ -88,6 +88,11 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nutritionistUserId, setNutritionistUserId] = useState<number | null>(null);
+  const [mealMonth, setMealMonth] = useState(new Date().getMonth() + 1);
+  const [mealYear, setMealYear] = useState(new Date().getFullYear());
+  const [orderPage, setOrderPage] = useState(1);
+  const [hasMoreOrders, setHasMoreOrders] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -168,18 +173,22 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             }
             break;
           }
-          case "reviews":
-            setPayload(await fetchNutritionistReviewsForPatient(id));
-            break;
+          // case "reviews":
+          //   setPayload(await fetchNutritionistReviewsForPatient(id));
+          //   break;
           case "dietPlans":
             setPayload(await fetchUserDietPlansForPatient(id));
             break;
           case "meals":
-            setPayload(await fetchUserMealsForPatient(id));
+            setPayload(await fetchUserMealsForPatient(id, mealMonth, mealYear));
             break;
-          case "orders":
-            setPayload(await fetchOrdersForUserAdmin(id));
+          case "orders": {
+            const data = await fetchOrdersForUserAdmin(id, 1, 10);
+            setPayload(data.results);
+            setOrderPage(1);
+            setHasMoreOrders(!!data.next);
             break;
+          }
           default:
             break;
         }
@@ -195,8 +204,45 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
         setLoading(false);
       }
     },
-    [patient.id, nutritionistUserId]
+    [patient.id, nutritionistUserId, mealMonth, mealYear]
   );
+
+  useEffect(() => {
+    if (screen === "meals") {
+      loadView("meals");
+    }
+  }, [mealMonth, mealYear, screen]);
+
+  const loadMoreOrders = useCallback(async () => {
+    if (loadingOrders || !hasMoreOrders || screen !== "orders") return;
+    setLoadingOrders(true);
+    try {
+      const nextPage = orderPage + 1;
+      const data = await fetchOrdersForUserAdmin(patient.id, nextPage, 10);
+      setPayload((prev: any) => [...(Array.isArray(prev) ? prev : []), ...data.results]);
+      setOrderPage(nextPage);
+      setHasMoreOrders(!!data.next);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [patient.id, orderPage, hasMoreOrders, loadingOrders, screen]);
+
+  useEffect(() => {
+    if (screen !== "orders" || !hasMoreOrders) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreOrders();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const sen = document.getElementById("order-scroll-sentinel");
+    if (sen) obs.observe(sen);
+    return () => obs.disconnect();
+  }, [screen, hasMoreOrders, loadMoreOrders]);
 
   if (!open) return null;
 
@@ -287,17 +333,33 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
               {!loading && !error && screen === "nutritionistProfile" && Array.isArray(payload) && (
                 <DisplayNutritionistProfile items={payload as Record<string, unknown>[]} />
               )}
-              {!loading && !error && screen === "reviews" && Array.isArray(payload) && (
+              {/* {!loading && !error && screen === "reviews" && Array.isArray(payload) && (
                 <DisplayReviews items={payload as ReviewRow[]} />
-              )}
+              )} */}
               {!loading && !error && screen === "dietPlans" && Array.isArray(payload) && (
                 <DisplayDietPlans items={payload as DietPlanRow[]} />
               )}
               {!loading && !error && screen === "meals" && Array.isArray(payload) && (
-                <DisplayMeals meals={payload as MealRow[]} />
+                <DisplayMeals
+                  meals={payload as MealRow[]}
+                  month={mealMonth}
+                  year={mealYear}
+                  onMonthChange={(m, y) => {
+                    setMealMonth(m);
+                    setMealYear(y);
+                  }}
+                />
               )}
               {!loading && !error && screen === "orders" && Array.isArray(payload) && (
-                <AdminOrderList items={payload} hideCustomer />
+                <div className="space-y-6">
+                  <AdminOrderList items={payload} hideCustomer />
+                  <div id="order-scroll-sentinel" className="h-20 flex items-center justify-center">
+                    {loadingOrders && <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">Loading more orders...</div>}
+                    {!hasMoreOrders && payload.length > 0 && (
+                      <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
+                    )}
+                  </div>
+                </div>
               )}
             </>
           )}

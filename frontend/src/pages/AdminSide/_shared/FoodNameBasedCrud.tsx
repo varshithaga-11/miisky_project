@@ -81,19 +81,26 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    getFoodNameList(1, "all")
-      .then((res) => {
-        setFoodNames(res.results || []);
-      })
-      .catch(() => { });
+  const [foodNamesLoaded, setFoodNamesLoaded] = useState(false);
+  const [foodGroupsLoaded, setFoodGroupsLoaded] = useState(false);
 
-    getFoodGroupList(1, "all")
-      .then((res) => {
-        setFoodGroups(res.results || []);
-      })
-      .catch(() => { });
-  }, []);
+  const loadFoodNames = async () => {
+    if (foodNamesLoaded) return;
+    try {
+      const res = await getFoodNameList(1, "all");
+      setFoodNames(res.results || []);
+      setFoodNamesLoaded(true);
+    } catch { }
+  };
+
+  const loadFoodGroups = async () => {
+    if (foodGroupsLoaded) return;
+    try {
+      const res = await getFoodGroupList(1, "all");
+      setFoodGroups(res.results || []);
+      setFoodGroupsLoaded(true);
+    } catch { }
+  };
 
   useEffect(() => {
     fetchData();
@@ -274,6 +281,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
                 setSelectedFoodGroup(String(val));
                 setCurrentPage(1);
               }}
+              onFocus={loadFoodGroups}
               options={foodGroupOptions}
               className="w-48"
               placeholder="All Food Groups"
@@ -440,6 +448,7 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
                   <SearchableSelect
                     value={formFoodNameId}
                     onChange={(val) => setFormFoodNameId(String(val))}
+                    onFocus={loadFoodNames}
                     options={foodNameOptions}
                     className="w-full"
                     disabled={saving}

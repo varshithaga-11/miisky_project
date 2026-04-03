@@ -11,6 +11,7 @@ import AddFoodName from "./AddFoodName";
 import EditFoodName from "./EditFoodName";
 import { FoodGroup, getFoodGroupList } from "../FoodGroup/foodgroupapi";
 import ImportButton from "../../../components/common/ImportButton";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 
 const FoodNameManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodName[]>([]);
@@ -92,10 +93,10 @@ const FoodNameManagementPage: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Filter by Group:</Label>
-            <Select
+            <SearchableSelect
               value={selectedFoodGroup}
               onChange={(val) => {
-                setSelectedFoodGroup(val);
+                setSelectedFoodGroup(String(val));
                 setCurrentPage(1);
               }}
               options={[
@@ -105,7 +106,8 @@ const FoodNameManagementPage: React.FC = () => {
                   label: g.name,
                 })),
               ]}
-              className="w-48"
+              className="w-64"
+              placeholder="Select Group"
             />
           </div>
           <div className="flex items-center gap-6">

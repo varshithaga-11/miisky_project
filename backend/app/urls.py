@@ -180,6 +180,11 @@ urlpatterns = [
         views.AdminPlanPaymentsOverviewView.as_view(),
         name="admin-plan-payments-overview",
     ),
+    path(
+        "admin/patient-microkitchen-distances/<int:patient_id>/",
+        PatientToMicroKitchenDistanceView.as_view(),
+        name="patient-microkitchen-distances",
+    ),
     # ...
     # path('userlist/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user_detail'),
     path('login/', LoginView.as_view(), name='login'),

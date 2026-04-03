@@ -1,4 +1,4 @@
-import { FiChevronDown, FiChevronUp, FiPackage, FiUser } from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiEye, FiPackage, FiUser } from "react-icons/fi";
 import { useState } from "react";
 import { EmptyState } from "../PatientOverview/PatientDataViews";
 
@@ -109,18 +109,15 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderL
                   <div className="text-[11px] text-gray-500">Kitchen: {kd.brand_name}</div>
                 )}
               </div>
-              <div className="flex items-start gap-3">
-                <div className="text-right space-y-0.5">
-                  <div className="text-[10px] font-bold text-gray-400 uppercase">Total</div>
-                  <div className="text-lg font-black text-gray-900 dark:text-white">{money(finalAmt)}</div>
-                  <div className="text-[10px] text-gray-500">
-                    Food {money(o.total_amount)} · Delivery {money(o.delivery_charge)}
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
+                  <FiEye size={14} />
+                  <span>View Details</span>
                 </div>
                 {expanded ? (
-                  <FiChevronUp className="text-gray-400 mt-1" />
+                  <FiChevronUp className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
                 ) : (
-                  <FiChevronDown className="text-gray-400 mt-1" />
+                  <FiChevronDown className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
                 )}
               </div>
             </button>
