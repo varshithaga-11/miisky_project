@@ -4696,3 +4696,35 @@ class ResetPasswordView(APIView):
 
         return Response({"message": "Password reset successful."})
 
+
+class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenRating.objects.all().select_related('user', 'micro_kitchen', 'order').order_by('-created_at')
+    serializer_class = MicroKitchenRatingSerializer
+    pagination_class = Pagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        mk = self.request.query_params.get('micro_kitchen')
+        user = self.request.query_params.get('user')
+        if mk:
+            qs = qs.filter(micro_kitchen_id=mk)
+        if user:
+            qs = qs.filter(user_id=user)
+        return qs
+
+class NutritionistRatingViewSet(viewsets.ModelViewSet):
+    queryset = NutritionistRating.objects.all().select_related('user', 'nutritionist').order_by('-created_at')
+    serializer_class = NutritionistRatingSerializer
+    pagination_class = Pagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        nutri = self.request.query_params.get('nutritionist')
+        user = self.request.query_params.get('user')
+        if nutri:
+            qs = qs.filter(nutritionist_id=nutri)
+        if user:
+            qs = qs.filter(user_id=user)
+        return qs

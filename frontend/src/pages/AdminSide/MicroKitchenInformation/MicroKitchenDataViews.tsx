@@ -283,7 +283,7 @@ export function DisplayKitchenDailyPrep({
         {viewType === "list" ? (
           items.length === 0 ? <EmptyState message="No prep found for this month." /> : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
-              {items.map(m => <div key={m.id} className="p-4 border rounded-xl">{m.meal_type_details?.name}: {m.food_details?.name}</div>)}
+              {items.map(m => <MealCard key={m.id} m={m} />)}
             </div>
           )
         ) : (
@@ -408,33 +408,81 @@ export function DisplayKitchenInspections({ items }: { items: any[] }) {
   );
 }
 
-export function DisplayKitchenReviews({ items }: { items: any[] }) {
+export function DisplayKitchenReviews({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean;
+}) {
   if (!items || items.length === 0) return <EmptyState message="No reviews yet for this kitchen." />;
   return (
     <div className="space-y-4">
-      {items.map((r: any) => (
-        <div key={r.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm">
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div>
-              <div className="font-bold text-gray-900 dark:text-white">
-                {[r.user_details?.first_name, r.user_details?.last_name].filter(Boolean).join(" ") || "User"}
+      <div className="grid grid-cols-1 gap-4">
+        {items.map((r: any) => (
+          <div key={r.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm">
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <div className="font-bold text-gray-900 dark:text-white">
+                  {[r.user_details?.first_name, r.user_details?.last_name].filter(Boolean).join(" ") || "User"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1 italic">{r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</div>
               </div>
-              <div className="text-xs text-gray-500 mt-1 italic">{r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</div>
+              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-black">
+                {r.rating} ★
+              </div>
             </div>
-            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-black">
-              {r.rating} ★
-            </div>
+            <p className="text-sm text-gray-700 dark:text-gray-200 italic">&quot; {r.review || "No comments"} &quot;</p>
+            <div className="mt-3 text-[10px] text-gray-400 uppercase font-black">Linked Order #{r.order || "N/A"}</div>
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-200 italic">&quot; {r.review || "No comments"} &quot;</p>
-          <div className="mt-3 text-[10px] text-gray-400 uppercase font-black">Linked Order #{r.order || "N/A"}</div>
+        ))}
+      </div>
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Reviews"}
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
-export function DisplayKitchenOrders({ items }: { items: any[] }) {
-  return <AdminOrderList items={items || []} hideKitchen />;
+export function DisplayKitchenOrders({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean;
+}) {
+  return (
+    <div className="space-y-6">
+      <AdminOrderList items={items || []} hideKitchen />
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Orders"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function DisplayKitchenDeliverySlabs({ slabs }: { slabs: DeliveryChargeSlabAdmin[] }) {
@@ -473,144 +521,122 @@ export function DisplayKitchenDeliverySlabs({ slabs }: { slabs: DeliveryChargeSl
   );
 }
 
-export function DisplayKitchenFoods({ items }: { items: any[] }) {
+export function DisplayKitchenFoods({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean;
+}) {
   if (!items || items.length === 0) return <EmptyState message="No foods available in menu right now." />;
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {items.map((f: any) => (
-        <div key={f.id} className="group rounded-2xl border border-gray-100 dark:border-white/[0.05] bg-white/80 dark:bg-gray-800/40 p-5 shadow-sm hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-900 transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <div className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors">{f.food_details?.name || "Food"}</div>
-            <div className="text-lg font-black text-blue-600 dark:text-blue-400 italic">₹ {f.price ?? 0}</div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <FiClock className="text-blue-500" /> <span>Prep: {f.preparation_time || "—"}</span>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {items.map((f: any) => (
+          <div key={f.id} className="group rounded-2xl border border-gray-100 dark:border-white/[0.05] bg-white/80 dark:bg-gray-800/40 p-5 shadow-sm hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-900 transition-all">
+            <div className="flex justify-between items-start mb-4">
+              <div className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors">{f.food_details?.name || "Food"}</div>
+              <div className="text-lg font-black text-blue-600 dark:text-blue-400 italic">₹ {f.price ?? 0}</div>
             </div>
-            <div className={`text-[10px] font-black inline-flex px-2 py-0.5 rounded-full ${f.is_available ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"
-              }`}>
-              {f.is_available ? "INSTOCK" : "UNAVAILABLE"}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <FiClock className="text-blue-500" /> <span>Prep: {f.preparation_time || "—"}</span>
+              </div>
+              <div className={`text-[10px] font-black inline-flex px-2 py-0.5 rounded-full ${f.is_available ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"
+                }`}>
+                {f.is_available ? "INSTOCK" : "UNAVAILABLE"}
+              </div>
             </div>
+            {f.food_details?.description && (
+              <p className="mt-4 text-xs text-gray-500 line-clamp-2 italic leading-relaxed">
+                {f.food_details.description}
+              </p>
+            )}
           </div>
-          {f.food_details?.description && (
-            <p className="mt-4 text-xs text-gray-500 line-clamp-2 italic leading-relaxed">
-              {f.food_details.description}
-            </p>
-          )}
+        ))}
+      </div>
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Foods"}
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
-export function DisplayKitchenDailyPrep({ items }: { items: any[] }) {
-  const [viewType, setViewType] = useState<"list" | "calendar">("list");
-  const [filterType, setFilterType] = useState<"today" | "tomorrow" | "thisWeek" | "all">("today");
-
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
-
-  const getWeekRange = () => {
-    const curr = new Date();
-    const first = curr.getDate() - curr.getDay();
-    const last = first + 6;
-    return {
-      start: new Date(curr.setDate(first)).toISOString().split('T')[0],
-      end: new Date(curr.setDate(last)).toISOString().split('T')[0]
-    };
-  };
-  const weekRange = getWeekRange();
-
-  const filteredItems = items.filter(m => {
-    if (filterType === "today") return m.meal_date === today;
-    if (filterType === "tomorrow") return m.meal_date === tomorrow;
-    if (filterType === "thisWeek") return m.meal_date >= weekRange.start && m.meal_date <= weekRange.end;
-    return true;
-  });
-
+export function DisplayKitchenTickets({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean;
+}) {
+  if (!items || items.length === 0) return <EmptyState message="No support tickets for this kitchen." />;
   return (
     <div className="space-y-6">
-      {/* High-Performance Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/60 dark:bg-white/[0.02] p-4 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-sm backdrop-blur-md">
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { id: "today", label: "Today" },
-            { id: "tomorrow", label: "Tomorrow" },
-            { id: "thisWeek", label: "This Week" },
-            { id: "all", label: "See All" }
-          ].map(f => (
-            <button
-              key={f.id}
-              onClick={() => setFilterType(f.id as any)}
-              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${filterType === f.id
-                ? "bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 scale-105"
-                : "bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent"
-                }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex bg-gray-100 dark:bg-gray-950 p-1.5 rounded-2xl self-end md:self-auto border border-gray-200 dark:border-white/5">
-          <button
-            onClick={() => setViewType("list")}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${viewType === 'list'
-              ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm"
-              : "text-gray-400 hover:text-gray-600"
-              }`}
-          >
-            <FiList size={16} /> List
-          </button>
-          <button
-            onClick={() => setViewType("calendar")}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${viewType === 'calendar'
-              ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm"
-              : "text-gray-400 hover:text-gray-600"
-              }`}
-          >
-            <FiCalendar size={16} /> Grid
-          </button>
-        </div>
+      <div className="grid grid-cols-1 gap-4">
+        {items.map((t: any) => (
+          <div key={t.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-6 bg-white/60 dark:bg-gray-800/30 shadow-sm relative overflow-hidden">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900 dark:text-white">Ticket #{t.id}</span>
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                    t.status === 'open' ? 'bg-amber-100/50 text-amber-600 border border-amber-200' :
+                    t.status === 'resolved' ? 'bg-green-100/50 text-green-600 border border-green-200' :
+                    'bg-gray-100/50 text-gray-600 border border-gray-200'
+                  }`}>
+                    {t.status}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${
+                    t.priority === 'high' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
+                  }`}>
+                    {t.priority}
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.subject}</h4>
+              </div>
+              <div className="text-right text-[10px] text-gray-400 font-bold uppercase italic">
+                {new Date(t.created_at).toLocaleString()}
+              </div>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50/50 dark:bg-white/[0.02] p-3 rounded-xl border border-gray-100 dark:border-white/5">
+              {t.message || "No message body"}
+            </p>
+            {t.admin_response && (
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-1">
+                <div className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                  <FiInfo size={10} /> Admin Response
+                </div>
+                <p className="text-xs text-gray-700 dark:text-gray-300 italic">{t.admin_response}</p>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-
-      {filteredItems.length === 0 ? (
-        <div className="py-20">
-          <EmptyState message={`No preparation tasks found for ${filterType === 'all' ? 'this history' : filterType}.`} />
-        </div>
-      ) : (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          {viewType === "list" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
-              {filteredItems.map(m => <MealCard key={m.id} m={m} />)}
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-gray-900/50 p-8 rounded-[40px] border border-gray-100 dark:border-white/5 shadow-2xl relative">
-              <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin]}
-                initialView="dayGridMonth"
-                headerToolbar={{ left: "prev,next today", center: "title", right: "" }}
-                events={filteredItems.map(m => ({
-                  id: String(m.id),
-                  title: `${m.meal_type_details?.name}: ${m.food_details?.name}`,
-                  start: m.meal_date,
-                  allDay: true,
-                  backgroundColor: '#4f46e5',
-                  borderColor: 'transparent',
-                  extendedProps: { m }
-                }))}
-                eventContent={(arg) => (
-                  <div
-                    title={`${arg.event.title}\nPatient: ${arg.event.extendedProps.m.user_details?.first_name} ${arg.event.extendedProps.m.user_details?.last_name}\nQty: ${arg.event.extendedProps.m.quantity}`}
-                    className="px-2 py-1 rounded-lg text-[9px] font-black uppercase overflow-hidden truncate transition-all hover:bg-amber-500 cursor-pointer"
-                  >
-                    {arg.event.title}
-                  </div>
-                )}
-                height="auto"
-              />
-            </div>
-          )}
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Tickets"}
+          </button>
         </div>
       )}
     </div>

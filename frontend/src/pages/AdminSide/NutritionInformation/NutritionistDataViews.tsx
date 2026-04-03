@@ -408,3 +408,125 @@ export function DisplayNutritionistMeetings({ items }: { items: any[] }) {
         </div>
     );
 }
+
+export function DisplayNutritionistReviews({ 
+    items, 
+    onLoadMore, 
+    hasMore, 
+    loadingMore 
+}: { 
+    items: any[]; 
+    onLoadMore: () => void; 
+    hasMore: boolean; 
+    loadingMore: boolean;
+}) {
+    if (!items || items.length === 0) return <EmptyState message="No reviews yet for this nutritionist." />;
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+                {items.map((r: any) => (
+                    <div key={r.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-6 bg-white/60 dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-bold uppercase">
+                                    {r.user_details?.first_name?.[0] || 'U'}
+                                </div>
+                                <div>
+                                    <div className="font-bold text-gray-900 dark:text-white leading-none">
+                                        {[r.user_details?.first_name, r.user_details?.last_name].filter(Boolean).join(" ") || "User"}
+                                    </div>
+                                    <div className="text-[10px] text-gray-400 mt-1 font-bold italic">{r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-black text-sm border border-amber-100 dark:border-amber-900/30">
+                                {r.rating} <span className="text-xs">★</span>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-200 italic leading-relaxed">&quot; {r.review || "No comments"} &quot;</p>
+                    </div>
+                ))}
+            </div>
+            {hasMore && (
+                <div className="flex justify-center pt-8">
+                    <button
+                        onClick={onLoadMore}
+                        disabled={loadingMore}
+                        className="px-10 py-3.5 rounded-[22px] bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-2xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {loadingMore ? "Fetching more reviews..." : "Load More Experience Logs"}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export function DisplayNutritionistTickets({ 
+    items, 
+    onLoadMore, 
+    hasMore, 
+    loadingMore 
+}: { 
+    items: any[]; 
+    onLoadMore: () => void; 
+    hasMore: boolean; 
+    loadingMore: boolean;
+}) {
+    if (!items || items.length === 0) return <EmptyState message="No support requests found." />;
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-5">
+                {items.map((t: any) => (
+                    <div key={t.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-7 bg-white/60 dark:bg-gray-800/30 shadow-sm relative overflow-hidden group">
+                        <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <span className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">ISSUE #{t.id}</span>
+                                    <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${
+                                        t.status === 'open' ? 'bg-amber-100/50 text-amber-600 border-amber-200' :
+                                        t.status === 'resolved' ? 'bg-green-100/50 text-green-600 border-green-200' :
+                                        'bg-gray-100/50 text-gray-600 border-gray-200'
+                                    }`}>
+                                        {t.status}
+                                    </span>
+                                    <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
+                                        t.priority === 'high' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                                    }`}>
+                                        {t.priority}
+                                    </span>
+                                </div>
+                                <h4 className="text-base font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight group-hover:text-indigo-600 transition-colors">{t.subject}</h4>
+                            </div>
+                            <div className="text-right text-[10px] text-gray-400 font-bold uppercase italic bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/5">
+                                {new Date(t.created_at).toLocaleString()}
+                            </div>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50/50 dark:bg-white/[0.01] p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-inner">
+                            {t.message || "No detailed dossier available."}
+                        </div>
+                        {t.admin_response && (
+                            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-white/5 space-y-2">
+                                <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <span className="size-2 bg-indigo-600 rounded-full animate-pulse"></span>
+                                    Resolution Statement
+                                </div>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 italic font-medium bg-indigo-50/30 dark:bg-indigo-900/10 p-3 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">{t.admin_response}</p>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+            {hasMore && (
+                <div className="flex justify-center pt-10">
+                    <button
+                        onClick={onLoadMore}
+                        disabled={loadingMore}
+                        className="px-12 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-2xl shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {loadingMore ? "Syncing tickets..." : "Access More Records"}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}

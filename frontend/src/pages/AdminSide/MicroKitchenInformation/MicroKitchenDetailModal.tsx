@@ -14,11 +14,12 @@ import {
 import {
   getMicroKitchenPatientsNoPagination,
   getMicroKitchenInspectionsNoPagination,
-  getMicroKitchenReviewsNoPagination,
-  getMicroKitchenOrdersNoPagination,
-  getMicroKitchenAvailableFoodsNoPagination,
+  getMicroKitchenReviewsPaginated,
+  getMicroKitchenOrdersPaginated,
+  getMicroKitchenFoodsPaginated,
   getMicroKitchenDailyMealsNoPagination,
   getMicroKitchenDeliverySlabs,
+  getKitchenSupportTickets,
   MicroKitchenProfile,
 } from "./api";
 import {
@@ -30,6 +31,7 @@ import {
   DisplayKitchenFoods,
   DisplayKitchenDailyPrep,
   DisplayKitchenDeliverySlabs,
+  DisplayKitchenTickets,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
@@ -40,7 +42,8 @@ export type KitchenDataView =
   | "reviews"
   | "orders"
   | "delivery"
-  | "foods";
+  | "foods"
+  | "tickets";
 
 const VIEW_TITLES: Record<KitchenDataView, string> = {
   info: "Kitchen Information & Questionnaire",
@@ -51,6 +54,7 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   orders: "Micro Kitchen Orders",
   delivery: "Delivery charges & distance slabs",
   foods: "Food Available (Menu)",
+  tickets: "Kitchen Support Tickets",
 };
 
 const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
@@ -62,6 +66,7 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "orders", description: "Orders with address, distance, delivery & line items", icon: <FiShoppingCart /> },
   { key: "delivery", description: "Distance slabs and charge amounts for this kitchen", icon: <FiDollarSign /> },
   { key: "foods", description: "Menu items currently provided by the kitchen", icon: <FiMenu /> },
+  { key: "tickets", description: "Technical and operational support requests", icon: <FiClipboard /> },
 ];
 
 type Props = {
@@ -76,12 +81,19 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     setScreen("hub");
     setPayload(null);
     setError(null);
     setLoading(false);
+    setPage(1);
+    setHasMore(false);
   }, [open, kitchen.id]);
 
   const goHub = () => {
@@ -89,16 +101,25 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     setPayload(null);
     setError(null);
     setLoading(false);
+    setPage(1);
+    setHasMore(false);
   };
 
   const loadView = useCallback(
-    async (view: KitchenDataView) => {
+    async (view: KitchenDataView, p = 1, isLoadMore = false) => {
       const id = kitchen.id;
-      setScreen(view);
-      setLoading(true);
+      if (!isLoadMore) {
+        setScreen(view);
+        setLoading(true);
+        setPayload(null);
+        setPage(1);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
-      setPayload(null);
+
       try {
+        let res: any;
         switch (view) {
           case "info":
             setPayload(kitchen);
@@ -110,19 +131,31 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             setPayload(await getMicroKitchenInspectionsNoPagination(id));
             break;
           case "reviews":
-            setPayload(await getMicroKitchenReviewsNoPagination(id));
+            res = await getMicroKitchenReviewsPaginated(id, p, 10);
+            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
+            setHasMore(res.current_page < res.total_pages);
             break;
           case "orders":
-            setPayload(await getMicroKitchenOrdersNoPagination(id));
+            res = await getMicroKitchenOrdersPaginated(id, p, 10);
+            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
+            setHasMore(res.current_page < res.total_pages);
+            break;
+          case "foods":
+            res = await getMicroKitchenFoodsPaginated(id, p, 20);
+            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
+            setHasMore(res.current_page < res.total_pages);
+            break;
+          case "tickets":
+            res = await getKitchenSupportTickets(kitchen.user, p, 10);
+            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
+            setHasMore(res.current_page < res.total_pages);
             break;
           case "delivery":
             setPayload(await getMicroKitchenDeliverySlabs(id));
             break;
-          case "foods":
-            setPayload(await getMicroKitchenAvailableFoodsNoPagination(id));
-            break;
           case "prep":
-            setPayload(await getMicroKitchenDailyMealsNoPagination(id));
+            const now = new Date();
+            setPayload(await getMicroKitchenDailyMealsNoPagination(id, now.getMonth() + 1, now.getFullYear()));
             break;
           default:
             break;
@@ -131,10 +164,28 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
         setError(e?.response?.data?.detail || e.message || "Failed to load data");
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     },
     [kitchen]
   );
+
+  const handleLoadMore = () => {
+    const nextP = page + 1;
+    setPage(nextP);
+    loadView(screen as KitchenDataView, nextP, true);
+  };
+
+  const handlePrepMonthChange = async (m: number, y: number) => {
+    setLoading(true);
+    try {
+      setPayload(await getMicroKitchenDailyMealsNoPagination(kitchen.id, m, y));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!open) return null;
 
@@ -175,7 +226,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto px-6 py-8 bg-gradient-to-b from-blue-50/20 to-white dark:from-gray-900 dark:to-gray-950">
           {screen === "hub" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 pb-10">
               {MENU_ITEMS.map((item) => (
                 <button
                   key={item.key}
@@ -198,7 +249,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
 
           {screen !== "hub" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {loading && (
+              {loading && !payload && (
                 <div className="py-20 flex flex-col items-center justify-center gap-4">
                   <div className="size-12 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
                   <span className="text-sm font-bold text-gray-400 uppercase tracking-widest italic">Gathering data...</span>
@@ -211,16 +262,45 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                 </div>
               )}
 
-              {!loading && !error && payload && (
+              {payload && (
                 <>
                   {screen === "info" && <DisplayKitchenInfo kitchen={payload} />}
                   {screen === "patients" && <DisplayKitchenPatients items={payload} kitchen={kitchen} />}
                   {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
-                  {screen === "reviews" && <DisplayKitchenReviews items={payload} />}
-                  {screen === "orders" && <DisplayKitchenOrders items={payload} />}
+                  {screen === "reviews" && (
+                    <DisplayKitchenReviews 
+                      items={payload} 
+                      onLoadMore={handleLoadMore} 
+                      hasMore={hasMore} 
+                      loadingMore={loadingMore} 
+                    />
+                  )}
+                  {screen === "orders" && (
+                    <DisplayKitchenOrders 
+                      items={payload} 
+                      onLoadMore={handleLoadMore} 
+                      hasMore={hasMore} 
+                      loadingMore={loadingMore} 
+                    />
+                  )}
                   {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload} />}
-                  {screen === "foods" && <DisplayKitchenFoods items={payload} />}
-                  {screen === "prep" && <DisplayKitchenDailyPrep items={payload} />}
+                  {screen === "foods" && (
+                    <DisplayKitchenFoods 
+                      items={payload} 
+                      onLoadMore={handleLoadMore} 
+                      hasMore={hasMore} 
+                      loadingMore={loadingMore} 
+                    />
+                  )}
+                  {screen === "prep" && <DisplayKitchenDailyPrep items={payload} onMonthChange={handlePrepMonthChange} />}
+                  {screen === "tickets" && (
+                    <DisplayKitchenTickets 
+                      items={payload} 
+                      onLoadMore={handleLoadMore} 
+                      hasMore={hasMore} 
+                      loadingMore={loadingMore} 
+                    />
+                  )}
                 </>
               )}
             </div>

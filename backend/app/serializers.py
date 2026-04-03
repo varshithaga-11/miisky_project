@@ -2729,3 +2729,33 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ["id", "user", "title", "body", "is_read", "created_at"]
         read_only_fields = ["id", "user", "title", "body", "created_at"]
+
+class MicroKitchenRatingSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenRating
+        fields = ["id", "user", "micro_kitchen", "order", "rating", "review", "created_at", "user_details"]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {"id": obj.user.id, "first_name": obj.user.first_name, "last_name": obj.user.last_name, "mobile": obj.user.mobile}
+        return None
+
+class NutritionistRatingSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NutritionistRating
+        fields = ["id", "user", "nutritionist", "rating", "review", "created_at", "user_details", "nutritionist_details"]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {"id": obj.user.id, "first_name": obj.user.first_name, "last_name": obj.user.last_name}
+        return None
+        
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {"id": obj.nutritionist.id, "first_name": obj.nutritionist.first_name, "last_name": obj.nutritionist.last_name}
+        return None

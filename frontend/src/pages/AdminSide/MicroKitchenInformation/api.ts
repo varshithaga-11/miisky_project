@@ -286,12 +286,25 @@ export const getMicroKitchenOrdersPaginated = async (
 export const getMicroKitchenFoodsPaginated = async (
   microKitchenId: number,
   page: number = 1,
-  limit: number = 10
+  limit: number = 20
 ): Promise<PaginatedResponse<MicroKitchenFoodRow>> => {
   const url = createApiUrl(`api/microkitchenfood/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
     params: { micro_kitchen: microKitchenId, page, limit },
+  });
+  return response.data;
+};
+
+export const getKitchenSupportTickets = async (
+  kitchenUserId: number,
+  page: number = 1,
+  limit: number = 20
+): Promise<PaginatedResponse<any>> => {
+  const url = createApiUrl(`api/supportticket/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { created_by: kitchenUserId, page, limit },
   });
   return response.data;
 };
