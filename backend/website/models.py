@@ -1028,6 +1028,7 @@ class WebsiteInquiry(UIDMixin):
         ('general_inquiry', 'General Inquiry'),
         ('product_info', 'Product Information'),
         ('partnership', 'Partnership'),
+        ('callback', 'Callback Request'),
     ]
 
     STATUS_CHOICES = [
@@ -1038,7 +1039,7 @@ class WebsiteInquiry(UIDMixin):
     ]
 
     inquiry_type = models.CharField(max_length=30, choices=INQUIRY_TYPE_CHOICES, default='general_inquiry')
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     
@@ -1046,7 +1047,7 @@ class WebsiteInquiry(UIDMixin):
     service_interested = models.CharField(max_length=200, blank=True, null=True)
     preferred_date = models.DateField(blank=True, null=True)
     
-    message = models.TextField()
+    message = models.TextField(blank=True, null=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
     admin_notes = models.TextField(blank=True, null=True)

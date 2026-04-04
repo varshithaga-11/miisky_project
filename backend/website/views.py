@@ -883,13 +883,18 @@ class WebsiteInquiryViewSet(viewsets.ModelViewSet):
         
         # Send email notification to configured email
         try:
-            subject = f"New Website Inquiry: {instance.subject or 'General Inquiry'}"
+            # Custom subject based on inquiry type
+            if instance.inquiry_type == 'callback':
+                subject = f"Urgent: Callback Request from {instance.email or instance.phone or 'Website Visitor'}"
+            else:
+                subject = f"New Website Inquiry: {instance.subject or instance.get_inquiry_type_display()}"
             
             message = f"You have received a new inquiry from the website.\n\n"
-            message += f"Name: {instance.name}\n"
+            message += f"Inquiry Type: {instance.get_inquiry_type_display()}\n"
+            message += f"Name: {instance.name or 'N/A'}\n"
             message += f"Email: {instance.email or 'N/A'}\n"
             message += f"Phone: {instance.phone or 'N/A'}\n"
-            message += f"Inquiry Type: {instance.get_inquiry_type_display()}\n"
+            
             if instance.subject:
                 message += f"Subject: {instance.subject}\n"
             if instance.service_interested:
@@ -897,14 +902,19 @@ class WebsiteInquiryViewSet(viewsets.ModelViewSet):
             if instance.preferred_date:
                 message += f"Preferred Date: {instance.preferred_date}\n"
             
-            message += f"\nMessage:\n{instance.message}\n\n"
-            message += f"---\nYou can manage this inquiry in the Master Dashboard."
+            if instance.message:
+                message += f"\nMessage:\n{instance.message}\n"
+            
+            message += f"\n---\nYou can manage this inquiry in the Master Dashboard."
+
+            # Send exclusively to the designated admin email
+            recipient_list = ['vidhuk300@gmail.com']
 
             send_mail(
                 subject=subject,
                 message=message,
                 from_email=None,
-                recipient_list=['vidhuk300@gmail.com'],
+                recipient_list=recipient_list,
                 fail_silently=True,
             )
         except Exception as e:
