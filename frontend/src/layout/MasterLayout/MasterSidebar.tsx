@@ -335,6 +335,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/dashboard",
   },
   {
+    icon: <BookOpen className="w-5 h-5" />,
+    name: "Kitchen Guide",
+    path: "/microkitchen/instructions",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
     path: "/microkitchen/questionnaire",

@@ -115,6 +115,7 @@ import NonPatientPaymentHistoryPage from "./pages/NonPatient/PaymentHistory/inde
 import NutritionInstructionsPage from "./pages/NutritionSide/Instructions/index";
 import PatientInstructionsPage from "./pages/PatientSide/Instructions/index";
 import NonPatientInstructionsPage from "./pages/NonPatient/Instructions/index";
+import MicroKitchenInstructionsPage from "./pages/MicroKitchenSide/Instructions/index";
 
 
 // Master Side Pages
@@ -308,6 +309,7 @@ export function appRoutes() {
           <Route path="patient/orders" element={<PatientOrdersPage />} />
           <Route path="patient/payment-history" element={<PaymentHistoryPage />} />
           <Route path="microkitchen/orders" element={<KitchenOrdersPage />} />
+          <Route path="microkitchen/instructions" element={<MicroKitchenInstructionsPage />} />
           <Route path="microkitchen/delivery-charges" element={<MicroKitchenDeliveryChargesPage />} />
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
