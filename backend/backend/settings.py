@@ -195,3 +195,4 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = 'servicescc.002@gmail.com' 
 EMAIL_HOST_PASSWORD = 'pobtshsdfqdehswu'
+DEFAULT_FROM_EMAIL = 'Miisky SVASTH <servicescc.002@gmail.com>'

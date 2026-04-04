@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.utils import timezone
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.conf import settings
 from .pagination import WebsitePagination
 
 
@@ -877,7 +879,37 @@ class WebsiteInquiryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Always force 'new' status for public submissions
-        serializer.save(status='new')
+        instance = serializer.save(status='new')
+        
+        # Send email notification to configured email
+        try:
+            subject = f"New Website Inquiry: {instance.subject or 'General Inquiry'}"
+            
+            message = f"You have received a new inquiry from the website.\n\n"
+            message += f"Name: {instance.name}\n"
+            message += f"Email: {instance.email or 'N/A'}\n"
+            message += f"Phone: {instance.phone or 'N/A'}\n"
+            message += f"Inquiry Type: {instance.get_inquiry_type_display()}\n"
+            if instance.subject:
+                message += f"Subject: {instance.subject}\n"
+            if instance.service_interested:
+                message += f"Service Interested: {instance.service_interested}\n"
+            if instance.preferred_date:
+                message += f"Preferred Date: {instance.preferred_date}\n"
+            
+            message += f"\nMessage:\n{instance.message}\n\n"
+            message += f"---\nYou can manage this inquiry in the Master Dashboard."
+
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=None,
+                recipient_list=['vidhuk300@gmail.com'],
+                fail_silently=True,
+            )
+        except Exception as e:
+            # Log the error but don't prevent inquiry creation
+            print(f"Email notification failed: {str(e)}")
 
     def get_queryset(self):
         qs = WebsiteInquiry.objects.all()

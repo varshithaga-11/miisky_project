@@ -155,7 +155,11 @@ export default function MedicalDeviceDetailsPage() {
                                     </div>
                                 </div>
                                 <div className="btn-box mt_10">
-                                    <Link to="/contact" className="theme-btn btn-one" style={{ padding: '15px 40px', borderRadius: '50px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    <Link 
+                                        to={`/contact?subject=Inquiry regarding ${encodeURIComponent(device.name)}`} 
+                                        className="theme-btn btn-one" 
+                                        style={{ padding: '15px 40px', borderRadius: '50px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                    >
                                         <span>Request Quote</span>
                                     </Link>
                                 </div>

@@ -98,6 +98,11 @@ const EditWebsiteInquiry: React.FC<EditWebsiteInquiryProps> = ({ id, onSuccess, 
           </div>
 
           <div className="space-y-1.5 pt-2 border-t border-gray-50 dark:border-gray-700">
+            <Label>Inquiry Subject</Label>
+            <InputField name="subject" value={formData.subject || ""} onChange={handleChange} placeholder="No subject provided" />
+          </div>
+
+          <div className="space-y-1.5 pt-2 border-t border-gray-50 dark:border-gray-700">
             <Label className="uppercase text-[10px] text-gray-400 font-bold tracking-widest">Message Content</Label>
             <p className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 whitespace-pre-wrap min-h-[100px]">
                 {formData.message || "No content provided."}

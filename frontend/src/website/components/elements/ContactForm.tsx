@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { contactApi } from "../../utils/api";
 
 interface FormState {
@@ -10,16 +12,24 @@ interface FormState {
 }
 
 export default function ContactForm() {
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState<FormState>({
     name: "",
     email: "",
     phone: "",
-    subject: "",
+    subject: searchParams.get("subject") || "",
     message: "",
   });
 
+  // Sync state if search params change
+  useEffect(() => {
+    const subjectParam = searchParams.get("subject");
+    if (subjectParam) {
+      setFormData(prev => ({ ...prev, subject: subjectParam }));
+    }
+  }, [searchParams]);
+
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -30,17 +40,16 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
-    setErrorMessage("");
 
     try {
       await contactApi.send(formData);
       setStatus("success");
+      toast.success("Message sent successfully ✅");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (err) {
       console.error(err);
-      setErrorMessage(
-        err instanceof Error ? err.message : "Something went wrong."
-      );
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      toast.error(msg + " ❌");
       setStatus("error");
     }
   };
@@ -106,18 +115,6 @@ export default function ContactForm() {
             </button>
             </div>
         </div>
-
-      {status === "success" && (
-        <p style={{ color: "green", marginTop: "8px" }}>
-          Message sent successfully ✅
-        </p>
-      )}
-      {status === "error" && (
-        <p style={{ color: "red", marginTop: "8px" }}>
-          {errorMessage || "Something went wrong ❌"}
-        </p>
-      )}
     </form>
   );
 }
-

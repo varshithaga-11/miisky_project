@@ -154,13 +154,18 @@ const WebsiteInquiryPage: React.FC = () => {
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase w-fit mb-1 dark:bg-indigo-900/30">
-                                {inq.inquiry_type}
-                            </span>
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 italic">
-                                {inq.subject || "No Subject"}
-                            </span>
+                        <div className="flex flex-col gap-1 max-w-[250px] sm:max-w-[400px]">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[9px] font-extrabold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase dark:bg-blue-900/40 dark:text-blue-200">
+                                    {inq.inquiry_type.replace(/_/g, ' ')}
+                                </span>
+                                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                    {inq.subject || "General Inquiry"}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 italic">
+                                {inq.message}
+                            </p>
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
