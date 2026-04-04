@@ -72,7 +72,7 @@ export default function Working() {
                     )}
                     <div className="row clearfix">
                         {steps.map((step, index) => (
-                            <div key={step.id || index} className="col-lg-4 col-md-6 col-sm-12 working-block" style={index >= 3 ? { marginTop: '80px' } : {}}>
+                            <div key={step.id || index} className="col-lg-4 col-md-6 col-sm-12 working-block">
                                 <div className="working-block-one">
                                     <div className="inner-box">
                                         <div className="image-box">

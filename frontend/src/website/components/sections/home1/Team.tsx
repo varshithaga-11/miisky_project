@@ -133,7 +133,7 @@ export default function Team({ doctors }: TeamProps) {
           </Swiper>
 
           {/* Navigation and Pagination */}
-          <div className="swiper-pagination-team mt_40"></div>
+          <div className="swiper-pagination-team"></div>
           
           <div className="nav-style-one section-nav">
              <div className="swiper-button-prev-team swiper-prev"><span className="icon-21"></span></div>

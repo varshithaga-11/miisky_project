@@ -117,13 +117,14 @@ export default function Banner({
               {/* Content Box */}
               <div className="auto-container">
                 <div className="content-box p_relative d_block z_5">
-                  <span className="title-text p_relative d_block">{slide.subTitle}</span>
-                  <h2 className="p_relative d_block">
+                  <span className="title-text p_relative d_block" style={{ fontSize: 'clamp(14px, 4vw, 18px)' }}>{slide.subTitle}</span>
+                  <h2 className="p_relative d_block" style={{ fontSize: 'clamp(28px, 8vw, 60px)', lineHeight: '1.1', whiteSpace: 'normal' }}>
                     {slide.title}<span>{slide.highlight}</span>
                   </h2>
-                  <p>{slide.description}</p>
+                  <p style={{ fontSize: 'clamp(14px, 3vw, 18px)', marginTop: '15px' }}>{slide.description}</p>
                 </div>
               </div>
+
 
               {/* Image Box */}
               <div className="image-box">

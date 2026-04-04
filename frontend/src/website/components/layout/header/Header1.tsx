@@ -51,16 +51,17 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
             <div className="outer-container">
               <div className="top-inner">
                 <ul className="info-list clearfix">
-                  <li>
-                    <i className="icon-46"></i>
+                  <li style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="icon-46" style={{ position: 'static', transform: 'translateY(2px)' }}></i>
                     <a href="mailto:support@miisky.com">support@miisky.com</a>
                   </li>
 
-                  <li>
-                    <i className="icon-3"></i>
+                  <li style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="icon-3" style={{ position: 'static', transform: 'translateY(2px)' }}></i>
                     Open Hours: <span>Mon - Fri: 9:30am to 6:00pm</span>
                   </li>
                 </ul>
+
               </div>
             </div>
           </div>
@@ -76,11 +77,12 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                 </figure>
               </div>
               <div className="menu-area">
-                <div className="mobile-nav-toggler" onClick={handleMobileMenu}>
-                  <i className="icon-bar" style={{ backgroundColor: "#111" }}></i>
-                  <i className="icon-bar" style={{ backgroundColor: "#111" }}></i>
-                  <i className="icon-bar" style={{ backgroundColor: "#111" }}></i>
+                <div className="mobile-nav-toggler" onClick={handleMobileMenu} style={{ padding: '4px' }}>
+                  <i className="icon-bar" style={{ backgroundColor: "#111", width: '22px', height: '2px', margin: '4px 0' }}></i>
+                  <i className="icon-bar" style={{ backgroundColor: "#111", width: '22px', height: '2px', margin: '4px 0' }}></i>
+                  <i className="icon-bar" style={{ backgroundColor: "#111", width: '22px', height: '2px', margin: '4px 0' }}></i>
                 </div>
+
 
                 {/* Desktop nav simplified */}
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
@@ -197,11 +199,12 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                 </figure>
               </div>
               <div className="menu-area">
-                <div className="mobile-nav-toggler" onClick={handleMobileMenu}>
-                  <i className="icon-bar"></i>
-                  <i className="icon-bar"></i>
-                  <i className="icon-bar"></i>
+                <div className="mobile-nav-toggler" onClick={handleMobileMenu} style={{ padding: '4px' }}>
+                  <i className="icon-bar" style={{ width: '22px', height: '2px', margin: '4px 0' }}></i>
+                  <i className="icon-bar" style={{ width: '22px', height: '2px', margin: '4px 0' }}></i>
+                  <i className="icon-bar" style={{ width: '22px', height: '2px', margin: '4px 0' }}></i>
                 </div>
+
 
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContentSticky">

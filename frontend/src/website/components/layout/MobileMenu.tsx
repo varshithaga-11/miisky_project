@@ -63,7 +63,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
         </div>
         <nav className="menu-box">
           <div className="nav-logo">
-            <Link to="/"><Image src="/website/assets/images/logo-miisky.png" alt="Logo Image" width={150} height={30} priority /></Link>
+            <Link to="/"><Image src="/miisky-logo.png" alt="Logo Image" width={150} height={30} priority /></Link>
           </div>
           <div className="menu-outer">
             <ul className="navigation clearfix" onClick={handleClick}>
@@ -74,10 +74,10 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
               {/* About */}
               <li><Link to="/about">About Us</Link></li>
 
-              {/* Services */}
-              <li className={`dropdown ${activeDropdown === 2 ? "current" : ""}`}>
-                <Link to="/">Departments</Link>
-                <ul style={{ display: activeDropdown === 2 ? "block" : "none" }}>
+              {/* Departments */}
+              <li className={`dropdown ${activeDropdown === 1 ? "active" : ""}`}>
+                <Link to="/departments">Departments</Link>
+                <ul className="sub-menu">
                   <li><Link to="/departments">Our Departments</Link></li>
                   {departments.map((dept: any) => (
                     <li key={dept.id}>
@@ -85,55 +85,80 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                     </li>
                   ))}
                 </ul>
+                <div className={`dropdown-btn ${activeDropdown === 1 ? "open" : ""}`} onClick={() => toggleDropdown(1)}>
+                  <span className="fa fa-angle-right" />
+                </div>
+              </li>
+
+              {/* Products */}
+              <li className={`dropdown ${activeDropdown === 2 ? "active" : ""}`}>
+                <Link to="/device-categories">Products</Link>
+                <ul className="sub-menu">
+                  <li><Link to="/device-categories">Device Categories</Link></li>
+                  <li><Link to="/medical-devices">Medical Devices</Link></li>
+                </ul>
                 <div className={`dropdown-btn ${activeDropdown === 2 ? "open" : ""}`} onClick={() => toggleDropdown(2)}>
                   <span className="fa fa-angle-right" />
                 </div>
               </li>
 
-              {/* Pages */}
-              <li className={`dropdown ${activeDropdown === 3 ? "current" : ""}`}>
-                <Link to="/">Pages</Link>
-                <ul style={{ display: activeDropdown === 3 ? "block" : "none" }}>
-                  <li><Link to="/doctors">Our Doctors</Link></li>
-                  <li><Link to="/doctor-details">Doctor Details</Link></li>
-                  <li><Link to="/portfolio">Portfolio One</Link></li>
-                  {/* <li><Link to="/portfolio-2">Portfolio Two</Link></li> */}
-                  <li><Link to="/plans">Plans</Link></li>
-                  <li><Link to="/error">Page Not Found</Link></li>
+              {/* Innovation */}
+              <li className={`dropdown ${activeDropdown === 3 ? "active" : ""}`}>
+                <Link to="/research">Innovation</Link>
+                <ul className="sub-menu">
+                  <li><Link to="/research">Research Papers</Link></li>
+                  <li><Link to="/patents">Patents</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 3 ? "open" : ""}`} onClick={() => toggleDropdown(3)}>
                   <span className="fa fa-angle-right" />
                 </div>
               </li>
 
-              {/* Shop */}
-              <li className={`dropdown ${activeDropdown === 4 ? "current" : ""}`}>
-                <Link to="/">Blog</Link>
-                <ul style={{ display: activeDropdown === 4 ? "block" : "none" }}>
-                  <li><Link to="/blog">Blog Grid</Link></li>
-                  {/* <li><Link to="/blog-2">Blog Standard</Link></li> */}
-                  <li><Link to="/blog-details">Blog Details</Link></li>
+              {/* Support */}
+              <li className={`dropdown ${activeDropdown === 4 ? "active" : ""}`}>
+                <Link to="/">Support</Link>
+                <ul className="sub-menu">
+                  <li><Link to="/doctors">Our Doctors</Link></li>
+                  <li><Link to="/careers">Careers</Link></li>
+                  <li><Link to="/faq">FAQ</Link></li>
+                  <li><Link to="/gallery">Gallery</Link></li>
+                  <li><Link to="/partners">Our Partners</Link></li>
+                  <li><Link to="/plans">Plans</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 4 ? "open" : ""}`} onClick={() => toggleDropdown(4)}>
                   <span className="fa fa-angle-right" />
                 </div>
               </li>
 
+              {/* Blog */}
+              <li className={`dropdown ${activeDropdown === 5 ? "active" : ""}`}>
+                <Link to="/blog">Blog</Link>
+                <ul className="sub-menu">
+                  <li><Link to="/blog">Blog Grid</Link></li>
+                </ul>
+                <div className={`dropdown-btn ${activeDropdown === 5 ? "open" : ""}`} onClick={() => toggleDropdown(5)}>
+                  <span className="fa fa-angle-right" />
+                </div>
+              </li>
+
               {/* Contact */}
-              <li><Link to="/contact" onClick={handleMobileMenu}>Contact</Link></li>
+              <li><Link to="/contact">Contact</Link></li>
+
+              {/* Login */}
               <li style={{ padding: '15px 25px 0 25px' }}>
-                <button className="theme-btn btn-one" style={{ 
+                <Link to="/signin" className="theme-btn btn-one" style={{ 
                   width: '100%', 
                   padding: '10px 0', 
                   borderRadius: '5px',
                   fontSize: '14px',
                   fontWeight: '600',
-                  textTransform: 'uppercase'
+                  textTransform: 'uppercase',
+                  display: 'block',
+                  textAlign: 'center'
                 }}>
                   Login
-                </button>
+                </Link>
               </li>
-
 
             </ul>
           </div>
