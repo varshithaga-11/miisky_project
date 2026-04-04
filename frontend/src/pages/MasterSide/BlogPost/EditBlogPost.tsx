@@ -22,6 +22,7 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories, tag
   const [formData, setFormData] = useState<Partial<BlogPost>>({});
   
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [authorFile, setAuthorFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories, tag
         const dateOnly = formData.published_at.split("T")[0];
         data.append("published_at", dateOnly);
     }
+    if (formData.video_url) data.append("video_url", formData.video_url);
     
     if (formData.tag_ids && formData.tag_ids.length > 0) {
       formData.tag_ids.forEach(id => data.append("tag_ids", String(id)));
@@ -71,6 +73,7 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories, tag
     }
     
     if (imageFile) data.append("image", imageFile);
+    if (videoFile) data.append("video_file", videoFile);
     if (authorFile) data.append("author_image", authorFile);
 
     try {
@@ -187,6 +190,36 @@ const EditBlogPost: React.FC<Props> = ({ id, onSuccess, onClose, categories, tag
                       disabled={loading}
                     />
                   </div>
+                  <div>
+                     <Label htmlFor="video_url">Video URL (YouTube/Vimeo)</Label>
+                     <Input
+                       id="video_url"
+                       type="text"
+                       value={formData.video_url || ""}
+                       onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                       placeholder="https://www.youtube.com/watch?v=..."
+                       disabled={loading}
+                     />
+                     <div className="mt-4">
+                       <Label htmlFor="video_file">Or Upload Video</Label>
+                       {formData.video_file && (
+                         <div className="mb-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                           Current file: {typeof formData.video_file === 'string' ? formData.video_file.split('/').pop() : 'Uploaded video'}
+                         </div>
+                       )}
+                       <input
+                         id="video_file"
+                         type="file"
+                         accept="video/*"
+                         onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300"
+                         disabled={loading}
+                       />
+                     </div>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <ImagePicker
                       id="author_image"

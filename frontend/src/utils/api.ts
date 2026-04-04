@@ -116,6 +116,8 @@ export const getBlogPostById = (id: number | string) => API.get(`/website/blogpo
 export const createBlogPost = (data: any) => API.post('/website/blogpost/', data);
 export const updateBlogPost = (id: number | string, data: any) => API.put(`/website/blogpost/${id}/`, data);
 export const deleteBlogPost = (id: number | string) => API.delete(`/website/blogpost/${id}/`);
+export const likeBlogPost = (uid: string) => API.post(`/website/blogpost/${uid}/like/`);
+export const unlikeBlogPost = (uid: string) => API.post(`/website/blogpost/${uid}/unlike/`);
 
 // ============================================================================
 // BLOG COMMENTS

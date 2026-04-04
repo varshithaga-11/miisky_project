@@ -163,7 +163,7 @@ const BlogPostPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Article Details</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Taxonomy</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Engagement</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Reactions</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
@@ -203,8 +203,7 @@ const BlogPostPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <div className="flex flex-col gap-0.5">
-                          <div className="text-sm font-bold text-gray-800 dark:text-gray-200">{post.views_count || 0} <span className="font-normal text-gray-400 text-[10px] uppercase">Views</span></div>
-                          <div className="text-[10px] font-bold text-pink-500 uppercase">{post.likes_count || 0} Likes</div>
+                          <div className="text-[10px] font-bold text-pink-500 uppercase">Like {post.engagement || 0}</div>
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">

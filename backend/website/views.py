@@ -159,13 +159,13 @@ class MedicalDeviceViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
         return qs.order_by('position')
 
     @action(detail=True, methods=['get'], url_path='features')
-    def features(self, request, pk=None):
+    def features(self, request, uid=None):
         device = self.get_object()
         serializer = DeviceFeatureSerializer(device.features.all(), many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='research-papers')
-    def research_papers(self, request, pk=None):
+    def research_papers(self, request, uid=None):
         device = self.get_object()
         papers = device.research_papers.filter(is_active=True)
         serializer = ResearchPaperSerializer(papers, many=True)
@@ -294,18 +294,26 @@ class BlogPostViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
         return qs
 
     @action(detail=True, methods=['post'], url_path='increment-views', permission_classes=[AllowAny])
-    def increment_views(self, request, pk=None):
+    def increment_views(self, request, uid=None):
         post = self.get_object()
         post.views_count += 1
         post.save(update_fields=['views_count'])
         return Response({'views_count': post.views_count})
 
     @action(detail=True, methods=['post'], url_path='like', permission_classes=[AllowAny])
-    def like(self, request, pk=None):
+    def like(self, request, uid=None):
         post = self.get_object()
-        post.likes_count += 1
-        post.save(update_fields=['likes_count'])
-        return Response({'likes_count': post.likes_count})
+        post.engagement += 1
+        post.save(update_fields=['engagement'])
+        return Response({'engagement': post.engagement})
+
+    @action(detail=True, methods=['post'], url_path='unlike', permission_classes=[AllowAny])
+    def unlike(self, request, uid=None):
+        post = self.get_object()
+        if post.engagement > 0:
+            post.engagement -= 1
+            post.save(update_fields=['engagement'])
+        return Response({'engagement': post.engagement})
 
 
 class BlogCommentViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):

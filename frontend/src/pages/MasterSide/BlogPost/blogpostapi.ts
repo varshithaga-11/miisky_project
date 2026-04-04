@@ -14,10 +14,13 @@ export interface BlogPost {
   author_image?: any;
   featured_image?: string;
   image?: any;
+  video_file?: any;
+  video_url?: string;
   published_at?: string;
   position?: number;
   views_count?: number;
   likes_count?: number;
+  engagement?: number;
   is_active?: boolean;
   status?: "draft" | "published";
   tag_ids?: number[];

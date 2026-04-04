@@ -4,7 +4,8 @@ import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
-import { getBlogPostById, getBlogPosts, createBlogComment, getBlogCategories, getBlogTags } from "../../utils/api";
+import { FiHeart } from "react-icons/fi";
+import { getBlogPostById, getBlogPosts, createBlogComment, getBlogCategories, getBlogTags, likeBlogPost, unlikeBlogPost } from "../../utils/api";
 import { MOCK_BLOG_POSTS } from "../utils/mockData";
 
 export default function BlogDetails() {
@@ -20,6 +21,7 @@ export default function BlogDetails() {
     const [commentStatus, setCommentStatus] = useState({ type: "", message: "" });
     const [replyTo, setReplyTo] = useState<any>(null);
     const [expandedComments, setExpandedComments] = useState<number[]>([]);
+    const [isLiked, setIsLiked] = useState(false);
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -74,10 +76,18 @@ export default function BlogDetails() {
             }
         };
         
+        const checkIfLiked = () => {
+            if (uid) {
+                const likedBlogs = JSON.parse(localStorage.getItem("liked_blogs") || "[]");
+                setIsLiked(likedBlogs.includes(uid));
+            }
+        };
+
         fetchPost();
         fetchLatestPosts();
         fetchCategories();
         fetchTags();
+        checkIfLiked();
     }, [uid]);
 
     useEffect(() => {
@@ -102,14 +112,55 @@ export default function BlogDetails() {
             setCommentStatus({ type: "success", message: "Your comment has been submitted successfully!" });
             setCommentData({ name: "", email: "", message: "" });
             setReplyTo(null);
-            
-            // Refresh post to show new comment
             const response = await getBlogPostById(uid);
             setPost(response.data);
         } catch (err) {
-            console.error("Failed to submit comment:", err);
-            setCommentStatus({ type: "danger", message: "Failed to submit comment. Please try again later." });
+            console.error("Failed to refresh post:", err);
+            setCommentStatus({ type: "error", message: "Failed to submit comment." });
         }
+    };
+
+    const handleLike = async () => {
+        if (!uid) return;
+        
+        try {
+            if (isLiked) {
+                // Unlike
+                const response = await unlikeBlogPost(uid);
+                setPost({ ...post, engagement: response.data.engagement });
+                
+                const likedBlogs = JSON.parse(localStorage.getItem("liked_blogs") || "[]");
+                const newLikedBlogs = likedBlogs.filter((id: string) => id !== uid);
+                localStorage.setItem("liked_blogs", JSON.stringify(newLikedBlogs));
+                setIsLiked(false);
+            } else {
+                // Like
+                const response = await likeBlogPost(uid);
+                setPost({ ...post, engagement: response.data.engagement });
+                
+                const likedBlogs = JSON.parse(localStorage.getItem("liked_blogs") || "[]");
+                likedBlogs.push(uid);
+                localStorage.setItem("liked_blogs", JSON.stringify(likedBlogs));
+                setIsLiked(true);
+            }
+        } catch (err) {
+            console.error("Failed to toggle like:", err);
+        }
+    };
+
+    const getEmbedUrl = (url: string) => {
+        if (!url) return null;
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+        }
+        if (url.includes('vimeo.com')) {
+            const regExp = /vimeo\.com\/(\d+)/;
+            const match = url.match(regExp);
+            return (match) ? `https://player.vimeo.com/video/${match[1]}` : null;
+        }
+        return url;
     };
 
     if (loading) return <div className="boxed_wrapper"><div style={{padding: '120px 0', textAlign: 'center'}}>Loading...</div></div>;
@@ -124,12 +175,50 @@ export default function BlogDetails() {
                                 <div className="blog-details-content">
                                     <div className="news-block-one">
                                         <div className="inner-box">
-                                            <figure className="image-box"><Image src={post.featured_image || post.image || "/website/assets/images/news/news-7.jpg"} alt={post.title} width={856} height={425} priority /></figure>
+                                            <figure className="image-box">
+                                                <Image src={post.featured_image || post.image || "/website/assets/images/news/news-7.jpg"} alt={post.title} width={856} height={425} priority />
+                                            </figure>
+                                            
+                                            {/* Video Section */}
+                                            {(post.video_url || post.video_file) && (
+                                                <div className="video-content mt_30 mb_30" style={{ position: 'relative', overflow: 'hidden', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                                                    {post.video_url ? (
+                                                        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                                                            <iframe
+                                                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                                                                src={getEmbedUrl(post.video_url) || ""}
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowFullScreen
+                                                                title={post.title}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <video 
+                                                            controls 
+                                                            className="w-100" 
+                                                            style={{ width: '100%', maxHeight: '500px', display: 'block', backgroundColor: '#000' }}
+                                                        >
+                                                            <source src={post.video_file} type="video/mp4" />
+                                                            Your browser does not support the video tag.
+                                                        </video>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="lower-content">
                                                 <h3>{post.title || "Blog Post"}</h3>
                                                 <ul className="post-info clearfix">
                                                     <li><i className="icon-59"></i>{post.created_at || post.published_at ? new Date(post.created_at || post.published_at).toLocaleDateString() : "Date"}</li>
                                                     <li><i className="icon-60"></i><Link to="">{post.author_name || post.author || "Admin"}</Link></li>
+                                                    <li 
+                                                        onClick={handleLike} 
+                                                        style={{ cursor: 'pointer', transition: 'all 0.3s', display: 'flex', alignItems: 'center' }}
+                                                        title={isLiked ? "Click to Unlike" : "Click to Like"}
+                                                    >
+                                                        <FiHeart className={isLiked ? 'text-danger' : ''} style={{ color: isLiked ? '#ff4d4d' : 'inherit', marginRight: '5px', strokeWidth: isLiked ? 3 : 2 }} />
+                                                        <span style={{ fontWeight: 600, color: isLiked ? '#ff4d4d' : 'inherit' }}>
+                                                            Like {post.engagement || 0}
+                                                        </span>
+                                                    </li>
                                                 </ul>
                                                 <p>{post.content || post.description || post.excerpt || "No content available"}</p>
                                                 {post.additional_content && (

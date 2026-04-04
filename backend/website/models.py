@@ -369,9 +369,14 @@ class BlogPost(UIDMixin):
     meta_description = models.TextField(blank=True, null=True)
     meta_keywords = models.TextField(blank=True, null=True)
 
+    # Media
+    video_file = models.FileField(upload_to='website/blog_videos/', null=True, blank=True)
+    video_url = models.URLField(max_length=500, blank=True, null=True)
+
     # Engagement
     views_count = models.PositiveIntegerField(default=0)
     likes_count = models.PositiveIntegerField(default=0)
+    engagement = models.PositiveIntegerField(default=0)
 
     is_featured = models.BooleanField(default=False)
     read_time = models.CharField(max_length=50, blank=True, null=True) # e.g. "5 min read"

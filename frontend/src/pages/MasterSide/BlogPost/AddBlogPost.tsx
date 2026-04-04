@@ -33,6 +33,7 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories, tags }) 
   });
   
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [authorFile, setAuthorFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,12 +52,14 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories, tags }) 
     data.append("status", formData.status || "draft");
     data.append("position", String(formData.position || 0));
     if (formData.published_at) data.append("published_at", formData.published_at);
+    if (formData.video_url) data.append("video_url", formData.video_url);
     
     if (formData.tag_ids && formData.tag_ids.length > 0) {
       formData.tag_ids.forEach(id => data.append("tag_ids", String(id)));
     }
     
     if (imageFile) data.append("image", imageFile);
+    if (videoFile) data.append("video_file", videoFile);
     if (authorFile) data.append("author_image", authorFile);
 
     try {
@@ -170,6 +173,31 @@ const AddBlogPost: React.FC<Props> = ({ onSuccess, onClose, categories, tags }) 
                     disabled={loading}
                   />
                 </div>
+                <div>
+                   <Label htmlFor="video_url">Video URL (YouTube/Vimeo)</Label>
+                   <Input
+                     id="video_url"
+                     type="text"
+                     value={formData.video_url || ""}
+                     onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                     placeholder="https://www.youtube.com/watch?v=..."
+                     disabled={loading}
+                   />
+                   <div className="mt-4">
+                     <Label htmlFor="video_file">Or Upload Video</Label>
+                     <input
+                       id="video_file"
+                       type="file"
+                       accept="video/*"
+                       onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                       className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300"
+                       disabled={loading}
+                     />
+                   </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <ImagePicker
                     id="author_image"
