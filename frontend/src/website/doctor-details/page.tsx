@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Image from "../components/Image";
 import { useLayout } from "../context/LayoutContext";
 import Cta from "../components/sections/home2/Cta";
@@ -10,7 +10,8 @@ import { toast } from "react-toastify";
 
 export default function DoctorsDetails() {
   const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-  const { id } = useParams<{ id: string }>();
+  const { uid } = useParams<{ uid: string }>();
+  const navigate = useNavigate();
   const [doctor, setDoctor] = useState<any>(MOCK_DOCTORS[0] || {});
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,8 +36,8 @@ export default function DoctorsDetails() {
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
-        if (id) {
-          const response = await getTeamMemberById(parseInt(id));
+        if (uid) {
+          const response = await getTeamMemberById(uid);
           const doctorData = response.data || MOCK_DOCTORS[0];
           setDoctor(doctorData);
           setBreadcrumbTitle(doctorData.name || "Doctor Details");
@@ -54,7 +55,13 @@ export default function DoctorsDetails() {
       }
     };
     fetchDoctor();
-  }, [id, setBreadcrumbTitle]);
+  }, [uid, setBreadcrumbTitle]);
+
+  useEffect(() => {
+    if (doctor?.uid && String(uid) === String(doctor.id)) {
+      navigate(`/doctor-details/${doctor.uid}`, { replace: true });
+    }
+  }, [doctor, uid, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

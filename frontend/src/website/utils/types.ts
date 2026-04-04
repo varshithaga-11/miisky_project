@@ -27,6 +27,7 @@ export interface AuthTokens {
 
 export interface UserProfile {
   id: number;
+  uid?: string;
   email: string;
   first_name: string;
   last_name: string;
@@ -64,6 +65,7 @@ export interface AppointmentPayload {
 
 export interface Appointment {
   id: number;
+  uid?: string;
   name: string;
   email: string;
   phone: string;
@@ -80,6 +82,7 @@ export interface Appointment {
 
 export interface Doctor {
   id: number;
+  uid?: string;
   name: string;
   specialty: string;
   department: string;
@@ -95,6 +98,7 @@ export interface Doctor {
 
 export interface Department {
   id: number;
+  uid?: string;
   name: string;
   description?: string;
   image?: string;
@@ -106,6 +110,7 @@ export interface Department {
 
 export interface BlogPost {
   id: number;
+  uid?: string;
   title: string;
   slug: string;
   excerpt?: string;
@@ -113,6 +118,8 @@ export interface BlogPost {
   image?: string;
   author?: string;
   category?: string;
+  category_id?: number | string;
+  category_uid?: string;
   tags?: string[];
   published_at: string;
 }
@@ -121,6 +128,7 @@ export interface BlogPost {
 
 export interface Service {
   id: number;
+  uid?: string;
   title: string;
   description?: string;
   icon?: string;
@@ -131,6 +139,7 @@ export interface Service {
 
 export interface PortfolioItem {
   id: number;
+  uid?: string;
   title: string;
   category?: string;
   image: string;
@@ -141,6 +150,7 @@ export interface PortfolioItem {
 
 export interface Testimonial {
   id: number;
+  uid?: string;
   name: string;
   role?: string;
   avatar?: string;
@@ -152,6 +162,7 @@ export interface Testimonial {
 
 export interface PricingPlan {
   id: number;
+  uid?: string;
   name: string;
   price: number;
   currency?: string;
@@ -162,6 +173,7 @@ export interface PricingPlan {
 // ─── Partners ──────────────────────────────────────────────────────────────────
 export interface Partner {
   id: number;
+  uid?: string;
   name: string;
   logo?: string;
   website_url?: string;

@@ -7,7 +7,7 @@ import Cta from "../components/sections/home2/Cta";
 
 export default function PartnerDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
     const [partner, setPartner] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -18,10 +18,10 @@ export default function PartnerDetailsPage() {
 
     useEffect(() => {
         const fetchPartnerData = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
                 setLoading(true);
-                const response = await getPartnerById(parseInt(id));
+                const response = await getPartnerById(uid);
                 setPartner(response.data);
             } catch (err) {
                 console.error("Failed to fetch partner details:", err);
@@ -30,7 +30,7 @@ export default function PartnerDetailsPage() {
             }
         };
         fetchPartnerData();
-    }, [id]);
+    }, [uid]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading partner details...</div>;
     if (!partner) return <div className="text-center p-5 mt_100">Partner not found. <Link to="/partners">Go back</Link></div>;

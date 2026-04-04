@@ -369,11 +369,11 @@ export function appRoutes() {
           <Route path="blog-create" element={<WebsiteBlogCreate />} />
           {/* <Route path="blog-standard" element={<WebsiteBlog2 />} /> */}
           <Route path="blog-details" element={<WebsiteBlogDetails />} />
-          <Route path="blog-details/:id" element={<WebsiteBlogDetails />} />
+          <Route path="blog-details/:uid" element={<WebsiteBlogDetails />} />
           <Route path="contact" element={<WebsiteContact />} />
           <Route path="departments" element={<WebsiteDepartments />} />
           <Route path="department-details" element={<WebsiteDepartmentDetails />} />
-          <Route path="department-details/:id" element={<WebsiteDepartmentDetails />} />
+          <Route path="department-details/:uid" element={<WebsiteDepartmentDetails />} />
           {/* <Route path="department-details-2" element={<WebsiteDepartmentDetails2 />} />
           <Route path="department-details-3" element={<WebsiteDepartmentDetails3 />} />
           <Route path="department-details-4" element={<WebsiteDepartmentDetails4 />} />
@@ -381,7 +381,7 @@ export function appRoutes() {
           <Route path="department-details-6" element={<WebsiteDepartmentDetails6 />} /> */}
           <Route path="doctors" element={<WebsiteDoctors />} />
           <Route path="doctor-details" element={<WebsiteDoctorDetails />} />
-          <Route path="doctor-details/:id" element={<WebsiteDoctorDetails />} />
+          <Route path="doctor-details/:uid" element={<WebsiteDoctorDetails />} />
           <Route path="portfolio" element={<WebsitePortfolio />} />
           {/* <Route path="portfolio-2" element={<WebsitePortfolio2 />} /> */}
           <Route path="plans" element={<WebsitePricing />} />
@@ -392,19 +392,19 @@ export function appRoutes() {
           <Route path="error" element={<WebsiteError />} />
           <Route path="faq" element={<WebsiteFAQ />} />
           <Route path="careers" element={<WebsiteCareers />} />
-          <Route path="careers/:id" element={<WebsiteCareerDetails />} />
-          <Route path="careers/apply/:id" element={<WebsiteCareerApply />} />
+          <Route path="careers/:uid" element={<WebsiteCareerDetails />} />
+          <Route path="careers/apply/:uid" element={<WebsiteCareerApply />} />
           <Route path="medical-devices" element={<WebsiteMedicalDevices />} />
-          <Route path="medical-devices/:id" element={<WebsiteMedicalDeviceDetails />} />
+          <Route path="medical-devices/:uid" element={<WebsiteMedicalDeviceDetails />} />
           <Route path="device-categories" element={<WebsiteDeviceCategories />} />
           <Route path="research" element={<WebsiteResearch />} />
-          <Route path="research/:id" element={<WebsiteResearchDetails />} />
+          <Route path="research/:uid" element={<WebsiteResearchDetails />} />
           <Route path="patents" element={<WebsitePatents />} />
-          <Route path="patents/:id" element={<WebsitePatentDetails />} />
+          <Route path="patents/:uid" element={<WebsitePatentDetails />} />
           <Route path="gallery" element={<WebsiteGallery />} />
-          <Route path="gallery/:id" element={<WebsiteGalleryDetails />} />
+          <Route path="gallery/:uid" element={<WebsiteGalleryDetails />} />
           <Route path="partners" element={<WebsitePartners />} />
-          <Route path="partners/:id" element={<WebsitePartnerDetails />} />
+          <Route path="partners/:uid" element={<WebsitePartnerDetails />} />
           {/* <Route path="appointment" element={<WebsiteAppointment />} /> */}
         </Route>
 

@@ -57,7 +57,7 @@ export default function DoctorsPage() {
                                     <div className="team-block-one">
                                         <div className="inner-box" style={{ borderRadius: '25px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', backgroundColor: '#fff' }}>
                                             <figure className="image-box" style={{ margin: 0, height: '400px', overflow: 'hidden' }}>
-                                                <Link to={`/doctor-details/${doctor.id}`}>
+                                                <Link to={`/doctor-details/${doctor.uid || doctor.id}`}>
                                                     <Image 
                                                         src={doctor.photo_url || "/website/assets/images/team/team-1.jpg"} 
                                                         alt={doctor.name} 
@@ -68,7 +68,7 @@ export default function DoctorsPage() {
                                                 </Link>
                                             </figure>
                                             <div className="content-box p_20" style={{ borderTop: '1px solid #eee' }}>
-                                                <h3 style={{ fontSize: '20px', fontWeight: 800 }}><Link to={`/doctor-details/${doctor.id}`} style={{ color: '#111' }}>{doctor.name}</Link></h3>
+                                                <h3 style={{ fontSize: '20px', fontWeight: 800 }}><Link to={`/doctor-details/${doctor.uid || doctor.id}`} style={{ color: '#111' }}>{doctor.name}</Link></h3>
                                                 <span className="designation" style={{ color: '#0646ac', fontWeight: 600 }}>{doctor.designation}</span>
                                             </div>
                                         </div>

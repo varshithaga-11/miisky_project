@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import { getGalleryItemById, getGalleryCategories } from "../../utils/api";
 import Image from "../components/Image";
@@ -7,7 +7,8 @@ import Cta from "../components/sections/home2/Cta";
 
 export default function GalleryDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
+    const navigate = useNavigate();
     const [item, setItem] = useState<any>(null);
     const [category, setCategory] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -19,17 +20,17 @@ export default function GalleryDetailsPage() {
 
     useEffect(() => {
         const fetchItemData = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
                 setLoading(true);
                 const [itemRes, categoriesRes] = await Promise.all([
-                    getGalleryItemById(parseInt(id)),
+                    getGalleryItemById(uid),
                     getGalleryCategories()
                 ]);
                 
                 setItem(itemRes.data);
                 const categories = Array.isArray(categoriesRes.data) ? categoriesRes.data : categoriesRes.data.results || [];
-                setCategory(categories.find((c: any) => c.id === itemRes.data.category_id));
+                setCategory(categories.find((c: any) => c.id === itemRes.data.category_id || c.uid === itemRes.data.category_uid));
             } catch (err) {
                 console.error("Failed to fetch gallery item details:", err);
             } finally {
@@ -37,7 +38,13 @@ export default function GalleryDetailsPage() {
             }
         };
         fetchItemData();
-    }, [id]);
+    }, [uid]);
+
+    useEffect(() => {
+        if (item?.uid && String(uid) === String(item.id)) {
+            navigate(`/gallery-details/${item.uid}`, { replace: true });
+        }
+    }, [item, uid, navigate]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading gallery item...</div>;
     if (!item) return <div className="text-center p-5 mt_100">Gallery item not found. <Link to="/gallery">Go back</Link></div>;

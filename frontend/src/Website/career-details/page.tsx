@@ -6,7 +6,7 @@ import Cta from "../components/sections/home2/Cta";
 
 export default function CareerDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
     const [job, setJob] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -17,10 +17,10 @@ export default function CareerDetailsPage() {
 
     useEffect(() => {
         const fetchJobData = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
                 setLoading(true);
-                const response = await getJobListingById(parseInt(id));
+                const response = await getJobListingById(uid);
                 setJob(response.data);
             } catch (err) {
                 console.error("Failed to fetch job listing details:", err);
@@ -29,7 +29,7 @@ export default function CareerDetailsPage() {
             }
         };
         fetchJobData();
-    }, [id]);
+    }, [uid]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading job details...</div>;
     if (!job) return <div className="text-center p-5 mt_100">Job not found. <Link to="/careers">Go back</Link></div>;
@@ -91,7 +91,7 @@ export default function CareerDetailsPage() {
                                     <h3 className="mb_20 text-center" style={{ fontSize: '26px', fontWeight: 800 }}>Ready to join us?</h3>
                                     <p className="mb_30 text-center" style={{ color: '#888' }}>Interested candidates are requested to send their resumes and portfolios for consideration. We're looking forward to meeting you!</p>
                                     <div className="btn-box text-center">
-                                        <Link to={`/careers/apply/${id}`} className="theme-btn btn-one" style={{ padding: '12px 60px', borderRadius: '40px', fontSize: '18px' }}>
+                                        <Link to={`/careers/apply/${uid}`} className="theme-btn btn-one" style={{ padding: '12px 60px', borderRadius: '40px', fontSize: '18px' }}>
                                             <span>Apply Now</span>
                                         </Link>
                                     </div>

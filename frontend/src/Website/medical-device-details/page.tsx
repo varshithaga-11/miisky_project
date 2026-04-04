@@ -7,7 +7,7 @@ import Cta from "../components/sections/home2/Cta";
 
 export default function MedicalDeviceDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
     const [device, setDevice] = useState<any>(null);
     const [category, setCategory] = useState<any>(null);
     const [features, setFeatures] = useState<any[]>([]);
@@ -20,20 +20,20 @@ export default function MedicalDeviceDetailsPage() {
 
     useEffect(() => {
         const fetchDeviceData = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
                 setLoading(true);
                 const [deviceRes, categoriesRes, featuresRes] = await Promise.all([
-                    getMedicalDeviceById(parseInt(id)),
+                    getMedicalDeviceById(uid),
                     getMedicalDeviceCategories(),
-                    getDeviceFeatures(parseInt(id))
+                    getDeviceFeatures(uid)
                 ]);
                 
                 const deviceData = deviceRes.data;
                 setDevice(deviceData);
                 
                 const categories = Array.isArray(categoriesRes.data) ? categoriesRes.data : categoriesRes.data.results || [];
-                const foundCategory = categories.find((c: any) => c.id === deviceData.category_id);
+                const foundCategory = categories.find((c: any) => c.id === deviceData.category_id || c.uid === deviceData.category_uid);
                 setCategory(foundCategory);
 
                 const featuresData = Array.isArray(featuresRes.data) ? featuresRes.data : featuresRes.data.results || [];
@@ -45,7 +45,7 @@ export default function MedicalDeviceDetailsPage() {
             }
         };
         fetchDeviceData();
-    }, [id]);
+    }, [uid]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading device details...</div>;
     if (!device) return <div className="text-center p-5 mt_100">Device not found. <Link to="/medical-devices">Go back</Link></div>;

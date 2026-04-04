@@ -62,7 +62,7 @@ export default function PatentsPage() {
                                                 >
                                                     {patent.status || "FILING"}
                                                 </span>
-                                                <Link to={`/patents/${patent.id}`} style={{ color: '#0646ac', fontWeight: 700, fontSize: '14px' }}>
+                                                <Link to={`/patents/${patent.uid || patent.id}`} style={{ color: '#0646ac', fontWeight: 700, fontSize: '14px' }}>
                                                     View Details <i className="fas fa-arrow-right ml_5"></i>
                                                 </Link>
                                             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
@@ -9,7 +9,8 @@ import { MOCK_BLOG_POSTS } from "../utils/mockData";
 
 export default function BlogDetails() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
+    const navigate = useNavigate();
     const [post, setPost] = useState<any>(null);
     const [latestPosts, setLatestPosts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
@@ -28,8 +29,8 @@ export default function BlogDetails() {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                if (id) {
-                    const response = await getBlogPostById(parseInt(id));
+                if (uid) {
+                    const response = await getBlogPostById(uid);
                     setPost(response.data || MOCK_BLOG_POSTS[0]);
                 } else {
                     setPost(MOCK_BLOG_POSTS[0]);
@@ -77,16 +78,22 @@ export default function BlogDetails() {
         fetchLatestPosts();
         fetchCategories();
         fetchTags();
-    }, [id]);
+    }, [uid]);
+
+    useEffect(() => {
+        if (post?.uid && String(uid) === String(post.id)) {
+            navigate(`/blog-details/${post.uid}`, { replace: true });
+        }
+    }, [post, uid, navigate]);
 
     const handleCommentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!id) return;
+        if (!uid) return;
         
         setCommentStatus({ type: "info", message: "Submitting comment..." });
         try {
             await createBlogComment({
-                blog_post: parseInt(id),
+                blog_post: post.id,
                 name: commentData.name,
                 email: commentData.email,
                 comment: commentData.message,
@@ -97,7 +104,7 @@ export default function BlogDetails() {
             setReplyTo(null);
             
             // Refresh post to show new comment
-            const response = await getBlogPostById(parseInt(id));
+            const response = await getBlogPostById(uid);
             setPost(response.data);
         } catch (err) {
             console.error("Failed to submit comment:", err);
@@ -324,8 +331,8 @@ export default function BlogDetails() {
                                         <div className="post-inner">
                                             {latestPosts.map((latestPost: any) => (
                                                 <div key={latestPost.id} className="post">
-                                                    <figure className="post-thumb"><Link to={`/blog-details/${latestPost.id}`}><Image src={latestPost.featured_image || latestPost.image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
-                                                    <h3><Link to={`/blog-details/${latestPost.id}`}>{latestPost.title}</Link></h3>
+                                                    <figure className="post-thumb"><Link to={`/blog-details/${latestPost.uid || latestPost.id}`}><Image src={latestPost.featured_image || latestPost.image || "/website/assets/images/news/post-1.jpg"} alt={latestPost.title} width={100} height={101} priority /></Link></figure>
+                                                    <h3><Link to={`/blog-details/${latestPost.uid || latestPost.id}`}>{latestPost.title}</Link></h3>
                                                     <ul className="post-info clearfix">
                                                         <li><i className="icon-59"></i>{latestPost.created_at || latestPost.published_at ? new Date(latestPost.created_at || latestPost.published_at).toLocaleDateString() : "Date"}</li>
                                                         <li><i className="icon-60"></i><Link to="/blog">{latestPost.author_name || latestPost.author || "Admin"}</Link></li>

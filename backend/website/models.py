@@ -4,13 +4,35 @@ Miisky — SVASTH Website App Models
 
 from django.db import models
 from django.utils.text import slugify
+import uuid
+
+
+def generate_uid():
+    """Generates a 12-character unique identifier."""
+    return uuid.uuid4().hex[:12].upper()
+
+
+class UIDMixin(models.Model):
+    """
+    Mixin to add a unique alphanumeric identifier (uid) to models.
+    """
+    uid = models.CharField(
+        max_length=100, 
+        unique=True, 
+        default=generate_uid, 
+        editable=False,
+        verbose_name="UID"
+    )
+
+    class Meta:
+        abstract = True
 
 
 # ===========================================================================
 # 1. COMPANY INFORMATION
 # ===========================================================================
 
-class CompanyInfo(models.Model):
+class CompanyInfo(UIDMixin):
     """
     Stores global company information shown in the header/footer.
     Single-row config table (use pk=1 always).
@@ -69,7 +91,7 @@ class CompanyInfo(models.Model):
 # 2. HERO / BANNER SECTIONS
 # ===========================================================================
 
-class HeroBanner(models.Model):
+class HeroBanner(UIDMixin):
     """
     Hero/banner slides shown at the top of a page.
     Supports multiple banners per page (ordered by position).
@@ -115,7 +137,7 @@ class HeroBanner(models.Model):
 # 4. MEDICAL DEVICES
 # ===========================================================================
 
-class MedicalDeviceCategory(models.Model):
+class MedicalDeviceCategory(UIDMixin):
     """
     Groups devices by category: e.g., Wearables, Kiosks, Ventilators.
     """
@@ -135,7 +157,7 @@ class MedicalDeviceCategory(models.Model):
         return self.name
 
 
-class MedicalDevice(models.Model):
+class MedicalDevice(UIDMixin):
     """
     Represents each Svasth medical device shown on the website.
     E.g.: Wearable CGM, Pulse Oximeter, Kiosk, BP & 12 Lead ECG,
@@ -220,7 +242,7 @@ class MedicalDevice(models.Model):
         return self.name
 
 
-class DeviceFeature(models.Model):
+class DeviceFeature(UIDMixin):
     """
     Key features/bullet-points for a medical device.
     """
@@ -237,7 +259,7 @@ class DeviceFeature(models.Model):
         return f"{self.device.name} – {self.title}"
 
 
-class ResearchPaper(models.Model):
+class ResearchPaper(UIDMixin):
     """
     Research papers and patents linked to medical devices.
     """
@@ -267,7 +289,7 @@ class ResearchPaper(models.Model):
 # 8. BLOG
 # ===========================================================================
 
-class BlogCategory(models.Model):
+class BlogCategory(UIDMixin):
     """
     Categories for blog posts. E.g.: Food Blogs, Health Tips, Recipes.
     """
@@ -293,7 +315,7 @@ class BlogCategory(models.Model):
         return self.name
 
 
-class BlogTag(models.Model):
+class BlogTag(UIDMixin):
     """
     Tags for filtering/searching blog posts.
     """
@@ -309,7 +331,7 @@ class BlogTag(models.Model):
         return self.name
 
 
-class BlogPost(models.Model):
+class BlogPost(UIDMixin):
     """
     Blog posts (Food Blogs section).
     E.g.: "Sleep Like A Baby", "You Are What You Eat".
@@ -370,7 +392,7 @@ class BlogPost(models.Model):
         return self.title
 
 
-class BlogComment(models.Model):
+class BlogComment(UIDMixin):
     """
     Comments on blog posts (with Name field as seen on live site).
     """
@@ -393,7 +415,7 @@ class BlogComment(models.Model):
 # 9. REPORTS
 # ===========================================================================
 
-class ReportType(models.Model):
+class ReportType(UIDMixin):
     """
     Types of reports available for generation/download.
     E.g.: Health Report, Diet Plan Report, Food Intake Report.
@@ -418,7 +440,7 @@ class ReportType(models.Model):
         return self.name
 
 
-class WebsiteReport(models.Model):
+class WebsiteReport(UIDMixin):
     """
     Generated reports (linked to a user if logged in).
     Supports: Generate, View/Download, Forward.
@@ -458,7 +480,7 @@ class WebsiteReport(models.Model):
 # 13. TESTIMONIALS
 # ===========================================================================
 
-class Testimonial(models.Model):
+class Testimonial(UIDMixin):
     """
     Customer/user testimonials for the website.
     """
@@ -493,7 +515,7 @@ class Testimonial(models.Model):
 # 14. FAQs
 # ===========================================================================
 
-class FAQCategory(models.Model):
+class FAQCategory(UIDMixin):
     """
     FAQ categories. E.g.: Medical Devices, Health Foods, Subscription, General.
     """
@@ -510,7 +532,7 @@ class FAQCategory(models.Model):
         return self.name
 
 
-class FAQ(models.Model):
+class FAQ(UIDMixin):
     """
     Frequently asked questions.
     """
@@ -534,7 +556,7 @@ class FAQ(models.Model):
 # 14.5. DEPARTMENTS
 # ===========================================================================
 
-class Department(models.Model):
+class Department(UIDMixin):
     """
     Company departments used for organizing team members and job listings.
     E.g.: Leadership, Technology, Medical, Nutrition, Operations, Sales & Marketing, HR.
@@ -568,7 +590,7 @@ class Department(models.Model):
 # 15. TEAM MEMBERS
 # ===========================================================================
 
-class TeamMember(models.Model):
+class TeamMember(UIDMixin):
     """
     Company team members displayed on the About/Team page.
     """
@@ -603,7 +625,7 @@ class TeamMember(models.Model):
 # 16. CAREERS / JOB LISTINGS
 # ===========================================================================
 
-class JobListing(models.Model):
+class JobListing(UIDMixin):
     """
     Job openings shown in the Careers section.
     """
@@ -657,7 +679,7 @@ class JobListing(models.Model):
         return f"{self.title} – {self.department}"
 
 
-class JobApplication(models.Model):
+class JobApplication(UIDMixin):
     """
     Job applications submitted through the Careers page.
     """
@@ -701,7 +723,7 @@ class JobApplication(models.Model):
 # 17. GALLERY / MEDIA
 # ===========================================================================
 
-class GalleryCategory(models.Model):
+class GalleryCategory(UIDMixin):
     """
     Categories for the gallery section.
     E.g.: Medical Devices, Health Foods, Events, Office.
@@ -725,7 +747,7 @@ class GalleryCategory(models.Model):
         return self.name
 
 
-class GalleryItem(models.Model):
+class GalleryItem(UIDMixin):
     """
     Individual media items (images or videos) in the gallery.
     """
@@ -759,7 +781,7 @@ class GalleryItem(models.Model):
 # 18. PARTNERS / COLLABORATIONS
 # ===========================================================================
 
-class Partner(models.Model):
+class Partner(UIDMixin):
     """
     Partners and collaborators. E.g.: IISC Bangalore BEES LAB.
     """
@@ -797,7 +819,7 @@ class Partner(models.Model):
 # 19. ABOUT SECTION (DETAILED)
 # ===========================================================================
 
-class CompanyAboutSection(models.Model):
+class CompanyAboutSection(UIDMixin):
     """
     Refined About Us & Why Choose Us configuration.
     Contains fields for the two primary home page sections.
@@ -848,7 +870,7 @@ class CompanyAboutSection(models.Model):
 # 20. LEGAL PAGES
 # ===========================================================================
 
-class LegalPage(models.Model):
+class LegalPage(UIDMixin):
     """
     Legal content: Privacy Policy, Terms, etc.
     """
@@ -891,7 +913,7 @@ class LegalPage(models.Model):
 # 21. PATENTS
 # ===========================================================================
 
-class Patent(models.Model):
+class Patent(UIDMixin):
     """
     Patents for Miisky technologies and inventions.
     """
@@ -939,7 +961,7 @@ class Patent(models.Model):
 # 22. WORKFLOW STEPS
 # ===========================================================================
 
-class WorkflowStep(models.Model):
+class WorkflowStep(UIDMixin):
     """
     Steps for "How it Works" section on the home page.
     """
@@ -961,7 +983,7 @@ class WorkflowStep(models.Model):
 # 23. PRICING PLANS
 # ===========================================================================
 
-class PricingPlan(models.Model):
+class PricingPlan(UIDMixin):
     """
     Subscription/Pricing plans for the website.
     """
@@ -992,7 +1014,7 @@ class PricingPlan(models.Model):
 # 24. WEBSITE INQUIRIES / APPOINTMENTS
 # ===========================================================================
 
-class WebsiteInquiry(models.Model):
+class WebsiteInquiry(UIDMixin):
     """
     Inquiries submitted via contact/appointment forms on the website.
     """
@@ -1040,7 +1062,7 @@ class WebsiteInquiry(models.Model):
 # 25. DYNAMIC STAT COUNTERS
 # ===========================================================================
 
-class StatCounter(models.Model):
+class StatCounter(UIDMixin):
     """
     Dynamic counters for the home page (e.g., 30+ Years, 180+ Doctors).
     """

@@ -17,6 +17,34 @@ from .models import *
 from .serializers import *
 
 
+class PolymorphicLookupMixin:
+    """
+    Mixin to allow lookups by either 'id' or 'uid'.
+    Try numeric ID first if applicable, otherwise try UID.
+    """
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs[lookup_url_kwarg]
+        
+        # 1. Try lookup by UID (priority for SEO/New links)
+        obj = queryset.filter(uid=lookup_value).first()
+        if obj:
+            self.check_object_permissions(self.request, obj)
+            return obj
+            
+        # 2. Try lookup by numeric ID (fallback for legacy/admin links)
+        if str(lookup_value).isdigit():
+            obj = queryset.filter(id=lookup_value).first()
+            if obj:
+                self.check_object_permissions(self.request, obj)
+                return obj
+        
+        # 3. Standard Fallback to 404 (uses original lookup_field logic)
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(queryset, **{self.lookup_field: lookup_value})
+
+
 def _bool(val):
     """Convert query param string to boolean."""
     return str(val).lower() in ('1', 'true', 'yes')
@@ -26,9 +54,10 @@ def _bool(val):
 # 1. COMPANY INFO
 # ===========================================================================
 
-class CompanyInfoViewSet(viewsets.ModelViewSet):
+class CompanyInfoViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     queryset = CompanyInfo.objects.all()
     serializer_class = CompanyInfoSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter]
@@ -39,8 +68,9 @@ class CompanyInfoViewSet(viewsets.ModelViewSet):
 # 2. HERO BANNER
 # ===========================================================================
 
-class HeroBannerViewSet(viewsets.ModelViewSet):
+class HeroBannerViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = HeroBannerSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -69,8 +99,9 @@ class HeroBannerViewSet(viewsets.ModelViewSet):
 # 4. MEDICAL DEVICES
 # ===========================================================================
 
-class MedicalDeviceCategoryViewSet(viewsets.ModelViewSet):
+class MedicalDeviceCategoryViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = MedicalDeviceCategorySerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -88,7 +119,8 @@ class MedicalDeviceCategoryViewSet(viewsets.ModelViewSet):
         return qs.order_by('position')
 
 
-class MedicalDeviceViewSet(viewsets.ModelViewSet):
+class MedicalDeviceViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -105,7 +137,11 @@ class MedicalDeviceViewSet(viewsets.ModelViewSet):
         qs = MedicalDevice.objects.select_related('category')
         params = self.request.query_params
         if params.get('category'):
-            qs = qs.filter(category=params['category'])
+            val = params['category']
+            if val.isdigit():
+                qs = qs.filter(category_id=val)
+            else:
+                qs = qs.filter(category__uid=val)
         if params.get('is_featured') is not None:
             qs = qs.filter(is_featured=_bool(params['is_featured']))
         if params.get('is_non_invasive') is not None:
@@ -136,8 +172,9 @@ class MedicalDeviceViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class DeviceFeatureViewSet(viewsets.ModelViewSet):
+class DeviceFeatureViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = DeviceFeatureSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -148,12 +185,16 @@ class DeviceFeatureViewSet(viewsets.ModelViewSet):
         qs = DeviceFeature.objects.select_related('device')
         device = self.request.query_params.get('device')
         if device:
-            qs = qs.filter(device=device)
+            if device.isdigit():
+                qs = qs.filter(device_id=device)
+            else:
+                qs = qs.filter(device__uid=device)
         return qs
 
 
-class ResearchPaperViewSet(viewsets.ModelViewSet):
+class ResearchPaperViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = ResearchPaperSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -164,7 +205,10 @@ class ResearchPaperViewSet(viewsets.ModelViewSet):
         qs = ResearchPaper.objects.filter(is_active=True)
         device = self.request.query_params.get('device')
         if device:
-            qs = qs.filter(device=device)
+            if device.isdigit():
+                qs = qs.filter(device_id=device)
+            else:
+                qs = qs.filter(device__uid=device)
         return qs
 
 
@@ -172,8 +216,9 @@ class ResearchPaperViewSet(viewsets.ModelViewSet):
 # 8. BLOG
 # ===========================================================================
 
-class BlogCategoryViewSet(viewsets.ModelViewSet):
+class BlogCategoryViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = BlogCategorySerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -191,16 +236,18 @@ class BlogCategoryViewSet(viewsets.ModelViewSet):
         return qs.order_by('position')
 
 
-class BlogTagViewSet(viewsets.ModelViewSet):
+class BlogTagViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     queryset = BlogTag.objects.all()
     serializer_class = BlogTagSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
 
-class BlogPostViewSet(viewsets.ModelViewSet):
+class BlogPostViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -223,9 +270,17 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         qs = BlogPost.objects.select_related('category').prefetch_related('tags')
         p = self.request.query_params
         if p.get('category'):
-            qs = qs.filter(category=p['category'])
+            val = p['category']
+            if val.isdigit():
+                qs = qs.filter(category_id=val)
+            else:
+                qs = qs.filter(category__uid=val)
         if p.get('tag'):
-            qs = qs.filter(tags=p['tag'])
+            val = p['tag']
+            if val.isdigit():
+                qs = qs.filter(tags=val)
+            else:
+                qs = qs.filter(tags__uid=val)
         if p.get('status'):
             qs = qs.filter(status=p['status'])
         if p.get('is_featured') is not None:
@@ -253,8 +308,9 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         return Response({'likes_count': post.likes_count})
 
 
-class BlogCommentViewSet(viewsets.ModelViewSet):
+class BlogCommentViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = BlogCommentSerializer
+    lookup_field = 'uid'
     permission_classes = [AllowAny]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -270,7 +326,10 @@ class BlogCommentViewSet(viewsets.ModelViewSet):
         params = self.request.query_params
         blog_post = params.get('blog_post')
         if blog_post:
-            qs = qs.filter(blog_post=blog_post)
+            if blog_post.isdigit():
+                qs = qs.filter(blog_post_id=blog_post)
+            else:
+                qs = qs.filter(blog_post__uid=blog_post)
         
         return qs
 
@@ -288,6 +347,7 @@ class BlogCommentViewSet(viewsets.ModelViewSet):
 
 class ReportTypeViewSet(viewsets.ModelViewSet):
     serializer_class = ReportTypeSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -306,6 +366,7 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
 
 class WebsiteReportViewSet(viewsets.ModelViewSet):
     serializer_class = WebsiteReportSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -316,7 +377,11 @@ class WebsiteReportViewSet(viewsets.ModelViewSet):
         qs = WebsiteReport.objects.select_related('report_type')
         p = self.request.query_params
         if p.get('report_type'):
-            qs = qs.filter(report_type=p['report_type'])
+            val = p['report_type']
+            if val.isdigit():
+                qs = qs.filter(report_type_id=val)
+            else:
+                qs = qs.filter(report_type__uid=val)
         if p.get('status'):
             qs = qs.filter(status=p['status'])
         return qs
@@ -339,6 +404,7 @@ class WebsiteReportViewSet(viewsets.ModelViewSet):
 
 class TestimonialViewSet(viewsets.ModelViewSet):
     serializer_class = TestimonialSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -367,6 +433,7 @@ class TestimonialViewSet(viewsets.ModelViewSet):
 
 class FAQCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = FAQCategorySerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -386,6 +453,7 @@ class FAQCategoryViewSet(viewsets.ModelViewSet):
 
 class FAQViewSet(viewsets.ModelViewSet):
     serializer_class = FAQSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -396,7 +464,11 @@ class FAQViewSet(viewsets.ModelViewSet):
         qs = FAQ.objects.select_related('category')
         p = self.request.query_params
         if p.get('category'):
-            qs = qs.filter(category=p['category'])
+            val = p['category']
+            if val.isdigit():
+                qs = qs.filter(category_id=val)
+            else:
+                qs = qs.filter(category__uid=val)
         is_active = p.get('is_active')
         if is_active is not None:
             if is_active.lower() != 'all':
@@ -410,8 +482,9 @@ class FAQViewSet(viewsets.ModelViewSet):
 # 14.5. DEPARTMENTS
 # ===========================================================================
 
-class DepartmentViewSet(viewsets.ModelViewSet):
+class DepartmentViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = DepartmentSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -432,8 +505,9 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 # 15. TEAM MEMBERS
 # ===========================================================================
 
-class TeamMemberViewSet(viewsets.ModelViewSet):
+class TeamMemberViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = TeamMemberSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -444,7 +518,11 @@ class TeamMemberViewSet(viewsets.ModelViewSet):
         qs = TeamMember.objects.all()
         p = self.request.query_params
         if p.get('department'):
-            qs = qs.filter(department=p['department'])
+            val = p['department']
+            if val.isdigit():
+                qs = qs.filter(department_id=val)
+            else:
+                qs = qs.filter(department__uid=val)
         is_active = p.get('is_active')
         if is_active is not None:
             qs = qs.filter(is_active=_bool(is_active))
@@ -457,8 +535,9 @@ class TeamMemberViewSet(viewsets.ModelViewSet):
 # 16. CAREERS
 # ===========================================================================
 
-class JobListingViewSet(viewsets.ModelViewSet):
+class JobListingViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = JobListingSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -469,7 +548,11 @@ class JobListingViewSet(viewsets.ModelViewSet):
         qs = JobListing.objects.all()
         p = self.request.query_params
         if p.get('department'):
-            qs = qs.filter(department=p['department'])
+            val = p['department']
+            if val.isdigit():
+                qs = qs.filter(department_id=val)
+            else:
+                qs = qs.filter(department__uid=val)
         if p.get('job_type'):
             qs = qs.filter(job_type=p['job_type'])
         is_active = p.get('is_active')
@@ -481,7 +564,8 @@ class JobListingViewSet(viewsets.ModelViewSet):
         return qs.order_by('-created_at')
 
 
-class JobApplicationViewSet(viewsets.ModelViewSet):
+class JobApplicationViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
+    lookup_field = 'uid'
     permission_classes = [AllowAny]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -497,7 +581,11 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         qs = JobApplication.objects.select_related('job')
         p = self.request.query_params
         if p.get('job'):
-            qs = qs.filter(job=p['job'])
+            val = p['job']
+            if val.isdigit():
+                qs = qs.filter(job_id=val)
+            else:
+                qs = qs.filter(job__uid=val)
         if p.get('status'):
             qs = qs.filter(status=p['status'])
         return qs
@@ -521,6 +609,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 
 class GalleryCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = GalleryCategorySerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -538,8 +627,9 @@ class GalleryCategoryViewSet(viewsets.ModelViewSet):
         return qs.order_by('position')
 
 
-class GalleryItemViewSet(viewsets.ModelViewSet):
+class GalleryItemViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = GalleryItemSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -550,7 +640,11 @@ class GalleryItemViewSet(viewsets.ModelViewSet):
         qs = GalleryItem.objects.select_related('category')
         p = self.request.query_params
         if p.get('category'):
-            qs = qs.filter(category=p['category'])
+            val = p['category']
+            if val.isdigit():
+                qs = qs.filter(category_id=val)
+            else:
+                qs = qs.filter(category__uid=val)
         if p.get('media_type'):
             qs = qs.filter(media_type=p['media_type'])
         if p.get('is_featured') is not None:
@@ -568,8 +662,9 @@ class GalleryItemViewSet(viewsets.ModelViewSet):
 # 18. PARTNERS
 # ===========================================================================
 
-class PartnerViewSet(viewsets.ModelViewSet):
+class PartnerViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = PartnerSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -596,6 +691,7 @@ class PartnerViewSet(viewsets.ModelViewSet):
 
 class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
     serializer_class = CompanyAboutSectionSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -622,6 +718,7 @@ class CompanyAboutSectionViewSet(viewsets.ModelViewSet):
 
 class LegalPageViewSet(viewsets.ModelViewSet):
     serializer_class = LegalPageSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -642,8 +739,9 @@ class LegalPageViewSet(viewsets.ModelViewSet):
 # 21. PATENTS
 # ===========================================================================
 
-class PatentViewSet(viewsets.ModelViewSet):
+class PatentViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
     serializer_class = PatentSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -672,6 +770,7 @@ class PatentViewSet(viewsets.ModelViewSet):
 
 class WorkflowStepViewSet(viewsets.ModelViewSet):
     serializer_class = WorkflowStepSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -694,6 +793,7 @@ class WorkflowStepViewSet(viewsets.ModelViewSet):
 
 class PricingPlanViewSet(viewsets.ModelViewSet):
     serializer_class = PricingPlanSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -756,6 +856,7 @@ class DashboardStatsView(APIView):
 class WebsiteInquiryViewSet(viewsets.ModelViewSet):
     queryset = WebsiteInquiry.objects.all()
     serializer_class = WebsiteInquirySerializer
+    lookup_field = 'uid'
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone', 'subject', 'message']
@@ -786,6 +887,7 @@ class WebsiteInquiryViewSet(viewsets.ModelViewSet):
 
 class StatCounterViewSet(viewsets.ModelViewSet):
     serializer_class = StatCounterSerializer
+    lookup_field = 'uid'
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = WebsitePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

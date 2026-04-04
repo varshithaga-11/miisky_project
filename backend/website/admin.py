@@ -39,7 +39,7 @@ from .models import (
 
 @admin.register(CompanyInfo)
 class CompanyInfoAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email_general', 'email_support', 'phone_primary', 'city', 'updated_at')
+    list_display = ('uid', 'name', 'email_general', 'email_support', 'phone_primary', 'city', 'updated_at')
     search_fields = ('name', 'email_general', 'email_support', 'phone_primary', 'city')
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
@@ -59,7 +59,7 @@ class CompanyInfoAdmin(admin.ModelAdmin):
 
 @admin.register(HeroBanner)
 class HeroBannerAdmin(admin.ModelAdmin):
-    list_display = ('page', 'title', 'position', 'is_active', 'created_at')
+    list_display = ('uid', 'page', 'title', 'position', 'is_active', 'created_at')
     list_filter = ('page', 'is_active')
     search_fields = ('title', 'subtitle', 'description')
     list_editable = ('position', 'is_active')
@@ -92,7 +92,7 @@ class PatentInline(admin.TabularInline):
 
 @admin.register(MedicalDeviceCategory)
 class MedicalDeviceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'position', 'is_active')
+    list_display = ('uid', 'name', 'position', 'is_active')
     list_editable = ('position', 'is_active')
     search_fields = ('name', 'description')
     ordering = ('position',)
@@ -100,7 +100,7 @@ class MedicalDeviceCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(MedicalDevice)
 class MedicalDeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'primary_technology', 'is_available', 'is_featured', 'is_active', 'position')
+    list_display = ('uid', 'name', 'category', 'primary_technology', 'is_available', 'is_featured', 'is_active', 'position')
     list_filter = ('category', 'primary_technology', 'is_non_invasive', 'is_continuous_monitoring', 'is_available', 'is_featured', 'is_active')
     search_fields = ('name', 'slug', 'short_description', 'description', 'connectivity')
     list_editable = ('position', 'is_active', 'is_featured')
@@ -149,7 +149,7 @@ class BlogCommentInline(admin.TabularInline):
 
 @admin.register(BlogCategory)
 class BlogCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'position', 'is_active')
+    list_display = ('uid', 'name', 'slug', 'position', 'is_active')
     list_editable = ('position', 'is_active')
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
@@ -165,7 +165,7 @@ class BlogTagAdmin(admin.ModelAdmin):
 
 @admin.register(BlogPost)
 class BlogPostAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'author_name', 'status', 'is_featured', 'is_active', 'published_at', 'views_count', 'likes_count')
+    list_display = ('uid', 'title', 'category', 'author_name', 'status', 'is_featured', 'is_active', 'published_at', 'views_count', 'likes_count')
     list_filter = ('status', 'category', 'is_featured', 'is_active')
     search_fields = ('title', 'slug', 'excerpt', 'content', 'author_name')
     list_editable = ('status', 'is_featured', 'is_active')
@@ -187,7 +187,7 @@ class BlogPostAdmin(admin.ModelAdmin):
 
 @admin.register(BlogComment)
 class BlogCommentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'blog_post', 'is_approved', 'created_at')
+    list_display = ('uid', 'name', 'email', 'blog_post', 'is_approved', 'created_at')
     list_filter = ('is_approved', 'created_at')
     search_fields = ('name', 'email', 'comment', 'blog_post__title')
     list_editable = ('is_approved',)
@@ -235,7 +235,7 @@ class WebsiteReportAdmin(admin.ModelAdmin):
 
 @admin.register(Testimonial)
 class TestimonialAdmin(admin.ModelAdmin):
-    list_display = ('name', 'designation', 'testimonial_type', 'rating', 'is_featured', 'is_active', 'position')
+    list_display = ('uid', 'name', 'designation', 'testimonial_type', 'rating', 'is_featured', 'is_active', 'position')
     list_filter = ('testimonial_type', 'is_featured', 'is_active')
     search_fields = ('name', 'designation', 'organization', 'testimonial_text')
     list_editable = ('is_featured', 'is_active', 'position')
@@ -279,7 +279,7 @@ class FAQAdmin(admin.ModelAdmin):
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'head_name', 'head_email', 'position', 'is_active')
+    list_display = ('uid', 'name', 'head_name', 'head_email', 'position', 'is_active')
     list_editable = ('position', 'is_active')
     search_fields = ('name', 'description', 'head_name', 'head_email')
     readonly_fields = ('created_at', 'updated_at')
@@ -292,7 +292,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
 @admin.register(TeamMember)
 class TeamMemberAdmin(admin.ModelAdmin):
-    list_display = ('name', 'designation', 'department', 'experience_years', 'is_active', 'position')
+    list_display = ('uid', 'name', 'designation', 'department', 'experience_years', 'is_active', 'position')
     list_filter = ('department', 'is_active')
     search_fields = ('name', 'designation', 'bio', 'qualification', 'email')
     list_editable = ('is_active', 'position')
@@ -322,7 +322,7 @@ class JobApplicationInline(admin.TabularInline):
 
 @admin.register(JobListing)
 class JobListingAdmin(admin.ModelAdmin):
-    list_display = ('title', 'department', 'job_type', 'location', 'openings', 'application_deadline', 'is_active')
+    list_display = ('uid', 'title', 'department', 'job_type', 'location', 'openings', 'application_deadline', 'is_active')
     list_filter = ('department', 'job_type', 'is_active')
     search_fields = ('title', 'slug', 'job_description', 'requirements', 'location')
     readonly_fields = ('slug', 'created_at', 'updated_at')
@@ -339,7 +339,7 @@ class JobListingAdmin(admin.ModelAdmin):
 
 @admin.register(JobApplication)
 class JobApplicationAdmin(admin.ModelAdmin):
-    list_display = ('applicant_name', 'email', 'phone', 'job', 'status', 'applied_at')
+    list_display = ('uid', 'applicant_name', 'email', 'phone', 'job', 'status', 'applied_at')
     list_filter = ('status', 'job__department', 'applied_at')
     search_fields = ('applicant_name', 'email', 'phone', 'job__title')
     readonly_fields = ('applied_at', 'updated_at')
@@ -385,7 +385,7 @@ class GalleryCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(GalleryItem)
 class GalleryItemAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'media_type', 'is_featured', 'is_active', 'position', 'created_at')
+    list_display = ('uid', 'title', 'category', 'media_type', 'is_featured', 'is_active', 'position', 'created_at')
     list_filter = ('category', 'media_type', 'is_featured', 'is_active')
     search_fields = ('title', 'description')
     list_editable = ('is_featured', 'is_active', 'position')
@@ -399,7 +399,7 @@ class GalleryItemAdmin(admin.ModelAdmin):
 
 @admin.register(Partner)
 class PartnerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'partner_type', 'since_year', 'position', 'is_active')
+    list_display = ('uid', 'name', 'partner_type', 'since_year', 'position', 'is_active')
     list_filter = ('partner_type', 'is_active')
     search_fields = ('name', 'description', 'collaboration_details')
     list_editable = ('position', 'is_active')
@@ -413,7 +413,7 @@ class PartnerAdmin(admin.ModelAdmin):
 
 @admin.register(CompanyAboutSection)
 class CompanyAboutSectionAdmin(admin.ModelAdmin):
-    list_display = ('about_title', 'about_tagline', 'is_active', 'updated_at')
+    list_display = ('about_title', 'uid', 'about_tagline', 'is_active', 'updated_at')
     list_filter = ('is_active',)
     search_fields = ('about_title', 'about_tagline', 'about_description', 'choose_title')
     readonly_fields = ('created_at', 'updated_at')
@@ -450,7 +450,7 @@ class CompanyAboutSectionAdmin(admin.ModelAdmin):
 
 @admin.register(LegalPage)
 class LegalPageAdmin(admin.ModelAdmin):
-    list_display = ('title', 'page_type', 'version', 'effective_date', 'is_active', 'updated_at')
+    list_display = ('uid', 'title', 'page_type', 'version', 'effective_date', 'is_active', 'updated_at')
     list_filter = ('page_type', 'is_active')
     search_fields = ('title', 'slug', 'content')
     prepopulated_fields = {'slug': ('title',)}
@@ -470,7 +470,7 @@ class LegalPageAdmin(admin.ModelAdmin):
 
 @admin.register(Patent)
 class PatentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'patent_number', 'status', 'jurisdiction', 'device', 'filing_date', 'is_active')
+    list_display = ('uid', 'title', 'patent_number', 'status', 'jurisdiction', 'device', 'filing_date', 'is_active')
     list_filter = ('status', 'jurisdiction', 'is_active')
     search_fields = ('title', 'patent_number', 'application_number', 'inventors', 'abstract', 'technology_area')
     list_editable = ('status', 'is_active')

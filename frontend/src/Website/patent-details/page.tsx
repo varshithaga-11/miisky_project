@@ -6,7 +6,7 @@ import Cta from "../components/sections/home2/Cta";
 
 export default function PatentDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
     const [patent, setPatent] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -17,10 +17,10 @@ export default function PatentDetailsPage() {
 
     useEffect(() => {
         const fetchPatentData = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
                 setLoading(true);
-                const response = await getPatentById(parseInt(id));
+                const response = await getPatentById(uid);
                 setPatent(response.data);
             } catch (err) {
                 console.error("Failed to fetch patent details:", err);
@@ -29,7 +29,7 @@ export default function PatentDetailsPage() {
             }
         };
         fetchPatentData();
-    }, [id]);
+    }, [uid]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading patent details...</div>;
     if (!patent) return <div className="text-center p-5 mt_100">Patent not found. <Link to="/patents">Go back</Link></div>;

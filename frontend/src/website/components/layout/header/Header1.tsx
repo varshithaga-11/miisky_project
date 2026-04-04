@@ -100,7 +100,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/departments">Our Departments</Link></li>
                           {departments.map((dept: any) => (
                             <li key={dept.id}>
-                              <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
+                              <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
                         </ul>
@@ -221,7 +221,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                           <li><Link to="/departments">Our Departments</Link></li>
                           {departments.map((dept: any) => (
                             <li key={dept.id}>
-                              <Link to={`/department-details/${dept.id}`}>{dept.name}</Link>
+                              <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
                             </li>
                           ))}
                         </ul>

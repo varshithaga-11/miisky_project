@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
 import Image from "../components/Image";
 import { getMedicalDevices, getMedicalDeviceCategories } from "../../utils/api";
@@ -7,6 +7,7 @@ import { getMedicalDevices, getMedicalDeviceCategories } from "../../utils/api";
 export default function MedicalDevicesPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const location = useLocation();
+    const navigate = useNavigate();
     const [devices, setDevices] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -35,14 +36,29 @@ export default function MedicalDevicesPage() {
         fetchDevicesData();
     }, [setHeaderStyle, setBreadcrumbTitle]);
 
+    useEffect(() => {
+        if (categoryId && !isNaN(Number(categoryId)) && categories.length > 0) {
+            const cat = categories.find(c => String(c.id) === String(categoryId));
+            if (cat && cat.uid) {
+                navigate(`/medical-devices?category=${cat.uid}`, { replace: true });
+            }
+        }
+    }, [categoryId, categories, navigate]);
+
     const filteredDevices = useMemo(() => {
         if (!categoryId) return devices;
-        return devices.filter(device => device.category === parseInt(categoryId) || device.category_id === parseInt(categoryId));
+        return devices.filter(device => 
+            device.category === categoryId || 
+            device.category_id === categoryId || 
+            String(device.category) === String(categoryId) ||
+            String(device.category_id) === String(categoryId) ||
+            (device.category_uid && device.category_uid === categoryId)
+        );
     }, [devices, categoryId]);
 
     const activeCategoryName = useMemo(() => {
         if (!categoryId) return null;
-        return categories.find(c => c.id === parseInt(categoryId))?.name;
+        return categories.find(c => String(c.uid || c.id) === String(categoryId))?.name;
     }, [categories, categoryId]);
 
     return (
@@ -78,8 +94,8 @@ export default function MedicalDevicesPage() {
                     </Link>
                     {categories.map(cat => (
                         <Link 
-                            key={cat.id} 
-                            to={`/medical-devices?category=${cat.id}`}
+                            key={cat.uid || cat.id} 
+                            to={`/medical-devices?category=${cat.uid || cat.id}`}
                             className="filter-pill"
                             style={{
                                 padding: '12px 28px',
@@ -88,11 +104,11 @@ export default function MedicalDevicesPage() {
                                 fontWeight: 700,
                                 letterSpacing: '0.5px',
                                 transition: 'all 0.3s ease',
-                                backgroundColor: categoryId === String(cat.id) ? '#0646ac' : '#fff',
-                                color: categoryId === String(cat.id) ? '#fff' : '#111827',
+                                backgroundColor: String(categoryId) === String(cat.uid || cat.id) ? '#0646ac' : '#fff',
+                                color: String(categoryId) === String(cat.uid || cat.id) ? '#fff' : '#111827',
                                 border: '1px solid',
-                                borderColor: categoryId === String(cat.id) ? '#0646ac' : '#eee',
-                                boxShadow: categoryId === String(cat.id) ? '0 10px 20px rgba(6,70,172,0.2)' : '0 2px 5px rgba(0,0,0,0.03)',
+                                borderColor: String(categoryId) === String(cat.uid || cat.id) ? '#0646ac' : '#eee',
+                                boxShadow: String(categoryId) === String(cat.uid || cat.id) ? '0 10px 20px rgba(6,70,172,0.2)' : '0 2px 5px rgba(0,0,0,0.03)',
                                 textTransform: 'uppercase'
                             }}
                         >
@@ -120,7 +136,7 @@ export default function MedicalDevicesPage() {
                     <div className="row clearfix">
                         {filteredDevices.map((device) => (
                             <div key={device.id} className="col-lg-4 col-md-6 col-sm-12 mb_40">
-                                <Link to={`/medical-devices/${device.id}`} className="p_relative d-block h-100">
+                                <Link to={`/medical-devices/${device.uid || device.id}`} className="p_relative d-block h-100">
                                     <div className="device-card-premium h-100" style={{ 
                                         backgroundColor: '#fff', 
                                         borderRadius: '30px', 
@@ -133,7 +149,7 @@ export default function MedicalDevicesPage() {
                                         position: 'relative'
                                     }}>
                                         <div className="image-wrapper p_relative" style={{ height: '280px', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
-                                            <div className="category-badge" style={{ 
+                                             <div className="category-badge" style={{ 
                                                 position: 'absolute', 
                                                 top: '20px', 
                                                 left: '20px', 
@@ -149,7 +165,7 @@ export default function MedicalDevicesPage() {
                                                 letterSpacing: '1px',
                                                 boxShadow: '0 5px 15px rgba(0,0,0,0.05)'
                                             }}>
-                                                {categories.find(c => c.id === device.category || c.id === device.category_id)?.name || "Medical Tech"}
+                                                {categories.find(c => c.id === device.category || c.id === device.category_id || c.uid === device.category_uid)?.name || "Medical Tech"}
                                             </div>
                                             <Image 
                                                 src={device.image_url || device.image || "/website/assets/images/service/service-1.jpg"} 

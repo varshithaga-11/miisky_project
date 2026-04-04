@@ -6,7 +6,7 @@ import { FileText, User, Briefcase, Upload, CheckCircle } from "lucide-react";
 
 export default function CareerApplyPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
     const navigate = useNavigate();
     
     const [job, setJob] = useState<any>(null);
@@ -36,9 +36,9 @@ export default function CareerApplyPage() {
 
     useEffect(() => {
         const fetchJob = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
-                const response = await careersApi.detail(id);
+                const response = await careersApi.detail(uid);
                 setJob(response.data || response); 
             } catch (err) {
                 console.error("Failed to fetch job listing:", err);
@@ -48,7 +48,7 @@ export default function CareerApplyPage() {
             }
         };
         fetchJob();
-    }, [id]);
+    }, [uid]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -76,9 +76,9 @@ export default function CareerApplyPage() {
 
         setStatus("loading");
         setErrorMessage("");
-        try {
-            const data = new FormData();
-            data.append("job", id || "");
+    try {
+        const data = new FormData();
+        data.append("job", uid || "");
             data.append("applicant_name", formData.applicant_name);
             data.append("email", formData.email);
             data.append("phone", formData.phone);

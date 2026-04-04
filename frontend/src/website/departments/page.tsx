@@ -1,9 +1,10 @@
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
-import { getDepartments, createWebsiteInquiry } from "../../utils/api";
+import { getDepartments, getDepartmentById, createWebsiteInquiry } from "../../utils/api";
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 import { getDepartmentIcon } from "../../utils/departmentIcons";
 import Cta from "../components/sections/home2/Cta";
@@ -37,6 +38,7 @@ const swiperOptions = {
 
 export default function DepartmentsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
+    const { uid } = useParams<{ uid: string }>();
     const [, setActiveTab] = useState(1);
     const [departments, setDepartments] = useState(MOCK_DEPARTMENTS);
     const [loading, setLoading] = useState(true);
@@ -81,18 +83,11 @@ export default function DepartmentsPage() {
             try {
                 setLoading(true);
                 const response = await getDepartments();
-                let data = [];
-                
-                if (Array.isArray(response?.data)) {
-                  data = response.data;
-                } else if (response?.data?.results && Array.isArray(response.data.results)) {
-                  data = response.data.results;
-                } else if (Array.isArray(response?.data?.data)) {
-                  data = response.data.data;
-                }
+                const data = Array.isArray(response?.data) 
+                    ? response.data 
+                    : response?.data?.results || response?.data?.data || [];
                 
                 setDepartments(data.length > 0 ? data : MOCK_DEPARTMENTS);
-                if (data.length > 0) setActiveTab(data[0].id);
             } catch (err) {
                 console.warn('Failed to fetch departments:', err);
                 setDepartments(MOCK_DEPARTMENTS);
@@ -113,7 +108,7 @@ export default function DepartmentsPage() {
                         <div className="dept-carousel-container p_relative">
                             <Swiper {...swiperOptions} className="department-carousel">
                                 {departments.map((dept: any) => (
-                                    <SwiperSlide key={dept.id}>
+                                    <SwiperSlide key={dept.uid || dept.id}>
                                         <div className="service-block-one">
                                             <div className="inner-box">
                                                 <figure className="image-box">
@@ -128,7 +123,7 @@ export default function DepartmentsPage() {
                                                 style={{ width: '64px', height: '64px', objectFit: 'contain' }}
                                             />
                                         </div>
-                                                        <h3><Link to={`/department-details/${dept.id}`}>{dept.name}</Link></h3>
+                                                        <h3><Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link></h3>
                                                         <p>{dept.description?.substring(0, 60)}...</p>
                                                     </div>
                                                 </div>

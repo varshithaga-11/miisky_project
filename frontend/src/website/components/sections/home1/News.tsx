@@ -36,8 +36,9 @@ export default function News({ posts }: NewsProps) {
         const blogData = Array.isArray(data) ? data : data.results || data;
         const formattedPosts = blogData.map((post: any) => ({
           id: post.id,
+          uid: post.uid,
           title: post.title || "Untitled",
-          slug: post.slug || `post-${post.id}`,
+          slug: post.slug || `post-${post.uid || post.id}`,
           excerpt: post.excerpt || post.content?.substring(0, 150) || "",
           image: post.image || post.featured_image_url || post.featured_image || "/website/assets/images/news/news-1.jpg",
           author: post.author_name || post.author?.name || post.author || "Admin",
@@ -92,7 +93,7 @@ export default function News({ posts }: NewsProps) {
               <div className="news-block-one">
                 <div className="inner-box">
                   <figure className="image-box">
-                    <Link to={`/blog-details/${post.id}`}>
+                    <Link to={`/blog-details/${post.uid || post.id}`}>
                       <Image
                         src={post.image || '/website/assets/images/news/news-1.jpg'}
                         alt={post.title}
@@ -117,7 +118,7 @@ export default function News({ posts }: NewsProps) {
                       </li>
                       <li>
                         <i className="icon-60"></i>
-                        <Link to={`/blog-details/${post.id}`}>
+                        <Link to={`/blog-details/${post.uid || post.id}`}>
                           {post.author || "Admin"}
                         </Link>
                       </li>

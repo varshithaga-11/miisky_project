@@ -6,7 +6,7 @@ import Cta from "../components/sections/home2/Cta";
 
 export default function ResearchPaperDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
-    const { id } = useParams<{ id: string }>();
+    const { uid } = useParams<{ uid: string }>();
     const [paper, setPaper] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -17,10 +17,10 @@ export default function ResearchPaperDetailsPage() {
 
     useEffect(() => {
         const fetchPaperData = async () => {
-            if (!id) return;
+            if (!uid) return;
             try {
                 setLoading(true);
-                const response = await getResearchPaperById(parseInt(id));
+                const response = await getResearchPaperById(uid);
                 setPaper(response.data);
             } catch (err) {
                 console.error("Failed to fetch research paper details:", err);
@@ -29,7 +29,7 @@ export default function ResearchPaperDetailsPage() {
             }
         };
         fetchPaperData();
-    }, [id]);
+    }, [uid]);
 
     if (loading) return <div className="text-center p-5 mt_100">Loading research paper details...</div>;
     if (!paper) return <div className="text-center p-5 mt_100">Research paper not found. <Link to="/research">Go back</Link></div>;

@@ -67,6 +67,7 @@ class ResearchPaperSerializer(serializers.ModelSerializer):
 
 class MedicalDeviceSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
+    category_uid = serializers.CharField(source='category.uid', read_only=True)
     features = DeviceFeatureSerializer(many=True, read_only=True)
     research_papers = ResearchPaperSerializer(many=True, read_only=True)
     image_url = serializers.ImageField(source='image', read_only=True)
@@ -134,7 +135,7 @@ class BlogPostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogPost
         fields = [
-            'id', 'category', 'category_name', 'title', 'slug', 'excerpt',
+            'id', 'uid', 'category', 'category_name', 'title', 'slug', 'excerpt',
             'cover_image', 'image', 'author_name', 'author_designation', 'status', 'published_at',
             'views_count', 'likes_count', 'is_featured', 'is_active',
         ]
@@ -204,7 +205,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamMember
         fields = [
-            'id', 'name', 'designation', 'department', 'department_name',
+            'id', 'uid', 'name', 'designation', 'department', 'department_name',
             'bio', 'tagline', 'expertise_text', 'detailed_description',
             'qualification', 'experience_years', 'photo', 'photo_url',
             'linkedin_url', 'email', 'phone', 'position', 'is_doctor',
@@ -270,7 +271,7 @@ class GalleryItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = GalleryItem
         fields = [
-            'id', 'category', 'category_name', 'title', 'description', 
+            'id', 'uid', 'category', 'category_name', 'title', 'description', 
             'media_type', 'image', 'image_url', 'video_url', 
             'thumbnail', 'thumbnail_url', 'position', 'is_featured', 
             'is_active', 'created_at'

@@ -79,12 +79,13 @@ export default function CareersPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <h3 className="mb_15"><Link to={`/careers/${job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
-                                            <p className="mb_20" style={{ color: '#555' }}>
-                                                {job.short_description || (job.job_description ? job.job_description.substring(0, 120) + "..." : "Join our team to make a real impact on patient outcomes globally using cutting-edge medical technology.")}
-                                            </p>
-                                            <div className="btn-box">
-                                                <Link to={`/careers/${job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
+                                            <h3 className="mb_15"><Link to={`/careers/${job.uid || job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
+                                            <div className="location mb_15" style={{ display: 'flex', alignItems: 'center', color: '#666', fontSize: '14px' }}>
+                                                <i className="fas fa-map-marker-alt mr_10" style={{ color: '#0646ac' }}></i> {job.location || "Puducherry, India"}
+                                                <i className="far fa-clock ml_15 mr_10" style={{ color: '#0646ac' }}></i> {job.job_type || "Full Time"}
+                                            </div>
+                                            <div className="btn-box mt_20">
+                                                <Link to={`/careers/${job.uid || job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
                                                     <span>View Details</span>
                                                 </Link>
                                             </div>
