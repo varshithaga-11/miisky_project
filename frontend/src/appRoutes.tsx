@@ -112,6 +112,7 @@ import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
 import AvailabilityCalendar from "./pages/NutritionSide/AvailabilityCalendar/index";
 import PaymentHistoryPage from "./pages/PatientSide/PaymentHistory/index";
 import NonPatientPaymentHistoryPage from "./pages/NonPatient/PaymentHistory/index";
+import NutritionInstructionsPage from "./pages/NutritionSide/Instructions/index";
 
 
 // Master Side Pages
@@ -294,6 +295,7 @@ export function appRoutes() {
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />
           <Route path="patient/plans" element={<PlansPage />} />
+          <Route path="nutrition/plans" element={<PlansPage />} />
           <Route path="patient/suggested-plans" element={<SuggestedPlansPage />} />
           <Route path="patient/suggested-kitchens" element={<SuggestedPlansPage />} />
           <Route path="patient/foods" element={<NonPatientFoodsPage />} />
@@ -323,6 +325,7 @@ export function appRoutes() {
           <Route path="nutrition/notifications" element={<NutritionNotificationsPage />} />
           <Route path="nutrition/plan-payouts" element={<NutritionPlanPayoutsPage />} />
           <Route path="nutrition/availability-calendar" element={<AvailabilityCalendar />} />
+          <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />

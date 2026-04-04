@@ -252,6 +252,11 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/dashboard",
   },
   {
+    icon: <BookOpen className="w-5 h-5" />,
+    name: "Nutrition Guide",
+    path: "/nutrition/instructions",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
     path: "/nutrition/questionnaire",
@@ -259,46 +264,45 @@ const nutritionistNavItems: NavItem[] = [
   {
     icon: <Users className="w-5 h-5" />,
     name: "Allotted Patients",
-    path: "/nutrition/allotted-patients",
+    subItems: [
+      { name: "Allotted Patients", path: "/nutrition/allotted-patients" },
+      { name: "Patient Documents", path: "/nutrition/uploaded-documents" },
+    ],
   },
   {
     icon: <Layers className="w-5 h-5" />,
     name: "Meal Optimizer",
     path: "/nutrition/set-meals",
   },
+
   {
     icon: <Briefcase className="w-5 h-5" />,
-    name: "Micro Kitchens",
-    path: "/nutrition/micro-kitchens",
+    name: "Micro Kitchens & Diet Plans",
+    subItems: [
+      { name: "Micro Kitchens", path: "/nutrition/micro-kitchens" },
+      { name: "Diet Plans", path: "/nutrition/plans" },
+    ],
   },
+
   {
     icon: <FileText className="w-5 h-5" />,
-    name: "Patient Documents",
-    path: "/nutrition/uploaded-documents",
-  },
-  {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Suggest Plan & Kitchen",
-    path: "/nutrition/suggest-plan",
-  },
-  {
-    icon: <CheckCircle className="w-5 h-5" />,
-    name: "Approved Plans",
-    path: "/nutrition/approved-plans",
+    name: "Suggested & Approved Plans",
+    subItems: [
+      { name: "Suggest Plan & Kitchen", path: "/nutrition/suggest-plan" },
+      { name: "Approved Plans", path: "/nutrition/approved-plans" },
+    ],
   },
   {
     icon: <Video className="w-5 h-5" />,
-    name: "Meeting Requests",
-    path: "/nutrition/meeting-requests",
-  },
-  {
-    icon: <Calendar className="w-5 h-5" />,
-    name: "Availability Calendar",
-    path: "/nutrition/availability-calendar",
+    name: "Engagement Hub",
+    subItems: [
+      { name: "Meeting Requests", path: "/nutrition/meeting-requests" },
+      { name: "Availability Calendar", path: "/nutrition/availability-calendar" },
+    ],
   },
   {
     icon: <Wallet className="w-5 h-5" />,
-    name: "Diet plan payouts",
+    name: "Finance",
     path: "/nutrition/plan-payouts",
   },
   {
@@ -316,7 +320,7 @@ const nutritionistNavItems: NavItem[] = [
   },
   {
     icon: <HelpCircle className="w-5 h-5" />,
-    name: "Support Tickets",
+    name: "Support Tasks",
     path: "/nutrition/support-tickets",
   },
   {
