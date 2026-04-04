@@ -113,6 +113,8 @@ import AvailabilityCalendar from "./pages/NutritionSide/AvailabilityCalendar/ind
 import PaymentHistoryPage from "./pages/PatientSide/PaymentHistory/index";
 import NonPatientPaymentHistoryPage from "./pages/NonPatient/PaymentHistory/index";
 import NutritionInstructionsPage from "./pages/NutritionSide/Instructions/index";
+import PatientInstructionsPage from "./pages/PatientSide/Instructions/index";
+import NonPatientInstructionsPage from "./pages/NonPatient/Instructions/index";
 
 
 // Master Side Pages
@@ -312,6 +314,7 @@ export function appRoutes() {
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />
           <Route path="patient/support-tickets" element={<PatientSupportTicketPage />} />
           <Route path="patient/notifications" element={<PatientNotificationsPage />} />
+          <Route path="patient/instructions" element={<PatientInstructionsPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
@@ -335,6 +338,7 @@ export function appRoutes() {
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
           <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
+          <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
 

@@ -168,6 +168,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/dashboard",
   },
   {
+    icon: <BookOpen className="w-5 h-5" />,
+    name: "Patient Guide",
+    path: "/patient/instructions",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Questionnaire",
     path: "/patient/questionnaire",
@@ -184,20 +189,13 @@ const patientNavItems: NavItem[] = [
   },
   {
     icon: <Briefcase className="w-5 h-5" />,
-    name: "Diet Plans(List)",
-    path: "/patient/plans",
+    name: "Diet Plans & Micro-Kitchens",
+    subItems: [
+      { name: "Diet Plans", path: "/patient/plans" },
+      { name: "Micro-Kitchens", path: "/patient/micro-kitchens" },
+      { name: "Suggested Plans & Kitchens", path: "/patient/suggested-plans" },
+    ],
   },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Micro-Kitchens(List)",
-    path: "/patient/micro-kitchens",
-  },
-  {
-    icon: <CheckCircle className="w-5 h-5" />,
-    name: "Suggested Plans & Kitchens",
-    path: "/patient/suggested-plans",
-  },
-
   {
     icon: <CheckCircle className="w-5 h-5" />,
     name: "Meals Allotted",
@@ -320,7 +318,7 @@ const nutritionistNavItems: NavItem[] = [
   },
   {
     icon: <HelpCircle className="w-5 h-5" />,
-    name: "Support Tasks",
+    name: "Support Tickets",
     path: "/nutrition/support-tickets",
   },
   {
@@ -411,6 +409,11 @@ const nonPatientNavItems: NavItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
     name: "Dashboard",
     path: "/non-patient/dashboard",
+  },
+  {
+    icon: <BookOpen className="w-5 h-5" />,
+    name: "Navigation Guide",
+    path: "/non-patient/instructions",
   },
   {
     icon: <Layers className="w-5 h-5" />,
