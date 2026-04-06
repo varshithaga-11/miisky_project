@@ -117,9 +117,9 @@ html, body {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  gap: 20px !important;
-  padding: 10px 40px !important;
-  /* Added horizontal padding for breathing room */
+  gap: 15px !important;
+  padding: 10px 20px !important;
+  /* Reduced padding and gap for better fit */
 }
 
 /* Define the white header against the page content */
@@ -130,7 +130,7 @@ html, body {
 
 .main-header .logo-box {
   flex-shrink: 0 !important;
-  margin-right: 20px !important;
+  margin-right: 10px !important;
 }
 
 .main-header .menu-area {
@@ -148,8 +148,8 @@ html, body {
 }
 
 .main-header .navigation>li {
-  margin: 0px 22px !important;
-  /* Even more premium spacing */
+  margin: 0px 12px !important;
+  /* Reduced from 22px to prevent overflow */
   position: relative !important;
 }
 
@@ -178,12 +178,10 @@ html, body {
 
 /* Ensure no overlap with the support box */
 .main-header .support-box {
-  padding-left: 35px !important;
-  /* Save space on the icon side */
-  margin-right: 10px !important;
+  padding-left: 0px !important;
+  /* Reset to allow flex centering of icon and text */
+  margin-right: 0px !important;
   flex-shrink: 0 !important;
-  min-width: 170px !important;
-  /* Ensure enough space for the number */
 }
 
 .main-header .support-box h6 {
@@ -772,11 +770,12 @@ html, body {
 
   .banner-section {
     min-height: auto !important; /* Allow it to shrink to content */
-    max-height: 500px !important;
+    max-height: 500px !important; /* Slightly increased cutoff */
+    overflow: hidden !important;
   }
 
   .banner-section .slide-item {
-    padding: 60px 0 0px !important; /* Reduced top and eliminated bottom padding */
+    padding: 10px 0 0px !important; /* Extra reduced top padding */
   }
 
   .banner-carousel .content-box {
@@ -854,6 +853,407 @@ html, body {
   .about-section .image-block-one .text-box span {
     font-size: 12px !important;
     line-height: 1.2 !important;
+  }
+
+  /* Departments Page Responsive Fixes */
+  .service-page-section {
+    padding: 30px 0 !important;
+  }
+
+  .appointment-style-two {
+    padding: 40px 0 !important;
+  }
+
+  .appointment-style-two .inner-box {
+    padding: 20px 15px !important;
+    margin: 0 !important;
+    border-radius: 15px !important;
+  }
+
+  .appointment-style-two .inner-box h2 {
+    font-size: 26px !important;
+    text-align: center !important;
+    margin-bottom: 30px !important;
+    font-weight: 800 !important;
+  }
+
+  .appointment-style-two .default-form .form-group {
+    margin-bottom: 20px !important;
+    position: relative !important;
+  }
+
+  .appointment-style-two .default-form .form-group input, 
+  .appointment-style-two .default-form .form-group textarea {
+    height: 50px !important;
+    font-size: 14px !important;
+    padding-left: 50px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  .appointment-style-two .default-form .form-group textarea {
+    height: 100px !important;
+    padding-top: 15px !important;
+  }
+
+  .appointment-style-two .default-form .form-group .icon {
+    position: absolute !important;
+    left: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 25px !important;
+    height: 25px !important;
+    line-height: 25px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 5 !important;
+    opacity: 0.5 !important;
+  }
+  
+  .appointment-style-two .default-form .form-group textarea + .icon {
+    top: 25px !important;
+    transform: none !important;
+  }
+
+  .appointment-style-two .default-form .message-btn {
+    text-align: center !important;
+    margin-top: 20px !important;
+  }
+
+  .appointment-style-two .default-form .message-btn button {
+    width: 100% !important;
+    max-width: 280px !important;
+    height: 50px !important;
+    line-height: 50px !important;
+    padding: 0 30px !important;
+    border-radius: 30px !important;
+    font-size: 14px !important;
+    margin: 0 auto !important;
+    float: none !important;
+  }
+
+  .service-block-one .inner-box .image-box img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 250px !important;
+    object-fit: cover !important;
+  }
+
+  .cta-section {
+    padding-bottom: 40px !important;
+  }
+
+  .cta-section .inner-container {
+    padding: 30px 15px !important;
+    text-align: center !important;
+    flex-direction: column !important;
+    border-radius: 20px !important;
+  }
+
+  .cta-section .inner-container .content-box h2 {
+    font-size: 20px !important;
+    line-height: 1.4 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .cta-section .inner-container .image-layer {
+    display: none !important; /* Hide background image layer on tight mobile screens */
+  }
+
+  /* Fix back to top overlap */
+  .scroll-to-top {
+    bottom: 80px !important;
+  }
+
+  /* Device Categories Mobile Fixes */
+  .device-categories-section {
+    padding: 40px 0 !important;
+  }
+
+  .category-block-one {
+    padding: 30px 15px !important; /* Reduced from 40px */
+    margin-bottom: 20px !important;
+  }
+
+  .category-block-one h3 {
+    font-size: 20px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .category-block-one p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .category-block-one .theme-btn {
+    padding: 10px 25px !important;
+    font-size: 12px !important;
+  }
+
+  /* Medical Devices Page Mobile Fixes */
+  .medical-devices-section {
+    padding: 40px 0 !important;
+  }
+
+  .category-filters-container {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    justify-content: flex-start !important;
+    padding: 5px 15px 15px !important;
+    margin-bottom: 30px !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+  }
+
+  .category-filters-container::-webkit-scrollbar {
+    display: none !important; /* Hide scrollbar */
+  }
+
+  .filter-pill {
+    padding: 8px 20px !important; /* Smaller pills */
+    font-size: 12px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .device-card-premium {
+    border-radius: 20px !important;
+  }
+
+  .device-card-premium .image-wrapper {
+    height: 220px !important; /* Shorter image height */
+  }
+
+  .device-card-premium .card-body {
+    padding: 20px 15px !important;
+  }
+
+  .device-card-premium h3 {
+    font-size: 20px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .device-card-premium p {
+    font-size: 14px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .device-card-premium .card-footer-box {
+    padding-top: 15px !important;
+  }
+
+  .device-card-premium .price-info span:last-child {
+    font-size: 18px !important;
+  }
+
+  .medical-devices-section .text-center.p_100 {
+    padding: 40px 20px !important; /* Smaller padding */
+    border-radius: 20px !important;
+    border-width: 1px !important;
+  }
+
+  .medical-devices-section .text-center h3 {
+    font-size: 20px !important;
+  }
+
+  .medical-devices-section .text-center p {
+    font-size: 14px !important;
+  }
+
+  .medical-devices-section .theme-btn.btn-one {
+    padding: 10px 25px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Medical Device Details Mobile Fixes */
+  .device-details-section {
+    padding: 30px 0 50px !important;
+  }
+
+  .device-details-section .image-box {
+    margin-right: 0 !important;
+    margin-bottom: 20px !important;
+    border-radius: 15px !important;
+    max-height: 350px !important; /* Constrain tall images */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #f9fafb !important;
+  }
+
+  .device-details-section .image-box img {
+    max-height: 350px !important;
+    object-fit: contain !important;
+  }
+
+  .device-details-section .sec-title h2 {
+    font-size: 28px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .device-details-section .price-display {
+    margin-bottom: 15px !important;
+  }
+
+  .device-details-section .price-display span:last-child {
+    font-size: 24px !important;
+  }
+
+  .device-details-section .text p {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .features-box h3 {
+    font-size: 20px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .spec-card {
+    padding: 12px 15px !important;
+    margin-bottom: 0px !important; /* Reset margin */
+    min-height: auto !important;
+  }
+
+  .features-box .row .col-sm-12 {
+    margin-bottom: 8px !important; /* Tighter gap between rows */
+  }
+
+  .spec-card i {
+    font-size: 16px !important;
+  }
+
+  .spec-card h4 {
+    font-size: 15px !important;
+  }
+
+  .spec-card p {
+    font-size: 12px !important;
+  }
+
+  /* Product Overview Box */
+  .device-details-section .content-box[style*="padding: 50px"] {
+    padding: 25px 15px !important;
+    border-radius: 20px !important;
+    margin-top: 30px !important;
+  }
+
+  .device-details-section .content-box h3 {
+    font-size: 20px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .device-details-section .content-box .text p {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .device-details-section .btn-box .theme-btn {
+    padding: 12px 30px !important;
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 13px !important;
+  }
+
+  /* Department Details Mobile Fixes */
+  .service-details {
+    padding: 40px 0 !important;
+  }
+  
+  .service-details .row {
+    display: flex !important;
+    flex-direction: column-reverse !important; /* Content first, Sidebar last */
+  }
+
+  .service-details-content .content-one h2 {
+    font-size: 28px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .expertise-card {
+    padding: 20px 15px !important;
+    margin-bottom: 30px !important;
+  }
+
+  .expertise-card h4 {
+    font-size: 18px !important;
+  }
+
+  .expertise-card p {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .service-details-content .main-image {
+    margin-bottom: 30px !important;
+  }
+
+  .service-details-content .main-image .image-box img {
+    border-radius: 15px !important;
+    max-height: 300px !important;
+  }
+
+  .description-section {
+    margin-bottom: 30px !important;
+  }
+
+  .description-section h3, .features-grid h3 {
+    font-size: 22px !important;
+  }
+
+  .description-section p {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+  }
+
+  .feature-item {
+    padding: 8px 12px !important; /* Smaller padding */
+    margin-bottom: 5px !important; /* Even smaller gap */
+    height: auto !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    background-color: #fafbfc !important;
+    border-radius: 10px !important;
+    min-height: 44px !important; /* Cap minimal height */
+  }
+
+  .features-grid .mb_20 {
+    margin-bottom: 0px !important; /* Remove column-level margin */
+  }
+
+  .feature-item .icon-box {
+    width: 20px !important; /* Smaller icon circle */
+    height: 20px !important;
+    min-width: 20px !important;
+    font-size: 8px !important;
+    margin-right: 12px !important;
+  }
+
+  .feature-item span {
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+    font-weight: 500 !important;
+  }
+
+  .service-sidebar {
+    margin-top: 0px !important; /* Space after content removed */
+  }
+
+  .service-sidebar .sidebar-widget {
+    margin-bottom: 30px !important;
+  }
+
+  .service-sidebar .widget-title h2 {
+    font-size: 20px !important;
   }
 }
 
@@ -1240,9 +1640,9 @@ html, body {
 }
 
 .page-title .bread-crumb li {
-  padding-right: 20px !important;
-  color: #555 !important;
-  font-size: 22px !important; /* Increased from 16px */
+  padding-right: 0 !important; /* Removed entirely */
+  color: #fff !important;        /* Match header theme */
+  font-size: 16px !important;    /* Standard clinical size */
 }
 
 .page-title .bread-crumb li a {
@@ -1610,4 +2010,61 @@ html, body {
     border-color: #0646ac !important;
     background-color: #ffffff !important;
     box-shadow: 0 5px 15px rgba(6, 70, 172, 0.08) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ABOUT PAGE UNIQUE SECTIONS - RESPONSIVE SPACING
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.innovation-card {
+    padding: 50px !important;
+}
+
+.innovation-icon {
+    font-size: 150px !important;
+}
+
+.innovation-lab-title {
+    font-size: 32px !important;
+}
+
+.vision-block-one {
+    padding: 40px !important;
+}
+
+@media only screen and (max-width: 991px) {
+  .innovation-section,
+  .vision-section {
+    padding: 40px 0 !important;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .innovation-section,
+  .vision-section {
+    padding: 30px 0 !important;
+  }
+
+  .innovation-card {
+    padding: 30px 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .innovation-lab-title {
+    font-size: 24px !important;
+  }
+
+  .innovation-icon {
+    font-size: 80px !important;
+  }
+
+  .device-info {
+    padding: 15px !important;
+    border-radius: 15px !important;
+  }
+
+  .vision-block-one {
+    padding: 25px 20px !important;
+    border-radius: 20px !important;
+  }
 }

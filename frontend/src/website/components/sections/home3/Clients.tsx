@@ -52,9 +52,9 @@ export default function Clients() {
           </p>
         </div>
         <div className="inner-container">
-          <ul className="clients-list mb_30">
+          <ul className="clients-list mb_30" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '30px', listStyle: 'none', padding: 0 }}>
             {partners.map((partner) => (
-              <li key={partner.id}>
+              <li key={partner.id} style={{ margin: 0 }}>
                 <Link to={partner.website_url || "#"}>
                   <div className="image-box" style={{ 
                     background: '#ffffff', 

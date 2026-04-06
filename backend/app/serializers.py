@@ -2843,6 +2843,29 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
             "status",
             "scheduled_date",
             "scheduled_time",
+            "picked_up_at",
+            "delivered_at",
+            "delivery_notes",
+            "is_active",
+            "reassignment_reason",
+        ]
+        extra_kwargs = {
+            "status": {"required": False},
+            "picked_up_at": {"required": False, "allow_null": True},
+            "delivered_at": {"required": False, "allow_null": True},
+            "delivery_notes": {"required": False, "allow_null": True},
+        }
+        read_only_fields = [
+            "id",
+            "user_meal",
+            "user_meal_details",
+            "plan_delivery_assignment",
+            "delivery_person",
+            "delivery_person_details",
+            "delivery_slot",
+            "delivery_slot_details",
+            "scheduled_date",
+            "scheduled_time",
             "is_active",
             "reassignment_reason",
         ]
@@ -2851,13 +2874,59 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
         um = obj.user_meal
         if not um:
             return None
+        u = um.user
+        mk = um.micro_kitchen
+        mt = um.meal_type
+        food = um.food
         return {
             "id": um.id,
             "meal_date": str(um.meal_date),
-            "meal_type": um.meal_type.name if um.meal_type else None,
+            "meal_type": mt.name if mt else None,
+            "meal_type_details": {"name": mt.name} if mt else None,
             "patient_name": (
-                f"{um.user.first_name or ''} {um.user.last_name or ''}".strip() or um.user.username
+                f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username
             ),
-            "food_name": um.food.name if um.food else None,
+            "user_details": {
+                "first_name": u.first_name or "",
+                "last_name": u.last_name or "",
+                "mobile": getattr(u, "mobile", None) or "",
+                "address": getattr(u, "address", None) or "",
+            },
+            "food_details": {"name": food.name} if food else None,
+            "food_name": food.name if food else None,
+            "micro_kitchen_details": {
+                "brand_name": mk.brand_name if mk else "",
+                "address": getattr(mk, "address", None) or "" if mk else "",
+            }
+            if mk
+            else None,
         }
+
+
+class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
+    user_details = UserSummarySerializer(source="user", read_only=True)
+
+    class Meta:
+        model = SupplyChainDeliveryLeave
+        fields = [
+            "id",
+            "user",
+            "user_details",
+            "start_at",
+            "end_at",
+            "notes",
+            "created_on",
+        ]
+        read_only_fields = ["user", "created_on"]
+
+    def validate(self, attrs):
+        if self.instance and self.partial:
+            start_at = attrs["start_at"] if "start_at" in attrs else self.instance.start_at
+            end_at = attrs["end_at"] if "end_at" in attrs else self.instance.end_at
+        else:
+            start_at = attrs.get("start_at")
+            end_at = attrs.get("end_at")
+        if start_at and end_at and end_at <= start_at:
+            raise serializers.ValidationError("end_at must be after start_at.")
+        return attrs
 

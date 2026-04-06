@@ -5648,34 +5648,61 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class KitchenMealDeliveryViewSet(viewsets.ReadOnlyModelViewSet):
+class KitchenMealDeliveryViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = DeliveryAssignment.objects.select_related(
         "user_meal",
         "user_meal__user",
         "user_meal__meal_type",
         "user_meal__food",
+        "user_meal__micro_kitchen",
         "delivery_person",
         "delivery_slot",
         "plan_delivery_assignment",
     ).all()
     serializer_class = KitchenMealDeliverySerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "head", "options", "patch", "post"]
 
     def get_queryset(self):
         u = self.request.user
-        if getattr(u, "role", None) != "micro_kitchen":
-            return DeliveryAssignment.objects.none()
-        mk = MicroKitchenProfile.objects.filter(user=u).first()
-        if not mk:
-            return DeliveryAssignment.objects.none()
-        qs = self.queryset.filter(user_meal__micro_kitchen=mk, is_active=True)
-        meal_date = self.request.query_params.get("meal_date")
-        if meal_date:
-            qs = qs.filter(scheduled_date=meal_date)
-        return qs.order_by("-scheduled_date", "id")
+        role = getattr(u, "role", None)
+        if role == "supply_chain":
+            qs = self.queryset.filter(delivery_person=u, is_active=True)
+            meal_date = self.request.query_params.get("meal_date")
+            if meal_date:
+                qs = qs.filter(scheduled_date=meal_date)
+            return qs.order_by("-scheduled_date", "id")
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=u).first()
+            if not mk:
+                return DeliveryAssignment.objects.none()
+            qs = self.queryset.filter(user_meal__micro_kitchen=mk, is_active=True)
+            meal_date = self.request.query_params.get("meal_date")
+            if meal_date:
+                qs = qs.filter(scheduled_date=meal_date)
+            return qs.order_by("-scheduled_date", "id")
+        return DeliveryAssignment.objects.none()
+
+    def partial_update(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Only supply chain users can update delivery status."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        instance = self.get_object()
+        if instance.delivery_person_id != request.user.id:
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"], url_path="reassign")
     def reassign(self, request, pk=None):
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
         new_id = request.data.get("new_delivery_person_id")
         reason = request.data.get("reason") or "On leave"
         if not new_id:
@@ -5697,3 +5724,55 @@ class KitchenMealDeliveryViewSet(viewsets.ReadOnlyModelViewSet):
         DeliveryAssignment.reassign(um, new_person, reason=reason)
         new_da = DeliveryAssignment.objects.filter(user_meal=um, is_active=True).first()
         return Response(KitchenMealDeliverySerializer(new_da).data)
+
+
+class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
+    serializer_class = SupplyChainDeliveryLeaveSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        u = self.request.user
+        role = getattr(u, "role", None)
+        if role == "supply_chain":
+            return SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_at")
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=u).first()
+            if not mk:
+                return SupplyChainDeliveryLeave.objects.none()
+            dp_ids = set(
+                DeliveryAssignment.objects.filter(user_meal__micro_kitchen=mk)
+                .values_list("delivery_person_id", flat=True)
+                .distinct()
+            )
+            dp_ids |= set(
+                DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk)
+                .values_list("delivery_person_id", flat=True)
+                .distinct()
+            )
+            dp_ids.discard(None)
+            return (
+                SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids)
+                .select_related("user")
+                .order_by("-start_at")
+            )
+        return SupplyChainDeliveryLeave.objects.none()
+
+    def perform_create(self, serializer):
+        if getattr(self.request.user, "role", None) != "supply_chain":
+            raise PermissionDenied("Only supply chain users can create leave entries.")
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        if getattr(self.request.user, "role", None) != "supply_chain":
+            raise PermissionDenied()
+        if serializer.instance.user_id != self.request.user.id:
+            raise PermissionDenied()
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if getattr(self.request.user, "role", None) != "supply_chain":
+            raise PermissionDenied()
+        if instance.user_id != self.request.user.id:
+            raise PermissionDenied()
+        instance.delete()

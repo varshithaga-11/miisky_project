@@ -131,7 +131,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
             <div className="auto-container" style={{ position: 'relative', zIndex: 2 }}>
                 <div className="content-box" style={{ textAlign: 'left' }}>
                     <h1 style={{ 
-                        marginBottom: '15px', 
+                        marginBottom: '10px', 
                         fontSize: '56px', 
                         fontWeight: '900', 
                         color: '#ffffff !important',
@@ -144,14 +144,16 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
                         justifyContent: 'flex-start',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
-                        listStyle: 'none'
+                        gap: '0', /* No default gap */
+                        listStyle: 'none',
+                        margin: 0,
+                        padding: 0
                     }}>
-                        <li style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        <li style={{ paddingRight: '0 !important' }}>
                             <Link to="/" style={{ color: '#ffffff !important', textDecoration: 'none' }}>Home</Link>
                         </li>
-                        {/* <li style={{ color: '#ffffff !important' }}>/</li> */}
-                        <li style={{ color: '#ffffff !important', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        <li className="separator" style={{ color: '#ffffff', opacity: 0.5, margin: '0 4px', fontSize: '10px' }}>{'>'}</li>
+                        <li style={{ paddingLeft: '0 !important', color: '#ffffff !important' }}>
                             {breadcrumbTitle}
                         </li>
                     </ul>
@@ -163,10 +165,62 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
                     animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1);
                     color: #ffffff !important;
                 }
+                .bread-crumb li:after, .bread-crumb li:before {
+                    display: none !important;
+                }
                 .bread-crumb li, .bread-crumb li a {
                     color: #ffffff !important;
                 }
                 @keyframes slideInLeft { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                
+                @media (max-width: 767px) {
+                    .page-title {
+                        padding-top: 25px !important;
+                        padding-bottom: 25px !important;
+                        min-height: 140px !important; /* Slightly increased cutoff */
+                        display: flex !important;
+                        align-items: center !important;
+                    }
+                    .page-title .content-box {
+                        display: flex !important;
+                        flex-direction: column !important; /* Forces title then breadcrumb */
+                    }
+                    .page-title h1 {
+                        font-size: 24px !important; /* Clearly the primary title */
+                        margin-bottom: 0px !important; /* NO GAP */
+                        order: 1 !important;
+                        color: #ffffff !important;
+                    }
+                    .page-title .bread-crumb {
+                        font-size: 9px !important; /* Tiny secondary info */
+                        text-transform: uppercase;
+                        letter-spacing: 0 !important;
+                        opacity: 0.6; /* Higher contrast difference */
+                        margin-top: -2px !important; /* Even pull it closer */
+                        order: 2 !important;
+                        display: flex !important;
+                        flex-direction: row !important; /* Items side by side */
+                        align-items: center !important;
+                        gap: 0 !important; /* NO GAP */
+                    }
+                    .page-title .bread-crumb li, 
+                    .page-title .bread-crumb li a {
+                        font-size: 9px !important;
+                        color: #ffffff !important; /* Forces it to white like the title */
+                        line-height: 1 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .page-title .bread-crumb li {
+                        display: flex !important;
+                        align-items: center !important;
+                    }
+                    .page-title .bread-crumb li.separator {
+                        margin: 0 3px !important; /* Minimum visibility gap */
+                        font-size: 8px !important;
+                        opacity: 0.4 !important;
+                    }
+                }
             `}</style>
         </section>
     );

@@ -38,6 +38,7 @@ router.register(r'deliverychargeslab', DeliveryChargeSlabViewSet, basename='deli
 router.register(r'delivery-slot', DeliverySlotKitchenViewSet, basename='delivery-slot')
 router.register(r'plandeliveryassignment', DietPlanDeliveryAssignmentViewSet, basename='plandeliveryassignment')
 router.register(r'mealdeliveryassignment', KitchenMealDeliveryViewSet, basename='mealdeliveryassignment')
+router.register(r'supply-chain-leave', SupplyChainDeliveryLeaveViewSet, basename='supply-chain-leave')
 
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
