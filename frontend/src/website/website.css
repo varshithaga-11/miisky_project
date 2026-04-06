@@ -1640,7 +1640,7 @@ html, body {
 }
 
 .page-title .bread-crumb li {
-  padding-right: 6px !important; /* Reduced from 20px */
+  padding-right: 0 !important; /* Removed entirely */
   color: #fff !important;        /* Match header theme */
   font-size: 16px !important;    /* Standard clinical size */
 }
