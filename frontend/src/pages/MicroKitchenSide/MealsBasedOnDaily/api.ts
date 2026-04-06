@@ -30,6 +30,13 @@ export interface DailyMeal {
         brand_name?: string | null;
         status?: string;
     } | null;
+    /** Active daily DeliveryAssignment delivery person (supply chain). */
+    delivery_person_details?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        mobile?: string | null;
+    } | null;
 }
 
 export interface KitchenPatient {

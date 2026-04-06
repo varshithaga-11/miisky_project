@@ -23,6 +23,13 @@ const getMediaUrl = (path: string | undefined | null) => {
     return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
 };
 
+const formatDeliveryPersonName = (m: DailyMeal): string | null => {
+    const d = m.delivery_person_details;
+    if (!d) return null;
+    const name = `${d.first_name || ""} ${d.last_name || ""}`.trim();
+    return name || null;
+};
+
 const MealsBasedOnDailyPage: React.FC = () => {
     const [meals, setMeals] = useState<DailyMeal[]>([]);
     const [patients, setPatients] = useState<KitchenPatient[]>([]);
@@ -131,11 +138,16 @@ const MealsBasedOnDailyPage: React.FC = () => {
         fetchDailyMeals();
     }, [rangeType, selectedPatient, customStart, customEnd]);
 
-    const filteredMeals = meals.filter(m => 
-        `${m.user_details.first_name} ${m.user_details.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.food_details.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.meal_type_details.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredMeals = meals.filter(m => {
+        const q = searchTerm.toLowerCase();
+        const deliveryName = formatDeliveryPersonName(m)?.toLowerCase() ?? "";
+        return (
+            `${m.user_details.first_name} ${m.user_details.last_name}`.toLowerCase().includes(q) ||
+            m.food_details.name.toLowerCase().includes(q) ||
+            m.meal_type_details.name.toLowerCase().includes(q) ||
+            (deliveryName && deliveryName.includes(q))
+        );
+    });
 
     const getMealIcon = (name: string = "") => {
         const n = name.toLowerCase();
@@ -418,6 +430,18 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                                 </button>
                                                             </div>
                                                             
+                                                            <div className="flex items-center gap-4 p-4 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-2xl border border-indigo-100/50 dark:border-indigo-900/30">
+                                                                <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                                                                    <FiTruck size={18} />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Daily delivery</p>
+                                                                    <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                                                                        {formatDeliveryPersonName(m) ?? "Unassigned"}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
                                                             <div className="p-5 bg-gray-50/50 dark:bg-white/[0.03] rounded-3xl border border-transparent group-hover:border-indigo-100/30 transition-all">
                                                                 <p className="text-[10px] font-black text-gray-700 dark:text-gray-300 uppercase leading-relaxed line-clamp-2 italic">
                                                                     "{m.user_details.address || "No delivery address registered"}"
@@ -496,12 +520,16 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                     plugins={[dayGridPlugin, interactionPlugin]}
                                     initialView="dayGridMonth"
                                     headerToolbar={{ left: "prev,next today", center: "title", right: "" }}
-                                    events={calendarMeals.map((m) => ({
-                                        id: String(m.id),
-                                        title: `${m.meal_type_details?.name || "Meal"}: ${m.food_details?.name || "—"} (${m.user_details?.first_name || ""})`,
-                                        start: m.meal_date,
-                                        allDay: true,
-                                    }))}
+                                    events={calendarMeals.map((m) => {
+                                        const dp = formatDeliveryPersonName(m);
+                                        const base = `${m.meal_type_details?.name || "Meal"}: ${m.food_details?.name || "—"} (${m.user_details?.first_name || ""})`;
+                                        return {
+                                            id: String(m.id),
+                                            title: dp ? `${base} · ${dp}` : base,
+                                            start: m.meal_date,
+                                            allDay: true,
+                                        };
+                                    })}
                                     datesSet={(info) => {
                                         const start = info.startStr?.split("T")[0];
                                         if (start) {

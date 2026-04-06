@@ -1925,6 +1925,7 @@ class UserMealSerializer(serializers.ModelSerializer):
     food_details = serializers.SerializerMethodField()
     packaging_material_details = serializers.SerializerMethodField()
     micro_kitchen_details = serializers.SerializerMethodField()
+    delivery_person_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMeal
@@ -1934,7 +1935,8 @@ class UserMealSerializer(serializers.ModelSerializer):
             'food', 'food_details',
             'quantity', 'meal_date', 'is_consumed', 'consumed_at',
             'notes', 'packaging_material', 'packaging_material_details',
-            'micro_kitchen', 'micro_kitchen_details', 'created_on'
+            'micro_kitchen', 'micro_kitchen_details', 'delivery_person_details',
+            'created_on'
         ]
         read_only_fields = ['created_on']
 
@@ -1986,6 +1988,18 @@ class UserMealSerializer(serializers.ModelSerializer):
                 'status': obj.micro_kitchen.status,
             }
         return None
+
+    def get_delivery_person_details(self, obj):
+        da = obj.deliveries.filter(is_active=True).select_related('delivery_person').first()
+        if not da or not da.delivery_person:
+            return None
+        dp = da.delivery_person
+        return {
+            'id': dp.id,
+            'first_name': dp.first_name or '',
+            'last_name': dp.last_name or '',
+            'mobile': getattr(dp, 'mobile', None),
+        }
 
 
 class BulkUserMealSerializer(serializers.ModelSerializer):

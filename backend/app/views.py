@@ -3151,6 +3151,11 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
 class UserMealViewSet(viewsets.ModelViewSet):
     queryset = UserMeal.objects.all().select_related(
         'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material', 'micro_kitchen'
+    ).prefetch_related(
+        Prefetch(
+            'deliveries',
+            queryset=DeliveryAssignment.objects.filter(is_active=True).select_related('delivery_person'),
+        )
     )
     serializer_class = UserMealSerializer
     permission_classes = [IsAuthenticated]
@@ -3270,6 +3275,11 @@ class UserMealViewSet(viewsets.ModelViewSet):
         # Base queryset with date filter
         queryset = UserMeal.objects.select_related(
             'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material', 'micro_kitchen'
+        ).prefetch_related(
+            Prefetch(
+                'deliveries',
+                queryset=DeliveryAssignment.objects.filter(is_active=True).select_related('delivery_person'),
+            )
         ).filter(meal_date__range=[start_date, end_date])
 
         # Scope to logged-in user's role
