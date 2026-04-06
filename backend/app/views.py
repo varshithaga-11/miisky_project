@@ -5257,6 +5257,78 @@ def _apply_plan_delivery_slots(assignment, slot_ids, primary_slot_id=None):
     assignment.save(update_fields=["default_slot"])
 
 
+def _sync_slot_persons_from_single(assignment, person):
+    """One delivery person for every slot on the assignment (legacy / single-person mode)."""
+    assignment.slot_delivery_persons.all().delete()
+    if not person:
+        return
+    for sid in assignment.delivery_slots.values_list("id", flat=True):
+        DietPlanSlotDeliveryPerson.objects.create(
+            plan_assignment=assignment,
+            delivery_slot_id=sid,
+            delivery_person=person,
+        )
+
+
+def _apply_slot_assignments_from_groups(assignment, groups, primary_slot_id):
+    """
+    groups: list of dicts with delivery_person_id and delivery_slot_ids (non-empty).
+    Sets assignment.delivery_person to whoever covers primary_slot_id; M2M + per-slot junction rows.
+    """
+    if not groups or not isinstance(groups, (list, tuple)):
+        raise ValueError("empty_groups")
+    uniq = []
+    seen = set()
+    for g in groups:
+        if not isinstance(g, dict):
+            raise ValueError("bad_group")
+        dp_id = g.get("delivery_person_id")
+        raw = g.get("delivery_slot_ids")
+        if dp_id is None or raw is None or not isinstance(raw, (list, tuple)) or len(raw) == 0:
+            raise ValueError("empty_group")
+        dp_id = int(dp_id)
+        dp = UserRegister.objects.get(pk=dp_id)
+        if getattr(dp, "role", None) != "supply_chain":
+            raise ValueError("not_supply_chain")
+        for x in raw:
+            sid = int(x)
+            if sid in seen:
+                raise ValueError("duplicate_slot")
+            seen.add(sid)
+            uniq.append(sid)
+    if not uniq:
+        raise ValueError("no_slots")
+    prim = primary_slot_id
+    if prim is None or str(prim).strip() == "":
+        prim = uniq[0]
+    else:
+        prim = int(prim)
+    if prim not in seen:
+        raise ValueError("primary_not_in_slots")
+    primary_person = None
+    for g in groups:
+        dp_id = int(g["delivery_person_id"])
+        sids = [int(x) for x in g["delivery_slot_ids"]]
+        if prim in sids:
+            primary_person = UserRegister.objects.get(pk=dp_id)
+            break
+    if primary_person is None:
+        raise ValueError("primary_owner")
+    assignment.delivery_person = primary_person
+    assignment.save(update_fields=["delivery_person"])
+    _apply_plan_delivery_slots(assignment, uniq, primary_slot_id=prim)
+    assignment.slot_delivery_persons.all().delete()
+    for g in groups:
+        dp = UserRegister.objects.get(pk=int(g["delivery_person_id"]))
+        for x in g["delivery_slot_ids"]:
+            sid = int(x)
+            DietPlanSlotDeliveryPerson.objects.create(
+                plan_assignment=assignment,
+                delivery_slot_id=sid,
+                delivery_person=dp,
+            )
+
+
 class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
     queryset = DietPlanDeliveryAssignment.objects.select_related(
         "user_diet_plan",
@@ -5265,7 +5337,13 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         "delivery_person",
         "default_slot",
         "assigned_by",
-    ).prefetch_related("delivery_slots").all()
+    ).prefetch_related(
+        "delivery_slots",
+        Prefetch(
+            "slot_delivery_persons",
+            queryset=DietPlanSlotDeliveryPerson.objects.select_related("delivery_slot", "delivery_person"),
+        ),
+    ).all()
     serializer_class = DietPlanDeliveryAssignmentSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "patch", "head", "options"]
@@ -5294,10 +5372,88 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         raw_slot_ids = request.data.get("delivery_slot_ids")
         legacy_slot_id = request.data.get("default_slot_id")
         primary_slot_id = request.data.get("primary_slot_id")
+        slot_assignments = request.data.get("slot_assignments")
 
+        def _slot_group_error_response(exc):
+            code = str(exc)
+            msg = {
+                "empty_groups": "slot_assignments must be a non-empty list.",
+                "bad_group": "Each slot_assignment must be an object with delivery_person_id and delivery_slot_ids.",
+                "empty_group": "Each group needs a supply chain user and at least one delivery_slot_id.",
+                "duplicate_slot": "Each delivery slot can only be assigned to one person.",
+                "no_slots": "No delivery slots in slot_assignments.",
+                "primary_not_in_slots": "primary_slot_id must be one of the assigned slots.",
+                "primary_owner": "Could not resolve delivery person for primary slot.",
+                "not_supply_chain": "Delivery person must be a supply chain user.",
+            }.get(
+                code,
+                "Invalid slot_assignments.",
+            )
+            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Multi-person per slot (different person per slot group) ---
+        if slot_assignments is not None and isinstance(slot_assignments, (list, tuple)) and len(slot_assignments) > 0:
+            if not plan_id:
+                return Response(
+                    {"detail": "user_diet_plan_id is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                plan = UserDietPlan.objects.select_related("user", "micro_kitchen").get(pk=int(plan_id))
+            except (UserDietPlan.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid user_diet_plan_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if role == "micro_kitchen":
+                mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+                if not mk or plan.micro_kitchen_id != mk.id:
+                    return Response(
+                        {"detail": "This diet plan is not assigned to your kitchen."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+            if plan.status != "active":
+                return Response(
+                    {"detail": "Plan must be active to attach a delivery assignment."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            obj, created = DietPlanDeliveryAssignment.objects.update_or_create(
+                user_diet_plan=plan,
+                defaults={
+                    "user": plan.user,
+                    "micro_kitchen": plan.micro_kitchen,
+                    "assigned_by": request.user,
+                    "is_active": True,
+                    "notes": notes if notes is not None else None,
+                },
+            )
+            try:
+                _apply_slot_assignments_from_groups(obj, slot_assignments, primary_slot_id)
+            except ValueError as e:
+                if str(e) in (
+                    "empty_groups",
+                    "bad_group",
+                    "empty_group",
+                    "duplicate_slot",
+                    "no_slots",
+                    "primary_not_in_slots",
+                    "primary_owner",
+                    "not_supply_chain",
+                ):
+                    return _slot_group_error_response(e)
+                if str(e) == "invalid_slots":
+                    return Response({"detail": "Invalid delivery_slot_ids."}, status=status.HTTP_400_BAD_REQUEST)
+                raise
+            except UserRegister.DoesNotExist:
+                return Response({"detail": "Invalid delivery_person_id in slot_assignments."}, status=status.HTTP_400_BAD_REQUEST)
+            obj.refresh_from_db()
+            serializer = self.get_serializer(obj)
+            return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+        # --- Legacy: one delivery_person_id + delivery_slot_ids ---
         if not plan_id or not dp_id:
             return Response(
-                {"detail": "user_diet_plan_id and delivery_person_id are required."},
+                {"detail": "user_diet_plan_id and delivery_person_id are required (or use slot_assignments)."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -5313,7 +5469,7 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         else:
             return Response(
                 {
-                    "detail": "Provide delivery_slot_ids (non-empty list) or default_slot_id (single slot).",
+                    "detail": "Provide slot_assignments, delivery_slot_ids (non-empty list), or default_slot_id (single slot).",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -5371,6 +5527,7 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             raise
+        _sync_slot_persons_from_single(obj, delivery_person)
         obj.refresh_from_db()
         serializer = self.get_serializer(obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
@@ -5381,12 +5538,53 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         slot_id = request.data.get("default_slot_id")
         raw_slot_ids = request.data.get("delivery_slot_ids")
         primary_slot_id = request.data.get("primary_slot_id")
+        slot_assignments = request.data.get("slot_assignments")
+
+        def _patch_slot_group_err(exc):
+            code = str(exc)
+            msg = {
+                "empty_groups": "slot_assignments must be a non-empty list.",
+                "bad_group": "Each slot_assignment must be an object with delivery_person_id and delivery_slot_ids.",
+                "empty_group": "Each group needs a supply chain user and at least one delivery_slot_id.",
+                "duplicate_slot": "Each delivery slot can only be assigned to one person.",
+                "no_slots": "No delivery slots in slot_assignments.",
+                "primary_not_in_slots": "primary_slot_id must be one of the assigned slots.",
+                "primary_owner": "Could not resolve delivery person for primary slot.",
+                "not_supply_chain": "Delivery person must be a supply chain user.",
+            }.get(code, "Invalid slot_assignments.")
+            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         if "notes" in request.data:
             instance.notes = request.data.get("notes") or None
             instance.save(update_fields=["notes"])
 
-        if raw_slot_ids is not None:
+        had_slot_assignments = False
+        if slot_assignments is not None and isinstance(slot_assignments, (list, tuple)) and len(slot_assignments) > 0:
+            had_slot_assignments = True
+            try:
+                _apply_slot_assignments_from_groups(instance, slot_assignments, primary_slot_id)
+            except ValueError as e:
+                if str(e) in (
+                    "empty_groups",
+                    "bad_group",
+                    "empty_group",
+                    "duplicate_slot",
+                    "no_slots",
+                    "primary_not_in_slots",
+                    "primary_owner",
+                    "not_supply_chain",
+                ):
+                    return _patch_slot_group_err(e)
+                if str(e) == "invalid_slots":
+                    return Response({"detail": "Invalid delivery_slot_ids."}, status=status.HTTP_400_BAD_REQUEST)
+                raise
+            except UserRegister.DoesNotExist:
+                return Response(
+                    {"detail": "Invalid delivery_person_id in slot_assignments."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            instance.refresh_from_db()
+        elif raw_slot_ids is not None:
             if not isinstance(raw_slot_ids, (list, tuple)) or len(raw_slot_ids) == 0:
                 return Response(
                     {"detail": "delivery_slot_ids must be a non-empty list."},
@@ -5410,8 +5608,9 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
                     )
                 raise
             instance.refresh_from_db()
+            _sync_slot_persons_from_single(instance, instance.delivery_person)
 
-        if dp_id is not None and str(dp_id).strip() != "":
+        if dp_id is not None and str(dp_id).strip() != "" and not had_slot_assignments:
             try:
                 new_dp = UserRegister.objects.get(pk=int(dp_id))
             except (UserRegister.DoesNotExist, ValueError, TypeError):
@@ -5431,8 +5630,9 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
                 notes=request.data.get("change_notes"),
             )
             instance.refresh_from_db()
+            _sync_slot_persons_from_single(instance, instance.delivery_person)
 
-        if raw_slot_ids is None and slot_id is not None and str(slot_id).strip() != "":
+        if raw_slot_ids is None and not had_slot_assignments and slot_id is not None and str(slot_id).strip() != "":
             try:
                 slot = DeliverySlot.objects.get(pk=int(slot_id))
             except (DeliverySlot.DoesNotExist, ValueError, TypeError):
@@ -5441,6 +5641,8 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
             instance.save(update_fields=["default_slot"])
             if not instance.delivery_slots.filter(pk=slot.pk).exists():
                 instance.delivery_slots.add(slot)
+            instance.refresh_from_db()
+            _sync_slot_persons_from_single(instance, instance.delivery_person)
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)

@@ -2706,6 +2706,37 @@ class DietPlanDeliveryAssignment(models.Model):
         return self
 
 
+class DietPlanSlotDeliveryPerson(models.Model):
+    """
+    Per delivery slot, which supply-chain user delivers for this plan.
+    Allows different persons for different time windows (e.g. morning vs evening).
+    """
+
+    plan_assignment = models.ForeignKey(
+        DietPlanDeliveryAssignment,
+        on_delete=models.CASCADE,
+        related_name='slot_delivery_persons',
+    )
+    delivery_slot = models.ForeignKey(
+        DeliverySlot,
+        on_delete=models.CASCADE,
+        related_name='plan_slot_delivery_persons',
+    )
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='slot_specific_plan_deliveries',
+    )
+
+    class Meta:
+        unique_together = [('plan_assignment', 'delivery_slot')]
+
+    def __str__(self):
+        return f"Plan assignment {self.plan_assignment_id} slot {self.delivery_slot_id} → {self.delivery_person_id}"
+
+
 class DietPlanDeliveryAssignmentLog(models.Model):
     """
     Audit log every time the global delivery person changes mid-plan.
@@ -2852,16 +2883,32 @@ class DeliveryAssignment(models.Model):
         Call this whenever a UserMeal is created.
         Auto-pulls delivery_person + slot from the global assignment.
         """
-        plan_assignment = DietPlanDeliveryAssignment.objects.filter(
-            user_diet_plan=user_meal.user_diet_plan,
-            is_active=True
-        ).first()
+        plan_assignment = (
+            DietPlanDeliveryAssignment.objects.filter(
+                user_diet_plan=user_meal.user_diet_plan,
+                is_active=True,
+            )
+            .select_related('delivery_person', 'default_slot')
+            .first()
+        )
+
+        delivery_person = None
+        delivery_slot = plan_assignment.default_slot if plan_assignment else None
+        if plan_assignment and delivery_slot:
+            slot_row = DietPlanSlotDeliveryPerson.objects.filter(
+                plan_assignment=plan_assignment,
+                delivery_slot=delivery_slot,
+            ).select_related('delivery_person').first()
+            if slot_row and slot_row.delivery_person_id:
+                delivery_person = slot_row.delivery_person
+        if delivery_person is None and plan_assignment:
+            delivery_person = plan_assignment.delivery_person
 
         return cls.objects.create(
             user_meal=user_meal,
             plan_delivery_assignment=plan_assignment,
-            delivery_person=plan_assignment.delivery_person if plan_assignment else None,
-            delivery_slot=plan_assignment.default_slot if plan_assignment else None,
+            delivery_person=delivery_person,
+            delivery_slot=delivery_slot,
             scheduled_date=user_meal.meal_date,
             status='assigned' if plan_assignment else 'pending',
         )

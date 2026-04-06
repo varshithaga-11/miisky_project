@@ -2777,6 +2777,7 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
     default_slot_details = DeliverySlotSerializer(source="default_slot", read_only=True)
     delivery_slots_details = DeliverySlotSerializer(source="delivery_slots", many=True, read_only=True)
     delivery_slot_ids = serializers.SerializerMethodField(read_only=True)
+    slot_delivery_assignments = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DietPlanDeliveryAssignment
@@ -2793,6 +2794,7 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
             "default_slot_details",
             "delivery_slots_details",
             "delivery_slot_ids",
+            "slot_delivery_assignments",
             "is_active",
             "assigned_on",
             "notes",
@@ -2801,6 +2803,25 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
 
     def get_delivery_slot_ids(self, obj):
         return list(obj.delivery_slots.values_list("id", flat=True).order_by("id"))
+
+    def get_slot_delivery_assignments(self, obj):
+        rows = (
+            obj.slot_delivery_persons.select_related("delivery_slot", "delivery_person")
+            .order_by("delivery_slot_id")
+        )
+        out = []
+        for r in rows:
+            out.append(
+                {
+                    "delivery_slot_id": r.delivery_slot_id,
+                    "delivery_slot_details": DeliverySlotSerializer(r.delivery_slot).data,
+                    "delivery_person_id": r.delivery_person_id,
+                    "delivery_person_details": UserSummarySerializer(r.delivery_person).data
+                    if r.delivery_person
+                    else None,
+                }
+            )
+        return out
 
 
 class KitchenMealDeliverySerializer(serializers.ModelSerializer):

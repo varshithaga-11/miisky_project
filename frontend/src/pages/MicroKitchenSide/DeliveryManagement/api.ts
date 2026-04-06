@@ -33,6 +33,14 @@ export interface DeliverySlot {
   micro_kitchen: number | null;
 }
 
+/** Per-slot delivery person when different staff cover different time windows. */
+export interface SlotDeliveryAssignmentRow {
+  delivery_slot_id: number;
+  delivery_slot_details?: DeliverySlot;
+  delivery_person_id: number | null;
+  delivery_person_details?: { id: number; first_name: string; last_name: string; username?: string };
+}
+
 export interface PlanDeliveryAssignment {
   id: number;
   user_diet_plan: number;
@@ -49,6 +57,8 @@ export interface PlanDeliveryAssignment {
   /** All slots this delivery person covers for the plan */
   delivery_slot_ids?: number[];
   delivery_slots_details?: DeliverySlot[];
+  /** When set, each slot maps to a delivery person (can differ per slot). */
+  slot_delivery_assignments?: SlotDeliveryAssignmentRow[];
   patient_details?: { id: number; first_name: string; last_name: string };
   is_active: boolean;
   assigned_on: string;
@@ -106,12 +116,12 @@ export const fetchPlanDeliveryAssignments = async (): Promise<PlanDeliveryAssign
 
 export const createPlanDeliveryAssignment = async (payload: {
   user_diet_plan_id: number;
-  delivery_person_id: number;
-  /** Prefer: multiple slots per delivery person */
-  delivery_slot_ids: number[];
-  /** Must be one of delivery_slot_ids (defaults to first if omitted) */
+  /** Different person per slot group (preferred when multiple people cover different slots). */
+  slot_assignments?: Array<{ delivery_person_id: number; delivery_slot_ids: number[] }>;
+  /** Legacy: one person for all listed slots */
+  delivery_person_id?: number;
+  delivery_slot_ids?: number[];
   primary_slot_id?: number;
-  /** Legacy single slot (same as delivery_slot_ids: [id]) */
   default_slot_id?: number;
   notes?: string | null;
 }): Promise<PlanDeliveryAssignment> => {
@@ -127,6 +137,7 @@ export const patchPlanDeliveryAssignment = async (
     default_slot_id?: number;
     delivery_slot_ids?: number[];
     primary_slot_id?: number;
+    slot_assignments?: Array<{ delivery_person_id: number; delivery_slot_ids: number[] }>;
     notes?: string | null;
     effective_from?: string;
     reason?: string;
