@@ -40,12 +40,12 @@ export default function ResearchPaperDetailsPage() {
                 <div className="auto-container">
                     <div className="row clearfix">
                         <div className="col-lg-12 col-md-12 col-sm-12 content-column">
-                            <div className="content-box p_relative d_block" style={{ padding: '60px', border: '1px solid #eee', borderRadius: '20px', backgroundColor: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
+                            <div className="content-box p_relative d_block" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '20px', backgroundColor: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
                                 <div className="paper-meta mb_25" style={{ color: '#777', fontSize: '15px' }}>
                                     <span className="mr_30"><i className="far fa-calendar-alt" style={{ color: '#0646ac', marginRight: '5px' }}></i> {paper.published_date || "Coming Soon"}</span>
                                     <span className="mr_30"><i className="far fa-user" style={{ color: '#0646ac', marginRight: '5px' }}></i> {paper.authors || "Miisky Team"}</span>
                                 </div>
-                                <h1 className="mb_40" style={{ fontSize: '36px', fontWeight: 800, color: '#111', lineHeight: '1.3' }}>{paper.title}</h1>
+                                <h1 className="mb_40" style={{ fontSize: '30px', fontWeight: 800, color: '#111', lineHeight: '1.3' }}>{paper.title}</h1>
                                 
                                 <div className="abstract-box mb_50 p-4" style={{ backgroundColor: '#f0f4ff', borderRadius: '15px', borderLeft: '5px solid #0646ac' }}>
                                     <h3 className="mb_15" style={{ fontSize: '22px', fontWeight: 700 }}>Abstract</h3>
@@ -127,13 +127,13 @@ export default function ResearchPaperDetailsPage() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="single-document btn-box d-flex align-items-center">
+                                        <div className="single-document btn-box d-flex flex-column flex-sm-row" style={{ gap: '15px' }}>
                                             {paper.document_url || paper.document_1_url || paper.document_2_url ? (
-                                                <a href={paper.document_url || paper.document_1_url || paper.document_2_url} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one mr_20">
+                                                <a href={paper.document_url || paper.document_1_url || paper.document_2_url} target="_blank" rel="noopener noreferrer" className="theme-btn btn-one" style={{ whiteSpace: 'nowrap'}}>
                                                     <span>Download File</span>
                                                 </a>
                                             ) : null}
-                                            <Link to="/research" className="theme-btn btn-two" style={{ backgroundColor: 'transparent', border: '1.5px solid #eee', color: '#777' }}>
+                                            <Link to="/research" className="theme-btn btn-two" style={{ backgroundColor: 'transparent', border: '1.5px solid #eee', color: '#777', whiteSpace: 'nowrap' }}>
                                                 <span>Back to Research</span>
                                             </Link>
                                         </div>
