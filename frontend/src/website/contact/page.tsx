@@ -19,7 +19,7 @@ export default function ContactPage() {
                 <section className="contact-info-two centred" style={{ padding: '40px 0' }}>
                     <div className="pattern-layer" style={{ backgroundImage: "url(/website/assets/images/shape/shape-43.png)" }}></div>
                     <div className="auto-container">
-                        <div className="row clearfix" style={{ display: 'flex', flexWrap: 'wrap' }}>
+                        <div className="row clearfix" style={{ display: 'flex', flexWrap: 'wrap', rowGap: '100px' }}>
                             <div className="col-lg-3 col-md-6 col-sm-12 info-block">
                                 <div className="info-block-two wow fadeInUp animated" data-wow-delay="00ms" data-wow-duration="1500ms" style={{ height: '100%', marginTop: '30px' }}>
                                     <div className="inner-box" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '55px 15px 15px 15px' }}>
