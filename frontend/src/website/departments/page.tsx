@@ -4,37 +4,10 @@ import { toast } from "react-toastify";
 import Image from "../components/Image";
 import { Link } from "react-router-dom";
 import { useLayout } from "../context/LayoutContext";
-import { getDepartments, getDepartmentById, createWebsiteInquiry } from "../../utils/api";
+import { getDepartments, createWebsiteInquiry } from "../../utils/api";
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 import { getDepartmentIcon } from "../../utils/departmentIcons";
 import Cta from "../components/sections/home2/Cta";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-
-const swiperOptions = {
-    modules: [Autoplay, Pagination, Navigation],
-    slidesPerView: 1,
-    spaceBetween: 30,
-    autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-    },
-    loop: true,
-    pagination: {
-        el: ".swiper-pagination-dept",
-        clickable: true,
-    },
-    breakpoints: {
-        320: { slidesPerView: 1 },
-        575: { slidesPerView: 1 },
-        767: { slidesPerView: 2 },
-        991: { slidesPerView: 3 },
-        1200: { slidesPerView: 3 },
-    },
-};
 
 export default function DepartmentsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
@@ -103,38 +76,38 @@ export default function DepartmentsPage() {
 
     return (
         <div className="boxed_wrapper">
-                <section className="service-page-section p_relative">
+                <section className="service-page-section p_relative pb_100 pt_100">
                     <div className="auto-container">
-                        <div className="dept-carousel-container p_relative">
-                            <Swiper {...swiperOptions} className="department-carousel">
-                                {departments.map((dept: any) => (
-                                    <SwiperSlide key={dept.uid || dept.id}>
-                                        <div className="service-block-one">
-                                            <div className="inner-box">
-                                                <figure className="image-box">
-                                                    <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
-                                                </figure>
-                                                <div className="lower-content">
-                                                    <div className="inner">
-                                                        <div className="icon-box">
-                                            <img
-                                                src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
-                                                alt={dept.name}
-                                                style={{ width: '64px', height: '64px', objectFit: 'contain' }}
-                                            />
-                                        </div>
-                                                        <h3><Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link></h3>
-                                                        <p>{dept.description?.substring(0, 60)}...</p>
+                        <div className="sec-title centred mb_60">
+                            <span className="sub-title mb_5">Medical Services</span>
+                            <h2>Dedicated Healthcare Departments</h2>
+                            <p>Miisky provides specialized medical care across various departments, <br />focusing on innovative diagnosis and personalized treatment paths.</p>
+                        </div>
+                        <div className="row clearfix">
+                            {departments.map((dept: any) => (
+                                <div key={dept.uid || dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block-column mb_30">
+                                    <div className="service-block-one">
+                                        <div className="inner-box">
+                                            <figure className="image-box">
+                                                <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
+                                            </figure>
+                                            <div className="lower-content">
+                                                <div className="inner">
+                                                    <div className="icon-box">
+                                                        <img
+                                                            src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
+                                                            alt={dept.name}
+                                                            style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+                                                        />
                                                     </div>
+                                                    <h3><Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link></h3>
+                                                    <p>{dept.description?.substring(0, 80)}...</p>
                                                 </div>
                                             </div>
                                         </div>
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
-                                
-                            {/* Navigation and Pagination */}
-                            <div className="swiper-pagination-dept mt_40 centred"></div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
@@ -217,8 +190,14 @@ export default function DepartmentsPage() {
                     </div>
                 </section> */}
 
-                <section className="appointment-style-two p_relative">
-                    <div className="auto-container">
+                <section className="appointment-style-two p_relative" style={{ 
+                    backgroundImage: "url(/website/assets/images/background/appointment-bg-1.jpg)",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    padding: '100px 0'
+                }}>
+                    <div className="bg-overlay" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(255,255,255,0.9)' }}></div>
+                    <div className="auto-container p_relative z_5">
                         <div className="inner-box">
                             <h2>Make an Appointment</h2>
                             <form onSubmit={handleFormSubmit} className="default-form">

@@ -139,7 +139,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li>
                         <Link to="/contact">Contact</Link>
                       </li>
-                      <li className="login-li" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
+                      <li className="login-li" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
                         <Link to="/signin" className="theme-btn btn-one" style={{
                           padding: '8px 25px',
                           fontSize: '14px',
@@ -175,10 +175,10 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   }}>
                     <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                   </div>
-                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
                     <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                      <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                      <Link to="tel:+919845497950" style={{ color: '#111', whiteSpace: 'nowrap' }}>+91 9845497950</Link>
                     </h6>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li>
                         <Link to="/contact">Contact</Link>
                       </li>
-                      <li className="login-li" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
+                      <li className="login-li" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
                         <Link to="/signin" className="theme-btn btn-one" style={{
                           padding: '8px 25px',
                           fontSize: '14px',
@@ -296,10 +296,10 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                   }}>
                     <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                   </div>
-                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px' }}>
+                  <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative', paddingLeft: '0px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
                     <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                      <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                      <Link to="tel:+919845497950" style={{ color: '#111', whiteSpace: 'nowrap' }}>+91 9845497950</Link>
                     </h6>
                   </div>
                 </div>
