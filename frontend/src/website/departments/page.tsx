@@ -86,25 +86,54 @@ export default function DepartmentsPage() {
                         <div className="row clearfix">
                             {departments.map((dept: any) => (
                                 <div key={dept.uid || dept.id} className="col-lg-4 col-md-6 col-sm-12 service-block-column mb_30">
-                                    <div className="service-block-one">
-                                        <div className="inner-box">
-                                            <figure className="image-box">
-                                                <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
-                                            </figure>
-                                            <div className="lower-content">
-                                                <div className="inner">
-                                                    <div className="icon-box">
-                                                        <img
-                                                            src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
-                                                            alt={dept.name}
-                                                            style={{ width: '64px', height: '64px', objectFit: 'contain' }}
-                                                        />
+                                    {/* Desktop Card Design */}
+                                    <div className="desktop-dept-card-container">
+                                        <div className="service-block-one">
+                                            <div className="inner-box">
+                                                <figure className="image-box">
+                                                    <Image src={dept.image || "/website/assets/images/service/service-1.jpg"} alt={dept.name} width={416} height={358} priority />
+                                                </figure>
+                                                <div className="lower-content">
+                                                    <div className="inner">
+                                                        <div className="icon-box">
+                                                            <img
+                                                                src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
+                                                                alt={dept.name}
+                                                                style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+                                                            />
+                                                        </div>
+                                                        <h3><Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link></h3>
+                                                        <p>{dept.description?.substring(0, 80)}...</p>
                                                     </div>
-                                                    <h3><Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link></h3>
-                                                    <p>{dept.description?.substring(0, 80)}...</p>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Mobile Card Design (Premium Circle Overlay) */}
+                                    <div className="mobile-dept-card-container">
+                                        <Link to={`/department-details/${dept.uid || dept.id}`}>
+                                            <div className="mobile-dept-card">
+                                                <div className="image-box">
+                                                    <Image 
+                                                        src={dept.image || "/website/assets/images/service/service-1.jpg"} 
+                                                        alt={dept.name} 
+                                                        width={500} 
+                                                        height={380} 
+                                                        priority={true}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                </div>
+                                                <div className="circle-overlay">
+                                                    <img
+                                                        src={getDepartmentIcon(dept.icon_class || dept.icon || "").src}
+                                                        alt={dept.name}
+                                                        className="icon"
+                                                    />
+                                                    <h4 className="title">{dept.name}</h4>
+                                                </div>
+                                            </div>
+                                        </Link>
                                     </div>
                                 </div>
                             ))}

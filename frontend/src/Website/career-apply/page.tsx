@@ -126,19 +126,19 @@ export default function CareerApplyPage() {
     }
 
     return (
-        <section className="job-apply-section p_relative sec-pad-2">
+        <section className="job-apply-section p_relative">
             <div className="auto-container">
                 <div className="row clearfix">
                     <div className="col-lg-10 offset-lg-1 col-md-12 col-sm-12 content-column">
-                        <div className="apply-form-box" style={{ backgroundColor: '#fff', padding: '60px', borderRadius: '30px', border: '1px solid #f0f0f0', boxShadow: '0 15px 50px rgba(0,0,0,0.03)' }}>
-                            <div className="form-header mb_40 pb_30" style={{ borderBottom: '1px solid #f5f5f5' }}>
+                        <div className="apply-form-box">
+                            <div className="form-header">
                                 <div className="row align-items-end">
                                     <div className="col-md-8">
-                                        <span style={{ color: '#0646ac', fontWeight: 700, textTransform: 'uppercase', fontSize: '13px', letterSpacing: '1px' }}>Apply For Position</span>
-                                        <h2 style={{ fontSize: '32px', fontWeight: 800, marginTop: '5px' }}>{job.title}</h2>
+                                        <span className="apply-sub-title" style={{ color: '#0646ac', fontWeight: 700, textTransform: 'uppercase', fontSize: '13px', letterSpacing: '1px' }}>Apply For Position</span>
+                                        <h2>{job.title}</h2>
                                     </div>
-                                    <div className="col-md-4 text-md-right">
-                                        <span style={{ backgroundColor: '#f0f4ff', color: '#0646ac', padding: '6px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                                    <div className="col-md-4 text-md-right mt-3 mt-md-0">
+                                        <span style={{ backgroundColor: '#f0f4ff', color: '#0646ac', padding: '6px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, display: 'inline-block' }}>
                                             {job.location || "Remote/Office"} • {job.type || "Full Time"}
                                         </span>
                                     </div>
@@ -148,87 +148,68 @@ export default function CareerApplyPage() {
                             <form onSubmit={handleSubmit} className="default-form">
                                 <div className="row clearfix">
                                     <div className="col-lg-12 mb_30">
-                                        <h4 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <User size={20} color="#0646ac" /> Personal Information
-                                        </h4>
+                                        <h4><User size={20} color="#0646ac" /> Personal Information</h4>
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Full Name *</label>
-                                        <input type="text" name="applicant_name" value={formData.applicant_name} onChange={handleInputChange} placeholder="Your legal name" required 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Full Name *</label>
+                                        <input type="text" name="applicant_name" value={formData.applicant_name} onChange={handleInputChange} placeholder="Your legal name" required />
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Email Address *</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="example@email.com" required 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Email Address *</label>
+                                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="example@email.com" required />
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Phone Number *</label>
-                                        <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 XXXX XXX XXX" required 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Phone Number *</label>
+                                        <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 XXXX XXX XXX" required />
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Years of Experience</label>
-                                        <input type="number" step="0.5" name="years_of_experience" value={formData.years_of_experience} onChange={handleInputChange} placeholder="e.g. 3" 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Years of Experience</label>
+                                        <input type="number" step="0.5" name="years_of_experience" value={formData.years_of_experience} onChange={handleInputChange} placeholder="e.g. 3" />
                                     </div>
 
                                     <div className="col-lg-12 mb_30 mt_20">
-                                        <h4 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <Briefcase size={20} color="#0646ac" /> Professional Details
-                                        </h4>
+                                        <h4><Briefcase size={20} color="#0646ac" /> Professional Details</h4>
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>LinkedIn Profile</label>
-                                        <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleInputChange} placeholder="https://linkedin.com/in/..." 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>LinkedIn Profile</label>
+                                        <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleInputChange} placeholder="https://linkedin.com/in/..." />
                                     </div>
                                     <div className="col-lg-6 col-md-6 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Portfolio/Website URL</label>
-                                        <input type="url" name="portfolio_url" value={formData.portfolio_url} onChange={handleInputChange} placeholder="https://yourportfolio.com" 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Portfolio/Website URL</label>
+                                        <input type="url" name="portfolio_url" value={formData.portfolio_url} onChange={handleInputChange} placeholder="https://yourportfolio.com" />
                                     </div>
                                     <div className="col-lg-4 col-md-4 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Current CTC</label>
-                                        <input type="text" name="current_ctc" value={formData.current_ctc} onChange={handleInputChange} placeholder="e.g. 10 LPA" 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Current CTC</label>
+                                        <input type="text" name="current_ctc" value={formData.current_ctc} onChange={handleInputChange} placeholder="e.g. 10 LPA" />
                                     </div>
                                     <div className="col-lg-4 col-md-4 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Expected CTC</label>
-                                        <input type="text" name="expected_ctc" value={formData.expected_ctc} onChange={handleInputChange} placeholder="e.g. 15 LPA" 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Expected CTC</label>
+                                        <input type="text" name="expected_ctc" value={formData.expected_ctc} onChange={handleInputChange} placeholder="e.g. 15 LPA" />
                                     </div>
                                     <div className="col-lg-4 col-md-4 col-sm-12 form-group mb_25">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Notice Period</label>
-                                        <input type="text" name="notice_period" value={formData.notice_period} onChange={handleInputChange} placeholder="e.g. 30 Days" 
-                                            style={{ width: '100%', padding: '12px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none' }} />
+                                        <label>Notice Period</label>
+                                        <input type="text" name="notice_period" value={formData.notice_period} onChange={handleInputChange} placeholder="e.g. 30 Days" />
                                     </div>
 
                                     <div className="col-lg-12 mb_30 mt_20">
-                                        <h4 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <Upload size={20} color="#0646ac" /> Documents
-                                        </h4>
+                                        <h4><Upload size={20} color="#0646ac" /> Documents</h4>
                                     </div>
                                     <div className="col-lg-12 form-group mb_30">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px', display: 'block' }}>Upload Resume (PDF only) *</label>
+                                        <label>Upload Resume (PDF only) *</label>
                                         <div 
-                                            style={{ 
-                                                border: '2px dashed #ddd', padding: '30px', borderRadius: '15px', textAlign: 'center',
-                                                backgroundColor: resume ? '#f0faff' : '#fcfcfc', transition: 'all 0.3s ease',
-                                                cursor: 'pointer', position: 'relative'
-                                            }}
+                                            className={`resume-upload-wrapper ${resume ? 'active' : ''}`}
                                             onClick={() => document.getElementById('resume-upload')?.click()}
                                         >
                                             <input type="file" id="resume-upload" onChange={handleFileChange} accept=".pdf" style={{ display: 'none' }} />
                                             {resume ? (
                                                 <div>
-                                                    <FileText size={40} color="#0646ac" style={{ marginBottom: '10px' }} />
+                                                    <FileText size={40} color="#0646ac" className="mb_10" />
                                                     <p style={{ fontWeight: 700, color: '#111' }}>{resume.name}</p>
                                                     <p style={{ fontSize: '12px', color: '#666' }}>Click to change file</p>
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <Upload size={40} color="#ccc" style={{ marginBottom: '10px' }} />
+                                                    <Upload size={40} color="#ccc" className="mb_10" />
                                                     <p style={{ fontWeight: 600, color: '#777' }}>Drag & drop or <span style={{ color: '#0646ac' }}>browse</span></p>
                                                     <p style={{ fontSize: '12px', color: '#999' }}>Adobe PDF Format only (Max 5MB)</p>
                                                 </div>
@@ -237,9 +218,8 @@ export default function CareerApplyPage() {
                                     </div>
 
                                     <div className="col-lg-12 form-group mb_30">
-                                        <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Cover Letter (Optional)</label>
-                                        <textarea name="cover_letter" value={formData.cover_letter} onChange={handleInputChange} placeholder="Tell us why you are a great fit for this role..." 
-                                            style={{ width: '100%', padding: '15px 20px', borderRadius: '10px', border: '1.5px solid #eee', outline: 'none', minHeight: '150px' }}></textarea>
+                                        <label>Cover Letter (Optional)</label>
+                                        <textarea name="cover_letter" value={formData.cover_letter} onChange={handleInputChange} placeholder="Tell us why you are a great fit for this role..." style={{ minHeight: '150px' }}></textarea>
                                     </div>
 
                                     <div className="col-lg-12 form-group message-btn mt_20">

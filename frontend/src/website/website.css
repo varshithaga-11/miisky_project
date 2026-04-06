@@ -1248,6 +1248,21 @@ html, body {
     margin-top: 0px !important; /* Space after content removed */
   }
 
+  .service-block-one .icon-box {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-left: 0 !important;
+  }
+  
+  .service-block-one .lower-content .inner {
+    text-align: center !important;
+  }
+
+  /* Optimize department content density on mobile */
+  .service-block-one .lower-content {
+    padding: 20px 15px 30px 15px !important;
+  }
+
   .service-sidebar .sidebar-widget {
     margin-bottom: 30px !important;
   }
@@ -2294,5 +2309,449 @@ html, body {
   /* Cta section spacing */
   .sidebar-page-container + .cta-section {
     margin-top: 0 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE DEPARTMENT CARDS PREMIUM STYLE
+   Central Circle Design as requested.
+   ───────────────────────────────────────────────────────────────────────────── */
+@media only screen and (max-width: 767px) {
+  .mobile-dept-card-container {
+    display: block !important;
+  }
+  
+  .desktop-dept-card-container {
+    display: none !important;
+  }
+
+  .mobile-dept-card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 30px;
+    height: 380px; /* Adjust height as needed */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+
+  .mobile-dept-card .image-box {
+    width: 100%;
+    height: 100%;
+  }
+
+  .mobile-dept-card .image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* White Circle Overlay */
+  .mobile-dept-card .circle-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 190px;
+    height: 190px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    padding: 25px;
+    text-align: center;
+    /* Fancy border for the circle */
+    border: 12px solid rgba(6, 70, 172, 0.05);
+    background-clip: padding-box;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+  }
+
+  .mobile-dept-card .circle-overlay .icon {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 12px;
+    object-fit: contain;
+  }
+
+  .mobile-dept-card .circle-overlay .title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0646ac;
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    text-transform: capitalize;
+  }
+
+  /* Optional: Lighten image on mobile to make circle pop */
+  .mobile-dept-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.05); /* Very subtle dark overlay */
+    z-index: 1;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .mobile-dept-card-container {
+    display: none !important;
+  }
+  
+  .desktop-dept-card-container {
+    display: block !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CAREERS PAGE STYLES
+   Premium card design with hover effects.
+   ───────────────────────────────────────────────────────────────────────────── */
+.career-block-one {
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.career-block-one:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(6, 70, 172, 0.2);
+}
+
+.career-block-one::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 0;
+  background: #0646ac;
+  transition: all 0.3s ease;
+}
+
+.career-block-one:hover::before {
+  height: 100%;
+}
+
+.career-block-one h3 a {
+  transition: all 0.3s ease;
+}
+
+.career-block-one:hover h3 a {
+  color: #0646ac !important;
+}
+
+.career-block-one .location i {
+  transition: all 0.3s ease;
+}
+
+.career-block-one:hover .location i {
+  transform: scale(1.2);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CAREER DETAILS PAGE STYLES
+   ───────────────────────────────────────────────────────────────────────────── */
+.career-details-section {
+  padding-top: 60px !important;
+  padding-bottom: 60px !important;
+}
+
+.career-details-content .content-box {
+  padding: 40px !important;
+  border: 1px solid #eeeeee !important;
+  border-radius: 25px !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05) !important;
+  position: relative;
+  display: block;
+}
+
+.career-details-content .job-header {
+  border-bottom: 1.5px solid #f0f0f0 !important;
+  margin-bottom: 30px !important;
+  padding-bottom: 30px !important;
+}
+
+.career-details-content .job-title {
+  font-size: 38px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #111111 !important;
+}
+
+.career-details-content .job-meta-list {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 10px 25px !important;
+  color: #777777 !important;
+  font-size: 15px !important;
+}
+
+.career-details-content .job-type-badge {
+  background-color: #0646ac !important;
+  color: #ffffff !important;
+  padding: 5px 15px !important;
+  border-radius: 25px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-transform: capitalize !important;
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.career-details-content .job-meta-item {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.career-details-content .job-meta-item i {
+  color: #0646ac;
+  margin-right: 8px;
+}
+
+.career-details-content .job-description h3 {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  margin-bottom: 15px !important;
+  color: #111111 !important;
+}
+
+.career-details-content .job-description p {
+  font-size: 17px !important;
+  line-height: 1.8 !important;
+  color: #555555 !important;
+  margin-bottom: 30px !important;
+}
+
+.career-details-content .apply-card {
+  background-color: #fdfdfd !important;
+  border-radius: 20px !important;
+  border: 1px solid #eeeeee !important;
+  padding: 40px !important;
+  text-align: center !important;
+  margin-top: 40px !important;
+}
+
+.career-details-content .apply-card h3 {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  margin-bottom: 15px !important;
+}
+
+.career-details-content .apply-card p {
+  color: #888888 !important;
+  margin-bottom: 30px !important;
+}
+
+.career-details-sidebar .sidebar-widget-main {
+  background-color: #0646ac !important;
+  border-radius: 20px !important;
+  color: #ffffff !important;
+  padding: 30px !important;
+}
+
+.career-details-sidebar .sidebar-widget-main h3 {
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  margin-bottom: 20px !important;
+}
+
+.career-details-sidebar .sidebar-widget-about {
+  background-color: #f0f4ff !important;
+  border-radius: 20px !important;
+  padding: 30px !important;
+  margin-top: 30px !important;
+}
+
+.career-details-sidebar .sidebar-widget-about h3 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  margin-bottom: 15px !important;
+}
+
+/* Mobile Responsiveness for Career Details */
+@media only screen and (max-width: 991px) {
+  .career-details-section {
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+  
+  .career-details-sidebar .sidebar {
+    margin-left: 0 !important;
+    margin-top: 40px !important;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .career-details-content .content-box {
+    padding: 25px 20px !important;
+    border-radius: 20px !important;
+  }
+  
+  .career-details-content .job-title {
+    font-size: 26px !important;
+  }
+  
+  .career-details-content .job-header {
+    margin-bottom: 20px !important;
+    padding-bottom: 20px !important;
+  }
+  
+  .career-details-content .job-meta-list {
+    gap: 8px 15px !important;
+    font-size: 14px !important;
+  }
+  
+  .career-details-content .job-description h3 {
+    font-size: 20px !important;
+  }
+  
+  .career-details-content .job-description p {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .career-details-content .apply-card {
+    padding: 25px 20px !important;
+    border-radius: 15px !important;
+    margin-top: 30px !important;
+  }
+  
+  .career-details-sidebar .sidebar-widget-main,
+  .career-details-sidebar .sidebar-widget-about {
+    padding: 25px 20px !important;
+    border-radius: 15px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CAREER APPLY PAGE STYLES
+   ───────────────────────────────────────────────────────────────────────────── */
+.job-apply-section {
+  padding-top: 60px !important;
+  padding-bottom: 60px !important;
+}
+
+.apply-form-box {
+  background-color: #ffffff !important;
+  padding: 60px !important;
+  border-radius: 30px !important;
+  border: 1px solid #f0f0f0 !important;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.03) !important;
+}
+
+.apply-form-box .form-header {
+  border-bottom: 1px solid #f5f5f5 !important;
+  margin-bottom: 40px !important;
+  padding-bottom: 30px !important;
+}
+
+.apply-form-box h2 {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  margin-top: 5px !important;
+}
+
+.apply-form-box h4 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  margin-bottom: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.apply-form-box label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+  display: block !important;
+}
+
+.apply-form-box input,
+.apply-form-box textarea {
+  width: 100% !important;
+  padding: 12px 20px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #eeeeee !important;
+  outline: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.apply-form-box input:focus,
+.apply-form-box textarea:focus {
+  border-color: #0646ac !important;
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgba(6, 70, 172, 0.05) !important;
+}
+
+.resume-upload-wrapper {
+  border: 2px dashed #dddddd !important;
+  padding: 30px !important;
+  border-radius: 15px !important;
+  text-align: center !important;
+  background-color: #fcfcfc !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+.resume-upload-wrapper.active {
+  background-color: #f0faff !important;
+  border-color: #0646ac !important;
+}
+
+/* Mobile Responsiveness for Career Apply */
+@media only screen and (max-width: 767px) {
+  .job-apply-section {
+    padding-top: 30px !important;
+    padding-bottom: 30px !important;
+  }
+  
+  .apply-form-box {
+    padding: 30px 20px !important;
+    border-radius: 20px !important;
+  }
+  
+  .apply-form-box .form-header {
+    margin-bottom: 30px !important;
+    padding-bottom: 20px !important;
+  }
+  
+  .apply-form-box h2 {
+    font-size: 24px !important;
+  }
+  
+  .apply-form-box h4 {
+    font-size: 18px !important;
+  }
+  
+  .resume-upload-wrapper {
+    padding: 20px !important;
+  }
+  
+  .apply-form-box .theme-btn.btn-one {
+    font-size: 16px !important;
+    padding: 12px 15px !important;
   }
 }

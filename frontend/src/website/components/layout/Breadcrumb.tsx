@@ -186,10 +186,13 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ breadcrumbTitle }) => {
                         flex-direction: column !important; /* Forces title then breadcrumb */
                     }
                     .page-title h1 {
-                        font-size: 24px !important; /* Clearly the primary title */
+                        font-size: 20px !important; /* Slightly reduced to fit long titles on one line */
                         margin-bottom: 0px !important; /* NO GAP */
                         order: 1 !important;
                         color: #ffffff !important;
+                        white-space: nowrap !important; /* Forces one line as requested */
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
                     }
                     .page-title .bread-crumb {
                         font-size: 9px !important; /* Tiny secondary info */

@@ -754,6 +754,17 @@ const MasterSidebar: React.FC = () => {
     </ul>
   );
 
+  const dashboardPath = useMemo(() => {
+    const role = getUserRoleFromToken();
+    if (role === "master") return "/master/dashboard";
+    if (role === "patient") return "/patient/dashboard";
+    if (role === "non_patient") return "/non-patient/dashboard";
+    if (role === "nutritionist") return "/nutrition/dashboard";
+    if (role === "micro_kitchen") return "/microkitchen/dashboard";
+    if (role === "supply_chain") return "/supplychain/dashboard";
+    return "/admin/dashboard";
+  }, []);
+
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -769,7 +780,7 @@ const MasterSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="py-8 flex justify-center">
-        <Link to="/">
+        <Link to={dashboardPath}>
           <img
             src="/miisky-logo.png"
             alt="Miisky Logo"

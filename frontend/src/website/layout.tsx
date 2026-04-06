@@ -26,6 +26,23 @@ export function GlobalLayoutWrapper() {
 }
 
 export default function WebsiteLayout() {
+  useEffect(() => {
+    document.body.classList.add("website-active");
+    
+    // Tag the style element to allow identification for removal on other pages
+    const styleTags = document.querySelectorAll('style');
+    styleTags.forEach(tag => {
+      if (tag.innerHTML.includes('/* Website Global Styles */') || 
+          tag.innerHTML.includes('website/assets/css/bootstrap.css')) {
+        tag.setAttribute('data-website-styles', 'true');
+      }
+    });
+
+    return () => {
+      document.body.classList.remove("website-active");
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <LayoutProvider>

@@ -11,6 +11,8 @@ export default function MedicalDevicesPage() {
     const [devices, setDevices] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const PAGE_SIZE = 6;
 
     // Get category ID from query params
     const queryParams = new URLSearchParams(location.search);
@@ -21,6 +23,7 @@ export default function MedicalDevicesPage() {
         setBreadcrumbTitle("Innovative Medical Solutions");
         const fetchDevicesData = async () => {
             try {
+                setLoading(true);
                 const [devicesRes, categoriesRes] = await Promise.all([
                     getMedicalDevices(),
                     getMedicalDeviceCategories()
@@ -43,6 +46,7 @@ export default function MedicalDevicesPage() {
                 navigate(`/medical-devices?category=${cat.uid}`, { replace: true });
             }
         }
+        setCurrentPage(1); // Reset page on category change
     }, [categoryId, categories, navigate]);
 
     const filteredDevices = useMemo(() => {
@@ -55,6 +59,9 @@ export default function MedicalDevicesPage() {
             (device.category_uid && device.category_uid === categoryId)
         );
     }, [devices, categoryId]);
+
+    const totalPages = Math.ceil(filteredDevices.length / PAGE_SIZE) || 1;
+    const displayedDevices = filteredDevices.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     const activeCategoryName = useMemo(() => {
         if (!categoryId) return null;
@@ -133,92 +140,118 @@ export default function MedicalDevicesPage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="row clearfix">
-                        {filteredDevices.map((device) => (
-                            <div key={device.id} className="col-lg-4 col-md-6 col-sm-12 mb_40">
-                                <Link to={`/medical-devices/${device.uid || device.id}`} className="p_relative d-block h-100">
-                                    <div className="device-card-premium h-100" style={{ 
-                                        backgroundColor: '#fff', 
-                                        borderRadius: '30px', 
-                                        overflow: 'hidden', 
-                                        boxShadow: '0 15px 45px rgba(0,0,0,0.04)',
-                                        border: '1px solid #f2f2f2',
-                                        transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative'
-                                    }}>
-                                        <div className="image-wrapper p_relative" style={{ height: '280px', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
-                                             <div className="category-badge" style={{ 
-                                                position: 'absolute', 
-                                                top: '20px', 
-                                                left: '20px', 
-                                                zIndex: 2, 
-                                                backgroundColor: 'rgba(255,255,255,0.95)', 
-                                                backdropFilter: 'blur(10px)',
-                                                padding: '6px 16px', 
-                                                borderRadius: '30px',
-                                                fontSize: '11px',
-                                                fontWeight: 800,
-                                                color: '#0646ac',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '1px',
-                                                boxShadow: '0 5px 15px rgba(0,0,0,0.05)'
-                                            }}>
-                                                {categories.find(c => c.id === device.category || c.id === device.category_id || c.uid === device.category_uid)?.name || "Medical Tech"}
+                    <>
+                        <div className="row clearfix">
+                            {displayedDevices.map((device) => (
+                                <div key={device.id} className="col-lg-4 col-md-6 col-sm-12 mb_40">
+                                    <Link to={`/medical-devices/${device.uid || device.id}`} className="p_relative d-block h-100">
+                                        <div className="device-card-premium h-100" style={{ 
+                                            backgroundColor: '#fff', 
+                                            borderRadius: '30px', 
+                                            overflow: 'hidden', 
+                                            boxShadow: '0 15px 45px rgba(0,0,0,0.04)',
+                                            border: '1px solid #f2f2f2',
+                                            transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            position: 'relative'
+                                        }}>
+                                            <div className="image-wrapper p_relative" style={{ height: '280px', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
+                                                <div className="category-badge" style={{ 
+                                                    position: 'absolute', 
+                                                    top: '20px', 
+                                                    left: '20px', 
+                                                    zIndex: 2, 
+                                                    backgroundColor: 'rgba(255,255,255,0.95)', 
+                                                    backdropFilter: 'blur(10px)',
+                                                    padding: '6px 16px', 
+                                                    borderRadius: '30px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 800,
+                                                    color: '#0646ac',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '1px',
+                                                    boxShadow: '0 5px 15px rgba(0,0,0,0.05)'
+                                                }}>
+                                                    {categories.find(c => c.id === device.category || c.id === device.category_id || c.uid === device.category_uid)?.name || "Medical Tech"}
+                                                </div>
+                                                <Image 
+                                                    src={device.image_url || device.image || "/website/assets/images/service/service-1.jpg"} 
+                                                    alt={device.name} 
+                                                    width={400} 
+                                                    height={280} 
+                                                    style={{ objectFit: 'contain', width: '100%', height: '100%', transition: 'transform 0.8s ease', padding: '20px' }} 
+                                                />
                                             </div>
-                                            <Image 
-                                                src={device.image_url || device.image || "/website/assets/images/service/service-1.jpg"} 
-                                                alt={device.name} 
-                                                width={400} 
-                                                height={280} 
-                                                style={{ objectFit: 'contain', width: '100%', height: '100%', transition: 'transform 0.8s ease', padding: '20px' }} 
-                                            />
-                                        </div>
 
-                                        <div className="card-body p_30 d-flex flex-column" style={{ flex: 1 }}>
-                                            <h3 className="mb_15" style={{ fontSize: '24px', fontWeight: 900, color: '#111827', lineHeight: '1.2' }}>{device.name}</h3>
-                                            <p className="mb_25" style={{ color: '#6b7280', fontSize: '15px', lineHeight: '1.7', flex: 1 }}>
-                                                {device.short_description || (device.description ? device.description.substring(0, 90) + "..." : "Precision-engineered medical solution for advanced clinical diagnostic and monitoring workflows.")}
-                                            </p>
-                                            
-                                            <div className="card-footer-box pt_25 d-flex align-items-center justify-content-between border-top" style={{ borderColor: '#f2f2f2' }}>
-                                                {device.price ? (
-                                                    <div className="price-info">
-                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Market Price</span>
-                                                        <span style={{ color: '#111827', fontWeight: 900, fontSize: '20px' }}>
-                                                            <span style={{ fontSize: '14px', marginRight: '2px' }}>₹</span>
-                                                            {Number(device.price).toLocaleString('en-IN')}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#0646ac' }}>Innovative Care</span>
-                                                )}
-                                                <div className="btn-box">
-                                                    <div className="view-details-btn d-flex align-items-center justify-content-center" style={{ 
-                                                        backgroundColor: '#0646ac', 
-                                                        color: '#fff', 
-                                                        padding: '10px 24px', 
-                                                        borderRadius: '30px', 
-                                                        fontSize: '13px', 
-                                                        fontWeight: 800, 
-                                                        textTransform: 'uppercase', 
-                                                        letterSpacing: '1px',
-                                                        boxShadow: '0 8px 20px rgba(6, 70, 172, 0.15)',
-                                                        transition: 'all 0.3s ease',
-                                                        cursor: 'pointer'
-                                                    }}>
-                                                        View Details
-                                                        <i className="fas fa-arrow-right ml_10" style={{ fontSize: '11px' }}></i>
+                                            <div className="card-body p_30 d-flex flex-column" style={{ flex: 1 }}>
+                                                <h3 className="mb_15" style={{ fontSize: '24px', fontWeight: 900, color: '#111827', lineHeight: '1.2' }}>{device.name}</h3>
+                                                <p className="mb_25" style={{ color: '#6b7280', fontSize: '15px', lineHeight: '1.7', flex: 1 }}>
+                                                    {device.short_description || (device.description ? device.description.substring(0, 90) + "..." : "Precision-engineered medical solution for advanced clinical diagnostic and monitoring workflows.")}
+                                                </p>
+                                                
+                                                <div className="card-footer-box pt_25 d-flex align-items-center justify-content-between border-top" style={{ borderColor: '#f2f2f2' }}>
+                                                    {device.price ? (
+                                                        <div className="price-info">
+                                                            <span style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Market Price</span>
+                                                            <span style={{ color: '#111827', fontWeight: 900, fontSize: '20px' }}>
+                                                                <span style={{ fontSize: '14px', marginRight: '2px' }}>₹</span>
+                                                                {Number(device.price).toLocaleString('en-IN')}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0646ac' }}>Innovative Care</span>
+                                                    )}
+                                                    <div className="btn-box">
+                                                        <div className="view-details-btn d-flex align-items-center justify-content-center" style={{ 
+                                                            backgroundColor: '#0646ac', 
+                                                            color: '#fff', 
+                                                            padding: '10px 24px', 
+                                                            borderRadius: '30px', 
+                                                            fontSize: '13px', 
+                                                            fontWeight: 800, 
+                                                            textTransform: 'uppercase', 
+                                                            letterSpacing: '1px',
+                                                            boxShadow: '0 8px 20px rgba(6, 70, 172, 0.15)',
+                                                            transition: 'all 0.3s ease',
+                                                            cursor: 'pointer'
+                                                        }}>
+                                                            View Details
+                                                            <i className="fas fa-arrow-right ml_10" style={{ fontSize: '11px' }}></i>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </Link>
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+
+                        {totalPages > 1 && (
+                            <div className="pagination-wrapper centred mt_40">
+                                <ul className="pagination clearfix">
+                                    <li>
+                                        <Link to="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
+                                            <i className="icon-21"></i>
+                                        </Link>
+                                    </li>
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <li key={i+1}>
+                                            <Link to="#" className={currentPage === i + 1 ? "current" : ""} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                                                {(i + 1).toString().padStart(2, '0')}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                    <li>
+                                        <Link to="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>
+                                            <i className="icon-22"></i>
+                                        </Link>
+                                    </li>
+                                </ul>
                             </div>
-                        ))}
-                    </div>
+                        )}
+                    </>
                 )}
             </div>
         </section>

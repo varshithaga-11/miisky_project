@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { SidebarProvider, useSidebar } from "../../context/SidebarContext";
 import { Outlet } from "react-router";
 import MasterHeader from "./MasterHeader";
@@ -6,6 +7,37 @@ import MasterSidebar from "./MasterSidebar";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+
+  useEffect(() => {
+    // Disable website-specific styles to prevent leakage into the master dashboard
+    const disableStyles = () => {
+      const websiteStyles = document.querySelectorAll('style[data-website-styles="true"], link[data-website-styles="true"]');
+      websiteStyles.forEach(tag => {
+        if (tag instanceof HTMLStyleElement || tag instanceof HTMLLinkElement) {
+          tag.disabled = true;
+        }
+      });
+    };
+
+    const enableStyles = () => {
+      const websiteStyles = document.querySelectorAll('style[data-website-styles="true"], link[data-website-styles="true"]');
+      websiteStyles.forEach(tag => {
+        if (tag instanceof HTMLStyleElement || tag instanceof HTMLLinkElement) {
+          tag.disabled = false;
+        }
+      });
+    };
+
+    disableStyles();
+    
+    // Sometimes styles take a moment to be tagged by WebsiteLayout if coming from there
+    const timeout = setTimeout(disableStyles, 100);
+
+    return () => {
+      clearTimeout(timeout);
+      enableStyles();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen xl:flex">

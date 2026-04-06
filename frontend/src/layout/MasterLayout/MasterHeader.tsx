@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSidebar } from "../../context/SidebarContext";
 import { ThemeToggleButton } from "../../components/common/ThemeToggleButton";
+import { getUserRoleFromToken } from "../../utils/auth";
 
 import MasterUserDropdown from "../../components/Header/MasterUserDropdown";
 
@@ -17,6 +18,17 @@ const MasterHeader: React.FC = () => {
       toggleMobileSidebar();
     }
   };
+
+  const dashboardPath = useMemo(() => {
+    const role = getUserRoleFromToken();
+    if (role === "master") return "/master/dashboard";
+    if (role === "patient") return "/patient/dashboard";
+    if (role === "non_patient") return "/non-patient/dashboard";
+    if (role === "nutritionist") return "/nutrition/dashboard";
+    if (role === "micro_kitchen") return "/microkitchen/dashboard";
+    if (role === "supply_chain") return "/supplychain/dashboard";
+    return "/admin/dashboard";
+  }, []);
 
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
@@ -82,7 +94,7 @@ const MasterHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link to="/" className="lg:hidden flex items-center">
+          <Link to={dashboardPath} className="lg:hidden flex items-center">
             {/* Empty logo area for mobile, show only text */}
             <span className="font-bold text-lg text-gray-900 dark:text-white">Miisky</span>
           </Link>

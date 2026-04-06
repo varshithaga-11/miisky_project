@@ -22,6 +22,9 @@ export default function Pricing_Page() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const PAGE_SIZE = 8;
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -55,18 +58,23 @@ export default function Pricing_Page() {
                         a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
                     );
                     setPlans(sortedPlans);
+                    setTotalPages(Math.ceil(sortedPlans.length / PAGE_SIZE) || 1);
                 } else {
                     setPlans(MOCK_PLANS);
+                    setTotalPages(1);
                 }
             } catch (error) {
                 console.error("Failed to fetch pricing:", error);
                 setPlans(MOCK_PLANS);
+                setTotalPages(1);
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
     }, [setHeaderStyle, setBreadcrumbTitle]);
+
+    const displayedPlans = plans.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     if (loading) {
         return (
@@ -95,7 +103,7 @@ export default function Pricing_Page() {
                     </div>
 
                     <div className="row flex flex-wrap justify-start -mx-4">
-                        {plans.map((plan, index) => (
+                        {displayedPlans.map((plan, index) => (
                             <div key={plan.id || index} className="col-lg-3 col-md-6 col-sm-12 info-block px-4 mb-12">
                                 <div className="info-block-two wow fadeInUp animated h-full" data-wow-delay={`${index * 200}ms`} data-wow-duration="1500ms">
                                     <div className="inner-box shadow-xl hover:shadow-2xl transition-all duration-400 rounded-[28px] bg-white dark:bg-gray-800/80 backdrop-blur-sm group border border-gray-100 dark:border-white/5 hover:-translate-y-2.5"
@@ -154,6 +162,30 @@ export default function Pricing_Page() {
                             </div>
                         ))}
                     </div>
+
+                    {totalPages > 1 && (
+                        <div className="pagination-wrapper centred mt-12">
+                            <ul className="pagination clearfix">
+                                <li>
+                                    <Link to="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
+                                        <i className="icon-21"></i>
+                                    </Link>
+                                </li>
+                                {[...Array(totalPages)].map((_, i) => (
+                                    <li key={i+1}>
+                                        <Link to="#" className={currentPage === i + 1 ? "current" : ""} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                                            {(i + 1).toString().padStart(2, '0')}
+                                        </Link>
+                                    </li>
+                                ))}
+                                <li>
+                                    <Link to="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>
+                                        <i className="icon-22"></i>
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </section>
             <Cta />

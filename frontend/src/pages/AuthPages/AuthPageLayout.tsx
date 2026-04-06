@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import GridShape from "../../components/common/GridShape";
 import ThemeTogglerTwo from "../../components/common/ThemeTogglerTwo";
 
@@ -7,6 +7,25 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    // Disable website-specific styles to prevent pollution/leakage
+    const websiteStyles = document.querySelectorAll('style[data-website-styles="true"], link[data-website-styles="true"]');
+    websiteStyles.forEach(tag => {
+      if (tag instanceof HTMLStyleElement || tag instanceof HTMLLinkElement) {
+        tag.disabled = true;
+      }
+    });
+
+    return () => {
+      // Re-enable when leaving auth pages
+      websiteStyles.forEach(tag => {
+        if (tag instanceof HTMLStyleElement || tag instanceof HTMLLinkElement) {
+          tag.disabled = false;
+        }
+      });
+    };
+  }, []);
+
   return (
     <div className="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
       <div className="relative flex flex-col justify-center w-full h-screen lg:flex-row dark:bg-gray-900 sm:p-0">

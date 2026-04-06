@@ -63,7 +63,7 @@ export default function CareersPage() {
                         <div className="row clearfix">
                             {jobs.map((job) => (
                                 <div key={job.id} className="col-lg-6 col-md-12 col-sm-12 career-block">
-                                    <div className="career-block-one" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '10px', backgroundColor: '#fff', marginBottom: '30px', transition: 'all 0.3s ease', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
+                                    <div className="career-block-one">
                                         <div className="inner-box">
                                             <div className="job-meta mb_10">
                                                 <span style={{ backgroundColor: '#0646ac', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
@@ -82,7 +82,7 @@ export default function CareersPage() {
                                             <h3 className="mb_15"><Link to={`/careers/${job.uid || job.id}`} style={{ color: '#111' }}>{job.title}</Link></h3>
                                             <div className="location mb_15" style={{ display: 'flex', alignItems: 'center', color: '#666', fontSize: '14px' }}>
                                                 <i className="fas fa-map-marker-alt mr_10" style={{ color: '#0646ac' }}></i> {job.location || "Puducherry, India"}
-                                                <i className="far fa-clock ml_15 mr_10" style={{ color: '#0646ac' }}></i> {job.job_type || "Full Time"}
+                                                <i className="far fa-clock ml_15 mr_10" style={{ color: '#0646ac' }}></i> {(job.job_type || "Full Time").replace(/_/g, ' ').replace(/\b\w/g, (l: any) => l.toUpperCase())}
                                             </div>
                                             <div className="btn-box mt_20">
                                                 <Link to={`/careers/${job.uid || job.id}`} className="theme-btn btn-one" style={{ padding: '8px 25px' }}>
