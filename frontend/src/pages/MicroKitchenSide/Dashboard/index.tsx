@@ -9,7 +9,7 @@ import {
   FileText,
   HelpCircle,
   UserCog,
-  RotateCw,
+  Milestone,
   Zap,
   ChevronRight,
   Wallet,
@@ -28,6 +28,7 @@ type DashboardMenuItem = {
 const microKitchenMenus: DashboardMenuItem[] = [
   // Logistics
   { label: "Daily Prep", path: "/microkitchen/daily-prep", icon: Truck, statKey: "dailyPrep", color: "amber", category: "Logistics" },
+  { label: "Delivery management", path: "/microkitchen/delivery", icon: Milestone, color: "violet", category: "Logistics" },
   { label: "Manage Orders", path: "/microkitchen/orders", icon: Package, statKey: "orders", color: "indigo", category: "Logistics" },
   { label: "Available Foods", path: "/microkitchen/available-foods", icon: UtensilsCrossed, statKey: "availableFoods", color: "emerald", category: "Logistics" },
 

@@ -1514,7 +1514,7 @@ class UserDietPlan(models.Model):
         self.status = 'payment_pending'
         self.save()
 
-    def verify_payment(self, admin_user, start_date=None):
+    def verify_payment(self, admin_user, start_date=None, delivery_person=None, default_slot=None):
         """Admin verifies payment, assigns start date, and activates plan"""
         self.is_payment_verified = True
         self.verified_by = admin_user
@@ -1535,6 +1535,20 @@ class UserDietPlan(models.Model):
         self.save()
         from .plan_payment import ensure_plan_payment_snapshot
         ensure_plan_payment_snapshot(self)
+
+        # Step 1 — one-time global delivery setup (optional until admin sends person + slot)
+        if delivery_person is not None and default_slot is not None:
+            DietPlanDeliveryAssignment.objects.update_or_create(
+                user_diet_plan=self,
+                defaults={
+                    'user': self.user,
+                    'micro_kitchen': self.micro_kitchen,
+                    'delivery_person': delivery_person,
+                    'default_slot': default_slot,
+                    'assigned_by': admin_user,
+                    'is_active': True,
+                },
+            )
 
     def reject_payment(self):
         """Admin rejects payment"""
@@ -1615,12 +1629,21 @@ class UserMeal(models.Model):
 
     created_on = models.DateTimeField(auto_now_add=True)
 
+    # class Meta:
+    #     unique_together = ('user', 'meal_date', 'meal_type')
+    #     indexes = [
+    #         models.Index(fields=['user', 'meal_date']),
+    #         models.Index(fields=['micro_kitchen', 'meal_date']),
+    #     ]
+
     class Meta:
-        unique_together = ('user', 'meal_date', 'meal_type')
+        # REMOVED: unique_together = ('user', 'meal_date', 'meal_type')
         indexes = [
             models.Index(fields=['user', 'meal_date']),
+            models.Index(fields=['user', 'meal_date', 'meal_type']),  # fast per-meal-type queries
             models.Index(fields=['micro_kitchen', 'meal_date']),
         ]
+        ordering = ['meal_date', 'meal_type']
 
     def __str__(self):
         return f"{self.user} - {self.meal_type} - {self.meal_date}"
@@ -2552,3 +2575,413 @@ class EmailOTP(models.Model):
 
 
 
+# --------------------------------------------------------------
+# -------------------------------------------------------------
+# ------------------------------------------------------------
+# SUPPLY CHAIN / DELIVERY MODELS
+# --------------------------------------------------------------------
+
+class DeliverySlot(models.Model):
+    """
+    Time window for diet-plan deliveries (e.g. morning / evening).
+    Referenced by DietPlanDeliveryAssignment.default_slot and DeliveryAssignment.delivery_slot.
+    """
+
+    name = models.CharField(max_length=100)
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    micro_kitchen = models.ForeignKey(
+        'MicroKitchenProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='delivery_slots',
+    )
+
+    def __str__(self):
+        return self.name
+
+
+# ============================================================
+# 🌍 LAYER 1 — GLOBAL ASSIGNMENT
+# ============================================================
+
+class DietPlanDeliveryAssignment(models.Model):
+    """
+    One record per active UserDietPlan.
+    Admin assigns delivery person + slot ONCE here.
+    All meals under this plan auto-inherit this assignment.
+    """
+
+    user_diet_plan = models.OneToOneField(
+        UserDietPlan,
+        on_delete=models.CASCADE,
+        related_name='delivery_assignment'
+    )
+
+    # Denormalized for easy querying (no need to join UserDietPlan every time)
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='plan_delivery_assignments'
+    )
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='plan_delivery_assignments'
+    )
+
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='primary_delivery_plans'
+    )
+
+    default_slot = models.ForeignKey(
+        DeliverySlot,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Primary slot used when auto-creating daily deliveries (e.g. first of the day).",
+    )
+
+    delivery_slots = models.ManyToManyField(
+        DeliverySlot,
+        blank=True,
+        related_name='diet_plan_assignments',
+        help_text="All time windows this delivery person covers for the plan (can be several).",
+    )
+
+    is_active = models.BooleanField(default=True)
+    assigned_on = models.DateTimeField(auto_now_add=True)
+    assigned_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_plan_delivery_assignments'
+    )
+    notes = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Plan {self.user_diet_plan_id} → {self.delivery_person}"
+
+    def change_delivery_person(
+        self,
+        new_person,
+        *,
+        changed_by,
+        effective_from=None,
+        reason='reassigned',
+        notes=None,
+    ):
+        """
+        Permanent mid-plan handoff: updates global assignment and appends an audit log.
+        Past DeliveryAssignment rows are unchanged; new UserMeals get the new person via create_from_plan.
+        """
+        from django.utils import timezone as dj_tz
+
+        old = self.delivery_person
+        if getattr(new_person, 'pk', None) == getattr(old, 'pk', None):
+            return self
+
+        self.delivery_person = new_person
+        self.save(update_fields=['delivery_person'])
+
+        DietPlanDeliveryAssignmentLog.objects.create(
+            plan_assignment=self,
+            previous_delivery_person=old,
+            new_delivery_person=new_person,
+            reason=reason,
+            notes=notes,
+            changed_by=changed_by,
+            effective_from=effective_from or dj_tz.now().date(),
+        )
+        return self
+
+
+class DietPlanDeliveryAssignmentLog(models.Model):
+    """
+    Audit log every time the global delivery person changes mid-plan.
+    """
+    plan_assignment = models.ForeignKey(
+        DietPlanDeliveryAssignment,
+        on_delete=models.CASCADE,
+        related_name='change_logs'
+    )
+
+    previous_delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='removed_from_plans'
+    )
+    new_delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='added_to_plans'
+    )
+
+    REASON_CHOICES = [
+        ('left', 'Delivery Person Left'),
+        ('on_leave', 'On Leave'),
+        ('reassigned', 'Admin Reassignment'),
+        ('patient_request', 'Patient Request'),
+        ('performance', 'Performance Issue'),
+        ('other', 'Other'),
+    ]
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES)
+    notes = models.TextField(null=True, blank=True)
+
+    changed_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='delivery_plan_changes'
+    )
+    changed_on = models.DateTimeField(auto_now_add=True)
+    effective_from = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Plan {self.plan_assignment.user_diet_plan_id}: {self.previous_delivery_person} → {self.new_delivery_person}"
+
+
+# ============================================================
+# 📦 LAYER 2 — DAILY EXECUTION
+# ============================================================
+
+class DeliveryAssignment(models.Model):
+    """
+    One row per meal delivery. Auto-created when UserMeal is created.
+    Inherits delivery_person + slot from DietPlanDeliveryAssignment.
+    For a one-day reassignment (leave etc.) → call reassign().
+    """
+
+    user_meal = models.ForeignKey(
+        UserMeal,
+        on_delete=models.CASCADE,
+        related_name='deliveries'
+    )
+
+    plan_delivery_assignment = models.ForeignKey(
+        DietPlanDeliveryAssignment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='daily_assignments'
+    )
+
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assignments'
+    )
+
+    delivery_slot = models.ForeignKey(
+        DeliverySlot,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    # Filled only when this row was created due to a reassignment
+    reassigned_from = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reassigned_from_deliveries'
+    )
+    reassignment_reason = models.CharField(max_length=100, null=True, blank=True)
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('assigned', 'Assigned'),
+        ('picked_up', 'Picked Up'),
+        ('in_transit', 'In Transit'),
+        ('delivered', 'Delivered'),
+        ('failed', 'Failed'),
+        ('rescheduled', 'Rescheduled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    scheduled_date = models.DateField()
+    scheduled_time = models.TimeField(null=True, blank=True)
+    picked_up_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+
+    delivery_photo = models.ImageField(upload_to='delivery_proofs/', null=True, blank=True)
+    delivery_notes = models.TextField(null=True, blank=True)
+
+    delivery_otp = models.CharField(max_length=6, null=True, blank=True)
+    is_otp_verified = models.BooleanField(default=False)
+
+    delivered_lat = models.FloatField(null=True, blank=True)
+    delivered_lng = models.FloatField(null=True, blank=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['delivery_person', 'scheduled_date']),
+            models.Index(fields=['user_meal', 'status']),
+            models.Index(fields=['user_meal', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f"Delivery for {self.user_meal} → {self.delivery_person} ({self.status})"
+
+    @classmethod
+    def create_from_plan(cls, user_meal):
+        """
+        Call this whenever a UserMeal is created.
+        Auto-pulls delivery_person + slot from the global assignment.
+        """
+        plan_assignment = DietPlanDeliveryAssignment.objects.filter(
+            user_diet_plan=user_meal.user_diet_plan,
+            is_active=True
+        ).first()
+
+        return cls.objects.create(
+            user_meal=user_meal,
+            plan_delivery_assignment=plan_assignment,
+            delivery_person=plan_assignment.delivery_person if plan_assignment else None,
+            delivery_slot=plan_assignment.default_slot if plan_assignment else None,
+            scheduled_date=user_meal.meal_date,
+            status='assigned' if plan_assignment else 'pending',
+        )
+
+    @classmethod
+    def ensure_for_meal(cls, user_meal):
+        """Idempotent: one active daily row per UserMeal (Step 2)."""
+        existing = cls.objects.filter(user_meal=user_meal, is_active=True).first()
+        if existing:
+            return existing
+        return cls.create_from_plan(user_meal)
+
+    @classmethod
+    def reassign(cls, user_meal, new_person, reason=None):
+        """
+        Use when delivery person is on leave for a specific day.
+        Only affects this one meal. Global assignment stays untouched.
+        """
+        old = cls.objects.filter(user_meal=user_meal, is_active=True).first()
+        old_person = old.delivery_person if old else None
+
+        if old:
+            old.is_active = False
+            old.status = 'rescheduled'
+            old.save()
+
+        return cls.objects.create(
+            user_meal=user_meal,
+            plan_delivery_assignment=old.plan_delivery_assignment if old else None,
+            delivery_person=new_person,
+            delivery_slot=old.delivery_slot if old else None,
+            is_active=True,
+            status='assigned',
+            scheduled_date=user_meal.meal_date,
+            reassigned_from=old_person,
+            reassignment_reason=reason,
+        )
+
+
+class DeliveryIssue(models.Model):
+    assignment = models.ForeignKey(
+        DeliveryAssignment,
+        on_delete=models.CASCADE,
+        related_name='issues'
+    )
+    reported_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    ISSUE_TYPES = [
+        ('not_home', 'Patient Not Home'),
+        ('wrong_address', 'Wrong Address'),
+        ('food_damaged', 'Food Damaged'),
+        ('late_delivery', 'Late Delivery'),
+        ('kitchen_delay', 'Kitchen Delay'),
+        ('other', 'Other'),
+    ]
+    issue_type = models.CharField(max_length=30, choices=ISSUE_TYPES)
+    description = models.TextField(null=True, blank=True)
+
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    ]
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='low')
+
+    resolved = models.BooleanField(default=False)
+    resolved_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resolved_delivery_issues'
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.issue_type} | {self.assignment} | {'Resolved' if self.resolved else 'Open'}"
+
+
+class DeliveryRating(models.Model):
+    assignment = models.OneToOneField(
+        DeliveryAssignment,
+        on_delete=models.CASCADE,
+        related_name='rating'
+    )
+    rated_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    review = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+        if not self.assignment_id:
+            return
+        a = self.assignment
+        if not a.is_active:
+            raise ValidationError(
+                {'assignment': 'Rating must be linked to the active delivery row for this meal.'}
+            )
+        if a.status != 'delivered':
+            raise ValidationError(
+                {'assignment': 'Rating is only allowed after delivery is completed.'}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Rating {self.rating}/5 → {self.assignment.delivery_person}"

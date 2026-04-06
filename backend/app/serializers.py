@@ -2558,10 +2558,19 @@ class MicroKitchenPatientSummarySerializer(serializers.ModelSerializer):
     """
     patient_details = serializers.SerializerMethodField()
     diet_plan_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
-        fields = ['id', 'patient_details', 'diet_plan_details']
+        fields = [
+            'id',
+            'status',
+            'start_date',
+            'end_date',
+            'patient_details',
+            'diet_plan_details',
+            'nutritionist_details',
+        ]
 
     def get_patient_details(self, obj):
         if obj.user:
@@ -2576,6 +2585,17 @@ class MicroKitchenPatientSummarySerializer(serializers.ModelSerializer):
     def get_diet_plan_details(self, obj):
         return {
             'plan_name': obj.diet_plan.title if obj.diet_plan else "No Plan"
+        }
+
+    def get_nutritionist_details(self, obj):
+        n = getattr(obj, 'nutritionist', None)
+        if not n:
+            return None
+        return {
+            'id': n.id,
+            'first_name': n.first_name or '',
+            'last_name': n.last_name or '',
+            'email': n.email or '',
         }
 
 
@@ -2729,4 +2749,94 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ["id", "user", "title", "body", "is_read", "created_at"]
         read_only_fields = ["id", "user", "title", "body", "created_at"]
+
+
+# --- Diet plan delivery (micro kitchen / admin) ---
+
+
+class UserDietPlanDeliverySummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDietPlan
+        fields = ["id", "status", "start_date", "end_date"]
+
+
+class DeliverySlotSerializer(serializers.ModelSerializer):
+    micro_kitchen_brand = serializers.CharField(
+        source="micro_kitchen.brand_name", read_only=True, allow_null=True
+    )
+
+    class Meta:
+        model = DeliverySlot
+        fields = ["id", "name", "start_time", "end_time", "micro_kitchen", "micro_kitchen_brand"]
+
+
+class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
+    user_diet_plan_details = UserDietPlanDeliverySummarySerializer(source="user_diet_plan", read_only=True)
+    delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
+    patient_details = UserSummarySerializer(source="user", read_only=True)
+    default_slot_details = DeliverySlotSerializer(source="default_slot", read_only=True)
+    delivery_slots_details = DeliverySlotSerializer(source="delivery_slots", many=True, read_only=True)
+    delivery_slot_ids = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = DietPlanDeliveryAssignment
+        fields = [
+            "id",
+            "user_diet_plan",
+            "user_diet_plan_details",
+            "user",
+            "patient_details",
+            "micro_kitchen",
+            "delivery_person",
+            "delivery_person_details",
+            "default_slot",
+            "default_slot_details",
+            "delivery_slots_details",
+            "delivery_slot_ids",
+            "is_active",
+            "assigned_on",
+            "notes",
+        ]
+        read_only_fields = ["user", "micro_kitchen", "assigned_on", "user_diet_plan"]
+
+    def get_delivery_slot_ids(self, obj):
+        return list(obj.delivery_slots.values_list("id", flat=True).order_by("id"))
+
+
+class KitchenMealDeliverySerializer(serializers.ModelSerializer):
+    delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
+    delivery_slot_details = DeliverySlotSerializer(source="delivery_slot", read_only=True)
+    user_meal_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DeliveryAssignment
+        fields = [
+            "id",
+            "user_meal",
+            "user_meal_details",
+            "plan_delivery_assignment",
+            "delivery_person",
+            "delivery_person_details",
+            "delivery_slot",
+            "delivery_slot_details",
+            "status",
+            "scheduled_date",
+            "scheduled_time",
+            "is_active",
+            "reassignment_reason",
+        ]
+
+    def get_user_meal_details(self, obj):
+        um = obj.user_meal
+        if not um:
+            return None
+        return {
+            "id": um.id,
+            "meal_date": str(um.meal_date),
+            "meal_type": um.meal_type.name if um.meal_type else None,
+            "patient_name": (
+                f"{um.user.first_name or ''} {um.user.last_name or ''}".strip() or um.user.username
+            ),
+            "food_name": um.food.name if um.food else None,
+        }
 

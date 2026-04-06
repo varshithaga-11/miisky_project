@@ -31,6 +31,15 @@ export interface UserMeal {
         brand_name?: string | null;
         status?: string;
     } | null;
+    delivery?: {
+        id: number;
+        status: 'pending' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'failed' | 'rescheduled';
+        scheduled_date: string;
+        delivery_person_details?: {
+            username: string;
+            mobile?: string;
+        };
+    } | null;
 }
 
 export const getMyMeals = async (): Promise<UserMeal[]> => {

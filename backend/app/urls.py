@@ -35,6 +35,9 @@ router.register(r'cart', CartViewSet, basename='cart')
 router.register(r'cart-item', CartItemViewSet, basename='cart-item')
 router.register(r'order', OrderViewSet, basename='order')
 router.register(r'deliverychargeslab', DeliveryChargeSlabViewSet, basename='deliverychargeslab')
+router.register(r'delivery-slot', DeliverySlotKitchenViewSet, basename='delivery-slot')
+router.register(r'plandeliveryassignment', DietPlanDeliveryAssignmentViewSet, basename='plandeliveryassignment')
+router.register(r'mealdeliveryassignment', KitchenMealDeliveryViewSet, basename='mealdeliveryassignment')
 
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
@@ -78,6 +81,8 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 
 urlpatterns = [
+    path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
+    path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
     path('', include(router.urls)),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),

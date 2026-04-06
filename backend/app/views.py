@@ -2982,7 +2982,36 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 return Response({"detail": "Invalid start_date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
             if start_date < timezone.now().date():
                 return Response({"detail": "Start date cannot be in the past."}, status=status.HTTP_400_BAD_REQUEST)
-        udp.verify_payment(admin_user=request.user, start_date=start_date)
+
+        # Step 1 — optional global delivery assignment (requires both person + slot)
+        dp_raw = request.data.get('delivery_person_id')
+        slot_raw = request.data.get('default_slot_id')
+        delivery_person = None
+        default_slot = None
+        if dp_raw is not None and str(dp_raw).strip() != '':
+            try:
+                delivery_person = UserRegister.objects.get(pk=int(dp_raw))
+            except (UserRegister.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid delivery_person_id."}, status=status.HTTP_400_BAD_REQUEST)
+        if slot_raw is not None and str(slot_raw).strip() != '':
+            try:
+                default_slot = DeliverySlot.objects.get(pk=int(slot_raw))
+            except (DeliverySlot.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid default_slot_id."}, status=status.HTTP_400_BAD_REQUEST)
+        if (delivery_person is not None) ^ (default_slot is not None):
+            return Response(
+                {
+                    "detail": "Provide both delivery_person_id and default_slot_id to create the plan delivery assignment, or omit both.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        udp.verify_payment(
+            admin_user=request.user,
+            start_date=start_date,
+            delivery_person=delivery_person,
+            default_slot=default_slot,
+        )
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -3184,6 +3213,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
         udp = serializer.validated_data.get('user_diet_plan')
         mk = getattr(udp, 'micro_kitchen', None) if udp else None
         serializer.save(micro_kitchen=mk)
+        # Step 2 — daily delivery row from global plan assignment
+        DeliveryAssignment.ensure_for_meal(serializer.instance)
 
     @action(detail=False, methods=['get'], url_path='kitchen-patients')
     def kitchen_patients(self, request):
@@ -3352,6 +3383,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                 )
 
                 if created:
+                    DeliveryAssignment.ensure_for_meal(meal_obj)
                     continue
 
                 meal_obj.food = item['food']
@@ -4140,7 +4172,9 @@ class MicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
         return UserDietPlan.objects.filter(
             Q(micro_kitchen__user=user) | Q(original_micro_kitchen__user=user),
             status__in=['active', 'approved', 'payment_pending']
-        ).select_related('user', 'diet_plan', 'micro_kitchen', 'original_micro_kitchen').order_by('-id')
+        ).select_related(
+            'user', 'diet_plan', 'nutritionist', 'micro_kitchen', 'original_micro_kitchen'
+        ).order_by('-id')
 
 
 # ---- Admin MicroKitchen panels (NO pagination) -----------------------------
@@ -5094,3 +5128,370 @@ class ResetPasswordView(APIView):
         return Response({"message": "Password reset successful."})
 
 
+def _parse_iso_date(val):
+    if val is None or val == "":
+        return None
+    if hasattr(val, "year"):
+        return val
+    if isinstance(val, str):
+        return datetime.strptime(val[:10], "%Y-%m-%d").date()
+    return None
+
+
+class DeliveryStaffListView(APIView):
+    """Users with a DeliveryProfile — selectable as delivery persons."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        role = getattr(request.user, "role", None)
+        if role not in ("micro_kitchen", "admin"):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        qs = (
+            UserRegister.objects.filter(delivery_profile__isnull=False)
+            .order_by("first_name", "last_name")
+        )
+        data = [
+            {
+                "id": u.id,
+                "first_name": u.first_name or "",
+                "last_name": u.last_name or "",
+                "mobile": u.mobile or "",
+            }
+            for u in qs
+        ]
+        return Response(data)
+
+
+class SupplyChainUsersListView(APIView):
+    """Users with role supply_chain — mappable as delivery persons for diet plans."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        role = getattr(request.user, "role", None)
+        if role not in ("micro_kitchen", "admin"):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        qs = UserRegister.objects.filter(role="supply_chain").order_by("first_name", "last_name", "id")
+        data = [
+            {
+                "id": u.id,
+                "first_name": u.first_name or "",
+                "last_name": u.last_name or "",
+                "mobile": u.mobile or "",
+                "email": u.email or "",
+            }
+            for u in qs
+        ]
+        return Response(data)
+
+
+class DeliverySlotKitchenViewSet(viewsets.ModelViewSet):
+    queryset = DeliverySlot.objects.select_related("micro_kitchen").all()
+    serializer_class = DeliverySlotSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        u = self.request.user
+        role = getattr(u, "role", None)
+        if role == "admin":
+            return DeliverySlot.objects.select_related("micro_kitchen").all().order_by("name")
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=u).first()
+            if not mk:
+                return DeliverySlot.objects.none()
+            return (
+                DeliverySlot.objects.filter(Q(micro_kitchen=mk) | Q(micro_kitchen__isnull=True))
+                .select_related("micro_kitchen")
+                .order_by("name")
+            )
+        return DeliverySlot.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Only admin can create delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Only admin can update delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Only admin can update delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Only admin can delete delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
+
+
+def _apply_plan_delivery_slots(assignment, slot_ids, primary_slot_id=None):
+    """
+    Persist M2M delivery_slots and default_slot (primary).
+    slot_ids: non-empty list of DeliverySlot PKs. primary_slot_id must be one of them (else first).
+    """
+    if not slot_ids:
+        return
+    uniq = []
+    seen = set()
+    for x in slot_ids:
+        i = int(x)
+        if i not in seen:
+            seen.add(i)
+            uniq.append(i)
+    found = set(DeliverySlot.objects.filter(pk__in=uniq).values_list("id", flat=True))
+    if len(found) != len(uniq):
+        raise ValueError("invalid_slots")
+    assignment.delivery_slots.set(uniq)
+    prim = primary_slot_id
+    if prim is None:
+        prim = uniq[0]
+    else:
+        prim = int(prim)
+        if prim not in uniq:
+            raise ValueError("primary_not_in_slots")
+    assignment.default_slot_id = prim
+    assignment.save(update_fields=["default_slot"])
+
+
+class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
+    queryset = DietPlanDeliveryAssignment.objects.select_related(
+        "user_diet_plan",
+        "user",
+        "micro_kitchen",
+        "delivery_person",
+        "default_slot",
+        "assigned_by",
+    ).prefetch_related("delivery_slots").all()
+    serializer_class = DietPlanDeliveryAssignmentSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+    def get_queryset(self):
+        u = self.request.user
+        role = getattr(u, "role", None)
+        if role == "admin":
+            return self.queryset.order_by("-assigned_on")
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=u).first()
+            if not mk:
+                return DietPlanDeliveryAssignment.objects.none()
+            return self.queryset.filter(micro_kitchen=mk).order_by("-assigned_on")
+        return DietPlanDeliveryAssignment.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        """Create or replace global delivery assignment for a plan (micro kitchen or admin)."""
+        role = getattr(request.user, "role", None)
+        if role not in ("admin", "micro_kitchen"):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        plan_id = request.data.get("user_diet_plan_id")
+        dp_id = request.data.get("delivery_person_id")
+        notes = request.data.get("notes")
+        raw_slot_ids = request.data.get("delivery_slot_ids")
+        legacy_slot_id = request.data.get("default_slot_id")
+        primary_slot_id = request.data.get("primary_slot_id")
+
+        if not plan_id or not dp_id:
+            return Response(
+                {"detail": "user_diet_plan_id and delivery_person_id are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if raw_slot_ids is not None:
+            if not isinstance(raw_slot_ids, (list, tuple)) or len(raw_slot_ids) == 0:
+                return Response(
+                    {"detail": "delivery_slot_ids must be a non-empty list of slot ids."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            slot_ids = [int(x) for x in raw_slot_ids]
+        elif legacy_slot_id is not None and str(legacy_slot_id).strip() != "":
+            slot_ids = [int(legacy_slot_id)]
+        else:
+            return Response(
+                {
+                    "detail": "Provide delivery_slot_ids (non-empty list) or default_slot_id (single slot).",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            plan = UserDietPlan.objects.select_related("user", "micro_kitchen").get(pk=int(plan_id))
+        except (UserDietPlan.DoesNotExist, ValueError, TypeError):
+            return Response({"detail": "Invalid user_diet_plan_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+            if not mk or plan.micro_kitchen_id != mk.id:
+                return Response(
+                    {"detail": "This diet plan is not assigned to your kitchen."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        if plan.status != "active":
+            return Response(
+                {"detail": "Plan must be active to attach a delivery assignment."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            delivery_person = UserRegister.objects.get(pk=int(dp_id))
+        except (UserRegister.DoesNotExist, ValueError, TypeError):
+            return Response({"detail": "Invalid delivery_person_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if getattr(delivery_person, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Delivery person must be a supply chain user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        obj, created = DietPlanDeliveryAssignment.objects.update_or_create(
+            user_diet_plan=plan,
+            defaults={
+                "user": plan.user,
+                "micro_kitchen": plan.micro_kitchen,
+                "delivery_person": delivery_person,
+                "assigned_by": request.user,
+                "is_active": True,
+                "notes": notes if notes is not None else None,
+            },
+        )
+        try:
+            prim = int(primary_slot_id) if primary_slot_id is not None and str(primary_slot_id).strip() != "" else None
+            _apply_plan_delivery_slots(obj, slot_ids, primary_slot_id=prim)
+        except ValueError as e:
+            if str(e) == "invalid_slots":
+                return Response({"detail": "Invalid delivery_slot_ids."}, status=status.HTTP_400_BAD_REQUEST)
+            if str(e) == "primary_not_in_slots":
+                return Response(
+                    {"detail": "primary_slot_id must be one of delivery_slot_ids."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            raise
+        obj.refresh_from_db()
+        serializer = self.get_serializer(obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        dp_id = request.data.get("delivery_person_id")
+        slot_id = request.data.get("default_slot_id")
+        raw_slot_ids = request.data.get("delivery_slot_ids")
+        primary_slot_id = request.data.get("primary_slot_id")
+
+        if "notes" in request.data:
+            instance.notes = request.data.get("notes") or None
+            instance.save(update_fields=["notes"])
+
+        if raw_slot_ids is not None:
+            if not isinstance(raw_slot_ids, (list, tuple)) or len(raw_slot_ids) == 0:
+                return Response(
+                    {"detail": "delivery_slot_ids must be a non-empty list."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            slot_ids = [int(x) for x in raw_slot_ids]
+            try:
+                prim = (
+                    int(primary_slot_id)
+                    if primary_slot_id is not None and str(primary_slot_id).strip() != ""
+                    else None
+                )
+                _apply_plan_delivery_slots(instance, slot_ids, primary_slot_id=prim)
+            except ValueError as e:
+                if str(e) == "invalid_slots":
+                    return Response({"detail": "Invalid delivery_slot_ids."}, status=status.HTTP_400_BAD_REQUEST)
+                if str(e) == "primary_not_in_slots":
+                    return Response(
+                        {"detail": "primary_slot_id must be one of delivery_slot_ids."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                raise
+            instance.refresh_from_db()
+
+        if dp_id is not None and str(dp_id).strip() != "":
+            try:
+                new_dp = UserRegister.objects.get(pk=int(dp_id))
+            except (UserRegister.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid delivery_person_id."}, status=status.HTTP_400_BAD_REQUEST)
+            if getattr(new_dp, "role", None) != "supply_chain":
+                return Response(
+                    {"detail": "Delivery person must be a supply chain user."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            reason = request.data.get("reason") or "reassigned"
+            eff = _parse_iso_date(request.data.get("effective_from"))
+            instance.change_delivery_person(
+                new_dp,
+                changed_by=request.user,
+                effective_from=eff,
+                reason=reason,
+                notes=request.data.get("change_notes"),
+            )
+            instance.refresh_from_db()
+
+        if raw_slot_ids is None and slot_id is not None and str(slot_id).strip() != "":
+            try:
+                slot = DeliverySlot.objects.get(pk=int(slot_id))
+            except (DeliverySlot.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid default_slot_id."}, status=status.HTTP_400_BAD_REQUEST)
+            instance.default_slot = slot
+            instance.save(update_fields=["default_slot"])
+            if not instance.delivery_slots.filter(pk=slot.pk).exists():
+                instance.delivery_slots.add(slot)
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+
+class KitchenMealDeliveryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = DeliveryAssignment.objects.select_related(
+        "user_meal",
+        "user_meal__user",
+        "user_meal__meal_type",
+        "user_meal__food",
+        "delivery_person",
+        "delivery_slot",
+        "plan_delivery_assignment",
+    ).all()
+    serializer_class = KitchenMealDeliverySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        u = self.request.user
+        if getattr(u, "role", None) != "micro_kitchen":
+            return DeliveryAssignment.objects.none()
+        mk = MicroKitchenProfile.objects.filter(user=u).first()
+        if not mk:
+            return DeliveryAssignment.objects.none()
+        qs = self.queryset.filter(user_meal__micro_kitchen=mk, is_active=True)
+        meal_date = self.request.query_params.get("meal_date")
+        if meal_date:
+            qs = qs.filter(scheduled_date=meal_date)
+        return qs.order_by("-scheduled_date", "id")
+
+    @action(detail=True, methods=["post"], url_path="reassign")
+    def reassign(self, request, pk=None):
+        new_id = request.data.get("new_delivery_person_id")
+        reason = request.data.get("reason") or "On leave"
+        if not new_id:
+            return Response(
+                {"detail": "new_delivery_person_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        instance = self.get_object()
+        try:
+            new_person = UserRegister.objects.get(pk=int(new_id))
+        except (UserRegister.DoesNotExist, ValueError, TypeError):
+            return Response({"detail": "Invalid new_delivery_person_id."}, status=status.HTTP_400_BAD_REQUEST)
+        if getattr(new_person, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Delivery person must be a supply chain user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        um = instance.user_meal
+        DeliveryAssignment.reassign(um, new_person, reason=reason)
+        new_da = DeliveryAssignment.objects.filter(user_meal=um, is_active=True).first()
+        return Response(KitchenMealDeliverySerializer(new_da).data)

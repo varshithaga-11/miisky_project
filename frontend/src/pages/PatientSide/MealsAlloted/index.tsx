@@ -346,6 +346,16 @@ const MealsAllotedPage: React.FC = () => {
                                                                         <span className="opacity-80">Kitchen:</span> {meal.micro_kitchen_details.brand_name}
                                                                     </div>
                                                                 )}
+                                                                {meal.delivery && (
+                                                                    <div className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
+                                                                        meal.delivery.status === 'delivered' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 
+                                                                        meal.delivery.status === 'in_transit' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 animate-pulse' :
+                                                                        'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
+                                                                    }`}>
+                                                                        <FiPackage size={12} />
+                                                                        <span className="opacity-70 lowercase font-bold">Delivery:</span> {meal.delivery.status.replace('_', ' ')}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             {(() => {
                                                                 const dateMeals = groupedByDate[dateStr];

@@ -30,6 +30,7 @@ import CountryManagementPage from "./pages/AdminSide/Country/index";
 import StateManagementPage from "./pages/AdminSide/State/index";
 import CityManagementPage from "./pages/AdminSide/City/index";
 import MealTypeManagementPage from "./pages/AdminSide/MealType/index";
+import DeliverySlotManagementPage from "./pages/AdminSide/DeliverySlot/index";
 import PackagingMaterialManagementPage from "./pages/AdminSide/PackagingMaterial/index";
 import CuisineTypeManagementPage from "./pages/AdminSide/CuisineType/index";
 import FoodManagementPage from "./pages/AdminSide/Food/index";
@@ -61,6 +62,7 @@ import InspectionReportPage from "./pages/MicroKitchenSide/InspectionReport/inde
 import MicroKitchenPatientsPage from "./pages/MicroKitchenSide/Patients/index";
 import MealsBasedOnDailyPage from "./pages/MicroKitchenSide/MealsBasedOnDaily/index";
 import DeliveryQuestionarePage from "./pages/SupplyChain/DeliveryQuestionare/index";
+import DeliveryAssignmentsPage from "./pages/SupplyChain/Assignments/index";
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
@@ -116,6 +118,9 @@ import NutritionInstructionsPage from "./pages/NutritionSide/Instructions/index"
 import PatientInstructionsPage from "./pages/PatientSide/Instructions/index";
 import NonPatientInstructionsPage from "./pages/NonPatient/Instructions/index";
 import MicroKitchenInstructionsPage from "./pages/MicroKitchenSide/Instructions/index";
+import MicroKitchenDeliveryManagementPage from "./pages/MicroKitchenSide/DeliveryManagement/index";
+import MicroKitchenGlobalDeliveryPage from "./pages/MicroKitchenSide/DeliveryManagement/GlobalAssignments";
+import MicroKitchenDailyDeliveryPage from "./pages/MicroKitchenSide/DeliveryManagement/DailyReassignments";
 
 
 // Master Side Pages
@@ -257,6 +262,7 @@ export function appRoutes() {
           <Route path="admin/state" element={<StateManagementPage />} />
           <Route path="admin/city" element={<CityManagementPage />} />
           <Route path="admin/meal-type" element={<MealTypeManagementPage />} />
+          <Route path="admin/delivery-slot" element={<DeliverySlotManagementPage />} />
           <Route path="admin/packaging-material" element={<PackagingMaterialManagementPage />} />
           <Route path="admin/cuisine-type" element={<CuisineTypeManagementPage />} />
           <Route path="admin/food" element={<FoodManagementPage />} />
@@ -339,10 +345,14 @@ export function appRoutes() {
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
+          <Route path="microkitchen/delivery" element={<MicroKitchenDeliveryManagementPage />} />
+          <Route path="microkitchen/delivery/global" element={<MicroKitchenGlobalDeliveryPage />} />
+          <Route path="microkitchen/delivery/daily" element={<MicroKitchenDailyDeliveryPage />} />
           <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
           <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
+          <Route path="supplychain/assignments" element={<DeliveryAssignmentsPage />} />
 
 
           {/* Others Page */}

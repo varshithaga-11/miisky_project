@@ -14,6 +14,7 @@ import {
   Layers,
   Video,
   Truck,
+  Milestone,
   ShoppingCart,
   Package,
   ClipboardList,
@@ -66,6 +67,7 @@ const adminNavItems: NavItem[] = [
       { name: "Meal Type", path: "/admin/meal-type" },
       { name: "Cuisine Type", path: "/admin/cuisine-type" },
       { name: "Packaging Material", path: "/admin/packaging-material" },
+      { name: "Delivery slots", path: "/admin/delivery-slot" },
       { name: "Foods", path: "/admin/food" },
       { name: "Units", path: "/admin/unit" },
       { name: "Ingredients", path: "/admin/ingredient" },
@@ -370,6 +372,14 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/delivery-charges",
   },
   {
+    icon: <Milestone className="w-5 h-5" />,
+    name: "Delivery management",
+    subItems: [
+      { name: "Global assignment", path: "/microkitchen/delivery/global" },
+      { name: "Daily reassignment", path: "/microkitchen/delivery/daily" },
+    ],
+  },
+  {
     icon: <Layers className="w-5 h-5" />,
     name: "Available Foods",
     path: "/microkitchen/available-foods",
@@ -401,6 +411,11 @@ const supplyChainNavItems: NavItem[] = [
     icon: <FileText className="w-5 h-5" />,
     name: "Delivery Questionnaire",
     path: "/supplychain/delivery-questionnaire",
+  },
+  {
+    icon: <Truck className="w-5 h-5" />,
+    name: "Deliveries",
+    path: "/supplychain/assignments",
   },
   {
     icon: <UserCog className="w-5 h-5" />,
