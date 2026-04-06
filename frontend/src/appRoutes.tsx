@@ -1,6 +1,6 @@
 // gkghb
 
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
@@ -63,6 +63,9 @@ import MicroKitchenPatientsPage from "./pages/MicroKitchenSide/Patients/index";
 import MealsBasedOnDailyPage from "./pages/MicroKitchenSide/MealsBasedOnDaily/index";
 import DeliveryQuestionarePage from "./pages/SupplyChain/DeliveryQuestionare/index";
 import DeliveryAssignmentsPage from "./pages/SupplyChain/Assignments/index";
+import SupplyChainDashboardPage from "./pages/SupplyChain/Dashboard/index";
+import SupplyChainEarningsPage from "./pages/SupplyChain/Earnings/index";
+import SupplyChainPlannedLeavePage from "./pages/SupplyChain/PlannedLeave/index";
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
@@ -351,8 +354,12 @@ export function appRoutes() {
           <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
           <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
+          <Route path="supplychain/dashboard" element={<SupplyChainDashboardPage />} />
+          <Route path="supplychain/daily-work" element={<DeliveryAssignmentsPage />} />
+          <Route path="supplychain/earnings" element={<SupplyChainEarningsPage />} />
+          <Route path="supplychain/planned-leave" element={<SupplyChainPlannedLeavePage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
-          <Route path="supplychain/assignments" element={<DeliveryAssignmentsPage />} />
+          <Route path="supplychain/assignments" element={<Navigate to="/supplychain/daily-work" replace />} />
 
 
           {/* Others Page */}

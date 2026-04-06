@@ -2948,6 +2948,33 @@ class DeliveryAssignment(models.Model):
         )
 
 
+class SupplyChainDeliveryLeave(models.Model):
+    """
+    Planned days off for supply-chain delivery staff.
+    Micro kitchens can see leaves for people who deliver for them and reassign meals on those days.
+    """
+
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name='supply_chain_delivery_leaves',
+    )
+    start_at = models.DateTimeField(
+        help_text="When leave begins (date and time, e.g. start of day or start of half-day window).",
+    )
+    end_at = models.DateTimeField(
+        help_text="When leave ends (date and time, e.g. end of day or end of half-day window).",
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-start_at"]
+
+    def __str__(self):
+        return f"{self.user_id} {self.start_at}–{self.end_at}"
+
+
 class DeliveryIssue(models.Model):
     assignment = models.ForeignKey(
         DeliveryAssignment,

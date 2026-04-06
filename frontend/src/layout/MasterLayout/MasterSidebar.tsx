@@ -26,6 +26,7 @@ import {
   Mail,
   Search,
   X,
+  CalendarRange,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -408,14 +409,29 @@ const microKitchenNavItems: NavItem[] = [
 
 const supplyChainNavItems: NavItem[] = [
   {
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    name: "Dashboard",
+    path: "/supplychain/dashboard",
+  },
+  {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "All daily work",
+    path: "/supplychain/daily-work",
+  },
+  {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Earnings",
+    path: "/supplychain/earnings",
+  },
+  {
+    icon: <CalendarRange className="w-5 h-5" />,
+    name: "Planned leave",
+    path: "/supplychain/planned-leave",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Delivery Questionnaire",
     path: "/supplychain/delivery-questionnaire",
-  },
-  {
-    icon: <Truck className="w-5 h-5" />,
-    name: "Deliveries",
-    path: "/supplychain/assignments",
   },
   {
     icon: <UserCog className="w-5 h-5" />,

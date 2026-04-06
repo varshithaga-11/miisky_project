@@ -20,14 +20,14 @@ export interface DeliveryAssignment {
 }
 
 export const getMyAssignments = async (): Promise<DeliveryAssignment[]> => {
-    const url = createApiUrl(`api/deliveryassignment/`);
+    const url = createApiUrl(`api/mealdeliveryassignment/`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     const data = response.data;
     return Array.isArray(data) ? data : data?.results ?? [];
 };
 
 export const updateDeliveryStatus = async (id: number, status: string, notes?: string): Promise<DeliveryAssignment> => {
-    const url = createApiUrl(`api/deliveryassignment/${id}/`);
+    const url = createApiUrl(`api/mealdeliveryassignment/${id}/`);
     const payload: any = { status };
     if (notes) payload.delivery_notes = notes;
     if (status === 'picked_up') payload.picked_up_at = new Date().toISOString();
