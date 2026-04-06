@@ -138,7 +138,8 @@ export default function PartnersPage() {
                         className="modal-content"
                         style={{
                             backgroundColor: '#fff', maxWidth: '800px', width: '100%',
-                            borderRadius: '20px', overflow: 'hidden', position: 'relative',
+                            maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
+                            borderRadius: '20px', position: 'relative',
                             boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
                             animation: 'modalSlideUp 0.4s ease-out'
                         }}

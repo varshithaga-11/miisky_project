@@ -40,7 +40,7 @@ export default function CareerDetailsPage() {
                 <div className="auto-container">
                     <div className="row clearfix">
                         <div className="col-lg-8 col-md-12 col-sm-12 content-column">
-                            <div className="content-box p_relative d_block" style={{ padding: '60px', border: '1px solid #eee', borderRadius: '25px', backgroundColor: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
+                            <div className="content-box p_relative d_block" style={{ padding: '30px', border: '1px solid #eee', borderRadius: '25px', backgroundColor: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
                                 <div className="job-header mb_40 pb_40" style={{ borderBottom: '1.5px solid #f0f0f0' }}>
                                     <h1 className="mb_20" style={{ fontSize: '38px', fontWeight: 800 }}>{job.title}</h1>
                                     <div className="job-meta-list d-flex align-items-center flex-wrap" style={{ color: '#777', fontSize: '15px' }}>
@@ -91,7 +91,7 @@ export default function CareerDetailsPage() {
                                     <h3 className="mb_20 text-center" style={{ fontSize: '26px', fontWeight: 800 }}>Ready to join us?</h3>
                                     <p className="mb_30 text-center" style={{ color: '#888' }}>Interested candidates are requested to send their resumes and portfolios for consideration. We're looking forward to meeting you!</p>
                                     <div className="btn-box text-center">
-                                        <Link to={`/careers/apply/${uid}`} className="theme-btn btn-one" style={{ padding: '12px 60px', borderRadius: '40px', fontSize: '18px' }}>
+                                        <Link to={`/careers/apply/${uid}`} className="theme-btn btn-one" style={{ padding: '12px 30px', borderRadius: '40px', fontSize: '18px', whiteSpace:'nowrap' }}>
                                             <span>Apply Now</span>
                                         </Link>
                                     </div>

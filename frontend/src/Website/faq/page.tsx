@@ -118,7 +118,7 @@ export default function FAQPage() {
                                         ))}
                                     </ul>
                                 </div>
-                                <div className="mt_30 p-4 text-center" style={{ backgroundColor: '#f0f4ff', borderRadius: '20px' }}>
+                                <div className="mt_30 p-4 text-center d-none d-lg-block" style={{ backgroundColor: '#f0f4ff', borderRadius: '20px' }}>
                                     <h4 className="mb_10" style={{ fontWeight: 800 }}>Still have questions?</h4>
                                     <p className="mb_20" style={{ fontSize: '14px', color: '#666' }}>Can't find the answer you're looking for? Please chat to our friendly team.</p>
                                     <button onClick={() => window.location.href='/contact'} className="theme-btn btn-one w-full">Contact Us</button>
@@ -149,7 +149,7 @@ export default function FAQPage() {
                                                         backgroundColor: activeId === faq.id ? '#fff' : '#fcfcfc', 
                                                         border: '1px solid #eee', 
                                                         marginBottom: '15px', 
-                                                        borderRadius: '15px', 
+                                                        borderRadius: activeId === faq.id ? '15px 15px 0 0' : '15px', 
                                                         display: 'flex', 
                                                         justifyContent: 'space-between', 
                                                         alignItems: 'center',
@@ -171,6 +171,13 @@ export default function FAQPage() {
                                         ))}
                                     </ul>
                                 )}
+                            </div>
+                            
+                            {/* Mobile version of Still have questions */}
+                            <div className="mt_40 mb_40 p-4 text-center d-block d-lg-none" style={{ backgroundColor: '#f0f4ff', borderRadius: '20px' }}>
+                                <h4 className="mb_10" style={{ fontWeight: 800 }}>Still have questions?</h4>
+                                <p className="mb_20" style={{ fontSize: '14px', color: '#666' }}>Can't find the answer you're looking for? Please chat to our friendly team.</p>
+                                <button onClick={() => window.location.href='/contact'} className="theme-btn btn-one w-full">Contact Us</button>
                             </div>
                         </div>
                     </div>
