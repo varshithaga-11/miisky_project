@@ -282,12 +282,6 @@ export default function BlogPage() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="consulting-widget">
-                                        <div className="bg-layer" style={{ backgroundImage: "url(/website/assets/images/resource/sidebar-1.jpg)" }}></div>
-                                        <h3>Get Free <br />Consultations Today!</h3>
-                                        <p>Speak with our expert team and receive professional advice on your next project. No obligation, no cost. Schedule your consultation now!</p>
-                                        <Link to="/contact" className="theme-btn btn-two"><span>get a quote</span></Link>
-                                    </div>
                                 </div>
                             </div>
                         </div>

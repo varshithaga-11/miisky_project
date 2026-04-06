@@ -22,6 +22,7 @@ export default function BlogDetails() {
     const [replyTo, setReplyTo] = useState<any>(null);
     const [expandedComments, setExpandedComments] = useState<number[]>([]);
     const [isLiked, setIsLiked] = useState(false);
+    const [isReadMore, setIsReadMore] = useState(true); // Default to collapsed for high density
 
     useEffect(() => {
         setHeaderStyle(1);
@@ -220,7 +221,29 @@ export default function BlogDetails() {
                                                         </span>
                                                     </li>
                                                 </ul>
-                                                <p>{post.content || post.description || post.excerpt || "No content available"}</p>
+                                                <div className="text">
+                                                    <p style={{ whiteSpace: 'pre-wrap' }}>
+                                                        {post.content && (isReadMore && post.content.length > 300 ? post.content.substring(0, 300) + '...' : post.content)}
+                                                        {post.content && post.content.length > 300 && (
+                                                            <span 
+                                                                onClick={() => setIsReadMore(!isReadMore)} 
+                                                                className="read-more-btn"
+                                                                style={{ 
+                                                                    color: '#0646ac', 
+                                                                    fontWeight: 700, 
+                                                                    cursor: 'pointer', 
+                                                                    display: 'inline-block', 
+                                                                    marginLeft: '5px',
+                                                                    textDecoration: 'underline' 
+                                                                }}
+                                                            >
+                                                                {isReadMore ? 'Read More' : 'Show Less'}
+                                                            </span>
+                                                        )}
+                                                        {(!post.content && (post.description || post.excerpt)) && (post.description || post.excerpt)}
+                                                        {!post.content && !post.description && !post.excerpt && "No content available"}
+                                                    </p>
+                                                </div>
                                                 {post.additional_content && (
                                                     <>
                                                         <blockquote>

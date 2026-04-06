@@ -1675,8 +1675,17 @@ html, body {
   padding-bottom: 80px !important;
 }
 
-.service-section .swiper-pagination {
-  bottom: 10px !important;
+.sidebar-page-container .comment-form,
+.sidebar-page-container .blog-details-content {
+    margin-bottom: 0 !important;
+}
+
+.sidebar-page-container .sidebar-side {
+    margin-top: 10px !important; /* Extremely tight on mobile */
+}
+
+.sidebar-page-container .form-group.message-btn {
+    margin-bottom: 0 !important;
 }
 
 .service-section .swiper-pagination-bullet {
@@ -2013,6 +2022,98 @@ html, body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   BLOG PAGE - MOBILE SPACING & GRID
+   ───────────────────────────────────────────────────────────────────────────── */
+@media only screen and (max-width: 767px) {
+  .sidebar-page-container {
+    padding: 40px 0 60px !important;
+  }
+
+  /* Filter feedback banner */
+  .blog-grid-content .bg-gray-50.p-4 {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 15px !important;
+    border-radius: 12px !important;
+  }
+
+  .blog-grid-content .bg-gray-50 button {
+    align-self: flex-end !important;
+  }
+
+  .news-block-one .image-box img {
+    border-radius: 15px 15px 0 0 !important;
+  }
+
+  .news-block-one .lower-content {
+    padding: 20px 15px !important;
+  }
+
+  .news-block-one .lower-content h3 {
+    font-size: 20px !important;
+    line-height: 1.3 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .news-block-one .lower-content p {
+    font-size: 14px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .news-block-one .lower-content ul.post-info {
+    margin-bottom: 10px !important;
+    gap: 10px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+  }
+
+  .news-block-one .lower-content ul.post-info li {
+    font-size: 12px !important;
+    margin-right: 0 !important;
+  }
+
+  /* Sidebar widgets on mobile */
+  .sidebar-side {
+    margin-top: 40px !important;
+  }
+
+  .sidebar-widget {
+    padding: 20px 15px !important;
+    border-radius: 15px !important;
+    margin-bottom: 30px !important;
+  }
+
+  .sidebar-widget .widget-title h3 {
+    font-size: 18px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .search-widget {
+    padding: 20px 15px !important;
+    border-radius: 15px !important;
+  }
+
+  .search-widget h3 {
+    font-size: 18px !important;
+  }
+
+  .consulting-widget {
+    padding: 30px 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .consulting-widget h3 {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+
+  .consulting-widget p {
+    font-size: 14px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    ABOUT PAGE UNIQUE SECTIONS - RESPONSIVE SPACING
    ───────────────────────────────────────────────────────────────────────────── */
 
@@ -2066,5 +2167,132 @@ html, body {
   .vision-block-one {
     padding: 25px 20px !important;
     border-radius: 20px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BLOG DETAILS PAGE - MOBILE RESPONSIVENESS
+   ───────────────────────────────────────────────────────────────────────────── */
+@media only screen and (max-width: 767px) {
+  /* Tighten overall section padding */
+  .blog-details-content {
+    margin-bottom: 40px !important;
+  }
+
+  /* Blog Title */
+  .blog-details-content .news-block-one .lower-content h3 {
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 15px !important;
+  }
+
+  /* Post Info (Date, Author, Likes) */
+  .blog-details-content .news-block-one .lower-content .post-info {
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+    margin-bottom: 20px !important;
+    display: flex !important;
+  }
+
+  .blog-details-content .news-block-one .lower-content .post-info li {
+    font-size: 13px !important;
+    margin-right: 0 !important;
+  }
+
+  /* Content Text & Blockquotes */
+  .blog-details-content .news-block-one .lower-content p {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .blog-details-content blockquote {
+    padding: 25px 20px !important;
+    margin: 30px 0 !important;
+  }
+
+  .blog-details-content blockquote h2 {
+    font-size: 18px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Comments Section */
+  .comment-box h3 {
+    font-size: 22px !important;
+    margin-bottom: 25px !important;
+  }
+
+  /* Individual comment cards on mobile */
+  .comment-box .comment {
+    padding: 15px !important;
+    background: #f9f9f9 !important;
+    border-radius: 12px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .comment-box .comment h4 {
+    font-size: 16px !important;
+    margin-right: 0 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .comment-box .comment h4 span {
+    display: block !important;
+    margin-left: 0 !important;
+    margin-top: 5px !important;
+    font-size: 12px !important;
+  }
+
+  /* REPLIES - Crucial: Reduce indentation on mobile */
+  .comment-box .comment-group .comment[style*="paddingLeft: 50px"] {
+    padding-left: 15px !important; /* Force override of inline style on mobile */
+    margin-left: 15px !important;  /* Use margin instead for a small visual indent */
+    width: auto !important;
+    border-left: 3px solid #0646ac !important; /* Blue visual indicator of nesting */
+    background: #ffffff !important; /* Slightly distinct background for replies */
+  }
+
+  /* Reply Form */
+  .comment-form h3 {
+    font-size: 22px !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Reduce vertical margins between major blocks */
+  .post-share-option.mb_60,
+  .author-box.mb_60,
+  .comment-box.mb_60 {
+    margin-bottom: 30px !important;
+  }
+
+  .sidebar-page-container {
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+
+  /* Sidebar spacing when stacked - NUKE SPACE */
+  .sidebar-side {
+    margin-top: 0px !important;
+  }
+
+  .blog-details-content {
+    margin-bottom: 0px !important;
+  }
+
+  .sidebar-widget {
+    margin-bottom: 25px !important;
+  }
+
+  .blog-sidebar .sidebar-widget:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Form and Button spacing */
+  .comment-form .theme-btn {
+    margin-bottom: 0 !important;
+  }
+
+  /* Cta section spacing */
+  .sidebar-page-container + .cta-section {
+    margin-top: 0 !important;
   }
 }
