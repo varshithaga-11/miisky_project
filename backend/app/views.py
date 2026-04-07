@@ -1523,6 +1523,148 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(profile).data)
 
 
+def _build_nutritionist_my_patients_list(nutritionist_user):
+    """Same payload as `my-patients` for one nutritionist (used by my_patients and clinical_review_dashboard)."""
+    mapped_qs = UserNutritionistMapping.objects.select_related("user").filter(
+        nutritionist=nutritionist_user, is_active=True
+    )
+    was_original_qs = UserDietPlan.objects.filter(
+        original_nutritionist=nutritionist_user, status="active"
+    ).select_related("user")
+    patient_map = {}
+    for m in mapped_qs:
+        patient_map[m.user.id] = {
+            "user": m.user,
+            "mapping_id": m.id,
+            "assigned_on": m.assigned_on,
+        }
+    for dp in was_original_qs:
+        if dp.user.id not in patient_map:
+            patient_map[dp.user.id] = {
+                "user": dp.user,
+                "mapping_id": None,
+                "assigned_on": dp.created_on,
+            }
+    results = []
+    for _pid, data in patient_map.items():
+        patient = data["user"]
+        reassignment = (
+            NutritionistReassignment.objects.filter(
+                user=patient, active_diet_plan__status="active"
+            )
+            .order_by("-reassigned_on")
+            .first()
+        )
+        reassignment_data = None
+        if reassignment:
+            reassignment_data = {
+                "previous_nutritionist": reassignment.previous_nutritionist.username
+                if reassignment.previous_nutritionist
+                else None,
+                "new_nutritionist": reassignment.new_nutritionist.username
+                if reassignment.new_nutritionist
+                else None,
+                "reason": reassignment.reason,
+                "notes": reassignment.notes,
+                "effective_from": reassignment.effective_from,
+            }
+        try:
+            q = patient.userquestionnaire
+        except UserQuestionnaire.DoesNotExist:
+            q = None
+        active_plan = (
+            UserDietPlan.objects.filter(user=patient, status="active")
+            .select_related("micro_kitchen", "original_micro_kitchen")
+            .first()
+        )
+        kitchen_data = None
+        if active_plan:
+            kitchen_data = {
+                "current_kitchen": active_plan.micro_kitchen.brand_name
+                if active_plan.micro_kitchen
+                else None,
+                "original_kitchen": active_plan.original_micro_kitchen.brand_name
+                if active_plan.original_micro_kitchen
+                else None,
+                "effective_from": active_plan.micro_kitchen_effective_from,
+            }
+        results.append(
+            {
+                "mapping_id": data["mapping_id"],
+                "assigned_on": data["assigned_on"],
+                "active_kitchen": kitchen_data,
+                "user": {
+                    "id": patient.id,
+                    "username": patient.username,
+                    "first_name": patient.first_name,
+                    "last_name": patient.last_name,
+                    "email": patient.email,
+                    "mobile": patient.mobile,
+                    "address": patient.address,
+                    "city": patient.city.name if patient.city else None,
+                    "zip_code": patient.zip_code,
+                    "state": patient.state.name if patient.state else None,
+                    "country": patient.country.name if patient.country else None,
+                    "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
+                    "latitude": getattr(patient, "latitude", None),
+                    "longitude": getattr(patient, "longitude", None),
+                },
+                "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
+                "reassignment_details": reassignment_data,
+            }
+        )
+    return results
+
+
+def _nutritionist_accessible_health_reports_queryset(nutritionist_user, patient_id):
+    """Match PatientHealthReportViewSet access rules for nutritionists, scoped to one patient."""
+    active_patient_ids = UserNutritionistMapping.objects.filter(
+        nutritionist=nutritionist_user, is_active=True
+    ).values_list("user_id", flat=True)
+    reassigned_plans = UserDietPlan.objects.filter(
+        original_nutritionist=nutritionist_user, status="active"
+    ).select_related("user")
+    condition = Q(user_id__in=active_patient_ids)
+    for plan in reassigned_plans:
+        if plan.nutritionist_effective_from:
+            condition |= Q(
+                user_id=plan.user_id,
+                uploaded_on__lt=plan.nutritionist_effective_from,
+            )
+        else:
+            condition |= Q(user_id=plan.user_id)
+    return (
+        PatientHealthReport.objects.filter(condition)
+        .filter(user_id=patient_id)
+        .select_related("user")
+        .prefetch_related(
+            Prefetch(
+                "reviews",
+                queryset=NutritionistReview.objects.select_related(
+                    "nutritionist"
+                ).order_by("-created_on"),
+            )
+        )
+        .order_by("-uploaded_on")
+    )
+
+
+def _nutritionist_accessible_reviews_queryset(nutritionist_user, patient_id):
+    """Match NutritionistReviewViewSet access rules for nutritionists, scoped to one patient."""
+    mapped_patient_ids = UserNutritionistMapping.objects.filter(
+        nutritionist=nutritionist_user, is_active=True
+    ).values_list("user_id", flat=True)
+    return (
+        NutritionistReview.objects.filter(
+            Q(nutritionist=nutritionist_user) | Q(user_id__in=mapped_patient_ids)
+        )
+        .filter(user_id=patient_id)
+        .select_related("nutritionist")
+        .prefetch_related("reports")
+        .order_by("-created_on")
+    )
+
+
 class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
     queryset = UserNutritionistMapping.objects.select_related("user", "nutritionist").all()
     serializer_class = UserNutritionistMappingSerializer
@@ -1570,88 +1712,100 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="my-patients")
     def my_patients(self, request):
-        # 1. Patients where current user is active nutritionist
-        mapped_qs = UserNutritionistMapping.objects.select_related("user").filter(
-            nutritionist=request.user, is_active=True
-        )
-        
-        # 2. Patients where current user was original nutritionist on an active plan
-        # This allows the "former" nutritionist to still see the patient they were working with
-        was_original_qs = UserDietPlan.objects.filter(
-            original_nutritionist=request.user, status='active'
-        ).select_related('user')
-        
-        # Build set of patient IDs to avoid duplicates
-        patient_map = {} # user_id -> {'mapping': mapping, 'diet_plan': diet_plan}
-        
-        for m in mapped_qs:
-            patient_map[m.user.id] = {'user': m.user, 'mapping_id': m.id, 'assigned_on': m.assigned_on}
-            
-        for dp in was_original_qs:
-            if dp.user.id not in patient_map:
-                patient_map[dp.user.id] = {'user': dp.user, 'mapping_id': None, 'assigned_on': dp.created_on}
+        return Response(_build_nutritionist_my_patients_list(request.user))
 
-        results = []
-        for pid, data in patient_map.items():
-            patient = data['user']
-            
-            # Fetch active reassignment info if any
-            reassignment = NutritionistReassignment.objects.filter(
-                user=patient, 
-                active_diet_plan__status='active'
-            ).order_by('-reassigned_on').first()
-            
-            reassignment_data = None
-            if reassignment:
-                reassignment_data = {
-                    "previous_nutritionist": reassignment.previous_nutritionist.username if reassignment.previous_nutritionist else None,
-                    "new_nutritionist": reassignment.new_nutritionist.username if reassignment.new_nutritionist else None,
-                    "reason": reassignment.reason,
-                    "notes": reassignment.notes,
-                    "effective_from": reassignment.effective_from,
-                }
-
-            try:
-                q = patient.userquestionnaire
-            except UserQuestionnaire.DoesNotExist:
-                q = None
-                
-            # Fetch active diet plan and kitchen info
-            active_plan = UserDietPlan.objects.filter(user=patient, status='active').select_related('micro_kitchen', 'original_micro_kitchen').first()
-            kitchen_data = None
-            if active_plan:
-                kitchen_data = {
-                    "current_kitchen": active_plan.micro_kitchen.brand_name if active_plan.micro_kitchen else None,
-                    "original_kitchen": active_plan.original_micro_kitchen.brand_name if active_plan.original_micro_kitchen else None,
-                    "effective_from": active_plan.micro_kitchen_effective_from,
-                }
-
-            results.append(
-                {
-                    "mapping_id": data['mapping_id'],
-                    "assigned_on": data['assigned_on'],
-                    "active_kitchen": kitchen_data,
-                    "user": {
-                        "id": patient.id,
-                        "username": patient.username,
-                        "first_name": patient.first_name,
-                        "last_name": patient.last_name,
-                        "email": patient.email,
-                        "mobile": patient.mobile,
-                        "address": patient.address,
-                        "city": patient.city.name if patient.city else None,
-                        "zip_code": patient.zip_code,
-                        "state": patient.state.name if patient.state else None,
-                        "country": patient.country.name if patient.country else None,
-                        "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
-                        "latitude": getattr(patient, "latitude", None),
-                        "longitude": getattr(patient, "longitude", None),
-                    },
-                    "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
-                    "reassignment_details": reassignment_data,
-                }
+    @action(detail=False, methods=["get"], url_path="clinical-review-dashboard")
+    def clinical_review_dashboard(self, request):
+        """
+        Single endpoint: paginated patient list (search on name/email/username),
+        plus health reports and nutritionist reviews for the selected patient.
+        Query: page, page_size (default 5), search, patient_id (optional).
+        """
+        user = request.user
+        if getattr(user, "role", None) != "nutritionist":
+            return Response(
+                {"detail": "Nutritionists only."},
+                status=status.HTTP_403_FORBIDDEN,
             )
-        return Response(results)
+
+        from django.core.paginator import Paginator
+
+        results = _build_nutritionist_my_patients_list(user)
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            ids = [r["user"]["id"] for r in results]
+            if not ids:
+                results = []
+            else:
+                matched_ids = UserRegister.objects.filter(id__in=ids).filter(
+                    Q(first_name__icontains=search)
+                    | Q(last_name__icontains=search)
+                    | Q(email__icontains=search)
+                    | Q(username__icontains=search)
+                ).values_list("id", flat=True)
+                matched_set = set(matched_ids)
+                results = [r for r in results if r["user"]["id"] in matched_set]
+
+        results.sort(key=lambda x: x["assigned_on"], reverse=True)
+
+        try:
+            page_size = int(request.query_params.get("page_size", 5))
+        except ValueError:
+            page_size = 5
+        page_size = max(1, min(page_size, 50))
+        try:
+            page = int(request.query_params.get("page", 1))
+        except ValueError:
+            page = 1
+
+        allowed_ids = {r["user"]["id"] for r in results}
+        paginator = Paginator(results, page_size)
+        page_obj = paginator.get_page(page)
+        page_results = list(page_obj.object_list)
+
+        selected_user_id = None
+        patient_id_param = request.query_params.get("patient_id")
+        if patient_id_param is not None and patient_id_param != "":
+            try:
+                pid = int(patient_id_param)
+            except ValueError:
+                pid = None
+            if pid is not None and pid in allowed_ids:
+                selected_user_id = pid
+        if selected_user_id is None and page_results:
+            selected_user_id = page_results[0]["user"]["id"]
+
+        reports_data = []
+        reviews_data = []
+        reports_total = 0
+        reviews_total = 0
+        if selected_user_id is not None:
+            rq = _nutritionist_accessible_health_reports_queryset(user, selected_user_id)
+            reports_total = rq.count()
+            reports_data = PatientHealthReportSerializer(rq, many=True).data
+            vq = _nutritionist_accessible_reviews_queryset(user, selected_user_id)
+            reviews_total = vq.count()
+            reviews_data = NutritionistReviewSerializer(vq, many=True).data
+
+        next_page = page_obj.next_page_number() if page_obj.has_next() else None
+        prev_page = page_obj.previous_page_number() if page_obj.has_previous() else None
+
+        return Response(
+            {
+                "count": paginator.count,
+                "page": page_obj.number,
+                "page_size": page_size,
+                "next": next_page,
+                "previous": prev_page,
+                "total_pages": paginator.num_pages,
+                "results": page_results,
+                "selected_user_id": selected_user_id,
+                "reports": reports_data,
+                "reviews": reviews_data,
+                "reports_total": reports_total,
+                "reviews_total": reviews_total,
+            }
+        )
 
     @action(detail=False, methods=["get"], url_path="my-nutritionist")
     def my_nutritionist(self, request):
