@@ -2922,13 +2922,15 @@ class DeliveryAssignment(models.Model):
         return cls.create_from_plan(user_meal)
 
     @classmethod
-    def reassign(cls, user_meal, new_person, reason=None):
+    def reassign(cls, user_meal, new_person, reason=None, delivery_slot=None):
         """
         Use when delivery person is on leave for a specific day.
         Only affects this one meal. Global assignment stays untouched.
+        Optional delivery_slot overrides the previous row's slot (e.g. global per-slot pick).
         """
         old = cls.objects.filter(user_meal=user_meal, is_active=True).first()
         old_person = old.delivery_person if old else None
+        resolved_slot = delivery_slot if delivery_slot is not None else (old.delivery_slot if old else None)
 
         if old:
             old.is_active = False
@@ -2939,7 +2941,7 @@ class DeliveryAssignment(models.Model):
             user_meal=user_meal,
             plan_delivery_assignment=old.plan_delivery_assignment if old else None,
             delivery_person=new_person,
-            delivery_slot=old.delivery_slot if old else None,
+            delivery_slot=resolved_slot,
             is_active=True,
             status='assigned',
             scheduled_date=user_meal.meal_date,

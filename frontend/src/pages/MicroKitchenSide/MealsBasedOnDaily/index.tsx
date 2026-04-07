@@ -5,11 +5,19 @@ import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
-import { getKitchenPatients, getKitchenMeals, getKitchenMealsMonthly } from "./api";
+import {
+    getKitchenPatients,
+    getKitchenMeals,
+    getKitchenMealsMonthly,
+    assignMealDelivery,
+    bulkAssignDelivery,
+} from "./api";
 import type { DailyMeal, KitchenPatient } from "./api";
+import { fetchPlanDeliveryAssignments, fetchSupplyChainUsers } from "../DeliveryManagement/api";
+import type { PlanDeliveryAssignment, SupplyChainUser } from "../DeliveryManagement/api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage } from "react-icons/fi";
+import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-icons/gi";
 
@@ -30,6 +38,48 @@ const formatDeliveryPersonName = (m: DailyMeal): string | null => {
     return name || null;
 };
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Build assignable rows from global plan (per-slot persons + legacy single person). */
+function globalDeliveryOptions(plan: PlanDeliveryAssignment | undefined): Array<{
+    key: string;
+    label: string;
+    personId: number;
+    slotId: number | null;
+}> {
+    if (!plan) return [];
+    const out: Array<{ key: string; label: string; personId: number; slotId: number | null }> = [];
+    const rows = plan.slot_delivery_assignments;
+    if (rows?.length) {
+        for (const r of rows) {
+            if (r.delivery_person_id == null) continue;
+            const pn = r.delivery_person_details
+                ? `${r.delivery_person_details.first_name || ""} ${r.delivery_person_details.last_name || ""}`.trim()
+                : `Person #${r.delivery_person_id}`;
+            const sn = r.delivery_slot_details?.name ?? `Slot ${r.delivery_slot_id}`;
+            out.push({
+                key: `slot-${r.delivery_slot_id}-${r.delivery_person_id}`,
+                label: `${pn} — ${sn}`,
+                personId: r.delivery_person_id,
+                slotId: r.delivery_slot_id,
+            });
+        }
+    }
+    if (out.length === 0 && plan.delivery_person != null) {
+        const pn = plan.delivery_person_details
+            ? `${plan.delivery_person_details.first_name || ""} ${plan.delivery_person_details.last_name || ""}`.trim()
+            : `Person #${plan.delivery_person}`;
+        const sn = plan.default_slot_details?.name ?? (plan.default_slot != null ? `Slot ${plan.default_slot}` : "Default slot");
+        out.push({
+            key: `legacy-${plan.delivery_person}`,
+            label: `${pn} — ${sn}`,
+            personId: plan.delivery_person,
+            slotId: plan.default_slot ?? null,
+        });
+    }
+    return out;
+}
+
 const MealsBasedOnDailyPage: React.FC = () => {
     const [meals, setMeals] = useState<DailyMeal[]>([]);
     const [patients, setPatients] = useState<KitchenPatient[]>([]);
@@ -47,6 +97,18 @@ const MealsBasedOnDailyPage: React.FC = () => {
     const [calendarMeals, setCalendarMeals] = useState<DailyMeal[]>([]);
     const [calendarLoading, setCalendarLoading] = useState(false);
     const lastFetchedMonthRef = useRef<string | null>(null);
+
+    const [planAssignments, setPlanAssignments] = useState<PlanDeliveryAssignment[]>([]);
+    const [supplyUsers, setSupplyUsers] = useState<SupplyChainUser[]>([]);
+    const [assignContextLoading, setAssignContextLoading] = useState(false);
+
+    const [assignModalMeal, setAssignModalMeal] = useState<DailyMeal | null>(null);
+    const [assignSaving, setAssignSaving] = useState(false);
+    const [manualSupplyPersonId, setManualSupplyPersonId] = useState<string>("");
+
+    const [bulkPersonId, setBulkPersonId] = useState<string>("");
+    const [bulkOnlyUnassigned, setBulkOnlyUnassigned] = useState(true);
+    const [bulkSaving, setBulkSaving] = useState(false);
 
     const fetchPatients = async () => {
         try {
@@ -71,6 +133,11 @@ const MealsBasedOnDailyPage: React.FC = () => {
         startNextWeek.setDate(startThisWeek.getDate() + 7);
         const endNextWeek = new Date(startNextWeek);
         endNextWeek.setDate(startNextWeek.getDate() + 6);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const thisMonthStart = `${y}-${pad2(m + 1)}-01`;
+        const thisMonthEnd = `${y}-${pad2(m + 1)}-${pad2(lastDay)}`;
         return {
             today,
             tomorrow,
@@ -78,7 +145,35 @@ const MealsBasedOnDailyPage: React.FC = () => {
             thisWeekEnd: endThisWeek.toISOString().split("T")[0],
             nextWeekStart: startNextWeek.toISOString().split("T")[0],
             nextWeekEnd: endNextWeek.toISOString().split("T")[0],
+            thisMonthStart,
+            thisMonthEnd,
         };
+    };
+
+    /** Same date window as the meal list (for bulk assign). */
+    const getBulkWindowDates = (): { start_date: string; end_date: string } | null => {
+        const range = getDateRange();
+        if (rangeType === "today") return { start_date: range.today, end_date: range.today };
+        if (rangeType === "tomorrow") return { start_date: range.tomorrow, end_date: range.tomorrow };
+        if (rangeType === "this_week") return { start_date: range.thisWeekStart, end_date: range.thisWeekEnd };
+        if (rangeType === "next_week") return { start_date: range.nextWeekStart, end_date: range.nextWeekEnd };
+        if (rangeType === "this_month") return { start_date: range.thisMonthStart, end_date: range.thisMonthEnd };
+        if (rangeType === "custom" && customStart && customEnd) return { start_date: customStart, end_date: customEnd };
+        return null;
+    };
+
+    const fetchAssignContext = async () => {
+        setAssignContextLoading(true);
+        try {
+            const [plans, users] = await Promise.all([fetchPlanDeliveryAssignments(), fetchSupplyChainUsers()]);
+            setPlanAssignments(plans);
+            setSupplyUsers(users);
+        } catch (e) {
+            console.error(e);
+            toast.error("Could not load delivery assignment options");
+        } finally {
+            setAssignContextLoading(false);
+        }
     };
 
     const fetchDailyMeals = async () => {
@@ -98,6 +193,9 @@ const MealsBasedOnDailyPage: React.FC = () => {
             } else if (rangeType === "next_week") {
                 params.start_date = range.nextWeekStart;
                 params.end_date = range.nextWeekEnd;
+            } else if (rangeType === "this_month") {
+                params.start_date = range.thisMonthStart;
+                params.end_date = range.thisMonthEnd;
             } else if (rangeType === "custom" && customStart && customEnd) {
                 params.start_date = customStart;
                 params.end_date = customEnd;
@@ -135,8 +233,93 @@ const MealsBasedOnDailyPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        fetchAssignContext();
+    }, []);
+
+    useEffect(() => {
         fetchDailyMeals();
     }, [rangeType, selectedPatient, customStart, customEnd]);
+
+    useEffect(() => {
+        if (assignModalMeal) setManualSupplyPersonId("");
+    }, [assignModalMeal]);
+
+    const handleAssignFromGlobal = async (
+        meal: DailyMeal,
+        personId: number,
+        slotId: number | null
+    ) => {
+        setAssignSaving(true);
+        try {
+            const payload: { delivery_person_id: number; delivery_slot_id?: number | null; reason?: string } = {
+                delivery_person_id: personId,
+                reason: "Global plan pick",
+            };
+            if (slotId != null) payload.delivery_slot_id = slotId;
+            const updated = await assignMealDelivery(meal.id, payload);
+            setMeals((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+            setAssignModalMeal(null);
+            toast.success("Delivery assigned");
+        } catch (e) {
+            console.error(e);
+            toast.error("Could not assign delivery");
+        } finally {
+            setAssignSaving(false);
+        }
+    };
+
+    const handleAssignManualSupply = async (meal: DailyMeal) => {
+        const id = parseInt(manualSupplyPersonId, 10);
+        if (!Number.isFinite(id)) {
+            toast.error("Select a supply chain person");
+            return;
+        }
+        setAssignSaving(true);
+        try {
+            const updated = await assignMealDelivery(meal.id, {
+                delivery_person_id: id,
+                reason: "Kitchen manual assign",
+            });
+            setMeals((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+            setAssignModalMeal(null);
+            toast.success("Delivery assigned");
+        } catch (e) {
+            console.error(e);
+            toast.error("Could not assign delivery");
+        } finally {
+            setAssignSaving(false);
+        }
+    };
+
+    const handleBulkAssign = async () => {
+        const win = getBulkWindowDates();
+        const pid = parseInt(bulkPersonId, 10);
+        if (!win) {
+            toast.error("Choose a valid date window (complete custom range if needed)");
+            return;
+        }
+        if (!Number.isFinite(pid)) {
+            toast.error("Select a supply chain person");
+            return;
+        }
+        setBulkSaving(true);
+        try {
+            const res = await bulkAssignDelivery({
+                start_date: win.start_date,
+                end_date: win.end_date,
+                delivery_person_id: pid,
+                ...(selectedPatient !== "all" ? { user: selectedPatient } : {}),
+                only_unassigned: bulkOnlyUnassigned,
+            });
+            toast.success(`Updated ${res.updated} meal delivery row(s)`);
+            await fetchDailyMeals();
+        } catch (e) {
+            console.error(e);
+            toast.error("Bulk assign failed");
+        } finally {
+            setBulkSaving(false);
+        }
+    };
 
     const filteredMeals = meals.filter(m => {
         const q = searchTerm.toLowerCase();
@@ -223,6 +406,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                         { value: "tomorrow", label: "Tomorrow's Prep" },
                                         { value: "this_week", label: "This Week" },
                                         { value: "next_week", label: "Next Week" },
+                                        { value: "this_month", label: "This Month" },
                                         { value: "custom", label: "Custom Window" },
                                     ]}
                                     value={rangeType}
@@ -283,6 +467,44 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                     />
                                 </motion.div>
                             )}
+                        </div>
+
+                        {/* Bulk assign — same date window as above; one supply-chain person for all meals / slots */}
+                        <div className="flex flex-col xl:flex-row flex-wrap gap-4 pt-6 border-t border-gray-50 dark:border-white/5 items-end">
+                            <div className="space-y-2 flex-1 min-w-[220px]">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">
+                                    Bulk assign (current window)
+                                </label>
+                                <Select
+                                    options={[
+                                        { value: "", label: assignContextLoading ? "Loading…" : "Supply chain person…" },
+                                        ...supplyUsers.map((u) => ({
+                                            value: String(u.id),
+                                            label: `${u.first_name} ${u.last_name}`.trim() || `User ${u.id}`,
+                                        })),
+                                    ]}
+                                    value={bulkPersonId}
+                                    onChange={(v) => setBulkPersonId(v)}
+                                    className="dark:bg-gray-900"
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tight cursor-pointer pb-3 xl:pb-0">
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    checked={bulkOnlyUnassigned}
+                                    onChange={(e) => setBulkOnlyUnassigned(e.target.checked)}
+                                />
+                                Only unassigned
+                            </label>
+                            <button
+                                type="button"
+                                disabled={bulkSaving || !bulkPersonId || !getBulkWindowDates()}
+                                onClick={() => void handleBulkAssign()}
+                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                            >
+                                {bulkSaving ? "Applying…" : "Apply to all meals in window"}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -434,12 +656,22 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                                 <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                                                                     <FiTruck size={18} />
                                                                 </div>
-                                                                <div className="min-w-0">
+                                                                <div className="min-w-0 flex-1">
                                                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Daily delivery</p>
                                                                     <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
                                                                         {formatDeliveryPersonName(m) ?? "Unassigned"}
                                                                     </p>
                                                                 </div>
+                                                                {!formatDeliveryPersonName(m) && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setAssignModalMeal(m)}
+                                                                        className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 text-white text-[9px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-colors"
+                                                                    >
+                                                                        <FiPlusCircle size={14} />
+                                                                        Assign
+                                                                    </button>
+                                                                )}
                                                             </div>
 
                                                             <div className="p-5 bg-gray-50/50 dark:bg-white/[0.03] rounded-3xl border border-transparent group-hover:border-indigo-100/30 transition-all">
@@ -480,6 +712,118 @@ const MealsBasedOnDailyPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Assign delivery — global plan rows or supply chain list */}
+            <AnimatePresence>
+                {assignModalMeal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={() => !assignSaving && setAssignModalMeal(null)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-gray-800 rounded-[28px] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-white/5"
+                        >
+                            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-white/5">
+                                <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                                    Assign delivery
+                                </h2>
+                                <button
+                                    type="button"
+                                    disabled={assignSaving}
+                                    onClick={() => setAssignModalMeal(null)}
+                                    className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                                >
+                                    <FiX size={20} />
+                                </button>
+                            </div>
+                            <div className="p-5 space-y-6">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {assignModalMeal.food_details.name} · {assignModalMeal.meal_type_details.name} ·{" "}
+                                    {assignModalMeal.meal_date}
+                                </p>
+
+                                <div>
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                                        Option 1 — Global plan (per slot)
+                                    </h3>
+                                    {(() => {
+                                        const plan = planAssignments.find(
+                                            (p) => p.user_diet_plan === assignModalMeal.user_diet_plan
+                                        );
+                                        const opts = globalDeliveryOptions(plan);
+                                        if (!opts.length) {
+                                            return (
+                                                <p className="text-xs text-gray-500 italic">
+                                                    No global assignment for this diet plan. Use option 2 or set global
+                                                    assignments in Delivery management.
+                                                </p>
+                                            );
+                                        }
+                                        return (
+                                            <div className="flex flex-col gap-2">
+                                                {opts.map((o) => (
+                                                    <button
+                                                        key={o.key}
+                                                        type="button"
+                                                        disabled={assignSaving}
+                                                        onClick={() =>
+                                                            void handleAssignFromGlobal(
+                                                                assignModalMeal,
+                                                                o.personId,
+                                                                o.slotId
+                                                            )
+                                                        }
+                                                        className="text-left px-4 py-3 rounded-2xl border border-gray-100 dark:border-white/10 hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-colors text-xs font-bold text-gray-800 dark:text-gray-200"
+                                                    >
+                                                        {o.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+
+                                <div className="border-t border-gray-100 dark:border-white/5 pt-5">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                                        Option 2 — Supply chain (any person)
+                                    </h3>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="flex-1">
+                                            <Select
+                                                options={[
+                                                    { value: "", label: "Choose person…" },
+                                                    ...supplyUsers.map((u) => ({
+                                                        value: String(u.id),
+                                                        label: `${u.first_name} ${u.last_name}`.trim() || `User ${u.id}`,
+                                                    })),
+                                                ]}
+                                                value={manualSupplyPersonId}
+                                                onChange={(v) => setManualSupplyPersonId(v)}
+                                                className="dark:bg-gray-900"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            disabled={assignSaving || !manualSupplyPersonId}
+                                            onClick={() => void handleAssignManualSupply(assignModalMeal)}
+                                            className="px-5 py-3 rounded-2xl bg-gray-900 dark:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 disabled:opacity-40"
+                                        >
+                                            Assign
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Calendar Modal - Monthly view of all meals */}
             <AnimatePresence>

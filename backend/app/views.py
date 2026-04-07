@@ -3154,7 +3154,9 @@ class UserMealViewSet(viewsets.ModelViewSet):
     ).prefetch_related(
         Prefetch(
             'deliveries',
-            queryset=DeliveryAssignment.objects.filter(is_active=True).select_related('delivery_person'),
+            queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                'delivery_person', 'delivery_slot'
+            ),
         )
     )
     serializer_class = UserMealSerializer
@@ -3249,6 +3251,104 @@ class UserMealViewSet(viewsets.ModelViewSet):
             })
         return Response(patients)
 
+    @action(detail=True, methods=['post'], url_path='assign-delivery')
+    def assign_delivery(self, request, pk=None):
+        """Micro kitchen: assign a supply-chain delivery person to this meal (single-day row)."""
+        user = request.user
+        if getattr(user, 'role', None) != 'micro_kitchen':
+            return Response(
+                {"detail": "Only micro kitchen users can assign delivery."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        mk = MicroKitchenProfile.objects.filter(user=user).first()
+        if not mk:
+            return Response({"detail": "No micro kitchen profile."}, status=status.HTTP_400_BAD_REQUEST)
+        meal = self.get_object()
+        if meal.micro_kitchen_id != mk.id:
+            return Response(
+                {"detail": "This meal is not scheduled for your kitchen."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        delivery_person_id = request.data.get('delivery_person_id')
+        if not delivery_person_id:
+            return Response(
+                {"detail": "delivery_person_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            person = UserRegister.objects.get(pk=int(delivery_person_id))
+        except (UserRegister.DoesNotExist, ValueError, TypeError):
+            return Response({"detail": "Invalid delivery_person_id."}, status=status.HTTP_400_BAD_REQUEST)
+        if getattr(person, 'role', None) != 'supply_chain':
+            return Response(
+                {"detail": "Delivery person must be a supply chain user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        slot_id = request.data.get('delivery_slot_id')
+        delivery_slot = None
+        if slot_id is not None and str(slot_id).strip() != '':
+            try:
+                delivery_slot = DeliverySlot.objects.get(pk=int(slot_id))
+            except (DeliverySlot.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid delivery_slot_id."}, status=status.HTTP_400_BAD_REQUEST)
+        reason = request.data.get('reason') or 'Kitchen assign'
+        with transaction.atomic():
+            DeliveryAssignment.ensure_for_meal(meal)
+            DeliveryAssignment.reassign(meal, person, reason=reason, delivery_slot=delivery_slot)
+        meal = self.get_queryset().get(pk=meal.pk)
+        return Response(self.get_serializer(meal).data)
+
+    @action(detail=False, methods=['post'], url_path='bulk-assign-delivery')
+    def bulk_assign_delivery(self, request):
+        """Micro kitchen: assign one supply-chain person to all meals in a date range (optional patient filter)."""
+        user = request.user
+        if getattr(user, 'role', None) != 'micro_kitchen':
+            return Response(
+                {"detail": "Only micro kitchen users can bulk assign delivery."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        mk = MicroKitchenProfile.objects.filter(user=user).first()
+        if not mk:
+            return Response({"detail": "No micro kitchen profile."}, status=status.HTTP_400_BAD_REQUEST)
+        start_date = request.data.get('start_date')
+        end_date = request.data.get('end_date')
+        delivery_person_id = request.data.get('delivery_person_id')
+        if not start_date or not end_date or not delivery_person_id:
+            return Response(
+                {"detail": "start_date, end_date, and delivery_person_id are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            person = UserRegister.objects.get(pk=int(delivery_person_id))
+        except (UserRegister.DoesNotExist, ValueError, TypeError):
+            return Response({"detail": "Invalid delivery_person_id."}, status=status.HTTP_400_BAD_REQUEST)
+        if getattr(person, 'role', None) != 'supply_chain':
+            return Response(
+                {"detail": "Delivery person must be a supply chain user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        only_unassigned = request.data.get('only_unassigned', True)
+        if isinstance(only_unassigned, str):
+            only_unassigned = only_unassigned.lower() in ('1', 'true', 'yes')
+        patient_id = request.data.get('user')
+        meals = UserMeal.objects.filter(micro_kitchen=mk, meal_date__range=[start_date, end_date])
+        if patient_id:
+            try:
+                meals = meals.filter(user_id=int(patient_id))
+            except (ValueError, TypeError):
+                return Response({"detail": "Invalid user (patient) id."}, status=status.HTTP_400_BAD_REQUEST)
+        updated = 0
+        with transaction.atomic():
+            for um in meals.iterator():
+                DeliveryAssignment.ensure_for_meal(um)
+                if only_unassigned:
+                    da = DeliveryAssignment.objects.filter(user_meal=um, is_active=True).first()
+                    if da and da.delivery_person_id:
+                        continue
+                DeliveryAssignment.reassign(um, person, reason='bulk_kitchen_assign')
+                updated += 1
+        return Response({"updated": updated, "start_date": start_date, "end_date": end_date})
+
     @action(detail=False, methods=['get'], url_path='monthly', pagination_class=None)
     def monthly_meals(self, request):
         """Fetch all meals for a month in one call. For micro_kitchen: only meals of allotted patients.
@@ -3278,7 +3378,9 @@ class UserMealViewSet(viewsets.ModelViewSet):
         ).prefetch_related(
             Prefetch(
                 'deliveries',
-                queryset=DeliveryAssignment.objects.filter(is_active=True).select_related('delivery_person'),
+                queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                    'delivery_person', 'delivery_slot'
+                ),
             )
         ).filter(meal_date__range=[start_date, end_date])
 
@@ -5715,6 +5817,7 @@ class KitchenMealDeliveryViewSet(
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
         new_id = request.data.get("new_delivery_person_id")
         reason = request.data.get("reason") or "On leave"
+        slot_id = request.data.get("delivery_slot_id")
         if not new_id:
             return Response(
                 {"detail": "new_delivery_person_id is required."},
@@ -5730,8 +5833,14 @@ class KitchenMealDeliveryViewSet(
                 {"detail": "Delivery person must be a supply chain user."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        delivery_slot = None
+        if slot_id is not None and str(slot_id).strip() != "":
+            try:
+                delivery_slot = DeliverySlot.objects.get(pk=int(slot_id))
+            except (DeliverySlot.DoesNotExist, ValueError, TypeError):
+                return Response({"detail": "Invalid delivery_slot_id."}, status=status.HTTP_400_BAD_REQUEST)
         um = instance.user_meal
-        DeliveryAssignment.reassign(um, new_person, reason=reason)
+        DeliveryAssignment.reassign(um, new_person, reason=reason, delivery_slot=delivery_slot)
         new_da = DeliveryAssignment.objects.filter(user_meal=um, is_active=True).first()
         return Response(KitchenMealDeliverySerializer(new_da).data)
 

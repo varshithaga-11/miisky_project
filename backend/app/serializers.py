@@ -1926,6 +1926,8 @@ class UserMealSerializer(serializers.ModelSerializer):
     packaging_material_details = serializers.SerializerMethodField()
     micro_kitchen_details = serializers.SerializerMethodField()
     delivery_person_details = serializers.SerializerMethodField()
+    delivery_assignment_id = serializers.SerializerMethodField()
+    delivery_slot_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMeal
@@ -1936,6 +1938,7 @@ class UserMealSerializer(serializers.ModelSerializer):
             'quantity', 'meal_date', 'is_consumed', 'consumed_at',
             'notes', 'packaging_material', 'packaging_material_details',
             'micro_kitchen', 'micro_kitchen_details', 'delivery_person_details',
+            'delivery_assignment_id', 'delivery_slot_details',
             'created_on'
         ]
         read_only_fields = ['created_on']
@@ -1999,6 +2002,22 @@ class UserMealSerializer(serializers.ModelSerializer):
             'first_name': dp.first_name or '',
             'last_name': dp.last_name or '',
             'mobile': getattr(dp, 'mobile', None),
+        }
+
+    def get_delivery_assignment_id(self, obj):
+        da = obj.deliveries.filter(is_active=True).first()
+        return da.id if da else None
+
+    def get_delivery_slot_details(self, obj):
+        da = obj.deliveries.filter(is_active=True).select_related('delivery_slot').first()
+        if not da or not da.delivery_slot:
+            return None
+        s = da.delivery_slot
+        return {
+            'id': s.id,
+            'name': s.name,
+            'start_time': s.start_time,
+            'end_time': s.end_time,
         }
 
 

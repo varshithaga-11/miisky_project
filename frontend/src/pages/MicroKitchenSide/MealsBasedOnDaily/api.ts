@@ -3,6 +3,7 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
 export interface DailyMeal {
     id: number;
+    user_diet_plan?: number;
     user_details: {
         id: number;
         first_name: string;
@@ -36,6 +37,13 @@ export interface DailyMeal {
         first_name: string;
         last_name: string;
         mobile?: string | null;
+    } | null;
+    delivery_assignment_id?: number | null;
+    delivery_slot_details?: {
+        id: number;
+        name: string;
+        start_time?: string | null;
+        end_time?: string | null;
     } | null;
 }
 
@@ -82,4 +90,29 @@ export const getKitchenMealsMonthly = async (
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     const data = response.data;
     return Array.isArray(data) ? data : data?.results ?? [];
+};
+
+export const assignMealDelivery = async (
+    mealId: number,
+    body: {
+        delivery_person_id: number;
+        delivery_slot_id?: number | null;
+        reason?: string;
+    }
+): Promise<DailyMeal> => {
+    const url = createApiUrl(`api/usermeal/${mealId}/assign-delivery/`);
+    const response = await axios.post(url, body, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const bulkAssignDelivery = async (body: {
+    start_date: string;
+    end_date: string;
+    delivery_person_id: number;
+    user?: string;
+    only_unassigned?: boolean;
+}): Promise<{ updated: number; start_date: string; end_date: string }> => {
+    const url = createApiUrl("api/usermeal/bulk-assign-delivery/");
+    const response = await axios.post(url, body, { headers: await getAuthHeaders() });
+    return response.data;
 };
