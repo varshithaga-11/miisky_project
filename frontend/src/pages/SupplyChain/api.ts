@@ -5,9 +5,11 @@ export interface SupplyChainLeave {
   id: number;
   user: number;
   user_details?: { id: number; first_name: string; last_name: string; username?: string };
-  /** ISO 8601 — includes date and time */
-  start_at: string;
-  end_at: string;
+  leave_type: "full_day" | "partial";
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
   notes: string | null;
   created_on: string;
 }
@@ -20,8 +22,11 @@ export const fetchSupplyChainLeaves = async (): Promise<SupplyChainLeave[]> => {
 };
 
 export const createSupplyChainLeave = async (payload: {
-  start_at: string;
-  end_at: string;
+  leave_type: "full_day" | "partial";
+  start_date: string;
+  end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
   notes?: string | null;
 }): Promise<SupplyChainLeave> => {
   const url = createApiUrl("api/supply-chain-leave/");

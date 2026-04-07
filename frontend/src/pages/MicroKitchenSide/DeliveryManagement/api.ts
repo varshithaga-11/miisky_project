@@ -83,6 +83,18 @@ export interface MealDeliveryAssignment {
   reassignment_reason: string | null;
 }
 
+export interface SupplyChainLeave {
+  id: number;
+  user: number;
+  user_details?: { id: number; first_name: string; last_name: string; username?: string };
+  leave_type: "full_day" | "partial";
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  notes: string | null;
+}
+
 export const fetchSupplyChainUsers = async (): Promise<SupplyChainUser[]> => {
   const url = createApiUrl("api/supply-chain-users/");
   const res = await axios.get(url, { headers: await getAuthHeaders() });
@@ -170,4 +182,11 @@ export const reassignMealDelivery = async (
     { headers: await getAuthHeaders() }
   );
   return res.data;
+};
+
+export const fetchSupplyChainLeaves = async (): Promise<SupplyChainLeave[]> => {
+  const url = createApiUrl("api/supply-chain-leave/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  const data = res.data;
+  return Array.isArray(data) ? data : data?.results ?? [];
 };

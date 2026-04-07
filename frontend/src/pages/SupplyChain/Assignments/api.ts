@@ -7,7 +7,14 @@ export interface DeliveryAssignment {
     user_meal_details?: {
         meal_type_details: { name: string };
         meal_date: string;
-        user_details: { first_name: string; last_name: string; address: string; mobile: string };
+        user_details: {
+            first_name: string;
+            last_name: string;
+            address: string;
+            mobile: string;
+            latitude?: number | null;
+            longitude?: number | null;
+        };
         food_details: { name: string };
         micro_kitchen_details: { brand_name: string; address: string };
     };
@@ -19,8 +26,20 @@ export interface DeliveryAssignment {
     delivery_notes: string | null;
 }
 
-export const getMyAssignments = async (): Promise<DeliveryAssignment[]> => {
-    const url = createApiUrl(`api/mealdeliveryassignment/`);
+export const getMyAssignments = async (params?: {
+    period?: "today" | "tomorrow" | "this_week" | "last_week" | "this_month" | "last_month" | "next_month" | "custom_range";
+    start_date?: string;
+    end_date?: string;
+    month?: number;
+    year?: number;
+}): Promise<DeliveryAssignment[]> => {
+    const q = new URLSearchParams();
+    if (params?.period) q.append("period", params.period);
+    if (params?.start_date) q.append("start_date", params.start_date);
+    if (params?.end_date) q.append("end_date", params.end_date);
+    if (params?.month != null) q.append("month", String(params.month));
+    if (params?.year != null) q.append("year", String(params.year));
+    const url = createApiUrl(`api/mealdeliveryassignment/${q.toString() ? `?${q.toString()}` : ""}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     const data = response.data;
     return Array.isArray(data) ? data : data?.results ?? [];

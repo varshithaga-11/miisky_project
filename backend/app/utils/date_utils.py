@@ -32,6 +32,12 @@ def get_period_range(period: str, start_date: Optional[str] = None, end_date: Op
         end = start + timedelta(days=6)
         return start, end
 
+    if period == "last_week":
+        this_week_start = today - timedelta(days=today.weekday())
+        start = this_week_start - timedelta(days=7)
+        end = start + timedelta(days=6)
+        return start, end
+
     if period == "this_month":
         return month_start_end(year, month)
 

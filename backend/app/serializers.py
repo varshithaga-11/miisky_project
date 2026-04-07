@@ -2977,6 +2977,8 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
                 "last_name": u.last_name or "",
                 "mobile": getattr(u, "mobile", None) or "",
                 "address": getattr(u, "address", None) or "",
+                "latitude": getattr(u, "latitude", None),
+                "longitude": getattr(u, "longitude", None),
             },
             "food_details": {"name": food.name} if food else None,
             "food_name": food.name if food else None,
@@ -2998,8 +3000,11 @@ class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_details",
-            "start_at",
-            "end_at",
+            "leave_type",
+            "start_date",
+            "end_date",
+            "start_time",
+            "end_time",
             "notes",
             "created_on",
         ]
@@ -3007,12 +3012,30 @@ class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance and self.partial:
-            start_at = attrs["start_at"] if "start_at" in attrs else self.instance.start_at
-            end_at = attrs["end_at"] if "end_at" in attrs else self.instance.end_at
+            leave_type = attrs["leave_type"] if "leave_type" in attrs else self.instance.leave_type
+            start_date = attrs["start_date"] if "start_date" in attrs else self.instance.start_date
+            end_date = attrs["end_date"] if "end_date" in attrs else self.instance.end_date
+            start_time = attrs["start_time"] if "start_time" in attrs else self.instance.start_time
+            end_time = attrs["end_time"] if "end_time" in attrs else self.instance.end_time
         else:
-            start_at = attrs.get("start_at")
-            end_at = attrs.get("end_at")
-        if start_at and end_at and end_at <= start_at:
-            raise serializers.ValidationError("end_at must be after start_at.")
+            leave_type = attrs.get("leave_type")
+            start_date = attrs.get("start_date")
+            end_date = attrs.get("end_date")
+            start_time = attrs.get("start_time")
+            end_time = attrs.get("end_time")
+
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError("end_date must be on or after start_date.")
+
+        if leave_type == "partial":
+            if start_date and end_date and start_date != end_date:
+                raise serializers.ValidationError("Partial leave must be for a single date.")
+            if not start_time or not end_time:
+                raise serializers.ValidationError("start_time and end_time are required for partial leave.")
+            if end_time <= start_time:
+                raise serializers.ValidationError("end_time must be after start_time.")
+        elif leave_type == "full_day":
+            attrs["start_time"] = None
+            attrs["end_time"] = None
         return attrs
 

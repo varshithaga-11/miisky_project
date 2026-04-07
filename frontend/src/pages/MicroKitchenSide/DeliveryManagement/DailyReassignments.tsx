@@ -8,9 +8,11 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
   fetchMealDeliveryAssignments,
+  fetchSupplyChainLeaves,
   fetchSupplyChainUsers,
   reassignMealDelivery,
   MealDeliveryAssignment,
+  SupplyChainLeave,
   SupplyChainUser,
 } from "./api";
 
@@ -26,6 +28,7 @@ export default function DailyReassignmentsPage() {
   const [date, setDate] = useState(todayISO());
   const [rows, setRows] = useState<MealDeliveryAssignment[]>([]);
   const [staff, setStaff] = useState<SupplyChainUser[]>([]);
+  const [leaves, setLeaves] = useState<SupplyChainLeave[]>([]);
   const [loading, setLoading] = useState(true);
   const [reassignId, setReassignId] = useState<number | null>(null);
   const [newPersonId, setNewPersonId] = useState("");
@@ -34,9 +37,14 @@ export default function DailyReassignmentsPage() {
   const load = async () => {
     try {
       setLoading(true);
-      const [m, s] = await Promise.all([fetchMealDeliveryAssignments(date), fetchSupplyChainUsers()]);
+      const [m, s, l] = await Promise.all([
+        fetchMealDeliveryAssignments(date),
+        fetchSupplyChainUsers(),
+        fetchSupplyChainLeaves(),
+      ]);
       setRows(m);
       setStaff(s);
+      setLeaves(l);
     } catch (e) {
       console.error(e);
       toast.error("Could not load meal deliveries.");
@@ -65,6 +73,8 @@ export default function DailyReassignmentsPage() {
       toast.error(e?.response?.data?.detail || "Reassign failed.");
     }
   };
+
+  const leavesForDate = leaves.filter((r) => r.start_date <= date && r.end_date >= date);
 
   return (
     <>
@@ -115,6 +125,31 @@ export default function DailyReassignmentsPage() {
             </button>
           </div>
         </header>
+
+        <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h2 className="font-semibold text-gray-900 dark:text-white">Supply-chain leave on selected date</h2>
+          </div>
+          {leavesForDate.length === 0 ? (
+            <div className="p-5 text-sm text-gray-500">No leave entries on {date}.</div>
+          ) : (
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              {leavesForDate.map((r) => (
+                <li key={r.id} className="px-5 py-3">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {(r.user_details?.first_name || "") + " " + (r.user_details?.last_name || "")}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {r.leave_type === "partial"
+                      ? `Partial: ${r.start_date} ${r.start_time || ""} - ${r.end_time || ""}`
+                      : `Full day: ${r.start_date}${r.end_date !== r.start_date ? ` -> ${r.end_date}` : ""}`}
+                    {r.notes ? ` | ${r.notes}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {loading ? (
           <div className="py-20 text-center text-gray-500">Loading…</div>

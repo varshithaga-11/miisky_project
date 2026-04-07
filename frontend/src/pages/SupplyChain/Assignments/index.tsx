@@ -16,14 +16,36 @@ import { getMyAssignments, updateDeliveryStatus, DeliveryAssignment } from "./ap
 const DeliveryAssignments: React.FC = () => {
     const [assignments, setAssignments] = useState<DeliveryAssignment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState<
+        "today" | "tomorrow" | "this_week" | "last_week" | "this_month" | "last_month" | "next_month" | "custom_month"
+    >("this_month");
+    const [customMonth, setCustomMonth] = useState<string>(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    });
+    const [geoAddressByTask, setGeoAddressByTask] = useState<Record<number, string>>({});
 
     useEffect(() => {
         fetchAssignments();
-    }, []);
+    }, [period, customMonth]);
 
     const fetchAssignments = async () => {
         try {
-            const data = await getMyAssignments();
+            const params: {
+                period?: "today" | "tomorrow" | "this_week" | "last_week" | "this_month" | "last_month" | "next_month";
+                month?: number;
+                year?: number;
+            } = {};
+            if (period === "custom_month") {
+                const [y, m] = customMonth.split("-").map(Number);
+                if (Number.isFinite(y) && Number.isFinite(m)) {
+                    params.year = y;
+                    params.month = m;
+                }
+            } else {
+                params.period = period;
+            }
+            const data = await getMyAssignments(params);
             setAssignments(data);
         } catch (error) {
             console.error("Failed to fetch assignments", error);
@@ -31,6 +53,39 @@ const DeliveryAssignments: React.FC = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const run = async () => {
+            const updates: Record<number, string> = {};
+            for (const task of assignments) {
+                const lat = task.user_meal_details?.user_details?.latitude;
+                const lng = task.user_meal_details?.user_details?.longitude;
+                if (lat == null || lng == null) continue;
+                if (geoAddressByTask[task.id]) continue;
+                try {
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+                        String(lat)
+                    )}&lon=${encodeURIComponent(String(lng))}`;
+                    const res = await fetch(url, {
+                        signal: controller.signal,
+                        headers: { Accept: "application/json" },
+                    });
+                    if (!res.ok) continue;
+                    const json = await res.json();
+                    const display = json?.display_name;
+                    if (display) updates[task.id] = display;
+                } catch {
+                    // Keep fallback address on fetch failure.
+                }
+            }
+            if (Object.keys(updates).length > 0) {
+                setGeoAddressByTask((prev) => ({ ...prev, ...updates }));
+            }
+        };
+        run();
+        return () => controller.abort();
+    }, [assignments]);
 
     const handleStatusUpdate = async (id: number, status: string) => {
         try {
@@ -67,6 +122,31 @@ const DeliveryAssignments: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex gap-4">
+                         <div className="p-6 rounded-[2.5rem] bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Filter</p>
+                            <select
+                                value={period}
+                                onChange={(e) => setPeriod(e.target.value as any)}
+                                className="px-3 py-2 rounded-xl text-xs font-bold uppercase bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                            >
+                                <option value="today">Today</option>
+                                <option value="tomorrow">Tomorrow</option>
+                                <option value="this_week">This Week</option>
+                                <option value="last_week">Last Week</option>
+                                <option value="this_month">This Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="next_month">Next Month</option>
+                                <option value="custom_month">Custom Month</option>
+                            </select>
+                            {period === "custom_month" && (
+                                <input
+                                    type="month"
+                                    value={customMonth}
+                                    onChange={(e) => setCustomMonth(e.target.value)}
+                                    className="mt-2 w-full px-3 py-2 rounded-xl text-xs font-bold uppercase bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                                />
+                            )}
+                         </div>
                          <div className="p-8 rounded-[2.5rem] bg-indigo-600 text-white shadow-2xl shadow-indigo-600/30 transform hover:scale-105 transition-transform duration-500">
                             <Truck className="w-8 h-8 mb-4" />
                             <p className="text-4xl font-black">{assignments.filter(a => a.status !== 'delivered').length}</p>
@@ -156,7 +236,7 @@ const DeliveryAssignments: React.FC = () => {
                                                 <div>
                                                     <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] mb-2">Patient Address</p>
                                                     <p className="text-gray-900 dark:text-white font-medium text-lg leading-relaxed">
-                                                        {task.user_meal_details?.user_details.address}
+                                                        {geoAddressByTask[task.id] || task.user_meal_details?.user_details.address}
                                                     </p>
                                                 </div>
                                             </div>

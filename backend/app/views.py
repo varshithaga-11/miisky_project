@@ -5881,22 +5881,41 @@ class KitchenMealDeliveryViewSet(
     http_method_names = ["get", "head", "options", "patch", "post"]
 
     def get_queryset(self):
+        from .utils.date_utils import get_period_range
+
+        def _apply_date_filters(qs):
+            meal_date = self.request.query_params.get("meal_date")
+            if meal_date:
+                return qs.filter(scheduled_date=meal_date)
+
+            period = self.request.query_params.get("period")
+            start_date = self.request.query_params.get("start_date")
+            end_date = self.request.query_params.get("end_date")
+            if period:
+                try:
+                    s, e = get_period_range(period, start_date, end_date)
+                    return qs.filter(scheduled_date__range=[s, e])
+                except ValueError:
+                    return qs.none()
+
+            month = self.request.query_params.get("month")
+            year = self.request.query_params.get("year")
+            if month and year:
+                return qs.filter(scheduled_date__month=month, scheduled_date__year=year)
+            return qs
+
         u = self.request.user
         role = getattr(u, "role", None)
         if role == "supply_chain":
             qs = self.queryset.filter(delivery_person=u, is_active=True)
-            meal_date = self.request.query_params.get("meal_date")
-            if meal_date:
-                qs = qs.filter(scheduled_date=meal_date)
+            qs = _apply_date_filters(qs)
             return qs.order_by("-scheduled_date", "id")
         if role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return DeliveryAssignment.objects.none()
             qs = self.queryset.filter(user_meal__micro_kitchen=mk, is_active=True)
-            meal_date = self.request.query_params.get("meal_date")
-            if meal_date:
-                qs = qs.filter(scheduled_date=meal_date)
+            qs = _apply_date_filters(qs)
             return qs.order_by("-scheduled_date", "id")
         return DeliveryAssignment.objects.none()
 
@@ -5954,7 +5973,7 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
         u = self.request.user
         role = getattr(u, "role", None)
         if role == "supply_chain":
-            return SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_at")
+            return SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")
         if role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
@@ -5973,7 +5992,7 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
             return (
                 SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids)
                 .select_related("user")
-                .order_by("-start_at")
+                .order_by("-start_date")
             )
         return SupplyChainDeliveryLeave.objects.none()
 

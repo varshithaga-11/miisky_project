@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { CalendarRange, ArrowLeft, Trash2 } from "lucide-react";
 import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import DatePicker2 from "../../../components/form/date-picker2";
+import TimePicker from "../../../components/form/timepicker";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -12,39 +14,24 @@ import {
   SupplyChainLeave,
 } from "../api";
 
-/** HTML time input → HH:MM:SS for ISO datetime string. */
 function timeInputToApi(hhmm: string): string {
   if (!hhmm) return "";
   return hhmm.length === 5 ? `${hhmm}:00` : hhmm;
 }
 
-/** Build API datetimes: full-day range uses 00:00 start and 23:59:59 end; half-day uses times on one day only. */
-function buildStartAtEndAt(
-  start: string,
-  end: string,
-  useTimeWindow: boolean,
-  timeStart: string,
-  timeEnd: string
-): { start_at: string; end_at: string } | null {
-  if (!start || !end || start > end) return null;
-  if (useTimeWindow) {
-    if (start !== end || !timeStart || !timeEnd || timeStart >= timeEnd) return null;
-    return {
-      start_at: `${start}T${timeInputToApi(timeStart)}`,
-      end_at: `${end}T${timeInputToApi(timeEnd)}`,
-    };
-  }
-  return {
-    start_at: `${start}T00:00:00`,
-    end_at: `${end}T23:59:59`,
-  };
+function timeFromFlatpickrDate(d: Date): string {
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
-function formatLeaveRange(startAt: string, endAt: string): string {
-  const a = new Date(startAt);
-  const b = new Date(endAt);
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return `${startAt} → ${endAt}`;
-  return `${a.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} → ${b.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
+function formatLeaveRange(r: SupplyChainLeave): string {
+  if (r.leave_type === "partial") {
+    const st = r.start_time || "—";
+    const et = r.end_time || "—";
+    return `${r.start_date} (${st} - ${et})`;
+  }
+  return r.start_date === r.end_date ? r.start_date : `${r.start_date} -> ${r.end_date}`;
 }
 
 export default function SupplyChainPlannedLeavePage() {
@@ -101,16 +88,14 @@ export default function SupplyChainPlannedLeavePage() {
         return;
       }
     }
-    const built = buildStartAtEndAt(start, end, useTimeWindow, timeStart, timeEnd);
-    if (!built) {
-      toast.error("Invalid dates or times.");
-      return;
-    }
     setSaving(true);
     try {
       await createSupplyChainLeave({
-        start_at: built.start_at,
-        end_at: built.end_at,
+        leave_type: useTimeWindow ? "partial" : "full_day",
+        start_date: start,
+        end_date: end,
+        start_time: useTimeWindow ? timeInputToApi(timeStart) : null,
+        end_time: useTimeWindow ? timeInputToApi(timeEnd) : null,
         notes: notes.trim() || null,
       });
       toast.success("Leave saved. Micro kitchens you work with can see this.");
@@ -180,26 +165,21 @@ export default function SupplyChainPlannedLeavePage() {
         >
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Add leave</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
-              <input
-                type="date"
-                required
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
-              <input
-                type="date"
-                required
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-              />
-            </div>
+            <DatePicker2
+              id="leave-start-date"
+              label="From"
+              value={start}
+              onChange={(v) => setStart(v)}
+              placeholder="Start date"
+            />
+            <DatePicker2
+              id="leave-end-date"
+              label="To"
+              value={end}
+              onChange={(v) => setEnd(v)}
+              placeholder="End date"
+              minDate={start || undefined}
+            />
           </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
@@ -219,21 +199,27 @@ export default function SupplyChainPlannedLeavePage() {
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Unavailable from</label>
-                  <input
-                    type="time"
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                    value={timeStart}
-                    onChange={(e) => setTimeStart(e.target.value)}
+                  <TimePicker
+                    id="leave-time-start"
+                    label="Unavailable from"
+                    placeholder="Select start time"
+                    timeFormat="24"
+                    defaultTime={timeStart || undefined}
+                    onChange={(selectedDates: Date[]) => {
+                      if (selectedDates?.[0]) setTimeStart(timeFromFlatpickrDate(selectedDates[0]));
+                    }}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Unavailable until</label>
-                  <input
-                    type="time"
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                    value={timeEnd}
-                    onChange={(e) => setTimeEnd(e.target.value)}
+                  <TimePicker
+                    id="leave-time-end"
+                    label="Unavailable until"
+                    placeholder="Select end time"
+                    timeFormat="24"
+                    defaultTime={timeEnd || undefined}
+                    onChange={(selectedDates: Date[]) => {
+                      if (selectedDates?.[0]) setTimeEnd(timeFromFlatpickrDate(selectedDates[0]));
+                    }}
                   />
                 </div>
               </div>
@@ -272,7 +258,7 @@ export default function SupplyChainPlannedLeavePage() {
                 <li key={r.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white leading-snug">
-                      {formatLeaveRange(r.start_at, r.end_at)}
+                      {formatLeaveRange(r)}
                     </p>
                     {r.notes && <p className="text-sm text-gray-500 mt-1">{r.notes}</p>}
                   </div>

@@ -2993,22 +2993,25 @@ class SupplyChainDeliveryLeave(models.Model):
     user = models.ForeignKey(
         UserRegister,
         on_delete=models.CASCADE,
-        related_name='supply_chain_delivery_leaves',
+        related_name='delivery_leaves',
     )
-    start_at = models.DateTimeField(
-        help_text="When leave begins (date and time, e.g. start of day or start of half-day window).",
-    )
-    end_at = models.DateTimeField(
-        help_text="When leave ends (date and time, e.g. end of day or end of half-day window).",
-    )
+    LEAVE_TYPE_CHOICES = [
+        ('full_day', 'Full Day'),
+        ('partial', 'Partial / Half Day'),
+    ]
+    leave_type = models.CharField(max_length=20, choices=LEAVE_TYPE_CHOICES)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-start_at"]
+        ordering = ["-start_date"]
 
     def __str__(self):
-        return f"{self.user_id} {self.start_at}–{self.end_at}"
+        return f"{self.user} | {self.start_date} -> {self.end_date}"
 
 
 class DeliveryIssue(models.Model):
