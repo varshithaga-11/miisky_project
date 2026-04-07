@@ -138,20 +138,58 @@ export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
   return response.data;
 };
 
-export const getMyOrders = async (page = 1, limit = 10, status?: string, type?: string, search?: string): Promise<{ results: Order[]; count: number }> => {
+/** Period values match `get_period_range` in `backend/app/utils/date_utils.py`. */
+export type OrderDatePeriod =
+  | "all"
+  | "today"
+  | "tomorrow"
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "next_month"
+  | "this_quarter"
+  | "this_year"
+  | "custom_range";
+
+export type PaginatedOrders = {
+  results: Order[];
+  count: number;
+  totalPages?: number;
+  currentPage?: number;
+};
+
+export const getMyOrders = async (
+  page = 1,
+  limit = 10,
+  status?: string,
+  type?: string,
+  search?: string,
+  period?: OrderDatePeriod | string,
+  customRangeStart?: string,
+  customRangeEnd?: string
+): Promise<PaginatedOrders> => {
   let url = createApiUrl(`api/order/?page=${page}&limit=${limit}`);
   if (status && status !== "all") url += `&status=${status}`;
   if (type && type !== "all") url += `&order_type=${type}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
-  
+  if (period && period !== "all") {
+    url += `&period=${encodeURIComponent(period)}`;
+    if (period === "custom_range" && customRangeStart && customRangeEnd) {
+      url += `&start_date=${encodeURIComponent(customRangeStart)}&end_date=${encodeURIComponent(customRangeEnd)}`;
+    }
+  }
+
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   const d = response.data;
   if (Array.isArray(d)) {
-    return { results: d, count: d.length };
+    return { results: d, count: d.length, totalPages: 1, currentPage: 1 };
   }
   return {
     results: d?.results ?? [],
     count: d?.count ?? 0,
+    totalPages: d?.total_pages ?? 1,
+    currentPage: d?.current_page ?? page,
   };
 };
 

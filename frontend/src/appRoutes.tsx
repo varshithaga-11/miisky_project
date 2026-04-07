@@ -72,6 +72,7 @@ import DeliveryAssignmentsPage from "./pages/SupplyChain/Assignments/index";
 import SupplyChainDashboardPage from "./pages/SupplyChain/Dashboard/index";
 import SupplyChainEarningsPage from "./pages/SupplyChain/Earnings/index";
 import SupplyChainPlannedLeavePage from "./pages/SupplyChain/PlannedLeave/index";
+import SupplyChainSeperateOrdersPage from "./pages/SupplyChain/SeperateOrders/index";
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
@@ -372,6 +373,7 @@ export function appRoutes() {
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/dashboard" element={<SupplyChainDashboardPage />} />
           <Route path="supplychain/daily-work" element={<DeliveryAssignmentsPage />} />
+          <Route path="supplychain/seperate-orders" element={<SupplyChainSeperateOrdersPage />} />
           <Route path="supplychain/earnings" element={<SupplyChainEarningsPage />} />
           <Route path="supplychain/planned-leave" element={<SupplyChainPlannedLeavePage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />

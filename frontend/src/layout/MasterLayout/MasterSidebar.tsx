@@ -434,6 +434,11 @@ const supplyChainNavItems: NavItem[] = [
     path: "/supplychain/daily-work",
   },
   {
+    icon: <Package className="w-5 h-5" />,
+    name: "My delivery orders",
+    path: "/supplychain/seperate-orders",
+  },
+  {
     icon: <Wallet className="w-5 h-5" />,
     name: "Earnings",
     path: "/supplychain/earnings",

@@ -4953,6 +4953,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(user_id=order_user_id)
         elif user.role == 'micro_kitchen':
             qs = base.filter(micro_kitchen__user=user)
+        elif user.role == 'supply_chain':
+            qs = base.filter(delivery_person=user)
         else:
             qs = base.filter(user=user)
 
