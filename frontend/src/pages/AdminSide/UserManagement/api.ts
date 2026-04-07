@@ -81,12 +81,16 @@ export interface PaginatedResponses<T> {
 export const getUserList = async (
   page: number = 1,
   limit: number | "all" = 10,
-  search?: string
+  search?: string,
+  role?: string,
+  status?: string
 ): Promise<PaginatedResponses<UserRegister>> => {
   try {
     const params: Record<string, any> = { page };
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
+    if (role && role !== "all") params.role = role;
+    if (status && status !== "all") params.status = status;
 
     const url = createApiUrl("api/usermanagement/");
     const response = await axios.get<PaginatedResponses<UserRegister>>(url, {

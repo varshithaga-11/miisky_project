@@ -63,12 +63,12 @@ const UserManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, roleFilter, statusFilter]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await getUserList(currentPage, pageSize, searchTerm);
+      const response = await getUserList(currentPage, pageSize, searchTerm, roleFilter, statusFilter);
       setUsers(response.results);
       setTotalItems(response.count);
       setTotalPages(response.total_pages);
@@ -100,30 +100,10 @@ const UserManagementPage: React.FC = () => {
     setEditUserId(null);
   };
 
-  // We still use local filtering for status and role since they weren't fully integrated into backend params yet
-  // but search and page-size are now backend-driven.
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
-
-    // Filter by status
-    if (statusFilter === 'active') {
-      filtered = filtered.filter(user => user.is_active);
-    } else if (statusFilter === 'inactive') {
-      filtered = filtered.filter(user => !user.is_active);
-    }
-
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(user => user.role === roleFilter);
-    }
-
-    return filtered;
-  }, [users, statusFilter, roleFilter]);
-
-
   const sortedDefinitions = useMemo(() => {
-    if (!sortField) return filteredUsers;
+    if (!sortField) return users;
 
-    return [...filteredUsers].sort((a, b) => {
+    return [...users].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
 
@@ -137,7 +117,7 @@ const UserManagementPage: React.FC = () => {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredUsers, sortField, sortDirection]);
+  }, [users, sortField, sortDirection]);
 
   const handleSort = (field: keyof UserRegister) => {
     if (sortField === field) {
