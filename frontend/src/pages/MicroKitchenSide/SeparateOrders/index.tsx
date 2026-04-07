@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getMyOrders, updateOrderStatus, Order } from "../../NonPatient/orderapi";
+import { assignOrderDeliveryPerson, getMyOrders, updateOrderStatus, Order } from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
@@ -26,6 +26,7 @@ const SeparateOrdersPage: React.FC = () => {
     const [teamUsers, setTeamUsers] = useState<SupplyChainUser[]>([]);
     const [roleFilterByOrder, setRoleFilterByOrder] = useState<Record<number, "all" | "primary" | "backup" | "temporary">>({});
     const [selectedPersonByOrder, setSelectedPersonByOrder] = useState<Record<number, string>>({});
+    const [savingDeliveryForOrderId, setSavingDeliveryForOrderId] = useState<number | null>(null);
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -101,8 +102,8 @@ const SeparateOrdersPage: React.FC = () => {
         }
     };
 
-    const getImageUrl = (path: string | undefined | null) => {
-        if (!path) return "";
+    const getImageUrl = (path: string | undefined | null): string | undefined => {
+        if (!path) return undefined;
         if (path.startsWith("http")) return path;
         return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
     };
@@ -117,6 +118,48 @@ const SeparateOrdersPage: React.FC = () => {
         const role = roleFilterByOrder[orderId] || "all";
         if (role === "all") return teamUsers;
         return teamUsers.filter((u) => u.team_role === role);
+    };
+
+    /** Include the saved assignee in the list even if role filter would hide them. */
+    const deliveryPersonOptionsForOrder = (order: Order): SupplyChainUser[] => {
+        const base = filteredTeamMembersForOrder(order.id!);
+        const pid = order.delivery_person;
+        if (pid == null) return base;
+        if (base.some((u) => u.id === pid)) return base;
+        const extra = teamUsers.find((u) => u.id === pid);
+        return extra ? [extra, ...base] : base;
+    };
+
+    const deliveryPersonSelectValue = (order: Order): string => {
+        const oid = order.id!;
+        if (selectedPersonByOrder[oid] !== undefined) return selectedPersonByOrder[oid];
+        return order.delivery_person != null ? String(order.delivery_person) : "";
+    };
+
+    const saveDeliveryAssignment = async (order: Order) => {
+        const oid = order.id!;
+        const raw = deliveryPersonSelectValue(order);
+        const personId = raw === "" ? null : parseInt(raw, 10);
+        if (raw !== "" && !Number.isFinite(personId)) {
+            toast.error("Choose a valid delivery person or clear the selection.");
+            return;
+        }
+        setSavingDeliveryForOrderId(oid);
+        try {
+            await assignOrderDeliveryPerson(oid, personId);
+            toast.success("Delivery assignment saved.");
+            setSelectedPersonByOrder((prev) => {
+                const next = { ...prev };
+                delete next[oid];
+                return next;
+            });
+            await fetchOrders();
+        } catch (error) {
+            console.error(error);
+            toast.error("Could not save delivery person.");
+        } finally {
+            setSavingDeliveryForOrderId(null);
+        }
     };
 
     return (
@@ -284,17 +327,26 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 <FiPackage size={14} className="text-indigo-500" /> Items Breakdown
                                                                             </h4>
                                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                                {order.items?.map((item) => (
+                                                                                {order.items?.map((item) => {
+                                                                                    const itemImageUrl = getImageUrl(item.food_details?.image);
+                                                                                    return (
                                                                                     <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
-                                                                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
-                                                                                            <img src={getImageUrl(item.food_details?.image)} className="w-full h-full object-cover" alt="" />
+                                                                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-700 flex-shrink-0">
+                                                                                            {itemImageUrl ? (
+                                                                                                <img
+                                                                                                    src={itemImageUrl}
+                                                                                                    className="w-full h-full object-cover"
+                                                                                                    alt=""
+                                                                                                />
+                                                                                            ) : null}
                                                                                         </div>
                                                                                         <div>
                                                                                             <p className="text-xs font-black text-gray-900 dark:text-white leading-tight">{item.food_details?.name}</p>
                                                                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{item.quantity} × ₹{item.price}</p>
                                                                                         </div>
                                                                                     </div>
-                                                                                ))}
+                                                                                    );
+                                                                                })}
                                                                             </div>
                                                                         </div>
 
@@ -317,8 +369,12 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 <FiMapPin size={14} className="text-indigo-500" /> Delivery Details
                                                                             </h4>
                                                                             <div className="mb-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 p-3">
-                                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-2">
+                                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">
                                                                                     Assign from team members
+                                                                                </p>
+                                                                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                                                                                    Saved on the order in the database (<span className="font-mono">app_order.delivery_person_id</span>
+                                                                                    ). Use Save to persist; the dropdown alone only updates this screen until you save.
                                                                                 </p>
                                                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                                     <select
@@ -337,7 +393,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         <option value="temporary">Temporary</option>
                                                                                     </select>
                                                                                     <select
-                                                                                        value={selectedPersonByOrder[order.id!] || ""}
+                                                                                        value={deliveryPersonSelectValue(order)}
                                                                                         onChange={(e) =>
                                                                                             setSelectedPersonByOrder((prev) => ({
                                                                                                 ...prev,
@@ -346,14 +402,35 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         }
                                                                                         className="rounded-lg border-none bg-gray-100 dark:bg-gray-700 px-3 py-2 text-xs font-bold"
                                                                                     >
-                                                                                        <option value="">Select delivery person</option>
-                                                                                        {filteredTeamMembersForOrder(order.id!).map((u) => (
+                                                                                        <option value="">None / unassigned</option>
+                                                                                        {deliveryPersonOptionsForOrder(order).map((u) => (
                                                                                             <option key={u.id} value={u.id}>
                                                                                                 {`${u.first_name || ""} ${u.last_name || ""}`.trim()}
                                                                                                 {u.team_role ? ` (${u.team_role})` : ""}
                                                                                             </option>
                                                                                         ))}
                                                                                     </select>
+                                                                                </div>
+                                                                                {order.delivery_person_details && (
+                                                                                    <p className="mt-2 text-[10px] text-gray-500 dark:text-gray-400">
+                                                                                        Currently saved:{" "}
+                                                                                        <span className="font-bold text-gray-700 dark:text-gray-300">
+                                                                                            {`${order.delivery_person_details.first_name || ""} ${order.delivery_person_details.last_name || ""}`.trim() ||
+                                                                                                `#${order.delivery_person}`}
+                                                                                        </span>
+                                                                                    </p>
+                                                                                )}
+                                                                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                                                    <Button
+                                                                                        type="button"
+                                                                                        size="sm"
+                                                                                        variant="primary"
+                                                                                        className="!rounded-xl !px-4 !py-2 text-xs font-black"
+                                                                                        disabled={savingDeliveryForOrderId === order.id}
+                                                                                        onClick={() => saveDeliveryAssignment(order)}
+                                                                                    >
+                                                                                        {savingDeliveryForOrderId === order.id ? "Saving…" : "Save delivery person"}
+                                                                                    </Button>
                                                                                 </div>
                                                                             </div>
                                                                             <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">

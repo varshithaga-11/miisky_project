@@ -77,6 +77,14 @@ export interface Order {
   delivery_slab_details?: { id?: number; min_km: string; max_km: string; charge: string } | null;
   final_amount?: number | string | null;
   delivery_address: string;
+  /** Supply-chain user id assigned by the kitchen to deliver this order (`app_order.delivery_person_id`). */
+  delivery_person?: number | null;
+  delivery_person_details?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    mobile?: string;
+  } | null;
   items: OrderItem[];
   ratings?: MicroKitchenRating[];
   created_at: string;
@@ -151,6 +159,17 @@ export const updateOrderStatus = async (orderId: number, status: string) => {
   const url = createApiUrl(`api/order/${orderId}/update-status/`);
   const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
   return response.data;
+};
+
+/** Persists assignment on the server (`Order.delivery_person`). Pass `null` to unassign. */
+export const assignOrderDeliveryPerson = async (orderId: number, delivery_person: number | null) => {
+  const url = createApiUrl(`api/order/${orderId}/assign-delivery-person/`);
+  const response = await axios.patch(
+    url,
+    { delivery_person },
+    { headers: await getAuthHeaders() }
+  );
+  return response.data as Order;
 };
 
 export const rateMicroKitchen = async (kitchenId: number, orderId: number, rating: number, review: string) => {

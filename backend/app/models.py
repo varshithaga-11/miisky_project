@@ -2108,6 +2108,15 @@ class Order(models.Model):
 
     delivery_address = models.TextField()
 
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_orders",
+        help_text="Supply-chain user assigned to deliver this order (kitchen assigns).",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 

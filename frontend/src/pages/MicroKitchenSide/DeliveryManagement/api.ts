@@ -100,9 +100,15 @@ export interface SupplyChainLeave {
   notes: string | null;
 }
 
-export const fetchSupplyChainUsers = async (): Promise<SupplyChainUser[]> => {
+/** @param allSupplyChainUsers For micro_kitchen only: full supply_chain pool (not just current team). */
+export const fetchSupplyChainUsers = async (options?: {
+  allSupplyChainUsers?: boolean;
+}): Promise<SupplyChainUser[]> => {
   const url = createApiUrl("api/supply-chain-users/");
-  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  const res = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: options?.allSupplyChainUsers ? { all: "1" } : undefined,
+  });
   return Array.isArray(res.data) ? res.data : [];
 };
 
@@ -224,6 +230,8 @@ export const fetchMicroKitchenDeliveryTeam = async (): Promise<MicroKitchenTeamM
 
 export const createMicroKitchenDeliveryTeamMember = async (payload: {
   delivery_person: number;
+  /** Sent when known so validation always has a kitchen id; server still enforces permissions. */
+  micro_kitchen?: number;
   role: "primary" | "backup" | "temporary";
   is_active?: boolean;
   zone_name?: string | null;

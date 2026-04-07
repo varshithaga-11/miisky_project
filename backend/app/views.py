@@ -26,7 +26,7 @@ from .serializers import *
 
 import os
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 from .questionnaire_sync import sync_user_questionnaire_relations
@@ -4940,7 +4940,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         base = Order.objects.select_related(
-            'user', 'micro_kitchen', 'micro_kitchen__user', 'delivery_slab'
+            'user', 'micro_kitchen', 'micro_kitchen__user', 'delivery_slab', 'delivery_person'
         ).prefetch_related('items__food', 'ratings').order_by('-created_at')
 
         if user.role == 'admin':
@@ -5108,6 +5108,44 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = new_status
         order.save()
         return Response({"message": f"Order status updated to {new_status}"})
+
+    @action(detail=True, methods=['patch'], url_path='assign-delivery-person')
+    def assign_delivery_person(self, request, pk=None):
+        """
+        Persist which supply-chain user delivers this order.
+        Stored on Order.delivery_person. Micro kitchen may only pick users on their active delivery team.
+        Send {"delivery_person": null} to clear.
+        """
+        order = self.get_object()
+        role = getattr(request.user, 'role', None)
+        if role not in ('micro_kitchen', 'admin'):
+            raise PermissionDenied()
+        raw = request.data.get('delivery_person', request.data.get('delivery_person_id'))
+        if raw in (None, ''):
+            order.delivery_person = None
+            order.save(update_fields=['delivery_person'])
+            return Response(self.get_serializer(order).data)
+        try:
+            dp_id = int(raw)
+        except (TypeError, ValueError):
+            return Response({'delivery_person': ['Invalid value.']}, status=status.HTTP_400_BAD_REQUEST)
+        dp = UserRegister.objects.filter(id=dp_id, role='supply_chain').first()
+        if not dp:
+            return Response({'detail': 'Only supply-chain users can be assigned.'}, status=status.HTTP_400_BAD_REQUEST)
+        if role == 'micro_kitchen':
+            mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+            if not mk or order.micro_kitchen_id != mk.id:
+                raise PermissionDenied()
+            if not MicroKitchenDeliveryTeam.objects.filter(
+                micro_kitchen=mk, delivery_person_id=dp_id, is_active=True
+            ).exists():
+                return Response(
+                    {'detail': 'This person is not on your active delivery team.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        order.delivery_person_id = dp_id
+        order.save(update_fields=['delivery_person'])
+        return Response(self.get_serializer(order).data)
 
 
 class DeliveryChargeSlabViewSet(viewsets.ModelViewSet):
@@ -6277,6 +6315,8 @@ class MicroKitchenDeliveryTeamViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         role = getattr(self.request.user, "role", None)
         if role == "admin":
+            if serializer.validated_data.get("micro_kitchen") is None:
+                raise ValidationError({"micro_kitchen": ["This field is required."]})
             serializer.save()
             return
         if role == "micro_kitchen":
@@ -6329,6 +6369,22 @@ class SupplyChainUsersListView(APIView):
             mk = MicroKitchenProfile.objects.filter(user=request.user).first()
             if not mk:
                 return Response([])
+            # Full supply_chain pool (e.g. "add team member" screen). Default remains current team only.
+            if request.query_params.get("all") in ("1", "true", "yes"):
+                qs = UserRegister.objects.filter(role="supply_chain").order_by(
+                    "first_name", "last_name", "id"
+                )
+                data = [
+                    {
+                        "id": u.id,
+                        "first_name": u.first_name or "",
+                        "last_name": u.last_name or "",
+                        "mobile": u.mobile or "",
+                        "email": u.email or "",
+                    }
+                    for u in qs
+                ]
+                return Response(data)
             team_qs = (
                 MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk, is_active=True)
                 .select_related("delivery_person")

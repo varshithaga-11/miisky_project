@@ -2505,6 +2505,7 @@ class OrderSerializer(serializers.ModelSerializer):
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     ratings = MicroKitchenRatingSerializer(many=True, read_only=True)
     delivery_slab_details = serializers.SerializerMethodField(read_only=True)
+    delivery_person_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -2514,8 +2515,13 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_amount', 'delivery_distance_km', 'delivery_charge', 'delivery_slab',
             'delivery_slab_details', 'final_amount',
             'delivery_address',
+            'delivery_person', 'delivery_person_details',
             'items', 'ratings', 'created_at',
         ]
+        extra_kwargs = {
+            # Assigned only via assign-delivery-person action (not open PATCH from clients).
+            'delivery_person': {'read_only': True},
+        }
 
     def get_user_details(self, obj):
         if obj.user:
@@ -2555,6 +2561,17 @@ class OrderSerializer(serializers.ModelSerializer):
             'min_km': str(s.min_km),
             'max_km': str(s.max_km),
             'charge': str(s.charge),
+        }
+
+    def get_delivery_person_details(self, obj):
+        dp = getattr(obj, 'delivery_person', None)
+        if not dp:
+            return None
+        return {
+            'id': dp.id,
+            'first_name': dp.first_name or '',
+            'last_name': dp.last_name or '',
+            'mobile': dp.mobile or '',
         }
 
 
@@ -3041,6 +3058,12 @@ class UserDietPlanDeliverySummarySerializer(serializers.ModelSerializer):
 
 
 class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
+    # Explicit field so validation does not require it on create (set in view for micro_kitchen users).
+    micro_kitchen = serializers.PrimaryKeyRelatedField(
+        queryset=MicroKitchenProfile.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
 
     class Meta:
