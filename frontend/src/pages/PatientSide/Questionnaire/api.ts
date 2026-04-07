@@ -37,6 +37,7 @@ export type UserQuestionnaire = {
   deficiencies?: string[];
   autoimmune_diseases?: string[];
   digestive_issues?: string[];
+  skin_issues?: string[];
   surgery_history?: boolean | null;
   on_medication?: boolean | null;
   alcohol_per_week?: number | null;

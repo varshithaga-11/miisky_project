@@ -514,6 +514,31 @@ class UserDigestiveIssue(models.Model):
         ]
 
 
+class SkinIssueMaster(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_skin_issue_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserSkinIssue(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='skin_issues')
+    skin_issue = models.ForeignKey(SkinIssueMaster, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'skin_issue'], name='uniq_user_skin_issue'),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.skin_issue.name}"
+
+
 class UserQuestionnaire(models.Model):
     user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL, null=True, blank=True)
 

@@ -382,6 +382,11 @@ const AllottedPatientsPage: React.FC = () => {
                                                    {d.replace('_', ' ')}
                                                 </span>
                                               ))}
+                                              {Array.isArray(p.questionnaire?.skin_issues) && p.questionnaire.skin_issues.map((d: string) => (
+                                                <span key={`skin-${d}`} className="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/10 text-teal-700 dark:text-teal-300 rounded-xl text-[9px] font-black uppercase">
+                                                   Skin: {d.replace('_', ' ')}
+                                                </span>
+                                              ))}
                                            </div>
 
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Habits</span>

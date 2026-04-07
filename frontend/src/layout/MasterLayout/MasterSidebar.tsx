@@ -69,8 +69,9 @@ const adminNavItems: NavItem[] = [
       { name: "Health conditions", path: "/admin/health-condition-master" },
       { name: "Symptoms", path: "/admin/symptom-master" },
       { name: "Autoimmune", path: "/admin/autoimmune-master" },
-      { name: "Deficiencies", path: "/admin/deficiency-master" },
+      { name: "Deficiencies(Minerals and Vitamins)", path: "/admin/deficiency-master" },
       { name: "Digestive issues", path: "/admin/digestive-issue-master" },
+      { name: "Skin issues", path: "/admin/skin-issue-master" },
     ],
   },
   {

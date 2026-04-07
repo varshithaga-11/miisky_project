@@ -22,6 +22,7 @@ router.register(r'symptom-master', SymptomMasterViewSet, basename='symptom-maste
 router.register(r'autoimmune-master', AutoimmuneMasterViewSet, basename='autoimmune-master')
 router.register(r'deficiency-master', DeficiencyMasterViewSet, basename='deficiency-master')
 router.register(r'digestive-issue-master', DigestiveIssueMasterViewSet, basename='digestive-issue-master')
+router.register(r'skin-issue-master', SkinIssueMasterViewSet, basename='skin-issue-master')
 router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
 router.register(r'microkitchenprofile', MicroKitchenProfileViewSet, basename='microkitchenprofile')
 router.register(r'microkitchenfood', MicroKitchenFoodViewSet, basename='microkitchenfood')

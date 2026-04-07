@@ -1052,7 +1052,14 @@ class AdminMicroKitchenAllottedPlanPayoutsView(APIView):
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
 
 _QUESTIONNAIRE_REL_KEYS = frozenset(
-    ('health_conditions', 'symptoms', 'deficiencies', 'autoimmune_diseases', 'digestive_issues')
+    (
+        'health_conditions',
+        'symptoms',
+        'deficiencies',
+        'autoimmune_diseases',
+        'digestive_issues',
+        'skin_issues',
+    )
 )
 
 
@@ -1063,6 +1070,7 @@ def _questionnaire_prefetch_qs():
         'user__deficiencies__deficiency',
         'user__autoimmune_diseases__disease',
         'user__digestive_issues__issue',
+        'user__skin_issues__skin_issue',
     )
 
 
@@ -1178,6 +1186,21 @@ class DeficiencyMasterViewSet(viewsets.ModelViewSet):
 class DigestiveIssueMasterViewSet(viewsets.ModelViewSet):
     queryset = DigestiveIssueMaster.objects.all().order_by("name")
     serializer_class = DigestiveIssueMasterSerializer
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class SkinIssueMasterViewSet(viewsets.ModelViewSet):
+    queryset = SkinIssueMaster.objects.all().order_by("name")
+    serializer_class = SkinIssueMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]

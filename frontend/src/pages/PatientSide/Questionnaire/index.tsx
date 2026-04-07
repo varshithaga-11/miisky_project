@@ -14,11 +14,18 @@ const normalizeItem = (s: string) =>
     .trim()
     .replace(/\s+/g, " "); // collapse multiple spaces
 
+/** Skip empty tokens and placeholders like "None" so we never persist them as master names. */
+const PLACEHOLDER_TOKENS = new Set(["none", "n/a", "na", "nil", "-", "no", "nothing"]);
+
 const toListOrNull = (val: string) => {
   const items = val
     .split(",")
     .map(normalizeItem)
-    .filter(Boolean);
+    .filter((s) => {
+      if (!s) return false;
+      if (PLACEHOLDER_TOKENS.has(s.toLowerCase())) return false;
+      return true;
+    });
   return items.length ? items : null;
 };
 
@@ -54,6 +61,7 @@ export default function PatientQuestionnairePage() {
   const [deficienciesText, setDeficienciesText] = useState("");
   const [autoimmuneText, setAutoimmuneText] = useState("");
   const [digestiveText, setDigestiveText] = useState("");
+  const [skinIssuesText, setSkinIssuesText] = useState("");
   const [foodPreferencesText, setFoodPreferencesText] = useState("");
 
   useEffect(() => {
@@ -67,6 +75,7 @@ export default function PatientQuestionnairePage() {
         setDeficienciesText(Array.isArray(res?.deficiencies) ? res!.deficiencies.join(", ") : "");
         setAutoimmuneText(Array.isArray(res?.autoimmune_diseases) ? res!.autoimmune_diseases.join(", ") : "");
         setDigestiveText(Array.isArray(res?.digestive_issues) ? res!.digestive_issues.join(", ") : "");
+        setSkinIssuesText(Array.isArray(res?.skin_issues) ? res!.skin_issues.join(", ") : "");
         setFoodPreferencesText(foodPreferencesToText(res?.food_preferences));
       } catch (err) {
         console.error(err);
@@ -89,6 +98,7 @@ export default function PatientQuestionnairePage() {
         deficiencies: toListOrNull(deficienciesText) as string[] | undefined,
         autoimmune_diseases: toListOrNull(autoimmuneText) as string[] | undefined,
         digestive_issues: toListOrNull(digestiveText) as string[] | undefined,
+        skin_issues: toListOrNull(skinIssuesText) as string[] | undefined,
         food_preferences: toListOrNull(foodPreferencesText) as unknown,
       };
       await saveMyQuestionnaire(payload);
@@ -316,6 +326,14 @@ export default function PatientQuestionnairePage() {
                 value={digestiveText}
                 onChange={(e) => setDigestiveText(e.target.value)}
                 placeholder="Acidity, Bloating"
+              />
+            </div>
+            <div>
+              <Label>Skin issues</Label>
+              <Input
+                value={skinIssuesText}
+                onChange={(e) => setSkinIssuesText(e.target.value)}
+                placeholder="Leave blank if none — e.g. Eczema, Psoriasis"
               />
             </div>
             <div className="md:col-span-2">

@@ -1281,6 +1281,7 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
     deficiencies = serializers.SerializerMethodField()
     autoimmune_diseases = serializers.SerializerMethodField()
     digestive_issues = serializers.SerializerMethodField()
+    skin_issues = serializers.SerializerMethodField()
 
     class Meta:
         model = UserQuestionnaire
@@ -1319,6 +1320,7 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "deficiencies",
             "autoimmune_diseases",
             "digestive_issues",
+            "skin_issues",
         ]
         read_only_fields = ("created_on", "updated_on")
 
@@ -1377,6 +1379,14 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             UserDigestiveIssue.objects.filter(user=u).values_list("issue__name", flat=True)
         )
 
+    def get_skin_issues(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return list(
+            UserSkinIssue.objects.filter(user=u).values_list("skin_issue__name", flat=True)
+        )
+
 
 class SymptomMasterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1399,6 +1409,12 @@ class DeficiencyMasterSerializer(serializers.ModelSerializer):
 class DigestiveIssueMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = DigestiveIssueMaster
+        fields = ["id", "name"]
+
+
+class SkinIssueMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SkinIssueMaster
         fields = ["id", "name"]
 
 
