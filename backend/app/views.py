@@ -94,6 +94,18 @@ class IsAdminRole(BasePermission):
         return bool(u and u.is_authenticated and getattr(u, 'role', None) == 'admin')
 
 
+class AuthenticatedReadAdminWrite(BasePermission):
+    """Any authenticated user may list/retrieve (for dropdowns); only admin may create/update/delete."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        if not u or not u.is_authenticated:
+            return False
+        if request.method in ("GET", "HEAD", "OPTIONS"):
+            return True
+        return getattr(u, "role", None) == "admin"
+
+
 class PatientToMicroKitchenDistanceView(APIView):
     """
     Calculate distances between a specific patient and all approved micro-kitchens.
@@ -1103,39 +1115,79 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(obj).data)
 
 
-class HealthConditionMasterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = HealthConditionMaster.objects.all().order_by('name')
+class HealthConditionMasterViewSet(viewsets.ModelViewSet):
+    queryset = HealthConditionMaster.objects.all().order_by("name")
     serializer_class = HealthConditionMasterSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "category"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
-class SymptomMasterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = SymptomMaster.objects.all().order_by('name')
+class SymptomMasterViewSet(viewsets.ModelViewSet):
+    queryset = SymptomMaster.objects.all().order_by("name")
     serializer_class = SymptomMasterSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
-class AutoimmuneMasterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AutoimmuneMaster.objects.all().order_by('name')
+class AutoimmuneMasterViewSet(viewsets.ModelViewSet):
+    queryset = AutoimmuneMaster.objects.all().order_by("name")
     serializer_class = AutoimmuneMasterSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
-class DeficiencyMasterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DeficiencyMaster.objects.all().order_by('name')
+class DeficiencyMasterViewSet(viewsets.ModelViewSet):
+    queryset = DeficiencyMaster.objects.all().order_by("name")
     serializer_class = DeficiencyMasterSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
-class DigestiveIssueMasterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DigestiveIssueMaster.objects.all().order_by('name')
+class DigestiveIssueMasterViewSet(viewsets.ModelViewSet):
+    queryset = DigestiveIssueMaster.objects.all().order_by("name")
     serializer_class = DigestiveIssueMasterSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class NutritionistProfileViewSet(viewsets.ModelViewSet):

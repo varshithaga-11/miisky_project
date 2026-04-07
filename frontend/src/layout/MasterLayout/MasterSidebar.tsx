@@ -27,6 +27,7 @@ import {
   Search,
   X,
   CalendarRange,
+  Heart,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -59,6 +60,17 @@ const adminNavItems: NavItem[] = [
       { name: "Countries", path: "/admin/country" },
       { name: "States", path: "/admin/state" },
       { name: "Cities", path: "/admin/city" },
+    ],
+  },
+  {
+    icon: <Heart className="w-5 h-5" />,
+    name: "Questionnaire masters",
+    subItems: [
+      { name: "Health conditions", path: "/admin/health-condition-master" },
+      { name: "Symptoms", path: "/admin/symptom-master" },
+      { name: "Autoimmune", path: "/admin/autoimmune-master" },
+      { name: "Deficiencies", path: "/admin/deficiency-master" },
+      { name: "Digestive issues", path: "/admin/digestive-issue-master" },
     ],
   },
   {

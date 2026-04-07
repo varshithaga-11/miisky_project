@@ -27,6 +27,11 @@ import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
 import CountryManagementPage from "./pages/AdminSide/Country/index";
+import HealthConditionMasterPage from "./pages/AdminSide/HealthConditionMaster/index";
+import SymptomMasterPage from "./pages/AdminSide/SymptomMaster/index";
+import AutoimmuneMasterPage from "./pages/AdminSide/AutoimmuneMaster/index";
+import DeficiencyMasterPage from "./pages/AdminSide/DeficiencyMaster/index";
+import DigestiveIssueMasterPage from "./pages/AdminSide/DigestiveIssueMaster/index";
 import StateManagementPage from "./pages/AdminSide/State/index";
 import CityManagementPage from "./pages/AdminSide/City/index";
 import MealTypeManagementPage from "./pages/AdminSide/MealType/index";
@@ -264,6 +269,11 @@ export function appRoutes() {
           <Route path="admin/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
           <Route path="admin/nutrition-information" element={<NutritionInformationPage />} />
           <Route path="admin/country" element={<CountryManagementPage />} />
+          <Route path="admin/health-condition-master" element={<HealthConditionMasterPage />} />
+          <Route path="admin/symptom-master" element={<SymptomMasterPage />} />
+          <Route path="admin/autoimmune-master" element={<AutoimmuneMasterPage />} />
+          <Route path="admin/deficiency-master" element={<DeficiencyMasterPage />} />
+          <Route path="admin/digestive-issue-master" element={<DigestiveIssueMasterPage />} />
           <Route path="admin/state" element={<StateManagementPage />} />
           <Route path="admin/city" element={<CityManagementPage />} />
           <Route path="admin/meal-type" element={<MealTypeManagementPage />} />
