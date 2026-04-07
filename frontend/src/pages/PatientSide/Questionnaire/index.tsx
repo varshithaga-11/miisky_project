@@ -22,6 +22,28 @@ const toListOrNull = (val: string) => {
   return items.length ? items : null;
 };
 
+function healthConditionsToText(res: UserQuestionnaire | undefined): string {
+  const hc = res?.health_conditions;
+  if (!Array.isArray(hc) || hc.length === 0) return "";
+  return hc
+    .map((x) => (typeof x === "string" ? x : (x as { name?: string }).name))
+    .filter(Boolean)
+    .join(", ");
+}
+
+function foodPreferencesToText(fp: unknown): string {
+  if (fp == null) return "";
+  if (Array.isArray(fp)) return fp.map(String).join(", ");
+  if (typeof fp === "object") {
+    const parts: string[] = [];
+    for (const v of Object.values(fp as Record<string, unknown>)) {
+      if (Array.isArray(v)) parts.push(...v.map(String));
+    }
+    return parts.join(", ");
+  }
+  return String(fp);
+}
+
 export default function PatientQuestionnairePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,7 +54,6 @@ export default function PatientQuestionnairePage() {
   const [deficienciesText, setDeficienciesText] = useState("");
   const [autoimmuneText, setAutoimmuneText] = useState("");
   const [digestiveText, setDigestiveText] = useState("");
-  const [familyHistoryText, setFamilyHistoryText] = useState("");
   const [foodPreferencesText, setFoodPreferencesText] = useState("");
 
   useEffect(() => {
@@ -41,15 +62,12 @@ export default function PatientQuestionnairePage() {
       try {
         const res = await getMyQuestionnaire();
         setData(res || {});
-        setHealthConditionsText(Array.isArray(res?.health_conditions) ? res!.health_conditions.join(", ") : "");
+        setHealthConditionsText(healthConditionsToText(res));
         setSymptomsText(Array.isArray(res?.symptoms) ? res!.symptoms.join(", ") : "");
         setDeficienciesText(Array.isArray(res?.deficiencies) ? res!.deficiencies.join(", ") : "");
         setAutoimmuneText(Array.isArray(res?.autoimmune_diseases) ? res!.autoimmune_diseases.join(", ") : "");
         setDigestiveText(Array.isArray(res?.digestive_issues) ? res!.digestive_issues.join(", ") : "");
-        setFamilyHistoryText(Array.isArray(res?.family_history) ? res!.family_history.join(", ") : "");
-        setFoodPreferencesText(
-          Array.isArray(res?.food_preferences) ? res!.food_preferences.join(", ") : ""
-        );
+        setFoodPreferencesText(foodPreferencesToText(res?.food_preferences));
       } catch (err) {
         console.error(err);
         toast.error("Failed to load questionnaire");
@@ -66,13 +84,12 @@ export default function PatientQuestionnairePage() {
     try {
       const payload: Partial<UserQuestionnaire> = {
         ...data,
-        health_conditions: toListOrNull(healthConditionsText),
-        symptoms: toListOrNull(symptomsText),
-        deficiencies: toListOrNull(deficienciesText),
-        autoimmune_diseases: toListOrNull(autoimmuneText),
-        digestive_issues: toListOrNull(digestiveText),
-        family_history: toListOrNull(familyHistoryText),
-        food_preferences: toListOrNull(foodPreferencesText),
+        health_conditions: toListOrNull(healthConditionsText) as unknown as UserQuestionnaire["health_conditions"],
+        symptoms: toListOrNull(symptomsText) as string[] | undefined,
+        deficiencies: toListOrNull(deficienciesText) as string[] | undefined,
+        autoimmune_diseases: toListOrNull(autoimmuneText) as string[] | undefined,
+        digestive_issues: toListOrNull(digestiveText) as string[] | undefined,
+        food_preferences: toListOrNull(foodPreferencesText) as unknown,
       };
       await saveMyQuestionnaire(payload);
       toast.success("Questionnaire saved");
@@ -177,10 +194,6 @@ export default function PatientQuestionnairePage() {
               ["consumes_egg", "Consumes egg"],
               ["consumes_dairy", "Consumes dairy"],
               ["food_allergy", "Food allergy"],
-              ["has_diabetes", "Has diabetes"],
-              ["has_thyroid", "Has thyroid"],
-              ["has_cardiac_issues", "Cardiac issues"],
-              ["is_anemic", "Anemic"],
               ["surgery_history", "Surgery history"],
               ["on_medication", "On medication"],
             ].map(([key, label]) => (
@@ -197,20 +210,6 @@ export default function PatientQuestionnairePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="has_bp">Blood Pressure</Label>
-              <Select
-                value={data.has_bp || ""}
-                onChange={(val) => setField("has_bp", (val as any) || null)}
-                options={[
-                  { value: "", label: "Select" },
-                  { value: "high", label: "High" },
-                  { value: "low", label: "Low" },
-                  { value: "normal", label: "Normal" },
-                ]}
-                className="w-full"
-              />
-            </div>
             <div>
               <Label htmlFor="sleep_quality">Sleep quality</Label>
               <Select
@@ -238,17 +237,6 @@ export default function PatientQuestionnairePage() {
                 className="w-full"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="alcohol_per_week">Alcohol / week</Label>
-              <Input id="alcohol_per_week" type="number" value={data.alcohol_per_week ?? ""} onChange={(e) => setField("alcohol_per_week", e.target.value ? Number(e.target.value) : null)} />
-            </div>
-            <div>
-              <Label htmlFor="smoking_per_day">Smoking / day</Label>
-              <Input id="smoking_per_day" type="number" value={data.smoking_per_day ?? ""} onChange={(e) => setField("smoking_per_day", e.target.value ? Number(e.target.value) : null)} />
-            </div>
             <div>
               <Label htmlFor="falls_sick_frequency">Falls sick frequency</Label>
               <Select
@@ -262,6 +250,17 @@ export default function PatientQuestionnairePage() {
                 ]}
                 className="w-full"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="alcohol_per_week">Alcohol / week</Label>
+              <Input id="alcohol_per_week" type="number" value={data.alcohol_per_week ?? ""} onChange={(e) => setField("alcohol_per_week", e.target.value ? Number(e.target.value) : null)} />
+            </div>
+            <div>
+              <Label htmlFor="smoking_per_day">Smoking / day</Label>
+              <Input id="smoking_per_day" type="number" value={data.smoking_per_day ?? ""} onChange={(e) => setField("smoking_per_day", e.target.value ? Number(e.target.value) : null)} />
             </div>
           </div>
 
@@ -284,7 +283,7 @@ export default function PatientQuestionnairePage() {
               <Input
                 value={healthConditionsText}
                 onChange={(e) => setHealthConditionsText(e.target.value)}
-                placeholder="Diabetes, Alcohol use"
+                placeholder="Diabetes, Thyroid"
               />
             </div>
             <div>
@@ -319,14 +318,6 @@ export default function PatientQuestionnairePage() {
                 placeholder="Acidity, Bloating"
               />
             </div>
-            <div>
-              <Label>Family history</Label>
-              <Input
-                value={familyHistoryText}
-                onChange={(e) => setFamilyHistoryText(e.target.value)}
-                placeholder="Diabetes, Cardiac"
-              />
-            </div>
             <div className="md:col-span-2">
               <Label>Food preferences</Label>
               <Input
@@ -358,4 +349,3 @@ export default function PatientQuestionnairePage() {
     </>
   );
 }
-

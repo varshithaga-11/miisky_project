@@ -1,6 +1,17 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
+/** One row from UserHealthCondition (API). */
+export type QuestionnaireHealthConditionRow = {
+  id: number;
+  condition_id: number;
+  name: string;
+  category: string;
+  has_condition: boolean;
+  since_when?: string | null;
+  comments?: string | null;
+};
+
 export type UserQuestionnaire = {
   id?: number;
   user?: number;
@@ -20,17 +31,12 @@ export type UserQuestionnaire = {
   food_allergy_details?: string | null;
   fruits_per_day?: number | null;
   vegetables_per_day?: number | null;
-  health_conditions?: any;
-  symptoms?: any;
-  deficiencies?: any;
-  autoimmune_diseases?: any;
-  digestive_issues?: any;
-  family_history?: any;
-  has_diabetes?: boolean | null;
-  has_thyroid?: boolean | null;
-  has_bp?: "high" | "low" | "normal" | null;
-  has_cardiac_issues?: boolean | null;
-  is_anemic?: boolean | null;
+  /** Structured rows from junction table + HealthConditionMaster */
+  health_conditions?: QuestionnaireHealthConditionRow[] | string[];
+  symptoms?: string[];
+  deficiencies?: string[];
+  autoimmune_diseases?: string[];
+  digestive_issues?: string[];
   surgery_history?: boolean | null;
   on_medication?: boolean | null;
   alcohol_per_week?: number | null;
@@ -38,7 +44,7 @@ export type UserQuestionnaire = {
   sleep_quality?: "fresh" | "not_fresh" | null;
   stress_level?: "low" | "medium" | "high" | null;
   falls_sick_frequency?: "once" | "twice" | "frequent" | null;
-  food_preferences?: any;
+  food_preferences?: unknown;
   additional_notes?: string | null;
 };
 
@@ -53,4 +59,3 @@ export const saveMyQuestionnaire = async (data: Partial<UserQuestionnaire>): Pro
   const response = await axios.put(url, data, { headers: await getAuthHeaders() });
   return response.data;
 };
-

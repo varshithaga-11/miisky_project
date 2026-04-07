@@ -388,8 +388,134 @@ class DeliveryProfile(models.Model):
         return "DeliveryProfile(unlinked)"
 
 
+class HealthConditionMaster(models.Model):
+    CATEGORY_CHOICES = [
+        ('chronic', 'Chronic'),
+        ('infectious', 'Infectious'),
+        ('metabolic', 'Metabolic'),
+        ('digestive', 'Digestive'),
+        ('other', 'Other'),
+    ]
+
+    name = models.CharField(max_length=100)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_health_condition_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserHealthCondition(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='health_conditions')
+    condition = models.ForeignKey(HealthConditionMaster, on_delete=models.CASCADE)
+
+    has_condition = models.BooleanField(default=False)
+    since_when = models.DateField(null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'condition'], name='uniq_user_health_condition'),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.condition.name}"
+
+
+class SymptomMaster(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_symptom_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserSymptom(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='symptoms')
+    symptom = models.ForeignKey(SymptomMaster, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'symptom'], name='uniq_user_symptom'),
+        ]
+
+
+class AutoimmuneMaster(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_autoimmune_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserAutoimmune(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='autoimmune_diseases')
+    disease = models.ForeignKey(AutoimmuneMaster, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'disease'], name='uniq_user_autoimmune'),
+        ]
+
+
+class DeficiencyMaster(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_deficiency_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserDeficiency(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='deficiencies')
+    deficiency = models.ForeignKey(DeficiencyMaster, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'deficiency'], name='uniq_user_deficiency'),
+        ]
+
+
+class DigestiveIssueMaster(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_digestive_issue_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserDigestiveIssue(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='digestive_issues')
+    issue = models.ForeignKey(DigestiveIssueMaster, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'issue'], name='uniq_user_digestive_issue'),
+        ]
+
+
 class UserQuestionnaire(models.Model):
-    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True)
+    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL, null=True, blank=True)
 
     # 🔹 BASIC DETAILS
     age = models.IntegerField(null=True, blank=True)
@@ -445,41 +571,7 @@ class UserQuestionnaire(models.Model):
     fruits_per_day = models.IntegerField(null=True, blank=True)
     vegetables_per_day = models.IntegerField(null=True, blank=True)
 
-    # 🔹 HEALTH (store complex data in JSON)
-    health_conditions = models.JSONField(null=True, blank=True)
-    # Example: ["diabetes", "thyroid"]
-
-    symptoms = models.JSONField(null=True, blank=True)
-    # Example: ["fatigue", "hair_loss"]
-
-    deficiencies = models.JSONField(null=True, blank=True)
-    # Example: ["vitamin_b12", "iron"]
-
-    autoimmune_diseases = models.JSONField(null=True, blank=True)
-    # Example: ["psoriasis", "celiac"]
-
-    digestive_issues = models.JSONField(null=True, blank=True)
-    # Example: ["acidity", "bloating"]
-
-    family_history = models.JSONField(null=True, blank=True)
-    # Example: ["diabetes", "cardiac"]
-
     # 🔹 MEDICAL FLAGS
-    has_diabetes = models.BooleanField(null=True, blank=True)
-    has_thyroid = models.BooleanField(null=True, blank=True)
-    has_bp = models.CharField(
-        max_length=10,
-        choices=[
-            ('high', 'High'),
-            ('low', 'Low'),
-            ('normal', 'Normal')
-        ],
-        null=True,
-        blank=True
-    )
-    has_cardiac_issues = models.BooleanField(null=True, blank=True)
-    is_anemic = models.BooleanField(null=True, blank=True)
-
     surgery_history = models.BooleanField(null=True, blank=True)
     on_medication = models.BooleanField(null=True, blank=True)
 
@@ -520,21 +612,8 @@ class UserQuestionnaire(models.Model):
         blank=True
     )
 
-    # 🔹 FOOD PREFERENCES (IMPORTANT PART)
+    # 🔹 FOOD PREFERENCES
     food_preferences = models.JSONField(null=True, blank=True)
-    """
-    Example structure:
-    {
-        "vegetables": ["onion", "garlic"],
-        "fruits": ["banana", "apple"],
-        "grains": ["ragi", "oats"],
-        "pulses": ["rajma"],
-        "oils": ["ghee"],
-        "dairy": ["milk"],
-        "nuts": ["almond"],
-        "seeds": ["chia", "pumpkin"]
-    }
-    """
 
     # 🔹 EXTRA NOTES
     additional_notes = models.TextField(null=True, blank=True)

@@ -29,6 +29,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
+from .questionnaire_sync import sync_user_questionnaire_relations
 
 class Pagination(PageNumberPagination):
     page_query_param = "page"
@@ -1038,14 +1039,29 @@ class AdminMicroKitchenAllottedPlanPayoutsView(APIView):
 
 # ── Role Questionnaires / Profiles ViewSets ────────────────────────────────────
 
+_QUESTIONNAIRE_REL_KEYS = frozenset(
+    ('health_conditions', 'symptoms', 'deficiencies', 'autoimmune_diseases', 'digestive_issues')
+)
+
+
+def _questionnaire_prefetch_qs():
+    return UserQuestionnaire.objects.select_related('user').prefetch_related(
+        'user__health_conditions__condition',
+        'user__symptoms__symptom',
+        'user__deficiencies__deficiency',
+        'user__autoimmune_diseases__disease',
+        'user__digestive_issues__issue',
+    )
+
+
 class UserQuestionnaireViewSet(viewsets.ModelViewSet):
-    queryset = UserQuestionnaire.objects.select_related('user').all()
+    queryset = _questionnaire_prefetch_qs().all()
     serializer_class = UserQuestionnaireSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
 
     def get_queryset(self):
-        qs = UserQuestionnaire.objects.select_related('user').all()
+        qs = _questionnaire_prefetch_qs().all()
         u = self.request.user
         patient_id = self.request.query_params.get('user')
         if getattr(u, 'role', None) == 'admin':
@@ -1067,15 +1083,59 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
         if request.method.lower() == 'get':
             if not instance:
                 return Response({}, status=status.HTTP_200_OK)
+            instance = _questionnaire_prefetch_qs().filter(pk=instance.pk).first()
             return Response(self.get_serializer(instance).data)
 
-        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        data = request.data
+        nested = {k: data[k] for k in _QUESTIONNAIRE_REL_KEYS if k in data}
+        payload = {k: v for k, v in data.items() if k not in _QUESTIONNAIRE_REL_KEYS}
+
+        serializer = self.get_serializer(instance=instance, data=payload, partial=True)
         serializer.is_valid(raise_exception=True)
+        vd = dict(serializer.validated_data)
+        vd.pop('user', None)
         obj, _ = UserQuestionnaire.objects.update_or_create(
             user=request.user,
-            defaults=serializer.validated_data
+            defaults=vd
         )
+        sync_user_questionnaire_relations(request.user, nested)
+        obj = _questionnaire_prefetch_qs().filter(pk=obj.pk).first()
         return Response(self.get_serializer(obj).data)
+
+
+class HealthConditionMasterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = HealthConditionMaster.objects.all().order_by('name')
+    serializer_class = HealthConditionMasterSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+
+class SymptomMasterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SymptomMaster.objects.all().order_by('name')
+    serializer_class = SymptomMasterSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+
+class AutoimmuneMasterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AutoimmuneMaster.objects.all().order_by('name')
+    serializer_class = AutoimmuneMasterSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+
+class DeficiencyMasterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = DeficiencyMaster.objects.all().order_by('name')
+    serializer_class = DeficiencyMasterSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+
+class DigestiveIssueMasterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = DigestiveIssueMaster.objects.all().order_by('name')
+    serializer_class = DigestiveIssueMasterSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
 
 
 class NutritionistProfileViewSet(viewsets.ModelViewSet):
@@ -3261,12 +3321,22 @@ class UserMealViewSet(viewsets.ModelViewSet):
     )
     serializer_class = UserMealSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
 
     @property
-    def pagination_class(self):
-        if self.request.query_params.get('month') and self.request.query_params.get('year'):
-            return None
-        return Pagination
+    def paginator(self):
+        """Match DRF GenericAPIView.paginator; disable pagination when month+year query params (calendar-style list)."""
+        if not hasattr(self, '_paginator'):
+            pcl = getattr(self, 'pagination_class', None)
+            if pcl is None:
+                self._paginator = None
+            else:
+                req = getattr(self, 'request', None)
+                if req and req.query_params.get('month') and req.query_params.get('year'):
+                    self._paginator = None
+                else:
+                    self._paginator = pcl()
+        return self._paginator
 
     def get_queryset(self):
         user = self.request.user

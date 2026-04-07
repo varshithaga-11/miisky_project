@@ -1256,10 +1256,150 @@ class AdminPlanPaymentOverviewSerializer(serializers.ModelSerializer):
 
 # ── Role Questionnaires / Profiles ─────────────────────────────────────────────
 
+class HealthConditionMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthConditionMaster
+        fields = ["id", "name", "category"]
+
+
+class UserHealthConditionSerializer(serializers.ModelSerializer):
+    condition = HealthConditionMasterSerializer(read_only=True)
+
+    class Meta:
+        model = UserHealthCondition
+        fields = ["id", "condition", "has_condition", "since_when", "comments"]
+
+
 class UserQuestionnaireSerializer(serializers.ModelSerializer):
+    """
+    Core questionnaire fields on UserQuestionnaire; health lists are stored on UserRegister
+    via junction tables and exposed here as read-only computed fields.
+    """
+
+    health_conditions = serializers.SerializerMethodField()
+    symptoms = serializers.SerializerMethodField()
+    deficiencies = serializers.SerializerMethodField()
+    autoimmune_diseases = serializers.SerializerMethodField()
+    digestive_issues = serializers.SerializerMethodField()
+
     class Meta:
         model = UserQuestionnaire
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "age",
+            "height_cm",
+            "weight_kg",
+            "work_type",
+            "physical_activity",
+            "meals_per_day",
+            "skips_meals",
+            "snacks_between_meals",
+            "food_source",
+            "diet_pattern",
+            "consumes_egg",
+            "consumes_dairy",
+            "food_allergy",
+            "food_allergy_details",
+            "fruits_per_day",
+            "vegetables_per_day",
+            "surgery_history",
+            "on_medication",
+            "alcohol_per_week",
+            "smoking_per_day",
+            "sleep_quality",
+            "stress_level",
+            "falls_sick_frequency",
+            "food_preferences",
+            "additional_notes",
+            "created_on",
+            "updated_on",
+            "health_conditions",
+            "symptoms",
+            "deficiencies",
+            "autoimmune_diseases",
+            "digestive_issues",
+        ]
+        read_only_fields = ("created_on", "updated_on")
+
+    def _user(self, obj):
+        return obj.user
+
+    def get_health_conditions(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        rows = UserHealthCondition.objects.filter(user=u).select_related("condition")
+        return [
+            {
+                "id": r.id,
+                "condition_id": r.condition_id,
+                "name": r.condition.name,
+                "category": r.condition.category,
+                "has_condition": r.has_condition,
+                "since_when": r.since_when,
+                "comments": r.comments,
+            }
+            for r in rows
+        ]
+
+    def get_symptoms(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return list(
+            UserSymptom.objects.filter(user=u).values_list("symptom__name", flat=True)
+        )
+
+    def get_deficiencies(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return list(
+            UserDeficiency.objects.filter(user=u).values_list(
+                "deficiency__name", flat=True
+            )
+        )
+
+    def get_autoimmune_diseases(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return list(
+            UserAutoimmune.objects.filter(user=u).values_list("disease__name", flat=True)
+        )
+
+    def get_digestive_issues(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return list(
+            UserDigestiveIssue.objects.filter(user=u).values_list("issue__name", flat=True)
+        )
+
+
+class SymptomMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SymptomMaster
+        fields = ["id", "name"]
+
+
+class AutoimmuneMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AutoimmuneMaster
+        fields = ["id", "name"]
+
+
+class DeficiencyMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeficiencyMaster
+        fields = ["id", "name"]
+
+
+class DigestiveIssueMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DigestiveIssueMaster
+        fields = ["id", "name"]
 
 
 class NutritionistProfileSerializer(serializers.ModelSerializer):
@@ -2592,23 +2732,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
     def get_patient_questionnaire(self, obj):
         q = UserQuestionnaire.objects.filter(user=obj.user).first()
         if q:
-            return {
-                'age': q.age,
-                'weight_kg': q.weight_kg,
-                'work_type': q.work_type,
-                'meals_per_day': q.meals_per_day,
-                'diet_pattern': q.diet_pattern,
-                'consumes_egg': q.consumes_egg,
-                'consumes_dairy': q.consumes_dairy,
-                'food_allergy': q.food_allergy,
-                'food_allergy_details': q.food_allergy_details,
-                'food_preferences': q.food_preferences,
-                'has_diabetes': q.has_diabetes,
-                'has_bp': q.has_bp,
-                'has_cardiac_issues': q.has_cardiac_issues,
-                'health_conditions': q.health_conditions,
-                'food_source': q.food_source,
-            }
+            return UserQuestionnaireSerializer(q).data
         return None
 
     def get_distance_km(self, obj):

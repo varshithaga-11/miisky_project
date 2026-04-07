@@ -138,11 +138,6 @@ const Q_LABELS: Record<string, string> = {
   food_allergy_details: "Allergy details",
   fruits_per_day: "Fruits per day",
   vegetables_per_day: "Vegetables per day",
-  has_diabetes: "Diabetes",
-  has_thyroid: "Thyroid",
-  has_bp: "Blood pressure",
-  has_cardiac_issues: "Cardiac issues",
-  is_anemic: "Anemic",
   surgery_history: "Surgery history",
   on_medication: "On medication",
   alcohol_per_week: "Alcohol (per week)",
@@ -196,7 +191,6 @@ const JSON_BLOCK_KEYS = new Set([
   "deficiencies",
   "autoimmune_diseases",
   "digestive_issues",
-  "family_history",
   "food_preferences",
 ]);
 

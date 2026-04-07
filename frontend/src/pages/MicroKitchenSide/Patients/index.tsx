@@ -15,6 +15,31 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { GiBreadSlice, GiBowlOfRice, GiHamburger, GiCookingPot } from "react-icons/gi";
 
+function healthConditionLabel(c: unknown): string {
+  if (typeof c === "string") return c;
+  if (c && typeof c === "object" && "name" in c) return String((c as { name: string }).name);
+  return "";
+}
+
+function foodPreferenceChips(fp: unknown): string[] {
+  if (fp == null) return [];
+  if (Array.isArray(fp)) return fp.map(String);
+  if (typeof fp === "object") {
+    const out: string[] = [];
+    for (const v of Object.values(fp as Record<string, unknown>)) {
+      if (Array.isArray(v)) out.push(...v.map(String));
+    }
+    return out;
+  }
+  return [];
+}
+
+function conditionNamesMatch(hc: unknown, needle: string): boolean {
+  const n = needle.toLowerCase();
+  if (!Array.isArray(hc)) return false;
+  return hc.some((x) => healthConditionLabel(x).toLowerCase().includes(n));
+}
+
 interface UserMeal {
     id: number;
     meal_date: string;
@@ -378,9 +403,9 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <div className="p-5 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100/50">
                                                 <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Avoidance Preferences</p>
                                                 <div className="flex flex-wrap gap-2 mt-2">
-                                                    {selectedPatient.patient_questionnaire?.food_preferences?.length > 0 ? (
-                                                        selectedPatient.patient_questionnaire.food_preferences.map((p: string) => (
-                                                            <span key={p} className="px-3 py-1 bg-white dark:bg-gray-800 rounded-lg text-[10px] font-black uppercase text-indigo-500 border border-indigo-200/50 shadow-sm">{p}</span>
+                                                    {foodPreferenceChips(selectedPatient.patient_questionnaire?.food_preferences).length > 0 ? (
+                                                        foodPreferenceChips(selectedPatient.patient_questionnaire?.food_preferences).map((pref) => (
+                                                            <span key={pref} className="px-3 py-1 bg-white dark:bg-gray-800 rounded-lg text-[10px] font-black uppercase text-indigo-500 border border-indigo-200/50 shadow-sm">{pref}</span>
                                                         ))
                                                     ) : <span className="text-xs font-medium text-gray-400">Standard preference list</span>}
                                                 </div>
@@ -425,29 +450,33 @@ const MicroKitchenPatientsPage: React.FC = () => {
 
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                                         <div>
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diabetes Status</p>
-                                            <p className={`text-xs font-black uppercase tracking-tighter ${selectedPatient.patient_questionnaire?.has_diabetes ? "text-rose-500" : "text-emerald-500"}`}>
-                                                {selectedPatient.patient_questionnaire?.has_diabetes ? "Confirmed Type Presence" : "Not Reported"}
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Diabetes (from conditions)</p>
+                                            <p className={`text-xs font-black uppercase tracking-tighter ${conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "diabet") ? "text-rose-500" : "text-emerald-500"}`}>
+                                                {conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "diabet") ? "Possible match in list" : "Not in list"}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">BP Levels</p>
-                                            <p className={`text-xs font-black uppercase tracking-tighter ${selectedPatient.patient_questionnaire?.has_bp === 'high' ? "text-rose-500" : "text-emerald-500"}`}>
-                                                {selectedPatient.patient_questionnaire?.has_bp || "Normal Range"}
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">BP / hypertension</p>
+                                            <p className={`text-xs font-black uppercase tracking-tighter ${conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "bp") || conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "blood pressure") ? "text-rose-500" : "text-emerald-500"}`}>
+                                                {conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "bp") || conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "blood pressure") ? "Flag in list" : "Not in list"}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Cardiac Awareness</p>
-                                            <p className={`text-xs font-black uppercase tracking-tighter ${selectedPatient.patient_questionnaire?.has_cardiac_issues ? "text-rose-500" : "text-emerald-500"}`}>
-                                                {selectedPatient.patient_questionnaire?.has_cardiac_issues ? "Special Care Req." : "Low Risk"}
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Cardiac</p>
+                                            <p className={`text-xs font-black uppercase tracking-tighter ${conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "cardiac") || conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "heart") ? "text-rose-500" : "text-emerald-500"}`}>
+                                                {conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "cardiac") || conditionNamesMatch(selectedPatient.patient_questionnaire?.health_conditions, "heart") ? "Flag in list" : "Not in list"}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Condition List</p>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Condition list</p>
                                             <div className="flex flex-wrap gap-1">
-                                                {selectedPatient.patient_questionnaire?.health_conditions?.map((c: string) => (
-                                                    <span key={c} className="text-[10px] font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md uppercase">{c}</span>
-                                                )) || "None"}
+                                                {Array.isArray(selectedPatient.patient_questionnaire?.health_conditions) && selectedPatient.patient_questionnaire!.health_conditions!.length > 0 ? (
+                                                    selectedPatient.patient_questionnaire!.health_conditions!.map((c: unknown, idx: number) => (
+                                                        <span key={idx} className="text-[10px] font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md uppercase">{healthConditionLabel(c)}</span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-500">None</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

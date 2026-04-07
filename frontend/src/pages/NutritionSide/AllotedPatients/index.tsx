@@ -354,17 +354,15 @@ const AllottedPatientsPage: React.FC = () => {
                                         <div className="space-y-4">
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Medical Conditions & Risks</span>
                                            <div className="flex flex-wrap gap-2">
-                                              {Array.isArray(p.questionnaire?.health_conditions) && p.questionnaire.health_conditions.length > 0 && 
-                                                p.questionnaire.health_conditions.map((h: string) => (
-                                                   <span key={h} className="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-xl text-[9px] font-black uppercase border border-rose-100/50 dark:border-rose-900/20">
-                                                      {h.replace('_', ' ')}
+                                              {Array.isArray(p.questionnaire?.health_conditions) && p.questionnaire.health_conditions.length > 0 &&
+                                                p.questionnaire.health_conditions.map((h: unknown) => {
+                                                   const label = typeof h === "string" ? h : String((h as { name?: string }).name || "");
+                                                   return (
+                                                   <span key={label} className="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-xl text-[9px] font-black uppercase border border-rose-100/50 dark:border-rose-900/20">
+                                                      {label.replace('_', ' ')}
                                                    </span>
-                                                ))
+                                                );})
                                               }
-                                              {p.questionnaire?.has_diabetes && <span className="px-3 py-1.5 bg-rose-500 text-white rounded-xl text-[9px] font-black uppercase">DIABETES</span>}
-                                              {p.questionnaire?.has_thyroid && <span className="px-3 py-1.5 bg-rose-500 text-white rounded-xl text-[9px] font-black uppercase">THYROID</span>}
-                                              {p.questionnaire?.has_cardiac_issues && <span className="px-3 py-1.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase shake-subtle">CARDIAC</span>}
-                                              {p.questionnaire?.has_bp && <span className="px-3 py-1.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase">{p.questionnaire.has_bp} BP</span>}
                                            </div>
 
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Symptoms & Vulnerabilities</span>
@@ -386,13 +384,8 @@ const AllottedPatientsPage: React.FC = () => {
                                               ))}
                                            </div>
 
-                                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Family & Habits</span>
+                                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Habits</span>
                                            <div className="flex flex-wrap gap-2">
-                                              {Array.isArray(p.questionnaire?.family_history) && p.questionnaire.family_history.map((f: string) => (
-                                                <span key={f} className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 rounded-xl text-[9px] font-black uppercase">
-                                                   History: {f}
-                                                </span>
-                                              ))}
                                               {p.questionnaire?.smoking_per_day > 0 && <span className="px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase">Smokes: {p.questionnaire.smoking_per_day}/day</span>}
                                               {p.questionnaire?.alcohol_per_week > 0 && <span className="px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase">Alcohol: {p.questionnaire.alcohol_per_week}/week</span>}
                                            </div>
