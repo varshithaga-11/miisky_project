@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db.models import DecimalField, F, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
@@ -2288,6 +2288,48 @@ class FoodNameViewSet(viewsets.ModelViewSet):
     def get_all_foodnames(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="nutrition-detail",
+        permission_classes=[IsAuthenticated],
+    )
+    def nutrition_detail(self, request, pk=None):
+        """
+        GET /api/foodname/<pk>/nutrition-detail/
+        Full composition (proximate, vitamins, minerals, fatty acids, etc.).
+        Patients may only view foods they have been recommended.
+        """
+        instance = get_object_or_404(
+            FoodName.objects.select_related(
+                "food_group",
+                "proximate",
+                "water_soluble_vitamins",
+                "fat_soluble_vitamins",
+                "carotenoids",
+                "minerals",
+                "sugars",
+                "amino_acids",
+                "organic_acids",
+                "polyphenols",
+                "phytochemicals",
+                "fatty_acid_profile",
+            ),
+            pk=pk,
+        )
+        role = getattr(request.user, "role", None)
+        if role == "patient":
+            if not PatientFoodRecommendation.objects.filter(
+                patient=request.user, food_id=instance.pk
+            ).exists():
+                raise PermissionDenied(
+                    "You can only view nutrition details for foods suggested to you."
+                )
+        elif role not in ("admin", "nutritionist", "doctor", "master"):
+            raise PermissionDenied()
+        serializer = FoodNameNutritionDetailSerializer(instance)
         return Response(serializer.data)
 
 

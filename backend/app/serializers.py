@@ -1953,6 +1953,112 @@ class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
         fields = "__all__"
 
 
+# Read-only composition rows (no write-only food_name_input); used for patient nutrition detail API.
+class FoodProximateReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodProximate
+        exclude = ("food_name",)
+
+
+class FoodWaterSolubleVitaminsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodWaterSolubleVitamins
+        exclude = ("food_name",)
+
+
+class FoodFatSolubleVitaminsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodFatSolubleVitamins
+        exclude = ("food_name",)
+
+
+class FoodCarotenoidsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodCarotenoids
+        exclude = ("food_name",)
+
+
+class FoodMineralsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodMinerals
+        exclude = ("food_name",)
+
+
+class FoodSugarsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodSugars
+        exclude = ("food_name",)
+
+
+class FoodAminoAcidsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodAminoAcids
+        exclude = ("food_name",)
+
+
+class FoodOrganicAcidsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodOrganicAcids
+        exclude = ("food_name",)
+
+
+class FoodPolyphenolsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodPolyphenols
+        exclude = ("food_name",)
+
+
+class FoodPhytochemicalsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodPhytochemicals
+        exclude = ("food_name",)
+
+
+class FoodFattyAcidProfileReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodFattyAcidProfile
+        exclude = ("food_name",)
+
+
+class FoodNameNutritionDetailSerializer(serializers.ModelSerializer):
+    """Full FoodName + all composition OneToOne relations (catalog reference data)."""
+
+    food_group_detail = FoodGroupSerializer(source="food_group", read_only=True)
+    proximate = FoodProximateReadSerializer(read_only=True)
+    water_soluble_vitamins = FoodWaterSolubleVitaminsReadSerializer(read_only=True)
+    fat_soluble_vitamins = FoodFatSolubleVitaminsReadSerializer(read_only=True)
+    carotenoids = FoodCarotenoidsReadSerializer(read_only=True)
+    minerals = FoodMineralsReadSerializer(read_only=True)
+    sugars = FoodSugarsReadSerializer(read_only=True)
+    amino_acids = FoodAminoAcidsReadSerializer(read_only=True)
+    organic_acids = FoodOrganicAcidsReadSerializer(read_only=True)
+    polyphenols = FoodPolyphenolsReadSerializer(read_only=True)
+    phytochemicals = FoodPhytochemicalsReadSerializer(read_only=True)
+    fatty_acid_profile = FoodFattyAcidProfileReadSerializer(read_only=True)
+
+    class Meta:
+        model = FoodName
+        fields = [
+            "id",
+            "name",
+            "code",
+            "created_at",
+            "food_group",
+            "food_group_detail",
+            "proximate",
+            "water_soluble_vitamins",
+            "fat_soluble_vitamins",
+            "carotenoids",
+            "minerals",
+            "sugars",
+            "amino_acids",
+            "organic_acids",
+            "polyphenols",
+            "phytochemicals",
+            "fatty_acid_profile",
+        ]
+
+
 class PatientHealthReportSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     reviews = serializers.SerializerMethodField()
