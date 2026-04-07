@@ -99,6 +99,7 @@ import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformati
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
+import DoctorAllPatientsPage from "./pages/DoctorSide/AllPatients/index";
 import NonPatientInformationPage from "./pages/AdminSide/NonPatientInformation/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
 import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
@@ -311,6 +312,7 @@ export function appRoutes() {
           <Route path="admin/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
           <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
           <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
+          <Route path="doctor/all-patients" element={<DoctorAllPatientsPage />} />
           <Route path="admin/non-patient-information" element={<NonPatientInformationPage />} />
           <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />

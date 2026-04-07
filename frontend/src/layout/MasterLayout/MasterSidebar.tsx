@@ -346,6 +346,19 @@ const nutritionistNavItems: NavItem[] = [
   },
 ];
 
+const doctorNavItems: NavItem[] = [
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "All patients",
+    path: "/doctor/all-patients",
+  },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
+];
+
 const microKitchenNavItems: NavItem[] = [
   {
     icon: <LayoutDashboard className="w-5 h-5" />,
@@ -610,6 +623,7 @@ const MasterSidebar: React.FC = () => {
     else if (role === "patient") items = patientNavItems;
     else if (role === "non_patient") items = nonPatientNavItems;
     else if (role === "nutritionist") items = nutritionistNavItems;
+    else if (role === "doctor") items = doctorNavItems;
     else if (role === "micro_kitchen") items = microKitchenNavItems;
     else if (role === "supply_chain") items = supplyChainNavItems;
     else items = adminNavItems;
@@ -782,6 +796,7 @@ const MasterSidebar: React.FC = () => {
     if (role === "patient") return "/patient/dashboard";
     if (role === "non_patient") return "/non-patient/dashboard";
     if (role === "nutritionist") return "/nutrition/dashboard";
+    if (role === "doctor") return "/doctor/all-patients";
     if (role === "micro_kitchen") return "/microkitchen/dashboard";
     if (role === "supply_chain") return "/supplychain/dashboard";
     return "/admin/dashboard";

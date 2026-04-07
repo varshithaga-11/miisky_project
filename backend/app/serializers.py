@@ -1976,26 +1976,40 @@ class PatientHealthReportSerializer(serializers.ModelSerializer):
     def get_reviews(self, obj):
         # Return reviews where this report is included
         from .models import NutritionistReview
-        revs = obj.reviews.all().order_by('-created_on')
-        return [
-            {
-                "id": r.id, 
-                "comments": r.comments, 
+        revs = obj.reviews.all().select_related('nutritionist', 'doctor').order_by('-created_on')
+        out = []
+        for r in revs:
+            nut_name = (
+                f"{r.nutritionist.first_name} {r.nutritionist.last_name}".strip()
+                if r.nutritionist
+                else None
+            )
+            doc_name = (
+                f"{r.doctor.first_name} {r.doctor.last_name}".strip()
+                if r.doctor
+                else None
+            )
+            out.append({
+                "id": r.id,
+                "comments": r.comments,
                 "created_on": r.created_on,
-                "nutritionist_name": f"{r.nutritionist.first_name} {r.nutritionist.last_name}" if r.nutritionist else "Unknown"
-            } 
-            for r in revs
-        ]
+                "nutritionist_name": nut_name or doc_name or "Unknown",
+                "doctor_name": doc_name,
+                "reviewer_role": "nutritionist" if r.nutritionist else ("doctor" if r.doctor else "unknown"),
+            })
+        return out
 
 
 class NutritionistReviewSerializer(serializers.ModelSerializer):
     report_details = serializers.SerializerMethodField()
     nutritionist_details = serializers.SerializerMethodField(read_only=True)
+    doctor_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = NutritionistReview
         fields = [
-            'id', 'user', 'nutritionist', 'nutritionist_details', 'reports', 'report_details',
+            'id', 'user', 'nutritionist', 'doctor', 'nutritionist_details', 'doctor_details',
+            'reports', 'report_details',
             'comments', 'created_on',
         ]
 
@@ -2006,6 +2020,16 @@ class NutritionistReviewSerializer(serializers.ModelSerializer):
                 'first_name': obj.nutritionist.first_name,
                 'last_name': obj.nutritionist.last_name,
                 'email': obj.nutritionist.email,
+            }
+        return None
+
+    def get_doctor_details(self, obj):
+        if obj.doctor:
+            return {
+                'id': obj.doctor.id,
+                'first_name': obj.doctor.first_name,
+                'last_name': obj.doctor.last_name,
+                'email': obj.doctor.email,
             }
         return None
 
@@ -2035,20 +2059,28 @@ class ClinicalReviewHealthReportSerializer(serializers.ModelSerializer):
         ]
 
     def get_reviews(self, obj):
-        revs = obj.reviews.all().order_by('-created_on')
-        return [
-            {
+        revs = obj.reviews.all().select_related('nutritionist', 'doctor').order_by('-created_on')
+        rows = []
+        for r in revs:
+            nut_name = (
+                f'{r.nutritionist.first_name} {r.nutritionist.last_name}'.strip()
+                if r.nutritionist
+                else None
+            )
+            doc_name = (
+                f'{r.doctor.first_name} {r.doctor.last_name}'.strip()
+                if r.doctor
+                else None
+            )
+            rows.append({
                 'id': r.id,
                 'comments': r.comments,
                 'created_on': r.created_on,
-                'nutritionist_name': (
-                    f'{r.nutritionist.first_name} {r.nutritionist.last_name}'.strip()
-                    if r.nutritionist
-                    else 'Unknown'
-                ),
-            }
-            for r in revs
-        ]
+                'nutritionist_name': nut_name or doc_name or 'Unknown',
+                'doctor_name': doc_name,
+                'reviewer_role': 'nutritionist' if r.nutritionist else ('doctor' if r.doctor else 'unknown'),
+            })
+        return rows
 
 
 class ClinicalReviewNutritionistReviewSerializer(serializers.ModelSerializer):

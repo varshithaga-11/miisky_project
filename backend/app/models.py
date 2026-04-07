@@ -45,7 +45,7 @@ class UserRegister(AbstractUser):
         ('nutritionist', 'Nutritionist/Dietician'),
         ('patient', 'Patient'),
         ('supply_chain', 'Supply Chain'),
-        ('food_buyer', 'Food Buyer'),
+        ('doctor', 'Doctor'),
         ('micro_kitchen', 'Micro Kitchen'),
         ('non_patient', 'Non Patient'),
     ]
@@ -1465,6 +1465,13 @@ class NutritionistReview(models.Model):
         null=True,
         blank=True,
         related_name="given_reviews"
+    )
+    doctor = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="given_doctor_reviews"
     )
 
     reports = models.ManyToManyField(
@@ -3259,8 +3266,6 @@ class DeliveryRating(models.Model):
 # ----------------------------------------------- 
 
 
-
-from django.db import models
 
 class PatientFoodRecommendation(models.Model):
     patient = models.ForeignKey(

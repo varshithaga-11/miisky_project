@@ -94,6 +94,16 @@ class IsAdminRole(BasePermission):
         return bool(u and u.is_authenticated and getattr(u, 'role', None) == 'admin')
 
 
+class IsAdminOrDoctorRole(BasePermission):
+    """Allow authenticated users with role admin or doctor (shared admin-patient directory)."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        return bool(
+            u and u.is_authenticated and getattr(u, 'role', None) in ('admin', 'doctor')
+        )
+
+
 class AuthenticatedReadAdminWrite(BasePermission):
     """Any authenticated user may list/retrieve (for dropdowns); only admin may create/update/delete."""
 
@@ -1091,7 +1101,7 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
         qs = _questionnaire_prefetch_qs().all()
         u = self.request.user
         patient_id = self.request.query_params.get('user')
-        if getattr(u, 'role', None) == 'admin':
+        if getattr(u, 'role', None) in ('admin', 'doctor'):
             if patient_id:
                 return qs.filter(user_id=patient_id)
             return qs
@@ -3153,6 +3163,11 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             return queryset
+
+        if user.role == "doctor":
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            return queryset
             
         if user.role == "nutritionist":
             from django.db.models import Q
@@ -3197,7 +3212,7 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
 
 
 class NutritionistReviewViewSet(viewsets.ModelViewSet):
-    queryset = NutritionistReview.objects.all()
+    queryset = NutritionistReview.objects.all().select_related('nutritionist', 'doctor', 'user')
     serializer_class = NutritionistReviewSerializer
     permission_classes = [IsAuthenticated]
 
@@ -3209,6 +3224,11 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
         patient_id = self.request.query_params.get('user')
         
         if user.role == "admin":
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            return queryset
+
+        if user.role == "doctor":
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             return queryset
@@ -3241,8 +3261,11 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
         return queryset.none()
 
     def perform_create(self, serializer):
-        # Automatically set the nutritionist to the logged-in user
-        serializer.save(nutritionist=self.request.user)
+        user = self.request.user
+        if getattr(user, 'role', None) == 'doctor':
+            serializer.save(doctor=user, nutritionist=None)
+        else:
+            serializer.save(nutritionist=user)
 
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
@@ -3291,6 +3314,15 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         payment_status_filter = self.request.query_params.get('payment_status')
 
         if user.role == "admin":
+            if patient_id:
+                queryset = queryset.filter(user_id=patient_id)
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            if payment_status_filter:
+                queryset = queryset.filter(payment_status=payment_status_filter)
+            return queryset.order_by('-suggested_on')
+
+        if user.role == "doctor":
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
@@ -5216,12 +5248,12 @@ class CartItemViewSet(viewsets.ModelViewSet):
 
 class AdminPatientOverviewViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Admin-only: paginated list of users with role=patient (summary columns);
+    Admin and doctor: paginated list of users with role=patient (summary columns);
     retrieve returns nested questionnaire, health reports, nutritionist reviews,
     diet plans, active plan, and UserMeal rows (food + packaging material).
     """
 
-    permission_classes = [IsAuthenticated, IsAdminRole]
+    permission_classes = [IsAuthenticated, IsAdminOrDoctorRole]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
