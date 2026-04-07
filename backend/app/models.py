@@ -327,31 +327,65 @@ class MicroKitchenInspection(models.Model):
 
 
 class DeliveryProfile(models.Model):
-    user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name="delivery_profile")
+    """KYC / vehicle / bank details for supply-chain delivery staff (one row per user)."""
 
-    # 🔹 Vehicle Info
+    user = models.OneToOneField(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="delivery_profile",
+    )
+
+    # Vehicle
     VEHICLE_TYPE_CHOICES = [
-        ('bike', 'Bike'),
-        ('scooter', 'Scooter'),
-        ('car', 'Car'),
-        ('van', 'Van'),
-        ('other', 'Other'),
+        ("bike", "Bike"),
+        ("scooter", "Scooter"),
+        ("car", "Car"),
+        ("van", "Van"),
+        ("other", "Other"),
     ]
 
     vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, null=True, blank=True)
+    other_vehicle_name = models.CharField(max_length=100, null=True, blank=True)
     vehicle_details = models.TextField(null=True, blank=True)
-
     register_number = models.CharField(max_length=20, null=True, blank=True)
 
-    # 🔹 Documents
+    # Documents
     license_number = models.CharField(max_length=50, null=True, blank=True)
-    license_copy = models.FileField(upload_to='delivery/licenses/', null=True, blank=True)
+    license_copy = models.FileField(upload_to="delivery/licenses/", null=True, blank=True)
+    rc_copy = models.FileField(upload_to="delivery/rc/", null=True, blank=True)
+    insurance_copy = models.FileField(upload_to="delivery/insurance/", null=True, blank=True)
+    aadhar_number = models.CharField(max_length=12, null=True, blank=True)
+    aadhar_image = models.FileField(upload_to="delivery/aadhar/", null=True, blank=True)
+    pan_number = models.CharField(max_length=10, null=True, blank=True)
+    pan_image = models.FileField(upload_to="delivery/pan/", null=True, blank=True)
+    puc_image = models.FileField(upload_to="delivery/puc/", null=True, blank=True)
 
-    rc_copy = models.FileField(upload_to='delivery/rc/', null=True, blank=True)  # Registration Certificate
-    insurance_copy = models.FileField(upload_to='delivery/insurance/', null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+    verified_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_deliveries",
+    )
+    verified_on = models.DateTimeField(null=True, blank=True)
 
-    available_slots = models.JSONField(null=True, blank=True)
+    bank_account_number = models.CharField(max_length=20, null=True, blank=True)
+    ifsc_code = models.CharField(max_length=11, null=True, blank=True)
+    account_holder_name = models.CharField(max_length=100, null=True, blank=True)
+    bank_name = models.CharField(max_length=100, null=True, blank=True)
 
+    available_slots = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        if self.user_id:
+            return f"DeliveryProfile(user={self.user_id})"
+        return "DeliveryProfile(unlinked)"
 
 
 class UserQuestionnaire(models.Model):

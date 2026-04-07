@@ -378,6 +378,7 @@ const microKitchenNavItems: NavItem[] = [
     subItems: [
       { name: "Global assignment", path: "/microkitchen/delivery/global" },
       { name: "Daily reassignment", path: "/microkitchen/delivery/daily" },
+      { name: "Delivery profiles", path: "/microkitchen/delivery/profiles" },
     ],
   },
   {

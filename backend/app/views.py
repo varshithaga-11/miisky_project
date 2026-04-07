@@ -1259,13 +1259,79 @@ class MicroKitchenInspectionViewSet(viewsets.ModelViewSet):
 
 
 class DeliveryProfileViewSet(viewsets.ModelViewSet):
-    queryset = DeliveryProfile.objects.select_related('user').all()
+    queryset = DeliveryProfile.objects.select_related("user", "verified_by").all()
     serializer_class = DeliveryProfileSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
+    pagination_class = Pagination
+
+    def _delivery_person_ids_for_kitchen(self, mk):
+        """
+        Supply-chain users who appear in global / daily delivery for this kitchen.
+        """
+        dp_ids = set(
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            DietPlanSlotDeliveryPerson.objects.filter(plan_assignment__micro_kitchen=mk).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen=mk).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids.discard(None)
+        return dp_ids
+
+    def get_queryset(self):
+        u = self.request.user
+        role = getattr(u, "role", None)
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=u).first()
+            if not mk:
+                return DeliveryProfile.objects.none()
+            dp_ids = self._delivery_person_ids_for_kitchen(mk)
+            return DeliveryProfile.objects.filter(user_id__in=dp_ids).select_related("user", "verified_by")
+        if role == "supply_chain":
+            return DeliveryProfile.objects.filter(user=u).select_related("user", "verified_by")
+        if role == "admin":
+            return DeliveryProfile.objects.select_related("user", "verified_by").all()
+        return DeliveryProfile.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        return super().list(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+    def update(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "admin":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):
+        if getattr(request.user, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Only supply chain users can manage delivery profile."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         instance = DeliveryProfile.objects.filter(user=request.user).first()
         if request.method.lower() == 'get':
             if not instance:
@@ -1279,6 +1345,40 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
             defaults=serializer.validated_data
         )
         return Response(self.get_serializer(obj).data)
+
+    @action(detail=False, methods=['get'], url_path='kitchen-delivery-profiles')
+    def kitchen_delivery_profiles(self, request):
+        """Paginated delivery profiles for supply-chain staff tied to this micro kitchen."""
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+        if not mk:
+            return Response(
+                {"count": 0, "next": None, "previous": None, "current_page": 1, "total_pages": 0, "results": []}
+            )
+        qs = (
+            DeliveryProfile.objects.filter(user_id__in=self._delivery_person_ids_for_kitchen(mk))
+            .select_related("user", "verified_by")
+            .order_by("user__first_name", "user__last_name", "id")
+        )
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='verify')
+    def verify(self, request, pk=None):
+        """Micro kitchen: mark delivery profile as verified."""
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        profile = self.get_object()
+        profile.is_verified = True
+        profile.verified_by = request.user
+        profile.verified_on = timezone.now()
+        profile.save(update_fields=["is_verified", "verified_by", "verified_on"])
+        return Response(self.get_serializer(profile).data)
 
 
 class UserNutritionistMappingViewSet(viewsets.ModelViewSet):

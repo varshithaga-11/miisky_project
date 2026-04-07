@@ -1443,9 +1443,62 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
 
 
 class DeliveryProfileSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    verified_by_details = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = DeliveryProfile
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "vehicle_type",
+            "other_vehicle_name",
+            "vehicle_details",
+            "register_number",
+            "license_number",
+            "license_copy",
+            "rc_copy",
+            "insurance_copy",
+            "aadhar_number",
+            "aadhar_image",
+            "pan_number",
+            "pan_image",
+            "puc_image",
+            "is_verified",
+            "verified_by",
+            "verified_on",
+            "bank_account_number",
+            "ifsc_code",
+            "account_holder_name",
+            "bank_name",
+            "available_slots",
+            "user_details",
+            "verified_by_details",
+        ]
+        read_only_fields = ("is_verified", "verified_by", "verified_on", "user")
+
+    def get_user_details(self, obj):
+        if not obj.user:
+            return None
+        u = obj.user
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+            "email": getattr(u, "email", None),
+            "mobile": getattr(u, "mobile", None),
+            "username": getattr(u, "username", None),
+        }
+
+    def get_verified_by_details(self, obj):
+        if not obj.verified_by:
+            return None
+        v = obj.verified_by
+        return {
+            "id": v.id,
+            "first_name": v.first_name or "",
+            "last_name": v.last_name or "",
+        }
 
 
 class UserNutritionistMappingSerializer(serializers.ModelSerializer):
