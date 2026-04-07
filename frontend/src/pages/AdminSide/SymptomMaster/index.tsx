@@ -81,7 +81,7 @@ const SymptomMasterPage: React.FC = () => {
     return () => clearTimeout(t);
   }, [searchInput, searchTerm]);
 
-  if (loading && rows.length === 0) return <div className="p-6 dark:text-white">Loading...</div>;
+  if (loading && rows.length === 0) return <div className="text-black dark:text-white p-6">Loading...</div>;
 
   return (
     <>
@@ -92,7 +92,7 @@ const SymptomMasterPage: React.FC = () => {
           <div className="relative flex-1 max-w-md">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               placeholder="Search..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -103,7 +103,7 @@ const SymptomMasterPage: React.FC = () => {
               <FiPlus /> Add
             </Button>
             <div className="flex items-center gap-2">
-              <Label className="text-sm whitespace-nowrap">Show:</Label>
+              <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
               <Select
                 value={String(pageSize)}
                 onChange={(v) => {
@@ -118,44 +118,75 @@ const SymptomMasterPage: React.FC = () => {
                 ]}
                 className="w-20"
               />
+              <span className="text-sm text-gray-600 whitespace-nowrap dark:text-gray-400">entries</span>
             </div>
           </div>
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+            {searchTerm && ` (filtered from search)`}
+          </div>
         </div>
       </div>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3">#</TableCell>
-                <TableCell isHeader className="px-5 py-3 cursor-pointer" onClick={() => handleSort("name")}>
-                  Name {sortField === "name" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  #
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3">Action</TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center gap-2">
+                    Name
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === "name" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Action
+                </TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-500">
+                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                     No records
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedRows.map((row, i) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                    <TableCell className="px-5 py-4 font-medium dark:text-white/90">{row.name}</TableCell>
-                    <TableCell className="px-5 py-4">
-                      <button type="button" className="text-blue-600 mr-3" onClick={() => { setEditId(row.id!); setIsEditOpen(true); }}>
-                        <FiEdit />
-                      </button>
-                      <button type="button" className="text-red-600" onClick={() => void handleDelete(row.id!)}>
-                        <FiTrash2 />
-                      </button>
+                  <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {(currentPage - 1) * pageSize + i + 1}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {row.name}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Edit"
+                          onClick={() => {
+                            setEditId(row.id!);
+                            setIsEditOpen(true);
+                          }}
+                        >
+                          <FiEdit />
+                        </button>
+                        <button type="button" className="text-red-600 hover:text-red-800" title="Delete" onClick={() => void handleDelete(row.id!)}>
+                          <FiTrash2 />
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -165,18 +196,44 @@ const SymptomMasterPage: React.FC = () => {
         </div>
       </div>
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center gap-2 flex-wrap">
-          <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} className="px-3 py-2 border rounded dark:bg-gray-800 disabled:opacity-50">
-            Previous
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button key={p} type="button" onClick={() => setCurrentPage(p)} className={`px-3 py-2 rounded border ${currentPage === p ? "bg-blue-600 text-white" : "dark:bg-gray-800"}`}>
-              {p}
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Previous
             </button>
-          ))}
-          <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} className="px-3 py-2 border rounded dark:bg-gray-800 disabled:opacity-50">
-            Next
-          </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-blue-600 text-white border border-blue-600"
+                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Next
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
         </div>
       )}
       {isAddOpen && <AddSymptomMaster onClose={() => setIsAddOpen(false)} onAdd={() => void fetchRows()} />}

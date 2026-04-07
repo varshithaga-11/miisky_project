@@ -52,6 +52,8 @@ const DeliverySlotManagementPage: React.FC = () => {
     }
   };
 
+  const totalItems = filtered.length;
+
   return (
     <>
       <PageMeta title="Delivery slots" description="Manage delivery time windows for diet plans" />
@@ -60,72 +62,96 @@ const DeliverySlotManagementPage: React.FC = () => {
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name or kitchen…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
-            <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           </div>
           <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setAddOpen(true)}>
             <FiPlus />
             Add slot
           </Button>
         </div>
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems} {totalItems === 1 ? "entry" : "entries"}
+            {searchTerm.trim() && ` (filtered from search)`}
+          </div>
+        </div>
+      </div>
 
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
           {loading ? (
-            <p className="p-8 text-center text-gray-500">Loading…</p>
+            <p className="p-8 text-center text-gray-500 dark:text-gray-400">Loading…</p>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-900">
-                  <TableCell isHeader>Name</TableCell>
-                  <TableCell isHeader>Time window</TableCell>
-                  <TableCell isHeader>Micro kitchen</TableCell>
-                  <TableCell isHeader className="text-right w-28">
-                    Actions
+              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                <TableRow>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    #
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Name
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Time window
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Micro kitchen
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Action
                   </TableCell>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       No slots found. Add one to use at payment verification and kitchen delivery settings.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-medium text-gray-900 dark:text-white">{row.name}</TableCell>
-                      <TableCell className="text-gray-600 dark:text-gray-300">
+                  filtered.map((row, index) => (
+                    <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                      <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {row.name}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-700 dark:text-gray-300">
                         {formatTime12hDisplay(row.start_time)} – {formatTime12hDisplay(row.end_time)}
                       </TableCell>
-                      <TableCell className="text-gray-600 dark:text-gray-300">
+                      <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-700 dark:text-gray-300">
                         {row.micro_kitchen == null
                           ? "Global"
                           : row.micro_kitchen_brand || `Kitchen #${row.micro_kitchen}`}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <button
-                          type="button"
-                          onClick={() => setEditSlot(row)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded dark:hover:bg-blue-900/20"
-                          title="Edit"
-                        >
-                          <FiEdit />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(row.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded dark:hover:bg-red-900/20"
-                          title="Delete"
-                        >
-                          <FiTrash2 />
-                        </button>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditSlot(row)}
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                            title="Edit"
+                          >
+                            <FiEdit />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(row.id)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400"
+                            title="Delete"
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -136,16 +162,9 @@ const DeliverySlotManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {addOpen && (
-        <AddDeliverySlot onClose={() => setAddOpen(false)} onAdded={load} />
-      )}
+      {addOpen && <AddDeliverySlot onClose={() => setAddOpen(false)} onAdded={load} />}
       {editSlot && (
-        <EditDeliverySlot
-          key={editSlot.id}
-          slot={editSlot}
-          onClose={() => setEditSlot(null)}
-          onUpdated={load}
-        />
+        <EditDeliverySlot key={editSlot.id} slot={editSlot} onClose={() => setEditSlot(null)} onUpdated={load} />
       )}
     </>
   );
