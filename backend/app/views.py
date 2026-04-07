@@ -495,6 +495,13 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         role = self.request.query_params.get('role')
         if role:
             qs = qs.filter(role=role.strip())
+        
+        status_param = self.request.query_params.get('status')
+        if status_param == 'active':
+            qs = qs.filter(is_active=True)
+        elif status_param == 'inactive':
+            qs = qs.filter(is_active=False)
+            
         return qs
 
     # NOTE: UserRegister currently has no created_by field.
@@ -1905,7 +1912,7 @@ class CityViewSet(viewsets.ModelViewSet):
         country = self.request.query_params.get('country')
         if state:
             queryset = queryset.filter(state=state)
-        elif country:
+        if country:
             queryset = queryset.filter(state__country=country)
         return queryset
 

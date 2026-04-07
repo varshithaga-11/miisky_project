@@ -208,18 +208,14 @@ export const fetchUserMealsForPatient = async (
 };
 
 /** Optional: aggregated admin endpoint (try `adminpatients` then `admin-patients`). */
-export const fetchAdminPatientListFallback = async (
+export const fetchAdminPatientList = async (
   page: number,
   limit: number,
   search?: string
 ): Promise<PaginatedResponse<PatientUserRow>> => {
   const params: Record<string, string | number> = { page, limit };
   if (search?.trim()) params.search = search.trim();
-  try {
-    return await getJson<PaginatedResponse<PatientUserRow>>("api/adminpatients/", params);
-  } catch {
-    return getJson<PaginatedResponse<PatientUserRow>>("api/admin-patients/", params);
-  }
+  return getJson<PaginatedResponse<PatientUserRow>>("api/admin-patients/", params);
 };
 
 /** Diet plans payment history — filtered by patient user ID */
