@@ -3588,6 +3588,532 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(plan).data, status=status.HTTP_200_OK)
 
 
+def _set_daily_meals_allowed_patient_ids(nutritionist_user):
+    mapped = set(
+        UserNutritionistMapping.objects.filter(
+            nutritionist=nutritionist_user, is_active=True
+        ).values_list("user_id", flat=True)
+    )
+    original = set(
+        UserDietPlan.objects.filter(
+            original_nutritionist=nutritionist_user, status="active"
+        ).values_list("user_id", flat=True)
+    )
+    return mapped | original
+
+
+class SetDailyMealsViewSet(viewsets.ViewSet):
+    """
+    Nutritionist-only endpoints for Set Daily Meals page:
+    paginated patients, meal/cuisine filter options, patient detail (questionnaire + kitchen + today meals),
+    plan meals by day window, calendar month meals, paginated foods.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def _nutritionist_only(self, request):
+        if getattr(request.user, "role", None) != "nutritionist":
+            return Response(
+                {"detail": "Nutritionists only."}, status=status.HTTP_403_FORBIDDEN
+            )
+        return None
+
+    @action(detail=False, methods=["get"], url_path="patients")
+    def patients(self, request):
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+        from django.core.paginator import Paginator
+
+        user = request.user
+        results = _build_nutritionist_my_patients_list(user)
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            ids = [r["user"]["id"] for r in results]
+            if not ids:
+                results = []
+            else:
+                matched_ids = UserRegister.objects.filter(id__in=ids).filter(
+                    Q(first_name__icontains=search)
+                    | Q(last_name__icontains=search)
+                    | Q(email__icontains=search)
+                    | Q(username__icontains=search)
+                ).values_list("id", flat=True)
+                matched_set = set(matched_ids)
+                results = [r for r in results if r["user"]["id"] in matched_set]
+
+        results.sort(key=lambda x: x["assigned_on"], reverse=True)
+
+        try:
+            page_size = int(request.query_params.get("page_size", 5))
+        except ValueError:
+            page_size = 5
+        page_size = max(1, min(page_size, 50))
+        try:
+            page = int(request.query_params.get("page", 1))
+        except ValueError:
+            page = 1
+
+        paginator = Paginator(results, page_size)
+        page_obj = paginator.get_page(page)
+        page_results = list(page_obj.object_list)
+
+        allowed_ids = {r["user"]["id"] for r in results}
+        selected_user_id = None
+        patient_id_param = request.query_params.get("patient_id")
+        if patient_id_param is not None and patient_id_param != "":
+            try:
+                pid = int(patient_id_param)
+            except ValueError:
+                pid = None
+            if pid is not None and pid in allowed_ids:
+                selected_user_id = pid
+        if selected_user_id is None and page_results:
+            selected_user_id = page_results[0]["user"]["id"]
+
+        next_page = page_obj.next_page_number() if page_obj.has_next() else None
+        prev_page = page_obj.previous_page_number() if page_obj.has_previous() else None
+
+        return Response(
+            {
+                "count": paginator.count,
+                "page": page_obj.number,
+                "page_size": page_size,
+                "next": next_page,
+                "previous": prev_page,
+                "total_pages": paginator.num_pages,
+                "results": page_results,
+                "selected_user_id": selected_user_id,
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="filter-options")
+    def filter_options(self, request):
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+        try:
+            limit = int(request.query_params.get("limit", 5))
+        except ValueError:
+            limit = 5
+        limit = max(1, min(limit, 50))
+        try:
+            mt_page = int(request.query_params.get("meal_types_page", 1))
+        except ValueError:
+            mt_page = 1
+        try:
+            cu_page = int(request.query_params.get("cuisines_page", 1))
+        except ValueError:
+            cu_page = 1
+
+        cuisine_id = request.query_params.get("cuisine_id")
+        meal_type_id = request.query_params.get("meal_type_id")
+
+        mt_qs = MealType.objects.all().order_by("name")
+        if cuisine_id:
+            mt_qs = mt_qs.filter(food__cuisine_types__id=cuisine_id).distinct()
+
+        cu_qs = CuisineType.objects.all().order_by("name")
+        if meal_type_id:
+            cu_qs = cu_qs.filter(food__meal_types__id=meal_type_id).distinct()
+
+        mt_count = mt_qs.count()
+        cu_count = cu_qs.count()
+        mt_start = (mt_page - 1) * limit
+        cu_start = (cu_page - 1) * limit
+        mt_results = list(mt_qs[mt_start : mt_start + limit].values("id", "name"))
+        cu_results = list(cu_qs[cu_start : cu_start + limit].values("id", "name"))
+
+        def _page_meta(total, page, page_size):
+            total_pages = max(1, (total + page_size - 1) // page_size) if total else 1
+            return {
+                "count": total,
+                "page": page,
+                "limit": page_size,
+                "total_pages": total_pages,
+                "next": page + 1 if page * page_size < total else None,
+                "previous": page - 1 if page > 1 else None,
+                "results": mt_results if total == mt_count else None,
+            }
+
+        return Response(
+            {
+                "meal_types": {
+                    "count": mt_count,
+                    "page": mt_page,
+                    "limit": limit,
+                    "total_pages": max(1, (mt_count + limit - 1) // limit) if mt_count else 1,
+                    "next": mt_page + 1 if mt_page * limit < mt_count else None,
+                    "previous": mt_page - 1 if mt_page > 1 else None,
+                    "results": mt_results,
+                },
+                "cuisine_types": {
+                    "count": cu_count,
+                    "page": cu_page,
+                    "limit": limit,
+                    "total_pages": max(1, (cu_count + limit - 1) // limit) if cu_count else 1,
+                    "next": cu_page + 1 if cu_page * limit < cu_count else None,
+                    "previous": cu_page - 1 if cu_page > 1 else None,
+                    "results": cu_results,
+                },
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="patient-detail")
+    def patient_detail(self, request):
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response(
+                {"detail": "user_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            uid = int(user_id)
+        except ValueError:
+            return Response(
+                {"detail": "Invalid user_id."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if uid not in _set_daily_meals_allowed_patient_ids(request.user):
+            return Response(
+                {"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        patient = UserRegister.objects.filter(id=uid).first()
+        if not patient:
+            return Response(
+                {"detail": "Patient not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            q = patient.userquestionnaire
+        except UserQuestionnaire.DoesNotExist:
+            q = None
+
+        plan = (
+            UserDietPlan.objects.filter(user=patient, status="active")
+            .select_related(
+                "micro_kitchen",
+                "original_micro_kitchen",
+                "diet_plan",
+            )
+            .first()
+        )
+
+        kitchen_block = None
+        if plan:
+            kitchen_block = {
+                "plan_id": plan.id,
+                "start_date": plan.start_date,
+                "end_date": plan.end_date,
+                "micro_kitchen_effective_from": plan.micro_kitchen_effective_from,
+                "nutritionist_effective_from": plan.nutritionist_effective_from,
+                "current_micro_kitchen": {
+                    "id": plan.micro_kitchen_id,
+                    "brand_name": plan.micro_kitchen.brand_name if plan.micro_kitchen else None,
+                }
+                if plan.micro_kitchen
+                else None,
+                "original_micro_kitchen": {
+                    "id": plan.original_micro_kitchen_id,
+                    "brand_name": plan.original_micro_kitchen.brand_name
+                    if plan.original_micro_kitchen
+                    else None,
+                }
+                if plan.original_micro_kitchen
+                else None,
+            }
+
+        reassignment = (
+            NutritionistReassignment.objects.filter(
+                user=patient, active_diet_plan__status="active"
+            )
+            .order_by("-reassigned_on")
+            .first()
+        )
+        reassignment_data = None
+        if reassignment:
+            reassignment_data = {
+                "previous_nutritionist": reassignment.previous_nutritionist.username
+                if reassignment.previous_nutritionist
+                else None,
+                "new_nutritionist": reassignment.new_nutritionist.username
+                if reassignment.new_nutritionist
+                else None,
+                "reason": reassignment.reason,
+                "notes": reassignment.notes,
+                "effective_from": reassignment.effective_from,
+            }
+
+        today = timezone.now().date()
+        today_meals_qs = (
+            UserMeal.objects.filter(user_id=uid, meal_date=today)
+            .select_related(
+                "meal_type",
+                "food",
+                "packaging_material",
+                "micro_kitchen",
+                "user_diet_plan",
+            )
+            .prefetch_related(
+                Prefetch(
+                    "deliveries",
+                    queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                        "delivery_person", "delivery_slot"
+                    ),
+                )
+            )
+            .order_by("meal_type__id")
+        )
+        today_meals = UserMealSerializer(today_meals_qs, many=True).data
+
+        return Response(
+            {
+                "user": {
+                    "id": patient.id,
+                    "first_name": patient.first_name or "",
+                    "last_name": patient.last_name or "",
+                    "email": patient.email or "",
+                    "mobile": patient.mobile or "",
+                },
+                "questionnaire": UserQuestionnaireSerializer(q).data if q else None,
+                "kitchen": kitchen_block,
+                "reassignment_details": reassignment_data,
+                "today_food": today_meals,
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="plan-meals")
+    def plan_meals(self, request):
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+        user_id = request.query_params.get("user_id")
+        plan_id = request.query_params.get("plan_id")
+        if not user_id or not plan_id:
+            return Response(
+                {"detail": "user_id and plan_id are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            uid = int(user_id)
+            pid = int(plan_id)
+        except ValueError:
+            return Response(
+                {"detail": "Invalid ids."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if uid not in _set_daily_meals_allowed_patient_ids(request.user):
+            return Response(
+                {"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        plan = UserDietPlan.objects.filter(id=pid, user_id=uid).first()
+        if not plan:
+            return Response(
+                {"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            offset_days = int(request.query_params.get("offset_days", 0))
+        except ValueError:
+            offset_days = 0
+        try:
+            days = int(request.query_params.get("days", 10))
+        except ValueError:
+            days = 10
+        days = max(1, min(days, 60))
+
+        if not plan.start_date or not plan.end_date:
+            return Response(
+                {
+                    "plan_id": plan.id,
+                    "range_start": None,
+                    "range_end": None,
+                    "offset_days": offset_days,
+                    "days": days,
+                    "next_offset_days": None,
+                    "has_more": False,
+                    "meals": [],
+                }
+            )
+
+        window_start = plan.start_date + timedelta(days=offset_days)
+        window_end = window_start + timedelta(days=days - 1)
+        if window_start > plan.end_date:
+            return Response(
+                {
+                    "plan_id": plan.id,
+                    "range_start": None,
+                    "range_end": None,
+                    "offset_days": offset_days,
+                    "days": days,
+                    "next_offset_days": None,
+                    "has_more": False,
+                    "meals": [],
+                }
+            )
+
+        if window_end > plan.end_date:
+            window_end = plan.end_date
+
+        meals_qs = (
+            UserMeal.objects.filter(
+                user_id=uid,
+                user_diet_plan_id=pid,
+                meal_date__range=[window_start, window_end],
+            )
+            .select_related(
+                "meal_type",
+                "food",
+                "packaging_material",
+                "micro_kitchen",
+                "user_diet_plan",
+            )
+            .prefetch_related(
+                Prefetch(
+                    "deliveries",
+                    queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                        "delivery_person", "delivery_slot"
+                    ),
+                )
+            )
+            .order_by("meal_date", "meal_type__id")
+        )
+        meals_data = UserMealSerializer(meals_qs, many=True).data
+
+        next_offset = offset_days + days
+        has_more = plan.end_date > window_end
+
+        return Response(
+            {
+                "plan_id": plan.id,
+                "range_start": window_start,
+                "range_end": window_end,
+                "offset_days": offset_days,
+                "days": days,
+                "next_offset_days": next_offset if has_more else None,
+                "has_more": has_more,
+                "meals": meals_data,
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="calendar-month")
+    def calendar_month(self, request):
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+        user_id = request.query_params.get("user_id")
+        plan_id = request.query_params.get("plan_id")
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
+        if not all([user_id, plan_id, month, year]):
+            return Response(
+                {"detail": "user_id, plan_id, month, year are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            uid = int(user_id)
+            pid = int(plan_id)
+            m = int(month)
+            y = int(year)
+        except ValueError:
+            return Response(
+                {"detail": "Invalid parameters."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if uid not in _set_daily_meals_allowed_patient_ids(request.user):
+            return Response(
+                {"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not UserDietPlan.objects.filter(id=pid, user_id=uid).exists():
+            return Response(
+                {"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        meals_qs = (
+            UserMeal.objects.filter(
+                user_id=uid,
+                user_diet_plan_id=pid,
+                meal_date__month=m,
+                meal_date__year=y,
+            )
+            .select_related(
+                "meal_type",
+                "food",
+                "packaging_material",
+                "micro_kitchen",
+                "user_diet_plan",
+            )
+            .prefetch_related(
+                Prefetch(
+                    "deliveries",
+                    queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                        "delivery_person", "delivery_slot"
+                    ),
+                )
+            )
+            .order_by("meal_date", "meal_type__id")
+        )
+        return Response(
+            {
+                "month": m,
+                "year": y,
+                "meals": UserMealSerializer(meals_qs, many=True).data,
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="foods")
+    def foods(self, request):
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+        try:
+            page = int(request.query_params.get("page", 1))
+        except ValueError:
+            page = 1
+        try:
+            limit = int(request.query_params.get("limit", 20))
+        except ValueError:
+            limit = 20
+        limit = max(1, min(limit, 100))
+        search = (request.query_params.get("search") or "").strip()
+        meal_type = request.query_params.get("meal_type")
+        cuisine_type = request.query_params.get("cuisine_type")
+
+        qs = Food.objects.all().order_by("name")
+        if meal_type:
+            qs = qs.filter(meal_types=meal_type)
+        if cuisine_type:
+            qs = qs.filter(cuisine_types=cuisine_type)
+        if search:
+            qs = qs.filter(name__icontains=search)
+        qs = qs.distinct()
+
+        from django.core.paginator import Paginator
+
+        paginator = Paginator(qs, limit)
+        page_obj = paginator.get_page(page)
+        page_results = SetDailyMealsFoodListSerializer(page_obj.object_list, many=True).data
+
+        return Response(
+            {
+                "count": paginator.count,
+                "page": page_obj.number,
+                "limit": limit,
+                "total_pages": paginator.num_pages,
+                "next": page_obj.next_page_number() if page_obj.has_next() else None,
+                "previous": page_obj.previous_page_number() if page_obj.has_previous() else None,
+                "results": page_results,
+            }
+        )
+
+
 class UserMealViewSet(viewsets.ModelViewSet):
     queryset = UserMeal.objects.all().select_related(
         'user', 'user_diet_plan', 'meal_type', 'food', 'packaging_material', 'micro_kitchen'

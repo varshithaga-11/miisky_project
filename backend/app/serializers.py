@@ -693,6 +693,14 @@ class FoodSerializer(serializers.ModelSerializer):
         return value
 
 
+class SetDailyMealsFoodListSerializer(serializers.ModelSerializer):
+    """Minimal food row for Set Daily Meals picker — id and name only (no nutrition, ingredients, steps)."""
+
+    class Meta:
+        model = Food
+        fields = ["id", "name"]
+
+
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
     health_parameter_name = serializers.CharField(source='health_parameter.name', read_only=True)
     health_parameter_name_input = serializers.CharField(write_only=True, required=False)
