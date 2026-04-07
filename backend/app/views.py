@@ -5375,8 +5375,72 @@ class DeliveryStaffListView(APIView):
         return Response(data)
 
 
+class MicroKitchenDeliveryTeamViewSet(viewsets.ModelViewSet):
+    serializer_class = MicroKitchenDeliveryTeamSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        role = getattr(self.request.user, "role", None)
+        qs = MicroKitchenDeliveryTeam.objects.select_related(
+            "micro_kitchen",
+            "delivery_person",
+        )
+        if role == "admin":
+            mk_id = self.request.query_params.get("micro_kitchen")
+            if mk_id:
+                qs = qs.filter(micro_kitchen_id=mk_id)
+            return qs.order_by("-assigned_on")
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+            if not mk:
+                return MicroKitchenDeliveryTeam.objects.none()
+            return qs.filter(micro_kitchen=mk).order_by("-assigned_on")
+        return MicroKitchenDeliveryTeam.objects.none()
+
+    def perform_create(self, serializer):
+        role = getattr(self.request.user, "role", None)
+        if role == "admin":
+            serializer.save()
+            return
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+            if not mk:
+                raise PermissionDenied("No micro kitchen profile found for this account.")
+            serializer.save(micro_kitchen=mk)
+            return
+        raise PermissionDenied("Forbidden.")
+
+    def perform_update(self, serializer):
+        obj = self.get_object()
+        role = getattr(self.request.user, "role", None)
+        if role == "admin":
+            serializer.save()
+            return
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+            if not mk or obj.micro_kitchen_id != mk.id:
+                raise PermissionDenied("Forbidden.")
+            serializer.save(micro_kitchen=mk)
+            return
+        raise PermissionDenied("Forbidden.")
+
+    def perform_destroy(self, instance):
+        role = getattr(self.request.user, "role", None)
+        if role == "admin":
+            instance.delete()
+            return
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+            if not mk or instance.micro_kitchen_id != mk.id:
+                raise PermissionDenied("Forbidden.")
+            instance.delete()
+            return
+        raise PermissionDenied("Forbidden.")
+
+
 class SupplyChainUsersListView(APIView):
-    """Users with role supply_chain — mappable as delivery persons for diet plans."""
+    """Users available for delivery assignment based on user's role."""
 
     permission_classes = [IsAuthenticated]
 
@@ -5384,6 +5448,33 @@ class SupplyChainUsersListView(APIView):
         role = getattr(request.user, "role", None)
         if role not in ("micro_kitchen", "admin"):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+            if not mk:
+                return Response([])
+            team_qs = (
+                MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk, is_active=True)
+                .select_related("delivery_person")
+                .order_by("role", "delivery_person__first_name", "delivery_person__last_name", "id")
+            )
+            data = [
+                {
+                    "id": t.delivery_person_id,
+                    "first_name": t.delivery_person.first_name or "",
+                    "last_name": t.delivery_person.last_name or "",
+                    "mobile": t.delivery_person.mobile or "",
+                    "email": t.delivery_person.email or "",
+                    "team_member_id": t.id,
+                    "team_role": t.role,
+                    "is_active": t.is_active,
+                    "zone_name": t.zone_name,
+                    "pincode": t.pincode,
+                }
+                for t in team_qs
+            ]
+            return Response(data)
+
         qs = UserRegister.objects.filter(role="supply_chain").order_by("first_name", "last_name", "id")
         data = [
             {

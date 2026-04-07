@@ -67,6 +67,13 @@ type AddPersonSlotRow = {
   slotIds: number[];
 };
 
+function userLabel(u: SupplyChainUser): string {
+  const full = `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email || `#${u.id}`;
+  const roleText = u.team_role ? ` (${u.team_role.replace("_", " ")})` : "";
+  const phoneText = u.mobile ? ` - ${u.mobile}` : "";
+  return `${full}${roleText}${phoneText}`;
+}
+
 function newAddRow(): AddPersonSlotRow {
   return { key: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, personId: "", slotIds: [] };
 }
@@ -443,13 +450,12 @@ export default function GlobalAssignmentsPage() {
             <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Truck className="w-5 h-5 text-violet-500" />
-                <h2 className="font-semibold text-gray-900 dark:text-white">Supply chain users</h2>
-                <span className="text-xs text-gray-500">(map as delivery person)</span>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Delivery team members</h2>
+                <span className="text-xs text-gray-500">(this micro-kitchen pool)</span>
               </div>
               {supplyUsers.length === 0 ? (
                 <p className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4">
-                  No supply chain users found. Create users with role &quot;Supply Chain&quot; in admin, then map them
-                  here.
+                  No team members found. Add members in Delivery management - Team members.
                 </p>
               ) : (
                 <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -569,8 +575,7 @@ export default function GlobalAssignmentsPage() {
                                   <option value="">Select…</option>
                                   {supplyUsers.map((u) => (
                                     <option key={u.id} value={u.id}>
-                                      {u.first_name} {u.last_name}
-                                      {u.mobile ? ` · ${u.mobile}` : ""}
+                                      {userLabel(u)}
                                     </option>
                                   ))}
                                 </select>
@@ -768,7 +773,7 @@ export default function GlobalAssignmentsPage() {
                         <option value="">Select supply chain user…</option>
                         {supplyUsers.map((u) => (
                           <option key={u.id} value={u.id}>
-                            {u.first_name} {u.last_name}
+                            {userLabel(u)}
                           </option>
                         ))}
                       </select>

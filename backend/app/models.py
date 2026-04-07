@@ -2636,6 +2636,42 @@ class DeliverySlot(models.Model):
         return self.name
 
 
+class MicroKitchenDeliveryTeam(models.Model):
+    """
+    Defines which delivery persons belong to a micro kitchen.
+    Each micro kitchen has its own pool/team of delivery persons.
+    """
+
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE,
+        related_name="delivery_team",
+    )
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.CASCADE,
+        related_name="kitchen_assignments",
+    )
+
+    ROLE_CHOICES = [
+        ("primary", "Primary"),
+        ("backup", "Backup"),
+        ("temporary", "Temporary"),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="primary")
+    is_active = models.BooleanField(default=True)
+    zone_name = models.CharField(max_length=100, null=True, blank=True)
+    pincode = models.CharField(max_length=10, null=True, blank=True)
+    assigned_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("micro_kitchen", "delivery_person")
+        ordering = ["-assigned_on"]
+
+    def __str__(self):
+        return f"{self.delivery_person} -> {self.micro_kitchen} ({self.role})"
+
+
 # ============================================================
 # 🌍 LAYER 1 — GLOBAL ASSIGNMENT
 # ============================================================

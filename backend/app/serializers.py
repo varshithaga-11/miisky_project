@@ -2846,6 +2846,30 @@ class UserDietPlanDeliverySummarySerializer(serializers.ModelSerializer):
         fields = ["id", "status", "start_date", "end_date"]
 
 
+class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
+    delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
+
+    class Meta:
+        model = MicroKitchenDeliveryTeam
+        fields = [
+            "id",
+            "micro_kitchen",
+            "delivery_person",
+            "delivery_person_details",
+            "role",
+            "is_active",
+            "zone_name",
+            "pincode",
+            "assigned_on",
+        ]
+        read_only_fields = ["id", "assigned_on"]
+
+    def validate_delivery_person(self, value):
+        if getattr(value, "role", None) != "supply_chain":
+            raise serializers.ValidationError("Only supply-chain users can be added to team.")
+        return value
+
+
 class DeliverySlotSerializer(serializers.ModelSerializer):
     micro_kitchen_brand = serializers.CharField(
         source="micro_kitchen.brand_name", read_only=True, allow_null=True

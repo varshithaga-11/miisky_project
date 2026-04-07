@@ -10,6 +10,7 @@ import { coordsFromFields, distanceKmBetween } from "../../../components/orders/
 import { motion, AnimatePresence } from "framer-motion";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
+import { fetchSupplyChainUsers, SupplyChainUser } from "../DeliveryManagement/api";
 
 const SeparateOrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -22,6 +23,9 @@ const SeparateOrdersPage: React.FC = () => {
     const [pageSize, setPageSize] = useState(10);
     const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
     const [search, setSearch] = useState("");
+    const [teamUsers, setTeamUsers] = useState<SupplyChainUser[]>([]);
+    const [roleFilterByOrder, setRoleFilterByOrder] = useState<Record<number, "all" | "primary" | "backup" | "temporary">>({});
+    const [selectedPersonByOrder, setSelectedPersonByOrder] = useState<Record<number, string>>({});
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -43,6 +47,18 @@ const SeparateOrdersPage: React.FC = () => {
         }, search ? 500 : 0); // Debounce search
         return () => clearTimeout(timer);
     }, [currentPage, pageSize, statusFilter, typeFilter, search]);
+
+    useEffect(() => {
+        const loadTeam = async () => {
+            try {
+                const users = await fetchSupplyChainUsers();
+                setTeamUsers(users);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        loadTeam();
+    }, []);
 
     // Reset to page 1 when filters change
     useEffect(() => {
@@ -95,6 +111,12 @@ const SeparateOrdersPage: React.FC = () => {
 
     const toggleRow = (orderId: number) => {
         setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    };
+
+    const filteredTeamMembersForOrder = (orderId: number): SupplyChainUser[] => {
+        const role = roleFilterByOrder[orderId] || "all";
+        if (role === "all") return teamUsers;
+        return teamUsers.filter((u) => u.team_role === role);
     };
 
     return (
@@ -294,6 +316,46 @@ const SeparateOrdersPage: React.FC = () => {
                                                                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                                                                 <FiMapPin size={14} className="text-indigo-500" /> Delivery Details
                                                                             </h4>
+                                                                            <div className="mb-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 p-3">
+                                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-2">
+                                                                                    Assign from team members
+                                                                                </p>
+                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                                    <select
+                                                                                        value={roleFilterByOrder[order.id!] || "all"}
+                                                                                        onChange={(e) =>
+                                                                                            setRoleFilterByOrder((prev) => ({
+                                                                                                ...prev,
+                                                                                                [order.id!]: e.target.value as "all" | "primary" | "backup" | "temporary",
+                                                                                            }))
+                                                                                        }
+                                                                                        className="rounded-lg border-none bg-gray-100 dark:bg-gray-700 px-3 py-2 text-xs font-bold"
+                                                                                    >
+                                                                                        <option value="all">All roles</option>
+                                                                                        <option value="primary">Primary</option>
+                                                                                        <option value="backup">Backup</option>
+                                                                                        <option value="temporary">Temporary</option>
+                                                                                    </select>
+                                                                                    <select
+                                                                                        value={selectedPersonByOrder[order.id!] || ""}
+                                                                                        onChange={(e) =>
+                                                                                            setSelectedPersonByOrder((prev) => ({
+                                                                                                ...prev,
+                                                                                                [order.id!]: e.target.value,
+                                                                                            }))
+                                                                                        }
+                                                                                        className="rounded-lg border-none bg-gray-100 dark:bg-gray-700 px-3 py-2 text-xs font-bold"
+                                                                                    >
+                                                                                        <option value="">Select delivery person</option>
+                                                                                        {filteredTeamMembersForOrder(order.id!).map((u) => (
+                                                                                            <option key={u.id} value={u.id}>
+                                                                                                {`${u.first_name || ""} ${u.last_name || ""}`.trim()}
+                                                                                                {u.team_role ? ` (${u.team_role})` : ""}
+                                                                                            </option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                </div>
+                                                                            </div>
                                                                             <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
                                                                                 <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">Address</p>
                                                                                 <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">{order.delivery_address}</p>

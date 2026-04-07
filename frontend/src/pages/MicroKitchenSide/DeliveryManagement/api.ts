@@ -8,6 +8,11 @@ export interface SupplyChainUser {
   last_name: string;
   mobile: string;
   email?: string;
+  team_member_id?: number;
+  team_role?: "primary" | "backup" | "temporary";
+  is_active?: boolean;
+  zone_name?: string | null;
+  pincode?: string | null;
 }
 
 export interface KitchenAllottedPlan {
@@ -189,4 +194,61 @@ export const fetchSupplyChainLeaves = async (): Promise<SupplyChainLeave[]> => {
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   const data = res.data;
   return Array.isArray(data) ? data : data?.results ?? [];
+};
+
+export interface MicroKitchenTeamMember {
+  id: number;
+  micro_kitchen: number;
+  delivery_person: number;
+  delivery_person_details?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username?: string;
+    email?: string;
+    mobile?: string;
+  };
+  role: "primary" | "backup" | "temporary";
+  is_active: boolean;
+  zone_name: string | null;
+  pincode: string | null;
+  assigned_on: string;
+}
+
+export const fetchMicroKitchenDeliveryTeam = async (): Promise<MicroKitchenTeamMember[]> => {
+  const url = createApiUrl("api/micro-kitchen-delivery-team/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  const data = res.data;
+  return Array.isArray(data) ? data : data?.results ?? [];
+};
+
+export const createMicroKitchenDeliveryTeamMember = async (payload: {
+  delivery_person: number;
+  role: "primary" | "backup" | "temporary";
+  is_active?: boolean;
+  zone_name?: string | null;
+  pincode?: string | null;
+}): Promise<MicroKitchenTeamMember> => {
+  const url = createApiUrl("api/micro-kitchen-delivery-team/");
+  const res = await axios.post(url, payload, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+export const patchMicroKitchenDeliveryTeamMember = async (
+  id: number,
+  payload: Partial<{
+    role: "primary" | "backup" | "temporary";
+    is_active: boolean;
+    zone_name: string | null;
+    pincode: string | null;
+  }>
+): Promise<MicroKitchenTeamMember> => {
+  const url = createApiUrl(`api/micro-kitchen-delivery-team/${id}/`);
+  const res = await axios.patch(url, payload, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+export const deleteMicroKitchenDeliveryTeamMember = async (id: number): Promise<void> => {
+  const url = createApiUrl(`api/micro-kitchen-delivery-team/${id}/`);
+  await axios.delete(url, { headers: await getAuthHeaders() });
 };

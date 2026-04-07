@@ -39,6 +39,7 @@ router.register(r'delivery-slot', DeliverySlotKitchenViewSet, basename='delivery
 router.register(r'plandeliveryassignment', DietPlanDeliveryAssignmentViewSet, basename='plandeliveryassignment')
 router.register(r'mealdeliveryassignment', KitchenMealDeliveryViewSet, basename='mealdeliveryassignment')
 router.register(r'supply-chain-leave', SupplyChainDeliveryLeaveViewSet, basename='supply-chain-leave')
+router.register(r'micro-kitchen-delivery-team', MicroKitchenDeliveryTeamViewSet, basename='micro-kitchen-delivery-team')
 
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
