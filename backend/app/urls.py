@@ -33,6 +33,7 @@ router.register(r'patienthealthreport', PatientHealthReportViewSet, basename='pa
 router.register(r'nutritionistreview', NutritionistReviewViewSet, basename='nutritionistreview')
 router.register(r'usermeal', UserMealViewSet, basename='usermeal')
 router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
+router.register(r'patient-food-recommendation', PatientFoodRecommendationViewSet, basename='patient-food-recommendation')
 router.register(r'meetingrequest', MeetingRequestViewSet, basename='meetingrequest')
 router.register(r'nutritionistavailability', NutritionistAvailabilityViewSet, basename='nutritionistavailability')
 router.register(r'nutritionistrating', NutritionistRatingViewSet, basename='nutritionistrating')

@@ -3247,3 +3247,62 @@ class DeliveryRating(models.Model):
 
     def __str__(self):
         return f"Rating {self.rating}/5 → {self.assignment.delivery_person}"
+
+
+
+
+
+
+
+# -----------------------------------------------
+# -----------------------------------------------
+# ----------------------------------------------- 
+
+
+
+from django.db import models
+
+class PatientFoodRecommendation(models.Model):
+    patient = models.ForeignKey(
+        UserRegister,  
+        on_delete=models.CASCADE,
+        related_name='food_recommendations'
+    )
+
+    food = models.ForeignKey(
+        FoodName,
+        on_delete=models.CASCADE,
+        related_name='recommended_to'
+    )
+
+    # Optional details
+    quantity = models.CharField(max_length=100, blank=True, null=True)  
+    # e.g., "1 bowl", "2 slices", "100g"
+
+    meal_time = models.CharField(
+        max_length=50,
+        choices=[
+            ('breakfast', 'Breakfast'),
+            ('lunch', 'Lunch'),
+            ('dinner', 'Dinner'),
+            ('snack', 'Snack'),
+        ],
+        blank=True,
+        null=True
+    )
+
+    # Core requirement
+    notes = models.TextField(blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+
+    recommended_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    recommended_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.patient} - {self.food}"

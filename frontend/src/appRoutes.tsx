@@ -77,6 +77,8 @@ import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
 import SuggestPlanToPatientsPage from "./pages/NutritionSide/SuggestPlanToPatients/index";
+import SuggestFoodNameToPatientsPage from "./pages/NutritionSide/SuggestFoodNameToPatients/index";
+import SuggestedFoodNameFromNutritionPage from "./pages/PatientSide/SuggestedFoodNameFromNutrition/index";
 import ApprovesPlansByPatientsPage from "./pages/NutritionSide/ApprovesPlansByPatients/index";
 import SetDailyMealsPage from "./pages/NutritionSide/SetDailyMeals/index";
 import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
@@ -341,10 +343,12 @@ export function appRoutes() {
           <Route path="patient/support-tickets" element={<PatientSupportTicketPage />} />
           <Route path="patient/notifications" element={<PatientNotificationsPage />} />
           <Route path="patient/instructions" element={<PatientInstructionsPage />} />
+          <Route path="patient/suggested-foods" element={<SuggestedFoodNameFromNutritionPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
           <Route path="nutrition/uploaded-documents" element={<UploadedDocumentsByPatientPage />} />
+          <Route path="nutrition/suggest-foods" element={<SuggestFoodNameToPatientsPage />} />
           <Route path="nutrition/suggest-plan" element={<SuggestPlanToPatientsPage />} />
           <Route path="nutrition/allot-micro-kitchen" element={<SuggestPlanToPatientsPage />} />
           <Route path="nutrition/approved-plans" element={<ApprovesPlansByPatientsPage />} />

@@ -7039,3 +7039,83 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
         if instance.user_id != self.request.user.id:
             raise PermissionDenied()
         instance.delete()
+
+
+class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
+    """Nutritionists suggest foods from the FoodName catalog to allotted patients; patients read their list."""
+
+    serializer_class = PatientFoodRecommendationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        user = self.request.user
+        role = getattr(user, "role", None)
+        qs = PatientFoodRecommendation.objects.select_related(
+            "patient", "food", "recommended_by"
+        ).order_by("-recommended_on")
+        if role == "patient":
+            return qs.filter(patient=user)
+        if role == "nutritionist":
+            mapped = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list("user_id", flat=True)
+            qs = qs.filter(patient_id__in=mapped)
+            pid = self.request.query_params.get("patient")
+            if pid:
+                try:
+                    pid_int = int(pid)
+                    if pid_int not in mapped:
+                        return PatientFoodRecommendation.objects.none()
+                    qs = qs.filter(patient_id=pid_int)
+                except (TypeError, ValueError):
+                    return PatientFoodRecommendation.objects.none()
+            return qs
+        if role == "admin":
+            return qs
+        return PatientFoodRecommendation.objects.none()
+
+    def perform_create(self, serializer):
+        if getattr(self.request.user, "role", None) != "nutritionist":
+            raise PermissionDenied("Only nutritionists can create food recommendations.")
+        patient = serializer.validated_data.get("patient")
+        if not UserNutritionistMapping.objects.filter(
+            nutritionist=self.request.user, user=patient, is_active=True
+        ).exists():
+            raise ValidationError({"patient": ["This patient is not in your allotted list."]})
+        serializer.save(recommended_by=self.request.user)
+
+    def perform_update(self, serializer):
+        role = getattr(self.request.user, "role", None)
+        if role == "patient":
+            raise PermissionDenied()
+        inst = serializer.instance
+        if role == "admin":
+            serializer.save()
+            return
+        if role == "nutritionist":
+            if inst.recommended_by_id != self.request.user.id:
+                raise PermissionDenied("You can only edit your own recommendations.")
+            if not UserNutritionistMapping.objects.filter(
+                nutritionist=self.request.user, user=inst.patient, is_active=True
+            ).exists():
+                raise PermissionDenied()
+            if "patient" in serializer.validated_data:
+                raise ValidationError({"patient": "Cannot change patient on update."})
+            serializer.save()
+            return
+        raise PermissionDenied()
+
+    def perform_destroy(self, instance):
+        role = getattr(self.request.user, "role", None)
+        if role == "patient":
+            raise PermissionDenied()
+        if role == "admin":
+            instance.delete()
+            return
+        if role == "nutritionist":
+            if instance.recommended_by_id != self.request.user.id:
+                raise PermissionDenied("You can only delete your own recommendations.")
+            instance.delete()
+            return
+        raise PermissionDenied()

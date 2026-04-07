@@ -3280,3 +3280,59 @@ class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
             attrs["end_time"] = None
         return attrs
 
+
+class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
+    patient_details = serializers.SerializerMethodField(read_only=True)
+    food_details = serializers.SerializerMethodField(read_only=True)
+    recommended_by_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PatientFoodRecommendation
+        fields = [
+            "id",
+            "patient",
+            "patient_details",
+            "food",
+            "food_details",
+            "quantity",
+            "meal_time",
+            "notes",
+            "comment",
+            "recommended_by",
+            "recommended_by_details",
+            "recommended_on",
+        ]
+        read_only_fields = ["id", "recommended_by", "recommended_on", "recommended_by_details", "patient_details", "food_details"]
+
+    def get_patient_details(self, obj):
+        u = obj.patient
+        if not u:
+            return None
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+            "email": u.email or "",
+        }
+
+    def get_food_details(self, obj):
+        f = obj.food
+        if not f:
+            return None
+        return {"id": f.id, "name": f.name, "code": f.code}
+
+    def get_recommended_by_details(self, obj):
+        u = obj.recommended_by
+        if not u:
+            return None
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+        }
+
+    def validate_patient(self, value):
+        if getattr(value, "role", None) != "patient":
+            raise serializers.ValidationError("Selected user must be a patient.")
+        return value
+

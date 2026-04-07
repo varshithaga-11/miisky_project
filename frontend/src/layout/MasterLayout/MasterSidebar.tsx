@@ -210,6 +210,7 @@ const patientNavItems: NavItem[] = [
       { name: "Diet Plans", path: "/patient/plans" },
       { name: "Micro-Kitchens", path: "/patient/micro-kitchens" },
       { name: "Suggested Plans & Kitchens", path: "/patient/suggested-plans" },
+      { name: "Suggested foods", path: "/patient/suggested-foods" },
     ],
   },
   {
@@ -280,6 +281,7 @@ const nutritionistNavItems: NavItem[] = [
     name: "Allotted Patients",
     subItems: [
       { name: "Allotted Patients", path: "/nutrition/allotted-patients" },
+      { name: "Suggest foods", path: "/nutrition/suggest-foods" },
       { name: "Patient Documents", path: "/nutrition/uploaded-documents" },
     ],
   },
