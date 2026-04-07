@@ -2015,6 +2015,52 @@ class NutritionistReviewSerializer(serializers.ModelSerializer):
         return out
 
 
+class ClinicalReviewHealthReportSerializer(serializers.ModelSerializer):
+    """Minimal health report payload for nutritionist clinical review dashboard."""
+
+    reviews = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientHealthReport
+        fields = [
+            'id', 'user', 'title', 'report_file', 'report_type', 'uploaded_on', 'reviews',
+        ]
+
+    def get_reviews(self, obj):
+        revs = obj.reviews.all().order_by('-created_on')
+        return [
+            {
+                'id': r.id,
+                'comments': r.comments,
+                'created_on': r.created_on,
+                'nutritionist_name': (
+                    f'{r.nutritionist.first_name} {r.nutritionist.last_name}'.strip()
+                    if r.nutritionist
+                    else 'Unknown'
+                ),
+            }
+            for r in revs
+        ]
+
+
+class ClinicalReviewNutritionistReviewSerializer(serializers.ModelSerializer):
+    """Minimal nutritionist review for clinical review dashboard (no nutritionist_details)."""
+
+    report_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NutritionistReview
+        fields = [
+            'id', 'user', 'nutritionist', 'reports', 'report_details', 'comments', 'created_on',
+        ]
+
+    def get_report_details(self, obj):
+        return [
+            {'id': r.id, 'title': r.title}
+            for r in obj.reports.all().order_by('-uploaded_on')
+        ]
+
+
 class UserDietPlanSerializer(serializers.ModelSerializer):
     diet_plan_details = serializers.SerializerMethodField()
     user_details = serializers.SerializerMethodField()

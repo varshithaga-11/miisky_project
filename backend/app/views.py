@@ -1616,6 +1616,50 @@ def _build_nutritionist_my_patients_list(nutritionist_user):
     return results
 
 
+def _build_clinical_review_patient_rows(nutritionist_user):
+    """
+    Lightweight patient list for clinical-review-dashboard only:
+    mapping_id, assigned_on, user (id, name, email, mobile). No questionnaire, kitchen, or reassignment.
+    """
+    mapped_qs = UserNutritionistMapping.objects.select_related("user").filter(
+        nutritionist=nutritionist_user, is_active=True
+    )
+    was_original_qs = UserDietPlan.objects.filter(
+        original_nutritionist=nutritionist_user, status="active"
+    ).select_related("user")
+    patient_map = {}
+    for m in mapped_qs:
+        patient_map[m.user.id] = {
+            "user": m.user,
+            "mapping_id": m.id,
+            "assigned_on": m.assigned_on,
+        }
+    for dp in was_original_qs:
+        if dp.user.id not in patient_map:
+            patient_map[dp.user.id] = {
+                "user": dp.user,
+                "mapping_id": None,
+                "assigned_on": dp.created_on,
+            }
+    results = []
+    for _pid, data in patient_map.items():
+        patient = data["user"]
+        results.append(
+            {
+                "mapping_id": data["mapping_id"],
+                "assigned_on": data["assigned_on"],
+                "user": {
+                    "id": patient.id,
+                    "first_name": patient.first_name or "",
+                    "last_name": patient.last_name or "",
+                    "email": patient.email or "",
+                    "mobile": patient.mobile or "",
+                },
+            }
+        )
+    return results
+
+
 def _nutritionist_accessible_health_reports_queryset(nutritionist_user, patient_id):
     """Match PatientHealthReportViewSet access rules for nutritionists, scoped to one patient."""
     active_patient_ids = UserNutritionistMapping.objects.filter(
@@ -1730,7 +1774,7 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
 
         from django.core.paginator import Paginator
 
-        results = _build_nutritionist_my_patients_list(user)
+        results = _build_clinical_review_patient_rows(user)
         search = (request.query_params.get("search") or "").strip()
         if search:
             ids = [r["user"]["id"] for r in results]
@@ -1781,11 +1825,11 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
         reviews_total = 0
         if selected_user_id is not None:
             rq = _nutritionist_accessible_health_reports_queryset(user, selected_user_id)
-            reports_total = rq.count()
-            reports_data = PatientHealthReportSerializer(rq, many=True).data
+            reports_data = ClinicalReviewHealthReportSerializer(rq, many=True).data
+            reports_total = len(reports_data)
             vq = _nutritionist_accessible_reviews_queryset(user, selected_user_id)
-            reviews_total = vq.count()
-            reviews_data = NutritionistReviewSerializer(vq, many=True).data
+            reviews_data = ClinicalReviewNutritionistReviewSerializer(vq, many=True).data
+            reviews_total = len(reviews_data)
 
         next_page = page_obj.next_page_number() if page_obj.has_next() else None
         prev_page = page_obj.previous_page_number() if page_obj.has_previous() else None

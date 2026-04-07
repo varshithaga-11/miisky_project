@@ -4,13 +4,14 @@ import PageMeta from "../../../components/common/PageMeta";
 import {
     getClinicalReviewDashboard,
     saveNutritionistReview,
-    MappedPatientResponse,
+    ClinicalReviewPatientRow,
     PatientHealthReport,
     NutritionistReview,
     ClinicalReviewDashboardResponse,
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiFileText, FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiInfo, FiChevronLeft, FiChevronRight, FiEye, FiDownload } from "react-icons/fi";
+import { resolveMediaUrl } from "../../AdminSide/PatientOverview/api";
 
 const PAGE_SIZE = 5;
 
@@ -78,7 +79,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
     /** While a fetch is in flight after a click, keep highlighting / header aligned with intent. */
     const effectiveUserId =
         explicitPatientId ?? dashboard?.selected_user_id ?? null;
-    const selectedPatient: MappedPatientResponse | null =
+    const selectedPatient: ClinicalReviewPatientRow | null =
         effectiveUserId != null
             ? patients.find((m) => m.user.id === effectiveUserId) ?? null
             : null;
@@ -121,7 +122,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
         );
     };
 
-    const selectPatient = (mapping: MappedPatientResponse) => {
+    const selectPatient = (mapping: ClinicalReviewPatientRow) => {
         setExplicitPatientId(mapping.user.id);
     };
 
@@ -331,7 +332,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             <a
-                                                                href={report.report_file}
+                                                                href={resolveMediaUrl(report.report_file)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide bg-slate-100 dark:bg-gray-900/80 text-slate-700 dark:text-slate-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
@@ -341,7 +342,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                                                 View
                                                             </a>
                                                             <a
-                                                                href={report.report_file}
+                                                                href={resolveMediaUrl(report.report_file)}
                                                                 download={getReportDownloadFilename(report)}
                                                                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide bg-slate-100 dark:bg-gray-900/80 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
                                                                 title="Download file"
