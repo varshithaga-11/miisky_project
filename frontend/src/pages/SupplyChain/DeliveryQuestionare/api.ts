@@ -74,3 +74,32 @@ export const saveMyDeliveryProfile = async (data: Partial<DeliveryProfile>): Pro
   const response = await axios.put(url, payload as any, { headers });
   return response.data;
 };
+
+/** Build absolute URL for a stored media path (API may return relative path). */
+export const profileFileUrl = (path: string): string => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
+
+/** Download an already-uploaded file (uses auth for protected media). */
+export const downloadProfileFile = async (mediaPath: string, filenameHint?: string): Promise<void> => {
+  const url = profileFileUrl(mediaPath);
+  const h = await getAuthHeaders();
+  const res = await axios.get(url, {
+    responseType: "blob",
+    headers: { Authorization: h.Authorization },
+  });
+  const name =
+    filenameHint ||
+    mediaPath.split("/").filter(Boolean).pop() ||
+    "document";
+  const blob = new Blob([res.data]);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+};

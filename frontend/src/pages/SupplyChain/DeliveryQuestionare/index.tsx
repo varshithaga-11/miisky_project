@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
@@ -7,7 +7,7 @@ import Label from "../../../components/form/Label";
 import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { DeliveryProfile, getMyDeliveryProfile, saveMyDeliveryProfile } from "./api";
+import { DeliveryProfile, downloadProfileFile, getMyDeliveryProfile, saveMyDeliveryProfile } from "./api";
 
 export default function DeliveryQuestionarePage() {
   const [loading, setLoading] = useState(true);
@@ -81,6 +81,35 @@ export default function DeliveryQuestionarePage() {
     }
     return "—";
   };
+
+  const fileInputBox = (children: ReactNode) => (
+    <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50/80 dark:bg-gray-900/40 px-3 py-3 mt-1">
+      {children}
+    </div>
+  );
+
+  const isServerFile = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
+
+  const FileCurrentRow = ({ value }: { value: unknown }) => (
+    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-gray-500 dark:text-gray-400">Current: {fileLabel(value as string)}</p>
+      {isServerFile(value) && (
+        <button
+          type="button"
+          className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 underline underline-offset-2 shrink-0"
+          onClick={async () => {
+            try {
+              await downloadProfileFile(value, fileLabel(value));
+            } catch {
+              toast.error("Could not download file");
+            }
+          }}
+        >
+          Download
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -172,47 +201,55 @@ export default function DeliveryQuestionarePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="license_copy">Licence copy</Label>
-                <p className="text-xs text-gray-500 mb-1">Current: {fileLabel(data.license_copy as string)}</p>
-                <input
-                  id="license_copy"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setField("license_copy", e.target.files?.[0] || null)}
-                  className="w-full text-sm"
-                />
+                <FileCurrentRow value={data.license_copy} />
+                {fileInputBox(
+                  <input
+                    id="license_copy"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setField("license_copy", e.target.files?.[0] || null)}
+                    className="w-full text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 dark:file:bg-indigo-950/50 dark:file:text-indigo-300"
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="rc_copy">RC (registration certificate)</Label>
-                <p className="text-xs text-gray-500 mb-1">Current: {fileLabel(data.rc_copy as string)}</p>
-                <input
-                  id="rc_copy"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setField("rc_copy", e.target.files?.[0] || null)}
-                  className="w-full text-sm"
-                />
+                <FileCurrentRow value={data.rc_copy} />
+                {fileInputBox(
+                  <input
+                    id="rc_copy"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setField("rc_copy", e.target.files?.[0] || null)}
+                    className="w-full text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 dark:file:bg-indigo-950/50 dark:file:text-indigo-300"
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="insurance_copy">Insurance copy</Label>
-                <p className="text-xs text-gray-500 mb-1">Current: {fileLabel(data.insurance_copy as string)}</p>
-                <input
-                  id="insurance_copy"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setField("insurance_copy", e.target.files?.[0] || null)}
-                  className="w-full text-sm"
-                />
+                <FileCurrentRow value={data.insurance_copy} />
+                {fileInputBox(
+                  <input
+                    id="insurance_copy"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setField("insurance_copy", e.target.files?.[0] || null)}
+                    className="w-full text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 dark:file:bg-indigo-950/50 dark:file:text-indigo-300"
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="puc_image">PUC (pollution certificate)</Label>
-                <p className="text-xs text-gray-500 mb-1">Current: {fileLabel(data.puc_image as string)}</p>
-                <input
-                  id="puc_image"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setField("puc_image", e.target.files?.[0] || null)}
-                  className="w-full text-sm"
-                />
+                <FileCurrentRow value={data.puc_image} />
+                {fileInputBox(
+                  <input
+                    id="puc_image"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setField("puc_image", e.target.files?.[0] || null)}
+                    className="w-full text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 dark:file:bg-indigo-950/50 dark:file:text-indigo-300"
+                  />
+                )}
               </div>
             </div>
           </section>
@@ -233,14 +270,16 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="aadhar_image">Aadhaar image</Label>
-                <p className="text-xs text-gray-500 mb-1">Current: {fileLabel(data.aadhar_image as string)}</p>
-                <input
-                  id="aadhar_image"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setField("aadhar_image", e.target.files?.[0] || null)}
-                  className="w-full text-sm"
-                />
+                <FileCurrentRow value={data.aadhar_image} />
+                {fileInputBox(
+                  <input
+                    id="aadhar_image"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setField("aadhar_image", e.target.files?.[0] || null)}
+                    className="w-full text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 dark:file:bg-indigo-950/50 dark:file:text-indigo-300"
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="pan_number">PAN number</Label>
@@ -253,14 +292,16 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="pan_image">PAN image</Label>
-                <p className="text-xs text-gray-500 mb-1">Current: {fileLabel(data.pan_image as string)}</p>
-                <input
-                  id="pan_image"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setField("pan_image", e.target.files?.[0] || null)}
-                  className="w-full text-sm"
-                />
+                <FileCurrentRow value={data.pan_image} />
+                {fileInputBox(
+                  <input
+                    id="pan_image"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setField("pan_image", e.target.files?.[0] || null)}
+                    className="w-full text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 dark:file:bg-indigo-950/50 dark:file:text-indigo-300"
+                  />
+                )}
               </div>
             </div>
           </section>
@@ -310,7 +351,7 @@ export default function DeliveryQuestionarePage() {
               Availability
             </h2>
             <div>
-              <Label htmlFor="available_slots">Preferred slots (JSON or free text)</Label>
+              <Label htmlFor="available_slots">Preferred slots</Label>
               <textarea
                 id="available_slots"
                 value={slotsText}

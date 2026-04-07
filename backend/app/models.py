@@ -356,9 +356,9 @@ class DeliveryProfile(models.Model):
     license_copy = models.FileField(upload_to="delivery/licenses/", null=True, blank=True)
     rc_copy = models.FileField(upload_to="delivery/rc/", null=True, blank=True)
     insurance_copy = models.FileField(upload_to="delivery/insurance/", null=True, blank=True)
-    aadhar_number = models.CharField(max_length=12, null=True, blank=True)
+    aadhar_number = models.CharField(max_length=20, null=True, blank=True)
     aadhar_image = models.FileField(upload_to="delivery/aadhar/", null=True, blank=True)
-    pan_number = models.CharField(max_length=10, null=True, blank=True)
+    pan_number = models.CharField(max_length=20, null=True, blank=True)
     pan_image = models.FileField(upload_to="delivery/pan/", null=True, blank=True)
     puc_image = models.FileField(upload_to="delivery/puc/", null=True, blank=True)
 
