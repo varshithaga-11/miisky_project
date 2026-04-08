@@ -714,6 +714,121 @@ class MicroKitchenOrderPaymentSnapshotsView(generics.ListAPIView):
         )
 
 
+class SupplyChainDeliveryEarningsListView(generics.ListAPIView):
+    """
+    Delivered separate (customer) orders assigned to this supply-chain user.
+    Delivery charge is the pass-through amount tied to that delivery.
+    """
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = SupplyChainDeliveryEarningsListSerializer
+
+    def get_queryset(self):
+        if getattr(self.request.user, "role", None) != "supply_chain":
+            return Order.objects.none()
+
+        qs = (
+            Order.objects.filter(delivery_person=self.request.user, status="delivered")
+            .select_related("micro_kitchen", "user", "payment_snapshot", "supply_chain_delivery_receipt")
+            .order_by("-created_at")
+        )
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if search.isdigit():
+                qs = qs.filter(id=int(search))
+            else:
+                qs = qs.filter(
+                    Q(user__first_name__icontains=search)
+                    | Q(user__last_name__icontains=search)
+                    | Q(user__username__icontains=search)
+                    | Q(micro_kitchen__brand_name__icontains=search)
+                )
+
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        stats = queryset.aggregate(
+            total_orders=Count("id"),
+            total_delivery_earnings=Sum("delivery_charge"),
+        )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data["total_orders"] = stats["total_orders"] or 0
+            response.data["total_delivery_earnings"] = str(stats["total_delivery_earnings"] or 0)
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "total_orders": stats["total_orders"] or 0,
+                "total_delivery_earnings": str(stats["total_delivery_earnings"] or 0),
+            }
+        )
+
+
+class SupplyChainOrderDeliveryReceiptUpsertView(APIView):
+    """Create or update receipt image + notes for a delivered order assigned to the caller."""
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def post(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "supply_chain":
+            raise PermissionDenied()
+
+        order_id = request.data.get("order_id")
+        if not order_id:
+            return Response({"detail": "order_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            oid = int(order_id)
+        except (TypeError, ValueError):
+            return Response({"detail": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = get_object_or_404(
+            Order,
+            id=oid,
+            delivery_person=request.user,
+            status="delivered",
+        )
+
+        receipt = getattr(order, "supply_chain_delivery_receipt", None)
+        img = request.FILES.get("receipt_image")
+        notes = (request.data.get("notes") or "").strip() or ""
+
+        if receipt:
+            if img:
+                receipt.receipt_image = img
+            receipt.notes = notes
+            receipt.uploaded_by = request.user
+            receipt.save()
+            created = False
+        else:
+            if not img:
+                return Response(
+                    {"detail": "receipt_image file is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            receipt = SupplyChainOrderDeliveryReceipt.objects.create(
+                order=order,
+                uploaded_by=request.user,
+                receipt_image=img,
+                notes=notes,
+            )
+            created = True
+
+        data = SupplyChainOrderDeliveryReceiptReadSerializer(
+            receipt, context={"request": request}
+        ).data
+        return Response(data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
 class PartnerPayoutTransactionListView(generics.ListAPIView):
     """List transactions for the logged-in partner (nutritionist or micro-kitchen)."""
     permission_classes = [IsAuthenticated]

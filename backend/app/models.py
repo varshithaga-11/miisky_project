@@ -412,8 +412,8 @@ class HealthConditionMaster(models.Model):
 
 
 class UserHealthCondition(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='health_conditions')
-    condition = models.ForeignKey(HealthConditionMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='health_conditions')
+    condition = models.ForeignKey(HealthConditionMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     has_condition = models.BooleanField(default=False)
     since_when = models.DateField(null=True, blank=True)
@@ -441,8 +441,8 @@ class SymptomMaster(models.Model):
 
 
 class UserSymptom(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='symptoms')
-    symptom = models.ForeignKey(SymptomMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='symptoms')
+    symptom = models.ForeignKey(SymptomMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -463,8 +463,8 @@ class AutoimmuneMaster(models.Model):
 
 
 class UserAutoimmune(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='autoimmune_diseases')
-    disease = models.ForeignKey(AutoimmuneMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='autoimmune_diseases')
+    disease = models.ForeignKey(AutoimmuneMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -485,8 +485,8 @@ class DeficiencyMaster(models.Model):
 
 
 class UserDeficiency(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='deficiencies')
-    deficiency = models.ForeignKey(DeficiencyMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='deficiencies')
+    deficiency = models.ForeignKey(DeficiencyMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -507,8 +507,8 @@ class DigestiveIssueMaster(models.Model):
 
 
 class UserDigestiveIssue(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='digestive_issues')
-    issue = models.ForeignKey(DigestiveIssueMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='digestive_issues')
+    issue = models.ForeignKey(DigestiveIssueMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -529,8 +529,8 @@ class SkinIssueMaster(models.Model):
 
 
 class UserSkinIssue(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='skin_issues')
-    skin_issue = models.ForeignKey(SkinIssueMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='skin_issues')
+    skin_issue = models.ForeignKey(SkinIssueMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -720,7 +720,7 @@ class Food(models.Model):
     image = models.ImageField(upload_to='foods/', null=True, blank=True)
     # Example image path: media/foods/idli.jpg
 
-    micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.CASCADE, null=True, blank=True, related_name='foods')
+    micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='foods')
 
     price = models.IntegerField(null=True, blank=True)
 
@@ -1720,13 +1720,13 @@ class UserMeal(models.Model):
 
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="meals"
     )
 
     user_diet_plan = models.ForeignKey(
         UserDietPlan,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="meals"
     )
     # 🔥 Important: link to the ACTIVE plan instance (not just DietPlans)
@@ -1741,7 +1741,7 @@ class UserMeal(models.Model):
 
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="user_meals"
     )
 
@@ -1812,13 +1812,13 @@ class MeetingRequest(models.Model):
 
     patient = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="meeting_requests"
     )
 
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="nutritionist_meetings"
     )
 
@@ -1903,7 +1903,7 @@ class NutritionistAvailability(models.Model):
     """
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="availabilities"
     )
 
@@ -1933,12 +1933,12 @@ class NutritionistAvailability(models.Model):
 class NutritionistRating(models.Model):
     patient = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='given_ratings'
     )
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='received_ratings'
     )
 
@@ -2015,12 +2015,12 @@ class MicroKitchenFood(models.Model):
     """Junction: which foods a micro kitchen offers, with kitchen-specific price & availability."""
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='kitchen_foods'
     )
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='kitchen_mappings'
     )
     is_available = models.BooleanField(default=True)
@@ -2047,7 +2047,7 @@ class MicroKitchenFood(models.Model):
 class DeliveryChargeSlab(models.Model):
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='delivery_slabs'
     )
 
@@ -2063,13 +2063,13 @@ class DeliveryChargeSlab(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='orders'
     )
 
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='orders'
     )
 
@@ -2132,13 +2132,13 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(
         Order,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='items'
     )
 
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,null=True,blank=True,
     )
 
     quantity = models.PositiveIntegerField()
@@ -2152,13 +2152,13 @@ class OrderItem(models.Model):
 class Cart(models.Model):
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='cart'
     )
 
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,null=True,blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2167,13 +2167,13 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(
         Cart,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='items'
     )
 
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,null=True,blank=True,
     )
 
     quantity = models.PositiveIntegerField()
@@ -2424,7 +2424,7 @@ class MicroKitchenReassignment(models.Model):
 
     user_diet_plan = models.ForeignKey(
         'UserDietPlan',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="kitchen_reassignments"
     )
     previous_kitchen = models.ForeignKey(
@@ -2478,10 +2478,8 @@ class PlanPaymentSnapshot(models.Model):
 
     user_diet_plan = models.OneToOneField(
         "UserDietPlan",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="payment_snapshot",
-        null=True,
-        blank=True,
     )
 
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -2579,7 +2577,7 @@ class OrderPaymentSnapshot(models.Model):
 
     order = models.OneToOneField(
         "Order",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="payment_snapshot",
     )
 
@@ -2615,6 +2613,34 @@ class OrderPaymentSnapshot(models.Model):
         )
 
 
+class SupplyChainOrderDeliveryReceipt(models.Model):
+    """
+    Receipt / proof uploaded by supply-chain staff for a delivered order's delivery charge (pass-through).
+    One row per order.
+    """
+
+    order = models.OneToOneField(
+        "Order",
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="supply_chain_delivery_receipt",
+    )
+    uploaded_by = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="order_delivery_receipt_uploads",
+    )
+    receipt_image = models.ImageField(upload_to="supply_chain_order_receipts/")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Supply chain order delivery receipt"
+
+    def __str__(self):
+        return f"Receipt order #{self.order_id}"
+
+
 class PayoutTracker(models.Model):
     """
     Amount owed to one recipient for one period; multiple PayoutTransaction rows may apply until paid.
@@ -2623,7 +2649,7 @@ class PayoutTracker(models.Model):
 
     snapshot = models.ForeignKey(
         PlanPaymentSnapshot,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="payouts",
     )
 
@@ -2728,7 +2754,7 @@ class PayoutTransaction(models.Model):
 
     tracker = models.ForeignKey(
         PayoutTracker,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="transactions",
     )
 
@@ -2883,12 +2909,12 @@ class MicroKitchenDeliveryTeam(models.Model):
 
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="delivery_team",
     )
     delivery_person = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="kitchen_assignments",
     )
 
@@ -2924,7 +2950,7 @@ class DietPlanDeliveryAssignment(models.Model):
 
     user_diet_plan = models.OneToOneField(
         UserDietPlan,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='delivery_assignment'
     )
 
@@ -3023,12 +3049,12 @@ class DietPlanSlotDeliveryPerson(models.Model):
 
     plan_assignment = models.ForeignKey(
         DietPlanDeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='slot_delivery_persons',
     )
     delivery_slot = models.ForeignKey(
         DeliverySlot,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='plan_slot_delivery_persons',
     )
     delivery_person = models.ForeignKey(
@@ -3052,7 +3078,7 @@ class DietPlanDeliveryAssignmentLog(models.Model):
     """
     plan_assignment = models.ForeignKey(
         DietPlanDeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='change_logs'
     )
 
@@ -3109,7 +3135,7 @@ class DeliveryAssignment(models.Model):
 
     user_meal = models.ForeignKey(
         UserMeal,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='deliveries'
     )
 
@@ -3267,7 +3293,7 @@ class SupplyChainDeliveryLeave(models.Model):
 
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='delivery_leaves',
     )
     LEAVE_TYPE_CHOICES = [
@@ -3292,7 +3318,7 @@ class SupplyChainDeliveryLeave(models.Model):
 class DeliveryIssue(models.Model):
     assignment = models.ForeignKey(
         DeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='issues'
     )
     reported_by = models.ForeignKey(
@@ -3338,7 +3364,7 @@ class DeliveryIssue(models.Model):
 class DeliveryRating(models.Model):
     assignment = models.OneToOneField(
         DeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='rating'
     )
     rated_by = models.ForeignKey(
@@ -3389,13 +3415,13 @@ class DeliveryRating(models.Model):
 class PatientFoodRecommendation(models.Model):
     patient = models.ForeignKey(
         UserRegister,  
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='food_recommendations'
     )
 
     food = models.ForeignKey(
         FoodName,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='recommended_to'
     )
 

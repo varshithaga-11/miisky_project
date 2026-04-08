@@ -227,6 +227,16 @@ urlpatterns = [
         name="microkitchen-order-payment-snapshots",
     ),
     path(
+        "supply-chain/delivery-earnings/",
+        views.SupplyChainDeliveryEarningsListView.as_view(),
+        name="supply-chain-delivery-earnings",
+    ),
+    path(
+        "supply-chain/order-delivery-receipt/",
+        views.SupplyChainOrderDeliveryReceiptUpsertView.as_view(),
+        name="supply-chain-order-delivery-receipt",
+    ),
+    path(
         "admin/plan-payout-trackers/",
         views.AdminPayoutTrackersForPayView.as_view(),
         name="admin-plan-payout-trackers",

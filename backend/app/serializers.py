@@ -2788,6 +2788,80 @@ class OrderPaymentSnapshotKitchenSerializer(serializers.ModelSerializer):
         return name or getattr(u, "username", None) or ""
 
 
+class SupplyChainDeliveryEarningsListSerializer(serializers.ModelSerializer):
+    """Delivered separate orders for the logged-in supply-chain user — delivery charge is their pass-through earning."""
+
+    kitchen_name = serializers.CharField(source="micro_kitchen.brand_name", read_only=True)
+    customer_display = serializers.SerializerMethodField()
+    delivery_earning = serializers.DecimalField(
+        source="delivery_charge", max_digits=10, decimal_places=2, read_only=True
+    )
+    snapshot_delivery_charge = serializers.SerializerMethodField()
+    receipt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "kitchen_name",
+            "customer_display",
+            "order_type",
+            "status",
+            "delivery_earning",
+            "snapshot_delivery_charge",
+            "final_amount",
+            "created_at",
+            "receipt",
+        ]
+
+    def get_customer_display(self, obj):
+        u = getattr(obj, "user", None)
+        if not u:
+            return ""
+        name = f"{(u.first_name or '').strip()} {(u.last_name or '').strip()}".strip()
+        return name or getattr(u, "username", None) or ""
+
+    def get_snapshot_delivery_charge(self, obj):
+        snap = getattr(obj, "payment_snapshot", None)
+        if snap:
+            return str(snap.delivery_charge)
+        return None
+
+    def get_receipt(self, obj):
+        r = getattr(obj, "supply_chain_delivery_receipt", None)
+        if not r:
+            return None
+        request = self.context.get("request")
+        url = None
+        if r.receipt_image:
+            url = r.receipt_image.url
+            if request:
+                url = request.build_absolute_uri(url)
+        return {
+            "id": r.id,
+            "receipt_image_url": url,
+            "notes": r.notes or "",
+            "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+        }
+
+
+class SupplyChainOrderDeliveryReceiptReadSerializer(serializers.ModelSerializer):
+    receipt_image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SupplyChainOrderDeliveryReceipt
+        fields = ["id", "order", "receipt_image_url", "notes", "created_at", "updated_at"]
+
+    def get_receipt_image_url(self, obj):
+        if not obj.receipt_image:
+            return None
+        request = self.context.get("request")
+        url = obj.receipt_image.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+
 class AdminPatientListSerializer(serializers.ModelSerializer):
     """Summary row for admin patient directory (role=patient users)."""
 
