@@ -42,3 +42,13 @@ export const getKitchenPayouts = async (page: number = 1, limit: number = 10, se
   });
   return response.data;
 };
+/**
+ * Fetches details for a specific order by its ID.
+ */
+export const getOrderById = async (id: number | string) => {
+  const url = createApiUrl(`api/order/${id}/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders()
+  });
+  return response.data;
+};
