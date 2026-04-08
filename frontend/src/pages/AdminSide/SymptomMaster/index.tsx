@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ImportButton from "../../../components/common/ImportButton";
 
 const SymptomMasterPage: React.FC = () => {
   const [rows, setRows] = useState<SymptomMaster[]>([]);
@@ -99,9 +100,12 @@ const SymptomMasterPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-6">
-            <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
-              <FiPlus /> Add
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
+                <FiPlus /> Add
+              </Button>
+              <ImportButton onSuccess={() => void fetchRows()} />
+            </div>
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
               <Select
@@ -125,7 +129,6 @@ const SymptomMasterPage: React.FC = () => {
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <div>
             Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
-            {searchTerm && ` (filtered from search)`}
           </div>
         </div>
       </div>
@@ -134,9 +137,7 @@ const SymptomMasterPage: React.FC = () => {
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  #
-                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -149,33 +150,26 @@ const SymptomMasterPage: React.FC = () => {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Action
-                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No records
+                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-500">
+                    No records found
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedRows.map((row, i) => (
                   <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                      {(currentPage - 1) * pageSize + i + 1}
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                      {row.name}
-                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">{(currentPage - 1) * pageSize + i + 1}</TableCell>
+                    <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">{row.name}</TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Edit"
+                          className="text-blue-600 hover:text-blue-800 text-lg transition-colors"
                           onClick={() => {
                             setEditId(row.id!);
                             setIsEditOpen(true);
@@ -183,7 +177,11 @@ const SymptomMasterPage: React.FC = () => {
                         >
                           <FiEdit />
                         </button>
-                        <button type="button" className="text-red-600 hover:text-red-800" title="Delete" onClick={() => void handleDelete(row.id!)}>
+                        <button
+                          type="button"
+                          className="text-red-600 hover:text-red-800 text-lg transition-colors"
+                          onClick={() => void handleDelete(row.id!)}
+                        >
                           <FiTrash2 />
                         </button>
                       </div>
@@ -199,10 +197,9 @@ const SymptomMasterPage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              type="button"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
             >
               Previous
             </button>
@@ -210,12 +207,11 @@ const SymptomMasterPage: React.FC = () => {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                 <button
                   key={pageNum}
-                  type="button"
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     currentPage === pageNum
-                      ? "bg-blue-600 text-white border border-blue-600"
-                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                      ? 'bg-blue-600 text-white border border-blue-600'
+                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                   }`}
                 >
                   {pageNum}
@@ -223,10 +219,9 @@ const SymptomMasterPage: React.FC = () => {
               ))}
             </div>
             <button
-              type="button"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
             >
               Next
             </button>

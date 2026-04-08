@@ -46,6 +46,12 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
       '/admin/diet-plan': { module: 'health', submenu: 'dietplan' },
 
       '/admin/usermanagement': { module: 'auth', submenu: 'usermanagement' },
+      '/admin/health-condition-master': { module: 'questionnaire', submenu: 'health-condition' },
+      '/admin/symptom-master': { module: 'questionnaire', submenu: 'symptom' },
+      '/admin/autoimmune-master': { module: 'questionnaire', submenu: 'autoimmune' },
+      '/admin/deficiency-master': { module: 'questionnaire', submenu: 'deficiency' },
+      '/admin/digestive-issue-master': { module: 'questionnaire', submenu: 'digestive-issue' },
+      '/admin/skin-issue-master': { module: 'questionnaire', submenu: 'skin-issue' },
     };
 
     // Find a matching path

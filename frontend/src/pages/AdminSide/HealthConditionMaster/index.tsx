@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ImportButton from "../../../components/common/ImportButton";
 
 const CATEGORY_LABEL: Record<string, string> = {
   chronic: "Chronic",
@@ -117,9 +118,12 @@ const HealthConditionMasterPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-6">
-            <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
-              <FiPlus /> Add
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
+                <FiPlus /> Add
+              </Button>
+              <ImportButton onSuccess={() => void fetchRows()} />
+            </div>
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
               <Select
@@ -143,7 +147,6 @@ const HealthConditionMasterPage: React.FC = () => {
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <div>
             Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
-            {searchTerm && ` (filtered from search)`}
           </div>
         </div>
       </div>
@@ -188,8 +191,8 @@ const HealthConditionMasterPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No records
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500">
+                    No records found
                   </TableCell>
                 </TableRow>
               ) : (
@@ -198,17 +201,25 @@ const HealthConditionMasterPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                       {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                    <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">
                       {row.name}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
-                      {CATEGORY_LABEL[row.category] ?? row.category}
+                    <TableCell className="px-5 py-4 text-start">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            row.category === 'chronic' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30' :
+                            row.category === 'infectious' ? 'bg-red-50 text-red-600 dark:bg-red-900/30' :
+                            row.category === 'metabolic' ? 'bg-green-50 text-green-600 dark:bg-green-900/30' :
+                            row.category === 'digestive' ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/30' :
+                            'bg-gray-50 text-gray-600 dark:bg-gray-700/50'
+                        }`}>
+                            {CATEGORY_LABEL[row.category] ?? row.category}
+                        </span>
                     </TableCell>
-                    <TableCell className="px-5 py-4">
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                          className="text-blue-600 hover:text-blue-800 text-lg transition-colors"
                           title="Edit"
                           onClick={() => {
                             setEditId(row.id!);
@@ -217,10 +228,10 @@ const HealthConditionMasterPage: React.FC = () => {
                         >
                           <FiEdit />
                         </button>
-                        <button
-                          type="button"
-                          className="text-red-600 hover:text-red-800 dark:text-red-400"
-                          title="Delete"
+                        <button 
+                          type="button" 
+                          className="text-red-600 hover:text-red-800 text-lg transition-colors" 
+                          title="Delete" 
                           onClick={() => void handleDelete(row.id!)}
                         >
                           <FiTrash2 />
@@ -239,10 +250,9 @@ const HealthConditionMasterPage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              type="button"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
             >
               Previous
             </button>
@@ -250,12 +260,11 @@ const HealthConditionMasterPage: React.FC = () => {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                 <button
                   key={pageNum}
-                  type="button"
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     currentPage === pageNum
-                      ? "bg-blue-600 text-white border border-blue-600"
-                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                      ? 'bg-blue-600 text-white border border-blue-600'
+                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                   }`}
                 >
                   {pageNum}
@@ -263,10 +272,9 @@ const HealthConditionMasterPage: React.FC = () => {
               ))}
             </div>
             <button
-              type="button"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
             >
               Next
             </button>

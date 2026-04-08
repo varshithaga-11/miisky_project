@@ -2850,6 +2850,16 @@ class TemplateDownloadView(APIView):
                 "diet-plan": ["title", "code", "amount", "discount_amount", "no_of_days"],
                 "dietplan": ["title", "code", "amount", "discount_amount", "no_of_days"]
             },
+
+            "questionnaire": {
+                "health-condition": ["name", "category"],
+                "symptom": ["name"],
+                "autoimmune": ["name"],
+                "deficiency": ["name"],
+                "digestive-issue": ["name"],
+                "skin-issue": ["name"],
+            },
+
             "auth": {
                 "usermanagement": ["username", "email", "first_name", "last_name", "role", "mobile", "whatsapp", "dob", "gender", "address", "zip_code", "country_name", "state_name", "city_name", "joined_date", "password", "password_confirm", "is_active"]
             }
@@ -3148,6 +3158,40 @@ class TemplateDownloadView(APIView):
                 ["Egg", "100g", "0.05", "0.02", "0.01", "0.02", "0.05", "0.15", "2.50", "0.85", "0.02", "0.01", "0.01", "0.05", "0.15", "3.50", "0.05", "0.02", "0.01", "1.50", "0.12", "3.85", "3.75", "1.62"],
                 ["Peanut", "100g", "0.05", "0.01", "0.01", "0.02", "0.05", "0.15", "5.20", "1.25", "0.65", "0.75", "0.35", "0.05", "0.15", "23.50", "0.05", "0.55", "0.05", "15.50", "0.15", "8.50", "24.50", "15.65"],
                 ["Sugar", "100g", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
+            ],
+            "health-condition": [
+                ["Pre-Diabetic", "metabolic"], ["Diabetes Type I", "metabolic"], ["Diabetes Type II", "metabolic"], ["Juvenile Diabetes", "metabolic"],
+                ["Hypertension", "chronic"], ["Cardiac Issues", "chronic"], ["CKD", "chronic"], ["Anemia", "other"],
+                ["Thyroid", "metabolic"], ["Migraine", "chronic"], ["PCOD & PCOS", "metabolic"], ["Triglycerides", "metabolic"],
+                ["Cholesterol", "metabolic"], ["Cancer", "chronic"], ["Gout", "metabolic"], ["Osteoporosis", "chronic"],
+                ["Obesity", "metabolic"], ["Urine Infection", "infectious"], ["Glucoma", "chronic"], ["Malaria", "infectious"],
+                ["Dengue", "infectious"], ["Chicken Pox", "infectious"], ["Herpes", "infectious"], ["Gall Stone", "digestive"],
+                ["Fatty Liver", "digestive"], ["Liver Cirrhosis", "digestive"], ["Kidney Stone", "other"], ["IBS", "digestive"], ["Gastritis", "digestive"]
+            ],
+            "symptom": [
+                ["Fatigue"], ["Sudden weight loss"], ["Sudden weight Gain"], ["Muscle pain"], ["Joint pain"],
+                ["Hair loss"], ["Bloating"], ["Diarrhoea"], ["Constipation"], ["Numbness/tingling"],
+                ["Difficulty Concentrating"], ["Palpitations"], ["Blurry vision"], ["Mouth ulcers"]
+            ],
+            "autoimmune": [
+                ["Rheumatoid Arthritis"], ["Celiac disease"], ["Pernicious Anemia"], ["Vitiligo"], ["Addison’s disease"],
+                ["Ulcerative Colitis"], ["Crohn’s disease"], ["Guillain- Barre Syndrome"], ["Kawasaki disease"], ["Psoriasis"],
+                ["Alopecia Areata"], ["Fibromyalgia"]
+            ],
+            "deficiency": [
+                ["Vitamin A"], ["Vitamin B1"], ["Vitamin B9"], ["Vitamin B12"], ["Vitamin C"],
+                ["Vitamin D3"], ["Vitamin K"], ["Calcium"], ["Magnesium"], ["Zinc"],
+                ["Iron"], ["Potassium"], ["Sodium"]
+            ],
+            "digestive-issue": [
+                ["Acid Reflux / GERD"], ["IBS (Irritable Bowel Syndrome)"], ["Bloating / Gas"], ["Chronic Constipation"], ["Chronic Diarrhea"],
+                ["Gastritis"], ["Peptic Ulcer"], ["Crohn's Disease"], ["Celiac Disease"], ["Food Intolerance"],
+                ["Gallstones"], ["Ulcerative Colitis"], ["Hemorrhoids"], ["Diverticulitis"], ["Lactose Intolerance"],
+                ["Hiatal Hernia"], ["Fatty Liver"], ["Pancreatitis"], ["Stomach Flu / Gastroenteritis"], ["Indigestion / Dyspepsia"],
+                ["Heartburn"], ["Nausea"], ["Abdominal Pain"], ["Loss of Appetite"], ["Small Intestinal Bacterial Overgrowth (SIBO)"]
+            ],
+            "skin-issue": [
+                ["Allergy"], ["Acne prone"], ["Eczema"], ["Dandruff"], ["Dryness"], ["Itchiness"]
             ]
         }
         if submenu in sample_rows:
