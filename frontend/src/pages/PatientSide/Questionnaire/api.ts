@@ -12,6 +12,14 @@ export type QuestionnaireHealthConditionRow = {
   comments?: string | null;
 };
 
+/** Sent when saving; slimmer than full GET row. */
+export type QuestionnaireHealthConditionPayload = {
+  condition_id: number;
+  has_condition: boolean;
+  since_when?: string | null;
+  comments?: string | null;
+};
+
 export type UserQuestionnaire = {
   id?: number;
   user?: number;
@@ -31,13 +39,13 @@ export type UserQuestionnaire = {
   food_allergy_details?: string | null;
   fruits_per_day?: number | null;
   vegetables_per_day?: number | null;
-  /** Structured rows from junction table + HealthConditionMaster */
-  health_conditions?: QuestionnaireHealthConditionRow[] | string[];
-  symptoms?: string[];
-  deficiencies?: string[];
-  autoimmune_diseases?: string[];
-  digestive_issues?: string[];
-  skin_issues?: string[];
+  health_conditions?: QuestionnaireHealthConditionRow[] | string[] | QuestionnaireHealthConditionPayload[];
+  /** Read: names from API. Write: master ids (numbers) or names (strings) per backend sync. */
+  symptoms?: Array<string | number>;
+  deficiencies?: Array<string | number>;
+  autoimmune_diseases?: Array<string | number>;
+  digestive_issues?: Array<string | number>;
+  skin_issues?: Array<string | number>;
   surgery_history?: boolean | null;
   on_medication?: boolean | null;
   alcohol_per_week?: number | null;
@@ -49,10 +57,16 @@ export type UserQuestionnaire = {
   additional_notes?: string | null;
 };
 
+export type MasterRow = { id: number; name: string; category?: string };
+
+async function getJson<T>(path: string): Promise<T> {
+  const url = createApiUrl(path);
+  const res = await axios.get<T>(url, { headers: await getAuthHeaders() });
+  return res.data;
+}
+
 export const getMyQuestionnaire = async (): Promise<UserQuestionnaire> => {
-  const url = createApiUrl("api/userquestionnaire/me/");
-  const response = await axios.get(url, { headers: await getAuthHeaders() });
-  return response.data;
+  return getJson<UserQuestionnaire>("api/userquestionnaire/me/");
 };
 
 export const saveMyQuestionnaire = async (data: Partial<UserQuestionnaire>): Promise<UserQuestionnaire> => {
@@ -60,3 +74,21 @@ export const saveMyQuestionnaire = async (data: Partial<UserQuestionnaire>): Pro
   const response = await axios.put(url, data, { headers: await getAuthHeaders() });
   return response.data;
 };
+
+export const fetchHealthConditionMasters = (): Promise<MasterRow[]> =>
+  getJson<MasterRow[]>("api/health-condition-master/all/");
+
+export const fetchSymptomMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/symptom-master/all/");
+
+export const fetchAutoimmuneMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/autoimmune-master/all/");
+
+export const fetchDeficiencyMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/deficiency-master/all/");
+
+export const fetchDigestiveIssueMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/digestive-issue-master/all/");
+
+export const fetchSkinIssueMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/skin-issue-master/all/");

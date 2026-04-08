@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiClipboard, FiFileText, FiSearch, FiActivity } from "react-icons/fi";
+import { FiClipboard, FiFileText, FiSearch, FiActivity, FiCheckCircle, FiUser } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Modal } from "../../../components/ui/modal";
@@ -39,6 +39,210 @@ function DietPlanRowView({ plan }: { plan: Record<string, unknown> }) {
         {[nut?.first_name, nut?.last_name].filter(Boolean).join(" ") || "—"}
       </TableCell>
     </TableRow>
+  );
+}
+
+function QuestionnaireView({ data }: { data: any }) {
+  if (!data) return null;
+
+  const renderSection = (title: string, icon: React.ReactNode, children: React.ReactNode) => (
+    <div className="mb-6 last:mb-0">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+          {icon}
+        </div>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white capitalize">
+          {title}
+        </h3>
+      </div>
+      <div className="bg-white dark:bg-white/[0.03] rounded-2xl border border-gray-200 dark:border-white/[0.05] p-5 shadow-sm">
+        {children}
+      </div>
+    </div>
+  );
+
+  const InfoItem = ({ label, value, subValue }: { label: string; value: any; subValue?: string }) => (
+    <div className="space-y-1">
+      <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase">
+        {label}
+      </div>
+      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+        {value === true ? "Yes" : value === false ? "No" : value || "—"}
+      </div>
+      {subValue && <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">{subValue}</div>}
+    </div>
+  );
+
+  const BadgeList = ({ items }: { items: string[] }) => (
+    <div className="flex flex-wrap gap-1.5">
+      {items && items.length > 0 ? (
+        items.map((item, i) => (
+          <span
+            key={i}
+            className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-gray-300 text-[11px] font-semibold border border-slate-200 dark:border-white/10"
+          >
+            {item}
+          </span>
+        ))
+      ) : (
+        <span className="text-gray-400 italic text-xs">None reported</span>
+      )}
+    </div>
+  );
+
+  const bmi =
+    data.height_cm > 0 && data.weight_kg > 0
+      ? (data.weight_kg / Math.pow(data.height_cm / 100, 2)).toFixed(1)
+      : "—";
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {renderSection(
+            "Physical Stats & Lifestyle",
+            <FiUser className="w-4 h-4" />,
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+              <InfoItem label="Age" value={`${data.age} years`} />
+              <InfoItem label="Height" value={`${data.height_cm} cm`} />
+              <InfoItem label="Weight" value={`${data.weight_kg} kg`} />
+              <InfoItem label="BMI" value={bmi} />
+              <InfoItem
+                label="Activity"
+                value={data.physical_activity ? "Active" : "Sedentary"}
+                subValue={data.work_type}
+              />
+              <InfoItem label="Sleep Quality" value={data.sleep_quality} />
+              <InfoItem label="Stress Level" value={data.stress_level} />
+              <InfoItem label="Alcohol" value={`${data.alcohol_per_week} / week`} />
+              <InfoItem label="Smoking" value={`${data.smoking_per_day} / day`} />
+            </div>
+          )}
+
+          {renderSection(
+            "Dietary Habits",
+            <FiClipboard className="w-4 h-4" />,
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+              <InfoItem label="Pattern" value={data.diet_pattern?.replace("_", " ")} />
+              <InfoItem label="Source" value={data.food_source} />
+              <InfoItem label="Meals / Day" value={data.meals_per_day} />
+              <InfoItem label="Skips Meals" value={data.skips_meals} />
+              <InfoItem label="Snacks" value={data.snacks_between_meals} />
+              <InfoItem label="Sick freq." value={data.falls_sick_frequency} />
+              <div className="col-span-full grid grid-cols-2 gap-6 pt-2 border-t border-gray-100 dark:border-white/5 mt-2">
+                <InfoItem label="Fruits / Day" value={data.fruits_per_day} />
+                <InfoItem label="Veggies / Day" value={data.vegetables_per_day} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {renderSection(
+            "Medical conditions",
+            <FiActivity className="w-4 h-4" />,
+            <div className="space-y-4">
+              {data.health_conditions?.filter((c: any) => c.has_condition).length > 0 ? (
+                <div className="grid grid-cols-1 gap-2.5">
+                  {data.health_conditions
+                    .filter((c: any) => c.has_condition)
+                    .map((c: any) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center justify-between p-3 rounded-xl border border-red-100 bg-red-50/30 dark:border-red-500/10 dark:bg-red-500/5 transition-all hover:bg-red-50/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
+                          <div>
+                            <div className="text-sm font-bold text-red-900 dark:text-red-400 capitalize">
+                              {c.name}
+                            </div>
+                            <div className="text-[10px] text-red-700/60 dark:text-red-400/50 uppercase tracking-wider font-semibold">
+                              {c.category}
+                            </div>
+                          </div>
+                        </div>
+                        {c.since_when && (
+                          <div className="text-[11px] text-red-600 dark:text-red-400/80 font-bold bg-white dark:bg-black/20 px-2 py-0.5 rounded-md">
+                            Since: {c.since_when}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="py-4 text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 text-sm font-semibold border border-emerald-100 dark:border-emerald-500/20">
+                    <FiCheckCircle className="w-4 h-4" /> No active issues
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-white dark:bg-white/[0.03] rounded-2xl border border-gray-200 dark:border-white/[0.05] p-5 shadow-sm space-y-6">
+              <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                <div className="space-y-3">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Symptoms
+                  </div>
+                  <BadgeList items={data.symptoms} />
+                </div>
+                <div className="space-y-3">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Deficiencies
+                  </div>
+                  <BadgeList items={data.deficiencies} />
+                </div>
+                <div className="space-y-3">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Digestive Issues
+                  </div>
+                  <BadgeList items={data.digestive_issues} />
+                </div>
+                <div className="space-y-3">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Skin Issues
+                  </div>
+                  <BadgeList items={data.skin_issues} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Details */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+        <div className="p-4 rounded-2xl bg-orange-50/40 dark:bg-orange-500/5 border border-orange-100 dark:border-orange-500/10">
+          <div className="text-[10px] font-bold text-orange-800 dark:text-orange-400 uppercase tracking-wider mb-2">
+            Food Allergies
+          </div>
+          <p className="text-sm text-orange-900 dark:text-orange-200 font-medium">
+            {data.food_allergy ? data.food_allergy_details || "Yes (No details provided)" : "None"}
+          </p>
+        </div>
+        <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10">
+          <div className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider mb-2">
+            Preferences
+          </div>
+          <div className="text-sm text-indigo-900 dark:text-indigo-200 font-medium">
+            {data.food_preferences?.length > 0 ? data.food_preferences.join(", ") : "None reported"}
+          </div>
+        </div>
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+          <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+            Additional Notes
+          </div>
+          <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+            {data.additional_notes || "No extra notes"}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -190,14 +394,7 @@ const AllPatientsPage: React.FC = () => {
     }
   };
 
-  const questionnaireJson = useMemo(() => {
-    if (qData == null) return "";
-    try {
-      return JSON.stringify(qData, null, 2);
-    } catch {
-      return String(qData);
-    }
-  }, [qData]);
+  // questionnaireJson useMemo removed as we now use QuestionnaireView component
 
   return (
     <>
@@ -374,13 +571,19 @@ const AllPatientsPage: React.FC = () => {
         </div>
         <div className="p-6 overflow-y-auto flex-1 min-h-0">
           {qLoading ? (
-            <p className="text-gray-500">Loading…</p>
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">Loading questionnaire data...</p>
+            </div>
           ) : !qData ? (
-            <p className="text-gray-500">No questionnaire submitted for this patient.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+               <FiClipboard className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+               <p className="text-gray-500 dark:text-gray-400 font-medium">No questionnaire submitted for this patient.</p>
+            </div>
           ) : (
-            <pre className="text-xs font-mono whitespace-pre-wrap break-words bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-white/10 max-h-[65vh] overflow-auto">
-              {questionnaireJson}
-            </pre>
+            <div className="max-w-5xl mx-auto">
+              <QuestionnaireView data={qData} />
+            </div>
           )}
         </div>
       </Modal>
