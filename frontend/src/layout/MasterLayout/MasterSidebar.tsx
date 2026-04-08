@@ -144,6 +144,7 @@ const adminNavItems: NavItem[] = [
     name: "Orders Management",
     subItems: [
       { name: "All Orders", path: "/admin/all-orders" },
+      { name: "Order Commission", path: "/admin/order-commission" },
       // { name: "Kitchen Payouts", path: "/admin/payouts" },
     ],
   },

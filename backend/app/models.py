@@ -13,6 +13,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Sum
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 
@@ -2498,6 +2500,121 @@ class PlanPaymentSnapshot(models.Model):
         return f"Snapshot for plan {self.user_diet_plan_id} — ₹{self.total_amount}"
 
 
+class OrderCommissionConfig(models.Model):
+    """
+    Single global commission rate for order payouts.
+    Exactly one row should be active at a time.
+    """
+
+    platform_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
+        help_text="Platform cut (%)",
+    )
+    kitchen_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
+        help_text="Kitchen cut (%)",
+    )
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_order_commission_configs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Order commission config"
+
+    def clean(self):
+        super().clean()
+        if (
+            self.platform_commission_percent is not None
+            and self.kitchen_commission_percent is not None
+        ):
+            total = self.platform_commission_percent + self.kitchen_commission_percent
+            if total != Decimal("100"):
+                raise ValidationError(
+                    f"Platform % + Kitchen % must equal 100. Currently: {total}%"
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if self.is_active:
+            OrderCommissionConfig.objects.exclude(pk=self.pk).filter(
+                is_active=True
+            ).update(is_active=False)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_active(cls):
+        config = cls.objects.filter(is_active=True).first()
+        if not config:
+            raise ValueError(
+                "No active OrderCommissionConfig found. "
+                "Please create one in the admin panel."
+            )
+        return config
+
+    def __str__(self):
+        return (
+            f"Platform {self.platform_commission_percent}% / "
+            f"Kitchen {self.kitchen_commission_percent}%"
+            f"{' [active]' if self.is_active else ''}"
+        )
+
+
+class OrderPaymentSnapshot(models.Model):
+    """
+    Immutable order split snapshot created when an order is inserted.
+    Food subtotal is split by commission, while delivery charge is pass-through.
+    """
+
+    order = models.OneToOneField(
+        "Order",
+        on_delete=models.CASCADE,
+        related_name="payment_snapshot",
+    )
+
+    food_subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+    delivery_charge = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Pass-through to delivery person. Not included in split.",
+    )
+    grand_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text="food_subtotal + delivery_charge",
+    )
+
+    platform_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    kitchen_percent = models.DecimalField(max_digits=5, decimal_places=2)
+
+    platform_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    kitchen_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Order payment snapshot"
+
+    def __str__(self):
+        return (
+            f"Order #{self.order_id} | "
+            f"Platform ₹{self.platform_amount} ({self.platform_percent}%) | "
+            f"Kitchen ₹{self.kitchen_amount} ({self.kitchen_percent}%)"
+        )
+
+
 class PayoutTracker(models.Model):
     """
     Amount owed to one recipient for one period; multiple PayoutTransaction rows may apply until paid.
@@ -3313,3 +3430,38 @@ class PatientFoodRecommendation(models.Model):
 
     def __str__(self):
         return f"{self.patient} - {self.food}"
+
+
+@receiver(post_save, sender=Order)
+def create_order_payment_snapshot(sender, instance, created, **kwargs):
+    """
+    Auto-create immutable payout split snapshot when a new order is created.
+    """
+    if not created:
+        return
+
+    if OrderPaymentSnapshot.objects.filter(order=instance).exists():
+        return
+
+    config = OrderCommissionConfig.get_active()
+
+    food_subtotal = Decimal(str(instance.total_amount or 0))
+    delivery_charge = Decimal(str(instance.delivery_charge or 0))
+    platform_pct = config.platform_commission_percent
+    kitchen_pct = config.kitchen_commission_percent
+
+    platform_amount = (food_subtotal * platform_pct / Decimal("100")).quantize(
+        Decimal("0.01")
+    )
+    kitchen_amount = food_subtotal - platform_amount
+
+    OrderPaymentSnapshot.objects.create(
+        order=instance,
+        food_subtotal=food_subtotal,
+        delivery_charge=delivery_charge,
+        grand_total=food_subtotal + delivery_charge,
+        platform_percent=platform_pct,
+        kitchen_percent=kitchen_pct,
+        platform_amount=platform_amount,
+        kitchen_amount=kitchen_amount,
+    )
