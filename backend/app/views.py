@@ -1975,6 +1975,19 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
             )
         return Response(results)
 
+
+class AdminAllNutritionistsViewSet(viewsets.ViewSet):
+    """
+    Admin-only endpoint for listing nutritionists.
+    Kept separate from UserNutritionistMappingViewSet to provide a stable URL binding.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminOrDoctorRole]
+
+    def list(self, request):
+        qs = UserRegister.objects.filter(role="nutritionist").order_by("username")
+        return Response(AdminNutritionistListSerializer(qs, many=True).data)
+
     @action(
         detail=False,
         methods=["post"],
@@ -5967,6 +5980,8 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
             user_type = "nutritionist"
         elif role == "micro_kitchen":
             user_type = "kitchen"
+        elif role == "doctor":
+            user_type = "doctor"
         else:
             user_type = self.request.data.get("user_type") or "patient"
 

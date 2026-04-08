@@ -8,8 +8,8 @@ export type TicketCategory = {
 
 export type SupportTicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "medium" | "high";
-export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen";
-export type SupportTicketTargetType = "admin" | "nutritionist" | "kitchen";
+export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen" | "doctor" | "non_patient" | "supply_chain";
+export type SupportTicketTargetType = "admin" | "nutritionist" | "kitchen" | "doctor";
 
 export type SupportTicket = {
   id: number;
@@ -24,7 +24,6 @@ export type SupportTicket = {
   priority: SupportTicketPriority;
   created_at: string;
   updated_at: string;
-  // If backend returns expanded objects later, we keep it flexible
   category_details?: TicketCategory | null;
   created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
   assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
@@ -68,8 +67,33 @@ export type SupportServiceProvider = {
   id: number;
   name: string;
   is_active: boolean;
-  role: "nutritionist" | "kitchen";
+  role: "kitchen" | "admin";
 };
+
+export async function getMyKitchens(): Promise<SupportServiceProvider[]> {
+  // Fetch assignments to find kitchens this person works with
+  const url = createApiUrl("api/mealdeliveryassignment/");
+  const res = await axios.get(url, { headers: await getAuthHeaders(), params: { limit: 100 } });
+  const assignments = res.data?.results ?? res.data;
+  
+  if (!Array.isArray(assignments)) return [];
+  
+  const kitchenMap = new Map<number, SupportServiceProvider>();
+  assignments.forEach((a: any) => {
+    const kitchen = a.user_meal_details?.micro_kitchen_details;
+    const kitchenUserId = a.user_meal_details?.micro_kitchen; // Assuming this is the user ID
+    if (kitchen && kitchenUserId) {
+      kitchenMap.set(kitchenUserId, {
+        id: kitchenUserId,
+        name: kitchen.brand_name || "Micro Kitchen",
+        is_active: true,
+        role: "kitchen"
+      });
+    }
+  });
+  
+  return Array.from(kitchenMap.values());
+}
 
 export async function createSupportTicket(payload: {
   category?: number | null;
@@ -134,15 +158,8 @@ export async function uploadTicketAttachment(ticketId: number, file: File): Prom
   formData.append("file", file);
   
   const headers = await getAuthHeaders();
-  // Overwrite the JSON content type with multipart for file uploads
   headers["Content-Type"] = "multipart/form-data";
 
   const res = await axios.post(url, formData, { headers });
   return res.data as TicketAttachment;
-}
-
-export async function getServiceProviders(): Promise<{ nutritionists: SupportServiceProvider[], kitchens: SupportServiceProvider[] }> {
-  const url = createApiUrl("api/patient/service-providers/");
-  const res = await axios.get(url, { headers: await getAuthHeaders() });
-  return res.data;
 }

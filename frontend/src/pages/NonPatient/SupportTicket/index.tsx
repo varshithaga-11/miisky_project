@@ -29,6 +29,18 @@ const formatName = (u?: { first_name?: string; last_name?: string; username?: st
   return name || u?.username || "User";
 };
 
+const formatRole = (role?: string | null) => {
+  if (!role) return "";
+  return role.replace(/_/g, " ");
+};
+
+const formatNameWithRole = (u?: { first_name?: string; last_name?: string; username?: string; role?: string } | null) => {
+  if (!u) return "—";
+  const name = formatName(u);
+  const role = formatRole((u as any).role);
+  return role ? `${name} (${role})` : name;
+};
+
 const asArray = <T,>(data: any): T[] => {
   if (Array.isArray(data)) return data as T[];
   if (data?.results && Array.isArray(data.results)) return data.results as T[];
@@ -288,6 +300,9 @@ const SupportTicketPage: React.FC = () => {
                   <div className="text-[11px] font-medium text-gray-500 truncate mb-4 italic">
                     {t.description}
                   </div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                    From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
+                  </div>
                   <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
                     <span className={`inline-flex items-center gap-1.5 ${t.priority === 'high' ? 'text-rose-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-blue-500'
                       }`}>
@@ -312,7 +327,7 @@ const SupportTicketPage: React.FC = () => {
                     Ticket #{activeTicket.id} — {activeTicket.title}
                   </div>
                   <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-                    Channel: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority}
+                    Channel: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority} • From: {formatNameWithRole(activeTicket.created_by_details)} • To: {formatNameWithRole(activeTicket.assigned_to_details)}
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => loadMessages(activeTicket.id)} className="font-black uppercase tracking-widest text-[9px]">

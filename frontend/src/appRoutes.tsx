@@ -100,6 +100,7 @@ import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/ind
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
 import DoctorAllPatientsPage from "./pages/DoctorSide/AllPatients/index";
+import DoctorSupportTicketPage from "./pages/DoctorSide/SupportTicket/index";
 import NonPatientInformationPage from "./pages/AdminSide/NonPatientInformation/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
 import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
@@ -111,6 +112,7 @@ import PatientNotificationsPage from "./pages/PatientSide/Notification/index";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
 import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
+import SupplyChainSupportTicketPage from "./pages/SupplyChain/SupportTicket/index";
 import PatientDashboardPage from "./pages/PatientSide/Dashboard/index";
 import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
 import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
@@ -313,6 +315,7 @@ export function appRoutes() {
           <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
           <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
           <Route path="doctor/all-patients" element={<DoctorAllPatientsPage />} />
+          <Route path="doctor/support-tickets" element={<DoctorSupportTicketPage />} />
           <Route path="admin/non-patient-information" element={<NonPatientInformationPage />} />
           <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
@@ -383,6 +386,7 @@ export function appRoutes() {
           <Route path="supplychain/earnings" element={<SupplyChainEarningsPage />} />
           <Route path="supplychain/planned-leave" element={<SupplyChainPlannedLeavePage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
+          <Route path="supplychain/support-tickets" element={<SupplyChainSupportTicketPage />} />
           <Route path="supplychain/assignments" element={<Navigate to="/supplychain/daily-work" replace />} />
 
 

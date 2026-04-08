@@ -19,7 +19,7 @@ import {
   TicketAttachment,
   getTicketAttachments,
   uploadTicketAttachment,
-  getServiceProviders,
+  getAllNutritionists,
   SupportServiceProvider,
 } from "./api";
 import { getUserIdFromToken } from "../../../utils/auth";
@@ -27,6 +27,18 @@ import { getUserIdFromToken } from "../../../utils/auth";
 const formatName = (u?: { first_name?: string; last_name?: string; username?: string } | null) => {
   const name = [u?.first_name, u?.last_name].filter(Boolean).join(" ").trim();
   return name || u?.username || "User";
+};
+
+const formatRole = (role?: string | null) => {
+  if (!role) return "";
+  return role.replace(/_/g, " ");
+};
+
+const formatNameWithRole = (u?: { first_name?: string; last_name?: string; username?: string; role?: string } | null) => {
+  if (!u) return "—";
+  const name = formatName(u);
+  const role = formatRole((u as any).role);
+  return role ? `${name} (${role})` : name;
 };
 
 const asArray = <T,>(data: any): T[] => {
@@ -115,8 +127,11 @@ const SupportTicketPage: React.FC = () => {
 
   const loadProviders = async () => {
     try {
-      const data = await getServiceProviders();
-      setProviders(data);
+      const nutritionistData = await getAllNutritionists();
+      setProviders({
+        kitchens: [],
+        nutritionists: nutritionistData
+      });
     } catch (e) {
       console.error(e);
     }
@@ -270,6 +285,9 @@ const SupportTicketPage: React.FC = () => {
                         #{t.id} {t.title}
                       </div>
                       <div className="text-xs text-gray-500 truncate">{t.description}</div>
+                      <div className="text-[11px] text-gray-500 truncate mt-1">
+                        From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
+                      </div>
                     </div>
                     <div className="shrink-0">{getStatusBadge(t.status)}</div>
                   </div>
@@ -293,6 +311,7 @@ const SupportTicketPage: React.FC = () => {
                   </div>
                   <div className="text-xs text-gray-500">
                     Status: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority}
+                    {" "}• From: {formatNameWithRole(activeTicket.created_by_details)} • To: {formatNameWithRole(activeTicket.assigned_to_details)}
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => loadMessages(activeTicket.id)}>

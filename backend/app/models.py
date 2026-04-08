@@ -2232,6 +2232,7 @@ class SupportTicket(models.Model):
         ('patient', 'Patient'),
         ('nutritionist', 'Nutritionist'),
         ('kitchen', 'Kitchen'),
+        ('doctor', 'Doctor'),
         ('non_patient', 'Non Patient'),
     ]
 
@@ -2239,6 +2240,7 @@ class SupportTicket(models.Model):
         ('admin', 'Support/Admin'),
         ('nutritionist', 'Account Nutritionist'),
         ('kitchen', 'Account Kitchen'),
+        ('doctor', 'Account Doctor'),
     ]
 
     created_by = models.ForeignKey(

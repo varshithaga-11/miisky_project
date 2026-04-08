@@ -92,6 +92,11 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 urlpatterns = [
     path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
     path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
+    path(
+        "usernutritionistmapping/all-nutritionists/",
+        views.AdminAllNutritionistsViewSet.as_view({"get": "list"}),
+        name="admin-all-nutritionists",
+    ),
     path('', include(router.urls)),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),

@@ -25,8 +25,8 @@ export type SupportTicket = {
   created_at: string;
   updated_at: string;
   category_details?: TicketCategory | null;
-  created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
-  assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
+  created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
+  assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
 };
 
 export type TicketMessage = {

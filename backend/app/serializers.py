@@ -1715,6 +1715,12 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
         return None
 
 
+class AdminNutritionistListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRegister
+        fields = ["id", "username", "first_name", "last_name", "email"]
+
+
 class ReassignNutritionistSerializer(serializers.Serializer):
     """Payload for POST usernutritionistmapping/reassign/ (admin only)."""
 
@@ -3110,7 +3116,7 @@ class AdminNutritionistDetailSerializer(serializers.ModelSerializer):
 class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRegister
-        fields = ["id", "username", "first_name", "last_name"]
+        fields = ["id", "username", "first_name", "last_name", "role"]
 
 
 class TicketCategorySerializer(serializers.ModelSerializer):

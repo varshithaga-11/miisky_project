@@ -8,7 +8,7 @@ export type TicketCategory = {
 
 export type SupportTicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "medium" | "high";
-export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen" | "doctor";
+export type SupportTicketUserType = "patient" | "nutritionist" | "kitchen" | "doctor" | "non_patient";
 export type SupportTicketTargetType = "admin" | "nutritionist" | "kitchen" | "doctor";
 
 export type SupportTicket = {
@@ -25,8 +25,8 @@ export type SupportTicket = {
   created_at: string;
   updated_at: string;
   category_details?: TicketCategory | null;
-  created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
-  assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
+  created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
+  assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
 };
 
 export type TicketMessage = {
@@ -88,6 +88,19 @@ export async function getServiceProviders(): Promise<{ nutritionists: SupportSer
   const url = createApiUrl("api/expert/service-providers/");
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data;
+}
+
+export async function getAllNutritionists(): Promise<SupportServiceProvider[]> {
+  const url = createApiUrl("api/usernutritionistmapping/all-nutritionists/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  const data = res.data?.results ?? res.data;
+  if (!Array.isArray(data)) return [];
+  return data.map((u: any) => ({
+    id: u.id,
+    name: [u.first_name, u.last_name].filter(Boolean).join(" ").trim() || u.username || "Nutritionist",
+    is_active: u.is_active ?? true,
+    role: "nutritionist",
+  }));
 }
 
 export async function getMySupportTickets(params?: {
