@@ -402,6 +402,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/orders",
   },
   {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Order payments",
+    path: "/microkitchen/order-payments",
+  },
+  {
     icon: <MapPin className="w-5 h-5" />,
     name: "Delivery charges",
     path: "/microkitchen/delivery-charges",

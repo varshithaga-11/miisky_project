@@ -2750,6 +2750,44 @@ class OrderSerializer(serializers.ModelSerializer):
         }
 
 
+class OrderPaymentSnapshotKitchenSerializer(serializers.ModelSerializer):
+    """
+    Read-only snapshot of platform vs kitchen split for one order (micro kitchen portal).
+    """
+
+    order_id = serializers.IntegerField(source="order.id", read_only=True)
+    order_status = serializers.CharField(source="order.status", read_only=True)
+    order_type = serializers.CharField(source="order.order_type", read_only=True)
+    order_created_at = serializers.DateTimeField(source="order.created_at", read_only=True)
+    customer_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderPaymentSnapshot
+        fields = [
+            "id",
+            "order_id",
+            "order_status",
+            "order_type",
+            "order_created_at",
+            "customer_display",
+            "food_subtotal",
+            "delivery_charge",
+            "grand_total",
+            "platform_percent",
+            "kitchen_percent",
+            "platform_amount",
+            "kitchen_amount",
+            "created_at",
+        ]
+
+    def get_customer_display(self, obj):
+        u = getattr(obj.order, "user", None)
+        if not u:
+            return ""
+        name = f"{(u.first_name or '').strip()} {(u.last_name or '').strip()}".strip()
+        return name or getattr(u, "username", None) or ""
+
+
 class AdminPatientListSerializer(serializers.ModelSerializer):
     """Summary row for admin patient directory (role=patient users)."""
 

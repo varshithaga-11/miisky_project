@@ -222,6 +222,11 @@ urlpatterns = [
         name="microkitchen-plan-payouts",
     ),
     path(
+        "microkitchen/order-payment-snapshots/",
+        views.MicroKitchenOrderPaymentSnapshotsView.as_view(),
+        name="microkitchen-order-payment-snapshots",
+    ),
+    path(
         "admin/plan-payout-trackers/",
         views.AdminPayoutTrackersForPayView.as_view(),
         name="admin-plan-payout-trackers",

@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, get_object_or_404
-from django.db.models import DecimalField, F, Prefetch, Q, Sum, Value
+from django.db.models import Count, DecimalField, F, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins, generics
@@ -645,6 +645,74 @@ class MicroKitchenPlanPayoutsView(generics.ListAPIView):
             .distinct()
             .order_by("first_name", "last_name", "id")
         )
+
+
+class MicroKitchenOrderPaymentSnapshotsView(generics.ListAPIView):
+    """
+    Paginated list of frozen order payment splits (food subtotal → platform vs kitchen)
+    for customer orders belonging to the logged-in micro kitchen.
+    Separate from diet-plan payouts.
+    """
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = OrderPaymentSnapshotKitchenSerializer
+
+    def get_queryset(self):
+        from .models import MicroKitchenProfile, OrderPaymentSnapshot
+
+        user = self.request.user
+        if getattr(user, "role", None) != "micro_kitchen":
+            return OrderPaymentSnapshot.objects.none()
+
+        mk = MicroKitchenProfile.objects.filter(user=user).first()
+        if not mk:
+            return OrderPaymentSnapshot.objects.none()
+
+        qs = (
+            OrderPaymentSnapshot.objects.filter(order__micro_kitchen=mk)
+            .select_related("order", "order__user")
+        )
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if search.isdigit():
+                qs = qs.filter(order_id=int(search))
+            else:
+                qs = qs.filter(
+                    Q(order__user__first_name__icontains=search)
+                    | Q(order__user__last_name__icontains=search)
+                    | Q(order__user__username__icontains=search)
+                )
+
+        return qs.order_by("-created_at")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        stats = queryset.aggregate(
+            total_orders=Count("id"),
+            total_kitchen_amount=Sum("kitchen_amount"),
+            total_platform_amount=Sum("platform_amount"),
+        )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data["total_orders"] = stats["total_orders"] or 0
+            response.data["total_kitchen_amount"] = str(stats["total_kitchen_amount"] or 0)
+            response.data["total_platform_amount"] = str(stats["total_platform_amount"] or 0)
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "total_orders": stats["total_orders"] or 0,
+                "total_kitchen_amount": str(stats["total_kitchen_amount"] or 0),
+                "total_platform_amount": str(stats["total_platform_amount"] or 0),
+            }
+        )
+
 
 class PartnerPayoutTransactionListView(generics.ListAPIView):
     """List transactions for the logged-in partner (nutritionist or micro-kitchen)."""
