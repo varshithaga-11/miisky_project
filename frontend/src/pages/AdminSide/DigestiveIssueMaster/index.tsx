@@ -84,8 +84,8 @@ const DigestiveIssueMasterPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Digestive issues (master)" description="Digestive issue catalog" />
-      <PageBreadcrumb pageTitle="Digestive issues (master)" />
+      <PageMeta title="Digestive issues" description="Digestive issue catalog" />
+      <PageBreadcrumb pageTitle="Digestive issues" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

@@ -179,6 +179,7 @@ const SupportTicketRequestsPage: React.FC = () => {
             <option value="patient">Patient</option>
             <option value="nutritionist">Nutritionist</option>
             <option value="kitchen">Kitchen</option>
+            <option value="doctor">Doctor</option>
           </select>
           <input
             value={search}

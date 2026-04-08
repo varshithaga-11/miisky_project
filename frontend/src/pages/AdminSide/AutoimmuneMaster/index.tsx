@@ -84,8 +84,8 @@ const AutoimmuneMasterPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Autoimmune (master)" description="Autoimmune condition catalog" />
-      <PageBreadcrumb pageTitle="Autoimmune (master)" />
+      <PageMeta title="Autoimmune" description="Autoimmune condition catalog" />
+      <PageBreadcrumb pageTitle="Autoimmune" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

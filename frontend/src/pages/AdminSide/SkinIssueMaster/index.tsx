@@ -84,8 +84,8 @@ const SkinIssueMasterPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Skin issues (master)" description="Skin issue catalog" />
-      <PageBreadcrumb pageTitle="Skin issues (master)" />
+      <PageMeta title="Skin issues" description="Skin issue catalog" />
+      <PageBreadcrumb pageTitle="Skin issues" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

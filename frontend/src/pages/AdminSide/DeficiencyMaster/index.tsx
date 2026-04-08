@@ -84,8 +84,8 @@ const DeficiencyMasterPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Deficiencies (master)" description="Deficiency catalog" />
-      <PageBreadcrumb pageTitle="Deficiencies (master)" />
+      <PageMeta title="Deficiencies" description="Deficiency catalog" />
+      <PageBreadcrumb pageTitle="Deficiencies" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

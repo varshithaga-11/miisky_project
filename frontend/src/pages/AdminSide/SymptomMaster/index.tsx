@@ -86,8 +86,8 @@ const SymptomMasterPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Symptoms (master)" description="Symptom catalog" />
-      <PageBreadcrumb pageTitle="Symptoms (master)" />
+      <PageMeta title="Symptoms" description="Symptom catalog" />
+      <PageBreadcrumb pageTitle="Symptoms" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

@@ -102,8 +102,8 @@ const HealthConditionMasterPage: React.FC = () => {
 
   return (
     <>
-      <PageMeta title="Health conditions (master)" description="Manage health condition catalog" />
-      <PageBreadcrumb pageTitle="Health conditions (master)" />
+      <PageMeta title="Health conditions" description="Manage health condition catalog" />
+      <PageBreadcrumb pageTitle="Health conditions" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
