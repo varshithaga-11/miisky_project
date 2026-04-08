@@ -2265,6 +2265,16 @@ class FoodNutritionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class FoodByIdViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, pk=None):
+        nutrition = FoodNutrition.objects.select_related("food").filter(food_id=pk).first()
+        if not nutrition:
+            return Response({"detail": "Food nutrition not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(FoodByIdNutritionSerializer(nutrition).data)
+
+
 # ── Food Composition (FoodName-based) ViewSets ─────────────────────────────────
 
 class FoodGroupViewSet(viewsets.ModelViewSet):

@@ -390,6 +390,37 @@ class FoodNutritionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class FoodByIdNutritionSerializer(serializers.ModelSerializer):
+    food_name = serializers.CharField(source="food.name", read_only=True)
+
+    class Meta:
+        model = FoodNutrition
+        fields = [
+            "id",
+            "food",
+            "food_name",
+            "calories",
+            "protein",
+            "carbs",
+            "fat",
+            "fiber",
+            "sugar",
+            "saturated_fat",
+            "trans_fat",
+            "sodium",
+            "potassium",
+            "calcium",
+            "iron",
+            "vitamin_a",
+            "vitamin_c",
+            "vitamin_d",
+            "vitamin_b12",
+            "cholesterol",
+            "glycemic_index",
+            "serving_size",
+        ]
+
+
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient

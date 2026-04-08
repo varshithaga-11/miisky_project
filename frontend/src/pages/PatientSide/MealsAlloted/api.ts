@@ -42,6 +42,31 @@ export interface UserMeal {
     } | null;
 }
 
+export interface FoodNutritionById {
+    id: number;
+    food: number;
+    food_name: string;
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+    fiber: number | null;
+    sugar: number | null;
+    saturated_fat: number | null;
+    trans_fat: number | null;
+    sodium: number | null;
+    potassium: number | null;
+    calcium: number | null;
+    iron: number | null;
+    vitamin_a: number | null;
+    vitamin_c: number | null;
+    vitamin_d: number | null;
+    vitamin_b12: number | null;
+    cholesterol: number | null;
+    glycemic_index: number | null;
+    serving_size: string | null;
+}
+
 export const getMyMeals = async (): Promise<UserMeal[]> => {
     const url = createApiUrl(`api/usermeal/`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
@@ -76,5 +101,11 @@ export const markAsConsumed = async (mealId: number): Promise<UserMeal> => {
 export const updateMealNote = async (mealId: number, notes: string): Promise<UserMeal> => {
     const url = createApiUrl(`api/usermeal/${mealId}/`);
     const response = await axios.patch(url, { notes }, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getFoodByIdNutrition = async (foodId: number): Promise<FoodNutritionById> => {
+    const url = createApiUrl(`api/foodbyid/${foodId}/`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };

@@ -42,6 +42,31 @@ export interface UserMeal {
     micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
 }
 
+export interface FoodNutritionById {
+    id: number;
+    food: number;
+    food_name: string;
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+    fiber: number | null;
+    sugar: number | null;
+    saturated_fat: number | null;
+    trans_fat: number | null;
+    sodium: number | null;
+    potassium: number | null;
+    calcium: number | null;
+    iron: number | null;
+    vitamin_a: number | null;
+    vitamin_c: number | null;
+    vitamin_d: number | null;
+    vitamin_b12: number | null;
+    cholesterol: number | null;
+    glycemic_index: number | null;
+    serving_size: string | null;
+}
+
 export interface ReassignMicroKitchenPayload {
     new_micro_kitchen: number;
     reason:
@@ -247,6 +272,12 @@ export const getSetDailyMealsFoods = async (params: {
             cuisine_type: params.cuisine_type || undefined,
         },
     });
+    return response.data;
+};
+
+export const getFoodByIdNutrition = async (foodId: number): Promise<FoodNutritionById> => {
+    const url = createApiUrl(`api/foodbyid/${foodId}/`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
 

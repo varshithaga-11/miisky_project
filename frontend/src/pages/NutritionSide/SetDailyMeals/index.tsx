@@ -16,6 +16,7 @@ import {
     getSetDailyMealsPlanMeals,
     getSetDailyMealsCalendarMonth,
     getPackagingMaterialList,
+    getFoodByIdNutrition,
 } from "./api";
 import type {
     MappedPatientResponse,
@@ -24,6 +25,7 @@ import type {
     MealType,
     Food,
     CuisineType,
+    FoodNutritionById,
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage, FiMapPin, FiEye, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
@@ -87,6 +89,9 @@ const SetDailyMealsPage: React.FC = () => {
     const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
     const [calYear, setCalYear] = useState(() => new Date().getFullYear());
     const [calendarMonthMeals, setCalendarMonthMeals] = useState<UserMeal[]>([]);
+    const [foodNutritionOpen, setFoodNutritionOpen] = useState(false);
+    const [foodNutritionLoading, setFoodNutritionLoading] = useState(false);
+    const [foodNutrition, setFoodNutrition] = useState<FoodNutritionById | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("access");
@@ -404,6 +409,20 @@ const SetDailyMealsPage: React.FC = () => {
         (e.target as HTMLElement).style.opacity = "1";
     };
 
+    const openFoodNutrition = async (foodId: number) => {
+        setFoodNutritionOpen(true);
+        setFoodNutritionLoading(true);
+        setFoodNutrition(null);
+        try {
+            const data = await getFoodByIdNutrition(foodId);
+            setFoodNutrition(data);
+        } catch {
+            toast.error("Failed to load food nutrition");
+        } finally {
+            setFoodNutritionLoading(false);
+        }
+    };
+
     const handleDropOnDay = (e: React.DragEvent, dateStr: string) => {
         e.preventDefault();
         (e.currentTarget as HTMLElement).classList.remove("ring-2", "ring-indigo-500", "bg-indigo-50/50", "dark:bg-indigo-900/20");
@@ -705,6 +724,19 @@ const SetDailyMealsPage: React.FC = () => {
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{food.name}</p>
                                             </div>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    if (typeof food.id !== "number") return;
+                                                    openFoodNutrition(food.id);
+                                                }}
+                                                className="p-2 rounded-lg text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                                                title="View nutrition"
+                                            >
+                                                <FiEye size={14} />
+                                            </button>
                                         </div>
                                     ))
                                 )}
@@ -1094,6 +1126,61 @@ const SetDailyMealsPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <AnimatePresence>
+                {foodNutritionOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50"
+                        onClick={() => setFoodNutritionOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95 }}
+                            animate={{ scale: 1 }}
+                            className="bg-white dark:bg-gray-900 rounded-[24px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                                    {foodNutrition?.food_name || "Food nutrition"}
+                                </h3>
+                                <button type="button" onClick={() => setFoodNutritionOpen(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800">
+                                    <FiX size={20} />
+                                </button>
+                            </div>
+                            {foodNutritionLoading ? (
+                                <p className="text-gray-500 text-sm">Loading...</p>
+                            ) : foodNutrition ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Serving Size:</span> <span className="font-bold">{foodNutrition.serving_size || "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Calories:</span> <span className="font-bold">{foodNutrition.calories ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Protein:</span> <span className="font-bold">{foodNutrition.protein ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Carbs:</span> <span className="font-bold">{foodNutrition.carbs ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Fat:</span> <span className="font-bold">{foodNutrition.fat ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Fiber:</span> <span className="font-bold">{foodNutrition.fiber ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Sugar:</span> <span className="font-bold">{foodNutrition.sugar ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Saturated Fat:</span> <span className="font-bold">{foodNutrition.saturated_fat ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Trans Fat:</span> <span className="font-bold">{foodNutrition.trans_fat ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Sodium:</span> <span className="font-bold">{foodNutrition.sodium ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Potassium:</span> <span className="font-bold">{foodNutrition.potassium ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Calcium:</span> <span className="font-bold">{foodNutrition.calcium ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Iron:</span> <span className="font-bold">{foodNutrition.iron ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin A:</span> <span className="font-bold">{foodNutrition.vitamin_a ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin C:</span> <span className="font-bold">{foodNutrition.vitamin_c ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin D:</span> <span className="font-bold">{foodNutrition.vitamin_d ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B12:</span> <span className="font-bold">{foodNutrition.vitamin_b12 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Cholesterol:</span> <span className="font-bold">{foodNutrition.cholesterol ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Glycemic Index:</span> <span className="font-bold">{foodNutrition.glycemic_index ?? "-"}</span></div>
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 text-sm">No nutrition data</p>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {detailOpen && (
