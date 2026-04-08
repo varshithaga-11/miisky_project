@@ -1027,6 +1027,14 @@ const SetDailyMealsPage: React.FC = () => {
                                                             ) : (
                                                                 dayEntries.map((entry) => {
                                                                     const globalIdx = dailyEntries.indexOf(entry);
+                                                                    const mealTypeName =
+                                                                        entry.meal_type_details?.name ||
+                                                                        mealTypes.find((m) => m.id === entry.meal_type)?.name ||
+                                                                        "Meal";
+                                                                    const foodName =
+                                                                        entry.food_details?.name ||
+                                                                        foods.find((f) => f.id === entry.food)?.name ||
+                                                                        "Food";
                                                                     return (
                                                                         <motion.div
                                                                             key={globalIdx}
@@ -1038,26 +1046,15 @@ const SetDailyMealsPage: React.FC = () => {
                                                                             <div className="flex flex-wrap gap-4 items-end">
                                                                                 <div className="flex-1 min-w-[120px]">
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meal Type</label>
-                                                                                    <select
-                                                                                        value={entry.meal_type}
-                                                                                        disabled={isReadOnly}
-                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                                    >
-                                                                                        {mealTypes.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                                                                    </select>
+                                                                                    <div className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold">
+                                                                                        {mealTypeName}
+                                                                                    </div>
                                                                                 </div>
                                                                                 <div className="flex-1 min-w-[140px]">
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Food</label>
-                                                                                    <select
-                                                                                        value={entry.food}
-                                                                                        disabled={isReadOnly}
-                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'food', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                                    >
-                                                                                        <option value="">Select</option>
-                                                                                        {foods.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                                                                    </select>
+                                                                                    <div className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold">
+                                                                                        {foodName}
+                                                                                    </div>
                                                                                 </div>
                                                                                 <div className="w-20">
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qty</label>
