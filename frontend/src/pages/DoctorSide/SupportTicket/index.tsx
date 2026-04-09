@@ -89,6 +89,7 @@ const SupportTicketPage: React.FC = () => {
   }, [messages, attachments]);
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     try {
       const data = await getTicketCategories();
       setCategories(data);
@@ -126,6 +127,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   const loadProviders = async () => {
+    if (providers.nutritionists.length > 0) return;
     try {
       const nutritionistData = await getAllNutritionists();
       setProviders({
@@ -138,8 +140,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadCategories();
-    loadProviders();
+    // Tickets are loaded on mount, but categories/providers are deferred.
   }, []);
 
   useEffect(() => {
@@ -255,7 +256,7 @@ const SupportTicketPage: React.FC = () => {
           </Button>
         </div>
 
-        <Button size="sm" onClick={() => setIsNewOpen(true)} className="inline-flex items-center gap-2">
+        <Button size="sm" onClick={() => { setIsNewOpen(true); loadCategories(); }} className="inline-flex items-center gap-2">
           <FiPlus /> New Ticket
         </Button>
       </div>
@@ -461,7 +462,12 @@ const SupportTicketPage: React.FC = () => {
                     <button
                       key={target.id}
                       type="button"
-                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      onClick={() => {
+                        setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }));
+                        if (target.id === "nutritionist") {
+                          loadProviders();
+                        }
+                      }}
                       className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${
                         form.target_user_type === target.id
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"

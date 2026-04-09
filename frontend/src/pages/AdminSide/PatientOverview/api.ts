@@ -116,7 +116,7 @@ export const fetchUserById = async (userId: number): Promise<PatientUserRow> => 
 export const fetchQuestionnairesForPatient = async (patientUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/userquestionnaire/", {
     user: patientUserId,
-    limit: 100,
+    limit: 30,
     page: 1,
   });
   return unwrapResults(data);
@@ -126,7 +126,7 @@ export const fetchQuestionnairesForPatient = async (patientUserId: number): Prom
 export const fetchHealthReportsForPatient = async (patientUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/patienthealthreport/", {
     user: patientUserId,
-    limit: 200,
+    limit: 50,
     page: 1,
   });
   return unwrapResults(data);
@@ -170,7 +170,7 @@ export const fetchNutritionistProfileByUserId = async (nutritionistUserId: numbe
 export const fetchNutritionistReviewsForPatient = async (patientUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/nutritionistreview/", {
     user: patientUserId,
-    limit: 100,
+    limit: 30,
     page: 1,
   });
   return unwrapResults(data);
@@ -180,7 +180,7 @@ export const fetchNutritionistReviewsForPatient = async (patientUserId: number):
 export const fetchUserDietPlansForPatient = async (patientUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/userdietplan/", {
     user: patientUserId,
-    limit: 100,
+    limit: 30,
     page: 1,
   });
   return unwrapResults(data);
@@ -199,7 +199,7 @@ export const fetchUserMealsForPatient = async (
     params.month = month;
     params.year = year;
   } else {
-    params.limit = 500;
+    params.limit = 60;
     params.page = 1;
   }
 
