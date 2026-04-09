@@ -89,6 +89,7 @@ const SupportTicketPage: React.FC = () => {
   }, [messages, attachments]);
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     try {
       const data = await getTicketCategories();
       setCategories(data);
@@ -99,6 +100,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   const loadProviders = async () => {
+    if (providers.nutritionists.length > 0 || providers.kitchens.length > 0) return;
     try {
       const data = await getServiceProviders();
       setProviders(data);
@@ -164,8 +166,6 @@ const SupportTicketPage: React.FC = () => {
 
   const handleOpenNewTicket = () => {
     loadCategories();
-    loadProviders();
-    // loadTickets();
     setIsNewOpen(true);
   };
 
@@ -462,7 +462,7 @@ const SupportTicketPage: React.FC = () => {
               </Button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 no-scrollbar">
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 italic">Who is this for? / Ask To</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -474,7 +474,12 @@ const SupportTicketPage: React.FC = () => {
                     <button
                       key={target.id}
                       type="button"
-                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      onClick={() => {
+                        setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }));
+                        if (target.id === "nutritionist" || target.id === "kitchen") {
+                          loadProviders();
+                        }
+                      }}
                       className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${form.target_user_type === target.id
                         ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"
                         : "border-gray-100 dark:border-white/5 hover:border-blue-200"

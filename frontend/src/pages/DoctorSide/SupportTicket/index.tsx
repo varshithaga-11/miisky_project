@@ -451,7 +451,7 @@ const SupportTicketPage: React.FC = () => {
               </Button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 no-scrollbar">
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 italic">Who is this for? / Ask To</label>
                 <div className="grid grid-cols-2 gap-4">

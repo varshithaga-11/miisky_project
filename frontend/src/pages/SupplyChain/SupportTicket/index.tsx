@@ -86,6 +86,7 @@ const SupportTicketPage: React.FC = () => {
   }, [messages, attachments]);
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     try {
       const data = await getTicketCategories();
       setCategories(data);
@@ -121,6 +122,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   const loadKitchens = async () => {
+    if (kitchens.length > 0) return;
     try {
       const data = await getMyKitchens();
       setKitchens(data);
@@ -130,8 +132,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadCategories();
-    loadKitchens();
+    // Categories and kitchens are loaded on demand
   }, []);
 
   useEffect(() => {
@@ -246,7 +247,7 @@ const SupportTicketPage: React.FC = () => {
           </Button>
         </div>
 
-        <Button size="sm" onClick={() => setIsNewOpen(true)} className="inline-flex items-center gap-2 shadow-lg shadow-blue-500/20">
+        <Button size="sm" onClick={() => { setIsNewOpen(true); loadCategories(); }} className="inline-flex items-center gap-2 shadow-lg shadow-blue-500/20">
           <FiPlus /> New Support Ticket
         </Button>
       </div>
@@ -464,7 +465,7 @@ const SupportTicketPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-1 no-scrollbar">
               <div className="md:col-span-2 space-y-3">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                   <FiInfo className="text-blue-500" /> Send support request to
@@ -474,16 +475,21 @@ const SupportTicketPage: React.FC = () => {
                     { id: "admin", label: "Miisky Admin", icon: "🏢", desc: "For technical/account issues" },
                     { id: "kitchen", label: "Micro Kitchen", icon: "🍳", desc: "For food/delivery issues" },
                   ].map((target) => (
-                    <button
-                      key={target.id}
-                      type="button"
-                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
-                      className={`flex flex-col items-start p-5 rounded-3xl border-2 transition-all group ${
-                        form.target_user_type === target.id
-                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-600/10 text-blue-700 dark:text-blue-400"
-                          : "border-gray-100 dark:border-white/5 hover:border-blue-100 dark:hover:border-blue-900/30"
-                      }`}
-                    >
+                     <button
+                       key={target.id}
+                       type="button"
+                       onClick={() => {
+                         setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }));
+                         if (target.id === "kitchen") {
+                           loadKitchens();
+                         }
+                       }}
+                       className={`flex flex-col items-start p-5 rounded-3xl border-2 transition-all group ${
+                         form.target_user_type === target.id
+                           ? "border-blue-600 bg-blue-50/50 dark:bg-blue-600/10 text-blue-700 dark:text-blue-400"
+                           : "border-gray-100 dark:border-white/5 hover:border-blue-100 dark:hover:border-blue-900/30"
+                       }`}
+                     >
                       <span className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">{target.icon}</span>
                       <span className="font-bold text-sm tracking-tight">{target.label}</span>
                       <span className="text-[10px] opacity-60 mt-1 font-medium">{target.desc}</span>

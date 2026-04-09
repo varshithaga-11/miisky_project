@@ -89,6 +89,7 @@ const SupportTicketPage: React.FC = () => {
   }, [messages, attachments]);
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     try {
       const data = await getTicketCategories();
       setCategories(data);
@@ -126,6 +127,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   const loadProviders = async () => {
+    if (providers.kitchens.length > 0 || providers.nutritionists.length > 0) return;
     try {
       const data = await getServiceProviders();
       setProviders(data);
@@ -164,7 +166,6 @@ const SupportTicketPage: React.FC = () => {
 
   const handleOpenCreateModal = () => {
     setIsNewOpen(true);
-    loadProviders();
     loadCategories();
   };
 
@@ -473,7 +474,7 @@ const SupportTicketPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-8">
+            <form onSubmit={handleCreate} className="space-y-8 max-h-[60vh] overflow-y-auto pr-1 no-scrollbar">
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">Ask To / Recipient Channel</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -484,7 +485,12 @@ const SupportTicketPage: React.FC = () => {
                     <button
                       key={target.id}
                       type="button"
-                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      onClick={() => {
+                        setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }));
+                        if (target.id === "kitchen") {
+                          loadProviders();
+                        }
+                      }}
                       className={`flex flex-col items-center justify-center p-4 rounded-[28px] border-2 transition-all gap-2 ${form.target_user_type === target.id
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-xl scale-105"
                           : "border-gray-50 dark:border-white/5 hover:border-blue-200"
