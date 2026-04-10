@@ -12,7 +12,7 @@ import {
 } from "./api";
 import InputField from "../../../components/form/input/InputField";
 import { UserCircleIcon, GroupIcon } from "../../../icons";
-import { FiMapPin, FiActivity, FiUser, FiHeart, FiInfo, FiNavigation2, FiX } from "react-icons/fi";
+import { FiMapPin, FiActivity, FiUser, FiHeart, FiInfo, FiNavigation2, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { haversineKm } from "../../../utils/haversineKm";
 
@@ -25,6 +25,8 @@ const AllottedPatientsPage: React.FC = () => {
   const [microKitchens, setMicroKitchens] = useState<MicroKitchenForDistance[] | null>(null);
   const [kitchensLoading, setKitchensLoading] = useState(false);
   const [kitchensFetchError, setKitchensFetchError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const patientsPerPage = 5;
 
   const loadMicroKitchens = async () => {
     setKitchensLoading(true);
@@ -118,6 +120,11 @@ const AllottedPatientsPage: React.FC = () => {
     });
   }, [patients, searchTerm]);
 
+  const paginatedPatients = useMemo(() => {
+    const startIndex = (currentPage - 1) * patientsPerPage;
+    return filteredPatients.slice(startIndex, startIndex + patientsPerPage);
+  }, [filteredPatients, currentPage, patientsPerPage]);
+
   return (
     <>
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
@@ -146,7 +153,10 @@ const AllottedPatientsPage: React.FC = () => {
             <InputField
               placeholder="Search by name, email or username..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -184,7 +194,7 @@ const AllottedPatientsPage: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPatients.map((p) => (
+                  paginatedPatients.map((p) => (
                     <React.Fragment key={p.mapping_id}>
                       <TableRow className="border-t border-gray-100 dark:border-white/[0.05] hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-colors">
                         <TableCell className="px-5 py-4">
@@ -481,6 +491,29 @@ const AllottedPatientsPage: React.FC = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {!loading && filteredPatients.length > patientsPerPage && (
+            <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-white/[0.05]">
+                <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                    <FiChevronLeft size={20} />
+                </button>
+                <span className="text-xs font-bold text-gray-400">
+                    Page {currentPage} of {Math.ceil(filteredPatients.length / patientsPerPage)}
+                </span>
+                <button
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredPatients.length / patientsPerPage), p + 1))}
+                    disabled={currentPage === Math.ceil(filteredPatients.length / patientsPerPage)}
+                    className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                    <FiChevronRight size={20} />
+                </button>
+            </div>
+          )}
         </div>
       </div>
 

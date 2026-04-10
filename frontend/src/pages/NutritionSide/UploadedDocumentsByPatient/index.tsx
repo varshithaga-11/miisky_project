@@ -3,7 +3,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyPatients, getPatientReports, saveNutritionistReview, getPatientReviews, MappedPatientResponse, PatientHealthReport, NutritionistReview } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiFileText, FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiInfo } from "react-icons/fi";
+import { FiUsers, FiFileText, FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiInfo, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const UploadedDocumentsByPatientPage: React.FC = () => {
     const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -13,6 +13,8 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [comments, setComments] = useState("");
     const [selectedReports, setSelectedReports] = useState<number[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const patientsPerPage = 5;
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -93,7 +95,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                     
                     {/* Sidebar: Patient List */}
                     <div className="xl:col-span-1">
-                        <div className="bg-white dark:bg-gray-800 rounded-[32px] p-8 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] h-full overflow-y-auto max-h-[calc(100vh-200px)]">
+                        <div className="bg-white dark:bg-gray-800 rounded-[32px] p-8 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] h-fit">
                             <div className="mb-8">
                                 <h1 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                                     <FiUsers className="text-blue-500" /> My Patients
@@ -106,7 +108,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                     {[1,2,3,4,5].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700/50 rounded-2xl"></div>)}
                                 </div>}
                                 
-                                {patients.map((mapping) => (
+                                {!loading && patients.slice((currentPage - 1) * patientsPerPage, currentPage * patientsPerPage).map((mapping) => (
                                     <button
                                         key={mapping.user.id}
                                         onClick={() => setSelectedPatient(mapping)}
@@ -122,6 +124,29 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Pagination Controls */}
+                            {!loading && patients.length > patientsPerPage && (
+                                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100 dark:border-white/[0.05]">
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        <FiChevronLeft size={20} />
+                                    </button>
+                                    <span className="text-xs font-bold text-gray-400">
+                                        Page {currentPage} of {Math.ceil(patients.length / patientsPerPage)}
+                                    </span>
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(patients.length / patientsPerPage), p + 1))}
+                                        disabled={currentPage === Math.ceil(patients.length / patientsPerPage)}
+                                        className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        <FiChevronRight size={20} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
