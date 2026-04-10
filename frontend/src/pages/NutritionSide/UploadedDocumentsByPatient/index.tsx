@@ -137,14 +137,16 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
             <PageMeta title="Patient Document Review" description="Review health reports for your assigned patients" />
-            <PageBreadcrumb pageTitle="Clinical Records Review" />
+            <div className="max-w-[1600px] mx-auto">
+                <PageBreadcrumb pageTitle="Clinical Records Review" />
+            </div>
             <ToastContainer position="bottom-right" />
 
-            <div className="px-4 md:px-8 pb-12">
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            <div className="px-4 md:px-6 lg:px-8 pb-12 max-w-[1600px] mx-auto">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
                     {/* Sidebar: Patient List */}
-                    <div className="xl:col-span-1">
-                        <div className="bg-white dark:bg-gray-800 rounded-[32px] p-8 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] h-full overflow-y-auto max-h-[calc(100vh-200px)]">
+                    <div className="xl:col-span-3">
+                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 lg:p-8 shadow-xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-white/[0.05] sticky top-8 flex flex-col h-[calc(100vh-140px)]">
                             <div className="mb-6">
                                 <h1 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                                     <FiUsers className="text-blue-500" /> My Patients
@@ -152,22 +154,25 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                 <p className="text-gray-500 mt-1 font-medium text-xs">Search and select a patient to review reports.</p>
                             </div>
 
-                            <div className="mb-4">
+                            <div className="mb-4 relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors pointer-events-none">
+                                    <FiUsers size={16} />
+                                </div>
                                 <input
                                     type="search"
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
-                                    placeholder="Search name, email, username…"
-                                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-white/10 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder:text-gray-400"
+                                    placeholder="Search patients..."
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-[1.5rem] bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-white/10 text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 dark:text-white placeholder:text-gray-400 transition-all"
                                     aria-label="Search patients"
                                 />
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
                                 {loading && (
-                                    <div className="animate-pulse space-y-4">
+                                    <div className="animate-pulse space-y-3">
                                         {[1, 2, 3, 4, 5].map((i) => (
-                                            <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700/50 rounded-2xl"></div>
+                                            <div key={i} className="h-20 bg-gray-50 dark:bg-gray-700/30 rounded-2xl"></div>
                                         ))}
                                     </div>
                                 )}
@@ -178,65 +183,74 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                             key={mapping.user.id}
                                             type="button"
                                             onClick={() => selectPatient(mapping)}
-                                            className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all text-left ${
+                                            className={`w-full p-4 rounded-3xl flex items-center gap-3 transition-all duration-300 group relative ${
                                                 effectiveUserId === mapping.user.id
-                                                    ? "bg-blue-600 text-white shadow-xl shadow-blue-500/30"
-                                                    : "bg-gray-50 dark:bg-white/[0.02] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
+                                                    ? "bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-1"
+                                                    : "bg-gray-50/80 dark:bg-white/[0.02] text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-blue-100 dark:hover:border-blue-900/40 hover:shadow-lg"
                                             }`}
                                         >
                                             <div
-                                                className={`p-2 rounded-xl ${
+                                                className={`p-2.5 rounded-2xl shrink-0 transition-colors ${
                                                     effectiveUserId === mapping.user.id
                                                         ? "bg-white/20"
-                                                        : "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                                                        : "bg-white dark:bg-gray-700 text-blue-500 shadow-sm group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30"
                                                 }`}
                                             >
-                                                <FiUsers size={20} />
+                                                <FiUsers size={18} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-black text-sm line-clamp-1">
+                                                <p className="font-extrabold text-[13px] leading-tight line-clamp-1">
                                                     {mapping.user.first_name} {mapping.user.last_name}
                                                 </p>
                                                 <p
-                                                    className={`text-[10px] font-bold ${
+                                                    className={`text-[9px] font-bold mt-1.5 flex items-center gap-1 ${
                                                         effectiveUserId === mapping.user.id
-                                                            ? "text-blue-100"
-                                                            : "text-gray-400 uppercase tracking-tighter mt-1"
+                                                            ? "text-blue-100/80"
+                                                            : "text-gray-400 uppercase tracking-tighter"
                                                     }`}
                                                 >
-                                                    Joined: {new Date(mapping.assigned_on).toLocaleDateString()}
+                                                    <FiClock className="size-2.5" /> {new Date(mapping.assigned_on).toLocaleDateString()}
                                                 </p>
                                             </div>
+                                            {effectiveUserId === mapping.user.id && (
+                                                <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_white]"></div>
+                                            )}
                                         </button>
                                     ))}
 
                                 {!loading && patients.length === 0 && (
-                                    <p className="text-center text-sm text-gray-500 py-8">No patients match your search.</p>
+                                    <div className="text-center py-12 flex flex-col items-center gap-3 opacity-60">
+                                        <FiUsers className="size-10 text-gray-300" />
+                                        <p className="text-sm font-medium">No patients found</p>
+                                    </div>
                                 )}
                             </div>
 
                             {!loading && patientCount > 0 && (
-                                <div className="mt-6 flex items-center justify-between gap-2">
+                                <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/[0.05] flex items-center justify-between gap-2">
                                     <button
                                         type="button"
                                         onClick={() => goToPage(page - 1)}
                                         disabled={page <= 1}
-                                        className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600"
+                                        className="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors shadow-sm"
                                         aria-label="Previous page"
                                     >
-                                        <FiChevronLeft size={20} />
+                                        <FiChevronLeft size={18} />
                                     </button>
-                                    <span className="text-xs font-bold text-gray-500 tabular-nums">
-                                        Page {page} / {Math.max(1, totalPages)} · {patientCount} total
-                                    </span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em]">Page</span>
+                                        <span className="text-xs font-black text-gray-900 dark:text-white tabular-nums">
+                                            {page} <span className="text-gray-400">/</span> {Math.max(1, totalPages)}
+                                        </span>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => goToPage(page + 1)}
                                         disabled={page >= totalPages}
-                                        className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600"
+                                        className="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors shadow-sm"
                                         aria-label="Next page"
                                     >
-                                        <FiChevronRight size={20} />
+                                        <FiChevronRight size={18} />
                                     </button>
                                 </div>
                             )}
@@ -244,113 +258,135 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="xl:col-span-3 space-y-8">
+                    <div className="xl:col-span-9 space-y-6 lg:space-y-8">
                         {selectedPatient ? (
                             <>
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-white dark:bg-gray-800 rounded-[32px] border border-transparent dark:border-white/[0.05]">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-white dark:bg-gray-800 rounded-[3rem] border border-gray-100 dark:border-white/[0.05] shadow-xl shadow-gray-100/30 dark:shadow-none animate-in fade-in slide-in-from-top-4 duration-500">
                                     <div>
-                                        <h2 className="text-3xl font-black text-gray-900 dark:text-white">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="size-3 rounded-full bg-green-500 animate-pulse"></div>
+                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">Active Record</span>
+                                        </div>
+                                        <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                                             {selectedPatient.user.first_name} {selectedPatient.user.last_name}
                                         </h2>
-                                        <p className="text-gray-500 font-medium">Record Folder • {selectedPatient.user.email}</p>
+                                        <p className="text-gray-500 font-bold mt-1 text-sm bg-gray-50 dark:bg-white/[0.03] inline-block px-3 py-1 rounded-full">{selectedPatient.user.email}</p>
                                     </div>
-                                    <div className="mt-4 md:mt-0 flex gap-4">
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-3 rounded-2xl text-center">
-                                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Total Reports</p>
-                                            <p className="text-2xl font-black text-blue-900 dark:text-blue-400">{reportsTotal}</p>
+                                    <div className="mt-6 md:mt-0 flex gap-4 lg:gap-6">
+                                        <div className="bg-blue-50/50 dark:bg-blue-900/10 px-8 py-4 rounded-3xl text-center border border-blue-100/50 dark:border-blue-900/20 group hover:bg-blue-600 transition-all duration-300">
+                                            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 group-hover:text-white/80 uppercase tracking-widest mb-1">Total Reports</p>
+                                            <p className="text-3xl font-black text-blue-900 dark:text-blue-200 group-hover:text-white transition-colors">{reportsTotal}</p>
                                         </div>
-                                        <div className="bg-green-50 dark:bg-green-900/20 px-6 py-3 rounded-2xl text-center">
-                                            <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Reviews Given</p>
-                                            <p className="text-2xl font-black text-green-900 dark:text-green-400">{reviewsTotal}</p>
+                                        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 px-8 py-4 rounded-3xl text-center border border-emerald-100/50 dark:border-emerald-900/20 group hover:bg-emerald-600 transition-all duration-300">
+                                            <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 group-hover:text-white/80 uppercase tracking-widest mb-1">Reviews Given</p>
+                                            <p className="text-3xl font-black text-emerald-900 dark:text-emerald-200 group-hover:text-white transition-colors">{reviewsTotal}</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    <div className="space-y-6">
-                                        <div className="flex items-center justify-between px-2">
-                                            <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                                                <FiFileText className="text-blue-500" /> Patient Library
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+                                    <div className="lg:col-span-7 space-y-6">
+                                        <div className="flex items-center justify-between px-4">
+                                            <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.25em] flex items-center gap-3">
+                                                <div className="w-8 h-[1px] bg-blue-500/30"></div>
+                                                Patient Library
                                             </h3>
                                         </div>
 
-                                        <div className="space-y-4">
+                                        <div className="grid grid-cols-1 gap-5">
                                             {sortedReports.length === 0 ? (
-                                                <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-[32px] border border-dashed border-gray-200 dark:border-white/10">
-                                                    <FiInfo className="size-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                                                    <p className="text-gray-500">No documents uploaded yet.</p>
+                                                <div className="text-center py-24 bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-white/5 flex flex-col items-center gap-4">
+                                                    <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-full text-gray-300">
+                                                        <FiFileText size={48} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xl font-black text-gray-400">No documents yet</p>
+                                                        <p className="text-sm font-medium text-gray-400 mt-1">This patient hasn't uploaded any reports.</p>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 sortedReports.map((report) => (
                                                     <div
                                                         key={report.id}
                                                         onClick={() => toggleReportSelection(report.id)}
-                                                        className={`bg-white dark:bg-gray-800 p-5 rounded-3xl border transition-all cursor-pointer flex items-center gap-4 group ${
+                                                        className={`bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border transition-all duration-300 cursor-pointer group flex flex-col gap-5 ${
                                                             selectedReports.includes(report.id)
-                                                                ? "border-blue-500 bg-blue-50/30"
-                                                                : "border-transparent dark:border-white/[0.05] hover:border-blue-500/30 shadow-sm"
+                                                                ? "border-blue-500 bg-blue-50/10 shadow-2xl shadow-blue-500/10 scale-[1.02]"
+                                                                : "border-gray-50 dark:border-white/[0.05] hover:border-blue-500/20 shadow-xl shadow-gray-200/20 dark:shadow-none"
                                                         }`}
                                                     >
-                                                        <div
-                                                            className={`p-3 rounded-2xl ${
-                                                                selectedReports.includes(report.id)
-                                                                    ? "bg-blue-500 text-white"
-                                                                    : "bg-gray-100 dark:bg-gray-700 text-gray-400"
-                                                            }`}
-                                                        >
-                                                            <FiFileText size={20} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex justify-between items-start">
-                                                                <div>
-                                                                    <h4 className="font-bold text-gray-900 dark:text-white line-clamp-1">{report.title}</h4>
-                                                                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider mt-0.5">
-                                                                        {report.report_type?.replace("_", " ")} • {new Date(report.uploaded_on).toLocaleDateString()}
-                                                                    </p>
+                                                        <div className="flex items-center gap-5">
+                                                            <div
+                                                                className={`p-4 rounded-2xl transition-all duration-500 ${
+                                                                    selectedReports.includes(report.id)
+                                                                        ? "bg-blue-500 text-white rotate-6 shadow-lg shadow-blue-500/40"
+                                                                        : "bg-gray-50 dark:bg-gray-900/50 text-gray-400 group-hover:text-blue-500 group-hover:scale-110"
+                                                                }`}
+                                                            >
+                                                                <FiFileText size={24} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="font-extrabold text-lg text-gray-900 dark:text-white leading-tight mb-1">{report.title}</h4>
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="text-[10px] uppercase font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-lg tracking-wider">
+                                                                        {report.report_type?.replace("_", " ")}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5">
+                                                                        <FiClock className="size-3" /> {new Date(report.uploaded_on).toLocaleDateString()}
+                                                                    </span>
                                                                 </div>
                                                             </div>
-
-                                                            {report.reviews && report.reviews.length > 0 && (
-                                                                <div className="mt-3 space-y-2">
-                                                                    {report.reviews.map((rev) => (
-                                                                        <div
-                                                                            key={rev.id}
-                                                                            className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20"
-                                                                        >
-                                                                            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1 flex justify-between">
-                                                                                <span>{rev.nutritionist_name}</span>
-                                                                                <span>{new Date(rev.created_on).toLocaleDateString()}</span>
-                                                                            </p>
-                                                                            <p className="text-[11px] text-gray-600 dark:text-gray-400 font-medium italic">
-                                                                                &quot;{rev.comments}&quot;
-                                                                            </p>
-                                                                        </div>
-                                                                    ))}
+                                                            <div className="shrink-0 flex items-center relative">
+                                                                <div className={`size-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                                                                    selectedReports.includes(report.id)
+                                                                        ? "bg-blue-500 border-blue-500 scale-110"
+                                                                        : "bg-white dark:bg-gray-700 border-gray-200 dark:border-white/10"
+                                                                }`}>
+                                                                    {selectedReports.includes(report.id) && <FiCheckCircle className="text-white size-4" />}
                                                                 </div>
-                                                            )}
+                                                            </div>
                                                         </div>
+
+                                                        {report.reviews && report.reviews.length > 0 && (
+                                                            <div className="space-y-3">
+                                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Recent Insights</p>
+                                                                {report.reviews.map((rev) => (
+                                                                    <div
+                                                                        key={rev.id}
+                                                                        className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-white/5 relative overflow-hidden group/review"
+                                                                    >
+                                                                        <div className="flex justify-between items-start mb-2">
+                                                                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">{rev.nutritionist_name}</span>
+                                                                            <span className="text-[9px] font-bold text-gray-400">{new Date(rev.created_on).toLocaleDateString()}</span>
+                                                                        </div>
+                                                                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed italic">
+                                                                            &quot;{rev.comments}&quot;
+                                                                        </p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
                                                         <div
-                                                            className="flex shrink-0 items-center gap-2"
+                                                            className="flex items-center gap-3 pt-4 border-t border-gray-50 dark:border-white/5"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             <a
                                                                 href={resolveMediaUrl(report.report_file)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide bg-slate-100 dark:bg-gray-900/80 text-slate-700 dark:text-slate-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                                                                title="View in new window"
+                                                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-slate-900 text-white hover:bg-blue-600 transition-all duration-300 shadow-lg shadow-slate-900/10"
+                                                                title="View full document"
                                                             >
-                                                                <FiEye size={16} />
-                                                                View
+                                                                <FiEye size={16} /> View
                                                             </a>
                                                             <a
                                                                 href={resolveMediaUrl(report.report_file)}
                                                                 download={getReportDownloadFilename(report)}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide bg-slate-100 dark:bg-gray-900/80 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
-                                                                title="Download file"
+                                                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-white dark:bg-gray-700 text-slate-900 dark:text-white border border-gray-100 dark:border-white/10 hover:border-emerald-500 hover:text-emerald-600 transition-all duration-300 shadow-sm"
+                                                                title="Download for offline access"
                                                             >
-                                                                <FiDownload size={16} />
-                                                                Download
+                                                                <FiDownload size={16} /> Download
                                                             </a>
                                                         </div>
                                                     </div>
@@ -359,88 +395,104 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-8">
-                                        <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05]">
-                                            <div className="mb-6 flex items-center justify-between">
-                                                <h3 className="text-xl font-black text-gray-900 dark:text-white">Professional Review</h3>
-                                                <div className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center gap-2">
-                                                    <div className="size-2 rounded-full bg-amber-500 animate-pulse"></div>
-                                                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">
-                                                        {selectedReports.length} Reports Selected
+                                    <div className="lg:col-span-5 space-y-8">
+                                        <div className="bg-white dark:bg-gray-800 rounded-[3rem] p-8 lg:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-white/[0.05] sticky top-8">
+                                            <div className="mb-8 flex items-center justify-between">
+                                                <h3 className="text-2xl font-black text-gray-900 dark:text-white tracing-tight">Professional Review</h3>
+                                                <div className={`px-4 py-1.5 rounded-full flex items-center gap-3 transition-colors ${selectedReports.length > 0 ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600' : 'bg-gray-50 dark:bg-gray-900 text-gray-400'}`}>
+                                                    <div className={`size-2 rounded-full ${selectedReports.length > 0 ? 'bg-amber-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.15em]">
+                                                        {selectedReports.length} {selectedReports.length === 1 ? 'Report' : 'Reports'}
                                                     </span>
                                                 </div>
                                             </div>
 
                                             <form onSubmit={handleSubmitReview} className="space-y-6">
-                                                <textarea
-                                                    rows={5}
-                                                    placeholder="Enter clinical observations, dietary suggestions, or follow-up instructions..."
-                                                    value={comments}
-                                                    onChange={(e) => setComments(e.target.value)}
-                                                    className="w-full px-6 py-5 bg-gray-50/50 dark:bg-gray-900/50 border-none rounded-3xl outline-none focus:ring-2 focus:ring-blue-500 transition-all dark:text-white font-medium"
-                                                />
+                                                <div className="relative group">
+                                                    <textarea
+                                                        rows={6}
+                                                        placeholder="Enter clinical observations, dietary suggestions, or follow-up instructions..."
+                                                        value={comments}
+                                                        onChange={(e) => setComments(e.target.value)}
+                                                        className="w-full px-8 py-7 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-white/10 rounded-[2rem] outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white font-medium text-sm lg:text-base leading-relaxed placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                                                    />
+                                                    <div className="absolute top-6 left-3 w-1 h-3/4 bg-gray-100 dark:bg-white/5 rounded-full group-focus-within:bg-blue-500/20 transition-colors"></div>
+                                                </div>
                                                 <button
                                                     type="submit"
-                                                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3 transition-all"
+                                                    disabled={selectedReports.length === 0}
+                                                    className={`w-full py-5 rounded-3xl font-black uppercase tracking-[0.25em] flex items-center justify-center gap-4 transition-all duration-500 text-sm ${
+                                                        selectedReports.length > 0 
+                                                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-2xl shadow-blue-600/30 active:scale-95" 
+                                                        : "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                                                    }`}
                                                 >
-                                                    Submit Analysis <FiSend />
+                                                    Submit Analysis <FiSend className={selectedReports.length > 0 ? "animate-bounce" : ""} />
                                                 </button>
                                             </form>
-                                        </div>
 
-                                        <div className="space-y-6">
-                                            <h3 className="px-2 text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                <FiClock /> Previous Comments
-                                            </h3>
+                                            <div className="mt-12 space-y-8">
+                                                <div className="flex items-center gap-3 px-2">
+                                                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-3 flex-1">
+                                                        <FiClock /> Previous Insights
+                                                    </h3>
+                                                    <div className="h-[1px] bg-gray-100 dark:bg-white/5 flex-1"></div>
+                                                </div>
 
-                                            <div className="space-y-4">
-                                                {reviews.length === 0 ? (
-                                                    <div className="text-center py-10 opacity-50 italic text-gray-400 text-sm">No previous reviews recorded.</div>
-                                                ) : (
-                                                    reviews.map((review) => (
-                                                        <div
-                                                            key={review.id}
-                                                            className="bg-white dark:bg-gray-800 p-6 rounded-[32px] border border-transparent dark:border-white/[0.05] shadow-sm relative overflow-hidden group"
-                                                        >
-                                                            <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-bl-[32px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <FiMessageSquare className="text-indigo-400" />
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-[10px] font-black text-indigo-600 tracking-widest mb-3 uppercase">
-                                                                <FiCheckCircle size={10} /> {new Date(review.created_on).toLocaleDateString()} at{" "}
-                                                                {new Date(review.created_on).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                                            </div>
-                                                            <p className="text-gray-700 dark:text-gray-300 text-sm font-medium leading-relaxed italic line-clamp-4">
-                                                                &quot;{review.comments}&quot;
-                                                            </p>
-                                                            {review.report_details && review.report_details.length > 0 && (
-                                                                <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-white/[0.05]">
-                                                                    {review.report_details.map((rd) => (
-                                                                        <span
-                                                                            key={rd.id}
-                                                                            className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-[8px] font-black text-blue-500 rounded-lg tracking-widest uppercase border border-blue-100 dark:border-blue-900/30"
-                                                                        >
-                                                                            {rd.title || "Untitled Document"}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                <div className="space-y-5">
+                                                    {reviews.length === 0 ? (
+                                                        <div className="text-center py-10 bg-gray-50/50 dark:bg-gray-900/30 rounded-[2rem] border border-dashed border-gray-100 dark:border-white/5">
+                                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest italic opacity-60">History is empty</p>
                                                         </div>
-                                                    ))
-                                                )}
+                                                    ) : (
+                                                        reviews.map((review) => (
+                                                            <div
+                                                                key={review.id}
+                                                                className="bg-white dark:bg-gray-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-white/[0.05] shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-300"
+                                                            >
+                                                                <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 dark:bg-blue-900/10 rounded-bl-[2rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                                                    <FiMessageSquare className="text-blue-500" />
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-[9px] font-black text-blue-500 tracking-[0.1em] mb-4 uppercase bg-blue-50 dark:bg-blue-900/20 w-fit px-3 py-1 rounded-full">
+                                                                    <FiCheckCircle size={10} /> {new Date(review.created_on).toLocaleDateString()}
+                                                                </div>
+                                                                <p className="text-gray-700 dark:text-gray-300 text-sm font-medium leading-relaxed italic border-l-2 border-blue-500/20 pl-4 py-2">
+                                                                    &quot;{review.comments}&quot;
+                                                                </p>
+                                                                {review.report_details && review.report_details.length > 0 && (
+                                                                    <div className="mt-5 flex flex-wrap gap-2 pt-4 border-t border-gray-50 dark:border-white/[0.05]">
+                                                                        {review.report_details.map((rd) => (
+                                                                            <span
+                                                                                key={rd.id}
+                                                                                className="px-2.5 py-1.5 bg-gray-100 dark:bg-gray-800 text-[8px] font-black text-gray-500 dark:text-gray-400 rounded-xl tracking-widest uppercase border border-gray-200 dark:border-white/10"
+                                                                            >
+                                                                                {rd.title || "Untitled Document"}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex items-center justify-center h-[600px] border-2 border-dashed border-gray-200 dark:border-white/10 rounded-[40px]">
-                                <div className="text-center">
-                                    <FiUsers className="size-20 mx-auto text-gray-200 dark:text-gray-800 mb-6" />
-                                    <h2 className="text-2xl font-black text-gray-400">
-                                        {loading ? "Loading…" : "No patient selected"}
+                            <div className="flex items-center justify-center h-[70vh] border-2 border-dashed border-gray-100 dark:border-white/5 rounded-[4rem] bg-white/30 dark:bg-gray-800/20 backdrop-blur-sm shadow-inner">
+                                <div className="text-center max-w-sm px-6">
+                                    <div className="size-24 rounded-full bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center mx-auto mb-8 border border-gray-100 dark:border-white/5 shadow-xl">
+                                        <FiUsers className="size-10 text-gray-200 dark:text-gray-600" />
+                                    </div>
+                                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
+                                        {loading ? "Discovering Records…" : "Ready to Review?"}
                                     </h2>
-                                    <p className="text-gray-400 font-medium">
-                                        {loading ? "Fetching your patient list." : "Adjust search or pick a patient from the list."}
+                                    <p className="text-gray-500 font-medium leading-relaxed">
+                                        {loading 
+                                            ? "We're fetching your patient list and their clinical history. Just a moment." 
+                                            : "Search and select a patient from the library to begin your professional clinical analysis."}
                                     </p>
                                 </div>
                             </div>
