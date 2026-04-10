@@ -13,7 +13,7 @@ export type Patient = {
 export type PatientHealthReport = {
   id: number;
   user: number;
-  user_details: {
+  user_details?: {
     first_name: string;
     last_name: string;
     email: string;
@@ -58,9 +58,59 @@ export type MappedPatientResponse = {
     } | null;
 };
 
+/** Slim patient row from `clinical-review-dashboard` (no questionnaire, kitchen, or full profile). */
+export type ClinicalReviewPatientUser = {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    mobile: string;
+};
+
+export type ClinicalReviewPatientRow = {
+    mapping_id: number | null;
+    assigned_on: string;
+    user: ClinicalReviewPatientUser;
+};
+
 export const getMyPatients = async (): Promise<MappedPatientResponse[]> => {
   const url = createApiUrl("api/usernutritionistmapping/my-patients/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+/** Paginated patient list + reports + reviews for the nutritionist clinical review page. */
+export type ClinicalReviewDashboardResponse = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: number | null;
+  previous: number | null;
+  total_pages: number;
+  results: ClinicalReviewPatientRow[];
+  selected_user_id: number | null;
+  reports: PatientHealthReport[];
+  reviews: NutritionistReview[];
+  reports_total: number;
+  reviews_total: number;
+};
+
+export const getClinicalReviewDashboard = async (params: {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  patient_id?: number;
+}): Promise<ClinicalReviewDashboardResponse> => {
+  const url = createApiUrl("api/usernutritionistmapping/clinical-review-dashboard/");
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: {
+      page: params.page ?? 1,
+      page_size: params.page_size ?? 5,
+      search: params.search || undefined,
+      patient_id: params.patient_id,
+    },
+  });
   return response.data;
 };
 

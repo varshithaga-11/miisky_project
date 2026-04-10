@@ -29,6 +29,18 @@ const formatName = (u?: { first_name?: string; last_name?: string; username?: st
   return name || u?.username || "User";
 };
 
+const formatRole = (role?: string | null) => {
+  if (!role) return "";
+  return role.replace(/_/g, " ");
+};
+
+const formatNameWithRole = (u?: { first_name?: string; last_name?: string; username?: string; role?: string } | null) => {
+  if (!u) return "—";
+  const name = formatName(u);
+  const role = formatRole((u as any).role);
+  return role ? `${name} (${role})` : name;
+};
+
 const asArray = <T,>(data: any): T[] => {
   if (Array.isArray(data)) return data as T[];
   if (data?.results && Array.isArray(data.results)) return data.results as T[];
@@ -77,6 +89,7 @@ const SupportTicketPage: React.FC = () => {
   }, [messages, attachments]);
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     try {
       const data = await getTicketCategories();
       setCategories(data);
@@ -87,6 +100,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   const loadProviders = async () => {
+    if (providers.nutritionists.length > 0 || providers.kitchens.length > 0) return;
     try {
       const data = await getServiceProviders();
       setProviders(data);
@@ -152,8 +166,6 @@ const SupportTicketPage: React.FC = () => {
 
   const handleOpenNewTicket = () => {
     loadCategories();
-    loadProviders();
-    // loadTickets();
     setIsNewOpen(true);
   };
 
@@ -288,6 +300,9 @@ const SupportTicketPage: React.FC = () => {
                     <div className="min-w-0">
                       <div className="font-medium text-gray-900 dark:text-white truncate">#{t.id} {t.title}</div>
                       <div className="text-xs text-gray-500 truncate">{t.description}</div>
+                      <div className="text-[11px] text-gray-500 truncate mt-1">
+                        From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
+                      </div>
                     </div>
                     <div className="shrink-0">{getStatusBadge(t.status)}</div>
                   </div>
@@ -311,6 +326,7 @@ const SupportTicketPage: React.FC = () => {
                   </div>
                   <div className="text-xs text-gray-500">
                     Status: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority}
+                    {" "}• From: {formatNameWithRole(activeTicket.created_by_details)} • To: {formatNameWithRole(activeTicket.assigned_to_details)}
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => loadMessages(activeTicket.id)}>
@@ -446,7 +462,7 @@ const SupportTicketPage: React.FC = () => {
               </Button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 no-scrollbar">
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 italic">Who is this for? / Ask To</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -458,7 +474,12 @@ const SupportTicketPage: React.FC = () => {
                     <button
                       key={target.id}
                       type="button"
-                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      onClick={() => {
+                        setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }));
+                        if (target.id === "nutritionist" || target.id === "kitchen") {
+                          loadProviders();
+                        }
+                      }}
                       className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${form.target_user_type === target.id
                         ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"
                         : "border-gray-100 dark:border-white/5 hover:border-blue-200"

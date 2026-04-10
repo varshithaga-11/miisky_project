@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
-import { getAllOrders, getMicroKitchens } from "./api";
+import { getAllOrders, getMicroKitchens, getOrderById } from "./api";
+import OrderDetailModal from "./OrderDetailModal";
 
 interface OrderRow {
   id: number;
@@ -28,6 +29,9 @@ const OrderManagementPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedKitchen, setSelectedKitchen] = useState("");
   const [kitchens, setKitchens] = useState<{ id: number; brand_name: string }[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
 
   useEffect(() => {
     const fetchKitchens = async () => {
@@ -68,6 +72,56 @@ const OrderManagementPage: React.FC = () => {
       case 'pending': return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
       case 'completed': return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10';
       default: return 'text-gray-500 bg-gray-50 dark:bg-gray-500/10';
+    }
+  };
+
+  const handleViewDetails = async (id: number) => {
+    setModalLoading(true);
+    try {
+      const data = await getOrderById(id);
+      setSelectedOrder(data);
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch order details", err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      // Fetch with a high limit to export all matching records based on current filters
+      const res = await getAllOrders(1, 10000, searchTerm, selectedKitchen);
+      const allRows = res.results || [];
+      
+      if (allRows.length === 0) {
+        return;
+      }
+
+      const headers = ["Order ID", "Patient Name", "Kitchen", "Amount", "Status", "Date"];
+      const csvRows = allRows.map((r: any) => [
+        `"${r.order_id || `#ORD-${r.id}`}"`,
+        `"${r.patient_name}"`,
+        `"${r.kitchen_name || "—"}"`,
+        r.amount,
+        `"${r.status}"`,
+        `"${new Date(r.created_at).toLocaleString()}"`
+      ].join(","));
+
+      const csvContent = [headers.join(","), ...csvRows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `miisky_orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Export failed", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,7 +190,12 @@ const OrderManagementPage: React.FC = () => {
                     className="w-24 px-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl"
                   />
                 </div>
-                <Button variant="outline" className="flex items-center gap-2 rounded-xl py-2.5 px-4 shadow-sm hover:shadow-md transition-all">
+                <Button 
+                  variant="outline" 
+                  onClick={handleExport}
+                  disabled={loading || rows.length === 0}
+                  className="flex items-center gap-2 rounded-xl py-2.5 px-4 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+                >
                   <FiDownload /> Export
                 </Button>
               </div>
@@ -197,7 +256,10 @@ const OrderManagementPage: React.FC = () => {
                           </span>
                         </TableCell>
                         <TableCell className="px-6 py-5 text-right">
-                          <button className="inline-flex items-center gap-1.5 text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-bold opacity-80 hover:opacity-100 transition-all">
+                          <button 
+                            onClick={() => handleViewDetails(r.id)}
+                            className="inline-flex items-center gap-1.5 text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-bold opacity-80 hover:opacity-100 transition-all"
+                          >
                             <FiEye className="w-4 h-4" /> Details
                           </button>
                         </TableCell>
@@ -238,6 +300,11 @@ const OrderManagementPage: React.FC = () => {
           )}
         </div>
       </div>
+      <OrderDetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        order={selectedOrder} 
+      />
     </>
   );
 };

@@ -26,8 +26,8 @@ export type SupportTicket = {
   updated_at: string;
   // If backend returns expanded objects later, we keep it flexible
   category_details?: TicketCategory | null;
-  created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
-  assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string } | null;
+  created_by_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
+  assigned_to_details?: { id: number; username?: string; first_name?: string; last_name?: string; role?: string } | null;
 };
 
 export type TicketMessage = {

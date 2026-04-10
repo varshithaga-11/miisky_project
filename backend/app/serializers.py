@@ -390,6 +390,37 @@ class FoodNutritionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class FoodByIdNutritionSerializer(serializers.ModelSerializer):
+    food_name = serializers.CharField(source="food.name", read_only=True)
+
+    class Meta:
+        model = FoodNutrition
+        fields = [
+            "id",
+            "food",
+            "food_name",
+            "calories",
+            "protein",
+            "carbs",
+            "fat",
+            "fiber",
+            "sugar",
+            "saturated_fat",
+            "trans_fat",
+            "sodium",
+            "potassium",
+            "calcium",
+            "iron",
+            "vitamin_a",
+            "vitamin_c",
+            "vitamin_d",
+            "vitamin_b12",
+            "cholesterol",
+            "glycemic_index",
+            "serving_size",
+        ]
+
+
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
@@ -691,6 +722,14 @@ class FoodSerializer(serializers.ModelSerializer):
         if query.exists():
             raise serializers.ValidationError("A food item with this name already exists.")
         return value
+
+
+class SetDailyMealsFoodListSerializer(serializers.ModelSerializer):
+    """Minimal food row for Set Daily Meals picker — id and name only (no nutrition, ingredients, steps)."""
+
+    class Meta:
+        model = Food
+        fields = ["id", "name"]
 
 
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
@@ -1281,6 +1320,7 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
     deficiencies = serializers.SerializerMethodField()
     autoimmune_diseases = serializers.SerializerMethodField()
     digestive_issues = serializers.SerializerMethodField()
+    skin_issues = serializers.SerializerMethodField()
 
     class Meta:
         model = UserQuestionnaire
@@ -1319,6 +1359,7 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "deficiencies",
             "autoimmune_diseases",
             "digestive_issues",
+            "skin_issues",
         ]
         read_only_fields = ("created_on", "updated_on")
 
@@ -1377,6 +1418,14 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             UserDigestiveIssue.objects.filter(user=u).values_list("issue__name", flat=True)
         )
 
+    def get_skin_issues(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return list(
+            UserSkinIssue.objects.filter(user=u).values_list("skin_issue__name", flat=True)
+        )
+
 
 class SymptomMasterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1399,6 +1448,12 @@ class DeficiencyMasterSerializer(serializers.ModelSerializer):
 class DigestiveIssueMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = DigestiveIssueMaster
+        fields = ["id", "name"]
+
+
+class SkinIssueMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SkinIssueMaster
         fields = ["id", "name"]
 
 
@@ -1691,6 +1746,12 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
         return None
 
 
+class AdminNutritionistListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRegister
+        fields = ["id", "username", "first_name", "last_name", "email"]
+
+
 class ReassignNutritionistSerializer(serializers.Serializer):
     """Payload for POST usernutritionistmapping/reassign/ (admin only)."""
 
@@ -1929,6 +1990,112 @@ class FoodFattyAcidProfileSerializer(FoodCompositionBaseSerializer):
         fields = "__all__"
 
 
+# Read-only composition rows (no write-only food_name_input); used for patient nutrition detail API.
+class FoodProximateReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodProximate
+        exclude = ("food_name",)
+
+
+class FoodWaterSolubleVitaminsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodWaterSolubleVitamins
+        exclude = ("food_name",)
+
+
+class FoodFatSolubleVitaminsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodFatSolubleVitamins
+        exclude = ("food_name",)
+
+
+class FoodCarotenoidsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodCarotenoids
+        exclude = ("food_name",)
+
+
+class FoodMineralsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodMinerals
+        exclude = ("food_name",)
+
+
+class FoodSugarsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodSugars
+        exclude = ("food_name",)
+
+
+class FoodAminoAcidsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodAminoAcids
+        exclude = ("food_name",)
+
+
+class FoodOrganicAcidsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodOrganicAcids
+        exclude = ("food_name",)
+
+
+class FoodPolyphenolsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodPolyphenols
+        exclude = ("food_name",)
+
+
+class FoodPhytochemicalsReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodPhytochemicals
+        exclude = ("food_name",)
+
+
+class FoodFattyAcidProfileReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodFattyAcidProfile
+        exclude = ("food_name",)
+
+
+class FoodNameNutritionDetailSerializer(serializers.ModelSerializer):
+    """Full FoodName + all composition OneToOne relations (catalog reference data)."""
+
+    food_group_detail = FoodGroupSerializer(source="food_group", read_only=True)
+    proximate = FoodProximateReadSerializer(read_only=True)
+    water_soluble_vitamins = FoodWaterSolubleVitaminsReadSerializer(read_only=True)
+    fat_soluble_vitamins = FoodFatSolubleVitaminsReadSerializer(read_only=True)
+    carotenoids = FoodCarotenoidsReadSerializer(read_only=True)
+    minerals = FoodMineralsReadSerializer(read_only=True)
+    sugars = FoodSugarsReadSerializer(read_only=True)
+    amino_acids = FoodAminoAcidsReadSerializer(read_only=True)
+    organic_acids = FoodOrganicAcidsReadSerializer(read_only=True)
+    polyphenols = FoodPolyphenolsReadSerializer(read_only=True)
+    phytochemicals = FoodPhytochemicalsReadSerializer(read_only=True)
+    fatty_acid_profile = FoodFattyAcidProfileReadSerializer(read_only=True)
+
+    class Meta:
+        model = FoodName
+        fields = [
+            "id",
+            "name",
+            "code",
+            "created_at",
+            "food_group",
+            "food_group_detail",
+            "proximate",
+            "water_soluble_vitamins",
+            "fat_soluble_vitamins",
+            "carotenoids",
+            "minerals",
+            "sugars",
+            "amino_acids",
+            "organic_acids",
+            "polyphenols",
+            "phytochemicals",
+            "fatty_acid_profile",
+        ]
+
+
 class PatientHealthReportSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     reviews = serializers.SerializerMethodField()
@@ -1952,26 +2119,40 @@ class PatientHealthReportSerializer(serializers.ModelSerializer):
     def get_reviews(self, obj):
         # Return reviews where this report is included
         from .models import NutritionistReview
-        revs = obj.reviews.all().order_by('-created_on')
-        return [
-            {
-                "id": r.id, 
-                "comments": r.comments, 
+        revs = obj.reviews.all().select_related('nutritionist', 'doctor').order_by('-created_on')
+        out = []
+        for r in revs:
+            nut_name = (
+                f"{r.nutritionist.first_name} {r.nutritionist.last_name}".strip()
+                if r.nutritionist
+                else None
+            )
+            doc_name = (
+                f"{r.doctor.first_name} {r.doctor.last_name}".strip()
+                if r.doctor
+                else None
+            )
+            out.append({
+                "id": r.id,
+                "comments": r.comments,
                 "created_on": r.created_on,
-                "nutritionist_name": f"{r.nutritionist.first_name} {r.nutritionist.last_name}" if r.nutritionist else "Unknown"
-            } 
-            for r in revs
-        ]
+                "nutritionist_name": nut_name or doc_name or "Unknown",
+                "doctor_name": doc_name,
+                "reviewer_role": "nutritionist" if r.nutritionist else ("doctor" if r.doctor else "unknown"),
+            })
+        return out
 
 
 class NutritionistReviewSerializer(serializers.ModelSerializer):
     report_details = serializers.SerializerMethodField()
     nutritionist_details = serializers.SerializerMethodField(read_only=True)
+    doctor_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = NutritionistReview
         fields = [
-            'id', 'user', 'nutritionist', 'nutritionist_details', 'reports', 'report_details',
+            'id', 'user', 'nutritionist', 'doctor', 'nutritionist_details', 'doctor_details',
+            'reports', 'report_details',
             'comments', 'created_on',
         ]
 
@@ -1982,6 +2163,16 @@ class NutritionistReviewSerializer(serializers.ModelSerializer):
                 'first_name': obj.nutritionist.first_name,
                 'last_name': obj.nutritionist.last_name,
                 'email': obj.nutritionist.email,
+            }
+        return None
+
+    def get_doctor_details(self, obj):
+        if obj.doctor:
+            return {
+                'id': obj.doctor.id,
+                'first_name': obj.doctor.first_name,
+                'last_name': obj.doctor.last_name,
+                'email': obj.doctor.email,
             }
         return None
 
@@ -1997,6 +2188,60 @@ class NutritionistReviewSerializer(serializers.ModelSerializer):
                 'report_file': url,
             })
         return out
+
+
+class ClinicalReviewHealthReportSerializer(serializers.ModelSerializer):
+    """Minimal health report payload for nutritionist clinical review dashboard."""
+
+    reviews = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientHealthReport
+        fields = [
+            'id', 'user', 'title', 'report_file', 'report_type', 'uploaded_on', 'reviews',
+        ]
+
+    def get_reviews(self, obj):
+        revs = obj.reviews.all().select_related('nutritionist', 'doctor').order_by('-created_on')
+        rows = []
+        for r in revs:
+            nut_name = (
+                f'{r.nutritionist.first_name} {r.nutritionist.last_name}'.strip()
+                if r.nutritionist
+                else None
+            )
+            doc_name = (
+                f'{r.doctor.first_name} {r.doctor.last_name}'.strip()
+                if r.doctor
+                else None
+            )
+            rows.append({
+                'id': r.id,
+                'comments': r.comments,
+                'created_on': r.created_on,
+                'nutritionist_name': nut_name or doc_name or 'Unknown',
+                'doctor_name': doc_name,
+                'reviewer_role': 'nutritionist' if r.nutritionist else ('doctor' if r.doctor else 'unknown'),
+            })
+        return rows
+
+
+class ClinicalReviewNutritionistReviewSerializer(serializers.ModelSerializer):
+    """Minimal nutritionist review for clinical review dashboard (no nutritionist_details)."""
+
+    report_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NutritionistReview
+        fields = [
+            'id', 'user', 'nutritionist', 'reports', 'report_details', 'comments', 'created_on',
+        ]
+
+    def get_report_details(self, obj):
+        return [
+            {'id': r.id, 'title': r.title}
+            for r in obj.reports.all().order_by('-uploaded_on')
+        ]
 
 
 class UserDietPlanSerializer(serializers.ModelSerializer):
@@ -2435,6 +2680,7 @@ class OrderSerializer(serializers.ModelSerializer):
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     ratings = MicroKitchenRatingSerializer(many=True, read_only=True)
     delivery_slab_details = serializers.SerializerMethodField(read_only=True)
+    delivery_person_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -2444,8 +2690,13 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_amount', 'delivery_distance_km', 'delivery_charge', 'delivery_slab',
             'delivery_slab_details', 'final_amount',
             'delivery_address',
+            'delivery_person', 'delivery_person_details',
             'items', 'ratings', 'created_at',
         ]
+        extra_kwargs = {
+            # Assigned only via assign-delivery-person action (not open PATCH from clients).
+            'delivery_person': {'read_only': True},
+        }
 
     def get_user_details(self, obj):
         if obj.user:
@@ -2486,6 +2737,129 @@ class OrderSerializer(serializers.ModelSerializer):
             'max_km': str(s.max_km),
             'charge': str(s.charge),
         }
+
+    def get_delivery_person_details(self, obj):
+        dp = getattr(obj, 'delivery_person', None)
+        if not dp:
+            return None
+        return {
+            'id': dp.id,
+            'first_name': dp.first_name or '',
+            'last_name': dp.last_name or '',
+            'mobile': dp.mobile or '',
+        }
+
+
+class OrderPaymentSnapshotKitchenSerializer(serializers.ModelSerializer):
+    """
+    Read-only snapshot of platform vs kitchen split for one order (micro kitchen portal).
+    """
+
+    order_id = serializers.IntegerField(source="order.id", read_only=True)
+    order_status = serializers.CharField(source="order.status", read_only=True)
+    order_type = serializers.CharField(source="order.order_type", read_only=True)
+    order_created_at = serializers.DateTimeField(source="order.created_at", read_only=True)
+    customer_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderPaymentSnapshot
+        fields = [
+            "id",
+            "order_id",
+            "order_status",
+            "order_type",
+            "order_created_at",
+            "customer_display",
+            "food_subtotal",
+            "delivery_charge",
+            "grand_total",
+            "platform_percent",
+            "kitchen_percent",
+            "platform_amount",
+            "kitchen_amount",
+            "created_at",
+        ]
+
+    def get_customer_display(self, obj):
+        u = getattr(obj.order, "user", None)
+        if not u:
+            return ""
+        name = f"{(u.first_name or '').strip()} {(u.last_name or '').strip()}".strip()
+        return name or getattr(u, "username", None) or ""
+
+
+class SupplyChainDeliveryEarningsListSerializer(serializers.ModelSerializer):
+    """Delivered separate orders for the logged-in supply-chain user — delivery charge is their pass-through earning."""
+
+    kitchen_name = serializers.CharField(source="micro_kitchen.brand_name", read_only=True)
+    customer_display = serializers.SerializerMethodField()
+    delivery_earning = serializers.DecimalField(
+        source="delivery_charge", max_digits=10, decimal_places=2, read_only=True
+    )
+    snapshot_delivery_charge = serializers.SerializerMethodField()
+    receipt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "kitchen_name",
+            "customer_display",
+            "order_type",
+            "status",
+            "delivery_earning",
+            "snapshot_delivery_charge",
+            "final_amount",
+            "created_at",
+            "receipt",
+        ]
+
+    def get_customer_display(self, obj):
+        u = getattr(obj, "user", None)
+        if not u:
+            return ""
+        name = f"{(u.first_name or '').strip()} {(u.last_name or '').strip()}".strip()
+        return name or getattr(u, "username", None) or ""
+
+    def get_snapshot_delivery_charge(self, obj):
+        snap = getattr(obj, "payment_snapshot", None)
+        if snap:
+            return str(snap.delivery_charge)
+        return None
+
+    def get_receipt(self, obj):
+        r = getattr(obj, "supply_chain_delivery_receipt", None)
+        if not r:
+            return None
+        request = self.context.get("request")
+        url = None
+        if r.receipt_image:
+            url = r.receipt_image.url
+            if request:
+                url = request.build_absolute_uri(url)
+        return {
+            "id": r.id,
+            "receipt_image_url": url,
+            "notes": r.notes or "",
+            "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+        }
+
+
+class SupplyChainOrderDeliveryReceiptReadSerializer(serializers.ModelSerializer):
+    receipt_image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SupplyChainOrderDeliveryReceipt
+        fields = ["id", "order", "receipt_image_url", "notes", "created_at", "updated_at"]
+
+    def get_receipt_image_url(self, obj):
+        if not obj.receipt_image:
+            return None
+        request = self.context.get("request")
+        url = obj.receipt_image.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
 
 class AdminPatientListSerializer(serializers.ModelSerializer):
@@ -2885,7 +3259,7 @@ class AdminNutritionistDetailSerializer(serializers.ModelSerializer):
 class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRegister
-        fields = ["id", "username", "first_name", "last_name"]
+        fields = ["id", "username", "first_name", "last_name", "role"]
 
 
 class TicketCategorySerializer(serializers.ModelSerializer):
@@ -2971,6 +3345,12 @@ class UserDietPlanDeliverySummarySerializer(serializers.ModelSerializer):
 
 
 class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
+    # Explicit field so validation does not require it on create (set in view for micro_kitchen users).
+    micro_kitchen = serializers.PrimaryKeyRelatedField(
+        queryset=MicroKitchenProfile.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
 
     class Meta:
@@ -3186,4 +3566,60 @@ class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
             attrs["start_time"] = None
             attrs["end_time"] = None
         return attrs
+
+
+class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
+    patient_details = serializers.SerializerMethodField(read_only=True)
+    food_details = serializers.SerializerMethodField(read_only=True)
+    recommended_by_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PatientFoodRecommendation
+        fields = [
+            "id",
+            "patient",
+            "patient_details",
+            "food",
+            "food_details",
+            "quantity",
+            "meal_time",
+            "notes",
+            "comment",
+            "recommended_by",
+            "recommended_by_details",
+            "recommended_on",
+        ]
+        read_only_fields = ["id", "recommended_by", "recommended_on", "recommended_by_details", "patient_details", "food_details"]
+
+    def get_patient_details(self, obj):
+        u = obj.patient
+        if not u:
+            return None
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+            "email": u.email or "",
+        }
+
+    def get_food_details(self, obj):
+        f = obj.food
+        if not f:
+            return None
+        return {"id": f.id, "name": f.name, "code": f.code}
+
+    def get_recommended_by_details(self, obj):
+        u = obj.recommended_by
+        if not u:
+            return None
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+        }
+
+    def validate_patient(self, value):
+        if getattr(value, "role", None) != "patient":
+            raise serializers.ValidationError("Selected user must be a patient.")
+        return value
 

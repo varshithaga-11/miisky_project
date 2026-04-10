@@ -50,6 +50,8 @@ export default function SignInForm() {
           targetPath = "/microkitchen/dashboard";
         } else if (role === 'non_patient') {
           targetPath = "/non-patient/dashboard";
+        } else if (role === 'doctor') {
+          targetPath = "/doctor/all-patients";
         }
 
         setTimeout(() => {

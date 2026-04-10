@@ -29,6 +29,18 @@ const formatName = (u?: { first_name?: string; last_name?: string; username?: st
   return name || u?.username || "User";
 };
 
+const formatRole = (role?: string | null) => {
+  if (!role) return "";
+  return role.replace(/_/g, " ");
+};
+
+const formatNameWithRole = (u?: { first_name?: string; last_name?: string; username?: string; role?: string } | null) => {
+  if (!u) return "—";
+  const name = formatName(u);
+  const role = formatRole((u as any).role);
+  return role ? `${name} (${role})` : name;
+};
+
 const asArray = <T,>(data: any): T[] => {
   if (Array.isArray(data)) return data as T[];
   if (data?.results && Array.isArray(data.results)) return data.results as T[];
@@ -77,6 +89,7 @@ const SupportTicketPage: React.FC = () => {
   }, [messages, attachments]);
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     try {
       const data = await getTicketCategories();
       setCategories(data);
@@ -114,6 +127,7 @@ const SupportTicketPage: React.FC = () => {
   };
 
   const loadProviders = async () => {
+    if (providers.kitchens.length > 0 || providers.nutritionists.length > 0) return;
     try {
       const data = await getServiceProviders();
       setProviders(data);
@@ -152,7 +166,6 @@ const SupportTicketPage: React.FC = () => {
 
   const handleOpenCreateModal = () => {
     setIsNewOpen(true);
-    loadProviders();
     loadCategories();
   };
 
@@ -288,6 +301,9 @@ const SupportTicketPage: React.FC = () => {
                   <div className="text-[11px] font-medium text-gray-500 truncate mb-4 italic">
                     {t.description}
                   </div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                    From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
+                  </div>
                   <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
                     <span className={`inline-flex items-center gap-1.5 ${t.priority === 'high' ? 'text-rose-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-blue-500'
                       }`}>
@@ -312,7 +328,7 @@ const SupportTicketPage: React.FC = () => {
                     Ticket #{activeTicket.id} — {activeTicket.title}
                   </div>
                   <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-                    Channel: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority}
+                    Channel: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority} • From: {formatNameWithRole(activeTicket.created_by_details)} • To: {formatNameWithRole(activeTicket.assigned_to_details)}
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => loadMessages(activeTicket.id)} className="font-black uppercase tracking-widest text-[9px]">
@@ -458,7 +474,7 @@ const SupportTicketPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-8">
+            <form onSubmit={handleCreate} className="space-y-8 max-h-[60vh] overflow-y-auto pr-1 no-scrollbar">
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">Ask To / Recipient Channel</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -469,7 +485,12 @@ const SupportTicketPage: React.FC = () => {
                     <button
                       key={target.id}
                       type="button"
-                      onClick={() => setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }))}
+                      onClick={() => {
+                        setForm(p => ({ ...p, target_user_type: target.id as SupportTicketTargetType }));
+                        if (target.id === "kitchen") {
+                          loadProviders();
+                        }
+                      }}
                       className={`flex flex-col items-center justify-center p-4 rounded-[28px] border-2 transition-all gap-2 ${form.target_user_type === target.id
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-xl scale-105"
                           : "border-gray-50 dark:border-white/5 hover:border-blue-200"

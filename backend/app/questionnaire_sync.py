@@ -12,18 +12,28 @@ from .models import (
     DeficiencyMaster,
     DigestiveIssueMaster,
     HealthConditionMaster,
+    SkinIssueMaster,
     SymptomMaster,
     UserAutoimmune,
     UserDeficiency,
     UserDigestiveIssue,
     UserHealthCondition,
     UserRegister,
+    UserSkinIssue,
     UserSymptom,
 )
 
 
 def _norm_name(s):
     return (s or "").strip()
+
+
+def _is_placeholder_name(name: str) -> bool:
+    """Skip storing literal 'None', 'N/A', etc. as master rows."""
+    if not name:
+        return True
+    low = name.strip().lower()
+    return low in ("none", "n/a", "na", "nil", "-", "no", "nothing")
 
 
 def _parse_date(val):
@@ -48,7 +58,7 @@ def _sync_health_conditions(user: UserRegister, items):
     for raw in items:
         if isinstance(raw, str):
             name = _norm_name(raw)
-            if not name:
+            if _is_placeholder_name(name):
                 continue
             cond, _ = HealthConditionMaster.objects.get_or_create(
                 name=name,
@@ -78,7 +88,7 @@ def _sync_health_conditions(user: UserRegister, items):
             )
             continue
         name = _norm_name(raw.get("name"))
-        if not name:
+        if _is_placeholder_name(name):
             continue
         cat = raw.get("category") or "other"
         if cat not in dict(HealthConditionMaster.CATEGORY_CHOICES):
@@ -110,7 +120,7 @@ def _sync_name_m2m(user, items, MasterModel, UserModel, fk_field: str):
             continue
         if isinstance(raw, str):
             name = _norm_name(raw)
-            if not name:
+            if _is_placeholder_name(name):
                 continue
             m, _ = MasterModel.objects.get_or_create(name=name)
             UserModel.objects.create(user=user, **{fk_field: m})
@@ -125,7 +135,7 @@ def _sync_name_m2m(user, items, MasterModel, UserModel, fk_field: str):
                 UserModel.objects.create(user=user, **{fk_field: m})
                 continue
             name = _norm_name(raw.get("name"))
-            if not name:
+            if _is_placeholder_name(name):
                 continue
             m, _ = MasterModel.objects.get_or_create(name=name)
             UserModel.objects.create(user=user, **{fk_field: m})
@@ -167,4 +177,12 @@ def sync_user_questionnaire_relations(user: UserRegister, payload: dict):
                 DigestiveIssueMaster,
                 UserDigestiveIssue,
                 "issue",
+            )
+        if "skin_issues" in payload:
+            _sync_name_m2m(
+                user,
+                payload.get("skin_issues"),
+                SkinIssueMaster,
+                UserSkinIssue,
+                "skin_issue",
             )

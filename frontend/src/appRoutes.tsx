@@ -32,6 +32,7 @@ import SymptomMasterPage from "./pages/AdminSide/SymptomMaster/index";
 import AutoimmuneMasterPage from "./pages/AdminSide/AutoimmuneMaster/index";
 import DeficiencyMasterPage from "./pages/AdminSide/DeficiencyMaster/index";
 import DigestiveIssueMasterPage from "./pages/AdminSide/DigestiveIssueMaster/index";
+import SkinIssueMasterPage from "./pages/AdminSide/SkinIssueMaster/index";
 import StateManagementPage from "./pages/AdminSide/State/index";
 import CityManagementPage from "./pages/AdminSide/City/index";
 import MealTypeManagementPage from "./pages/AdminSide/MealType/index";
@@ -71,10 +72,13 @@ import DeliveryAssignmentsPage from "./pages/SupplyChain/Assignments/index";
 import SupplyChainDashboardPage from "./pages/SupplyChain/Dashboard/index";
 import SupplyChainEarningsPage from "./pages/SupplyChain/Earnings/index";
 import SupplyChainPlannedLeavePage from "./pages/SupplyChain/PlannedLeave/index";
+import SupplyChainSeperateOrdersPage from "./pages/SupplyChain/SeperateOrders/index";
 import UserNutritionMappingPage from "./pages/AdminSide/UserNutritionMapping";
 import AllotedPatientsPage from "./pages/NutritionSide/AllotedPatients";
 import UploadedDocumentsByPatientPage from "./pages/NutritionSide/UploadedDocumentsByPatient/index";
 import SuggestPlanToPatientsPage from "./pages/NutritionSide/SuggestPlanToPatients/index";
+import SuggestFoodNameToPatientsPage from "./pages/NutritionSide/SuggestFoodNameToPatients/index";
+import SuggestedFoodNameFromNutritionPage from "./pages/PatientSide/SuggestedFoodNameFromNutrition/index";
 import ApprovesPlansByPatientsPage from "./pages/NutritionSide/ApprovesPlansByPatients/index";
 import SetDailyMealsPage from "./pages/NutritionSide/SetDailyMeals/index";
 import NutritionAllotedPage from "./pages/PatientSide/NutritionAlloted";
@@ -95,6 +99,8 @@ import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformati
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
+import DoctorAllPatientsPage from "./pages/DoctorSide/AllPatients/index";
+import DoctorSupportTicketPage from "./pages/DoctorSide/SupportTicket/index";
 import NonPatientInformationPage from "./pages/AdminSide/NonPatientInformation/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
 import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
@@ -106,6 +112,7 @@ import PatientNotificationsPage from "./pages/PatientSide/Notification/index";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
 import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
+import SupplyChainSupportTicketPage from "./pages/SupplyChain/SupportTicket/index";
 import PatientDashboardPage from "./pages/PatientSide/Dashboard/index";
 import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
 import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
@@ -115,8 +122,10 @@ import OrderManagementPage from "./pages/AdminSide/OrderManagement/index";
 import KitchenPayoutsPage from "./pages/AdminSide/KitchenPayouts/index";
 import RecordPlanPayoutsPage from "./pages/AdminSide/RecordPlanPayouts/index";
 import PlanPaymentsOverviewPage from "./pages/AdminSide/PlanPaymentsOverview/index";
+import OrderCommissionPage from "./pages/AdminSide/OrderCommission";
 import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
 import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
+import MicroKitchenOrderPaymentSnapshotsPage from "./pages/MicroKitchenSide/OrderPaymentSnapshots/index";
 import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
 import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
 import AvailabilityCalendar from "./pages/NutritionSide/AvailabilityCalendar/index";
@@ -274,6 +283,7 @@ export function appRoutes() {
           <Route path="admin/autoimmune-master" element={<AutoimmuneMasterPage />} />
           <Route path="admin/deficiency-master" element={<DeficiencyMasterPage />} />
           <Route path="admin/digestive-issue-master" element={<DigestiveIssueMasterPage />} />
+          <Route path="admin/skin-issue-master" element={<SkinIssueMasterPage />} />
           <Route path="admin/state" element={<StateManagementPage />} />
           <Route path="admin/city" element={<CityManagementPage />} />
           <Route path="admin/meal-type" element={<MealTypeManagementPage />} />
@@ -306,12 +316,15 @@ export function appRoutes() {
           <Route path="admin/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
           <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
           <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
+          <Route path="doctor/all-patients" element={<DoctorAllPatientsPage />} />
+          <Route path="doctor/support-tickets" element={<DoctorSupportTicketPage />} />
           <Route path="admin/non-patient-information" element={<NonPatientInformationPage />} />
           <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
           <Route path="admin/notifications" element={<AdminNotificationsPage />} />
           <Route path="admin/reassignment-logs" element={<NutritionKitchenReassignment />} />
           <Route path="admin/all-orders" element={<OrderManagementPage />} />
+          <Route path="admin/order-commission" element={<OrderCommissionPage />} />
           <Route path="admin/payouts" element={<KitchenPayoutsPage />} />
           <Route path="admin/record-plan-payouts" element={<RecordPlanPayoutsPage />} />
           <Route path="admin/plan-payments-overview" element={<PlanPaymentsOverviewPage />} />
@@ -338,10 +351,12 @@ export function appRoutes() {
           <Route path="patient/support-tickets" element={<PatientSupportTicketPage />} />
           <Route path="patient/notifications" element={<PatientNotificationsPage />} />
           <Route path="patient/instructions" element={<PatientInstructionsPage />} />
+          <Route path="patient/suggested-foods" element={<SuggestedFoodNameFromNutritionPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
           <Route path="nutrition/uploaded-documents" element={<UploadedDocumentsByPatientPage />} />
+          <Route path="nutrition/suggest-foods" element={<SuggestFoodNameToPatientsPage />} />
           <Route path="nutrition/suggest-plan" element={<SuggestPlanToPatientsPage />} />
           <Route path="nutrition/allot-micro-kitchen" element={<SuggestPlanToPatientsPage />} />
           <Route path="nutrition/approved-plans" element={<ApprovesPlansByPatientsPage />} />
@@ -360,6 +375,7 @@ export function appRoutes() {
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
+          <Route path="microkitchen/order-payments" element={<MicroKitchenOrderPaymentSnapshotsPage />} />
           <Route path="microkitchen/delivery" element={<MicroKitchenDeliveryManagementPage />} />
           <Route path="microkitchen/delivery/global" element={<MicroKitchenGlobalDeliveryPage />} />
           <Route path="microkitchen/delivery/daily" element={<MicroKitchenDailyDeliveryPage />} />
@@ -370,9 +386,11 @@ export function appRoutes() {
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/dashboard" element={<SupplyChainDashboardPage />} />
           <Route path="supplychain/daily-work" element={<DeliveryAssignmentsPage />} />
+          <Route path="supplychain/seperate-orders" element={<SupplyChainSeperateOrdersPage />} />
           <Route path="supplychain/earnings" element={<SupplyChainEarningsPage />} />
           <Route path="supplychain/planned-leave" element={<SupplyChainPlannedLeavePage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
+          <Route path="supplychain/support-tickets" element={<SupplyChainSupportTicketPage />} />
           <Route path="supplychain/assignments" element={<Navigate to="/supplychain/daily-work" replace />} />
 
 

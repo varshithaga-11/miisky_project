@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
-import { getMyPatients, MappedPatientResponse } from "../UploadedDocumentsByPatient/api";
+import { MappedPatientResponse } from "../UploadedDocumentsByPatient/api";
 import { UserDietPlan } from "../SuggestPlanToPatients/api";
 import { MealType, getMealTypeList } from "../../AdminSide/MealType/mealtypeapi";
 import { Food, CuisineType, getCuisineTypeList, getFoodList } from "../../AdminSide/Food/foodapi";
@@ -10,7 +10,7 @@ import {
     MicroKitchenProfile,
 } from "../ListOfMicroKitchens/api";
 
-export { getMyPatients, getMealTypeList, getCuisineTypeList, getFoodList, getPackagingMaterialList };
+export { getMealTypeList, getCuisineTypeList, getFoodList, getPackagingMaterialList };
 export { getApprovedMicroKitchens };
 export type {
     MappedPatientResponse,
@@ -40,6 +40,31 @@ export interface UserMeal {
     packaging_material_details?: { id: number; name: string } | null;
     micro_kitchen?: number | null;
     micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
+}
+
+export interface FoodNutritionById {
+    id: number;
+    food: number;
+    food_name: string;
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+    fiber: number | null;
+    sugar: number | null;
+    saturated_fat: number | null;
+    trans_fat: number | null;
+    sodium: number | null;
+    potassium: number | null;
+    calcium: number | null;
+    iron: number | null;
+    vitamin_a: number | null;
+    vitamin_c: number | null;
+    vitamin_d: number | null;
+    vitamin_b12: number | null;
+    cholesterol: number | null;
+    glycemic_index: number | null;
+    serving_size: string | null;
 }
 
 export interface ReassignMicroKitchenPayload {
@@ -99,7 +124,164 @@ export const getUserMealsList = async (
     return Array.isArray(data) ? data : data?.results ?? [];
 };
 
-export const saveBulkMeals = async (meals: UserMeal[]): Promise<any> => {
+/** Paginated allotted patients for Set Daily Meals (nutritionist-only). */
+export const getSetDailyMealsPatients = async (params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    patient_id?: number;
+}): Promise<{
+    count: number;
+    page: number;
+    page_size: number;
+    next: number | null;
+    previous: number | null;
+    total_pages: number;
+    results: MappedPatientResponse[];
+    selected_user_id: number | null;
+}> => {
+    const url = createApiUrl("api/set-daily-meals/patients/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: {
+            page: params.page ?? 1,
+            page_size: params.page_size ?? 5,
+            search: params.search || undefined,
+            patient_id: params.patient_id,
+        },
+    });
+    return response.data;
+};
+
+export type FilterOptionsBlock = {
+    count: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    next: number | null;
+    previous: number | null;
+    results: { id: number; name: string }[];
+};
+
+export const getSetDailyMealsFilterOptions = async (params: {
+    meal_types_page?: number;
+    cuisines_page?: number;
+    limit?: number;
+    meal_type_id?: number | "";
+    cuisine_id?: number | "";
+}): Promise<{ meal_types: FilterOptionsBlock; cuisine_types: FilterOptionsBlock }> => {
+    const url = createApiUrl("api/set-daily-meals/filter-options/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: {
+            meal_types_page: params.meal_types_page ?? 1,
+            cuisines_page: params.cuisines_page ?? 1,
+            limit: params.limit ?? 5,
+            meal_type_id: params.meal_type_id || undefined,
+            cuisine_id: params.cuisine_id || undefined,
+        },
+    });
+    return response.data;
+};
+
+export const getSetDailyMealsPatientDetail = async (userId: number): Promise<{
+    user: { id: number; first_name: string; last_name: string; email: string; mobile: string };
+    questionnaire: Record<string, unknown> | null;
+    kitchen: Record<string, unknown> | null;
+    reassignment_details: Record<string, unknown> | null;
+    today_food: UserMeal[];
+}> => {
+    const url = createApiUrl("api/set-daily-meals/patient-detail/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: { user_id: userId },
+    });
+    return response.data;
+};
+
+export const getSetDailyMealsPlanMeals = async (params: {
+    user_id: number;
+    plan_id: number;
+    offset_days?: number;
+    days?: number;
+}): Promise<{
+    plan_id: number;
+    range_start: string | null;
+    range_end: string | null;
+    offset_days: number;
+    days: number;
+    next_offset_days: number | null;
+    has_more: boolean;
+    meals: UserMeal[];
+}> => {
+    const url = createApiUrl("api/set-daily-meals/plan-meals/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: {
+            user_id: params.user_id,
+            plan_id: params.plan_id,
+            offset_days: params.offset_days ?? 0,
+            days: params.days ?? 10,
+        },
+    });
+    return response.data;
+};
+
+export const getSetDailyMealsCalendarMonth = async (params: {
+    user_id: number;
+    plan_id: number;
+    month: number;
+    year: number;
+}): Promise<{ month: number; year: number; meals: UserMeal[] }> => {
+    const url = createApiUrl("api/set-daily-meals/calendar-month/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: {
+            user_id: params.user_id,
+            plan_id: params.plan_id,
+            month: params.month,
+            year: params.year,
+        },
+    });
+    return response.data;
+};
+
+export const getSetDailyMealsFoods = async (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    meal_type?: number | "";
+    cuisine_type?: number | "";
+}): Promise<{
+    count: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    next: number | null;
+    previous: number | null;
+    results: Food[];
+}> => {
+    const url = createApiUrl("api/set-daily-meals/foods/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: {
+            page: params.page ?? 1,
+            limit: params.limit ?? 20,
+            search: params.search || undefined,
+            meal_type: params.meal_type || undefined,
+            cuisine_type: params.cuisine_type || undefined,
+        },
+    });
+    return response.data;
+};
+
+export const getFoodByIdNutrition = async (foodId: number): Promise<FoodNutritionById> => {
+    const url = createApiUrl(`api/foodbyid/${foodId}/`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const saveBulkMeals = async (meals: UserMeal[]): Promise<unknown> => {
     const payload = meals.map((m) => ({
         user: m.user,
         user_diet_plan: m.user_diet_plan,

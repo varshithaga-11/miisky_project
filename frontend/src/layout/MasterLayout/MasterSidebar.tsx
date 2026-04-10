@@ -69,8 +69,9 @@ const adminNavItems: NavItem[] = [
       { name: "Health conditions", path: "/admin/health-condition-master" },
       { name: "Symptoms", path: "/admin/symptom-master" },
       { name: "Autoimmune", path: "/admin/autoimmune-master" },
-      { name: "Deficiencies", path: "/admin/deficiency-master" },
+      { name: "Deficiencies(Minerals and Vitamins)", path: "/admin/deficiency-master" },
       { name: "Digestive issues", path: "/admin/digestive-issue-master" },
+      { name: "Skin issues", path: "/admin/skin-issue-master" },
     ],
   },
   {
@@ -143,6 +144,7 @@ const adminNavItems: NavItem[] = [
     name: "Orders Management",
     subItems: [
       { name: "All Orders", path: "/admin/all-orders" },
+      { name: "Order Commission", path: "/admin/order-commission" },
       // { name: "Kitchen Payouts", path: "/admin/payouts" },
     ],
   },
@@ -209,6 +211,7 @@ const patientNavItems: NavItem[] = [
       { name: "Diet Plans", path: "/patient/plans" },
       { name: "Micro-Kitchens", path: "/patient/micro-kitchens" },
       { name: "Suggested Plans & Kitchens", path: "/patient/suggested-plans" },
+      { name: "Suggested foods", path: "/patient/suggested-foods" },
     ],
   },
   {
@@ -279,6 +282,7 @@ const nutritionistNavItems: NavItem[] = [
     name: "Allotted Patients",
     subItems: [
       { name: "Allotted Patients", path: "/nutrition/allotted-patients" },
+      { name: "Suggest foods", path: "/nutrition/suggest-foods" },
       { name: "Patient Documents", path: "/nutrition/uploaded-documents" },
     ],
   },
@@ -343,6 +347,24 @@ const nutritionistNavItems: NavItem[] = [
   },
 ];
 
+const doctorNavItems: NavItem[] = [
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "All patients",
+    path: "/doctor/all-patients",
+  },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support Tickets",
+    path: "/doctor/support-tickets",
+  },
+  {
+    icon: <UserCog className="w-5 h-5" />,
+    name: "Profile",
+    path: "/profile-info",
+  },
+];
+
 const microKitchenNavItems: NavItem[] = [
   {
     icon: <LayoutDashboard className="w-5 h-5" />,
@@ -378,6 +400,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <Package className="w-5 h-5" />,
     name: "Manage Orders(From Non Patients and Patients)",
     path: "/microkitchen/orders",
+  },
+  {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Order payments",
+    path: "/microkitchen/order-payments",
   },
   {
     icon: <MapPin className="w-5 h-5" />,
@@ -433,6 +460,11 @@ const supplyChainNavItems: NavItem[] = [
     path: "/supplychain/daily-work",
   },
   {
+    icon: <Package className="w-5 h-5" />,
+    name: "My delivery orders",
+    path: "/supplychain/seperate-orders",
+  },
+  {
     icon: <Wallet className="w-5 h-5" />,
     name: "Earnings",
     path: "/supplychain/earnings",
@@ -451,6 +483,11 @@ const supplyChainNavItems: NavItem[] = [
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
+  },
+  {
+    icon: <HelpCircle className="w-5 h-5" />,
+    name: "Support Tickets",
+    path: "/supplychain/support-tickets",
   },
 ];
 
@@ -602,6 +639,7 @@ const MasterSidebar: React.FC = () => {
     else if (role === "patient") items = patientNavItems;
     else if (role === "non_patient") items = nonPatientNavItems;
     else if (role === "nutritionist") items = nutritionistNavItems;
+    else if (role === "doctor") items = doctorNavItems;
     else if (role === "micro_kitchen") items = microKitchenNavItems;
     else if (role === "supply_chain") items = supplyChainNavItems;
     else items = adminNavItems;
@@ -774,6 +812,7 @@ const MasterSidebar: React.FC = () => {
     if (role === "patient") return "/patient/dashboard";
     if (role === "non_patient") return "/non-patient/dashboard";
     if (role === "nutritionist") return "/nutrition/dashboard";
+    if (role === "doctor") return "/doctor/all-patients";
     if (role === "micro_kitchen") return "/microkitchen/dashboard";
     if (role === "supply_chain") return "/supplychain/dashboard";
     return "/admin/dashboard";

@@ -3,6 +3,8 @@ import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SearchableSelect, { Option } from "../../../components/form/SearchableSelect";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import {
   createMicroKitchenDeliveryTeamMember,
   deleteMicroKitchenDeliveryTeamMember,
@@ -12,6 +14,7 @@ import {
   patchMicroKitchenDeliveryTeamMember,
   SupplyChainUser,
 } from "../DeliveryManagement/api";
+import { getMyMicroKitchenProfile } from "../MicroKitchenQuestionare/api";
 
 const ROLE_OPTIONS: Array<{ value: "primary" | "backup" | "temporary"; label: string }> = [
   { value: "primary", label: "Primary" },
@@ -19,29 +22,62 @@ const ROLE_OPTIONS: Array<{ value: "primary" | "backup" | "temporary"; label: st
   { value: "temporary", label: "Temporary" },
 ];
 
+function supplyChainUserLabel(u: SupplyChainUser): string {
+  const name = `${u.first_name || ""} ${u.last_name || ""}`.trim();
+  const phone = u.mobile ? ` · ${u.mobile}` : "";
+  return name || u.email || `#${u.id}${phone}`;
+}
+
 export default function SupplyChainTeamMemberForMKPage() {
   const [users, setUsers] = useState<SupplyChainUser[]>([]);
   const [rows, setRows] = useState<MicroKitchenTeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [newPerson, setNewPerson] = useState("");
+  const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(undefined);
   const [newRole, setNewRole] = useState<"primary" | "backup" | "temporary">("primary");
   const [newZone, setNewZone] = useState("");
   const [newPincode, setNewPincode] = useState("");
+  /** Resolved from profile or existing team row — sent on POST so the API always receives micro_kitchen. */
+  const [myMicroKitchenId, setMyMicroKitchenId] = useState<number | null>(null);
 
-  const teamPersonIds = useMemo(() => new Set(rows.map((r) => r.delivery_person)), [rows]);
+  const teamPersonIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const r of rows) {
+      const id = Number(r.delivery_person);
+      if (Number.isFinite(id)) ids.add(id);
+    }
+    return ids;
+  }, [rows]);
+
   const selectableUsers = useMemo(
-    () => users.filter((u) => !teamPersonIds.has(u.id)),
+    () => users.filter((u) => !teamPersonIds.has(Number(u.id))),
     [users, teamPersonIds]
+  );
+
+  const personOptions: Option<number>[] = useMemo(
+    () =>
+      selectableUsers.map((u) => ({
+        value: u.id,
+        label: supplyChainUserLabel(u),
+      })),
+    [selectableUsers]
   );
 
   const load = async () => {
     try {
       setLoading(true);
-      const [team, supply] = await Promise.all([fetchMicroKitchenDeliveryTeam(), fetchSupplyChainUsers()]);
+      const [team, supply, profile] = await Promise.all([
+        fetchMicroKitchenDeliveryTeam(),
+        fetchSupplyChainUsers({ allSupplyChainUsers: true }),
+        getMyMicroKitchenProfile().catch(() => null),
+      ]);
       setRows(team);
       setUsers(supply);
+      const fromProfile = profile?.id != null ? Number(profile.id) : NaN;
+      const fromTeam = team[0]?.micro_kitchen != null ? Number(team[0].micro_kitchen) : NaN;
+      const mk = Number.isFinite(fromProfile) ? fromProfile : Number.isFinite(fromTeam) ? fromTeam : null;
+      setMyMicroKitchenId(mk);
     } catch (e) {
       console.error(e);
       toast.error("Could not load team members.");
@@ -55,22 +91,24 @@ export default function SupplyChainTeamMemberForMKPage() {
   }, []);
 
   const addMember = async () => {
-    const personId = parseInt(newPerson, 10);
-    if (!Number.isFinite(personId)) {
+    const personId = selectedPersonId;
+    if (personId == null || !Number.isFinite(personId)) {
       toast.error("Select a delivery person.");
       return;
     }
     try {
       setSaving(true);
+      const mkId = myMicroKitchenId ?? rows[0]?.micro_kitchen ?? undefined;
       await createMicroKitchenDeliveryTeamMember({
         delivery_person: personId,
+        ...(mkId != null && Number.isFinite(Number(mkId)) ? { micro_kitchen: Number(mkId) } : {}),
         role: newRole,
         is_active: true,
         zone_name: newZone.trim() || null,
         pincode: newPincode.trim() || null,
       });
       toast.success("Team member added.");
-      setNewPerson("");
+      setSelectedPersonId(undefined);
       setNewRole("primary");
       setNewZone("");
       setNewPincode("");
@@ -86,7 +124,7 @@ export default function SupplyChainTeamMemberForMKPage() {
   const updateMember = async (id: number, payload: Parameters<typeof patchMicroKitchenDeliveryTeamMember>[1]) => {
     try {
       await patchMicroKitchenDeliveryTeamMember(id, payload);
-      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...payload } as MicroKitchenTeamMember : r)));
+      setRows((prev) => prev.map((r) => (r.id === id ? ({ ...r, ...payload } as MicroKitchenTeamMember) : r)));
       toast.success("Updated.");
     } catch (e) {
       console.error(e);
@@ -115,96 +153,141 @@ export default function SupplyChainTeamMemberForMKPage() {
       <ToastContainer position="bottom-right" />
 
       <div className="space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-gray-900">
-          <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-            Each micro kitchen has its own pool/team of delivery persons.
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-gray-900">
+          <h3 className="mb-1 text-base font-semibold text-gray-900 dark:text-white">Add team member</h3>
+          <p className="mb-6 text-sm text-gray-600 dark:text-gray-300">
+            Search and select a supply chain user, set their role and optional zone or pincode, then add them to this
+            kitchen&apos;s delivery team.
           </p>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-            <select
-              value={newPerson}
-              onChange={(e) => setNewPerson(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-            >
-              <option value="">Select delivery person</option>
-              {selectableUsers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {`${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email || `#${u.id}`}
-                </option>
-              ))}
-            </select>
-            <select
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value as "primary" | "backup" | "temporary")}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-            <input
-              value={newZone}
-              onChange={(e) => setNewZone(e.target.value)}
-              placeholder="Zone (optional)"
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-            />
-            <input
-              value={newPincode}
-              onChange={(e) => setNewPincode(e.target.value)}
-              placeholder="Pincode (optional)"
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-            />
-            <button
-              type="button"
-              onClick={addMember}
-              disabled={saving}
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {saving ? "Adding..." : "Add member"}
-            </button>
-          </div>
+
+          <form
+            className="space-y-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void addMember();
+            }}
+          >
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div>
+                <label htmlFor="mk-team-person" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Delivery person <span className="text-red-500">*</span>
+                </label>
+                <SearchableSelect<number>
+                  options={personOptions}
+                  value={selectedPersonId}
+                  onChange={(v) => setSelectedPersonId(v)}
+                  placeholder={selectableUsers.length === 0 ? "No users available to add" : "Search by name, email, or phone"}
+                  disabled={selectableUsers.length === 0}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="mk-team-role" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Role
+                </label>
+                <select
+                  id="mk-team-role"
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as "primary" | "backup" | "temporary")}
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  {ROLE_OPTIONS.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="mk-team-zone" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Zone <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  id="mk-team-zone"
+                  type="text"
+                  value={newZone}
+                  onChange={(e) => setNewZone(e.target.value)}
+                  placeholder="e.g. North zone"
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label htmlFor="mk-team-pincode" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Pincode <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  id="mk-team-pincode"
+                  type="text"
+                  value={newPincode}
+                  onChange={(e) => setNewPincode(e.target.value)}
+                  placeholder="e.g. 560001"
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={saving || selectableUsers.length === 0}
+                className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {saving ? "Adding…" : "Add member"}
+              </button>
+            </div>
+          </form>
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-left dark:border-white/10">
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Zone</th>
-                <th className="px-4 py-3">Pincode</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow className="border-b border-gray-200 text-left dark:border-white/10">
+                <TableCell isHeader className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  Name
+                </TableCell>
+                <TableCell isHeader className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  Role
+                </TableCell>
+                <TableCell isHeader className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  Zone
+                </TableCell>
+                <TableCell isHeader className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  Pincode
+                </TableCell>
+                <TableCell isHeader className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  Status
+                </TableCell>
+                <TableCell isHeader className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                    Loading…
+                  </TableCell>
+                </TableRow>
               ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
                     No team members added yet.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 rows.map((r) => (
-                  <tr key={r.id} className="border-b border-gray-100 dark:border-white/5">
-                    <td className="px-4 py-3">
+                  <TableRow key={r.id} className="border-b border-gray-100 dark:border-white/5">
+                    <TableCell className="px-4 py-3 text-gray-900 dark:text-gray-100">
                       {`${r.delivery_person_details?.first_name || ""} ${r.delivery_person_details?.last_name || ""}`.trim() ||
                         `#${r.delivery_person}`}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <select
                         value={r.role}
                         onChange={(e) =>
                           updateMember(r.id, { role: e.target.value as "primary" | "backup" | "temporary" })
                         }
-                        className="rounded-md border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-gray-800"
+                        className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       >
                         {ROLE_OPTIONS.map((ro) => (
                           <option key={ro.value} value={ro.value}>
@@ -212,45 +295,46 @@ export default function SupplyChainTeamMemberForMKPage() {
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <input
                         defaultValue={r.zone_name || ""}
                         onBlur={(e) => updateMember(r.id, { zone_name: e.target.value.trim() || null })}
-                        className="rounded-md border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-gray-800"
+                        className="w-full min-w-[8rem] rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       />
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <input
                         defaultValue={r.pincode || ""}
                         onBlur={(e) => updateMember(r.id, { pincode: e.target.value.trim() || null })}
-                        className="rounded-md border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-gray-800"
+                        className="w-full min-w-[6rem] rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       />
-                    </td>
-                    <td className="px-4 py-3">
-                      <label className="inline-flex cursor-pointer items-center gap-2">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-gray-800 dark:text-gray-200">
                         <input
                           type="checkbox"
                           checked={r.is_active}
                           onChange={(e) => updateMember(r.id, { is_active: e.target.checked })}
+                          className="rounded border-gray-300"
                         />
                         <span>{r.is_active ? "Active" : "Inactive"}</span>
                       </label>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <button
                         type="button"
                         onClick={() => removeMember(r.id)}
-                        className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white"
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
                       >
                         Remove
                       </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

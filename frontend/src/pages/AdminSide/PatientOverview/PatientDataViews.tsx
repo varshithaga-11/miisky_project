@@ -191,6 +191,7 @@ const JSON_BLOCK_KEYS = new Set([
   "deficiencies",
   "autoimmune_diseases",
   "digestive_issues",
+  "skin_issues",
   "food_preferences",
 ]);
 

@@ -5,7 +5,9 @@ from app.models import (
     FoodGroup, FoodName, FoodProximate, FoodWaterSolubleVitamins,
     FoodFatSolubleVitamins, FoodCarotenoids, FoodMinerals, FoodSugars,
     FoodAminoAcids, FoodOrganicAcids, FoodPolyphenols, FoodPhytochemicals,
-    FoodFattyAcidProfile, UserRegister
+    FoodFattyAcidProfile, UserRegister,
+    HealthConditionMaster, SymptomMaster, AutoimmuneMaster, DeficiencyMaster,
+    DigestiveIssueMaster, SkinIssueMaster
 )
 from app.serializers import (
     CountrySerializer, StateSerializer, CitySerializer, 
@@ -18,7 +20,9 @@ from app.serializers import (
     FoodCarotenoidsSerializer, FoodMineralsSerializer, FoodSugarsSerializer,
     FoodAminoAcidsSerializer, FoodOrganicAcidsSerializer, FoodPolyphenolsSerializer,
     FoodPhytochemicalsSerializer, FoodFattyAcidProfileSerializer,
-    UserManagementSerializer
+    UserManagementSerializer,
+    HealthConditionMasterSerializer, SymptomMasterSerializer, AutoimmuneMasterSerializer,
+    DeficiencyMasterSerializer, DigestiveIssueMasterSerializer, SkinIssueMasterSerializer
 )
 
 # Mapping of module + submenu to Model and Serializer
@@ -75,6 +79,14 @@ MODEL_MAPPING = {
         'normal-range': (NormalRangeForHealthParameter, NormalRangeForHealthParameterSerializer),
         'dietplan': (DietPlans, DietPlanSerializer),
         'diet-plan': (DietPlans, DietPlanSerializer),
+    },
+    'questionnaire': {
+        'health-condition': (HealthConditionMaster, HealthConditionMasterSerializer),
+        'symptom': (SymptomMaster, SymptomMasterSerializer),
+        'autoimmune': (AutoimmuneMaster, AutoimmuneMasterSerializer),
+        'deficiency': (DeficiencyMaster, DeficiencyMasterSerializer),
+        'digestive-issue': (DigestiveIssueMaster, DigestiveIssueMasterSerializer),
+        'skin-issue': (SkinIssueMaster, SkinIssueMasterSerializer),
     }
 }
 

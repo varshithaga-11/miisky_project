@@ -77,6 +77,14 @@ export interface Order {
   delivery_slab_details?: { id?: number; min_km: string; max_km: string; charge: string } | null;
   final_amount?: number | string | null;
   delivery_address: string;
+  /** Supply-chain user id assigned by the kitchen to deliver this order (`app_order.delivery_person_id`). */
+  delivery_person?: number | null;
+  delivery_person_details?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    mobile?: string;
+  } | null;
   items: OrderItem[];
   ratings?: MicroKitchenRating[];
   created_at: string;
@@ -130,20 +138,58 @@ export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
   return response.data;
 };
 
-export const getMyOrders = async (page = 1, limit = 10, status?: string, type?: string, search?: string): Promise<{ results: Order[]; count: number }> => {
+/** Period values match `get_period_range` in `backend/app/utils/date_utils.py`. */
+export type OrderDatePeriod =
+  | "all"
+  | "today"
+  | "tomorrow"
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "next_month"
+  | "this_quarter"
+  | "this_year"
+  | "custom_range";
+
+export type PaginatedOrders = {
+  results: Order[];
+  count: number;
+  totalPages?: number;
+  currentPage?: number;
+};
+
+export const getMyOrders = async (
+  page = 1,
+  limit = 10,
+  status?: string,
+  type?: string,
+  search?: string,
+  period?: OrderDatePeriod | string,
+  customRangeStart?: string,
+  customRangeEnd?: string
+): Promise<PaginatedOrders> => {
   let url = createApiUrl(`api/order/?page=${page}&limit=${limit}`);
   if (status && status !== "all") url += `&status=${status}`;
   if (type && type !== "all") url += `&order_type=${type}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
-  
+  if (period && period !== "all") {
+    url += `&period=${encodeURIComponent(period)}`;
+    if (period === "custom_range" && customRangeStart && customRangeEnd) {
+      url += `&start_date=${encodeURIComponent(customRangeStart)}&end_date=${encodeURIComponent(customRangeEnd)}`;
+    }
+  }
+
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   const d = response.data;
   if (Array.isArray(d)) {
-    return { results: d, count: d.length };
+    return { results: d, count: d.length, totalPages: 1, currentPage: 1 };
   }
   return {
     results: d?.results ?? [],
     count: d?.count ?? 0,
+    totalPages: d?.total_pages ?? 1,
+    currentPage: d?.current_page ?? page,
   };
 };
 
@@ -151,6 +197,17 @@ export const updateOrderStatus = async (orderId: number, status: string) => {
   const url = createApiUrl(`api/order/${orderId}/update-status/`);
   const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
   return response.data;
+};
+
+/** Persists assignment on the server (`Order.delivery_person`). Pass `null` to unassign. */
+export const assignOrderDeliveryPerson = async (orderId: number, delivery_person: number | null) => {
+  const url = createApiUrl(`api/order/${orderId}/assign-delivery-person/`);
+  const response = await axios.patch(
+    url,
+    { delivery_person },
+    { headers: await getAuthHeaders() }
+  );
+  return response.data as Order;
 };
 
 export const rateMicroKitchen = async (kitchenId: number, orderId: number, rating: number, review: string) => {

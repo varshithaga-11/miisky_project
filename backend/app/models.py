@@ -13,6 +13,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Sum
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 
@@ -45,7 +47,7 @@ class UserRegister(AbstractUser):
         ('nutritionist', 'Nutritionist/Dietician'),
         ('patient', 'Patient'),
         ('supply_chain', 'Supply Chain'),
-        ('food_buyer', 'Food Buyer'),
+        ('doctor', 'Doctor'),
         ('micro_kitchen', 'Micro Kitchen'),
         ('non_patient', 'Non Patient'),
     ]
@@ -410,8 +412,8 @@ class HealthConditionMaster(models.Model):
 
 
 class UserHealthCondition(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='health_conditions')
-    condition = models.ForeignKey(HealthConditionMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='health_conditions')
+    condition = models.ForeignKey(HealthConditionMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     has_condition = models.BooleanField(default=False)
     since_when = models.DateField(null=True, blank=True)
@@ -439,8 +441,8 @@ class SymptomMaster(models.Model):
 
 
 class UserSymptom(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='symptoms')
-    symptom = models.ForeignKey(SymptomMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='symptoms')
+    symptom = models.ForeignKey(SymptomMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -461,8 +463,8 @@ class AutoimmuneMaster(models.Model):
 
 
 class UserAutoimmune(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='autoimmune_diseases')
-    disease = models.ForeignKey(AutoimmuneMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='autoimmune_diseases')
+    disease = models.ForeignKey(AutoimmuneMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -483,8 +485,8 @@ class DeficiencyMaster(models.Model):
 
 
 class UserDeficiency(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='deficiencies')
-    deficiency = models.ForeignKey(DeficiencyMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='deficiencies')
+    deficiency = models.ForeignKey(DeficiencyMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
@@ -505,13 +507,38 @@ class DigestiveIssueMaster(models.Model):
 
 
 class UserDigestiveIssue(models.Model):
-    user = models.ForeignKey(UserRegister, on_delete=models.CASCADE, related_name='digestive_issues')
-    issue = models.ForeignKey(DigestiveIssueMaster, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='digestive_issues')
+    issue = models.ForeignKey(DigestiveIssueMaster, on_delete=models.SET_NULL,null=True,blank=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'issue'], name='uniq_user_digestive_issue'),
         ]
+
+
+class SkinIssueMaster(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_skin_issue_master_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class UserSkinIssue(models.Model):
+    user = models.ForeignKey(UserRegister, on_delete=models.SET_NULL,null=True,blank=True, related_name='skin_issues')
+    skin_issue = models.ForeignKey(SkinIssueMaster, on_delete=models.SET_NULL,null=True,blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'skin_issue'], name='uniq_user_skin_issue'),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.skin_issue.name}"
 
 
 class UserQuestionnaire(models.Model):
@@ -693,7 +720,7 @@ class Food(models.Model):
     image = models.ImageField(upload_to='foods/', null=True, blank=True)
     # Example image path: media/foods/idli.jpg
 
-    micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.CASCADE, null=True, blank=True, related_name='foods')
+    micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='foods')
 
     price = models.IntegerField(null=True, blank=True)
 
@@ -1441,6 +1468,13 @@ class NutritionistReview(models.Model):
         blank=True,
         related_name="given_reviews"
     )
+    doctor = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="given_doctor_reviews"
+    )
 
     reports = models.ManyToManyField(
         PatientHealthReport,
@@ -1686,13 +1720,13 @@ class UserMeal(models.Model):
 
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="meals"
     )
 
     user_diet_plan = models.ForeignKey(
         UserDietPlan,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="meals"
     )
     # 🔥 Important: link to the ACTIVE plan instance (not just DietPlans)
@@ -1707,7 +1741,7 @@ class UserMeal(models.Model):
 
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="user_meals"
     )
 
@@ -1778,13 +1812,13 @@ class MeetingRequest(models.Model):
 
     patient = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="meeting_requests"
     )
 
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="nutritionist_meetings"
     )
 
@@ -1869,7 +1903,7 @@ class NutritionistAvailability(models.Model):
     """
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="availabilities"
     )
 
@@ -1899,12 +1933,12 @@ class NutritionistAvailability(models.Model):
 class NutritionistRating(models.Model):
     patient = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='given_ratings'
     )
     nutritionist = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='received_ratings'
     )
 
@@ -1981,12 +2015,12 @@ class MicroKitchenFood(models.Model):
     """Junction: which foods a micro kitchen offers, with kitchen-specific price & availability."""
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='kitchen_foods'
     )
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='kitchen_mappings'
     )
     is_available = models.BooleanField(default=True)
@@ -2013,7 +2047,7 @@ class MicroKitchenFood(models.Model):
 class DeliveryChargeSlab(models.Model):
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='delivery_slabs'
     )
 
@@ -2029,13 +2063,13 @@ class DeliveryChargeSlab(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='orders'
     )
 
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='orders'
     )
 
@@ -2083,19 +2117,28 @@ class Order(models.Model):
 
     delivery_address = models.TextField()
 
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_orders",
+        help_text="Supply-chain user assigned to deliver this order (kitchen assigns).",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 class OrderItem(models.Model):
     order = models.ForeignKey(
         Order,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='items'
     )
 
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,null=True,blank=True,
     )
 
     quantity = models.PositiveIntegerField()
@@ -2109,13 +2152,13 @@ class OrderItem(models.Model):
 class Cart(models.Model):
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='cart'
     )
 
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,null=True,blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2124,13 +2167,13 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(
         Cart,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='items'
     )
 
     food = models.ForeignKey(
         Food,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,null=True,blank=True,
     )
 
     quantity = models.PositiveIntegerField()
@@ -2191,6 +2234,7 @@ class SupportTicket(models.Model):
         ('patient', 'Patient'),
         ('nutritionist', 'Nutritionist'),
         ('kitchen', 'Kitchen'),
+        ('doctor', 'Doctor'),
         ('non_patient', 'Non Patient'),
     ]
 
@@ -2198,6 +2242,7 @@ class SupportTicket(models.Model):
         ('admin', 'Support/Admin'),
         ('nutritionist', 'Account Nutritionist'),
         ('kitchen', 'Account Kitchen'),
+        ('doctor', 'Account Doctor'),
     ]
 
     created_by = models.ForeignKey(
@@ -2379,7 +2424,7 @@ class MicroKitchenReassignment(models.Model):
 
     user_diet_plan = models.ForeignKey(
         'UserDietPlan',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="kitchen_reassignments"
     )
     previous_kitchen = models.ForeignKey(
@@ -2433,10 +2478,8 @@ class PlanPaymentSnapshot(models.Model):
 
     user_diet_plan = models.OneToOneField(
         "UserDietPlan",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="payment_snapshot",
-        null=True,
-        blank=True,
     )
 
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -2455,6 +2498,149 @@ class PlanPaymentSnapshot(models.Model):
         return f"Snapshot for plan {self.user_diet_plan_id} — ₹{self.total_amount}"
 
 
+class OrderCommissionConfig(models.Model):
+    """
+    Single global commission rate for order payouts.
+    Exactly one row should be active at a time.
+    """
+
+    platform_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
+        help_text="Platform cut (%)",
+    )
+    kitchen_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
+        help_text="Kitchen cut (%)",
+    )
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_order_commission_configs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Order commission config"
+
+    def clean(self):
+        super().clean()
+        if (
+            self.platform_commission_percent is not None
+            and self.kitchen_commission_percent is not None
+        ):
+            total = self.platform_commission_percent + self.kitchen_commission_percent
+            if total != Decimal("100"):
+                raise ValidationError(
+                    f"Platform % + Kitchen % must equal 100. Currently: {total}%"
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if self.is_active:
+            OrderCommissionConfig.objects.exclude(pk=self.pk).filter(
+                is_active=True
+            ).update(is_active=False)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_active(cls):
+        config = cls.objects.filter(is_active=True).first()
+        if not config:
+            raise ValueError(
+                "No active OrderCommissionConfig found. "
+                "Please create one in the admin panel."
+            )
+        return config
+
+    def __str__(self):
+        return (
+            f"Platform {self.platform_commission_percent}% / "
+            f"Kitchen {self.kitchen_commission_percent}%"
+            f"{' [active]' if self.is_active else ''}"
+        )
+
+
+class OrderPaymentSnapshot(models.Model):
+    """
+    Immutable order split snapshot created when an order is inserted.
+    Food subtotal is split by commission, while delivery charge is pass-through.
+    """
+
+    order = models.OneToOneField(
+        "Order",
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="payment_snapshot",
+    )
+
+    food_subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+    delivery_charge = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Pass-through to delivery person. Not included in split.",
+    )
+    grand_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text="food_subtotal + delivery_charge",
+    )
+
+    platform_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    kitchen_percent = models.DecimalField(max_digits=5, decimal_places=2)
+
+    platform_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    kitchen_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Order payment snapshot"
+
+    def __str__(self):
+        return (
+            f"Order #{self.order_id} | "
+            f"Platform ₹{self.platform_amount} ({self.platform_percent}%) | "
+            f"Kitchen ₹{self.kitchen_amount} ({self.kitchen_percent}%)"
+        )
+
+
+class SupplyChainOrderDeliveryReceipt(models.Model):
+    """
+    Receipt / proof uploaded by supply-chain staff for a delivered order's delivery charge (pass-through).
+    One row per order.
+    """
+
+    order = models.OneToOneField(
+        "Order",
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="supply_chain_delivery_receipt",
+    )
+    uploaded_by = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name="order_delivery_receipt_uploads",
+    )
+    receipt_image = models.ImageField(upload_to="supply_chain_order_receipts/")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Supply chain order delivery receipt"
+
+    def __str__(self):
+        return f"Receipt order #{self.order_id}"
+
+
 class PayoutTracker(models.Model):
     """
     Amount owed to one recipient for one period; multiple PayoutTransaction rows may apply until paid.
@@ -2463,7 +2649,7 @@ class PayoutTracker(models.Model):
 
     snapshot = models.ForeignKey(
         PlanPaymentSnapshot,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="payouts",
     )
 
@@ -2568,7 +2754,7 @@ class PayoutTransaction(models.Model):
 
     tracker = models.ForeignKey(
         PayoutTracker,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="transactions",
     )
 
@@ -2723,12 +2909,12 @@ class MicroKitchenDeliveryTeam(models.Model):
 
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="delivery_team",
     )
     delivery_person = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="kitchen_assignments",
     )
 
@@ -2764,7 +2950,7 @@ class DietPlanDeliveryAssignment(models.Model):
 
     user_diet_plan = models.OneToOneField(
         UserDietPlan,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='delivery_assignment'
     )
 
@@ -2863,12 +3049,12 @@ class DietPlanSlotDeliveryPerson(models.Model):
 
     plan_assignment = models.ForeignKey(
         DietPlanDeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='slot_delivery_persons',
     )
     delivery_slot = models.ForeignKey(
         DeliverySlot,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='plan_slot_delivery_persons',
     )
     delivery_person = models.ForeignKey(
@@ -2892,7 +3078,7 @@ class DietPlanDeliveryAssignmentLog(models.Model):
     """
     plan_assignment = models.ForeignKey(
         DietPlanDeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='change_logs'
     )
 
@@ -2949,7 +3135,7 @@ class DeliveryAssignment(models.Model):
 
     user_meal = models.ForeignKey(
         UserMeal,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='deliveries'
     )
 
@@ -3107,7 +3293,7 @@ class SupplyChainDeliveryLeave(models.Model):
 
     user = models.ForeignKey(
         UserRegister,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='delivery_leaves',
     )
     LEAVE_TYPE_CHOICES = [
@@ -3132,7 +3318,7 @@ class SupplyChainDeliveryLeave(models.Model):
 class DeliveryIssue(models.Model):
     assignment = models.ForeignKey(
         DeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='issues'
     )
     reported_by = models.ForeignKey(
@@ -3178,7 +3364,7 @@ class DeliveryIssue(models.Model):
 class DeliveryRating(models.Model):
     assignment = models.OneToOneField(
         DeliveryAssignment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name='rating'
     )
     rated_by = models.ForeignKey(
@@ -3213,3 +3399,95 @@ class DeliveryRating(models.Model):
 
     def __str__(self):
         return f"Rating {self.rating}/5 → {self.assignment.delivery_person}"
+
+
+
+
+
+
+
+# -----------------------------------------------
+# -----------------------------------------------
+# ----------------------------------------------- 
+
+
+
+class PatientFoodRecommendation(models.Model):
+    patient = models.ForeignKey(
+        UserRegister,  
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name='food_recommendations'
+    )
+
+    food = models.ForeignKey(
+        FoodName,
+        on_delete=models.SET_NULL,null=True,blank=True,
+        related_name='recommended_to'
+    )
+
+    # Optional details
+    quantity = models.CharField(max_length=100, blank=True, null=True)  
+    # e.g., "1 bowl", "2 slices", "100g"
+
+    meal_time = models.CharField(
+        max_length=50,
+        choices=[
+            ('breakfast', 'Breakfast'),
+            ('lunch', 'Lunch'),
+            ('dinner', 'Dinner'),
+            ('snack', 'Snack'),
+        ],
+        blank=True,
+        null=True
+    )
+
+    # Core requirement
+    notes = models.TextField(blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+
+    recommended_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    recommended_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.patient} - {self.food}"
+
+
+@receiver(post_save, sender=Order)
+def create_order_payment_snapshot(sender, instance, created, **kwargs):
+    """
+    Auto-create immutable payout split snapshot when a new order is created.
+    """
+    if not created:
+        return
+
+    if OrderPaymentSnapshot.objects.filter(order=instance).exists():
+        return
+
+    config = OrderCommissionConfig.get_active()
+
+    food_subtotal = Decimal(str(instance.total_amount or 0))
+    delivery_charge = Decimal(str(instance.delivery_charge or 0))
+    platform_pct = config.platform_commission_percent
+    kitchen_pct = config.kitchen_commission_percent
+
+    platform_amount = (food_subtotal * platform_pct / Decimal("100")).quantize(
+        Decimal("0.01")
+    )
+    kitchen_amount = food_subtotal - platform_amount
+
+    OrderPaymentSnapshot.objects.create(
+        order=instance,
+        food_subtotal=food_subtotal,
+        delivery_charge=delivery_charge,
+        grand_total=food_subtotal + delivery_charge,
+        platform_percent=platform_pct,
+        kitchen_percent=kitchen_pct,
+        platform_amount=platform_amount,
+        kitchen_amount=kitchen_amount,
+    )

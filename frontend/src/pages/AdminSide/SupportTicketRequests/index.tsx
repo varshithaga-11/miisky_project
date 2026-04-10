@@ -30,6 +30,18 @@ const formatName = (u?: { first_name?: string; last_name?: string; username?: st
   return name || u?.username || "User";
 };
 
+const formatRole = (role?: string | null) => {
+  if (!role) return "";
+  return role.replace(/_/g, " ");
+};
+
+const formatNameWithRole = (u?: { first_name?: string; last_name?: string; username?: string; role?: string } | null) => {
+  if (!u) return "—";
+  const name = formatName(u);
+  const role = formatRole((u as any).role);
+  return role ? `${name} (${role})` : name;
+};
+
 const SupportTicketRequestsPage: React.FC = () => {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(false);
@@ -179,6 +191,9 @@ const SupportTicketRequestsPage: React.FC = () => {
             <option value="patient">Patient</option>
             <option value="nutritionist">Nutritionist</option>
             <option value="kitchen">Kitchen</option>
+            <option value="doctor">Doctor</option>
+            <option value="non_patient">Non-patient</option>
+            <option value="supply_chain">Supply Chain</option>
           </select>
           <input
             value={search}
@@ -218,7 +233,7 @@ const SupportTicketRequestsPage: React.FC = () => {
                         #{t.id} {t.title}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        {t.user_type} → {t.target_user_type?.toUpperCase() || "ADMIN"} • {formatName(t.created_by_details)}
+                        From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
                       </div>
                     </div>
                     <div className="shrink-0">{getStatusBadge(t.status)}</div>
@@ -238,7 +253,7 @@ const SupportTicketRequestsPage: React.FC = () => {
                     Ticket #{active.id} — {active.title}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {formatName(active.created_by_details)} • {active.user_type} • Priority: {active.priority}
+                    From: {formatNameWithRole(active.created_by_details)} • To: {formatNameWithRole(active.assigned_to_details)} • Priority: {active.priority}
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">

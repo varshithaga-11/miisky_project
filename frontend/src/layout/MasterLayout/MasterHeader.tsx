@@ -25,6 +25,7 @@ const MasterHeader: React.FC = () => {
     if (role === "patient") return "/patient/dashboard";
     if (role === "non_patient") return "/non-patient/dashboard";
     if (role === "nutritionist") return "/nutrition/dashboard";
+    if (role === "doctor") return "/doctor/all-patients";
     if (role === "micro_kitchen") return "/microkitchen/dashboard";
     if (role === "supply_chain") return "/supplychain/dashboard";
     return "/admin/dashboard";

@@ -8,7 +8,8 @@ export type AppRole =
   | "supply_chain"
   | "food_buyer"
   | "micro_kitchen"
-  | "non_patient";
+  | "non_patient"
+  | "doctor";
 
 type TokenClaims = {
   role?: AppRole;

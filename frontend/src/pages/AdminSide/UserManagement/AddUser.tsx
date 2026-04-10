@@ -307,7 +307,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
                 { value: "nutritionist", label: "Nutritionist/Dietician" },
                 { value: "patient", label: "Patient" },
                 { value: "supply_chain", label: "Supply Chain" },
-                { value: "food_buyer", label: "Food Buyer" },
+                { value: "doctor", label: "Doctor" },
                 { value: "micro_kitchen", label: "Micro Kitchen" },
                 { value: "non_patient", label: "Non Patient" },
               ]}

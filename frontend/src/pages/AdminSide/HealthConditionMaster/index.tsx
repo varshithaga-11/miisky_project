@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ImportButton from "../../../components/common/ImportButton";
 
 const CATEGORY_LABEL: Record<string, string> = {
   chronic: "Chronic",
@@ -97,14 +98,12 @@ const HealthConditionMasterPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchInput, searchTerm]);
 
-  if (loading && rows.length === 0) {
-    return <div className="text-black dark:text-white p-6">Loading...</div>;
-  }
+  if (loading && rows.length === 0) return <div className="text-black dark:text-white p-6">Loading...</div>;
 
   return (
     <>
-      <PageMeta title="Health conditions (master)" description="Manage health condition catalog" />
-      <PageBreadcrumb pageTitle="Health conditions (master)" />
+      <PageMeta title="Health conditions" description="Manage health condition catalog" />
+      <PageBreadcrumb pageTitle="Health conditions" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -115,13 +114,16 @@ const HealthConditionMasterPage: React.FC = () => {
               placeholder="Search..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
           <div className="flex items-center gap-6">
-            <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
-              <FiPlus /> Add
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
+                <FiPlus /> Add
+              </Button>
+              <ImportButton onSuccess={() => void fetchRows()} />
+            </div>
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
               <Select
@@ -138,11 +140,14 @@ const HealthConditionMasterPage: React.FC = () => {
                 ]}
                 className="w-20"
               />
+              <span className="text-sm text-gray-600 whitespace-nowrap dark:text-gray-400">entries</span>
             </div>
           </div>
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+          </div>
         </div>
       </div>
 
@@ -156,17 +161,27 @@ const HealthConditionMasterPage: React.FC = () => {
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer"
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   onClick={() => handleSort("name")}
                 >
-                  Name {sortField === "name" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                  <div className="flex items-center gap-2">
+                    Name
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === "name" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer"
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   onClick={() => handleSort("category")}
                 >
-                  Category {sortField === "category" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                  <div className="flex items-center gap-2">
+                    Category
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === "category" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Action
@@ -177,26 +192,34 @@ const HealthConditionMasterPage: React.FC = () => {
               {sortedRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500">
-                    No records
+                    No records found
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedRows.map((row, index) => (
-                  <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
+                  <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                       {(currentPage - 1) * pageSize + index + 1}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                    <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">
                       {row.name}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
-                      {CATEGORY_LABEL[row.category] ?? row.category}
+                    <TableCell className="px-5 py-4 text-start">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            row.category === 'chronic' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30' :
+                            row.category === 'infectious' ? 'bg-red-50 text-red-600 dark:bg-red-900/30' :
+                            row.category === 'metabolic' ? 'bg-green-50 text-green-600 dark:bg-green-900/30' :
+                            row.category === 'digestive' ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/30' :
+                            'bg-gray-50 text-gray-600 dark:bg-gray-700/50'
+                        }`}>
+                            {CATEGORY_LABEL[row.category] ?? row.category}
+                        </span>
                     </TableCell>
-                    <TableCell className="px-5 py-4">
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-blue-600 hover:text-blue-800 text-lg transition-colors"
                           title="Edit"
                           onClick={() => {
                             setEditId(row.id!);
@@ -205,7 +228,12 @@ const HealthConditionMasterPage: React.FC = () => {
                         >
                           <FiEdit />
                         </button>
-                        <button type="button" className="text-red-600 hover:text-red-800" title="Delete" onClick={() => void handleDelete(row.id!)}>
+                        <button 
+                          type="button" 
+                          className="text-red-600 hover:text-red-800 text-lg transition-colors" 
+                          title="Delete" 
+                          onClick={() => void handleDelete(row.id!)}
+                        >
                           <FiTrash2 />
                         </button>
                       </div>
@@ -222,35 +250,38 @@ const HealthConditionMasterPage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              type="button"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 text-sm border rounded-md disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
             >
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                type="button"
-                onClick={() => setCurrentPage(pageNum)}
-                className={`px-3 py-2 text-sm rounded-md border ${
-                  currentPage === pageNum ? "bg-blue-600 text-white border-blue-600" : "dark:bg-gray-800 dark:border-gray-600"
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? 'bg-blue-600 text-white border border-blue-600'
+                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
             <button
-              type="button"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 text-sm border rounded-md disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
             >
               Next
             </button>
           </div>
-          <div className="text-sm text-gray-500">Page {currentPage} of {totalPages}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
         </div>
       )}
 

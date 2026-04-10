@@ -12,7 +12,6 @@ router.register(r'state', StateViewSet, basename='state')
 router.register(r'city', CityViewSet, basename='city')
 router.register(r'usermanagement', UserManagementViewSet, basename='usermanagement')
 router.register(r'admin-patients', AdminPatientOverviewViewSet, basename='admin-patients')
-router.register(r'adminpatients', AdminPatientOverviewViewSet, basename='adminpatients')
 router.register(r'admin-microkitchen-patients', AdminMicroKitchenPatientsViewSet, basename='admin-microkitchen-patients')
 router.register(r'admin-nutritionists', AdminNutritionistOverviewViewSet, basename='admin-nutritionists')
 router.register(r'micro-kitchen-patients', MicroKitchenPatientsViewSet, basename='micro-kitchen-patients')
@@ -22,16 +21,19 @@ router.register(r'symptom-master', SymptomMasterViewSet, basename='symptom-maste
 router.register(r'autoimmune-master', AutoimmuneMasterViewSet, basename='autoimmune-master')
 router.register(r'deficiency-master', DeficiencyMasterViewSet, basename='deficiency-master')
 router.register(r'digestive-issue-master', DigestiveIssueMasterViewSet, basename='digestive-issue-master')
+router.register(r'skin-issue-master', SkinIssueMasterViewSet, basename='skin-issue-master')
 router.register(r'nutritionistprofile', NutritionistProfileViewSet, basename='nutritionistprofile')
 router.register(r'microkitchenprofile', MicroKitchenProfileViewSet, basename='microkitchenprofile')
 router.register(r'microkitchenfood', MicroKitchenFoodViewSet, basename='microkitchenfood')
 router.register(r'microkitcheninspection', MicroKitchenInspectionViewSet, basename='microkitcheninspection')
 router.register(r'deliveryprofile', DeliveryProfileViewSet, basename='deliveryprofile')
 router.register(r'usernutritionistmapping', UserNutritionistMappingViewSet, basename='usernutritionistmapping')
+router.register(r'set-daily-meals', SetDailyMealsViewSet, basename='set-daily-meals')
 router.register(r'patienthealthreport', PatientHealthReportViewSet, basename='patienthealthreport')
 router.register(r'nutritionistreview', NutritionistReviewViewSet, basename='nutritionistreview')
 router.register(r'usermeal', UserMealViewSet, basename='usermeal')
 router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
+router.register(r'patient-food-recommendation', PatientFoodRecommendationViewSet, basename='patient-food-recommendation')
 router.register(r'meetingrequest', MeetingRequestViewSet, basename='meetingrequest')
 router.register(r'nutritionistavailability', NutritionistAvailabilityViewSet, basename='nutritionistavailability')
 router.register(r'nutritionistrating', NutritionistRatingViewSet, basename='nutritionistrating')
@@ -65,6 +67,7 @@ router.register(r'unit',          UnitViewSet)
 router.register(r'foodingredient', FoodIngredientViewSet, basename='foodingredient')
 router.register(r'foodstep',      FoodStepViewSet,       basename='foodstep')
 router.register(r'foodnutrition', FoodNutritionViewSet)
+router.register(r'foodbyid', FoodByIdViewSet, basename='foodbyid')
 router.register(r'foodgroup', FoodGroupViewSet)
 router.register(r'foodname', FoodNameViewSet)
 router.register(r'foodproximate', FoodProximateViewSet)
@@ -90,6 +93,11 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 urlpatterns = [
     path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
     path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
+    path(
+        "usernutritionistmapping/all-nutritionists/",
+        views.AdminAllNutritionistsViewSet.as_view({"get": "list"}),
+        name="admin-all-nutritionists",
+    ),
     path('', include(router.urls)),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),
@@ -212,6 +220,21 @@ urlpatterns = [
         "microkitchen/plan-payouts/",
         views.MicroKitchenPlanPayoutsView.as_view(),
         name="microkitchen-plan-payouts",
+    ),
+    path(
+        "microkitchen/order-payment-snapshots/",
+        views.MicroKitchenOrderPaymentSnapshotsView.as_view(),
+        name="microkitchen-order-payment-snapshots",
+    ),
+    path(
+        "supply-chain/delivery-earnings/",
+        views.SupplyChainDeliveryEarningsListView.as_view(),
+        name="supply-chain-delivery-earnings",
+    ),
+    path(
+        "supply-chain/order-delivery-receipt/",
+        views.SupplyChainOrderDeliveryReceiptUpsertView.as_view(),
+        name="supply-chain-order-delivery-receipt",
     ),
     path(
         "admin/plan-payout-trackers/",
