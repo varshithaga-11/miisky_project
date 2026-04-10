@@ -45,11 +45,13 @@ export const createTeamMember = async (data: FormData | TeamMember) => {
 export const getTeamMemberList = async (
   page: number = 1,
   limit: number = 10,
-  search?: string
+  search?: string,
+  department?: number
 ) => {
   const url = createApiUrl("api/website/teammember/");
   const params: any = { page, limit };
   if (search) params.search = search;
+  if (department) params.department = department;
 
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),

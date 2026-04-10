@@ -136,8 +136,18 @@ const MicroKitchenInformationPage: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this micro kitchen?")) return;
         try {
+            // Pre-check for dependencies (Foods)
+            // We need to import getFoodList from AdminSide/Food/foodapi
+            const { getFoodList } = await import("../Food/foodapi");
+            const foodsResponse = await getFoodList(1, 1, "", undefined, undefined, id);
+            
+            if (foodsResponse.count > 0) {
+                toast.error(`Cannot delete micro kitchen. It has ${foodsResponse.count} associated foods. Please delete them first.`);
+                return;
+            }
+
+            if (!confirm("Are you sure you want to delete this micro kitchen?")) return;
             await deleteMicroKitchen(id);
             setProfiles(prev => prev.filter(p => p.id !== id));
             toast.success("Profile deleted");

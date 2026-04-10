@@ -3,6 +3,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import { appRoutes } from "./appRoutes";
 import { NotificationProvider } from "./context/NotificationContext";
 import { LanguageProvider } from "./components/Context/LanguageContext";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function App() {
   return (

@@ -103,12 +103,23 @@ export type MicroKitchenListResponse = {
   total_pages: number;
 };
 
-export const getMicroKitchenList = async (page = 1, search = "", status?: string): Promise<MicroKitchenListResponse> => {
-  let url = createApiUrl(`api/microkitchenprofile/?page=${page}&search=${search}`);
-  if (status && status !== 'all') {
-    url += `&status=${status}`;
-  }
-  const response = await axios.get(url, { headers: await getAuthHeaders() });
+export const getMicroKitchenList = async (
+  page = 1,
+  search = "",
+  status?: string,
+  filters: { city?: number; state?: number; country?: number } = {}
+): Promise<MicroKitchenListResponse> => {
+  const params: Record<string, any> = { page, search };
+  if (status && status !== 'all') params.status = status;
+  if (filters.city) params.city = filters.city;
+  if (filters.state) params.state = filters.state;
+  if (filters.country) params.country = filters.country;
+
+  const url = createApiUrl(`api/microkitchenprofile/`);
+  const response = await axios.get(url, { 
+    headers: await getAuthHeaders(),
+    params
+  });
   return response.data;
 };
 

@@ -3,6 +3,7 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMealTypeList, deleteMealType, MealType } from "./mealtypeapi";
+import { getFoodList } from "../Food/foodapi";
 import AddMealType from "./AddMealType";
 import EditMealType from "./EditMealType";
 import ImportButton from "../../../components/common/ImportButton";
@@ -10,6 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import { toast, ToastContainer } from "react-toastify";
 
 const MealTypeManagementPage: React.FC = () => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
@@ -46,12 +48,20 @@ const MealTypeManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this meal type?")) return;
     try {
+      // Pre-check for dependencies (Foods)
+      const foodsResponse = await getFoodList(1, 1, "", id);
+      if (foodsResponse.count > 0) {
+        toast.error(`Cannot delete meal type. It has ${foodsResponse.count} associated foods. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this meal type?")) return;
       await deleteMealType(id);
+      toast.success("Meal type deleted successfully.");
       fetchMealTypes();
     } catch {
-      alert("Failed to delete meal type.");
+      toast.error("Failed to delete meal type.");
     }
   };
 
@@ -96,6 +106,7 @@ const MealTypeManagementPage: React.FC = () => {
     <>
       <PageMeta title="Meal Type Management" description="Manage meal types" />
       <PageBreadcrumb pageTitle="Meal Type Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

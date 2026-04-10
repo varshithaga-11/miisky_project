@@ -511,6 +511,19 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_active=True)
         elif status_param == 'inactive':
             qs = qs.filter(is_active=False)
+
+        # Filters for bottom-up deletion checks
+        city = self.request.query_params.get('city')
+        if city:
+            qs = qs.filter(city_id=city)
+            
+        state = self.request.query_params.get('state')
+        if state:
+            qs = qs.filter(state_id=state)
+
+        country = self.request.query_params.get('country')
+        if country:
+            qs = qs.filter(country_id=country)
             
         return qs
 
@@ -1467,6 +1480,20 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
         status_param = self.request.query_params.get('status')
         if status_param:
             qs = qs.filter(status=status_param)
+            
+        # Filters for bottom-up deletion checks
+        city = self.request.query_params.get('city')
+        if city:
+            qs = qs.filter(user__city_id=city)
+            
+        state = self.request.query_params.get('state')
+        if state:
+            qs = qs.filter(user__state_id=state)
+
+        country = self.request.query_params.get('country')
+        if country:
+            qs = qs.filter(user__country_id=country)
+
         return qs
 
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
@@ -1625,17 +1652,33 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         u = self.request.user
         role = getattr(u, "role", None)
+        qs = DeliveryProfile.objects.select_related("user", "verified_by").all()
+        
         if role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return DeliveryProfile.objects.none()
             dp_ids = self._delivery_person_ids_for_kitchen(mk)
-            return DeliveryProfile.objects.filter(user_id__in=dp_ids).select_related("user", "verified_by")
-        if role == "supply_chain":
-            return DeliveryProfile.objects.filter(user=u).select_related("user", "verified_by")
-        if role == "admin":
-            return DeliveryProfile.objects.select_related("user", "verified_by").all()
-        return DeliveryProfile.objects.none()
+            qs = qs.filter(user_id__in=dp_ids)
+        elif role == "supply_chain":
+            qs = qs.filter(user=u)
+        elif role != "admin":
+            return DeliveryProfile.objects.none()
+
+        # Filters for bottom-up deletion checks
+        city = self.request.query_params.get('city')
+        if city:
+            qs = qs.filter(user__city_id=city)
+            
+        state = self.request.query_params.get('state')
+        if state:
+            qs = qs.filter(user__state_id=state)
+
+        country = self.request.query_params.get('country')
+        if country:
+            qs = qs.filter(user__country_id=country)
+
+        return qs
 
     def list(self, request, *args, **kwargs):
         if getattr(request.user, "role", None) != "admin":
@@ -3612,6 +3655,11 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(status=status_filter)
             if payment_status_filter:
                 queryset = queryset.filter(payment_status=payment_status_filter)
+            
+            diet_plan_id = self.request.query_params.get('diet_plan')
+            if diet_plan_id:
+                queryset = queryset.filter(diet_plan_id=diet_plan_id)
+                
             return queryset.order_by('-suggested_on')
 
         if user.role == "doctor":

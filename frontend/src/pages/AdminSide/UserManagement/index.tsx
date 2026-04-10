@@ -3,6 +3,9 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getUserList, deleteUser } from "./api";
+import { toast, ToastContainer } from "react-toastify";
+import axios from "axios";
+import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import AddUser from "./AddUser";
 import EditUser from "./EditUser";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -80,12 +83,72 @@ const UserManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
+      const headers = await getAuthHeaders();
+
+      // 1. Check for User Diet Plans (for patients)
+      const dietPlansRes = await axios.get(createApiUrl("api/userdietplan/"), {
+        headers, params: { user: id, limit: 1 }
+      });
+      const dietPlanCount = dietPlansRes.data.count || 0;
+      if (dietPlanCount > 0) {
+        toast.error(`Cannot delete user. They have ${dietPlanCount} associated diet plans. Delete the plans first.`);
+        return;
+      }
+
+      // 2. Check for Orders (for patients/non-patients)
+      const ordersRes = await axios.get(createApiUrl("api/order/"), {
+        headers, params: { user: id, limit: 1 }
+      });
+      const orderCount = ordersRes.data.count || 0;
+      if (orderCount > 0) {
+        toast.error(`Cannot delete user. They have ${orderCount} associated orders. Delete the orders first.`);
+        return;
+      }
+
+      // 3. Check for Kitchen Profile (if kitchen role)
+      const kitchenRes = await axios.get(createApiUrl("api/microkitchenprofile/"), {
+        headers, params: { user: id, limit: 1 }
+      });
+      if (kitchenRes.data.count > 0) {
+        toast.error("Cannot delete user. This user has an associated Micro Kitchen profile. Delete the kitchen profile first.");
+        return;
+      }
+
+      // 4. Check for Nutritionist Profile (if nutritionist role)
+      const nutRes = await axios.get(createApiUrl("api/nutritionistprofile/"), {
+        headers, params: { user: id, limit: 1 }
+      });
+      if (nutRes.data.count > 0) {
+        toast.error("Cannot delete user. This user has an associated Nutritionist profile. Delete the profile first.");
+        return;
+      }
+
+      // 5. Check for Support Tickets (Created by)
+      const ticketsCreatedRes = await axios.get(createApiUrl("api/supportticket/"), {
+        headers, params: { created_by: id, limit: 1 }
+      });
+      if (ticketsCreatedRes.data.count > 0) {
+        toast.error("Cannot delete user. They have created support tickets. Delete the tickets first.");
+        return;
+      }
+
+      // 6. Check for Support Tickets (Assigned to)
+      const ticketsAssignedRes = await axios.get(createApiUrl("api/supportticket/"), {
+        headers, params: { assigned_to: id, limit: 1 }
+      });
+      if (ticketsAssignedRes.data.count > 0) {
+        toast.error("Cannot delete user. They have support tickets assigned to them. Reassign or delete those tickets first.");
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
       await deleteUser(id);
+      toast.success("User deleted successfully.");
       fetchUsers();
-    } catch {
-      alert("Failed to delete user.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to delete user. They may have other hidden dependencies.");
     }
   };
 
@@ -141,6 +204,7 @@ const UserManagementPage: React.FC = () => {
     <>
       <PageMeta title="User Management" description="Manage users" />
       <PageBreadcrumb pageTitle="User Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

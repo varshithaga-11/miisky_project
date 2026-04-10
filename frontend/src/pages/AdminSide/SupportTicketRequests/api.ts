@@ -54,6 +54,7 @@ export async function getSupportTickets(params?: {
   search?: string;
   status?: SupportTicketStatus | "all";
   user_type?: SupportTicketUserType | "all";
+  category?: number | string;
 }): Promise<PaginatedResponse<SupportTicket> | SupportTicket[]> {
   const url = createApiUrl("api/supportticket/");
   const res = await axios.get(url, {
@@ -64,6 +65,7 @@ export async function getSupportTickets(params?: {
       ...(params?.search ? { search: params.search } : {}),
       ...(params?.status && params.status !== "all" ? { status: params.status } : {}),
       ...(params?.user_type && params.user_type !== "all" ? { user_type: params.user_type } : {}),
+      ...(params?.category ? { category: params.category } : {}),
     },
   });
   return res.data as any;

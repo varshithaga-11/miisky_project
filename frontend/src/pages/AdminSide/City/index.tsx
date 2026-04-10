@@ -13,6 +13,9 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getCountryList, Country } from "../Country/countryapi";
+import { toast, ToastContainer } from "react-toastify";
+import { getUserList, getDeliveryProfileList } from "../UserManagement/api";
+import { getMicroKitchenList } from "../MicroKitchenInformation/api";
 
 const CityManagementPage: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
@@ -67,12 +70,34 @@ const CityManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this city?")) return;
     try {
+      // 1. Check for user dependencies
+      const userRes = await getUserList(1, 1, "", "all", "all", { city: id });
+      if (userRes.count > 0) {
+        toast.error(`Cannot delete city. It is associated with ${userRes.count} users. Please reassign or delete those users first.`);
+        return;
+      }
+
+      // 2. Check for Micro Kitchens
+      const mkRes = await getMicroKitchenList(1, "", "all", { city: id });
+      if (mkRes.count > 0) {
+        toast.error(`Cannot delete city. It is associated with ${mkRes.count} micro kitchens. Please delete them first.`);
+        return;
+      }
+
+      // 3. Check for Delivery Profiles
+      const dpRes = await getDeliveryProfileList(1, 1, "", { city: id });
+      if (dpRes.count > 0) {
+        toast.error(`Cannot delete city. It is associated with ${dpRes.count} delivery profiles. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this city?")) return;
       await deleteCity(id);
+      toast.success("City deleted successfully.");
       fetchData();
     } catch {
-      alert("Failed to delete city.");
+      toast.error("Failed to delete city. Please try again later.");
     }
   };
 
@@ -127,6 +152,7 @@ const CityManagementPage: React.FC = () => {
     <>
       <PageMeta title="City Management" description="Manage cities and municipalities efficiently" />
       <PageBreadcrumb pageTitle="City Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

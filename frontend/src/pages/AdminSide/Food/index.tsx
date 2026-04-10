@@ -12,6 +12,8 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { createApiUrl } from "../../../access/access";
+import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
+import { toast, ToastContainer } from "react-toastify";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import { getCuisineTypeList, CuisineType } from "./foodapi";
@@ -84,12 +86,20 @@ const FoodManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this food item?")) return;
     try {
+      // Check for recipe ingredient dependencies
+      const fiRes = await getFoodIngredientList(1, 1, "", id);
+      if (fiRes.count > 0) {
+        toast.error(`Cannot delete food item. It is used in ${fiRes.count} recipe ingredients. Please delete those ingredients first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this food item?")) return;
       await deleteFood(id);
+      toast.success("Food item deleted successfully.");
       fetchFoods();
     } catch {
-      alert("Failed to delete food item.");
+      toast.error("Failed to delete food item.");
     }
   };
 
@@ -134,6 +144,7 @@ const FoodManagementPage: React.FC = () => {
     <>
       <PageMeta title="Food Management" description="Manage food list" />
       <PageBreadcrumb pageTitle="Food Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

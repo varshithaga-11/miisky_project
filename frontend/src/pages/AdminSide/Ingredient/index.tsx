@@ -3,6 +3,8 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getIngredientList, deleteIngredient, Ingredient } from "./ingredientapi";
+import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
+import { toast, ToastContainer } from "react-toastify";
 import AddIngredient from "./AddIngredient";
 import EditIngredient from "./EditIngredient";
 import ImportButton from "../../../components/common/ImportButton";
@@ -42,12 +44,21 @@ const IngredientManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
     try {
+      // Pre-check for dependencies (Food Ingredients)
+      const foodIngRes = await getFoodIngredientList(1, 1, "", undefined, id);
+      
+      if (foodIngRes.count > 0) {
+        toast.error(`Cannot delete ingredient. It is used in ${foodIngRes.count} food items. Please remove it from there first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure?")) return;
       await deleteIngredient(id);
+      toast.success("Ingredient deleted");
       fetchIngredients();
     } catch {
-      alert("Failed to delete ingredient.");
+      toast.error("Failed to delete ingredient.");
     }
   };
 
@@ -55,6 +66,7 @@ const IngredientManagementPage: React.FC = () => {
     <>
       <PageMeta title="Ingredient Management" description="Manage ingredients" />
       <PageBreadcrumb pageTitle="Ingredient Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

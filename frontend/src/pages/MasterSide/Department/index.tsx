@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getDepartmentList, deleteDepartment, Department } from "./departmentapi";
+import { getTeamMemberList } from "../TeamMember/teammemberapi";
+import { getJobListingList } from "../JobListing/joblistingapi";
 import AddDepartment from "./AddDepartment";
 import EditDepartment from "./EditDepartment";
 import { getDepartmentIcon } from "../../../utils/departmentIcons";
@@ -44,17 +46,27 @@ const DepartmentPage: React.FC = () => {
   }, [fetchDepartments]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this department?")) {
-      return;
-    }
-
     try {
+      // 1. Check for Team Members
+      const teamRes = await getTeamMemberList(1, 1, "", id);
+      if (teamRes.count > 0) {
+        toast.error(`Cannot delete department. It has ${teamRes.count} associated team members. Please reassign or delete them first.`);
+        return;
+      }
+
+      // 2. Check for Job Listings
+      const jobRes = await getJobListingList(1, 1, "", id);
+      if (jobRes.count > 0) {
+        toast.error(`Cannot delete department. It has ${jobRes.count} active job listings. Please delete the listings first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this department?")) return;
       await deleteDepartment(id);
       toast.success("Department deleted successfully!");
       fetchDepartments();
-    } catch (error: any) {
-      console.error("Error deleting department:", error);
-      toast.error(error.response?.data?.detail || "Failed to delete department");
+    } catch {
+      toast.error("Failed to delete department");
     }
   };
 
@@ -72,6 +84,7 @@ const DepartmentPage: React.FC = () => {
     <>
       <PageMeta title="Department Management" description="Manage company departments effectively" />
       <PageBreadcrumb pageTitle="Departments" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

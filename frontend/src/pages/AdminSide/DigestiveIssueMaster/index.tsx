@@ -10,6 +10,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import ImportButton from "../../../components/common/ImportButton";
+import { toast, ToastContainer } from "react-toastify";
 
 const DigestiveIssueMasterPage: React.FC = () => {
   const [rows, setRows] = useState<DigestiveIssueMaster[]>([]);
@@ -45,12 +46,13 @@ const DigestiveIssueMasterPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this record?")) return;
     try {
+      if (!window.confirm("Are you sure you want to delete this digestive issue?")) return;
       await deleteDigestiveIssueMaster(id);
+      toast.success("Digestive issue deleted successfully!");
       void fetchRows();
     } catch {
-      alert("Failed to delete.");
+      toast.error("Failed to delete digestive issue.");
     }
   };
 
@@ -86,6 +88,7 @@ const DigestiveIssueMasterPage: React.FC = () => {
     <>
       <PageMeta title="Digestive issues" description="Digestive issue catalog" />
       <PageBreadcrumb pageTitle="Digestive issues" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">

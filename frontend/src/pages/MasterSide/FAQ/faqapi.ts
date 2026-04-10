@@ -30,11 +30,13 @@ export const createFAQ = async (data: FAQ) => {
 export const getFAQList = async (
   page: number = 1,
   limit: number = 10,
-  search?: string
+  search?: string,
+  category?: number
 ) => {
   const url = createApiUrl("api/website/faq/");
   const params: any = { page, limit };
   if (search) params.search = search;
+  if (category) params.category = category;
 
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getFAQCategoryList, deleteFAQCategory, FAQCategory } from "./faqcategoryapi";
+import { getFAQList } from "../FAQ/faqapi";
 import AddFAQCategory from "./AddFAQCategory";
 import EditFAQCategory from "./EditFAQCategory";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
@@ -41,13 +42,20 @@ const FAQCategoryPage: React.FC = () => {
   }, [fetchCategories]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this category?")) return;
     try {
+      // Pre-check for dependencies (FAQs)
+      const faqRes = await getFAQList(1, 1, "", id);
+      if (faqRes.count > 0) {
+        toast.error(`Cannot delete category. It contains ${faqRes.count} FAQs. Please delete the FAQs first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this category?")) return;
       await deleteFAQCategory(id);
-      toast.success("Deleted!");
+      toast.success("FAQ Category deleted!");
       fetchCategories();
-    } catch (error) {
-      toast.error("Failed to delete");
+    } catch {
+      toast.error("Failed to delete category");
     }
   };
 
@@ -55,6 +63,7 @@ const FAQCategoryPage: React.FC = () => {
     <>
       <PageMeta title="FAQ Category Management" description="Manage FAQ categories efficiently" />
       <PageBreadcrumb pageTitle="FAQ Categories" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

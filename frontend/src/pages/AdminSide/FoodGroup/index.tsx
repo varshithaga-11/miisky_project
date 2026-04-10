@@ -7,9 +7,11 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { deleteFoodGroup, FoodGroup, getFoodGroupList } from "./foodgroupapi";
+import { getFoodNameList } from "../FoodName/foodnameapi";
 import AddFoodGroup from "./AddFoodGroup";
 import EditFoodGroup from "./EditFoodGroup";
 import ImportButton from "../../../components/common/ImportButton";
+import { toast } from "react-toastify";
 
 const FoodGroupManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodGroup[]>([]);
@@ -46,12 +48,20 @@ const FoodGroupManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this food group?")) return;
     try {
+      // Pre-check for dependencies (Food Names)
+      const foodNamesResponse = await getFoodNameList(1, 1, "", id);
+      if (foodNamesResponse.count > 0) {
+        toast.error(`Cannot delete food group. It has ${foodNamesResponse.count} associated food names. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this food group?")) return;
       await deleteFoodGroup(id);
+      toast.success("Food group deleted successfully.");
       fetchData();
     } catch {
-      alert("Failed to delete food group.");
+      toast.error("Failed to delete food group.");
     }
   };
 

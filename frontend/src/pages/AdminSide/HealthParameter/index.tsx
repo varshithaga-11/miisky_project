@@ -47,8 +47,15 @@ const HealthParameterManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this parameter?")) return;
     try {
+      // Find the parameter in our current list to check normal range count
+      const parameter = params.find(p => p.id === id);
+      if (parameter && parameter.normal_ranges && parameter.normal_ranges.length > 0) {
+        toast.error(`Cannot delete health parameter. It has ${parameter.normal_ranges.length} associated normal ranges. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this parameter?")) return;
       await deleteHealthParameter(id);
       toast.success("Deleted successfully");
       fetchParams();

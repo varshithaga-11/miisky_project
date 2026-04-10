@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getBlogCategoryList, deleteBlogCategory, BlogCategory } from "./blogcategoryapi";
+import { getBlogPostList } from "../BlogPost/blogpostapi";
 import AddBlogCategory from "./AddBlogCategory";
 import EditBlogCategory from "./EditBlogCategory";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
@@ -41,12 +42,19 @@ const BlogCategoryPage: React.FC = () => {
   }, [fetchCategories]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Move this category to trash? This action cannot be easily undone.")) return;
     try {
+      // Pre-check for dependencies (Blog Posts)
+      const postsRes = await getBlogPostList(1, 1, "", String(id));
+      if (postsRes.count > 0) {
+        toast.error(`Cannot delete category. It contains ${postsRes.count} blog posts. Please delete the posts first.`);
+        return;
+      }
+
+      if (!window.confirm("Move this category to trash? This action cannot be easily undone.")) return;
       await deleteBlogCategory(id);
       toast.success("Category removed!");
       fetchCategories();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete category");
     }
   };
@@ -55,6 +63,7 @@ const BlogCategoryPage: React.FC = () => {
     <>
       <PageMeta title="Blog Category Management" description="Manage blog categories efficiently" />
       <PageBreadcrumb pageTitle="Blog Category" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

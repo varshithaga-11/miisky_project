@@ -85,15 +85,15 @@ const DeliveryChargesPage: React.FC = () => {
   };
 
   const remove = async (id: number) => {
-    if (!confirm("Delete this distance slab?")) return;
+    if (!window.confirm("Are you sure you want to delete this distance slab?")) return;
     try {
       await deleteDeliverySlab(id);
-      toast.success("Slab removed");
+      toast.success("Distance slab removed successfully");
       if (editingId === id) resetForm();
       await load();
     } catch (e) {
       console.error(e);
-      toast.error("Delete failed");
+      toast.error("Could not delete distance slab");
     }
   };
 

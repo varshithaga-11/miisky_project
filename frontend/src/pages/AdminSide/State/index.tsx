@@ -3,7 +3,10 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getStateList, deleteState, State } from "./stateapi";
+import { getCityList } from "../City/cityapi";
 import { getCountryList, Country } from "../Country/countryapi";
+import { getUserList, getDeliveryProfileList } from "../UserManagement/api";
+import { getMicroKitchenList } from "../MicroKitchenInformation/api";
 import AddState from "./AddState";
 import EditState from "./EditState";
 import ImportButton from "../../../components/common/ImportButton";
@@ -12,6 +15,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import SearchableSelect from "../../../components/form/SearchableSelect";
+import { toast, ToastContainer } from "react-toastify";
 
 const StateManagementPage: React.FC = () => {
   const [states, setStates] = useState<State[]>([]);
@@ -58,12 +62,41 @@ const StateManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this state?")) return;
     try {
+      // 1. Check for Cities
+      const citiesResponse = await getCityList(1, 1, "", id);
+      if (citiesResponse.count > 0) {
+        toast.error(`Cannot delete state. It has ${citiesResponse.count} associated cities. Please delete them first.`);
+        return;
+      }
+
+      // 2. Check for Users
+      const userRes = await getUserList(1, 1, "", "all", "all", { state: id });
+      if (userRes.count > 0) {
+        toast.error(`Cannot delete state. It is associated with ${userRes.count} users. Please reassign or delete those users first.`);
+        return;
+      }
+
+      // 3. Check for Micro Kitchens
+      const mkRes = await getMicroKitchenList(1, "", "all", { state: id });
+      if (mkRes.count > 0) {
+        toast.error(`Cannot delete state. It is associated with ${mkRes.count} micro kitchens. Please delete them first.`);
+        return;
+      }
+
+      // 4. Check for Delivery Profiles
+      const dpRes = await getDeliveryProfileList(1, 1, "", { state: id });
+      if (dpRes.count > 0) {
+        toast.error(`Cannot delete state. It is associated with ${dpRes.count} delivery profiles. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this state?")) return;
       await deleteState(id);
+      toast.success("State deleted successfully.");
       fetchData();
     } catch {
-      alert("Failed to delete state.");
+      toast.error("Failed to delete state. Please try again later.");
     }
   };
 
@@ -115,6 +148,7 @@ const StateManagementPage: React.FC = () => {
     <>
       <PageMeta title="State Management" description="Manage states and provinces efficiently" />
       <PageBreadcrumb pageTitle="State Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

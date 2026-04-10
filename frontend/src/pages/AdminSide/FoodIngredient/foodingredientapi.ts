@@ -37,11 +37,15 @@ export const getFoodIngredientList = async (
   page: number = 1,
   limit: number | "all" = 10,
   search?: string,
-  foodId?: number
+  foodId?: number,
+  ingredient?: number | string,
+  unit?: number | string
 ): Promise<PaginatedResponses<FoodIngredient>> => {
   try {
     const params: Record<string, any> = { page };
     if (foodId) params.food = foodId;
+    if (ingredient) params.ingredient = ingredient;
+    if (unit) params.unit = unit;
     if (limit !== "all") params.limit = limit;
     if (search) params.search = search;
 
@@ -49,7 +53,7 @@ export const getFoodIngredientList = async (
     const url = createApiUrl(isAll ? "api/foodingredient/all/" : "api/foodingredient/");
     const response = await axios.get<PaginatedResponses<FoodIngredient> | FoodIngredient[]>(url, {
       headers: await getAuthHeaders(),
-      params: isAll ? { search, food: foodId } : params,
+      params: isAll ? { search, food: foodId, ingredient, unit } : params,
     });
 
     if (isAll) {

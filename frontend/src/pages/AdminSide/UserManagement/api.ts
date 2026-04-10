@@ -83,7 +83,8 @@ export const getUserList = async (
   limit: number | "all" = 10,
   search?: string,
   role?: string,
-  status?: string
+  status?: string,
+  filters: { city?: number; state?: number; country?: number } = {}
 ): Promise<PaginatedResponses<UserRegister>> => {
   try {
     const params: Record<string, any> = { page };
@@ -91,6 +92,9 @@ export const getUserList = async (
     if (search) params.search = search;
     if (role && role !== "all") params.role = role;
     if (status && status !== "all") params.status = status;
+    if (filters.city) params.city = filters.city;
+    if (filters.state) params.state = filters.state;
+    if (filters.country) params.country = filters.country;
 
     const url = createApiUrl("api/usermanagement/");
     const response = await axios.get<PaginatedResponses<UserRegister>>(url, {
@@ -100,6 +104,32 @@ export const getUserList = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching user list:", error);
+    throw error;
+  }
+};
+
+export const getDeliveryProfileList = async (
+  page: number = 1,
+  limit: number | "all" = 10,
+  search?: string,
+  filters: { city?: number; state?: number; country?: number } = {}
+): Promise<PaginatedResponses<any>> => {
+  try {
+    const params: Record<string, any> = { page };
+    if (limit !== "all") params.limit = limit;
+    if (search) params.search = search;
+    if (filters.city) params.city = filters.city;
+    if (filters.state) params.state = filters.state;
+    if (filters.country) params.country = filters.country;
+
+    const url = createApiUrl("api/deliveryprofile/");
+    const response = await axios.get<PaginatedResponses<any>>(url, {
+      headers: await getAuthHeaders(),
+      params: limit === "all" ? { ...params, limit: 9999 } : params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching delivery profile list:", error);
     throw error;
   }
 };

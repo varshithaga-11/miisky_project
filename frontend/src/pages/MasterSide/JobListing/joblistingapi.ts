@@ -47,11 +47,13 @@ export const createJobListing = async (data: JobListing) => {
 export const getJobListingList = async (
   page: number = 1,
   limit: number = 10,
-  search?: string
+  search?: string,
+  department?: number
 ) => {
   const url = createApiUrl("api/website/joblisting/");
   const params: any = { page, limit };
   if (search) params.search = search;
+  if (department) params.department = department;
 
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),

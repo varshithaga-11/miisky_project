@@ -6,12 +6,13 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
-import { deleteFoodName, FoodName, getFoodNameList } from "./foodnameapi";
+import { deleteFoodName, FoodName, getFoodNameList, getFoodNameById } from "./foodnameapi";
 import AddFoodName from "./AddFoodName";
 import EditFoodName from "./EditFoodName";
 import { FoodGroup, getFoodGroupList } from "../FoodGroup/foodgroupapi";
 import ImportButton from "../../../components/common/ImportButton";
 import SearchableSelect from "../../../components/form/SearchableSelect";
+import { toast } from "react-toastify";
 
 const FoodNameManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodName[]>([]);
@@ -60,12 +61,29 @@ const FoodNameManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this food name?")) return;
     try {
+      // Pre-check for nutritional dependencies
+      const detail = await getFoodNameById(id);
+      
+      const dependencyKeys = [
+        "proximate", "water_soluble_vitamins", "fat_soluble_vitamins", 
+        "carotenoids", "minerals", "sugars", "amino_acids", 
+        "organic_acids", "polyphenols", "phytochemicals", "fatty_acid_profile"
+      ];
+
+      const activeDependencies = dependencyKeys.filter(key => detail[key] !== null);
+      
+      if (activeDependencies.length > 0) {
+        toast.error(`Cannot delete food name. It has associated ${activeDependencies.length} nutritional detail records. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this food name?")) return;
       await deleteFoodName(id);
+      toast.success("Food name deleted successfully.");
       fetchData();
     } catch {
-      alert("Failed to delete food name.");
+      toast.error("Failed to delete food name.");
     }
   };
 

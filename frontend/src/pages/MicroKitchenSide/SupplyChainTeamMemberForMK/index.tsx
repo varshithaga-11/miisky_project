@@ -10,6 +10,7 @@ import {
   deleteMicroKitchenDeliveryTeamMember,
   fetchMicroKitchenDeliveryTeam,
   fetchSupplyChainUsers,
+  fetchPlanDeliveryAssignments,
   MicroKitchenTeamMember,
   patchMicroKitchenDeliveryTeamMember,
   SupplyChainUser,
@@ -132,14 +133,28 @@ export default function SupplyChainTeamMemberForMKPage() {
     }
   };
 
-  const removeMember = async (id: number) => {
+  const removeMember = async (member: MicroKitchenTeamMember) => {
+    const name = `${member.delivery_person_details?.first_name || ""} ${member.delivery_person_details?.last_name || ""}`.trim() || `#${member.delivery_person}`;
+    
+    if (!window.confirm(`Are you sure you want to remove ${name} from the delivery team?`)) return;
+
     try {
-      await deleteMicroKitchenDeliveryTeamMember(id);
-      setRows((prev) => prev.filter((r) => r.id !== id));
-      toast.success("Removed.");
+      // Basic dependency check within loaded context or via API if possible
+      // Here we check if the person has any plan assignments
+      const assignments = await fetchPlanDeliveryAssignments();
+      const hasAssignments = assignments.some((a: any) => a.delivery_person === member.delivery_person);
+      
+      if (hasAssignments) {
+        toast.error(`Cannot remove ${name}. This person has active global plan assignments. Reassign their plans under 'Global assignments' first.`);
+        return;
+      }
+
+      await deleteMicroKitchenDeliveryTeamMember(member.id);
+      setRows((prev) => prev.filter((r) => r.id !== member.id));
+      toast.success(`${name} removed from team.`);
     } catch (e) {
       console.error(e);
-      toast.error("Could not remove member.");
+      toast.error("Could not remove team member.");
     }
   };
 
@@ -150,7 +165,7 @@ export default function SupplyChainTeamMemberForMKPage() {
         description="Each micro kitchen has its own pool/team of delivery persons."
       />
       <PageBreadcrumb pageTitle="Delivery Team Members" />
-      <ToastContainer position="bottom-right" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="space-y-6">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-gray-900">
@@ -324,7 +339,7 @@ export default function SupplyChainTeamMemberForMKPage() {
                     <TableCell className="px-4 py-3">
                       <button
                         type="button"
-                        onClick={() => removeMember(r.id)}
+                        onClick={() => removeMember(r)}
                         className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
                       >
                         Remove

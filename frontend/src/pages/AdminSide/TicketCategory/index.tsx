@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { createTicketCategory, deleteTicketCategory, getTicketCategoryList, TicketCategory, updateTicketCategory } from "./api";
+import { getSupportTickets } from "../SupportTicketRequests/api";
 import { toast, ToastContainer } from "react-toastify";
 
 const asArray = <T,>(data: any): T[] => {
@@ -92,8 +93,17 @@ const TicketCategoryPage: React.FC = () => {
 
   const onDelete = async (c: TicketCategory) => {
     if (!c.id) return;
-    if (!confirm(`Delete category "${c.name}"?`)) return;
     try {
+      // Pre-check for dependencies (Support Tickets)
+      const ticketRes = await getSupportTickets({ category: c.id, limit: 1 });
+      const ticketCount = Array.isArray(ticketRes) ? ticketRes.length : (ticketRes as any).count || 0;
+      
+      if (ticketCount > 0) {
+        toast.error(`Cannot delete category "${c.name}". It has ${ticketCount} associated tickets. Please delete them first.`);
+        return;
+      }
+
+      if (!confirm(`Delete category "${c.name}"?`)) return;
       await deleteTicketCategory(c.id);
       toast.success("Deleted");
       fetchData();

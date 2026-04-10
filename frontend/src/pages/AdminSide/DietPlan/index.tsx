@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getDietPlans as getDietPlanList, deleteDietPlan } from "../../../utils/api";
+import API, { getDietPlans as getDietPlanList, deleteDietPlan } from "../../../utils/api";
 import { DietPlan } from "./dietplanapi";
 import AddDietPlan from "./AddDietPlan";
 import EditDietPlan from "./EditDietPlan";
@@ -52,8 +52,26 @@ const DietPlanManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this diet plan?")) return;
     try {
+      // Find the plan in our current list to check feature count
+      const plan = plans.find(p => p.id === id);
+      if (plan && plan.features && plan.features.length > 0) {
+        toast.error(`Cannot delete diet plan. It has ${plan.features.length} associated features. Please delete them first.`);
+        return;
+      }
+
+      // Check for UserDietPlan dependencies (Purchased plans)
+      const userPlansRes = await API.get("/userdietplan/", {
+        params: { diet_plan: id, limit: 1 }
+      });
+      
+      const userPlansCount = userPlansRes.data.count || 0;
+      if (userPlansCount > 0) {
+        toast.error(`Cannot delete diet plan. It has been purchased/suggested to ${userPlansCount} patients. Please remove those associations first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this diet plan?")) return;
       await deleteDietPlan(id);
       toast.success("Diet plan deleted successfully");
       fetchPlans();

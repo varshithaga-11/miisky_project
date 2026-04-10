@@ -3,6 +3,7 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getCuisineTypeList, deleteCuisineType, CuisineType } from "./cuisinetypeapi";
+import { getFoodList } from "../Food/foodapi";
 import AddCuisineType from "./AddCuisineType";
 import EditCuisineType from "./EditCuisineType";
 import ImportButton from "../../../components/common/ImportButton";
@@ -20,7 +21,7 @@ const CuisineTypePage: React.FC = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchCuisines();
@@ -39,8 +40,15 @@ const CuisineTypePage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this cuisine type?")) return;
     try {
+      // Pre-check for dependencies (Foods)
+      const foodsResponse = await getFoodList(1, 1, "", undefined, id);
+      if (foodsResponse.count > 0) {
+        toast.error(`Cannot delete cuisine type. It has ${foodsResponse.count} associated foods. Please delete them first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure you want to delete this cuisine type?")) return;
       await deleteCuisineType(id);
       toast.success("Deleted successfully");
       fetchCuisines();

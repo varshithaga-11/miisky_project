@@ -3,6 +3,8 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getUnitList, deleteUnit, Unit } from "./unitapi";
+import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
+import { toast, ToastContainer } from "react-toastify";
 import AddUnit from "./AddUnit";
 import EditUnit from "./EditUnit";
 import ImportButton from "../../../components/common/ImportButton";
@@ -34,12 +36,21 @@ const UnitManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
     try {
+      // Pre-check for dependencies (Food Ingredients)
+      const foodIngRes = await getFoodIngredientList(1, 1, "", undefined, undefined, id);
+      
+      if (foodIngRes.count > 0) {
+        toast.error(`Cannot delete unit. It is used in ${foodIngRes.count} food ingredients. Please remove it from there first.`);
+        return;
+      }
+
+      if (!window.confirm("Are you sure?")) return;
       await deleteUnit(id);
+      toast.success("Unit deleted");
       fetchUnits();
     } catch {
-      alert("Failed to delete unit.");
+      toast.error("Failed to delete unit.");
     }
   };
 
@@ -51,6 +62,7 @@ const UnitManagementPage: React.FC = () => {
     <>
       <PageMeta title="Unit Management" description="Manage measurement units" />
       <PageBreadcrumb pageTitle="Unit Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">

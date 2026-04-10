@@ -115,14 +115,14 @@ export default function SupplyChainPlannedLeavePage() {
   };
 
   const remove = async (id: number) => {
-    if (!window.confirm("Remove this leave block?")) return;
+    if (!window.confirm("Are you sure you want to remove this leave block?")) return;
     try {
       await deleteSupplyChainLeave(id);
-      toast.success("Removed.");
+      toast.success("Leave entry removed successfully");
       await load();
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.response?.data?.detail || "Could not delete.");
+      toast.error(err?.response?.data?.detail || "Could not delete leave entry.");
     }
   };
 

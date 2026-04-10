@@ -71,14 +71,14 @@ const MedicalDeviceCategoryPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            <Button 
-                size="sm" 
-                className="inline-flex items-center gap-2"
-                onClick={() => setIsAddModalOpen(true)}
+            <Button
+              size="sm"
+              className="inline-flex items-center gap-2"
+              onClick={() => setIsAddModalOpen(true)}
             >
               <FiPlus /> Add Category
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Show:</Label>
               <Select
@@ -98,7 +98,7 @@ const MedicalDeviceCategoryPage: React.FC = () => {
         </div>
 
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-           <div>
+          <div>
             Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
         </div>
@@ -129,32 +129,31 @@ const MedicalDeviceCategoryPage: React.FC = () => {
                 categories.map((cat) => (
                   <TableRow key={cat.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">
-                        <div className="w-12 h-12 bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center justify-center p-1 border border-gray-100 dark:border-gray-800 shadow-sm">
-                          <img
-                            src={getDeviceCategoryIcon(cat.icon_class || "").src}
-                            alt={cat.name}
-                            className="w-10 h-10 object-contain"
-                          />
-                        </div>
+                      <div className="w-12 h-12 bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center justify-center p-1 border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <img
+                          src={getDeviceCategoryIcon(cat.icon_class || "").src}
+                          alt={cat.name}
+                          className="w-10 h-10 object-contain"
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-900 text-theme-sm dark:text-white uppercase tracking-tight">
-                        {cat.name}
+                      {cat.name}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-mono text-xs text-gray-400 dark:text-gray-500">
-                        {cat.position}
+                      {cat.position}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            cat.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${cat.is_active ? "bg-green-50 text-green-600 dark:bg-green-900/30" : "bg-red-50 text-red-600 dark:bg-red-900/30"
                         }`}>
-                            {cat.is_active ? "Active" : "Inactive"}
-                        </span>
+                        {cat.is_active ? "Active" : "Inactive"}
+                      </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
-                        <div className="flex items-center gap-3">
-                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(cat.id!)}><FiEdit /></button>
-                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(cat.id!)}><FiTrash2 /></button>
-                        </div>
+                      <div className="flex items-center gap-3">
+                        <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(cat.id!)}><FiEdit /></button>
+                        <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(cat.id!)}><FiTrash2 /></button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -166,7 +165,7 @@ const MedicalDeviceCategoryPage: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
-           <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
@@ -179,11 +178,10 @@ const MedicalDeviceCategoryPage: React.FC = () => {
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    currentPage === pageNum
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentPage === pageNum
                       ? 'bg-blue-600 text-white border border-blue-600'
                       : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
-                  }`}
+                    }`}
                 >
                   {pageNum}
                 </button>
@@ -204,17 +202,17 @@ const MedicalDeviceCategoryPage: React.FC = () => {
       )}
 
       {isAddModalOpen && (
-        <AddMedicalDeviceCategory 
-          onSuccess={() => fetchCategories()} 
-          onClose={() => setIsAddModalOpen(false)} 
+        <AddMedicalDeviceCategory
+          onSuccess={() => fetchCategories()}
+          onClose={() => setIsAddModalOpen(false)}
         />
       )}
 
       {editingId && (
-        <EditMedicalDeviceCategory 
-          id={editingId} 
-          onSuccess={() => fetchCategories()} 
-          onClose={() => setEditingId(null)} 
+        <EditMedicalDeviceCategory
+          id={editingId}
+          onSuccess={() => fetchCategories()}
+          onClose={() => setEditingId(null)}
         />
       )}
     </>
