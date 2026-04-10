@@ -16,6 +16,7 @@ import { FiShoppingCart, FiTrash2, FiMapPin, FiCheckCircle, FiLoader } from "rea
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../../components/ui/button/Button";
 import Label from "../../../components/form/Label";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const CHECKOUT_WARNING_COPY: Record<string, string> = {
     no_slabs: "This kitchen has no delivery slabs yet — delivery shows ₹0 until they add distance rates.",
@@ -35,6 +36,8 @@ const CartPage: React.FC = () => {
     const [checkoutByCartId, setCheckoutByCartId] = useState<
         Record<number, CheckoutPreview | null | undefined>
     >({});
+    const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchCarts = async () => {
         setLoading(true);
@@ -99,13 +102,22 @@ const CartPage: React.FC = () => {
         };
     }, [cartIdsKey]);
 
-    const handleRemoveItem = async (itemId: number) => {
+    const handleRemoveItem = (itemId: number) => {
+        setItemToDelete(itemId);
+    };
+
+    const confirmRemoveItem = async () => {
+        if (itemToDelete === null) return;
+        setIsDeleting(true);
         try {
-            await deleteCartItem(itemId);
-            toast.success("Item removed");
+            await deleteCartItem(itemToDelete);
+            toast.success("Item removed from your cart");
+            setItemToDelete(null);
             fetchCarts();
         } catch (error) {
-            toast.error("Failed to remove item");
+            toast.error("Failed to remove item. Please try again.");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -306,6 +318,16 @@ const CartPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={itemToDelete !== null}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmRemoveItem}
+                isLoading={isDeleting}
+                title="Remove Item?"
+                message="Are you sure you want to remove this item from your cart? You can always add it back later."
+                confirmText="Remove Item"
+            />
         </div>
     );
 };

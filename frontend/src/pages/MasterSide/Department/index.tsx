@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const DepartmentPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -25,6 +26,8 @@ const DepartmentPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchDepartments = useCallback(async () => {
     setLoading(true);
@@ -61,12 +64,24 @@ const DepartmentPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this department?")) return;
-      await deleteDepartment(id);
+      setIdToDelete(id);
+    } catch {
+      toast.error("Failed to check dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteDepartment(idToDelete);
       toast.success("Department deleted successfully!");
+      setIdToDelete(null);
       fetchDepartments();
     } catch {
-      toast.error("Failed to delete department");
+      toast.error("Failed to delete department.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -252,6 +267,16 @@ const DepartmentPage: React.FC = () => {
           onUpdated={handleEditDepartment}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Department?"
+        message="Are you sure you want to delete this department? This action cannot be undone."
+        confirmText="Delete Department"
+      />
     </>
   );
 };

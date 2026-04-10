@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const FoodIngredientManagementPage: React.FC = () => {
   const [foodIngredients, setFoodIngredients] = useState<FoodIngredient[]>([]);
@@ -22,6 +24,8 @@ const FoodIngredientManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [selectedFoodId, setSelectedFoodId] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,13 +57,22 @@ const FoodIngredientManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteFoodIngredient(id);
+      await deleteFoodIngredient(idToDelete);
+      toast.success("Food ingredient deleted successfully!");
+      setIdToDelete(null);
       fetchFoodIngredients();
     } catch {
-      alert("Failed to delete.");
+      toast.error("Failed to delete food ingredient.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -72,6 +85,7 @@ const FoodIngredientManagementPage: React.FC = () => {
     <>
       <PageMeta title="Food Ingredient Management" description="Manage ingredients for recipes" />
       <PageBreadcrumb pageTitle="Food Ingredient Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -219,6 +233,16 @@ const FoodIngredientManagementPage: React.FC = () => {
             onUpdated={() => { fetchFoodIngredients(); setIsEditModalOpen(false); }} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Food Ingredient?"
+        message="Are you sure you want to remove this ingredient from the recipe? This action cannot be undone."
+        confirmText="Delete Ingredient"
+      />
     </>
   );
 };

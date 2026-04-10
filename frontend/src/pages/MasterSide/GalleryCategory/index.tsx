@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getGalleryCategoryList, deleteGalleryCategory, GalleryCategory } from "./gallerycategoryapi";
 import { getGalleryItemList } from "../GalleryItem/galleryitemapi";
@@ -22,6 +23,8 @@ const GalleryCategoryPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -49,13 +52,24 @@ const GalleryCategoryPage: React.FC = () => {
         toast.error(`Cannot delete category. It contains ${itemRes.count} gallery items. Please delete the items first.`);
         return;
       }
+      setIdToDelete(id);
+    } catch {
+      toast.error("Failed to check category dependencies.");
+    }
+  };
 
-      if (!window.confirm("Are you sure you want to delete this category?")) return;
-      await deleteGalleryCategory(id);
-      toast.success("Gallery Category deleted!");
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteGalleryCategory(idToDelete);
+      toast.success("Gallery category deleted successfully!");
+      setIdToDelete(null);
       fetchCategories();
     } catch {
-      toast.error("Failed to delete category");
+      toast.error("Failed to delete category.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -219,6 +233,16 @@ const GalleryCategoryPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Gallery Category?"
+        message="Are you sure you want to permanently delete this gallery category? This action cannot be undone."
+        confirmText="Delete Category"
+      />
     </>
   );
 };

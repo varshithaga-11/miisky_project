@@ -16,6 +16,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const StateManagementPage: React.FC = () => {
   const [states, setStates] = useState<State[]>([]);
@@ -27,6 +28,8 @@ const StateManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editStateId, setEditStateId] = useState<number | null>(null);
   const [selectedCountryId, setSelectedCountryId] = useState<number | "">("");
+  const [stateToDelete, setStateToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,12 +94,24 @@ const StateManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this state?")) return;
-      await deleteState(id);
+      setStateToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (stateToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteState(stateToDelete);
       toast.success("State deleted successfully.");
+      setStateToDelete(null);
       fetchData();
     } catch {
       toast.error("Failed to delete state. Please try again later.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -328,6 +343,16 @@ const StateManagementPage: React.FC = () => {
           onUpdated={() => { fetchData(); setIsEditModalOpen(false); setEditStateId(null); }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={stateToDelete !== null}
+        onClose={() => setStateToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete State?"
+        message="Are you sure you want to permanently remove this state and its administrative configuration? This action is irreversible."
+        confirmText="Delete State"
+      />
     </>
   );
 };

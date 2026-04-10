@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getPricingPlanList, deletePricingPlan, PricingPlan } from "./pricingplanapi";
 import AddPricingPlan from "./AddPricingPlan";
@@ -21,6 +22,8 @@ const PricingPlanPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchPlans = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const PricingPlanPage: React.FC = () => {
     fetchPlans();
   }, [fetchPlans]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Archive this pricing plan? It will no longer be visible on the public site.")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deletePricingPlan(id);
-      toast.success("Plan archived!");
+      await deletePricingPlan(idToDelete);
+      toast.success("Pricing plan archived successfully!");
+      setIdToDelete(null);
       fetchPlans();
     } catch (error) {
-      toast.error("Failed to delete plan");
+      toast.error("Failed to archive pricing plan.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const PricingPlanPage: React.FC = () => {
     <>
       <PageMeta title="Pricing Management" description="Manage subscription tiers" />
       <PageBreadcrumb pageTitle="Pricing Plans" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -242,6 +254,16 @@ const PricingPlanPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Archive Pricing Plan?"
+        message="Archiving this pricing plan will stop it from appearing on the public site. Are you sure you want to continue?"
+        confirmText="Archive Plan"
+      />
     </>
   );
 };

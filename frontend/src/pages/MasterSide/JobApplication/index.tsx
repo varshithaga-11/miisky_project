@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch, FiFileText } from "react-icons/fi";
 import { getJobApplicationList, deleteJobApplication, JobApplication } from "./jobapplicationapi";
 import { getJobListingList } from "../JobListing/joblistingapi";
@@ -23,6 +24,8 @@ const JobApplicationPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [jobListings, setJobListings] = useState<any[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchApplications = useCallback(async () => {
     setLoading(true);
@@ -52,14 +55,22 @@ const JobApplicationPage: React.FC = () => {
     fetchJobListings();
   }, [fetchApplications, fetchJobListings]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete job application record?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteJobApplication(id);
-      toast.success("Deleted!");
+      await deleteJobApplication(idToDelete);
+      toast.success("Application deleted successfully!");
+      setIdToDelete(null);
       fetchApplications();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete application.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -76,6 +87,7 @@ const JobApplicationPage: React.FC = () => {
     <>
       <PageMeta title="Recruitment Pipeline" description="Manage candidate applications and hiring workflow" />
       <PageBreadcrumb pageTitle="Job Applications" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -252,6 +264,16 @@ const JobApplicationPage: React.FC = () => {
           jobListings={jobListings}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Job Application?"
+        message="Are you sure you want to permanently delete this job application record? This action cannot be undone."
+        confirmText="Delete Application"
+      />
     </>
   );
 };

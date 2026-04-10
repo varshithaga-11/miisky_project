@@ -3,6 +3,7 @@ import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getSymptomMasterList, deleteSymptomMaster, SymptomMaster } from "./api";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import AddSymptomMaster from "./AddSymptomMaster";
 import EditSymptomMaster from "./EditSymptomMaster";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -26,6 +27,8 @@ const SymptomMasterPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<keyof SymptomMaster | null>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     void fetchRows();
@@ -45,14 +48,22 @@ const SymptomMasterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
+    setRecordToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
     try {
-      if (!window.confirm("Are you sure you want to delete this symptom?")) return;
-      await deleteSymptomMaster(id);
+      await deleteSymptomMaster(recordToDelete);
       toast.success("Symptom deleted successfully!");
+      setRecordToDelete(null);
       void fetchRows();
     } catch {
       toast.error("Failed to delete symptom.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -238,6 +249,16 @@ const SymptomMasterPage: React.FC = () => {
       {isEditOpen && editId !== null && (
         <EditSymptomMaster recordId={editId} isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} onUpdated={() => void fetchRows()} />
       )}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Symptom?"
+        message="Are you sure you want to remove this symptom from the master list? This might affect questionnaires."
+        confirmText="Delete Symptom"
+      />
     </>
   );
 };

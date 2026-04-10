@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch, FiFileText } from "react-icons/fi";
 import { getResearchPaperList, deleteResearchPaper, ResearchPaper } from "./researchpapeapi";
 import AddResearchPaper from "./AddResearchPaper";
@@ -21,6 +22,8 @@ const ResearchPaperPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchPapers = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const ResearchPaperPage: React.FC = () => {
     fetchPapers();
   }, [fetchPapers]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete paper?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteResearchPaper(id);
-      toast.success("Deleted!");
+      await deleteResearchPaper(idToDelete);
+      toast.success("Research paper deleted successfully!");
+      setIdToDelete(null);
       fetchPapers();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete research paper.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const ResearchPaperPage: React.FC = () => {
     <>
       <PageMeta title="Scientific Repository" description="Manage research papers and publications" />
       <PageBreadcrumb pageTitle="Research Papers" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -259,6 +271,16 @@ const ResearchPaperPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Research Paper?"
+        message="Are you sure you want to permanently delete this research paper and all associated documents? This action cannot be undone."
+        confirmText="Delete Paper"
+      />
     </>
   );
 };

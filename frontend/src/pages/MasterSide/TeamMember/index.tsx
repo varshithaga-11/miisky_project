@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch, FiUser } from "react-icons/fi";
 import { getTeamMemberList, deleteTeamMember, TeamMember } from "./teammemberapi";
 import { getDepartmentList } from "../Department/departmentapi";
@@ -24,6 +25,8 @@ const TeamMemberPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -53,14 +56,22 @@ const TeamMemberPage: React.FC = () => {
     fetchDepartments();
   }, [fetchMembers, fetchDepartments]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this expert?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteTeamMember(id);
+      await deleteTeamMember(idToDelete);
       toast.success("Expert deleted successfully!");
+      setIdToDelete(null);
       fetchMembers();
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to delete expert");
+      toast.error(error.response?.data?.detail || "Failed to delete expert.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -68,6 +79,7 @@ const TeamMemberPage: React.FC = () => {
     <>
       <PageMeta title="Team Excellence" description="Manage MIISKY intellectual capital" />
       <PageBreadcrumb pageTitle="Our Experts" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -225,6 +237,16 @@ const TeamMemberPage: React.FC = () => {
 
       {showAddModal && <AddTeamMember onClose={() => setShowAddModal(false)} onSuccess={fetchMembers} departments={departments} />}
       {showEditModal && selectedMemberId && <EditTeamMember id={selectedMemberId} onClose={() => setShowEditModal(false)} onSuccess={fetchMembers} departments={departments} />}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Expert?"
+        message="Are you sure you want to permanently delete this team member? This action cannot be undone."
+        confirmText="Delete Expert"
+      />
     </>
   );
 };

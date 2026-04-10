@@ -12,6 +12,7 @@ import {
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage, FiHome, FiUpload, FiClock, FiStopCircle, FiCheck, FiEdit } from "react-icons/fi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -43,17 +44,23 @@ const SuggestedPlansPage: React.FC = () => {
   const [amountPaid, setAmountPaid] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
+  const [statusUpdate, setStatusUpdate] = useState<{ plan: UserDietPlan, status: string } | null>(null);
 
-  const handleStatusUpdate = async (id: number, newStatus: string) => {
-    if (submitting) return;
-    if (!window.confirm(`Are you sure you want to mark this plan as ${newStatus}?`)) return;
+  const handleStatusUpdate = (plan: UserDietPlan, newStatus: string) => {
+    setStatusUpdate({ plan, status: newStatus });
+  };
+
+  const confirmStatusUpdate = async () => {
+    if (!statusUpdate || submitting) return;
+    const { plan, status: newStatus } = statusUpdate;
     setSubmitting(true);
     try {
-      const updated = await updatePlanStatus(id, newStatus);
+      const updated = await updatePlanStatus(plan.id, newStatus);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      toast.success(`Plan marked as ${newStatus}`);
+      toast.success(`Plan marked as ${newStatus.replace('_', ' ')} successfully`);
+      setStatusUpdate(null);
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "Failed to update status");
+      toast.error(err?.response?.data?.detail || `Failed to mark plan as ${newStatus}`);
     } finally {
       setSubmitting(false);
     }
@@ -360,7 +367,7 @@ const SuggestedPlansPage: React.FC = () => {
                         <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Update Plan Status</p>
                           <button
-                            onClick={() => handleStatusUpdate(udp.id, "stopped")}
+                            onClick={() => handleStatusUpdate(udp, "stopped")}
                             disabled={submitting}
                             className="w-full py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 border border-red-200 dark:border-red-900/30 transition-all uppercase tracking-wider"
                           >
@@ -369,7 +376,7 @@ const SuggestedPlansPage: React.FC = () => {
                           
                           {isCompletionAllowed(udp.end_date) ? (
                             <button
-                              onClick={() => handleStatusUpdate(udp.id, "completed")}
+                              onClick={() => handleStatusUpdate(udp, "completed")}
                               disabled={submitting}
                               className="w-full py-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 border border-green-200 dark:border-green-900/30 transition-all uppercase tracking-wider"
                             >
@@ -590,6 +597,16 @@ const SuggestedPlansPage: React.FC = () => {
             </div>
           </div>
         )}
+      <ConfirmationModal
+        isOpen={!!statusUpdate}
+        onClose={() => setStatusUpdate(null)}
+        onConfirm={confirmStatusUpdate}
+        isLoading={submitting}
+        variant="info"
+        title="Update Plan Status?"
+        message={statusUpdate ? `Are you sure you want to mark "${statusUpdate.plan.diet_plan_details?.title || 'this plan'}" as ${statusUpdate.status.replace('_', ' ')}?` : ""}
+        confirmText="Update Status"
+      />
     </div>
   );
 };

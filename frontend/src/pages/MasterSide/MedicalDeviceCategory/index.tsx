@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getMedicalDeviceCategoryList, deleteMedicalDeviceCategory, MedicalDeviceCategory } from "./medicaldevicecategoryapi";
 import AddMedicalDeviceCategory from "./AddMedicalDeviceCategory";
@@ -22,6 +23,8 @@ const MedicalDeviceCategoryPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -41,14 +44,22 @@ const MedicalDeviceCategoryPage: React.FC = () => {
     fetchCategories();
   }, [fetchCategories]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete category?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteMedicalDeviceCategory(id);
-      toast.success("Deleted!");
+      await deleteMedicalDeviceCategory(idToDelete);
+      toast.success("Medical device category deleted successfully!");
+      setIdToDelete(null);
       fetchCategories();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete category.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -56,6 +67,7 @@ const MedicalDeviceCategoryPage: React.FC = () => {
     <>
       <PageMeta title="Device Categories" description="Manage medical device categories" />
       <PageBreadcrumb pageTitle="Medical Device Categories" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -215,6 +227,16 @@ const MedicalDeviceCategoryPage: React.FC = () => {
           onClose={() => setEditingId(null)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Medical Device Category?"
+        message="Are you sure you want to permanently delete this medical device category? This action cannot be undone."
+        confirmText="Delete Category"
+      />
     </>
   );
 };

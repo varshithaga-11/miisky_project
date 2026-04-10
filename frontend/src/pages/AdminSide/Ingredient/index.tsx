@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getIngredientList, deleteIngredient, Ingredient } from "./ingredientapi";
 import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import AddIngredient from "./AddIngredient";
 import EditIngredient from "./EditIngredient";
 import ImportButton from "../../../components/common/ImportButton";
@@ -24,6 +25,8 @@ const IngredientManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchIngredients();
@@ -53,12 +56,24 @@ const IngredientManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure?")) return;
-      await deleteIngredient(id);
-      toast.success("Ingredient deleted");
+      setRecordToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteIngredient(recordToDelete);
+      toast.success("Ingredient deleted successfully!");
+      setRecordToDelete(null);
       fetchIngredients();
     } catch {
       toast.error("Failed to delete ingredient.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -179,8 +194,23 @@ const IngredientManagementPage: React.FC = () => {
 
       {isAddModalOpen && <AddIngredient onClose={() => setIsAddModalOpen(false)} onAdd={() => { fetchIngredients(); setIsAddModalOpen(false); }} />}
       {isEditModalOpen && editIngredientId && (
-        <EditIngredient ingredientId={editIngredientId} isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onUpdated={() => { fetchIngredients(); setIsEditModalOpen(false); }} />
+        <EditIngredient 
+           ingredientId={editIngredientId} 
+           isOpen={isEditModalOpen} 
+           onClose={() => setIsEditModalOpen(false)} 
+           onUpdated={() => { fetchIngredients(); setIsEditModalOpen(false); }} 
+        />
       )}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Ingredient?"
+        message="Are you sure you want to remove this ingredient? This will affect all food items using it."
+        confirmText="Delete Ingredient"
+      />
     </>
   );
 };

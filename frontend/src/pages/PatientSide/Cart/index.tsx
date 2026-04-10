@@ -16,6 +16,7 @@ import { FiShoppingCart, FiTrash2, FiMapPin, FiCheckCircle, FiLoader } from "rea
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../../components/ui/button/Button";
 import Label from "../../../components/form/Label";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const CHECKOUT_WARNING_COPY: Record<string, string> = {
     no_slabs: "This kitchen has no delivery slabs yet — delivery shows ₹0 until they add distance rates.",
@@ -35,6 +36,8 @@ const CartPage: React.FC = () => {
     const [checkoutByCartId, setCheckoutByCartId] = useState<
         Record<number, CheckoutPreview | null | undefined>
     >({});
+    const [itemToRemove, setItemToRemove] = useState<number | null>(null);
+    const [isRemoving, setIsRemoving] = useState(false);
 
     const fetchCarts = async () => {
         setLoading(true);
@@ -99,13 +102,22 @@ const CartPage: React.FC = () => {
         };
     }, [cartIdsKey]);
 
-    const handleRemoveItem = async (itemId: number) => {
+    const handleRemoveItem = (itemId: number) => {
+        setItemToRemove(itemId);
+    };
+
+    const confirmRemove = async () => {
+        if (!itemToRemove) return;
+        setIsRemoving(true);
         try {
-            await deleteCartItem(itemId);
-            toast.success("Item removed");
+            await deleteCartItem(itemToRemove);
+            toast.success("Item removed from cart successfully");
+            setItemToRemove(null);
             fetchCarts();
         } catch (error) {
-            toast.error("Failed to remove item");
+            toast.error("Failed to remove item from cart");
+        } finally {
+            setIsRemoving(false);
         }
     };
 
@@ -306,6 +318,16 @@ const CartPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={!!itemToRemove}
+                onClose={() => setItemToRemove(null)}
+                onConfirm={confirmRemove}
+                isLoading={isRemoving}
+                title="Remove Item?"
+                message="Are you sure you want to remove this meal from your shopping cart?"
+                confirmText="Remove Item"
+            />
         </div>
     );
 };

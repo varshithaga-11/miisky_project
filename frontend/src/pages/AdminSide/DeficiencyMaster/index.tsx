@@ -11,6 +11,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import ImportButton from "../../../components/common/ImportButton";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const DeficiencyMasterPage: React.FC = () => {
   const [rows, setRows] = useState<DeficiencyMaster[]>([]);
@@ -26,6 +27,8 @@ const DeficiencyMasterPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<keyof DeficiencyMaster | null>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     void fetchRows();
@@ -45,14 +48,22 @@ const DeficiencyMasterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
+    setRecordToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
     try {
-      if (!window.confirm("Are you sure you want to delete this deficiency?")) return;
-      await deleteDeficiencyMaster(id);
-      toast.success("Deficiency deleted successfully!");
+      await deleteDeficiencyMaster(recordToDelete);
+      toast.success("Deficiency record deleted successfully!");
+      setRecordToDelete(null);
       void fetchRows();
     } catch {
-      toast.error("Failed to delete deficiency.");
+      toast.error("Failed to delete deficiency record.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -236,6 +247,16 @@ const DeficiencyMasterPage: React.FC = () => {
       {isEditOpen && editId !== null && (
         <EditDeficiencyMaster recordId={editId} isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} onUpdated={() => void fetchRows()} />
       )}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Record?"
+        message="Are you sure you want to remove this deficiency from the master list?"
+        confirmText="Delete Record"
+      />
     </>
   );
 };

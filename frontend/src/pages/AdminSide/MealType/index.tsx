@@ -12,6 +12,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const MealTypeManagementPage: React.FC = () => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
@@ -22,6 +23,8 @@ const MealTypeManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editMealTypeId, setEditMealTypeId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<keyof MealType | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,12 +59,24 @@ const MealTypeManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this meal type?")) return;
-      await deleteMealType(id);
+      setRecordToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteMealType(recordToDelete);
       toast.success("Meal type deleted successfully.");
+      setRecordToDelete(null);
       fetchMealTypes();
     } catch {
       toast.error("Failed to delete meal type.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -231,6 +246,16 @@ const MealTypeManagementPage: React.FC = () => {
           onUpdated={onMealTypeUpdated}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Meal Type?"
+        message="Are you sure you want to remove this meal type? This action is permanent."
+        confirmText="Delete Meal Type"
+      />
     </>
   );
 };

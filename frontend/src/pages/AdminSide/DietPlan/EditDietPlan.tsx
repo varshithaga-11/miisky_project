@@ -9,6 +9,8 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { toast } from 'react-toastify';
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
+
 
 interface EditDietPlanProps {
   id: number;
@@ -24,6 +26,9 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
   // Feature states
   const [newFeatureText, setNewFeatureText] = useState("");
   const [addFeatureLoading, setAddFeatureLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [featureToDelete, setFeatureToDelete] = useState<number | null>(null);
+
 
   useEffect(() => {
     fetchPlan();
@@ -115,17 +120,25 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
       }
   };
 
-  const handleDeleteFeature = async (featureId: number) => {
-      if (!window.confirm("Delete this feature?")) return;
+  const handleDeleteFeature = (featureId: number) => {
+      setFeatureToDelete(featureId);
+  };
+
+  const confirmDeleteFeature = async () => {
+      if (featureToDelete === null) return;
+      setIsDeleting(true);
       try {
-          await deleteDietPlanFeature(featureId);
+          await deleteDietPlanFeature(featureToDelete);
           setFormData(prev => ({
               ...prev,
-              features: prev.features?.filter(f => f.id !== featureId)
+              features: prev.features?.filter(f => f.id !== featureToDelete)
           }));
           toast.success("Feature removed");
       } catch {
           toast.error("Failed to remove");
+      } finally {
+          setIsDeleting(false);
+          setFeatureToDelete(null);
       }
   };
 
@@ -281,6 +294,16 @@ const EditDietPlan: React.FC<EditDietPlanProps> = ({ id, onClose, onUpdate }) =>
             </div>
         </div>
       </div>
+      
+      <ConfirmationModal
+        isOpen={featureToDelete !== null}
+        onClose={() => setFeatureToDelete(null)}
+        onConfirm={confirmDeleteFeature}
+        isLoading={isDeleting}
+        title="Delete Feature?"
+        message="Are you sure you want to permanently delete this plan feature? This action cannot be undone."
+        confirmText="Delete Feature"
+      />
     </div>
   );
 };

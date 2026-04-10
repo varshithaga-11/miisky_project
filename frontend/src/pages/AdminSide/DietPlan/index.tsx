@@ -13,6 +13,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const DietPlanManagement: React.FC = () => {
   const [plans, setPlans] = useState<DietPlan[]>([]);
@@ -24,6 +25,8 @@ const DietPlanManagement: React.FC = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [viewingId, setViewingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,12 +74,24 @@ const DietPlanManagement: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this diet plan?")) return;
-      await deleteDietPlan(id);
-      toast.success("Diet plan deleted successfully");
+      setIdToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteDietPlan(idToDelete);
+      toast.success("Diet plan deleted successfully!");
+      setIdToDelete(null);
       fetchPlans();
     } catch {
-      toast.error("Failed to delete diet plan");
+      toast.error("Failed to delete diet plan.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -251,6 +266,16 @@ const DietPlanManagement: React.FC = () => {
           onClose={() => { setIsViewOpen(false); setViewingId(null); }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Diet Plan?"
+        message="Are you sure you want to permanently delete this diet plan? Any patients who have purchased it may lose access. This action is irreversible."
+        confirmText="Delete Plan"
+      />
     </>
   );
 };

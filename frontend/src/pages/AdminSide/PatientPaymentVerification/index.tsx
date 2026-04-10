@@ -4,7 +4,9 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getAllPaymentPlans, verifyPayment, rejectPayment, UserDietPlanPayment } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage } from "react-icons/fi";
+
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 
@@ -32,8 +34,10 @@ const PatientPaymentVerificationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [verifyModal, setVerifyModal] = useState<UserDietPlanPayment | null>(null);
+  const [rejectModal, setRejectModal] = useState<UserDietPlanPayment | null>(null);
   const [startDate, setStartDate] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+
 
   const fetchPlans = async () => {
     setLoading(true);
@@ -73,13 +77,18 @@ const PatientPaymentVerificationPage: React.FC = () => {
     }
   };
 
-  const handleReject = async (plan: UserDietPlanPayment) => {
-    if (!window.confirm("Reject this payment? Patient can re-upload screenshot.")) return;
-    setActionLoading(plan.id);
+  const handleReject = (plan: UserDietPlanPayment) => {
+    setRejectModal(plan);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectModal) return;
+    setActionLoading(rejectModal.id);
     try {
-      await rejectPayment(plan.id);
+      await rejectPayment(rejectModal.id);
       fetchPlans();
       toast.success("Payment rejected. Patient can re-upload.");
+      setRejectModal(null);
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Rejection failed");
     } finally {
@@ -342,6 +351,16 @@ const PatientPaymentVerificationPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={rejectModal !== null}
+        onClose={() => setRejectModal(null)}
+        onConfirm={confirmReject}
+        isLoading={actionLoading === rejectModal?.id}
+        title="Reject Payment?"
+        message="Are you sure you want to reject this payment? The patient will be able to re-upload their payment screenshot."
+        confirmText="Reject Payment"
+      />
     </div>
   );
 };

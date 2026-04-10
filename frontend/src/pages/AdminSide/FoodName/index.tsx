@@ -12,7 +12,8 @@ import EditFoodName from "./EditFoodName";
 import { FoodGroup, getFoodGroupList } from "../FoodGroup/foodgroupapi";
 import ImportButton from "../../../components/common/ImportButton";
 import SearchableSelect from "../../../components/form/SearchableSelect";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const FoodNameManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodName[]>([]);
@@ -26,6 +27,8 @@ const FoodNameManagementPage: React.FC = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewData, setViewData] = useState<FoodName | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,12 +81,24 @@ const FoodNameManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this food name?")) return;
-      await deleteFoodName(id);
+      setIdToDelete(id);
+    } catch {
+      toast.error("Failed to check dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteFoodName(idToDelete);
       toast.success("Food name deleted successfully.");
+      setIdToDelete(null);
       fetchData();
     } catch {
       toast.error("Failed to delete food name.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -93,6 +108,7 @@ const FoodNameManagementPage: React.FC = () => {
     <>
       <PageMeta title="Food Name Management" description="Manage food names" />
       <PageBreadcrumb pageTitle="Food Name Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">
@@ -342,6 +358,16 @@ const FoodNameManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Food Name?"
+        message="Are you sure you want to delete this food name? All associated nutritional composition data will also be removed."
+        confirmText="Delete Food Name"
+      />
     </>
   );
 };

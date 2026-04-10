@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const FAQCategoryPage: React.FC = () => {
   const [categories, setCategories] = useState<FAQCategory[]>([]);
@@ -22,6 +23,8 @@ const FAQCategoryPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -49,13 +52,24 @@ const FAQCategoryPage: React.FC = () => {
         toast.error(`Cannot delete category. It contains ${faqRes.count} FAQs. Please delete the FAQs first.`);
         return;
       }
+      setCategoryToDelete(id);
+    } catch {
+      toast.error("Failed to check dependencies");
+    }
+  };
 
-      if (!window.confirm("Are you sure you want to delete this category?")) return;
-      await deleteFAQCategory(id);
+  const confirmDelete = async () => {
+    if (categoryToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteFAQCategory(categoryToDelete);
       toast.success("FAQ Category deleted!");
+      setCategoryToDelete(null);
       fetchCategories();
     } catch {
       toast.error("Failed to delete category");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -219,6 +233,16 @@ const FAQCategoryPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={categoryToDelete !== null}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Category?"
+        message="Are you sure you want to remove this FAQ category? This will not remove the FAQs associated with it if any were missed, but the check above should prevent this."
+        confirmText="Delete Category"
+      />
     </>
   );
 };

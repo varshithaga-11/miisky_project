@@ -4,6 +4,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getUserList, deleteUser } from "./api";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 import AddUser from "./AddUser";
@@ -63,6 +64,8 @@ const UserManagementPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [viewUser, setViewUser] = useState<UserRegister | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -142,13 +145,27 @@ const UserManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
-      await deleteUser(id);
+      // All checks passed — open confirmation modal
+      setIdToDelete(id);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to check user dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteUser(idToDelete);
       toast.success("User deleted successfully.");
+      setIdToDelete(null);
       fetchUsers();
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to delete user. They may have other hidden dependencies.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -409,6 +426,16 @@ const UserManagementPage: React.FC = () => {
           onUpdated={onUserUpdated}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete User?"
+        message="Are you sure you want to permanently delete this user? This action cannot be undone."
+        confirmText="Delete User"
+      />
 
       {viewUser && (
         <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-[9999]">

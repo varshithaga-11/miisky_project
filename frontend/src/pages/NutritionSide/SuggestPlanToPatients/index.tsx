@@ -17,10 +17,13 @@ import {
   MinimalDietPlan,
   MinimalMicroKitchen,
 } from "./api";
-import SearchableSelect from "../../../components/form/SearchableSelect";
-import { toast, ToastContainer } from "react-toastify";
-import { FiUsers, FiSend, FiCheckCircle, FiPackage, FiHome, FiStopCircle, FiCheck, FiClock, FiEdit } from "react-icons/fi";
+import SearchableSelect, { Option } from "../../../components/form/SearchableSelect";
 import DatePicker2 from "../../../components/form/date-picker2";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { FiUsers, FiSend, FiCheckCircle, FiPackage, FiHome, FiStopCircle, FiCheck, FiClock, FiEdit } from "react-icons/fi";
+
+
 
 const SuggestPlanToPatientsPage: React.FC = () => {
   const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -42,19 +45,28 @@ const SuggestPlanToPatientsPage: React.FC = () => {
   const [switchFromDate, setSwitchFromDate] = useState("");
   const [switchingKitchen, setSwitchingKitchen] = useState(false);
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
+  
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusUpdateTarget, setStatusUpdateTarget] = useState<{id: number, status: string} | null>(null);
 
-  const handleStatusUpdate = async (id: number, newStatus: string) => {
+
+  const handleStatusUpdate = (id: number, newStatus: string) => {
     if (submitting) return;
-    if (!window.confirm(`Are you sure you want to mark this plan as ${newStatus}?`)) return;
-    setSubmitting(true);
+    setStatusUpdateTarget({ id, status: newStatus });
+  };
+
+  const confirmStatusUpdate = async () => {
+    if (!statusUpdateTarget) return;
+    setIsUpdatingStatus(true);
     try {
-      const updated = await updatePlanStatus(id, newStatus);
+      const updated = await updatePlanStatus(statusUpdateTarget.id, statusUpdateTarget.status);
       setSuggestedPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      toast.success(`Plan marked as ${newStatus}`);
+      toast.success(`Plan marked as ${statusUpdateTarget.status}`);
+      setStatusUpdateTarget(null);
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Failed to update status");
     } finally {
-      setSubmitting(false);
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -546,6 +558,16 @@ const SuggestPlanToPatientsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={statusUpdateTarget !== null}
+        onClose={() => setStatusUpdateTarget(null)}
+        onConfirm={confirmStatusUpdate}
+        isLoading={isUpdatingStatus}
+        title={`Mark plan as ${statusUpdateTarget?.status}?`}
+        message={`Are you sure you want to update the status of this diet plan to ${statusUpdateTarget?.status}?`}
+        confirmText="Update Status"
+      />
     </div>
   );
 };

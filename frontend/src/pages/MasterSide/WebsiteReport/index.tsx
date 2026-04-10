@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getWebsiteReportList, deleteWebsiteReport, WebsiteReport } from "./websitereportapi";
 import { getReportTypeList } from "../ReportType/reporttypeapi";
@@ -23,6 +24,8 @@ const WebsiteReportPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [reportTypes, setReportTypes] = useState<any[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -52,14 +55,22 @@ const WebsiteReportPage: React.FC = () => {
     fetchReportTypes();
   }, [fetchReports, fetchReportTypes]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this report record permanently?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteWebsiteReport(id);
-      toast.success("Record deleted!");
+      await deleteWebsiteReport(idToDelete);
+      toast.success("Report record deleted successfully!");
+      setIdToDelete(null);
       fetchReports();
     } catch (error) {
-      toast.error("Failed to delete record");
+      toast.error("Failed to delete report record.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -73,6 +84,7 @@ const WebsiteReportPage: React.FC = () => {
     <>
       <PageMeta title="System Feedback & Reports" description="Monitor and respond to website issues reported by users" />
       <PageBreadcrumb pageTitle="Website Reports" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -239,6 +251,16 @@ const WebsiteReportPage: React.FC = () => {
           reportTypes={reportTypes}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Report Record?"
+        message="Are you sure you want to permanently delete this report record? This action cannot be undone."
+        confirmText="Delete Record"
+      />
     </>
   );
 };

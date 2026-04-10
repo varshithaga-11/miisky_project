@@ -8,6 +8,8 @@ import AddDeliverySlot from "./AddDeliverySlot";
 import EditDeliverySlot from "./EditDeliverySlot";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const DeliverySlotManagementPage: React.FC = () => {
   const [slots, setSlots] = useState<DeliverySlot[]>([]);
@@ -15,6 +17,8 @@ const DeliverySlotManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editSlot, setEditSlot] = useState<DeliverySlot | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -42,13 +46,22 @@ const DeliverySlotManagementPage: React.FC = () => {
     );
   }, [slots, searchTerm]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this delivery slot? Plans referencing it may need to be updated.")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteDeliverySlot(id);
+      await deleteDeliverySlot(idToDelete);
+      toast.success("Delivery slot deleted successfully!");
+      setIdToDelete(null);
       load();
     } catch {
-      alert("Failed to delete. It may be in use.");
+      toast.error("Failed to delete. It may be in use.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -58,6 +71,7 @@ const DeliverySlotManagementPage: React.FC = () => {
     <>
       <PageMeta title="Delivery slots" description="Manage delivery time windows for diet plans" />
       <PageBreadcrumb pageTitle="Delivery slots" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -164,8 +178,23 @@ const DeliverySlotManagementPage: React.FC = () => {
 
       {addOpen && <AddDeliverySlot onClose={() => setAddOpen(false)} onAdded={load} />}
       {editSlot && (
-        <EditDeliverySlot key={editSlot.id} slot={editSlot} onClose={() => setEditSlot(null)} onUpdated={load} />
+        <EditDeliverySlot 
+           key={editSlot.id} 
+           slot={editSlot} 
+           onClose={() => setEditSlot(null)} 
+           onUpdated={load} 
+        />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Delivery Slot?"
+        message="Are you sure you want to delete this delivery slot? This may affect active plans and kitchen delivery schedules."
+        confirmText="Delete Slot"
+      />
     </>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getJobListingList, deleteJobListing, JobListing } from "./joblistingapi";
 import { getDepartmentList } from "../Department/departmentapi";
@@ -23,6 +24,8 @@ const JobListingPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchListings = useCallback(async () => {
     setLoading(true);
@@ -53,14 +56,22 @@ const JobListingPage: React.FC = () => {
     fetchDepartments();
   }, [fetchListings, fetchDepartments]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this job listing?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteJobListing(id);
-      toast.success("Job listing deleted!");
+      await deleteJobListing(idToDelete);
+      toast.success("Job listing deleted successfully!");
+      setIdToDelete(null);
       fetchListings();
-    } catch (error: any) {
-      toast.error("Failed to delete");
+    } catch (error) {
+      toast.error("Failed to delete job listing.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -68,6 +79,7 @@ const JobListingPage: React.FC = () => {
     <>
       <PageMeta title="Job Listing Management" description="Manage job vacancies efficiently" />
       <PageBreadcrumb pageTitle="Job Listings" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -231,6 +243,16 @@ const JobListingPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Job Listing?"
+        message="Are you sure you want to permanently delete this job listing? All related applications may also be affected. This action cannot be undone."
+        confirmText="Delete Listing"
+      />
     </>
   );
 };

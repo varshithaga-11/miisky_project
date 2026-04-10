@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getMedicalDeviceList, deleteMedicalDevice, MedicalDevice } from "./medicaldeviceapi";
 import { getMedicalDeviceCategoryList } from "../MedicalDeviceCategory/medicaldevicecategoryapi";
 import AddMedicalDevice from "./AddMedicalDevice";
@@ -23,6 +24,8 @@ const MedicalDevicePage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deviceToDelete, setDeviceToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchDevices = useCallback(async () => {
     setLoading(true);
@@ -52,14 +55,22 @@ const MedicalDevicePage: React.FC = () => {
     fetchCategories();
   }, [fetchDevices, fetchCategories]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete device?")) return;
+  const handleDelete = (id: number) => {
+    setDeviceToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (deviceToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteMedicalDevice(id);
-      toast.success("Deleted!");
+      await deleteMedicalDevice(deviceToDelete);
+      toast.success("Medical device deleted successfully!");
+      setDeviceToDelete(null);
       fetchDevices();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete medical device");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -67,6 +78,7 @@ const MedicalDevicePage: React.FC = () => {
     <>
       <PageMeta title="Device Inventory" description="Manage medical devices and specifications" />
       <PageBreadcrumb pageTitle="Medical Devices" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -226,6 +238,16 @@ const MedicalDevicePage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={deviceToDelete !== null}
+        onClose={() => setDeviceToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Medical Device?"
+        message="Are you sure you want to remove this device from the inventory? This will also affect linked patents and features."
+        confirmText="Delete Device"
+      />
     </>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getLegalPageList, deleteLegalPage, LegalPage } from "./legalpageapi";
 import AddLegalPage from "./AddLegalPage";
@@ -21,6 +22,8 @@ const LegalPageList: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<LegalPage | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchLegalPages = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const LegalPageList: React.FC = () => {
     fetchLegalPages();
   }, [fetchLegalPages]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this legal page?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteLegalPage(id);
-      toast.success("Legal page deleted!");
+      await deleteLegalPage(idToDelete);
+      toast.success("Legal page deleted successfully!");
+      setIdToDelete(null);
       fetchLegalPages();
     } catch (error) {
-      toast.error("Failed to delete legal page");
+      toast.error("Failed to delete legal page.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const LegalPageList: React.FC = () => {
     <>
       <PageMeta title="Legal Documentation" description="Manage legal pages and policies" />
       <PageBreadcrumb pageTitle="Legal Pages" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -216,6 +228,16 @@ const LegalPageList: React.FC = () => {
           onClose={() => setEditingPage(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Legal Page?"
+        message="Are you sure you want to permanently delete this legal page? All content will be lost. This action cannot be undone."
+        confirmText="Delete Page"
+      />
     </>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiLoader, FiTrash2, FiTruck, FiEdit2 } from "react-icons/fi";
 import Button from "../../../components/ui/button/Button";
 import InputField from "../../../components/form/input/InputField";
@@ -19,6 +20,8 @@ const DeliveryChargesPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ min_km: "", max_km: "", charge: "" });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -84,21 +87,30 @@ const DeliveryChargesPage: React.FC = () => {
     }
   };
 
-  const remove = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this distance slab?")) return;
+  const remove = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmRemove = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteDeliverySlab(id);
+      await deleteDeliverySlab(idToDelete);
       toast.success("Distance slab removed successfully");
-      if (editingId === id) resetForm();
+      if (editingId === idToDelete) resetForm();
+      setIdToDelete(null);
       await load();
     } catch (e) {
       console.error(e);
       toast.error("Could not delete distance slab");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+    <>
+      <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
       <PageMeta title="Delivery charges" description="Distance-based delivery fees for your kitchen" />
       <PageBreadcrumb pageTitle="Delivery charges" />
       <ToastContainer position="bottom-right" className="z-[99999]" />
@@ -213,6 +225,17 @@ const DeliveryChargesPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    <ConfirmationModal
+      isOpen={idToDelete !== null}
+      onClose={() => setIdToDelete(null)}
+      onConfirm={confirmRemove}
+      isLoading={isDeleting}
+      title="Delete Distance Slab?"
+      message="Are you sure you want to permanently delete this distance slab? This action cannot be undone."
+      confirmText="Delete Slab"
+    />
+    </>
   );
 };
 

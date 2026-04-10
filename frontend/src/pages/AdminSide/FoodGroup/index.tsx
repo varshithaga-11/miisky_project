@@ -11,7 +11,8 @@ import { getFoodNameList } from "../FoodName/foodnameapi";
 import AddFoodGroup from "./AddFoodGroup";
 import EditFoodGroup from "./EditFoodGroup";
 import ImportButton from "../../../components/common/ImportButton";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const FoodGroupManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodGroup[]>([]);
@@ -28,6 +29,8 @@ const FoodGroupManagementPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -56,12 +59,24 @@ const FoodGroupManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this food group?")) return;
-      await deleteFoodGroup(id);
+      setRecordToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteFoodGroup(recordToDelete);
       toast.success("Food group deleted successfully.");
+      setRecordToDelete(null);
       fetchData();
     } catch {
       toast.error("Failed to delete food group.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -71,6 +86,7 @@ const FoodGroupManagementPage: React.FC = () => {
     <>
       <PageMeta title="Food Group Management" description="Manage food groups" />
       <PageBreadcrumb pageTitle="Food Group Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative flex-1 max-w-md">
@@ -262,6 +278,16 @@ const FoodGroupManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Food Group?"
+        message="Are you sure you want to remove this food group? This action is permanent."
+        confirmText="Delete Food Group"
+      />
     </>
   );
 };

@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import "react-toastify/dist/ReactToastify.css";
 import SearchableSelect, { Option } from "../../../components/form/SearchableSelect";
+
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import {
   createMicroKitchenDeliveryTeamMember,
@@ -41,6 +43,9 @@ export default function SupplyChainTeamMemberForMKPage() {
   const [newPincode, setNewPincode] = useState("");
   /** Resolved from profile or existing team row — sent on POST so the API always receives micro_kitchen. */
   const [myMicroKitchenId, setMyMicroKitchenId] = useState<number | null>(null);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<MicroKitchenTeamMember | null>(null);
 
   const teamPersonIds = useMemo(() => {
     const ids = new Set<number>();
@@ -134,27 +139,36 @@ export default function SupplyChainTeamMemberForMKPage() {
   };
 
   const removeMember = async (member: MicroKitchenTeamMember) => {
-    const name = `${member.delivery_person_details?.first_name || ""} ${member.delivery_person_details?.last_name || ""}`.trim() || `#${member.delivery_person}`;
-    
-    if (!window.confirm(`Are you sure you want to remove ${name} from the delivery team?`)) return;
-
     try {
-      // Basic dependency check within loaded context or via API if possible
-      // Here we check if the person has any plan assignments
       const assignments = await fetchPlanDeliveryAssignments();
       const hasAssignments = assignments.some((a: any) => a.delivery_person === member.delivery_person);
       
       if (hasAssignments) {
+        const name = `${member.delivery_person_details?.first_name || ""} ${member.delivery_person_details?.last_name || ""}`.trim() || `#${member.delivery_person}`;
         toast.error(`Cannot remove ${name}. This person has active global plan assignments. Reassign their plans under 'Global assignments' first.`);
         return;
       }
+      setMemberToDelete(member);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to check member dependencies.");
+    }
+  };
 
-      await deleteMicroKitchenDeliveryTeamMember(member.id);
-      setRows((prev) => prev.filter((r) => r.id !== member.id));
+  const confirmRemove = async () => {
+    if (!memberToDelete) return;
+    setIsDeleting(true);
+    const name = `${memberToDelete.delivery_person_details?.first_name || ""} ${memberToDelete.delivery_person_details?.last_name || ""}`.trim() || `#${memberToDelete.delivery_person}`;
+    try {
+      await deleteMicroKitchenDeliveryTeamMember(memberToDelete.id);
+      setRows((prev) => prev.filter((r) => r.id !== memberToDelete.id));
       toast.success(`${name} removed from team.`);
+      setMemberToDelete(null);
     } catch (e) {
       console.error(e);
       toast.error("Could not remove team member.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -352,6 +366,20 @@ export default function SupplyChainTeamMemberForMKPage() {
           </Table>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={memberToDelete !== null}
+        onClose={() => setMemberToDelete(null)}
+        onConfirm={confirmRemove}
+        isLoading={isDeleting}
+        title="Remove Team Member?"
+        message={`Are you sure you want to remove ${
+          memberToDelete
+            ? `${memberToDelete.delivery_person_details?.first_name || ""} ${memberToDelete.delivery_person_details?.last_name || ""}`.trim() || `#${memberToDelete.delivery_person}`
+            : "this member"
+        } from the delivery team?`}
+        confirmText="Remove Member"
+      />
     </div>
   );
 }

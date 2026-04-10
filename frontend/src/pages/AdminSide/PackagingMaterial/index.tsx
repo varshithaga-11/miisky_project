@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const PackagingMaterialManagementPage: React.FC = () => {
   const [materials, setMaterials] = useState<PackagingMaterial[]>([]);
@@ -19,6 +21,8 @@ const PackagingMaterialManagementPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editMaterialId, setEditMaterialId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
   const [sortField, setSortField] = useState<keyof PackagingMaterial | null>(null);
 
   // Search, sort, pagination states
@@ -45,13 +49,22 @@ const PackagingMaterialManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this packaging material?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deletePackagingMaterial(id);
+      await deletePackagingMaterial(idToDelete);
+      toast.success("Packaging material deleted successfully!");
+      setIdToDelete(null);
       fetchMaterials();
     } catch {
-      alert("Failed to delete packaging material.");
+      toast.error("Failed to delete packaging material.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -96,6 +109,7 @@ const PackagingMaterialManagementPage: React.FC = () => {
     <>
       <PageMeta title="Packaging Material Management" description="Manage packaging materials" />
       <PageBreadcrumb pageTitle="Packaging Material Management" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
       
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -224,6 +238,16 @@ const PackagingMaterialManagementPage: React.FC = () => {
           onUpdated={onMaterialUpdated}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Packaging Material?"
+        message="Are you sure you want to permanently delete this packaging material? This action cannot be undone."
+        confirmText="Delete Material"
+      />
     </>
   );
 };

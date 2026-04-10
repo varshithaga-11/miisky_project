@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import DatePicker2 from "../../../components/form/date-picker2";
 import TimePicker from "../../../components/form/timepicker";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -44,6 +45,8 @@ export default function SupplyChainPlannedLeavePage() {
   const [timeEnd, setTimeEnd] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [leaveToDelete, setLeaveToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const load = async () => {
     try {
@@ -114,15 +117,23 @@ export default function SupplyChainPlannedLeavePage() {
     }
   };
 
-  const remove = async (id: number) => {
-    if (!window.confirm("Are you sure you want to remove this leave block?")) return;
+  const remove = (id: number) => {
+    setLeaveToDelete(id);
+  };
+
+  const confirmRemove = async () => {
+    if (leaveToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteSupplyChainLeave(id);
+      await deleteSupplyChainLeave(leaveToDelete);
       toast.success("Leave entry removed successfully");
+      setLeaveToDelete(null);
       await load();
     } catch (err: any) {
       console.error(err);
       toast.error(err?.response?.data?.detail || "Could not delete leave entry.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -276,6 +287,16 @@ export default function SupplyChainPlannedLeavePage() {
           )}
         </section>
       </div>
+
+      <ConfirmationModal
+        isOpen={leaveToDelete !== null}
+        onClose={() => setLeaveToDelete(null)}
+        onConfirm={confirmRemove}
+        isLoading={isDeleting}
+        title="Remove Leave Entry?"
+        message="Are you sure you want to delete this planned leave? This might affect kitchen reassignment planning."
+        confirmText="Remove Leave"
+      />
     </>
   );
 }

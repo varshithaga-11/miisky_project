@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch, FiMail, FiPhone, FiCalendar } from "react-icons/fi";
 import { getWebsiteInquiryList, deleteInquiry, WebsiteInquiry } from "./websiteinquiryapi";
 import AddWebsiteInquiry from "./AddWebsiteInquiry";
@@ -21,6 +22,8 @@ const WebsiteInquiryPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchInquiries = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const WebsiteInquiryPage: React.FC = () => {
     fetchInquiries();
   }, [fetchInquiries]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete inquiry record?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteInquiry(id);
-      toast.success("Deleted!");
+      await deleteInquiry(idToDelete);
+      toast.success("Inquiry deleted successfully!");
+      setIdToDelete(null);
       fetchInquiries();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete inquiry.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -64,6 +75,7 @@ const WebsiteInquiryPage: React.FC = () => {
     <>
       <PageMeta title="Website Inquiries" description="Manage lead submissions and contact messages" />
       <PageBreadcrumb pageTitle="Website Inquiries" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -245,6 +257,16 @@ const WebsiteInquiryPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Inquiry?"
+        message="Are you sure you want to permanently delete this inquiry record? This action cannot be undone."
+        confirmText="Delete Inquiry"
+      />
     </>
   );
 };

@@ -17,6 +17,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { createApiUrl } from "../../../access/access";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getCuisineTypeList, CuisineType } from "../Food/foodapi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -45,6 +46,8 @@ const RecipeManagementPage: React.FC = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -68,15 +71,22 @@ const RecipeManagementPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (foodId: number) => {
-        if (!window.confirm("Are you sure you want to delete all ingredients and steps for this recipe?")) return;
-        
+    const handleDelete = (foodId: number) => {
+        setIdToDelete(foodId);
+    };
+
+    const confirmDelete = async () => {
+        if (idToDelete === null) return;
+        setIsDeleting(true);
         try {
-            await deleteFullRecipe(foodId);
+            await deleteFullRecipe(idToDelete);
             toast.success("Recipe cleared successfully!");
+            setIdToDelete(null);
             fetchData();
         } catch (err) {
             toast.error("Failed to delete recipe data.");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -320,6 +330,16 @@ const RecipeManagementPage: React.FC = () => {
                     />
                 </>
             )}
+
+            <ConfirmationModal
+                isOpen={idToDelete !== null}
+                onClose={() => setIdToDelete(null)}
+                onConfirm={confirmDelete}
+                isLoading={isDeleting}
+                title="Delete Recipe Data?"
+                message="Are you sure you want to delete all ingredients and steps for this recipe? This action only clears the recipe details, not the food item itself."
+                confirmText="Clear Recipe"
+            />
         </>
     );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getHeroBannerList, deleteHeroBanner, HeroBanner } from "./herobannerapi";
 import AddHeroBanner from "./AddHeroBanner";
@@ -21,6 +22,8 @@ const HeroBannerPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchBanners = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const HeroBannerPage: React.FC = () => {
     fetchBanners();
   }, [fetchBanners]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete banner?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteHeroBanner(id);
-      toast.success("Deleted!");
+      await deleteHeroBanner(idToDelete);
+      toast.success("Banner deleted successfully!");
+      setIdToDelete(null);
       fetchBanners();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete banner.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const HeroBannerPage: React.FC = () => {
     <>
       <PageMeta title="Visual Narrative" description="Manage homepage hero banners and slideshows" />
       <PageBreadcrumb pageTitle="Hero Banners" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -219,6 +231,16 @@ const HeroBannerPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Hero Banner?"
+        message="Are you sure you want to permanently delete this hero banner from the public site? This action cannot be undone."
+        confirmText="Delete Banner"
+      />
     </>
   );
 };

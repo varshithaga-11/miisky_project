@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getBlogPostList, deleteBlogPost, BlogPost } from "./blogpostapi";
 import { getBlogCategoryList } from "../BlogCategory/blogcategoryapi";
@@ -27,6 +28,8 @@ const BlogPostPage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -66,14 +69,22 @@ const BlogPostPage: React.FC = () => {
     fetchTags();
   }, [fetchPosts, fetchCategories, fetchTags]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Archive this blog post? It will no longer be visible on the public site.")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteBlogPost(id);
-      toast.success("Post archived!");
+      await deleteBlogPost(idToDelete);
+      toast.success("Blog post deleted successfully!");
+      setIdToDelete(null);
       fetchPosts();
     } catch (error) {
-      toast.error("Failed to delete post");
+      toast.error("Failed to delete post.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -81,6 +92,7 @@ const BlogPostPage: React.FC = () => {
     <>
       <PageMeta title="Blog Post Management" description="Manage blog articles efficiently" />
       <PageBreadcrumb pageTitle="Blog Posts" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -284,6 +296,16 @@ const BlogPostPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Blog Post?"
+        message="Are you sure you want to permanently delete this blog post? All associated comments will also be removed. This action cannot be undone."
+        confirmText="Delete Post"
+      />
     </>
   );
 };

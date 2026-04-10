@@ -11,6 +11,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const HealthParameterManagement: React.FC = () => {
   const [params, setParams] = useState<HealthParameter[]>([]);
@@ -20,6 +21,8 @@ const HealthParameterManagement: React.FC = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,21 +49,27 @@ const HealthParameterManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      // Find the parameter in our current list to check normal range count
-      const parameter = params.find(p => p.id === id);
-      if (parameter && parameter.normal_ranges && parameter.normal_ranges.length > 0) {
-        toast.error(`Cannot delete health parameter. It has ${parameter.normal_ranges.length} associated normal ranges. Please delete them first.`);
-        return;
-      }
+  const handleDelete = (id: number) => {
+    const parameter = params.find(p => p.id === id);
+    if (parameter && parameter.normal_ranges && parameter.normal_ranges.length > 0) {
+      toast.error(`Cannot delete health parameter. It has ${parameter.normal_ranges.length} associated normal ranges. Please delete them first.`);
+      return;
+    }
+    setIdToDelete(id);
+  };
 
-      if (!window.confirm("Are you sure you want to delete this parameter?")) return;
-      await deleteHealthParameter(id);
-      toast.success("Deleted successfully");
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteHealthParameter(idToDelete);
+      toast.success("Health parameter deleted successfully!");
+      setIdToDelete(null);
       fetchParams();
     } catch {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete health parameter.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -242,6 +251,16 @@ const HealthParameterManagement: React.FC = () => {
           onUpdate={() => { fetchParams(); setIsEditOpen(false); setEditingId(null); }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Health Parameter?"
+        message="Are you sure you want to delete this health parameter? All linked patient records and normal ranges may be affected."
+        confirmText="Delete Parameter"
+      />
     </>
   );
 };

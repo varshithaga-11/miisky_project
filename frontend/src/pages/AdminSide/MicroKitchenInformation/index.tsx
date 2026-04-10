@@ -16,6 +16,7 @@ import { toast, ToastContainer } from "react-toastify";
 import Button from "../../../components/ui/button/Button";
 import { MicroKitchenDetailModal } from "./MicroKitchenDetailModal";
 import { DisplayKitchenInspections } from "./MicroKitchenDataViews";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 type TabStatus = "all" | "draft" | "approved" | "rejected";
 
@@ -65,6 +66,8 @@ const MicroKitchenInformationPage: React.FC = () => {
     const [isInspecting, setIsInspecting] = useState<MicroKitchenProfile | null>(null);
     const [previousInspections, setPreviousInspections] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
     const [inspectionData, setInspectionData] = useState<Partial<MicroKitchenInspection>>({
         status: 'draft',
         mc_code: '',
@@ -138,7 +141,6 @@ const MicroKitchenInformationPage: React.FC = () => {
     const handleDelete = async (id: number) => {
         try {
             // Pre-check for dependencies (Foods)
-            // We need to import getFoodList from AdminSide/Food/foodapi
             const { getFoodList } = await import("../Food/foodapi");
             const foodsResponse = await getFoodList(1, 1, "", undefined, undefined, id);
             
@@ -147,12 +149,24 @@ const MicroKitchenInformationPage: React.FC = () => {
                 return;
             }
 
-            if (!confirm("Are you sure you want to delete this micro kitchen?")) return;
-            await deleteMicroKitchen(id);
-            setProfiles(prev => prev.filter(p => p.id !== id));
-            toast.success("Profile deleted");
+            setIdToDelete(id);
+        } catch (error) {
+            toast.error("Failed to check dependencies");
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (idToDelete === null) return;
+        setIsDeleting(true);
+        try {
+            await deleteMicroKitchen(idToDelete);
+            setProfiles(prev => prev.filter(p => p.id !== idToDelete));
+            toast.success("Profile deleted successfully");
+            setIdToDelete(null);
         } catch (error) {
             toast.error("Delete failed");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -587,6 +601,16 @@ const MicroKitchenInformationPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={idToDelete !== null}
+                onClose={() => setIdToDelete(null)}
+                onConfirm={confirmDelete}
+                isLoading={isDeleting}
+                title="Delete Micro Kitchen?"
+                message="Are you sure you want to permanently delete this micro kitchen profile and all associated data? This action cannot be undone."
+                confirmText="Delete Kitchen"
+            />
         </>
     );
 };

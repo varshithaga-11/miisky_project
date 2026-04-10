@@ -10,6 +10,7 @@ import Label from "../../../components/form/Label";
 import Input from "../../../components/form/input/InputField";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FoodName, getFoodNameList } from "../FoodName/foodnameapi";
 import { FoodGroup, getFoodGroupList } from "../FoodGroup/foodgroupapi";
 
@@ -80,6 +81,8 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
   const [formBaseUnit, setFormBaseUnit] = useState<string>("");
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const [foodNamesLoaded, setFoodNamesLoaded] = useState(false);
   const [foodGroupsLoaded, setFoodGroupsLoaded] = useState(false);
@@ -241,13 +244,22 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this record?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await api.remove(id);
+      await api.remove(idToDelete);
+      toast.success("Record deleted successfully!");
+      setIdToDelete(null);
       fetchData();
     } catch {
-      alert("Failed to delete record.");
+      toast.error("Failed to delete record.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -551,7 +563,18 @@ export default function FoodNameBasedCrud<T extends FoodNameBasedRow>(props: Foo
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Record?"
+        message="Are you sure you want to permanently delete this record? This action cannot be undone."
+        confirmText="Delete Record"
+      />
     </>
   );
 }
+
 

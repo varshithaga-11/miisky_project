@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getReportTypeList, deleteReportType, ReportType } from "./reporttypeapi";
 import AddReportType from "./AddReportType";
@@ -21,6 +22,8 @@ const ReportTypePage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchReportTypes = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const ReportTypePage: React.FC = () => {
     fetchReportTypes();
   }, [fetchReportTypes]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete report type?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteReportType(id);
-      toast.success("Deleted!");
+      await deleteReportType(idToDelete);
+      toast.success("Report type deleted successfully!");
+      setIdToDelete(null);
       fetchReportTypes();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete report type.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const ReportTypePage: React.FC = () => {
     <>
       <PageMeta title="Report Taxonomy" description="Manage database of report types and classifications" />
       <PageBreadcrumb pageTitle="Report Types" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -202,6 +214,16 @@ const ReportTypePage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Report Type?"
+        message="Are you sure you want to permanently delete this report type? This action cannot be undone."
+        confirmText="Delete Type"
+      />
     </>
   );
 };

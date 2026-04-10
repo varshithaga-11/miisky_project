@@ -4,6 +4,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getMyHealthReports, uploadHealthReport, deleteHealthReport, PatientHealthReport } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiInfo, FiMessageSquare, FiSearch, FiX } from "react-icons/fi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const HealthReportUploadPage: React.FC = () => {
     const [reports, setReports] = useState<PatientHealthReport[]>([]);
@@ -16,6 +17,8 @@ const HealthReportUploadPage: React.FC = () => {
         report_type: "",
         file: null as File | null
     });
+    const [reportToDelete, setReportToDelete] = useState<PatientHealthReport | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchReports = async () => {
         setLoading(true);
@@ -66,14 +69,22 @@ const HealthReportUploadPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this report?")) return;
+    const handleDelete = async (report: PatientHealthReport) => {
+        setReportToDelete(report);
+    };
+
+    const confirmDelete = async () => {
+        if (!reportToDelete) return;
+        setIsDeleting(true);
         try {
-            await deleteHealthReport(id);
-            toast.success("Report deleted");
-            setReports(reports.filter(r => r.id !== id));
+            await deleteHealthReport(reportToDelete.id);
+            toast.success("Health report deleted successfully");
+            setReports(reports.filter(r => r.id !== reportToDelete.id));
+            setReportToDelete(null);
         } catch (error) {
-            toast.error("Delete failed");
+            toast.error("Failed to delete health report");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -227,7 +238,7 @@ const HealthReportUploadPage: React.FC = () => {
                                                     <FiInfo size={18} />
                                                 </a>
                                                 <button 
-                                                    onClick={() => handleDelete(report.id)}
+                                                    onClick={() => handleDelete(report)}
                                                     className="p-3 bg-red-50/50 dark:bg-red-900/10 text-red-400 hover:text-red-600 rounded-xl transition-all"
                                                     title="Delete"
                                                 >
@@ -282,6 +293,20 @@ const HealthReportUploadPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={!!reportToDelete}
+                onClose={() => setReportToDelete(null)}
+                onConfirm={confirmDelete}
+                isLoading={isDeleting}
+                title="Delete Medical Document?"
+                message={reportToDelete ? (
+                    (reportToDelete.reviews || []).length > 0
+                        ? `This report has ${reportToDelete.reviews?.length} feedback comment(s) from your nutritionist. Deleting it will also permanently remove this feedback. Are you sure?`
+                        : `Are you sure you want to delete "${reportToDelete.title || 'this report'}"? This action cannot be undone.`
+                ) : ""}
+                confirmText="Delete Document"
+            />
         </div>
     );
 };

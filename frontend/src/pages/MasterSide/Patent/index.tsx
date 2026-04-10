@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch, FiFileText, FiLink } from "react-icons/fi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getPatentList, deletePatent, Patent } from "./patentapi";
 import AddPatent from "./AddPatent";
 import EditPatent from "./EditPatent";
@@ -21,6 +22,8 @@ const PatentList: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPatent, setEditingPatent] = useState<Patent | null>(null);
+  const [patentToDelete, setPatentToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchPatents = useCallback(async () => {
     setLoading(true);
@@ -43,14 +46,22 @@ const PatentList: React.FC = () => {
     return () => clearTimeout(timer);
   }, [fetchPatents]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this patent?")) return;
+  const handleDelete = (id: number) => {
+    setPatentToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (patentToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deletePatent(id);
-      toast.success("Patent deleted!");
+      await deletePatent(patentToDelete);
+      toast.success("Patent record deleted!");
+      setPatentToDelete(null);
       fetchPatents();
     } catch (error) {
       toast.error("Failed to delete patent");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -58,6 +69,7 @@ const PatentList: React.FC = () => {
     <>
       <PageMeta title="Intellectual Property" description="Manage core patents and technical innovations" />
       <PageBreadcrumb pageTitle="Patent Registry" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -226,6 +238,16 @@ const PatentList: React.FC = () => {
 
       {isAddModalOpen && <AddPatent onSuccess={() => fetchPatents()} onClose={() => setIsAddModalOpen(false)} />}
       {editingPatent && <EditPatent patent={editingPatent} onSuccess={() => fetchPatents()} onClose={() => setEditingPatent(null)} />}
+
+      <ConfirmationModal
+        isOpen={patentToDelete !== null}
+        onClose={() => setPatentToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Patent Record?"
+        message="Are you sure you want to permanently remove this intellectual property record? This action cannot be undone."
+        confirmText="Delete Patent"
+      />
     </>
   );
 };

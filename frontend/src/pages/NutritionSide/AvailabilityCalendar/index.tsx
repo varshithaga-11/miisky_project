@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import PageMeta from "../../../components/common/PageMeta";
 import DatePicker2 from "../../../components/form/date-picker2";
 import TimePicker from "../../../components/form/timepicker";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const AvailabilityCalendar: React.FC = () => {
     const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
@@ -13,6 +14,8 @@ const AvailabilityCalendar: React.FC = () => {
     const [startTime, setStartTime] = useState("09:00");
     const [endTime, setEndTime] = useState("10:00");
     const [isSaving, setIsSaving] = useState(false);
+    const [slotToDelete, setSlotToDelete] = useState<number | null>(null);
+    const [isClearingPast, setIsClearingPast] = useState(false);
 
     useEffect(() => {
         loadAvailability();
@@ -58,22 +61,31 @@ const AvailabilityCalendar: React.FC = () => {
         }
     };
 
-    const handleDeleteSlot = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this slot?")) return;
+    const handleDeleteSlot = (id: number) => {
+        setSlotToDelete(id);
+    };
+
+    const confirmDeleteSlot = async () => {
+        if (slotToDelete === null) return;
         try {
-            await deleteAvailabilitySlot(id);
+            await deleteAvailabilitySlot(slotToDelete);
             toast.success("Slot deleted");
-            setSlots(slots.filter(s => s.id !== id));
+            setSlots(slots.filter(s => s.id !== slotToDelete));
+            setSlotToDelete(null);
         } catch (error) {
             toast.error("Failed to delete slot");
         }
     };
 
-    const handleClearPast = async () => {
-        if (!window.confirm("Are you sure you want to delete ALL unbooked slots from previous dates? This will not affect booked sessions.")) return;
+    const handleClearPast = () => {
+        setIsClearingPast(true);
+    };
+
+    const confirmClearPast = async () => {
         try {
             const res = await clearPastSlots();
             toast.success(res.message || "Past unused slots cleared");
+            setIsClearingPast(false);
             loadAvailability();
         } catch (error) {
             toast.error("Failed to clear past slots");
@@ -271,6 +283,25 @@ const AvailabilityCalendar: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={slotToDelete !== null}
+                onClose={() => setSlotToDelete(null)}
+                onConfirm={confirmDeleteSlot}
+                title="Delete Time Slot?"
+                message="Are you sure you want to remove this availability slot? Patients will no longer be able to book this time."
+                confirmText="Delete Slot"
+            />
+
+            <ConfirmationModal
+                isOpen={isClearingPast}
+                onClose={() => setIsClearingPast(false)}
+                onConfirm={confirmClearPast}
+                title="Clear Past Slots?"
+                message="Are you sure you want to delete ALL unbooked slots from previous dates? This will not affect booked sessions."
+                confirmText="Clear Past Slots"
+                variant="warning"
+            />
         </div>
     );
 };

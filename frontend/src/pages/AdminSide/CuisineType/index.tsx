@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const CuisineTypePage: React.FC = () => {
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
@@ -18,6 +19,8 @@ const CuisineTypePage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,12 +51,24 @@ const CuisineTypePage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this cuisine type?")) return;
-      await deleteCuisineType(id);
-      toast.success("Deleted successfully");
+      setRecordToDelete(id);
+    } catch {
+      toast.error("Failed to check dependencies");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteCuisineType(recordToDelete);
+      toast.success("Cuisine type deleted successfully!");
+      setRecordToDelete(null);
       fetchCuisines();
     } catch {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete cuisine type");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -121,6 +136,16 @@ const CuisineTypePage: React.FC = () => {
 
       {isAddModalOpen && <AddCuisineType onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchCuisines()} />}
       {isEditModalOpen && editId && <EditCuisineType cuisineId={editId} onClose={() => setIsEditModalOpen(false)} onUpdated={() => fetchCuisines()} />}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Cuisine Type?"
+        message="Are you sure you want to remove this cuisine type? This action is permanent."
+        confirmText="Delete Cuisine"
+      />
     </>
   );
 };

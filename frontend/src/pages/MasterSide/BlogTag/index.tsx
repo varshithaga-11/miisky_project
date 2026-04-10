@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getBlogTagList, deleteBlogTag, BlogTag } from "./blogtagapi";
 import AddBlogTag from "./AddBlogTag";
@@ -21,6 +22,8 @@ const BlogTagPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchTags = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const BlogTagPage: React.FC = () => {
     fetchTags();
   }, [fetchTags]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Remove this tag? This will disconnect it from all posts.")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteBlogTag(id);
-      toast.success("Hashtag deleted!");
+      await deleteBlogTag(idToDelete);
+      toast.success("Tag deleted successfully!");
+      setIdToDelete(null);
       fetchTags();
     } catch (error) {
-      toast.error("Failed to delete tag");
+      toast.error("Failed to delete tag.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const BlogTagPage: React.FC = () => {
     <>
       <PageMeta title="Blog Tag Management" description="Manage descriptive tags efficiently" />
       <PageBreadcrumb pageTitle="Blog Tags" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -201,6 +213,16 @@ const BlogTagPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Blog Tag?"
+        message="Are you sure you want to remove this tag? It will be disconnected from all blog posts. This action cannot be undone."
+        confirmText="Delete Tag"
+      />
     </>
   );
 };

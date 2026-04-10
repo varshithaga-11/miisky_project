@@ -5,6 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import { getUnitList, deleteUnit, Unit } from "./unitapi";
 import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import AddUnit from "./AddUnit";
 import EditUnit from "./EditUnit";
 import ImportButton from "../../../components/common/ImportButton";
@@ -18,6 +19,8 @@ const UnitManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editUnitId, setEditUnitId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchUnits();
@@ -45,12 +48,24 @@ const UnitManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure?")) return;
-      await deleteUnit(id);
-      toast.success("Unit deleted");
+      setRecordToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (recordToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteUnit(recordToDelete);
+      toast.success("Unit deleted successfully!");
+      setRecordToDelete(null);
       fetchUnits();
     } catch {
       toast.error("Failed to delete unit.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -138,6 +153,16 @@ const UnitManagementPage: React.FC = () => {
       {isEditModalOpen && editUnitId && (
         <EditUnit unitId={editUnitId} isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onUpdated={() => { fetchUnits(); setIsEditModalOpen(false); }} />
       )}
+
+      <ConfirmationModal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Unit?"
+        message="Are you sure you want to remove this measurement unit? This will affect all ingredients using it."
+        confirmText="Delete Unit"
+      />
     </>
   );
 };

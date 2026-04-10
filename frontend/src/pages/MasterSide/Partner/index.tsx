@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch, FiExternalLink } from "react-icons/fi";
 import { getPartnerList, deletePartner, Partner } from "./partnerapi";
 import AddPartner from "./AddPartner";
@@ -21,6 +22,8 @@ const PartnerPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchPartners = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const PartnerPage: React.FC = () => {
     fetchPartners();
   }, [fetchPartners]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete partner?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deletePartner(id);
-      toast.success("Deleted!");
+      await deletePartner(idToDelete);
+      toast.success("Partner deleted successfully!");
+      setIdToDelete(null);
       fetchPartners();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete partner.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const PartnerPage: React.FC = () => {
     <>
       <PageMeta title="Strategic Partners" description="Manage collaborative ecosystem partners" />
       <PageBreadcrumb pageTitle="Partners" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -225,6 +237,16 @@ const PartnerPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Partner?"
+        message="Are you sure you want to permanently delete this partner entry? This action cannot be undone."
+        confirmText="Delete Partner"
+      />
     </>
   );
 };

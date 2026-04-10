@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getBlogCategoryList, deleteBlogCategory, BlogCategory } from "./blogcategoryapi";
 import { getBlogPostList } from "../BlogPost/blogpostapi";
 import AddBlogCategory from "./AddBlogCategory";
@@ -22,6 +23,8 @@ const BlogCategoryPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -49,13 +52,24 @@ const BlogCategoryPage: React.FC = () => {
         toast.error(`Cannot delete category. It contains ${postsRes.count} blog posts. Please delete the posts first.`);
         return;
       }
+      setCategoryToDelete(id);
+    } catch {
+      toast.error("Failed to check dependencies");
+    }
+  };
 
-      if (!window.confirm("Move this category to trash? This action cannot be easily undone.")) return;
-      await deleteBlogCategory(id);
+  const confirmDelete = async () => {
+    if (categoryToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteBlogCategory(categoryToDelete);
       toast.success("Category removed!");
+      setCategoryToDelete(null);
       fetchCategories();
     } catch {
       toast.error("Failed to delete category");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -227,6 +241,16 @@ const BlogCategoryPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={categoryToDelete !== null}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Category?"
+        message="Are you sure you want to move this category to trash? This action cannot be easily undone."
+        confirmText="Delete Category"
+      />
     </>
   );
 };

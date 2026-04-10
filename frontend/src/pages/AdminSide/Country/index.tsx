@@ -14,6 +14,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const CountryManagementPage: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
@@ -23,6 +24,8 @@ const CountryManagementPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editCountryId, setEditCountryId] = useState<number | null>(null);
+  const [countryToDelete, setCountryToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,12 +83,24 @@ const CountryManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this country?")) return;
-      await deleteCountry(id);
+      setCountryToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (countryToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteCountry(countryToDelete);
       toast.success("Country deleted successfully.");
+      setCountryToDelete(null);
       fetchCountries();
     } catch {
       toast.error("Failed to delete country. Please try again later.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -285,6 +300,16 @@ const CountryManagementPage: React.FC = () => {
           onUpdated={() => { fetchCountries(); setIsEditModalOpen(false); setEditCountryId(null); }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={countryToDelete !== null}
+        onClose={() => setCountryToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Country?"
+        message="Are you sure you want to permanently delete this country? This will also remove all associated region data. This action is irreversible."
+        confirmText="Delete Country"
+      />
     </>
   );
 };

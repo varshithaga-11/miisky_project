@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getWorkflowStepList, deleteWorkflowStep, WorkflowStep } from "./workflowstepapi";
 import AddWorkflowStep from "./AddWorkflowStep";
@@ -21,6 +22,8 @@ const WorkflowStepPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchSteps = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const WorkflowStepPage: React.FC = () => {
     fetchSteps();
   }, [fetchSteps]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Archiving this step will stop it from appearing on the website. Continue?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteWorkflowStep(id);
-      toast.success("Step archived!");
+      await deleteWorkflowStep(idToDelete);
+      toast.success("Workflow step archived successfully!");
+      setIdToDelete(null);
       fetchSteps();
     } catch (error) {
-      toast.error("Failed to delete step");
+      toast.error("Failed to archive workflow step.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const WorkflowStepPage: React.FC = () => {
     <>
       <PageMeta title="Workflow Management" description="Manage clinical process flow" />
       <PageBreadcrumb pageTitle="Workflow Steps" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -218,6 +230,16 @@ const WorkflowStepPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Archive Workflow Step?"
+        message="Archiving this step will stop it from appearing on the website. Are you sure you want to continue?"
+        confirmText="Archive Step"
+      />
     </>
   );
 };

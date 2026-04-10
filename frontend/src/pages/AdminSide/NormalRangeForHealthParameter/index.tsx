@@ -12,6 +12,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const NormalRangeManagement: React.FC = () => {
   const [ranges, setRanges] = useState<NormalRange[]>([]);
@@ -23,6 +24,8 @@ const NormalRangeManagement: React.FC = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [viewingId, setViewingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,14 +52,22 @@ const NormalRangeManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteNormalRange(id);
-      toast.success("Deleted");
+      await deleteNormalRange(idToDelete);
+      toast.success("Normal range deleted successfully!");
+      setIdToDelete(null);
       fetchRanges();
     } catch {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete normal range.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -234,6 +245,16 @@ const NormalRangeManagement: React.FC = () => {
           onClose={() => { setIsViewOpen(false); setViewingId(null); }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Normal Range?"
+        message="Are you sure you want to delete this normal range entry? This action cannot be undone."
+        confirmText="Delete Range"
+      />
     </>
   );
 };

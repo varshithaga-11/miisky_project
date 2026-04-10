@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getAboutSectionList, deleteAboutSection, CompanyAboutSection } from "./companyaboutsectionapi";
 import AddAboutSection from "./AddAboutSection";
@@ -21,6 +22,8 @@ const CompanyAboutSectionList: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<CompanyAboutSection | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchSections = useCallback(async () => {
     setLoading(true);
@@ -40,14 +43,22 @@ const CompanyAboutSectionList: React.FC = () => {
     fetchSections();
   }, [fetchSections]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this section?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteAboutSection(id);
-      toast.success("Section deleted!");
+      await deleteAboutSection(idToDelete);
+      toast.success("About section deleted successfully!");
+      setIdToDelete(null);
       fetchSections();
     } catch (error) {
-      toast.error("Failed to delete section");
+      toast.error("Failed to delete about section.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +66,7 @@ const CompanyAboutSectionList: React.FC = () => {
     <>
       <PageMeta title="Company About Management" description="Manage company about sections efficiently" />
       <PageBreadcrumb pageTitle="About Sections" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -216,6 +228,16 @@ const CompanyAboutSectionList: React.FC = () => {
           onClose={() => setEditingSection(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete About Section?"
+        message="Are you sure you want to permanently delete this About section? This action cannot be undone."
+        confirmText="Delete Section"
+      />
     </>
   );
 };

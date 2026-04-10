@@ -14,6 +14,7 @@ import Label from "../../../components/form/Label";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getCountryList, Country } from "../Country/countryapi";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getUserList, getDeliveryProfileList } from "../UserManagement/api";
 import { getMicroKitchenList } from "../MicroKitchenInformation/api";
 
@@ -29,6 +30,8 @@ const CityManagementPage: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [selectedStateId, setSelectedStateId] = useState<number | "">("");
   const [selectedCountryId, setSelectedCountryId] = useState<number | "">("");
+  const [cityToDelete, setCityToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,34 +73,42 @@ const CityManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
+    // 1. Check for user dependencies
+    const userRes = await getUserList(1, 1, "", "all", "all", { city: id });
+    if (userRes.count > 0) {
+      toast.error(`Cannot delete city. It is associated with ${userRes.count} users. Please reassign or delete those users first.`);
+      return;
+    }
+
+    // 2. Check for Micro Kitchens
+    const mkRes = await getMicroKitchenList(1, "", "all", { city: id });
+    if (mkRes.count > 0) {
+      toast.error(`Cannot delete city. It is associated with ${mkRes.count} micro kitchens. Please delete them first.`);
+      return;
+    }
+
+    // 3. Check for Delivery Profiles
+    const dpRes = await getDeliveryProfileList(1, 1, "", { city: id });
+    if (dpRes.count > 0) {
+      toast.error(`Cannot delete city. It is associated with ${dpRes.count} delivery profiles. Please delete them first.`);
+      return;
+    }
+
+    setCityToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (cityToDelete === null) return;
+    setIsDeleting(true);
     try {
-      // 1. Check for user dependencies
-      const userRes = await getUserList(1, 1, "", "all", "all", { city: id });
-      if (userRes.count > 0) {
-        toast.error(`Cannot delete city. It is associated with ${userRes.count} users. Please reassign or delete those users first.`);
-        return;
-      }
-
-      // 2. Check for Micro Kitchens
-      const mkRes = await getMicroKitchenList(1, "", "all", { city: id });
-      if (mkRes.count > 0) {
-        toast.error(`Cannot delete city. It is associated with ${mkRes.count} micro kitchens. Please delete them first.`);
-        return;
-      }
-
-      // 3. Check for Delivery Profiles
-      const dpRes = await getDeliveryProfileList(1, 1, "", { city: id });
-      if (dpRes.count > 0) {
-        toast.error(`Cannot delete city. It is associated with ${dpRes.count} delivery profiles. Please delete them first.`);
-        return;
-      }
-
-      if (!window.confirm("Are you sure you want to delete this city?")) return;
-      await deleteCity(id);
+      await deleteCity(cityToDelete);
       toast.success("City deleted successfully.");
+      setCityToDelete(null);
       fetchData();
     } catch {
       toast.error("Failed to delete city. Please try again later.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -369,6 +380,16 @@ const CityManagementPage: React.FC = () => {
           onUpdated={() => { fetchData(); setIsEditModalOpen(false); setEditCityId(null); }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={cityToDelete !== null}
+        onClose={() => setCityToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete City?"
+        message="Are you sure you want to permanently delete this city record? This action cannot be reversed."
+        confirmText="Delete City"
+      />
     </>
   );
 };

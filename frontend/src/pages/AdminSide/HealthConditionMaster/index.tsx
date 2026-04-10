@@ -15,6 +15,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import ImportButton from "../../../components/common/ImportButton";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const CATEGORY_LABEL: Record<string, string> = {
   chronic: "Chronic",
@@ -32,6 +33,8 @@ const HealthConditionMasterPage: React.FC = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,14 +61,22 @@ const HealthConditionMasterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      if (!window.confirm("Are you sure you want to delete this health condition? Linked patient records may be affected.")) return;
-      await deleteHealthConditionMaster(id);
+      await deleteHealthConditionMaster(idToDelete);
       toast.success("Health condition deleted successfully!");
+      setIdToDelete(null);
       void fetchRows();
     } catch {
       toast.error("Failed to delete health condition.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -297,6 +308,16 @@ const HealthConditionMasterPage: React.FC = () => {
           onUpdated={() => void fetchRows()}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Health Condition?"
+        message="Are you sure you want to delete this health condition? Linked patient records may be affected. This action cannot be undone."
+        confirmText="Delete Condition"
+      />
     </>
   );
 };

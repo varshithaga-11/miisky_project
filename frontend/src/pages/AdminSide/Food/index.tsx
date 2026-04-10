@@ -17,6 +17,7 @@ import { toast, ToastContainer } from "react-toastify";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import { getCuisineTypeList, CuisineType } from "./foodapi";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -45,6 +46,8 @@ const FoodManagementPage: React.FC = () => {
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
   const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
   const [filterOptionsLoaded, setFilterOptionsLoaded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -94,12 +97,24 @@ const FoodManagementPage: React.FC = () => {
         return;
       }
 
-      if (!window.confirm("Are you sure you want to delete this food item?")) return;
-      await deleteFood(id);
+      setIdToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
+    try {
+      await deleteFood(idToDelete);
       toast.success("Food item deleted successfully.");
+      setIdToDelete(null);
       fetchFoods();
     } catch {
       toast.error("Failed to delete food item.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -363,6 +378,16 @@ const FoodManagementPage: React.FC = () => {
           onClose={() => { setIsDetailModalOpen(false); setSelectedFood(null); }} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Food Item?"
+        message="Are you sure you want to delete this food item? Any active plans or recipes using this food may be affected. This action is permanent."
+        confirmText="Delete Food"
+      />
     </>
   );
 };

@@ -3,7 +3,9 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import SearchableSelect, { Option } from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiTrash2, FiPlus } from "react-icons/fi";
+
 import { getMyPatients, MappedPatientResponse } from "../UploadedDocumentsByPatient/api";
 import { getFoodNameList } from "../../AdminSide/FoodName/foodnameapi";
 import {
@@ -35,6 +37,9 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
   const [mealTime, setMealTime] = useState("");
   const [notes, setNotes] = useState("");
   const [comment, setComment] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+
 
   const selectedPatient = useMemo(
     () => patients.find((p) => p.user.id === selectedPatientId) ?? null,
@@ -132,14 +137,22 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Remove this food suggestion?")) return;
+  const handleDelete = (id: number) => {
+    setItemToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (itemToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteFoodRecommendation(id);
-      setRows((prev) => prev.filter((r) => r.id !== id));
+      await deleteFoodRecommendation(itemToDelete);
+      setRows((prev) => prev.filter((r) => r.id !== itemToDelete));
       toast.success("Removed.");
     } catch {
       toast.error("Could not remove.");
+    } finally {
+      setIsDeleting(false);
+      setItemToDelete(null);
     }
   };
 
@@ -318,6 +331,16 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
           </Table>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={itemToDelete !== null}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Remove Food Suggestion?"
+        message="Are you sure you want to remove this food suggestion from the patient's valid recommendations?"
+        confirmText="Remove Food"
+      />
     </div>
   );
 };

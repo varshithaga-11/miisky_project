@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiPlus, FiTrash2, FiEdit, FiSearch } from "react-icons/fi";
 import { getGalleryItemList, deleteGalleryItem, GalleryItem } from "./galleryitemapi";
 import { getGalleryCategoryList } from "../GalleryCategory/gallerycategoryapi";
@@ -23,6 +24,8 @@ const GalleryItemPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -52,14 +55,22 @@ const GalleryItemPage: React.FC = () => {
     fetchCategories();
   }, [fetchItems, fetchCategories]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Permanently delete this visual asset?")) return;
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (idToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteGalleryItem(id);
-      toast.success("Asset purged!");
+      await deleteGalleryItem(idToDelete);
+      toast.success("Gallery item deleted successfully!");
+      setIdToDelete(null);
       fetchItems();
     } catch (error) {
-      toast.error("Purge failed");
+      toast.error("Failed to delete gallery item.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -67,6 +78,7 @@ const GalleryItemPage: React.FC = () => {
     <>
       <PageMeta title="Gallery Management" description="Manage gallery assets effectively" />
       <PageBreadcrumb pageTitle="Visual Assets" />
+      <ToastContainer position="bottom-right" className="z-[99999]" />
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -229,6 +241,16 @@ const GalleryItemPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={idToDelete !== null}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete Gallery Item?"
+        message="Are you sure you want to permanently delete this visual asset from the gallery? This action cannot be undone."
+        confirmText="Delete Item"
+      />
     </>
   );
 };

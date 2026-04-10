@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const FAQPage: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -23,6 +24,8 @@ const FAQPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [faqToDelete, setFaqToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchFAQs = useCallback(async () => {
     setLoading(true);
@@ -52,14 +55,22 @@ const FAQPage: React.FC = () => {
     fetchCategories();
   }, [fetchFAQs, fetchCategories]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this FAQ?")) return;
+  const handleDelete = (id: number) => {
+    setFaqToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (faqToDelete === null) return;
+    setIsDeleting(true);
     try {
-      await deleteFAQ(id);
-      toast.success("Deleted!");
+      await deleteFAQ(faqToDelete);
+      toast.success("FAQ deleted successfully!");
+      setFaqToDelete(null);
       fetchFAQs();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete FAQ");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -230,6 +241,16 @@ const FAQPage: React.FC = () => {
           onClose={() => setEditingId(null)} 
         />
       )}
+
+      <ConfirmationModal
+        isOpen={faqToDelete !== null}
+        onClose={() => setFaqToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        title="Delete FAQ?"
+        message="Are you sure you want to remove this FAQ entry? This action is permanent."
+        confirmText="Delete FAQ"
+      />
     </>
   );
 };
