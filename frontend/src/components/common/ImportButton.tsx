@@ -52,6 +52,8 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
       '/admin/deficiency-master': { module: 'questionnaire', submenu: 'deficiency' },
       '/admin/digestive-issue-master': { module: 'questionnaire', submenu: 'digestive-issue' },
       '/admin/skin-issue-master': { module: 'questionnaire', submenu: 'skin-issue' },
+      '/admin/habit-master': { module: 'questionnaire', submenu: 'habit' },
+      '/admin/activity-master': { module: 'questionnaire', submenu: 'activity' },
     };
 
     // Find a matching path

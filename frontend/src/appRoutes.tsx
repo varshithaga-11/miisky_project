@@ -33,6 +33,8 @@ import AutoimmuneMasterPage from "./pages/AdminSide/AutoimmuneMaster/index";
 import DeficiencyMasterPage from "./pages/AdminSide/DeficiencyMaster/index";
 import DigestiveIssueMasterPage from "./pages/AdminSide/DigestiveIssueMaster/index";
 import SkinIssueMasterPage from "./pages/AdminSide/SkinIssueMaster/index";
+import HabitMasterPage from "./pages/AdminSide/HabitMaster/index";
+import ActivityMasterPage from "./pages/AdminSide/ActivityMaster/index";
 import StateManagementPage from "./pages/AdminSide/State/index";
 import CityManagementPage from "./pages/AdminSide/City/index";
 import MealTypeManagementPage from "./pages/AdminSide/MealType/index";
@@ -285,6 +287,8 @@ export function appRoutes() {
           <Route path="admin/deficiency-master" element={<DeficiencyMasterPage />} />
           <Route path="admin/digestive-issue-master" element={<DigestiveIssueMasterPage />} />
           <Route path="admin/skin-issue-master" element={<SkinIssueMasterPage />} />
+          <Route path="admin/habit-master" element={<HabitMasterPage />} />
+          <Route path="admin/activity-master" element={<ActivityMasterPage />} />
           <Route path="admin/state" element={<StateManagementPage />} />
           <Route path="admin/city" element={<CityManagementPage />} />
           <Route path="admin/meal-type" element={<MealTypeManagementPage />} />

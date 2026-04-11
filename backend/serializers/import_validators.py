@@ -7,7 +7,7 @@ from app.models import (
     FoodAminoAcids, FoodOrganicAcids, FoodPolyphenols, FoodPhytochemicals,
     FoodFattyAcidProfile, UserRegister,
     HealthConditionMaster, SymptomMaster, AutoimmuneMaster, DeficiencyMaster,
-    DigestiveIssueMaster, SkinIssueMaster
+    DigestiveIssueMaster, SkinIssueMaster, HabitMaster, ActivityMaster
 )
 from app.serializers import (
     CountrySerializer, StateSerializer, CitySerializer, 
@@ -22,7 +22,8 @@ from app.serializers import (
     FoodPhytochemicalsSerializer, FoodFattyAcidProfileSerializer,
     UserManagementSerializer,
     HealthConditionMasterSerializer, SymptomMasterSerializer, AutoimmuneMasterSerializer,
-    DeficiencyMasterSerializer, DigestiveIssueMasterSerializer, SkinIssueMasterSerializer
+    DeficiencyMasterSerializer, DigestiveIssueMasterSerializer, SkinIssueMasterSerializer,
+    HabitMasterSerializer, ActivityMasterSerializer
 )
 
 # Mapping of module + submenu to Model and Serializer
@@ -87,6 +88,8 @@ MODEL_MAPPING = {
         'deficiency': (DeficiencyMaster, DeficiencyMasterSerializer),
         'digestive-issue': (DigestiveIssueMaster, DigestiveIssueMasterSerializer),
         'skin-issue': (SkinIssueMaster, SkinIssueMasterSerializer),
+        'habit': (HabitMaster, HabitMasterSerializer),
+        'activity': (ActivityMaster, ActivityMasterSerializer),
     }
 }
 

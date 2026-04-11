@@ -1,0 +1,100 @@
+import React, { useState } from "react";
+import { createActivityMaster } from "./api";
+import Button from "../../../components/ui/button/Button";
+import Input from "../../../components/form/input/InputField";
+import Label from "../../../components/form/Label";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+interface Props {
+  onClose: () => void;
+  onAdd: () => void;
+}
+
+const AddActivityMaster: React.FC<Props> = ({ onClose, onAdd }) => {
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
+  const [isOther, setIsOther] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await createActivityMaster({
+        name: name.trim(),
+        code: code.trim(),
+        sort_order: Number(sortOrder) || 0,
+        is_other: isOther,
+      });
+      toast.success("Created.");
+      setTimeout(() => {
+        onAdd();
+        onClose();
+      }, 500);
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: Record<string, unknown> } };
+      if (ax.response?.data) Object.values(ax.response.data).forEach((msg) => toast.error(Array.isArray(msg) ? String(msg[0]) : String(msg)));
+      else toast.error("Failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg relative mt-24">
+        <button type="button" onClick={onClose} className="absolute top-3 right-3 w-10 h-10 text-4xl text-gray-500">
+          ×
+        </button>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Add physical activity</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Name *</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={loading} />
+          </div>
+          <div>
+            <Label htmlFor="code">Code *</Label>
+            <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} required disabled={loading} placeholder="e.g. walking" />
+          </div>
+          <div>
+            <Label htmlFor="sort_order">Sort order</Label>
+            <Input
+              id="sort_order"
+              type="number"
+              min={0}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(e.target.value))}
+              disabled={loading}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="is_other"
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              checked={isOther}
+              onChange={(e) => setIsOther(e.target.checked)}
+              disabled={loading}
+            />
+            <Label htmlFor="is_other" className="mb-0 cursor-pointer">
+              “Other” option (free text for users)
+            </Label>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AddActivityMaster;
