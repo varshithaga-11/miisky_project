@@ -446,6 +446,11 @@ const microKitchenNavItems: NavItem[] = [
     name: "Support Tickets",
     path: "/microkitchen/support-tickets",
   },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/microkitchen/notifications",
+  },
 ];
 
 const supplyChainNavItems: NavItem[] = [

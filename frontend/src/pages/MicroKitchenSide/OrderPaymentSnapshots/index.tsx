@@ -67,21 +67,12 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
   }, [page, pageSize, debouncedSearch]);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+    <>
       <PageMeta title="Order payments" description="Frozen platform vs kitchen split per customer order" />
       <PageBreadcrumb pageTitle="Order payments" />
       <ToastContainer position="bottom-right" />
 
-      <div className="px-4 md:px-8 pb-24">
-        <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-            Separate order payments
-          </h1>
-          <p className="text-gray-500 mt-1 font-medium max-w-2xl">
-            Each row is a frozen snapshot when the order was placed: food subtotal split between platform and your
-            kitchen. Delivery charge is shown for reference only (pass-through, not split).
-          </p>
-        </div>
+      <div className="px-4 md:px-8 pb-10">
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm">
@@ -105,31 +96,27 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-end gap-4 mb-6">
-          <div className="flex-1 min-w-[240px]">
-            <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">
-              Search order ID or customer name
-            </label>
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Order # or name…"
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-sm"
-              />
-            </div>
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center text-sm">
+          <div className="relative flex-1 max-w-md w-full">
+            <input
+              type="text"
+              placeholder="Search order ID or customer name..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <FiSearch className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
           </div>
-          <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Per page</label>
+          
+          <div className="flex items-center gap-4 text-sm font-medium">
+            <label className="text-gray-500 dark:text-gray-400">Per page:</label>
             <select
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
                 setPage(1);
               }}
-              className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-sm"
+              className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-white"
             >
               {[10, 25, 50].map((n) => (
                 <option key={n} value={n}>
@@ -140,58 +127,57 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-800/80">
-                  <TableCell isHeader>#</TableCell>
-                  <TableCell isHeader>Order</TableCell>
-                  <TableCell isHeader>Customer</TableCell>
-                  <TableCell isHeader>Type</TableCell>
-                  <TableCell isHeader>Status</TableCell>
-                  <TableCell isHeader>Food subtotal</TableCell>
-                  <TableCell isHeader>Delivery</TableCell>
-                  <TableCell isHeader>Grand total</TableCell>
-                  <TableCell isHeader>Kitchen</TableCell>
-                  <TableCell isHeader>Platform</TableCell>
-                  <TableCell isHeader>Date</TableCell>
+                <TableRow>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">#</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Order</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Customer</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Type</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Status</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Food subtotal</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Delivery</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Grand total</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Kitchen</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Platform</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Date</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center text-gray-500 py-12">
+                    <TableCell colSpan={11} className="text-center py-10">
                       Loading…
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center text-gray-500 py-12">
-                      No payment snapshots yet. Snapshots appear when customer orders are placed (and commission config
-                      exists).
+                    <TableCell colSpan={11} className="text-center py-10 text-gray-400 italic">
+                      No records found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   rows.map((r, i) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-gray-500">{(page - 1) * pageSize + i + 1}</TableCell>
-                      <TableCell className="font-mono font-bold">#{r.order_id}</TableCell>
-                      <TableCell>{r.customer_display || "—"}</TableCell>
-                      <TableCell className="capitalize">{r.order_type?.replace("_", " ") ?? "—"}</TableCell>
-                      <TableCell className="capitalize">{r.order_status ?? "—"}</TableCell>
-                      <TableCell>{fmtMoney(r.food_subtotal)}</TableCell>
-                      <TableCell>{fmtMoney(r.delivery_charge)}</TableCell>
-                      <TableCell className="font-semibold">{fmtMoney(r.grand_total)}</TableCell>
-                      <TableCell className="text-emerald-700 dark:text-emerald-400">
+                    <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                      <TableCell className="px-5 py-4 text-gray-500">{(page - 1) * pageSize + i + 1}</TableCell>
+                      <TableCell className="px-5 py-4 font-mono font-medium">#{r.order_id}</TableCell>
+                      <TableCell className="px-5 py-4">{r.customer_display || "—"}</TableCell>
+                      <TableCell className="px-5 py-4 capitalize">{r.order_type?.replace("_", " ") ?? "—"}</TableCell>
+                      <TableCell className="px-5 py-4 capitalize">{r.order_status ?? "—"}</TableCell>
+                      <TableCell className="px-5 py-4">{fmtMoney(r.food_subtotal)}</TableCell>
+                      <TableCell className="px-5 py-4">{fmtMoney(r.delivery_charge)}</TableCell>
+                      <TableCell className="px-5 py-4 font-semibold">{fmtMoney(r.grand_total)}</TableCell>
+                      <TableCell className="px-5 py-4 text-emerald-700 dark:text-emerald-400 font-medium">
                         {fmtMoney(r.kitchen_amount)}{" "}
                         <span className="text-gray-400 text-xs">({r.kitchen_percent}%)</span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-4 font-medium">
                         {fmtMoney(r.platform_amount)}{" "}
                         <span className="text-gray-400 text-xs">({r.platform_percent}%)</span>
                       </TableCell>
-                      <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                      <TableCell className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">
                         {r.order_created_at
                           ? new Date(r.order_created_at).toLocaleString(undefined, {
                               dateStyle: "short",
@@ -208,7 +194,7 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
         </div>
 
         {totalPages > 1 && (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 px-2">
             <p className="text-sm text-gray-500">
               Showing {totalCount === 0 ? 0 : (page - 1) * pageSize + 1}–
               {Math.min(page * pageSize, totalCount)} of {totalCount}
@@ -218,7 +204,7 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
                 type="button"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-bold disabled:opacity-40"
+                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium disabled:opacity-40 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Previous
               </button>
@@ -229,7 +215,7 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
                 type="button"
                 disabled={page >= totalPages || loading}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-bold disabled:opacity-40"
+                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium disabled:opacity-40 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Next
               </button>
@@ -237,7 +223,7 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 
