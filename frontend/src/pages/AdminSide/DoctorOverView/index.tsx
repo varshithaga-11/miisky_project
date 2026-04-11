@@ -3,7 +3,9 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
   getAdminDoctorList,
-  getDoctorPatientComments,
+  getAdminDoctorPatients,
+  getDoctorPatientCommentsPaginated,
+  type DoctorOverviewPatientRow,
   type DoctorPatientComment,
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
@@ -13,6 +15,7 @@ import {
   FiPhone,
   FiMail,
   FiChevronRight,
+  FiChevronLeft,
   FiActivity,
   FiMessageSquare,
   FiX,
@@ -31,35 +34,96 @@ type DoctorRow = {
   is_active: boolean;
 };
 
+const PATIENTS_PAGE_SIZE = 10;
+const COMMENTS_PAGE_SIZE = 10;
+
 const DoctorCommentsModal: React.FC<{
   doctor: DoctorRow | null;
   open: boolean;
   onClose: () => void;
 }> = ({ doctor, open, onClose }) => {
-  const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState<DoctorPatientComment[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState(false);
+  const [patientRows, setPatientRows] = useState<DoctorOverviewPatientRow[]>([]);
+  const [patientsPage, setPatientsPage] = useState(1);
+  const [patientsTotalPages, setPatientsTotalPages] = useState(1);
+
+  const [selectedPatient, setSelectedPatient] = useState<{
+    id: number;
+    label: string;
+  } | null>(null);
+
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentRows, setCommentRows] = useState<DoctorPatientComment[]>([]);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsTotalPages, setCommentsTotalPages] = useState(1);
 
   useEffect(() => {
     if (!open || !doctor) return;
+    setSelectedPatient(null);
+    setPatientsPage(1);
+    setCommentsPage(1);
+    setPatientRows([]);
+    setCommentRows([]);
+  }, [open, doctor?.id]);
+
+  useEffect(() => {
+    if (!open || !doctor || selectedPatient) return;
     let cancelled = false;
     (async () => {
-      setLoading(true);
+      setPatientsLoading(true);
       try {
-        const data = await getDoctorPatientComments(doctor.id);
-        if (!cancelled) setRows(data);
+        const data = await getAdminDoctorPatients(
+          doctor.id,
+          patientsPage,
+          PATIENTS_PAGE_SIZE
+        );
+        if (!cancelled) {
+          setPatientRows(data.results || []);
+          setPatientsTotalPages(data.total_pages || 1);
+        }
       } catch {
         if (!cancelled) {
-          toast.error("Failed to load patient comments");
-          setRows([]);
+          toast.error("Failed to load patients");
+          setPatientRows([]);
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setPatientsLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [open, doctor]);
+  }, [open, doctor?.id, selectedPatient, patientsPage]);
+
+  useEffect(() => {
+    if (!open || !doctor || !selectedPatient) return;
+    let cancelled = false;
+    (async () => {
+      setCommentsLoading(true);
+      try {
+        const data = await getDoctorPatientCommentsPaginated(
+          doctor.id,
+          selectedPatient.id,
+          commentsPage,
+          COMMENTS_PAGE_SIZE
+        );
+        if (!cancelled) {
+          setCommentRows(data.results || []);
+          setCommentsTotalPages(data.total_pages || 1);
+        }
+      } catch {
+        if (!cancelled) {
+          toast.error("Failed to load comments");
+          setCommentRows([]);
+        }
+      } finally {
+        if (!cancelled) setCommentsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, doctor?.id, selectedPatient?.id, commentsPage]);
 
   if (!open || !doctor) return null;
 
@@ -71,7 +135,7 @@ const DoctorCommentsModal: React.FC<{
         <div className="px-8 py-6 border-b border-gray-100 dark:border-white/5 flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
-              Patient comments
+              {selectedPatient ? "Comments" : "Patients with comments"}
             </p>
             <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
               {name}
@@ -86,59 +150,158 @@ const DoctorCommentsModal: React.FC<{
                 </span>
               ) : null}
             </p>
+            {selectedPatient ? (
+              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+                Patient: {selectedPatient.label}
+              </p>
+            ) : null}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-3 rounded-2xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
-            aria-label="Close"
-          >
-            <FiX size={20} />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {selectedPatient ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPatient(null);
+                  setCommentsPage(1);
+                  setCommentRows([]);
+                }}
+                className="px-4 py-2 rounded-2xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2"
+              >
+                <FiChevronLeft size={16} /> Patients
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-3 rounded-2xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              aria-label="Close"
+            >
+              <FiX size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-8 py-6">
-          {loading ? (
+          {!selectedPatient ? (
+            <>
+              {patientsLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <div className="size-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs font-black uppercase text-gray-400 tracking-widest italic">
+                    Loading patients…
+                  </span>
+                </div>
+              ) : patientRows.length === 0 ? (
+                <div className="text-center py-16 text-gray-400">
+                  <FiUser className="mx-auto mb-4 opacity-30" size={48} />
+                  <p className="text-sm font-bold uppercase tracking-tight">
+                    No patients with comments for this doctor yet.
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {patientRows.map((row) => {
+                    const p = row.patient;
+                    const label = p
+                      ? `${p.first_name} ${p.last_name}`.trim() || p.username
+                      : "Unknown patient";
+                    return (
+                      <li key={p?.id ?? label}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!p?.id) return;
+                            setSelectedPatient({ id: p.id, label });
+                            setCommentsPage(1);
+                          }}
+                          disabled={!p?.id}
+                          className="w-full text-left rounded-[24px] border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] p-5 hover:border-emerald-500/40 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-colors flex items-center justify-between gap-4 group"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <FiUser className="text-indigo-500 shrink-0" />
+                              <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                                {label}
+                              </span>
+                            </div>
+                            {p?.email ? (
+                              <p className="text-[10px] font-bold text-gray-400 truncate">
+                                {p.email}
+                              </p>
+                            ) : null}
+                            <p className="text-[10px] font-bold text-gray-500 mt-2">
+                              {row.comment_count} comment
+                              {row.comment_count === 1 ? "" : "s"}
+                              {row.last_comment_at
+                                ? ` · Last ${new Date(row.last_comment_at).toLocaleString()}`
+                                : ""}
+                            </p>
+                          </div>
+                          <FiChevronRight className="text-gray-400 group-hover:text-emerald-500 shrink-0" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {!patientsLoading && patientRows.length > 0 ? (
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-wrap justify-between items-center gap-4">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
+                    Page {patientsPage} of {Math.max(1, patientsTotalPages)}
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      onClick={() => setPatientsPage((p) => Math.max(1, p - 1))}
+                      disabled={patientsPage <= 1}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl font-black uppercase tracking-widest text-[10px]"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        setPatientsPage((p) =>
+                          Math.min(patientsTotalPages, p + 1)
+                        )
+                      }
+                      disabled={patientsPage >= patientsTotalPages}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl font-black uppercase tracking-widest text-[10px]"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          ) : commentsLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <div className="size-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
               <span className="text-xs font-black uppercase text-gray-400 tracking-widest italic">
                 Loading comments…
               </span>
             </div>
-          ) : rows.length === 0 ? (
+          ) : commentRows.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
-              <FiMessageSquare
-                className="mx-auto mb-4 opacity-30"
-                size={48}
-              />
+              <FiMessageSquare className="mx-auto mb-4 opacity-30" size={48} />
               <p className="text-sm font-bold uppercase tracking-tight">
-                No patient comments recorded for this doctor yet.
+                No comments for this patient.
               </p>
             </div>
           ) : (
-            <ul className="space-y-6">
-              {rows.map((row) => {
-                const p = row.patient_details;
-                const patientLabel = p
-                  ? `${p.first_name} ${p.last_name}`.trim() || p.username
-                  : "Unknown patient";
-                return (
+            <>
+              <ul className="space-y-6">
+                {commentRows.map((row) => (
                   <li
                     key={row.id}
                     className="rounded-[24px] border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] p-6"
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-2">
-                        <FiUser className="text-indigo-500 shrink-0" />
-                        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                          {patientLabel}
-                        </span>
-                        {p?.email ? (
-                          <span className="text-[10px] font-bold text-gray-400 truncate max-w-[200px]">
-                            {p.email}
-                          </span>
-                        ) : null}
-                      </div>
                       <time
                         className="text-[10px] font-black uppercase text-gray-400 tracking-widest"
                         dateTime={row.created_on}
@@ -167,9 +330,39 @@ const DoctorCommentsModal: React.FC<{
                       </div>
                     ) : null}
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+
+              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-wrap justify-between items-center gap-4">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
+                  Page {commentsPage} of {Math.max(1, commentsTotalPages)}
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    onClick={() => setCommentsPage((p) => Math.max(1, p - 1))}
+                    disabled={commentsPage <= 1}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl font-black uppercase tracking-widest text-[10px]"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      setCommentsPage((p) => Math.min(commentsTotalPages, p + 1))
+                    }
+                    disabled={commentsPage >= commentsTotalPages}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl font-black uppercase tracking-widest text-[10px]"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -269,7 +462,7 @@ const DoctorOverViewPage: React.FC = () => {
                     Status
                   </th>
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic text-right">
-                    Patient comments
+                    Patients
                   </th>
                 </tr>
               </thead>
@@ -347,7 +540,7 @@ const DoctorOverViewPage: React.FC = () => {
                           }}
                           className="px-6 py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2 ml-auto shadow-xl shadow-black/10 dark:shadow-white/5"
                         >
-                          View comments <FiChevronRight />
+                          View patients <FiChevronRight />
                         </button>
                       </td>
                     </tr>

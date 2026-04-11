@@ -1,15 +1,20 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
+export type PaginatedResponse<T> = {
+  count: number;
+  current_page: number;
+  total_pages: number;
+  next: number | null;
+  previous: number | null;
+  results: T[];
+};
+
 export const getAdminDoctorList = async (
   page: number = 1,
   search: string = "",
   limit: number = 10
-): Promise<{
-  results: unknown[];
-  total_pages: number;
-  count?: number;
-}> => {
+): Promise<PaginatedResponse<unknown>> => {
   const url = createApiUrl(
     `api/admin-doctors/?page=${page}&search=${encodeURIComponent(search)}&limit=${limit}`
   );
@@ -17,6 +22,33 @@ export const getAdminDoctorList = async (
   return response.data;
 };
 
+/** Distinct patients (with doctor comments), paginated */
+export type DoctorOverviewPatientRow = {
+  patient: {
+    id: number;
+    username: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    mobile: string | null;
+  } | null;
+  comment_count: number;
+  last_comment_at: string | null;
+};
+
+export const getAdminDoctorPatients = async (
+  doctorId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<DoctorOverviewPatientRow>> => {
+  const url = createApiUrl(
+    `api/admin-doctor-patients/?doctor=${doctorId}&page=${page}&limit=${limit}`
+  );
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+/** Paginated comment entries for one doctor + patient */
 export type DoctorPatientComment = {
   id: number;
   comments: string;
@@ -38,12 +70,15 @@ export type DoctorPatientComment = {
   }[];
 };
 
-export const getDoctorPatientComments = async (
-  doctorId: number
-): Promise<DoctorPatientComment[]> => {
+export const getDoctorPatientCommentsPaginated = async (
+  doctorId: number,
+  patientId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<DoctorPatientComment>> => {
   const url = createApiUrl(
-    `api/admin-doctor-patient-comments-nopaginate/?doctor=${doctorId}`
+    `api/admin-doctor-patient-comments/?doctor=${doctorId}&patient=${patientId}&page=${page}&limit=${limit}`
   );
   const response = await axios.get(url, { headers: await getAuthHeaders() });
-  return Array.isArray(response.data) ? response.data : [];
+  return response.data;
 };

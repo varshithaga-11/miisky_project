@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, DecimalField, F, Prefetch, Q, Sum, Value
+from django.db.models import Count, DecimalField, F, Max, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins, generics
@@ -3931,7 +3931,17 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             ).exists():
                 from rest_framework.exceptions import ValidationError
                 raise ValidationError("You can only suggest plans to your assigned patients.")
-        serializer.save(nutritionist=user)
+        udp = serializer.save(nutritionist=user)
+        if udp.user_id and udp.user_id != user.id:
+            plan_title = (udp.diet_plan and udp.diet_plan.title) or "Diet plan"
+            Notification.objects.create(
+                user_id=udp.user_id,
+                title="New diet plan suggested",
+                body=(
+                    f"{_notification_user_display(user)} suggested the plan \"{plan_title}\". "
+                    "Review it under Diet Plans to approve or discuss."
+                ),
+            )
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -3995,6 +4005,30 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             amount_paid=amount_paid, 
             transaction_id=transaction_id
         )
+        udp.refresh_from_db()
+        patient_name = _notification_user_display(udp.user) if udp.user_id else "A patient"
+        plan_title = (udp.diet_plan and udp.diet_plan.title) or "diet plan"
+        pay_bits = []
+        if udp.amount_paid is not None:
+            pay_bits.append(f"amount {udp.amount_paid}")
+        if udp.transaction_id:
+            pay_bits.append(f"transaction id {udp.transaction_id}")
+        pay_extra = ("; " + ", ".join(pay_bits)) if pay_bits else ""
+        notify_body = (
+            f"{patient_name} uploaded payment proof for \"{plan_title}\" (plan #{udp.pk}){pay_extra}. "
+            "Verify in Payment verification."
+        )
+        notify_ids = set(
+            UserRegister.objects.filter(role="admin", is_active=True).values_list("id", flat=True)
+        )
+        if udp.nutritionist_id:
+            notify_ids.add(udp.nutritionist_id)
+        for uid in notify_ids:
+            Notification.objects.create(
+                user_id=uid,
+                title="Patient payment proof uploaded",
+                body=notify_body,
+            )
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -6425,6 +6459,175 @@ class AdminDoctorPatientCommentsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+class AdminDoctorPatientsPaginatedView(APIView):
+    """
+    Admin-only: distinct patients who have non-empty doctor comments, paginated.
+    Query: doctor (required), page, limit.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        from django.core.paginator import EmptyPage, Paginator
+
+        doctor_id = request.query_params.get("doctor")
+        if not doctor_id:
+            return Response({"detail": "doctor is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            page = max(1, int(request.query_params.get("page", 1)))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            limit = int(request.query_params.get("limit", 10))
+        except (TypeError, ValueError):
+            limit = 10
+        limit = max(1, min(limit, 100))
+
+        base = NutritionistReview.objects.filter(doctor_id=doctor_id).exclude(
+            Q(comments__isnull=True) | Q(comments__exact="")
+        )
+        agg = (
+            base.values("user_id")
+            .annotate(comment_count=Count("id"), last_comment_at=Max("created_on"))
+            .order_by("-last_comment_at")
+        )
+        paginator = Paginator(agg, limit)
+        if paginator.count == 0:
+            return Response(
+                {
+                    "count": 0,
+                    "current_page": 1,
+                    "total_pages": 0,
+                    "next": None,
+                    "previous": None,
+                    "results": [],
+                }
+            )
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            return Response(
+                {
+                    "count": paginator.count,
+                    "current_page": page,
+                    "total_pages": paginator.num_pages,
+                    "next": None,
+                    "previous": None,
+                    "results": [],
+                }
+            )
+
+        user_ids = [row["user_id"] for row in page_obj if row["user_id"]]
+        users = {u.id: u for u in UserRegister.objects.filter(id__in=user_ids)}
+
+        results = []
+        for row in page_obj:
+            uid = row["user_id"]
+            u = users.get(uid) if uid else None
+            patient_details = None
+            if u:
+                patient_details = {
+                    "id": u.id,
+                    "username": u.username,
+                    "first_name": u.first_name or "",
+                    "last_name": u.last_name or "",
+                    "email": u.email or "",
+                    "mobile": u.mobile,
+                }
+            results.append(
+                {
+                    "patient": patient_details,
+                    "comment_count": row["comment_count"],
+                    "last_comment_at": row["last_comment_at"],
+                }
+            )
+
+        return Response(
+            {
+                "count": paginator.count,
+                "current_page": page_obj.number,
+                "total_pages": paginator.num_pages,
+                "next": page_obj.next_page_number() if page_obj.has_next() else None,
+                "previous": page_obj.previous_page_number() if page_obj.has_previous() else None,
+                "results": results,
+            }
+        )
+
+
+class AdminDoctorPatientCommentsPaginatedView(APIView):
+    """
+    Admin-only: paginated doctor comments for one patient.
+    Query: doctor (required), patient (required), page, limit.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        from django.core.paginator import EmptyPage, Paginator
+
+        doctor_id = request.query_params.get("doctor")
+        patient_id = request.query_params.get("patient")
+        if not doctor_id or not patient_id:
+            return Response(
+                {"detail": "doctor and patient are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            page = max(1, int(request.query_params.get("page", 1)))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            limit = int(request.query_params.get("limit", 10))
+        except (TypeError, ValueError):
+            limit = 10
+        limit = max(1, min(limit, 100))
+
+        qs = (
+            NutritionistReview.objects.filter(doctor_id=doctor_id, user_id=patient_id)
+            .exclude(Q(comments__isnull=True) | Q(comments__exact=""))
+            .select_related("user")
+            .prefetch_related("reports")
+            .order_by("-created_on")
+        )
+        paginator = Paginator(qs, limit)
+        if paginator.count == 0:
+            return Response(
+                {
+                    "count": 0,
+                    "current_page": 1,
+                    "total_pages": 0,
+                    "next": None,
+                    "previous": None,
+                    "results": [],
+                }
+            )
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            return Response(
+                {
+                    "count": paginator.count,
+                    "current_page": page,
+                    "total_pages": paginator.num_pages,
+                    "next": None,
+                    "previous": None,
+                    "results": [],
+                }
+            )
+
+        serializer = AdminDoctorPatientCommentListSerializer(page_obj.object_list, many=True)
+        return Response(
+            {
+                "count": paginator.count,
+                "current_page": page_obj.number,
+                "total_pages": paginator.num_pages,
+                "next": page_obj.next_page_number() if page_obj.has_next() else None,
+                "previous": page_obj.previous_page_number() if page_obj.has_previous() else None,
+                "results": serializer.data,
+            }
+        )
+
+
 class AdminSupplyChainOverviewViewSet(viewsets.ReadOnlyModelViewSet):
     """Admin-only: list users with role=supply_chain."""
 
@@ -7865,7 +8068,17 @@ class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
             nutritionist=self.request.user, user=patient, is_active=True
         ).exists():
             raise ValidationError({"patient": ["This patient is not in your allotted list."]})
-        serializer.save(recommended_by=self.request.user)
+        rec = serializer.save(recommended_by=self.request.user)
+        if rec.patient_id:
+            food_name = (rec.food and rec.food.name) or "a food"
+            Notification.objects.create(
+                user_id=rec.patient_id,
+                title="New food suggested by your nutritionist",
+                body=(
+                    f"{_notification_user_display(self.request.user)} suggested {food_name}. "
+                    "Check Suggested foods in the app for details."
+                ),
+            )
 
     def perform_update(self, serializer):
         role = getattr(self.request.user, "role", None)

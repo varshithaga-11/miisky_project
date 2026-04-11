@@ -241,6 +241,16 @@ urlpatterns = [
         views.AdminDoctorPatientCommentsNoPaginationView.as_view(),
         name="admin-doctor-patient-comments-nopaginate",
     ),
+    path(
+        "admin-doctor-patients/",
+        views.AdminDoctorPatientsPaginatedView.as_view(),
+        name="admin-doctor-patients",
+    ),
+    path(
+        "admin-doctor-patient-comments/",
+        views.AdminDoctorPatientCommentsPaginatedView.as_view(),
+        name="admin-doctor-patient-comments",
+    ),
     # Admin patient panels (no pagination for modal display)
     path(
         "admin-patient-meetings-nopaginate/",
