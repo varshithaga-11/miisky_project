@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import axios from "axios";
@@ -107,11 +107,14 @@ const MicroKitchenPatientsPage: React.FC = () => {
     const [currentCalMonth, setCurrentCalMonth] = useState(new Date().getMonth() + 1);
     const [currentCalYear, setCurrentCalYear] = useState(new Date().getFullYear());
 
-    const fetchAllotments = async () => {
+    const fetchAllotments = useCallback(async (search: string) => {
         setLoading(true);
         try {
             const url = createApiUrl("api/micro-kitchen-patients/");
-            const response = await axios.get(url, { headers: await getAuthHeaders() });
+            const params: Record<string, string | number> = { page: 1, limit: 500 };
+            const q = search.trim();
+            if (q) params.search = q;
+            const response = await axios.get(url, { headers: await getAuthHeaders(), params });
             setAllotments(response.data.results || []);
         } catch (error) {
             console.error(error);
@@ -119,7 +122,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const fetchPatientDetail = async (id: number) => {
         setDetailLoading(true);
@@ -150,13 +153,11 @@ const MicroKitchenPatientsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchAllotments();
-    }, []);
-
-    const filteredAllotments = allotments.filter(a =>
-        `${a.patient_details.first_name} ${a.patient_details.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.patient_details.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        const timer = setTimeout(() => {
+            fetchAllotments(searchTerm);
+        }, searchTerm ? 500 : 0);
+        return () => clearTimeout(timer);
+    }, [searchTerm, fetchAllotments]);
 
     const getMealIcon = (name: string = "") => {
         const n = name.toLowerCase();
@@ -199,11 +200,11 @@ const MicroKitchenPatientsPage: React.FC = () => {
                             <div className="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-2 no-scrollbar">
                                 {loading ? (
                                     [1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-50 dark:bg-gray-900/50 rounded-3xl animate-pulse" />)
-                                ) : filteredAllotments.length === 0 ? (
+                                ) : allotments.length === 0 ? (
                                     <div className="text-center py-10">
                                         <p className="text-gray-400 text-xs font-bold uppercase">No patients found</p>
                                     </div>
-                                ) : filteredAllotments.map(a => (
+                                ) : allotments.map(a => (
                                     <button
                                         key={a.id}
                                         onClick={() => fetchPatientDetail(a.id)}

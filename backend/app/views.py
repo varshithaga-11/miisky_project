@@ -5830,12 +5830,27 @@ class MicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
             return UserDietPlan.objects.none()
 
         from django.db.models import Q
-        return UserDietPlan.objects.filter(
+        qs = UserDietPlan.objects.filter(
             Q(micro_kitchen__user=user) | Q(original_micro_kitchen__user=user),
             status__in=['active', 'approved', 'payment_pending']
         ).select_related(
             'user', 'diet_plan', 'nutritionist', 'micro_kitchen', 'original_micro_kitchen'
-        ).order_by('-id')
+        )
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            q = (
+                Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(user__mobile__icontains=search)
+                | Q(diet_plan__title__icontains=search)
+            )
+            if search.isdigit():
+                q |= Q(id=int(search))
+            qs = qs.filter(q)
+
+        return qs.order_by('-id')
 
 
 # ---- Admin MicroKitchen panels (NO pagination) -----------------------------
