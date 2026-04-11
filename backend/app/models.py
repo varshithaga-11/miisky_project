@@ -598,12 +598,7 @@ class UserHabit(models.Model):
 
 class ActivityMaster(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=50, unique=True)
-
     sort_order = models.PositiveIntegerField(default=0)
-
-    # 🔥 dynamic control
-    is_other = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

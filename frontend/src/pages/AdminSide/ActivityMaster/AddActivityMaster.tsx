@@ -13,21 +13,14 @@ interface Props {
 
 const AddActivityMaster: React.FC<Props> = ({ onClose, onAdd }) => {
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
-  const [isOther, setIsOther] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createActivityMaster({
-        name: name.trim(),
-        code: code.trim(),
-        sort_order: Number(sortOrder) || 0,
-        is_other: isOther,
-      });
+      await createActivityMaster({ name: name.trim(), sort_order: Number(sortOrder) || 0 });
       toast.success("Created.");
       setTimeout(() => {
         onAdd();
@@ -45,7 +38,7 @@ const AddActivityMaster: React.FC<Props> = ({ onClose, onAdd }) => {
   return (
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50">
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg relative mt-24">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative mt-24">
         <button type="button" onClick={onClose} className="absolute top-3 right-3 w-10 h-10 text-4xl text-gray-500">
           ×
         </button>
@@ -54,10 +47,6 @@ const AddActivityMaster: React.FC<Props> = ({ onClose, onAdd }) => {
           <div>
             <Label htmlFor="name">Name *</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={loading} />
-          </div>
-          <div>
-            <Label htmlFor="code">Code *</Label>
-            <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} required disabled={loading} placeholder="e.g. walking" />
           </div>
           <div>
             <Label htmlFor="sort_order">Sort order</Label>
@@ -69,19 +58,6 @@ const AddActivityMaster: React.FC<Props> = ({ onClose, onAdd }) => {
               onChange={(e) => setSortOrder(Number(e.target.value))}
               disabled={loading}
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              id="is_other"
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              checked={isOther}
-              onChange={(e) => setIsOther(e.target.checked)}
-              disabled={loading}
-            />
-            <Label htmlFor="is_other" className="mb-0 cursor-pointer">
-              “Other” option (free text for users)
-            </Label>
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>

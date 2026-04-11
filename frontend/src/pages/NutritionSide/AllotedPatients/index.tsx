@@ -399,10 +399,42 @@ const AllottedPatientsPage: React.FC = () => {
                                               ))}
                                            </div>
 
-                                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Habits</span>
+                                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Activities &amp; habits</span>
                                            <div className="flex flex-wrap gap-2">
-                                              {p.questionnaire?.smoking_per_day > 0 && <span className="px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase">Smokes: {p.questionnaire.smoking_per_day}/day</span>}
-                                              {p.questionnaire?.alcohol_per_week > 0 && <span className="px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase">Alcohol: {p.questionnaire.alcohol_per_week}/week</span>}
+                                              {Array.isArray(p.questionnaire?.physical_activities) &&
+                                                p.questionnaire.physical_activities.map(
+                                                  (a: { name?: string; other_text?: string | null }, i: number) => {
+                                                    if (!a?.name) return null;
+                                                    const extra = a.other_text?.trim();
+                                                    return (
+                                                      <span
+                                                        key={`pa-${i}-${a.name}`}
+                                                        className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase"
+                                                        title={extra || undefined}
+                                                      >
+                                                        {a.name}
+                                                        {extra ? `: ${extra}` : ""}
+                                                      </span>
+                                                    );
+                                                  }
+                                                )}
+                                              {Array.isArray(p.questionnaire?.habits) &&
+                                                p.questionnaire.habits.map(
+                                                  (h: { name?: string; other_text?: string | null }, i: number) => {
+                                                    if (!h?.name) return null;
+                                                    const extra = h.other_text?.trim();
+                                                    return (
+                                                      <span
+                                                        key={`hab-${i}-${h.name}`}
+                                                        className="px-3 py-1.5 bg-gray-800 text-white rounded-xl text-[9px] font-black uppercase"
+                                                        title={extra || undefined}
+                                                      >
+                                                        Habit: {h.name}
+                                                        {extra ? `: ${extra}` : ""}
+                                                      </span>
+                                                    );
+                                                  }
+                                                )}
                                            </div>
                                         </div>
                                      </div>

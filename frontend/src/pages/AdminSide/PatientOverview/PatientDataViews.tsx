@@ -126,7 +126,6 @@ const Q_LABELS: Record<string, string> = {
   height_cm: "Height (cm)",
   weight_kg: "Weight (kg)",
   work_type: "Work type",
-  physical_activity: "Physical activity",
   meals_per_day: "Meals per day",
   skips_meals: "Skips meals",
   snacks_between_meals: "Snacks between meals",
@@ -140,12 +139,12 @@ const Q_LABELS: Record<string, string> = {
   vegetables_per_day: "Vegetables per day",
   surgery_history: "Surgery history",
   on_medication: "On medication",
-  alcohol_per_week: "Alcohol (per week)",
-  smoking_per_day: "Smoking (per day)",
   sleep_quality: "Sleep quality",
   stress_level: "Stress level",
   falls_sick_frequency: "Falls sick frequency",
   additional_notes: "Additional notes",
+  habits: "Lifestyle habits",
+  physical_activities: "Physical activities",
   created_on: "Created",
   updated_on: "Updated",
 };
@@ -192,6 +191,8 @@ const JSON_BLOCK_KEYS = new Set([
   "autoimmune_diseases",
   "digestive_issues",
   "skin_issues",
+  "habits",
+  "physical_activities",
   "food_preferences",
 ]);
 

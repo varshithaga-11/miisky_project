@@ -15,9 +15,7 @@ interface Props {
 
 const EditActivityMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
-  const [isOther, setIsOther] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -25,11 +23,9 @@ const EditActivityMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpda
     if (isOpen && recordId) {
       setLoading(true);
       getActivityMasterById(recordId)
-        .then((data: { name: string; code: string; sort_order: number; is_other: boolean }) => {
+        .then((data: { name: string; sort_order: number }) => {
           setName(data.name);
-          setCode(data.code);
           setSortOrder(data.sort_order ?? 0);
-          setIsOther(Boolean(data.is_other));
         })
         .finally(() => setLoading(false));
     }
@@ -39,12 +35,7 @@ const EditActivityMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpda
     e.preventDefault();
     setSaving(true);
     try {
-      await updateActivityMaster(recordId, {
-        name: name.trim(),
-        code: code.trim(),
-        sort_order: Number(sortOrder) || 0,
-        is_other: isOther,
-      });
+      await updateActivityMaster(recordId, { name: name.trim(), sort_order: Number(sortOrder) || 0 });
       toast.success("Updated.");
       setTimeout(() => {
         onUpdated();
@@ -64,7 +55,7 @@ const EditActivityMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpda
   return (
     <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50">
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg relative mt-24">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative mt-24">
         <button type="button" onClick={onClose} className="absolute top-3 right-3 w-10 h-10 text-4xl text-gray-500">
           ×
         </button>
@@ -78,10 +69,6 @@ const EditActivityMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpda
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={saving} />
             </div>
             <div>
-              <Label htmlFor="code">Code *</Label>
-              <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} required disabled={saving} />
-            </div>
-            <div>
               <Label htmlFor="sort_order">Sort order</Label>
               <Input
                 id="sort_order"
@@ -91,19 +78,6 @@ const EditActivityMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpda
                 onChange={(e) => setSortOrder(Number(e.target.value))}
                 disabled={saving}
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                id="is_other"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                checked={isOther}
-                onChange={(e) => setIsOther(e.target.checked)}
-                disabled={saving}
-              />
-              <Label htmlFor="is_other" className="mb-0 cursor-pointer">
-                “Other” option (free text for users)
-              </Label>
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <Button type="button" variant="outline" onClick={onClose} disabled={saving}>

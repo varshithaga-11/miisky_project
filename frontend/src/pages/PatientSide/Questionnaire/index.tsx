@@ -19,8 +19,11 @@ import {
   fetchDeficiencyMasters,
   fetchDigestiveIssueMasters,
   fetchSkinIssueMasters,
+  fetchHabitMasters,
+  fetchActivityMasters,
 } from "./api";
 import DatePicker2 from "../../../components/form/date-picker2";
+import { Modal } from "../../../components/ui/modal";
 
 const STEPS = [
   { id: 1, title: "Basic & lifestyle" },
@@ -30,6 +33,11 @@ const STEPS = [
 ] as const;
 
 type HcRowState = { has: boolean; since: string; comments: string };
+
+/** Matches admin-configured master row named "Other" (case-insensitive). */
+function isOtherMasterName(name: string): boolean {
+  return name.trim().toLowerCase() === "other";
+}
 
 function triSelect(
   value: boolean | null | undefined,
@@ -54,7 +62,10 @@ function triSelect(
   );
 }
 
-function namesToIds(names: (string | number)[] | undefined, masters: { id: number; name: string }[]): number[] {
+function namesToIds(
+  names: (string | number | { id?: number; name?: string })[] | undefined,
+  masters: { id: number; name: string }[]
+): number[] {
   if (!names?.length) return [];
   const byName = new Map(masters.map((m) => [m.name.trim().toLowerCase(), m.id]));
   const ids: number[] = [];
@@ -63,8 +74,15 @@ function namesToIds(names: (string | number)[] | undefined, masters: { id: numbe
       if (masters.some((m) => m.id === n)) ids.push(n);
       continue;
     }
-    const id = byName.get(n.trim().toLowerCase());
-    if (id != null) ids.push(id);
+    if (typeof n === "object" && n !== null && "id" in n && typeof (n as { id: number }).id === "number") {
+      const oid = (n as { id: number }).id;
+      if (masters.some((m) => m.id === oid)) ids.push(oid);
+      continue;
+    }
+    if (typeof n === "string") {
+      const id = byName.get(n.trim().toLowerCase());
+      if (id != null) ids.push(id);
+    }
   }
   return ids;
 }
@@ -102,6 +120,8 @@ export default function PatientQuestionnairePage() {
   const [deficiencyMasters, setDeficiencyMasters] = useState<{ id: number; name: string }[]>([]);
   const [digestiveMasters, setDigestiveMasters] = useState<{ id: number; name: string }[]>([]);
   const [skinMasters, setSkinMasters] = useState<{ id: number; name: string }[]>([]);
+  const [habitMasters, setHabitMasters] = useState<{ id: number; name: string }[]>([]);
+  const [activityMasters, setActivityMasters] = useState<{ id: number; name: string }[]>([]);
 
   const [hcRows, setHcRows] = useState<Record<number, HcRowState>>({});
 
@@ -110,6 +130,16 @@ export default function PatientQuestionnairePage() {
   const [deficiencyIds, setDeficiencyIds] = useState<number[]>([]);
   const [digestiveIds, setDigestiveIds] = useState<number[]>([]);
   const [skinIds, setSkinIds] = useState<number[]>([]);
+  const [habitIds, setHabitIds] = useState<number[]>([]);
+  const [physicalActivityIds, setPhysicalActivityIds] = useState<number[]>([]);
+  const [habitExtras, setHabitExtras] = useState<Record<number, { other_text: string }>>({});
+  const [activityExtras, setActivityExtras] = useState<Record<number, { other_text: string; duration_minutes?: string }>>({});
+  const [otherModal, setOtherModal] = useState<{
+    kind: "habit" | "activity";
+    master: { id: number; name: string };
+    draftText: string;
+    draftDuration: string;
+  } | null>(null);
 
   const [foodPreferencesText, setFoodPreferencesText] = useState("");
 
@@ -127,6 +157,8 @@ export default function PatientQuestionnairePage() {
           dm,
           dig,
           sk,
+          hm,
+          actm,
         ] = await Promise.all([
           getMyQuestionnaire(),
           fetchHealthConditionMasters(),
@@ -135,6 +167,8 @@ export default function PatientQuestionnairePage() {
           fetchDeficiencyMasters(),
           fetchDigestiveIssueMasters(),
           fetchSkinIssueMasters(),
+          fetchHabitMasters(),
+          fetchActivityMasters(),
         ]);
 
         setData(res || {});
@@ -144,6 +178,8 @@ export default function PatientQuestionnairePage() {
         setDeficiencyMasters(dm);
         setDigestiveMasters(dig);
         setSkinMasters(sk);
+        setHabitMasters(hm);
+        setActivityMasters(actm);
 
         setHcRows(initHcRows(hcm, res?.health_conditions));
 
@@ -152,6 +188,35 @@ export default function PatientQuestionnairePage() {
         setDeficiencyIds(namesToIds(res?.deficiencies, dm));
         setDigestiveIds(namesToIds(res?.digestive_issues, dig));
         setSkinIds(namesToIds(res?.skin_issues, sk));
+        setHabitIds(namesToIds(res?.habits, hm));
+        setPhysicalActivityIds(namesToIds(res?.physical_activities, actm));
+
+        const hx: Record<number, { other_text: string }> = {};
+        if (Array.isArray(res.habits)) {
+          for (const row of res.habits) {
+            if (row && typeof row === "object" && "id" in row) {
+              const r = row as { id: number; other_text?: string | null };
+              if (r.other_text) hx[r.id] = { other_text: String(r.other_text) };
+            }
+          }
+        }
+        setHabitExtras(hx);
+
+        const ax: Record<number, { other_text: string; duration_minutes?: string }> = {};
+        if (Array.isArray(res.physical_activities)) {
+          for (const row of res.physical_activities) {
+            if (row && typeof row === "object" && "id" in row) {
+              const r = row as { id: number; other_text?: string | null; duration_minutes?: number | null };
+              if (r.other_text || r.duration_minutes != null) {
+                ax[r.id] = {
+                  other_text: r.other_text ? String(r.other_text) : "",
+                  ...(r.duration_minutes != null ? { duration_minutes: String(r.duration_minutes) } : {}),
+                };
+              }
+            }
+          }
+        }
+        setActivityExtras(ax);
 
         setFoodPreferencesText(
           res?.food_preferences == null
@@ -176,14 +241,82 @@ export default function PatientQuestionnairePage() {
     else setList([...list, id]);
   };
 
+  const toggleHabit = (m: { id: number; name: string }, checked: boolean) => {
+    if (!checked) {
+      setHabitIds((prev) => prev.filter((x) => x !== m.id));
+      setHabitExtras((prev) => {
+        const n = { ...prev };
+        delete n[m.id];
+        return n;
+      });
+      return;
+    }
+    if (isOtherMasterName(m.name)) {
+      setOtherModal({
+        kind: "habit",
+        master: m,
+        draftText: habitExtras[m.id]?.other_text ?? "",
+        draftDuration: "",
+      });
+      return;
+    }
+    setHabitIds((prev) => (prev.includes(m.id) ? prev : [...prev, m.id]));
+  };
+
+  const toggleActivity = (m: { id: number; name: string }, checked: boolean) => {
+    if (!checked) {
+      setPhysicalActivityIds((prev) => prev.filter((x) => x !== m.id));
+      setActivityExtras((prev) => {
+        const n = { ...prev };
+        delete n[m.id];
+        return n;
+      });
+      return;
+    }
+    if (isOtherMasterName(m.name)) {
+      setOtherModal({
+        kind: "activity",
+        master: m,
+        draftText: activityExtras[m.id]?.other_text ?? "",
+        draftDuration: activityExtras[m.id]?.duration_minutes ?? "",
+      });
+      return;
+    }
+    setPhysicalActivityIds((prev) => (prev.includes(m.id) ? prev : [...prev, m.id]));
+  };
+
+  const confirmOtherModal = () => {
+    if (!otherModal) return;
+    const text = otherModal.draftText.trim();
+    if (!text) {
+      toast.error("Please add a short description for “Other”.");
+      return;
+    }
+    if (otherModal.kind === "habit") {
+      setHabitIds((prev) => (prev.includes(otherModal.master.id) ? prev : [...prev, otherModal.master.id]));
+      setHabitExtras((prev) => ({ ...prev, [otherModal.master.id]: { other_text: text } }));
+    } else {
+      const dur = otherModal.draftDuration.trim();
+      setPhysicalActivityIds((prev) =>
+        prev.includes(otherModal.master.id) ? prev : [...prev, otherModal.master.id]
+      );
+      setActivityExtras((prev) => ({
+        ...prev,
+        [otherModal.master.id]: { other_text: text, ...(dur ? { duration_minutes: dur } : {}) },
+      }));
+    }
+    setOtherModal(null);
+  };
+
   const buildPayload = useCallback((): Partial<UserQuestionnaire> => {
-    const foodPref =
+    const foodPrefParts =
       foodPreferencesText.trim().length > 0
         ? foodPreferencesText
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean)
-        : null;
+        : [];
+    const food_preferences = foodPrefParts.length ? foodPrefParts.join(", ") : null;
 
     const health_conditions = hcMasters.map((m) => {
       const r = hcRows[m.id] || { has: false, since: "", comments: "" };
@@ -195,6 +328,38 @@ export default function PatientQuestionnairePage() {
       };
     });
 
+    const habitsPayload: Array<number | { id: number; other_text?: string }> = habitIds.map((hid) => {
+      const m = habitMasters.find((x) => x.id === hid);
+      const t = habitExtras[hid]?.other_text?.trim();
+      if (m && isOtherMasterName(m.name)) {
+        return { id: hid, ...(t ? { other_text: t } : {}) };
+      }
+      if (t) return { id: hid, other_text: t };
+      return hid;
+    });
+
+    const activitiesPayload: Array<number | { id: number; other_text?: string; duration_minutes?: number }> =
+      physicalActivityIds.map((aid) => {
+        const m = activityMasters.find((x) => x.id === aid);
+        const t = activityExtras[aid]?.other_text?.trim();
+        const dm = activityExtras[aid]?.duration_minutes?.trim();
+        const dur = dm ? parseInt(dm, 10) : NaN;
+        const durOk = Number.isFinite(dur);
+        if (m && isOtherMasterName(m.name)) {
+          const o: { id: number; other_text?: string; duration_minutes?: number } = { id: aid };
+          if (t) o.other_text = t;
+          if (durOk) o.duration_minutes = dur;
+          return o;
+        }
+        if (t || durOk) {
+          const o: { id: number; other_text?: string; duration_minutes?: number } = { id: aid };
+          if (t) o.other_text = t;
+          if (durOk) o.duration_minutes = dur;
+          return o;
+        }
+        return aid;
+      });
+
     return {
       ...data,
       health_conditions,
@@ -203,11 +368,43 @@ export default function PatientQuestionnairePage() {
       deficiencies: deficiencyIds,
       digestive_issues: digestiveIds,
       skin_issues: skinIds,
-      food_preferences: foodPref && foodPref.length ? foodPref : null,
+      habits: habitsPayload,
+      physical_activities: activitiesPayload,
+      food_preferences,
     };
-  }, [data, hcMasters, hcRows, symptomIds, autoimmuneIds, deficiencyIds, digestiveIds, skinIds, foodPreferencesText]);
+  }, [
+    data,
+    hcMasters,
+    hcRows,
+    symptomIds,
+    autoimmuneIds,
+    deficiencyIds,
+    digestiveIds,
+    skinIds,
+    habitIds,
+    physicalActivityIds,
+    habitMasters,
+    activityMasters,
+    habitExtras,
+    activityExtras,
+    foodPreferencesText,
+  ]);
 
   const onSave = async () => {
+    for (const hid of habitIds) {
+      const m = habitMasters.find((x) => x.id === hid);
+      if (m && isOtherMasterName(m.name) && !habitExtras[hid]?.other_text?.trim()) {
+        toast.error('Add details for “Other” under lifestyle habits (or uncheck it).');
+        return;
+      }
+    }
+    for (const aid of physicalActivityIds) {
+      const m = activityMasters.find((x) => x.id === aid);
+      if (m && isOtherMasterName(m.name) && !activityExtras[aid]?.other_text?.trim()) {
+        toast.error('Add details for “Other” under physical activities (or uncheck it).');
+        return;
+      }
+    }
     setSaving(true);
     try {
       const payload = buildPayload();
@@ -267,6 +464,57 @@ export default function PatientQuestionnairePage() {
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" className="z-[99999]" />
       <PageMeta title="Questionnaire" description="Patient questionnaire" />
       <PageBreadcrumb pageTitle="Questionnaire" />
+
+      <Modal
+        isOpen={otherModal !== null}
+        onClose={() => setOtherModal(null)}
+        className="max-w-lg p-6 shadow-xl dark:bg-gray-900"
+      >
+        {otherModal ? (
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {otherModal.kind === "habit" ? "Describe this habit" : "Describe this activity"}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {otherModal.kind === "habit"
+                ? "Briefly describe the lifestyle habit that is not covered by the other options."
+                : "Briefly describe the type of movement or exercise that is not listed above."}
+            </p>
+            <div>
+              <Label htmlFor="other-modal-text">Details *</Label>
+              <textarea
+                id="other-modal-text"
+                rows={4}
+                value={otherModal.draftText}
+                onChange={(e) => setOtherModal((prev) => (prev ? { ...prev, draftText: e.target.value } : prev))}
+                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 px-3 py-2 text-sm"
+                placeholder="e.g. recreational cricket twice a week"
+              />
+            </div>
+            {otherModal.kind === "activity" ? (
+              <div>
+                <Label htmlFor="other-modal-duration">Typical duration (minutes per session, optional)</Label>
+                <Input
+                  id="other-modal-duration"
+                  type="number"
+                  min={0}
+                  value={otherModal.draftDuration}
+                  onChange={(e) => setOtherModal((prev) => (prev ? { ...prev, draftDuration: e.target.value } : prev))}
+                  className="mt-1"
+                />
+              </div>
+            ) : null}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setOtherModal(null)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={confirmOtherModal}>
+                Save
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       {loading ? (
         <div className="p-6 text-gray-600 dark:text-gray-300">Loading questionnaire...</div>
@@ -345,11 +593,60 @@ export default function PatientQuestionnairePage() {
               </div>
 
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white pt-4">2. Lifestyle</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="physical_activity">Physical activity</Label>
-                  {triSelect(data.physical_activity, (v) => setField("physical_activity", v), "physical_activity")}
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Select the activities and habits that apply to you. Your care team maintains these lists. If you need something
+                that is not listed, choose <strong>Other</strong> and describe it in the pop-up.
+              </p>
+
+              <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-3">
+                <p className="font-medium text-gray-900 dark:text-white">Movement &amp; exercise</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  What types of movement or exercise do you do on a typical week? (Select all that apply.)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {activityMasters.map((m) => (
+                    <label key={m.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={physicalActivityIds.includes(m.id)}
+                        onChange={(e) => toggleActivity(m, e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span>
+                        {m.name}
+                        {isOtherMasterName(m.name) ? (
+                          <span className="text-gray-400"> (details in pop-up)</span>
+                        ) : null}
+                      </span>
+                    </label>
+                  ))}
                 </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-3">
+                <p className="font-medium text-gray-900 dark:text-white">Lifestyle habits</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Which habits describe your usual lifestyle? (For example: sleep patterns, substance use, meal skipping—your
+                  clinic configures the exact options.)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {habitMasters.map((m) => (
+                    <label key={m.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={habitIds.includes(m.id)}
+                        onChange={(e) => toggleHabit(m, e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span>
+                        {m.name}
+                        {isOtherMasterName(m.name) ? <span className="text-gray-400"> (details in pop-up)</span> : null}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="meals_per_day">Meals per day</Label>
                   <Select
@@ -561,30 +858,6 @@ export default function PatientQuestionnairePage() {
                 <div>
                   <Label htmlFor="on_medication">On medication?</Label>
                   {triSelect(data.on_medication, (v) => setField("on_medication", v), "on_medication")}
-                </div>
-              </div>
-
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Habits</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="alcohol_per_week">Alcohol (per week)</Label>
-                  <Input
-                    id="alcohol_per_week"
-                    type="number"
-                    min={0}
-                    value={data.alcohol_per_week ?? ""}
-                    onChange={(e) => setField("alcohol_per_week", e.target.value ? Number(e.target.value) : null)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="smoking_per_day">Smoking (per day)</Label>
-                  <Input
-                    id="smoking_per_day"
-                    type="number"
-                    min={0}
-                    value={data.smoking_per_day ?? ""}
-                    onChange={(e) => setField("smoking_per_day", e.target.value ? Number(e.target.value) : null)}
-                  />
                 </div>
               </div>
 

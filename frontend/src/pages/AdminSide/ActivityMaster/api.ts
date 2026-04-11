@@ -4,9 +4,7 @@ import axios from "axios";
 export interface ActivityMaster {
   id?: number;
   name: string;
-  code: string;
   sort_order: number;
-  is_other: boolean;
 }
 
 export interface PaginatedResponses<T> {

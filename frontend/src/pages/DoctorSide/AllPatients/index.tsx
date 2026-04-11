@@ -95,6 +95,20 @@ function QuestionnaireView({ data }: { data: any }) {
       ? (data.weight_kg / Math.pow(data.height_cm / 100, 2)).toFixed(1)
       : "—";
 
+  const joinNames = (arr: unknown) =>
+    Array.isArray(arr)
+      ? (arr as { name?: string; other_text?: string | null }[])
+          .map((x) => {
+            const base = x?.name || "";
+            const o = x?.other_text?.trim();
+            if (!base && !o) return "";
+            if (o) return `${base} (${o})`;
+            return base;
+          })
+          .filter(Boolean)
+          .join(", ") || "—"
+      : "—";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -108,15 +122,11 @@ function QuestionnaireView({ data }: { data: any }) {
               <InfoItem label="Height" value={`${data.height_cm} cm`} />
               <InfoItem label="Weight" value={`${data.weight_kg} kg`} />
               <InfoItem label="BMI" value={bmi} />
-              <InfoItem
-                label="Activity"
-                value={data.physical_activity ? "Active" : "Sedentary"}
-                subValue={data.work_type}
-              />
+              <InfoItem label="Work type" value={data.work_type} />
+              <InfoItem label="Physical activities" value={joinNames(data.physical_activities)} />
+              <InfoItem label="Lifestyle habits" value={joinNames(data.habits)} />
               <InfoItem label="Sleep Quality" value={data.sleep_quality} />
               <InfoItem label="Stress Level" value={data.stress_level} />
-              <InfoItem label="Alcohol" value={`${data.alcohol_per_week} / week`} />
-              <InfoItem label="Smoking" value={`${data.smoking_per_day} / day`} />
             </div>
           )}
 

@@ -83,11 +83,6 @@ const ActivityMasterPage: React.FC = () => {
       if (sortField === "sort_order" && typeof av === "number" && typeof bv === "number") {
         return sortDirection === "asc" ? av - bv : bv - av;
       }
-      if (sortField === "is_other" && typeof av === "boolean" && typeof bv === "boolean") {
-        const an = av ? 1 : 0;
-        const bn = bv ? 1 : 0;
-        return sortDirection === "asc" ? an - bn : bn - an;
-      }
       const c = String(av ?? "").localeCompare(String(bv ?? ""));
       return sortDirection === "asc" ? c : -c;
     });
@@ -116,7 +111,7 @@ const ActivityMasterPage: React.FC = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-              placeholder="Search by name or code..."
+              placeholder="Search..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -175,18 +170,6 @@ const ActivityMasterPage: React.FC = () => {
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  onClick={() => handleSort("code")}
-                >
-                  <div className="flex items-center gap-2">
-                    Code
-                    <span className="text-gray-300 dark:text-gray-600">
-                      {sortField === "code" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   onClick={() => handleSort("sort_order")}
                 >
                   <div className="flex items-center gap-2">
@@ -196,25 +179,13 @@ const ActivityMasterPage: React.FC = () => {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  onClick={() => handleSort("is_other")}
-                >
-                  <div className="flex items-center gap-2">
-                    Other?
-                    <span className="text-gray-300 dark:text-gray-600">
-                      {sortField === "is_other" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
-                    </span>
-                  </div>
-                </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500">
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500">
                     No records found
                   </TableCell>
                 </TableRow>
@@ -223,9 +194,7 @@ const ActivityMasterPage: React.FC = () => {
                   <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">{row.name}</TableCell>
-                    <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90 font-mono text-sm">{row.code}</TableCell>
                     <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90">{row.sort_order}</TableCell>
-                    <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90">{row.is_other ? "Yes" : "No"}</TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
                         <button

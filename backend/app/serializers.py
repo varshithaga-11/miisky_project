@@ -1311,11 +1311,9 @@ class UserHealthConditionSerializer(serializers.ModelSerializer):
 
 class UserQuestionnaireSerializer(serializers.ModelSerializer):
     """
-    Core questionnaire fields on UserQuestionnaire; health lists are stored on UserRegister
-    via junction tables and exposed here as read-only computed fields.
-
-    Comma-separated CharFields (meal_slots, physical_activity_types, lifestyle_habit_keys) accept
-    tokens documented in app.questionnaire_constants (normalized to snake_case on save).
+    Questionnaire fields on UserQuestionnaire; list selections (symptoms, habits, activities, etc.)
+    live on junction tables under UserRegister and are exposed as read-only computed fields.
+    Saving sends those lists in the payload; sync_user_questionnaire_relations updates junction rows.
     """
 
     health_conditions = serializers.SerializerMethodField()
@@ -1324,6 +1322,8 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
     autoimmune_diseases = serializers.SerializerMethodField()
     digestive_issues = serializers.SerializerMethodField()
     skin_issues = serializers.SerializerMethodField()
+    habits = serializers.SerializerMethodField()
+    physical_activities = serializers.SerializerMethodField()
 
     class Meta:
         model = UserQuestionnaire
@@ -1334,9 +1334,6 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "height_cm",
             "weight_kg",
             "work_type",
-            "physical_activity",
-            "physical_activity_types",
-            "physical_activity_other",
             "meals_per_day",
             "meal_slots",
             "skips_meals",
@@ -1358,23 +1355,16 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "consultant_doctor_name",
             "consultant_doctor_specialty",
             "consultant_doctor_phone",
-            "prior_dietician_consultation",
-            "dietician_name",
-            "dietician_location",
-            "dietician_phone",
             "other_health_concerns",
             "menstrual_pattern",
             "on_medication",
-            "alcohol_per_week",
-            "smoking_per_day",
-            "lifestyle_habit_keys",
-            "lifestyle_habits_other",
             "sleep_quality",
             "stress_level",
             "falls_sick_frequency",
             "food_preferences",
             "additional_notes",
-            "health_improvement_feedback",
+            "any_other_comments",
+            "any_notes_for_care_team",
             "created_on",
             "updated_on",
             "health_conditions",
@@ -1383,6 +1373,8 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "autoimmune_diseases",
             "digestive_issues",
             "skin_issues",
+            "habits",
+            "physical_activities",
         ]
         read_only_fields = ("created_on", "updated_on")
 
@@ -1398,12 +1390,7 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
         return out
 
     def validate(self, attrs):
-        from .questionnaire_constants import (
-            LIFESTYLE_HABIT_KEYS,
-            MEAL_SLOT_KEYS,
-            PHYSICAL_ACTIVITY_KEYS,
-            normalize_comma_keys,
-        )
+        from .questionnaire_constants import MEAL_SLOT_KEYS, normalize_comma_keys
 
         merged = self._merged(attrs)
         request = self.context.get("request")
@@ -1429,23 +1416,15 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             attrs["consultant_doctor_specialty"] = None
             attrs["consultant_doctor_phone"] = None
 
-        if merged.get("prior_dietician_consultation") is False:
-            attrs["dietician_name"] = None
-            attrs["dietician_location"] = None
-            attrs["dietician_phone"] = None
-
-        for key, allow in (
-            ("meal_slots", MEAL_SLOT_KEYS),
-            ("physical_activity_types", PHYSICAL_ACTIVITY_KEYS),
-            ("lifestyle_habit_keys", LIFESTYLE_HABIT_KEYS),
-        ):
-            if key not in attrs:
-                continue
-            raw = attrs[key]
+        if "meal_slots" in attrs:
+            raw = attrs["meal_slots"]
             if raw is None or raw == "":
-                attrs[key] = None
-                continue
-            attrs[key] = normalize_comma_keys(raw, allow) or None
+                attrs["meal_slots"] = None
+            elif isinstance(raw, str):
+                attrs["meal_slots"] = normalize_comma_keys(raw, MEAL_SLOT_KEYS) or None
+            elif isinstance(raw, (list, tuple)):
+                norm = [str(x).strip() for x in raw if str(x).strip() in MEAL_SLOT_KEYS]
+                attrs["meal_slots"] = norm if norm else None
 
         return attrs
 
@@ -1520,6 +1499,39 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             if r.skin_issue_id
         ]
 
+    def get_habits(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return [
+            {
+                "id": r.habit_id,
+                "name": r.habit.name,
+                "frequency": r.frequency,
+                "since_when": r.since_when,
+                "comments": r.comments,
+                "other_text": r.other_text,
+            }
+            for r in UserHabit.objects.filter(user=u).select_related("habit")
+            if r.habit_id
+        ]
+
+    def get_physical_activities(self, obj):
+        u = self._user(obj)
+        if not u:
+            return []
+        return [
+            {
+                "id": r.activity_id,
+                "name": r.activity.name,
+                "frequency": r.frequency,
+                "duration_minutes": r.duration_minutes,
+                "other_text": r.other_text,
+            }
+            for r in UserPhysicalActivity.objects.filter(user=u).select_related("activity")
+            if r.activity_id
+        ]
+
 
 class SymptomMasterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1560,7 +1572,7 @@ class HabitMasterSerializer(serializers.ModelSerializer):
 class ActivityMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActivityMaster
-        fields = ["id", "name", "code", "sort_order", "is_other"]
+        fields = ["id", "name", "sort_order"]
 
 
 class NutritionistProfileSerializer(serializers.ModelSerializer):

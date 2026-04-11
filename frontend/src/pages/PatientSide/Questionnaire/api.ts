@@ -20,6 +20,12 @@ export type QuestionnaireHealthConditionPayload = {
   comments?: string | null;
 };
 
+export type MasterNameRow = { id: number; name: string };
+
+/** Saving: master id, or id + optional fields stored on UserHabit / UserPhysicalActivity. */
+export type HabitSyncPayload = number | { id: number; other_text?: string };
+export type PhysicalActivitySyncPayload = number | { id: number; other_text?: string; duration_minutes?: number };
+
 export type UserQuestionnaire = {
   id?: number;
   user?: number;
@@ -27,8 +33,8 @@ export type UserQuestionnaire = {
   height_cm?: number | null;
   weight_kg?: number | null;
   work_type?: "sedentary" | "moderate" | "heavy" | null;
-  physical_activity?: boolean | null;
   meals_per_day?: number | null;
+  meal_slots?: string[] | string | null;
   skips_meals?: boolean | null;
   snacks_between_meals?: boolean | null;
   food_source?: "home" | "canteen" | "hotel" | null;
@@ -40,16 +46,19 @@ export type UserQuestionnaire = {
   fruits_per_day?: number | null;
   vegetables_per_day?: number | null;
   health_conditions?: QuestionnaireHealthConditionRow[] | string[] | QuestionnaireHealthConditionPayload[];
-  /** Read: names from API. Write: master ids (numbers) or names (strings) per backend sync. */
-  symptoms?: Array<string | number>;
-  deficiencies?: Array<string | number>;
-  autoimmune_diseases?: Array<string | number>;
-  digestive_issues?: Array<string | number>;
-  skin_issues?: Array<string | number>;
+  /** Read: `{ id, name }[]` from API. Write: master ids (numbers) per backend sync. */
+  symptoms?: Array<string | number | MasterNameRow>;
+  deficiencies?: Array<string | number | MasterNameRow>;
+  autoimmune_diseases?: Array<string | number | MasterNameRow>;
+  digestive_issues?: Array<string | number | MasterNameRow>;
+  skin_issues?: Array<string | number | MasterNameRow>;
+  /** GET: `{ id, name, other_text?, ... }[]`. PUT: ids and/or sync objects. */
+  habits?: Array<string | number | MasterNameRow | { id: number; other_text?: string }>;
+  physical_activities?: Array<
+    string | number | MasterNameRow | { id: number; other_text?: string; duration_minutes?: number }
+  >;
   surgery_history?: boolean | null;
   on_medication?: boolean | null;
-  alcohol_per_week?: number | null;
-  smoking_per_day?: number | null;
   sleep_quality?: "fresh" | "not_fresh" | null;
   stress_level?: "low" | "medium" | "high" | null;
   falls_sick_frequency?: "once" | "twice" | "frequent" | null;
@@ -92,3 +101,9 @@ export const fetchDigestiveIssueMasters = (): Promise<Pick<MasterRow, "id" | "na
 
 export const fetchSkinIssueMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
   getJson("api/skin-issue-master/all/");
+
+export const fetchHabitMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/habit-master/all/");
+
+export const fetchActivityMasters = (): Promise<Pick<MasterRow, "id" | "name">[]> =>
+  getJson("api/activity-master/all/");

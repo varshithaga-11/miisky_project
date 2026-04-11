@@ -8,16 +8,20 @@ from datetime import date, datetime
 from django.db import transaction
 
 from .models import (
+    ActivityMaster,
     AutoimmuneMaster,
     DeficiencyMaster,
     DigestiveIssueMaster,
+    HabitMaster,
     HealthConditionMaster,
     SkinIssueMaster,
     SymptomMaster,
     UserAutoimmune,
     UserDeficiency,
     UserDigestiveIssue,
+    UserHabit,
     UserHealthCondition,
+    UserPhysicalActivity,
     UserRegister,
     UserSkinIssue,
     UserSymptom,
@@ -49,6 +53,104 @@ def _parse_date(val):
         except ValueError:
             return None
     return None
+
+
+def _safe_int(val):
+    if val is None or val == "":
+        return None
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def _truncate255(s):
+    s = _norm_name(s)
+    if not s:
+        return None
+    return s[:255] if len(s) > 255 else s
+
+
+def _sync_user_habits(user: UserRegister, items):
+    """Sync UserHabit from list of master ids (int) or dicts with id + optional other_text, frequency, since_when, comments."""
+    UserHabit.objects.filter(user=user).delete()
+    if not items:
+        return
+    for raw in items:
+        if isinstance(raw, int):
+            try:
+                h = HabitMaster.objects.get(pk=raw)
+            except HabitMaster.DoesNotExist:
+                continue
+            UserHabit.objects.create(user=user, habit=h)
+            continue
+        if isinstance(raw, str):
+            name = _norm_name(raw)
+            if _is_placeholder_name(name):
+                continue
+            h, _ = HabitMaster.objects.get_or_create(name=name)
+            UserHabit.objects.create(user=user, habit=h)
+            continue
+        if not isinstance(raw, dict):
+            continue
+        hid = raw.get("habit_id") or raw.get("id")
+        if hid is None:
+            continue
+        try:
+            h = HabitMaster.objects.get(pk=int(hid))
+        except (HabitMaster.DoesNotExist, TypeError, ValueError):
+            continue
+        cm = raw.get("comments")
+        if isinstance(cm, str):
+            cm = cm.strip() or None
+        else:
+            cm = None
+        UserHabit.objects.create(
+            user=user,
+            habit=h,
+            other_text=_truncate255(raw.get("other_text")),
+            frequency=_safe_int(raw.get("frequency")),
+            since_when=_parse_date(raw.get("since_when")),
+            comments=cm,
+        )
+
+
+def _sync_user_physical_activities(user: UserRegister, items):
+    """Sync UserPhysicalActivity from list of master ids or dicts with id + optional other_text, frequency, duration_minutes."""
+    UserPhysicalActivity.objects.filter(user=user).delete()
+    if not items:
+        return
+    for raw in items:
+        if isinstance(raw, int):
+            try:
+                a = ActivityMaster.objects.get(pk=raw)
+            except ActivityMaster.DoesNotExist:
+                continue
+            UserPhysicalActivity.objects.create(user=user, activity=a)
+            continue
+        if isinstance(raw, str):
+            name = _norm_name(raw)
+            if _is_placeholder_name(name):
+                continue
+            a, _ = ActivityMaster.objects.get_or_create(name=name)
+            UserPhysicalActivity.objects.create(user=user, activity=a)
+            continue
+        if not isinstance(raw, dict):
+            continue
+        aid = raw.get("activity_id") or raw.get("id")
+        if aid is None:
+            continue
+        try:
+            a = ActivityMaster.objects.get(pk=int(aid))
+        except (ActivityMaster.DoesNotExist, TypeError, ValueError):
+            continue
+        UserPhysicalActivity.objects.create(
+            user=user,
+            activity=a,
+            other_text=_truncate255(raw.get("other_text")),
+            frequency=_safe_int(raw.get("frequency")),
+            duration_minutes=_safe_int(raw.get("duration_minutes")),
+        )
 
 
 def _sync_health_conditions(user: UserRegister, items):
@@ -186,3 +288,7 @@ def sync_user_questionnaire_relations(user: UserRegister, payload: dict):
                 UserSkinIssue,
                 "skin_issue",
             )
+        if "habits" in payload:
+            _sync_user_habits(user, payload.get("habits"))
+        if "physical_activities" in payload:
+            _sync_user_physical_activities(user, payload.get("physical_activities"))

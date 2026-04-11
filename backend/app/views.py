@@ -1418,6 +1418,8 @@ _QUESTIONNAIRE_REL_KEYS = frozenset(
         'autoimmune_diseases',
         'digestive_issues',
         'skin_issues',
+        'habits',
+        'physical_activities',
     )
 )
 
@@ -1430,6 +1432,8 @@ def _questionnaire_prefetch_qs():
         'user__autoimmune_diseases__disease',
         'user__digestive_issues__issue',
         'user__skin_issues__skin_issue',
+        'user__user_habits__habit',
+        'user__physical_activities__activity',
     )
 
 
@@ -1593,7 +1597,7 @@ class ActivityMasterViewSet(viewsets.ModelViewSet):
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ["name", "code"]
+    search_fields = ["name"]
 
     @action(detail=False, methods=["get"], url_path="all")
     def get_all(self, request):
@@ -3284,7 +3288,7 @@ class TemplateDownloadView(APIView):
                 "digestive-issue": ["name"],
                 "skin-issue": ["name"],
                 "habit": ["name", "sort_order"],
-                "activity": ["name", "code", "sort_order", "is_other"],
+                "activity": ["name", "sort_order"],
             },
 
             "auth": {
@@ -3633,16 +3637,16 @@ class TemplateDownloadView(APIView):
                 ["Mindfulness", "9"],
             ],
             "activity": [
-                ["Walking", "walking", "0", "FALSE"],
-                ["Running", "running", "1", "FALSE"],
-                ["Cycling", "cycling", "2", "FALSE"],
-                ["Swimming", "swimming", "3", "FALSE"],
-                ["Yoga", "yoga", "4", "FALSE"],
-                ["Gym / weights", "gym", "5", "FALSE"],
-                ["Sports", "sports", "6", "FALSE"],
-                ["Dancing", "dancing", "7", "FALSE"],
-                ["Household chores", "chores", "8", "FALSE"],
-                ["Other", "other", "99", "TRUE"],
+                ["Walking", "0"],
+                ["Running", "1"],
+                ["Cycling", "2"],
+                ["Swimming", "3"],
+                ["Yoga", "4"],
+                ["Gym / weights", "5"],
+                ["Sports", "6"],
+                ["Dancing", "7"],
+                ["Household chores", "8"],
+                ["Other", "99"],
             ],
         }
         if submenu in sample_rows:
