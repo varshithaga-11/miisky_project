@@ -363,6 +363,11 @@ const doctorNavItems: NavItem[] = [
     path: "/doctor/support-tickets",
   },
   {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/doctor/notifications",
+  },
+  {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
@@ -498,6 +503,11 @@ const supplyChainNavItems: NavItem[] = [
     name: "Support Tickets",
     path: "/supplychain/support-tickets",
   },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/supplychain/notifications",
+  },
 ];
 
 const nonPatientNavItems: NavItem[] = [
@@ -545,6 +555,11 @@ const nonPatientNavItems: NavItem[] = [
     icon: <HelpCircle className="w-5 h-5" />,
     name: "Support Tickets",
     path: "/non-patient/support-tickets",
+  },
+  {
+    icon: <Bell className="w-5 h-5" />,
+    name: "Notifications",
+    path: "/patient/notifications",
   },
 ];
 

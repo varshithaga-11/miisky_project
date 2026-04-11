@@ -4,20 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { getUserProfile } from "../../pages/profile/api";
 import { useNotifications } from "../../context/NotificationContext";
-import { getUserRoleFromToken } from "../../utils/auth";
+import { getNotificationsListPath } from "../../utils/notificationsNavigation";
 
 interface UserProfile {
   username: string;
   email: string;
   first_name: string;
   last_name: string;
-}
-
-function notificationsListPath(): string {
-  const role = getUserRoleFromToken();
-  if (role === "admin" || role === "master") return "/admin/notifications";
-  if (role === "nutritionist") return "/nutrition/notifications";
-  return "/patient/notifications";
 }
 
 export default function MasterUserDropdown() {
@@ -58,7 +51,7 @@ export default function MasterUserDropdown() {
   }
 
   const handleNotificationClick = () => {
-    navigate(notificationsListPath());
+    navigate(getNotificationsListPath());
   };
 
   const handleLogout = () => {

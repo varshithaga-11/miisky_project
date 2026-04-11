@@ -114,6 +114,8 @@ import AdminNotificationsPage from "./pages/AdminSide/Notifications/index";
 import NutritionNotificationsPage from "./pages/NutritionSide/Notification/index";
 import PatientNotificationsPage from "./pages/PatientSide/Notification/index";
 import MicroKitchenNotificationsPage from "./pages/MicroKitchenSide/Notification/index";
+import DoctorNotificationsPage from "./pages/DoctorSide/Notification/index";
+import SupplyChainNotificationsPage from "./pages/SupplyChain/Notification/index";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
 import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
@@ -327,6 +329,7 @@ export function appRoutes() {
           <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
           <Route path="doctor/all-patients" element={<DoctorAllPatientsPage />} />
           <Route path="doctor/support-tickets" element={<DoctorSupportTicketPage />} />
+          <Route path="doctor/notifications" element={<DoctorNotificationsPage />} />
           <Route path="admin/non-patient-information" element={<NonPatientInformationPage />} />
           <Route path="admin/ticket-category" element={<TicketCategoryPage />} />
           <Route path="admin/support-ticket-requests" element={<SupportTicketRequestsPage />} />
@@ -401,6 +404,7 @@ export function appRoutes() {
           <Route path="supplychain/planned-leave" element={<SupplyChainPlannedLeavePage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
           <Route path="supplychain/support-tickets" element={<SupplyChainSupportTicketPage />} />
+          <Route path="supplychain/notifications" element={<SupplyChainNotificationsPage />} />
           <Route path="supplychain/assignments" element={<Navigate to="/supplychain/daily-work" replace />} />
 
 
