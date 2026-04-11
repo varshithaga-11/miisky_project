@@ -35,11 +35,11 @@ const patientMenus: DashboardMenuItem[] = [
   // Medical
   { label: "Questionnaire", path: "/patient/questionnaire", icon: FileText, statKey: "questionnaire", color: "blue", category: "Medical" },
   { label: "Health Reports", path: "/patient/health-reports", icon: FileText, statKey: "healthReports", color: "sky", category: "Medical" },
-  { label: "Nutritionist", path: "/patient/allotted-nutritionist", icon: Users, statKey: "nutritionistAllotted", color: "violet", category: "Medical" },
-  { label: "Consultation", path: "/patient/consultation", icon: Video, statKey: "consultations", color: "rose", category: "Medical" },
+  { label: "Nutritionist", path: "/patient/nutrition-allotted", icon: Users, statKey: "nutritionistAllotted", color: "violet", category: "Medical" },
+  { label: "Consultation", path: "/patient/meeting-request", icon: Video, statKey: "consultations", color: "rose", category: "Medical" },
 
   // Dietary
-  { label: "Diet Plans", path: "/patient/diet-plans", icon: FileText, statKey: "dietPlans", color: "emerald", category: "Dietary" },
+  { label: "Diet Plans", path: "/patient/plans", icon: FileText, statKey: "dietPlans", color: "emerald", category: "Dietary" },
   { label: "Suggestions", path: "/patient/suggested-plans", icon: Sparkles, statKey: "suggestedPlans", color: "amber", category: "Dietary" },
   { label: "Meals Allotted", path: "/patient/meals-allotted", icon: Layers, statKey: "mealsAllotted", color: "teal", category: "Dietary" },
 
@@ -82,8 +82,8 @@ export default function PatientDashboard() {
 
   const topCards = [
     { title: "Health Records", value: stats?.healthReports ?? 0, icon: FileText, color: "bg-blue-600", textColor: "text-blue-600", bgColor: "bg-blue-50 dark:bg-blue-900/20", link: "/patient/health-reports" },
-    { title: "Diet Plans", value: stats?.dietPlans ?? 0, icon: Sparkles, color: "bg-emerald-600", textColor: "text-emerald-600", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", link: "/patient/diet-plans" },
-    { title: "Consultations", value: stats?.consultations ?? 0, icon: Video, color: "bg-rose-600", textColor: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20", link: "/patient/consultation" },
+    { title: "Diet Plans", value: stats?.dietPlans ?? 0, icon: Sparkles, color: "bg-emerald-600", textColor: "text-emerald-600", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", link: "/patient/plans" },
+    { title: "Consultations", value: stats?.consultations ?? 0, icon: Video, color: "bg-rose-600", textColor: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20", link: "/patient/meeting-request" },
     { title: "Kitchen Units", value: stats?.microKitchens ?? 0, icon: UtensilsCrossed, color: "bg-indigo-600", textColor: "text-indigo-600", bgColor: "bg-indigo-50 dark:bg-indigo-900/20", link: "/patient/discover-kitchens" },
   ];
 
