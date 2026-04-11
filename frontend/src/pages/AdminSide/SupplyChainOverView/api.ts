@@ -56,15 +56,6 @@ export type AdminSupplyChainOrderRow = {
   receipt_uploaded: boolean;
 };
 
-export type SupplyChainDossier = {
-  user: Record<string, unknown>;
-  kitchen_team: KitchenTeamRow[];
-  plan_assignments: unknown[];
-  orders: AdminSupplyChainOrderRow[];
-  delivery_profile: Record<string, unknown> | null;
-  planned_leaves: unknown[];
-};
-
 function apiErrorDetail(err: unknown): string | null {
   if (isAxiosError(err)) {
     const d = err.response?.data as { detail?: unknown } | undefined;
@@ -75,15 +66,40 @@ function apiErrorDetail(err: unknown): string | null {
   return null;
 }
 
-export const fetchSupplyChainDossier = async (
-  userId: number
-): Promise<SupplyChainDossier> => {
-  const url = createApiUrl(`api/admin-supply-chain-dossier/?user=${userId}`);
+async function getJson<T>(path: string, userId: number): Promise<T> {
+  const url = createApiUrl(`${path}?user=${userId}`);
   try {
     const response = await axios.get(url, { headers: await getAuthHeaders() });
-    return response.data;
+    return response.data as T;
   } catch (err) {
     const detail = apiErrorDetail(err);
-    throw new Error(detail || "Failed to load supply chain dossier.");
+    throw new Error(detail || "Request failed.");
   }
+}
+
+/** GET api/admin-supply-chain-kitchen-team/?user= */
+export const fetchAdminSupplyChainKitchenTeam = (userId: number) =>
+  getJson<KitchenTeamRow[]>("api/admin-supply-chain-kitchen-team/", userId);
+
+/** GET api/admin-supply-chain-plan-assignments/?user= */
+export const fetchAdminSupplyChainPlanAssignments = (userId: number) =>
+  getJson<unknown[]>("api/admin-supply-chain-plan-assignments/", userId);
+
+/** GET api/admin-supply-chain-orders/?user= */
+export const fetchAdminSupplyChainOrders = (userId: number) =>
+  getJson<AdminSupplyChainOrderRow[]>("api/admin-supply-chain-orders/", userId);
+
+/** GET api/admin-supply-chain-delivery-profile/?user= */
+export const fetchAdminSupplyChainDeliveryProfile = async (
+  userId: number
+): Promise<Record<string, unknown> | null> => {
+  const data = await getJson<{ delivery_profile: Record<string, unknown> | null }>(
+    "api/admin-supply-chain-delivery-profile/",
+    userId
+  );
+  return data.delivery_profile ?? null;
 };
+
+/** GET api/admin-supply-chain-planned-leaves/?user= */
+export const fetchAdminSupplyChainPlannedLeaves = (userId: number) =>
+  getJson<unknown[]>("api/admin-supply-chain-planned-leaves/", userId);

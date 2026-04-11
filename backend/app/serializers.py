@@ -1814,6 +1814,13 @@ class DeliveryProfileSerializer(serializers.ModelSerializer):
         }
 
 
+class AdminSupplyChainDeliveryProfileReadSerializer(DeliveryProfileSerializer):
+    """Admin API: delivery questionnaire / KYC snapshot for supply-chain overview."""
+
+    class Meta(DeliveryProfileSerializer.Meta):
+        pass
+
+
 class UserNutritionistMappingSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     nutritionist_details = serializers.SerializerMethodField(read_only=True)
@@ -2971,6 +2978,13 @@ class AdminSupplyChainOrderRowSerializer(serializers.ModelSerializer):
         return bool(r and getattr(r, "receipt_image", None))
 
 
+class AdminSupplyChainOrderListSerializer(AdminSupplyChainOrderRowSerializer):
+    """Admin API: orders assigned to one supply-chain delivery person (list panel)."""
+
+    class Meta(AdminSupplyChainOrderRowSerializer.Meta):
+        pass
+
+
 class OrderCommissionConfigSerializer(serializers.ModelSerializer):
     """Admin CRUD for global order commission split (platform + kitchen = 100%)."""
 
@@ -3680,6 +3694,13 @@ class AdminSupplyChainKitchenTeamRowSerializer(serializers.ModelSerializer):
         }
 
 
+class AdminSupplyChainKitchenTeamListSerializer(AdminSupplyChainKitchenTeamRowSerializer):
+    """Admin API: micro-kitchen team rows for one supply-chain user."""
+
+    class Meta(AdminSupplyChainKitchenTeamRowSerializer.Meta):
+        pass
+
+
 class DeliverySlotSerializer(serializers.ModelSerializer):
     micro_kitchen_brand = serializers.CharField(
         source="micro_kitchen.brand_name", read_only=True, allow_null=True
@@ -3742,6 +3763,16 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
                 }
             )
         return out
+
+
+class AdminSupplyChainPlanDeliveryAssignmentListSerializer(DietPlanDeliveryAssignmentSerializer):
+    """
+    Admin API: diet-plan delivery assignments for one supply-chain user
+    (allotted patients / slots). Same payload as DietPlanDeliveryAssignmentSerializer.
+    """
+
+    class Meta(DietPlanDeliveryAssignmentSerializer.Meta):
+        pass
 
 
 class KitchenMealDeliverySerializer(serializers.ModelSerializer):
@@ -3872,6 +3903,13 @@ class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
             attrs["start_time"] = None
             attrs["end_time"] = None
         return attrs
+
+
+class AdminSupplyChainPlannedLeaveListSerializer(SupplyChainDeliveryLeaveSerializer):
+    """Admin API: planned leave rows for one supply-chain user (read list)."""
+
+    class Meta(SupplyChainDeliveryLeaveSerializer.Meta):
+        pass
 
 
 class PatientFoodRecommendationSerializer(serializers.ModelSerializer):

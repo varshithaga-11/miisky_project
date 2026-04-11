@@ -2,10 +2,14 @@ import React, { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
-  fetchSupplyChainDossier,
+  fetchAdminSupplyChainDeliveryProfile,
+  fetchAdminSupplyChainKitchenTeam,
+  fetchAdminSupplyChainOrders,
+  fetchAdminSupplyChainPlanAssignments,
+  fetchAdminSupplyChainPlannedLeaves,
   getAdminSupplyChainList,
+  type AdminSupplyChainOrderRow,
   type KitchenTeamRow,
-  type SupplyChainDossier,
 } from "./api";
 import { profileFileUrl } from "../../SupplyChain/DeliveryQuestionare/api";
 import { toast, ToastContainer } from "react-toastify";
@@ -22,6 +26,7 @@ import {
   FiShoppingBag,
   FiFileText,
   FiCalendar,
+  FiChevronRight,
 } from "react-icons/fi";
 import Button from "../../../components/ui/button/Button";
 
@@ -184,36 +189,86 @@ const SupplyChainDossierModal: React.FC<{
   initialTab: DossierTab;
   onClose: () => void;
 }> = ({ person, open, initialTab, onClose }) => {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<SupplyChainDossier | null>(null);
   const [tab, setTab] = useState<DossierTab>(initialTab);
+  const [loaded, setLoaded] = useState<Record<DossierTab, boolean>>({
+    kitchens: false,
+    plans: false,
+    orders: false,
+    profile: false,
+    leave: false,
+  });
+  const [kitchenTeam, setKitchenTeam] = useState<KitchenTeamRow[] | null>(null);
+  const [plans, setPlans] = useState<unknown[] | null>(null);
+  const [orders, setOrders] = useState<AdminSupplyChainOrderRow[] | null>(null);
+  const [deliveryProfile, setDeliveryProfile] = useState<Record<string, unknown> | null | undefined>(
+    undefined
+  );
+  const [plannedLeaves, setPlannedLeaves] = useState<unknown[] | null>(null);
+  const [loadingTab, setLoadingTab] = useState<DossierTab | null>(null);
+  const [loadError, setLoadError] = useState<{ tab: DossierTab; message: string } | null>(null);
 
   useEffect(() => {
     if (open) setTab(initialTab);
   }, [open, initialTab]);
 
   useEffect(() => {
+    if (!open || !person) {
+      setLoaded({
+        kitchens: false,
+        plans: false,
+        orders: false,
+        profile: false,
+        leave: false,
+      });
+      setKitchenTeam(null);
+      setPlans(null);
+      setOrders(null);
+      setDeliveryProfile(undefined);
+      setPlannedLeaves(null);
+      setLoadError(null);
+      setLoadingTab(null);
+    }
+  }, [open, person]);
+
+  useEffect(() => {
     if (!open || !person) return;
+    if (loaded[tab]) return;
+
     let cancelled = false;
     (async () => {
-      setLoading(true);
+      setLoadingTab(tab);
+      setLoadError(null);
       try {
-        const d = await fetchSupplyChainDossier(person.id);
-        if (!cancelled) setData(d);
-      } catch (e) {
+        const uid = person.id;
+        if (tab === "kitchens") {
+          setKitchenTeam(await fetchAdminSupplyChainKitchenTeam(uid));
+        } else if (tab === "plans") {
+          setPlans(await fetchAdminSupplyChainPlanAssignments(uid));
+        } else if (tab === "orders") {
+          setOrders(await fetchAdminSupplyChainOrders(uid));
+        } else if (tab === "profile") {
+          setDeliveryProfile(await fetchAdminSupplyChainDeliveryProfile(uid));
+        } else if (tab === "leave") {
+          setPlannedLeaves(await fetchAdminSupplyChainPlannedLeaves(uid));
+        }
         if (!cancelled) {
-          const msg = e instanceof Error ? e.message : "Failed to load supply chain details";
+          setLoaded((l) => ({ ...l, [tab]: true }));
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to load.";
+        if (!cancelled) {
+          setLoadError({ tab, message: msg });
           toast.error(msg);
-          setData(null);
+          setLoaded((l) => ({ ...l, [tab]: true }));
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadingTab(null);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [open, person]);
+  }, [open, person, tab, loaded]);
 
   if (!open || !person) return null;
 
@@ -232,12 +287,15 @@ const SupplyChainDossierModal: React.FC<{
         <div className="px-6 py-5 border-b border-gray-100 dark:border-white/5 flex items-start justify-between gap-4 shrink-0">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
-              Supply chain overview
+              Full details — use tabs below
             </p>
             <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
               {name}
             </h2>
-            <p className="text-xs font-bold text-gray-500 mt-1 flex flex-wrap gap-3">
+            <p className="text-[10px] text-gray-400 font-semibold mt-1 max-w-lg">
+              Kitchens, allotted patients, orders &amp; payments, delivery questionnaire, and planned leave.
+            </p>
+            <p className="text-xs font-bold text-gray-500 mt-2 flex flex-wrap gap-3">
               <span className="flex items-center gap-1">
                 <FiMail size={12} /> {person.email}
               </span>
@@ -277,15 +335,15 @@ const SupplyChainDossierModal: React.FC<{
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {loading ? (
+          {loadingTab === tab ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="size-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
               <span className="text-xs font-black uppercase text-gray-400 tracking-widest italic">
                 Loading…
               </span>
             </div>
-          ) : !data ? (
-            <p className="text-center text-gray-500 py-12">No data.</p>
+          ) : loadError?.tab === tab ? (
+            <p className="text-center text-red-600 dark:text-red-400 text-sm py-12">{loadError.message}</p>
           ) : (
             <>
               {tab === "kitchens" && (
@@ -293,11 +351,11 @@ const SupplyChainDossierModal: React.FC<{
                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
                     Micro kitchens this person is on the delivery team for
                   </p>
-                  {data.kitchen_team.length === 0 ? (
+                  {!kitchenTeam || kitchenTeam.length === 0 ? (
                     <p className="text-sm text-gray-500">No kitchen team memberships.</p>
                   ) : (
                     <ul className="space-y-3">
-                      {data.kitchen_team.map((k: KitchenTeamRow) => (
+                      {kitchenTeam.map((k: KitchenTeamRow) => (
                         <li
                           key={k.id}
                           className="rounded-2xl border border-gray-100 dark:border-white/10 p-4 bg-gray-50/50 dark:bg-white/[0.02]"
@@ -327,11 +385,11 @@ const SupplyChainDossierModal: React.FC<{
                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
                     Diet plans where this person delivers (allotted patients)
                   </p>
-                  {data.plan_assignments.length === 0 ? (
+                  {!plans || plans.length === 0 ? (
                     <p className="text-sm text-gray-500">No plan delivery assignments.</p>
                   ) : (
                     <div className="grid gap-3">
-                      {(data.plan_assignments as Record<string, unknown>[]).map((row) => (
+                      {(plans as Record<string, unknown>[]).map((row) => (
                         <PlanAssignmentCard key={String(row.id)} row={row} />
                       ))}
                     </div>
@@ -344,7 +402,7 @@ const SupplyChainDossierModal: React.FC<{
                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
                     Orders assigned to this delivery person (with payment split snapshot)
                   </p>
-                  {data.orders.length === 0 ? (
+                  {!orders || orders.length === 0 ? (
                     <p className="text-sm text-gray-500">No orders assigned yet.</p>
                   ) : (
                     <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-white/10">
@@ -361,7 +419,7 @@ const SupplyChainDossierModal: React.FC<{
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                          {data.orders.map((o) => (
+                          {orders.map((o) => (
                             <tr key={o.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
                               <td className="px-3 py-2 font-mono">{o.id}</td>
                               <td className="px-3 py-2">{o.patient_label ?? "—"}</td>
@@ -395,9 +453,7 @@ const SupplyChainDossierModal: React.FC<{
                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4">
                     Delivery questionnaire &amp; KYC (same as supply-chain profile form)
                   </p>
-                  <DeliveryProfilePanel
-                    profile={data.delivery_profile as Record<string, unknown> | null}
-                  />
+                  <DeliveryProfilePanel profile={deliveryProfile ?? null} />
                 </div>
               )}
 
@@ -406,11 +462,11 @@ const SupplyChainDossierModal: React.FC<{
                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
                     Planned time off
                   </p>
-                  {data.planned_leaves.length === 0 ? (
+                  {!plannedLeaves || plannedLeaves.length === 0 ? (
                     <p className="text-sm text-gray-500">No leave records.</p>
                   ) : (
                     <ul className="space-y-2">
-                      {(data.planned_leaves as Record<string, unknown>[]).map((L) => (
+                      {(plannedLeaves as Record<string, unknown>[]).map((L) => (
                         <li
                           key={String(L.id)}
                           className="rounded-xl border border-gray-100 dark:border-white/10 p-3 text-sm"
@@ -465,9 +521,9 @@ const SupplyChainOverViewPage: React.FC = () => {
     fetchList(currentPage, searchTerm, limit);
   }, [currentPage, searchTerm, limit, fetchList]);
 
-  const openDossier = (person: SupplyChainRow, tab: DossierTab) => {
+  const openDetails = (person: SupplyChainRow) => {
     setSelected(person);
-    setModalTab(tab);
+    setModalTab("kitchens");
     setModalOpen(true);
   };
 
@@ -534,7 +590,7 @@ const SupplyChainOverViewPage: React.FC = () => {
                     Status
                   </th>
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic text-right">
-                    Modals
+                    Action
                   </th>
                 </tr>
               </thead>
@@ -595,43 +651,13 @@ const SupplyChainOverViewPage: React.FC = () => {
                       </td>
                       <td className="px-8 py-6">{statusBadge(r.is_active)}</td>
                       <td className="px-8 py-6 text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openDossier(r, "kitchens")}
-                            className="px-3 py-1.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[9px] font-black uppercase tracking-wider"
-                          >
-                            Kitchens
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openDossier(r, "plans")}
-                            className="px-3 py-1.5 rounded-xl bg-amber-600 text-white text-[9px] font-black uppercase tracking-wider"
-                          >
-                            Patients
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openDossier(r, "orders")}
-                            className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white text-[9px] font-black uppercase tracking-wider"
-                          >
-                            Orders
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openDossier(r, "profile")}
-                            className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white text-[9px] font-black uppercase tracking-wider"
-                          >
-                            Form
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openDossier(r, "leave")}
-                            className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white text-[9px] font-black uppercase tracking-wider"
-                          >
-                            Leave
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openDetails(r)}
+                          className="px-6 py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2 ml-auto shadow-xl shadow-black/10 dark:shadow-white/5"
+                        >
+                          View details <FiChevronRight />
+                        </button>
                       </td>
                     </tr>
                   ))
