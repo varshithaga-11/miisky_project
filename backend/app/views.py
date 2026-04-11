@@ -1572,6 +1572,36 @@ class SkinIssueMasterViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class HabitMasterViewSet(viewsets.ModelViewSet):
+    queryset = HabitMaster.objects.all().order_by("sort_order", "name")
+    serializer_class = HabitMasterSerializer
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class ActivityMasterViewSet(viewsets.ModelViewSet):
+    queryset = ActivityMaster.objects.all().order_by("sort_order", "name")
+    serializer_class = ActivityMasterSerializer
+    permission_classes = [AuthenticatedReadAdminWrite]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "code"]
+
+    @action(detail=False, methods=["get"], url_path="all")
+    def get_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class NutritionistProfileViewSet(viewsets.ModelViewSet):
     queryset = NutritionistProfile.objects.select_related('user').all()
     serializer_class = NutritionistProfileSerializer
@@ -3253,6 +3283,8 @@ class TemplateDownloadView(APIView):
                 "deficiency": ["name"],
                 "digestive-issue": ["name"],
                 "skin-issue": ["name"],
+                "habit": ["name", "sort_order"],
+                "activity": ["name", "code", "sort_order", "is_other"],
             },
 
             "auth": {
@@ -3587,7 +3619,31 @@ class TemplateDownloadView(APIView):
             ],
             "skin-issue": [
                 ["Allergy"], ["Acne prone"], ["Eczema"], ["Dandruff"], ["Dryness"], ["Itchiness"]
-            ]
+            ],
+            "habit": [
+                ["Regular exercise", "0"],
+                ["Adequate sleep", "1"],
+                ["Balanced meals", "2"],
+                ["Limited processed food", "3"],
+                ["Hydration", "4"],
+                ["Stress management", "5"],
+                ["No smoking", "6"],
+                ["Moderate alcohol", "7"],
+                ["Screen breaks", "8"],
+                ["Mindfulness", "9"],
+            ],
+            "activity": [
+                ["Walking", "walking", "0", "FALSE"],
+                ["Running", "running", "1", "FALSE"],
+                ["Cycling", "cycling", "2", "FALSE"],
+                ["Swimming", "swimming", "3", "FALSE"],
+                ["Yoga", "yoga", "4", "FALSE"],
+                ["Gym / weights", "gym", "5", "FALSE"],
+                ["Sports", "sports", "6", "FALSE"],
+                ["Dancing", "dancing", "7", "FALSE"],
+                ["Household chores", "chores", "8", "FALSE"],
+                ["Other", "other", "99", "TRUE"],
+            ],
         }
         if submenu in sample_rows:
             for row in sample_rows[submenu]:

@@ -72,6 +72,8 @@ const adminNavItems: NavItem[] = [
       { name: "Deficiencies(Minerals and Vitamins)", path: "/admin/deficiency-master" },
       { name: "Digestive issues", path: "/admin/digestive-issue-master" },
       { name: "Skin issues", path: "/admin/skin-issue-master" },
+      { name: "Lifestyle habits", path: "/admin/habit-master" },
+      { name: "Physical activities", path: "/admin/activity-master" },
     ],
   },
   {

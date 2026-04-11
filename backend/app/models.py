@@ -18,6 +18,7 @@ import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from multiselectfield import MultiSelectField
 
 logger = logging.getLogger(__name__)
 
@@ -405,6 +406,7 @@ class HealthConditionMaster(models.Model):
 
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    sort_order = models.PositiveIntegerField(null=True, blank=True, default=0)
 
     class Meta:
         constraints = [
@@ -434,6 +436,7 @@ class UserHealthCondition(models.Model):
 
 class SymptomMaster(models.Model):
     name = models.CharField(max_length=100)
+    sort_order = models.PositiveIntegerField(null=True, blank=True, default=0)
 
     class Meta:
         constraints = [
@@ -456,6 +459,7 @@ class UserSymptom(models.Model):
 
 class AutoimmuneMaster(models.Model):
     name = models.CharField(max_length=100)
+    sort_order = models.PositiveIntegerField(null=True, blank=True, default=0)
 
     class Meta:
         constraints = [
@@ -478,6 +482,7 @@ class UserAutoimmune(models.Model):
 
 class DeficiencyMaster(models.Model):
     name = models.CharField(max_length=100)
+    sort_order = models.PositiveIntegerField(null=True, blank=True, default=0)
 
     class Meta:
         constraints = [
@@ -500,6 +505,7 @@ class UserDeficiency(models.Model):
 
 class DigestiveIssueMaster(models.Model):
     name = models.CharField(max_length=100)
+    sort_order = models.PositiveIntegerField(null=True, blank=True, default=0)
 
     class Meta:
         constraints = [
@@ -522,6 +528,7 @@ class UserDigestiveIssue(models.Model):
 
 class SkinIssueMaster(models.Model):
     name = models.CharField(max_length=100)
+    sort_order = models.PositiveIntegerField(null=True, blank=True, default=0)
 
     class Meta:
         constraints = [
@@ -545,6 +552,100 @@ class UserSkinIssue(models.Model):
         return f"{self.user} - {self.skin_issue.name}"
 
 
+
+class HabitMaster(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.name
+
+class UserHabit(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_habits'
+    )
+
+    habit = models.ForeignKey(
+        HabitMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    frequency = models.IntegerField(null=True, blank=True)
+    since_when = models.DateField(null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+
+    other_text = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'habit'],
+                name='uniq_user_habit'
+            )
+        ]
+
+    def __str__(self):
+        habit_name = self.habit.name if self.habit else "Deleted Habit"
+        user_name = str(self.user) if self.user else "Unknown User"
+        return f"{user_name} - {habit_name}"
+
+
+class ActivityMaster(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=50, unique=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    # 🔥 dynamic control
+    is_other = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+class UserPhysicalActivity(models.Model):
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='physical_activities'
+    )
+
+    activity = models.ForeignKey(
+        ActivityMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    # 🔹 optional extra info (future-ready)
+    frequency = models.IntegerField(null=True, blank=True)
+    duration_minutes = models.IntegerField(null=True, blank=True)
+
+    # 🔹 for "Others"
+    other_text = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'activity'],
+                name='uniq_user_activity'
+            )
+        ]
+
+    def __str__(self):
+        activity_name = self.activity.name if self.activity else "Deleted Activity"
+        user_name = str(self.user) if self.user else "Unknown User"
+        return f"{user_name} - {activity_name}"
+
+
+
 class UserQuestionnaire(models.Model):
     user = models.OneToOneField(UserRegister, on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -565,8 +666,23 @@ class UserQuestionnaire(models.Model):
         blank=True
     )
 
-    physical_activity = models.BooleanField(null=True, blank=True)
+
+    MEAL_SLOT_CHOICES = [
+        ("early_morning", "Early Morning"),
+        ("breakfast", "Breakfast"),
+        ("mid_morning", "Mid Morning"),
+        ("lunch", "Lunch"), 
+        ("evening_snacks", "Evening Snacks"),
+        ("dinner", "Dinner"),
+        ("none", "None"),
+    ]
+
     meals_per_day = models.IntegerField(null=True, blank=True)
+    meal_slots = MultiSelectField(
+        choices=MEAL_SLOT_CHOICES,
+        null=True,
+        blank=True
+    )
     skips_meals = models.BooleanField(null=True, blank=True)
     snacks_between_meals = models.BooleanField(null=True, blank=True)
 
@@ -593,6 +709,18 @@ class UserQuestionnaire(models.Model):
         blank=True
     )
 
+    non_veg_frequency = models.CharField(
+        max_length=40,
+        choices=[
+            ('daily', 'Daily'),
+            ('three_four_times_week', '3–4 times a week'),
+            ('one_two_times_week', '1–2 times a week'),
+            ('occasional', 'Occasionally (once in 2–3 weeks)'),
+        ],
+        null=True,
+        blank=True,
+    )
+
     consumes_egg = models.BooleanField(null=True, blank=True)
     consumes_dairy = models.BooleanField(null=True, blank=True)
 
@@ -604,11 +732,31 @@ class UserQuestionnaire(models.Model):
 
     # 🔹 MEDICAL FLAGS
     surgery_history = models.BooleanField(null=True, blank=True)
-    on_medication = models.BooleanField(null=True, blank=True)
+    surgery_details = models.TextField(null=True, blank=True)
 
-    # 🔹 HABITS
-    alcohol_per_week = models.IntegerField(null=True, blank=True)
-    smoking_per_day = models.IntegerField(null=True, blank=True)
+    medicine_allergy = models.BooleanField(null=True, blank=True)
+    medicine_allergy_details = models.TextField(null=True, blank=True)
+
+    consulted_doctor = models.BooleanField(null=True, blank=True)
+    consultant_doctor_name = models.CharField(max_length=200, null=True, blank=True)
+    consultant_doctor_specialty = models.CharField(max_length=200, null=True, blank=True)
+    consultant_doctor_phone = models.CharField(max_length=30, null=True, blank=True)
+
+    
+
+
+    menstrual_pattern = models.CharField(
+        max_length=20,
+        choices=[
+            ('heavy', 'Heavy bleeding'),
+            ('very_less', 'Very less bleeding'),
+            ('none', 'None'),
+        ],
+        null=True,
+        blank=True,
+    )
+
+    on_medication = models.BooleanField(null=True, blank=True)
 
     # 🔹 WELL-BEING
     sleep_quality = models.CharField(
@@ -644,13 +792,20 @@ class UserQuestionnaire(models.Model):
     )
 
     # 🔹 FOOD PREFERENCES
-    food_preferences = models.JSONField(null=True, blank=True)
+    food_preferences = models.TextField(null=True, blank=True)
 
     # 🔹 EXTRA NOTES
     additional_notes = models.TextField(null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
+
+
+    other_health_concerns = models.TextField(null=True, blank=True)
+
+    any_other_comments = models.TextField(null=True, blank=True)
+
+    any_notes_for_care_team = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user} Questionnaire"
