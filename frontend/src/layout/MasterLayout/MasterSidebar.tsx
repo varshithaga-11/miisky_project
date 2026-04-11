@@ -130,6 +130,7 @@ const adminNavItems: NavItem[] = [
       { name: "Non-Patient Users", path: "/admin/non-patient-information" },
       { name: "Micro Kitchens", path: "/admin/micro-kitchen-information" },
       { name: "Nutritionists", path: "/admin/nutrition-information" },
+      { name: "Doctors", path: "/admin/doctor-overview" },
     ],
   },
   {

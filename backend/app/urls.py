@@ -14,6 +14,7 @@ router.register(r'usermanagement', UserManagementViewSet, basename='usermanageme
 router.register(r'admin-patients', AdminPatientOverviewViewSet, basename='admin-patients')
 router.register(r'admin-microkitchen-patients', AdminMicroKitchenPatientsViewSet, basename='admin-microkitchen-patients')
 router.register(r'admin-nutritionists', AdminNutritionistOverviewViewSet, basename='admin-nutritionists')
+router.register(r'admin-doctors', AdminDoctorOverviewViewSet, basename='admin-doctors')
 router.register(r'micro-kitchen-patients', MicroKitchenPatientsViewSet, basename='micro-kitchen-patients')
 router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
 router.register(r'health-condition-master', HealthConditionMasterViewSet, basename='health-condition-master')
@@ -208,6 +209,11 @@ urlpatterns = [
         "admin-nutritionist-payouts-nopaginate/",
         views.AdminNutritionistPayoutsNoPaginationView.as_view(),
         name="admin-nutritionist-payouts-nopaginate",
+    ),
+    path(
+        "admin-doctor-patient-comments-nopaginate/",
+        views.AdminDoctorPatientCommentsNoPaginationView.as_view(),
+        name="admin-doctor-patient-comments-nopaginate",
     ),
     # Admin patient panels (no pagination for modal display)
     path(

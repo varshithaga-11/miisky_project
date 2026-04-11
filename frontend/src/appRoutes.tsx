@@ -99,6 +99,7 @@ import ReviewsPage from "./pages/MicroKitchenSide/Reviews/index";
 import AvailableFoodsPage from "./pages/MicroKitchenSide/AvailableFoods/index";
 import MicroKitchenInformationPage from "./pages/AdminSide/MicroKitchenInformation/index";
 import NutritionInformationPage from "./pages/AdminSide/NutritionInformation/index";
+import DoctorOverViewPage from "./pages/AdminSide/DoctorOverView/index";
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
 import DoctorAllPatientsPage from "./pages/DoctorSide/AllPatients/index";
@@ -280,6 +281,7 @@ export function appRoutes() {
           <Route path="admin/usermanagement" element={<UserManagementPage />} />
           <Route path="admin/micro-kitchen-information" element={<MicroKitchenInformationPage />} />
           <Route path="admin/nutrition-information" element={<NutritionInformationPage />} />
+          <Route path="admin/doctor-overview" element={<DoctorOverViewPage />} />
           <Route path="admin/country" element={<CountryManagementPage />} />
           <Route path="admin/health-condition-master" element={<HealthConditionMasterPage />} />
           <Route path="admin/symptom-master" element={<SymptomMasterPage />} />

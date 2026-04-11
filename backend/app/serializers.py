@@ -2316,6 +2316,43 @@ class NutritionistReviewSerializer(serializers.ModelSerializer):
         return out
 
 
+class AdminDoctorPatientCommentListSerializer(serializers.ModelSerializer):
+    """Admin: doctor reviews on patients with patient context for overview UI."""
+
+    patient_details = serializers.SerializerMethodField()
+    report_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NutritionistReview
+        fields = ['id', 'comments', 'created_on', 'patient_details', 'report_details']
+
+    def get_patient_details(self, obj):
+        u = obj.user
+        if not u:
+            return None
+        return {
+            'id': u.id,
+            'username': u.username,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
+            'email': u.email,
+            'mobile': u.mobile,
+        }
+
+    def get_report_details(self, obj):
+        out = []
+        for r in obj.reports.all().order_by('-uploaded_on'):
+            url = r.report_file.url if r.report_file else None
+            out.append({
+                'id': r.id,
+                'title': r.title,
+                'report_type': r.report_type,
+                'uploaded_on': r.uploaded_on,
+                'report_file': url,
+            })
+        return out
+
+
 class ClinicalReviewHealthReportSerializer(serializers.ModelSerializer):
     """Minimal health report payload for nutritionist clinical review dashboard."""
 

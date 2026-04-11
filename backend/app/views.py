@@ -6390,6 +6390,41 @@ class AdminNutritionistOverviewViewSet(viewsets.ReadOnlyModelViewSet):
         return UserManagementSerializer
 
 
+class AdminDoctorOverviewViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin-only: list users with role=doctor."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
+
+    def get_queryset(self):
+        return UserRegister.objects.filter(role='doctor').order_by('-id')
+
+    def get_serializer_class(self):
+        return UserManagementSerializer
+
+
+class AdminDoctorPatientCommentsNoPaginationView(APIView):
+    """Admin-only: patient comments left by a doctor (NutritionistReview.doctor)."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        doctor_id = request.query_params.get("doctor")
+        if not doctor_id:
+            return Response([])
+        qs = (
+            NutritionistReview.objects.filter(doctor_id=doctor_id)
+            .select_related("user")
+            .prefetch_related("reports")
+            .order_by("-created_on")
+        )
+        rows = [r for r in qs if (r.comments or "").strip()]
+        serializer = AdminDoctorPatientCommentListSerializer(rows, many=True)
+        return Response(serializer.data)
+
+
 # ── Support Tickets ───────────────────────────────────────────────────────────
 
 class TicketCategoryViewSet(viewsets.ModelViewSet):
