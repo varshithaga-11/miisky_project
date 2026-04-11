@@ -91,10 +91,18 @@ const HealthReportUploadPage: React.FC = () => {
     const filteredReports = React.useMemo(() => {
         if (!searchTerm.trim()) return reports;
         const q = searchTerm.toLowerCase();
-        return reports.filter(r => 
-            (r.title && r.title.toLowerCase().includes(q)) || 
-            (r.report_type && r.report_type.toLowerCase().includes(q))
-        );
+        return reports.filter((r) => {
+            if ((r.title && r.title.toLowerCase().includes(q)) || (r.report_type && r.report_type.toLowerCase().includes(q))) {
+                return true;
+            }
+            return (r.reviews || []).some((rv) => {
+                const text = [rv.comments, rv.nutritionist_name, rv.doctor_name, rv.nutritionist_only_name]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+                return text.includes(q);
+            });
+        });
     }, [reports, searchTerm]);
 
     return (
@@ -182,7 +190,7 @@ const HealthReportUploadPage: React.FC = () => {
                                 <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                                 <input
                                     type="text"
-                                    placeholder="Search by title or type..."
+                                    placeholder="Search title, type, or feedback..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full pl-14 pr-12 py-4 bg-white dark:bg-gray-800 border-2 border-transparent focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 rounded-[22px] outline-none transition-all font-bold text-sm shadow-xl shadow-gray-200/40 dark:shadow-none dark:text-white placeholder:font-medium placeholder:text-gray-400"
@@ -247,28 +255,57 @@ const HealthReportUploadPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {/* Nutritionist Comments Section */}
+                                        {/* Nutritionist & doctor comments (same API row; role distinguishes who wrote it) */}
                                         {report.reviews && report.reviews.length > 0 && (
                                             <div className="bg-gray-50 dark:bg-gray-900/40 rounded-3xl p-5 space-y-4 border border-gray-100 dark:border-white/5">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <FiMessageSquare className="text-blue-500 size-4" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nutritionist Feedback</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                        Feedback from your care team
+                                                    </span>
                                                 </div>
-                                                {report.reviews.map((review) => (
-                                                    <div key={review.id} className="relative pl-4 border-l-2 border-blue-500/30">
-                                                        <div className="flex justify-between items-center mb-1">
-                                                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
-                                                                {review.nutritionist_name}
-                                                            </span>
-                                                            <span className="text-[8px] font-bold text-gray-400">
-                                                                {new Date(review.created_on).toLocaleDateString()}
-                                                            </span>
+                                                {report.reviews.map((review) => {
+                                                    const role = review.reviewer_role ?? "unknown";
+                                                    const isDoctor = role === "doctor";
+                                                    const isNutritionist = role === "nutritionist";
+                                                    const badgeClass = isDoctor
+                                                        ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200/60"
+                                                        : isNutritionist
+                                                          ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-blue-200/40"
+                                                          : "text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/30 border-violet-200/40";
+                                                    const borderClass = isDoctor
+                                                        ? "border-emerald-500/35"
+                                                        : isNutritionist
+                                                          ? "border-blue-500/30"
+                                                          : "border-violet-500/30";
+                                                    const roleLabel = isDoctor
+                                                        ? "Doctor"
+                                                        : isNutritionist
+                                                          ? "Nutritionist"
+                                                          : "Clinical";
+                                                    return (
+                                                        <div key={review.id} className={`relative pl-4 border-l-2 ${borderClass}`}>
+                                                            <div className="flex flex-wrap justify-between items-center gap-2 mb-1">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <span
+                                                                        className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${badgeClass}`}
+                                                                    >
+                                                                        {roleLabel}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest leading-none bg-white/80 dark:bg-gray-800/80 px-2 py-1 rounded">
+                                                                        {review.nutritionist_name}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-[8px] font-bold text-gray-400 shrink-0">
+                                                                    {new Date(review.created_on).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed italic">
+                                                                &ldquo;{review.comments}&rdquo;
+                                                            </p>
                                                         </div>
-                                                        <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed italic">
-                                                            "{review.comments}"
-                                                        </p>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
@@ -281,8 +318,10 @@ const HealthReportUploadPage: React.FC = () => {
                             <FiCheckCircle className="absolute -bottom-6 -right-6 size-48 opacity-10" />
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                                 <div className="text-center md:text-left">
-                                    <h3 className="text-2xl font-black mb-2">Nutritionist Review</h3>
-                                    <p className="text-blue-100 font-medium max-w-md">Your nutritionist will automatically be notified of any new uploads and will provide feedback in your next session.</p>
+                                    <h3 className="text-2xl font-black mb-2">Care team review</h3>
+                                    <p className="text-blue-100 font-medium max-w-md">
+                                        Your nutritionist and care doctors can leave comments on your uploads here when they review your file.
+                                    </p>
                                 </div>
                                 <div className="px-8 py-4 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20">
                                     <span className="text-4xl font-black">{reports.length}</span>
@@ -302,7 +341,7 @@ const HealthReportUploadPage: React.FC = () => {
                 title="Delete Medical Document?"
                 message={reportToDelete ? (
                     (reportToDelete.reviews || []).length > 0
-                        ? `This report has ${reportToDelete.reviews?.length} feedback comment(s) from your nutritionist. Deleting it will also permanently remove this feedback. Are you sure?`
+                        ? `This report has ${reportToDelete.reviews?.length} comment(s) from your care team (nutritionist or doctor). Deleting it will also permanently remove this feedback. Are you sure?`
                         : `Are you sure you want to delete "${reportToDelete.title || 'this report'}"? This action cannot be undone.`
                 ) : ""}
                 confirmText="Delete Document"

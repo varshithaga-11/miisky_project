@@ -3633,6 +3633,21 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
+    @staticmethod
+    def _prefetch_report_reviews(queryset):
+        """Prefetch M2M reviews with reviewer users so list/detail serializers stay efficient."""
+        from django.db.models import Prefetch
+        from .models import NutritionistReview
+
+        return queryset.prefetch_related(
+            Prefetch(
+                "reviews",
+                queryset=NutritionistReview.objects.select_related(
+                    "nutritionist", "doctor"
+                ).order_by("-created_on"),
+            )
+        )
+
     def get_queryset(self):
         user = self.request.user
         queryset = self.queryset
@@ -3643,12 +3658,12 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         if user.role == "admin":
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
-            return queryset
+            return self._prefetch_report_reviews(queryset)
 
         if user.role == "doctor":
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
-            return queryset
+            return self._prefetch_report_reviews(queryset)
             
         if user.role == "nutritionist":
             from django.db.models import Q
@@ -3683,10 +3698,10 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             
-            return queryset
+            return self._prefetch_report_reviews(queryset)
             
         # Patients see their own reports
-        return queryset.filter(user=user)
+        return self._prefetch_report_reviews(queryset.filter(user=user))
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

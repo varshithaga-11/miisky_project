@@ -5,7 +5,12 @@ export type HealthReportReview = {
   id: number;
   comments: string;
   created_on: string;
+  /** Display name for the reviewer (nutritionist or doctor). */
   nutritionist_name: string;
+  nutritionist_only_name?: string | null;
+  doctor_name?: string | null;
+  /** Who wrote this comment when the review was saved. */
+  reviewer_role?: "nutritionist" | "doctor" | "unknown";
 };
 
 export type PatientHealthReport = {

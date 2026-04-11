@@ -2117,7 +2117,7 @@ class PatientHealthReportSerializer(serializers.ModelSerializer):
         return None
 
     def get_reviews(self, obj):
-        # Return reviews where this report is included
+        # Return reviews where this report is included (nutritionist and/or doctor comments share one `comments` field)
         from .models import NutritionistReview
         revs = obj.reviews.all().select_related('nutritionist', 'doctor').order_by('-created_on')
         out = []
@@ -2132,13 +2132,21 @@ class PatientHealthReportSerializer(serializers.ModelSerializer):
                 if r.doctor
                 else None
             )
+            reviewer_role = (
+                "nutritionist"
+                if r.nutritionist_id
+                else ("doctor" if r.doctor_id else "unknown")
+            )
+            display_name = (nut_name or doc_name or "Unknown").strip() or "Unknown"
             out.append({
                 "id": r.id,
                 "comments": r.comments,
                 "created_on": r.created_on,
-                "nutritionist_name": nut_name or doc_name or "Unknown",
+                # Combined display name for the reviewer (backward compatible with older clients)
+                "nutritionist_name": display_name,
+                "nutritionist_only_name": nut_name,
                 "doctor_name": doc_name,
-                "reviewer_role": "nutritionist" if r.nutritionist else ("doctor" if r.doctor else "unknown"),
+                "reviewer_role": reviewer_role,
             })
         return out
 
@@ -2215,13 +2223,20 @@ class ClinicalReviewHealthReportSerializer(serializers.ModelSerializer):
                 if r.doctor
                 else None
             )
+            reviewer_role = (
+                'nutritionist'
+                if r.nutritionist_id
+                else ('doctor' if r.doctor_id else 'unknown')
+            )
+            display_name = (nut_name or doc_name or 'Unknown').strip() or 'Unknown'
             rows.append({
                 'id': r.id,
                 'comments': r.comments,
                 'created_on': r.created_on,
-                'nutritionist_name': nut_name or doc_name or 'Unknown',
+                'nutritionist_name': display_name,
+                'nutritionist_only_name': nut_name,
                 'doctor_name': doc_name,
-                'reviewer_role': 'nutritionist' if r.nutritionist else ('doctor' if r.doctor else 'unknown'),
+                'reviewer_role': reviewer_role,
             })
         return rows
 
