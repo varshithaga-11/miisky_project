@@ -242,7 +242,8 @@ const SeparateOrdersPage: React.FC = () => {
                 ) : (
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-gray-800 rounded-[32px] overflow-hidden border border-gray-100 dark:border-white/5 shadow-xl">
-                            <Table>
+                            <div className="overflow-x-auto overscroll-x-contain">
+                                <Table className="min-w-[900px]">
                                 <TableHeader>
                                     <TableRow className="bg-gray-50/50 dark:bg-gray-900/40">
                                         <TableCell isHeader className="px-6 py-4">Order ID</TableCell>
@@ -465,6 +466,7 @@ const SeparateOrdersPage: React.FC = () => {
                                     ))}
                                 </TableBody>
                             </Table>
+                            </div>
                         </div>
 
                         {/* Pagination Buttons */}

@@ -93,8 +93,12 @@ interface PatientAllotted {
     distance_km?: number | null;
 }
 
+const PATIENT_LIST_PAGE_SIZE = 5;
+
 const MicroKitchenPatientsPage: React.FC = () => {
     const [allotments, setAllotments] = useState<PatientAllotted[]>([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [selectedPatient, setSelectedPatient] = useState<PatientAllotted | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -107,15 +111,17 @@ const MicroKitchenPatientsPage: React.FC = () => {
     const [currentCalMonth, setCurrentCalMonth] = useState(new Date().getMonth() + 1);
     const [currentCalYear, setCurrentCalYear] = useState(new Date().getFullYear());
 
-    const fetchAllotments = useCallback(async (search: string) => {
+    const fetchAllotments = useCallback(async (search: string, page: number) => {
         setLoading(true);
         try {
             const url = createApiUrl("api/micro-kitchen-patients/");
-            const params: Record<string, string | number> = { page: 1, limit: 500 };
+            const params: Record<string, string | number> = { page, limit: PATIENT_LIST_PAGE_SIZE };
             const q = search.trim();
             if (q) params.search = q;
             const response = await axios.get(url, { headers: await getAuthHeaders(), params });
             setAllotments(response.data.results || []);
+            const c = response.data.count;
+            setTotalItems(typeof c === "number" ? c : 0);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load allotted patients");
@@ -153,11 +159,17 @@ const MicroKitchenPatientsPage: React.FC = () => {
     };
 
     useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    useEffect(() => {
         const timer = setTimeout(() => {
-            fetchAllotments(searchTerm);
+            fetchAllotments(searchTerm, currentPage);
         }, searchTerm ? 500 : 0);
         return () => clearTimeout(timer);
-    }, [searchTerm, fetchAllotments]);
+    }, [searchTerm, currentPage, fetchAllotments]);
+
+    const totalPages = Math.max(1, Math.ceil(totalItems / PATIENT_LIST_PAGE_SIZE));
 
     const getMealIcon = (name: string = "") => {
         const n = name.toLowerCase();
@@ -197,7 +209,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                 />
                             </div>
 
-                            <div className="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-2 no-scrollbar">
+                            <div className="space-y-3">
                                 {loading ? (
                                     [1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-50 dark:bg-gray-900/50 rounded-3xl animate-pulse" />)
                                 ) : allotments.length === 0 ? (
@@ -230,6 +242,36 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                     </button>
                                 ))}
                             </div>
+
+                            {totalItems > 0 && (
+                                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-gray-100 dark:border-white/5">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                        {(currentPage - 1) * PATIENT_LIST_PAGE_SIZE + 1}&ndash;
+                                        {Math.min(currentPage * PATIENT_LIST_PAGE_SIZE, totalItems)} of {totalItems}
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            disabled={currentPage <= 1 || loading}
+                                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                            className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+                                        >
+                                            Previous
+                                        </button>
+                                        <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 tabular-nums px-1">
+                                            {currentPage} / {totalPages}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            disabled={currentPage >= totalPages || loading}
+                                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                            className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
