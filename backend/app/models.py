@@ -13,9 +13,13 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Sum
+import logging
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 class Country(models.Model):
@@ -3462,6 +3466,7 @@ class PatientFoodRecommendation(models.Model):
 def create_order_payment_snapshot(sender, instance, created, **kwargs):
     """
     Auto-create immutable payout split snapshot when a new order is created.
+    Skips if no active commission config exists (order still saves; set config in admin).
     """
     if not created:
         return
@@ -3469,7 +3474,15 @@ def create_order_payment_snapshot(sender, instance, created, **kwargs):
     if OrderPaymentSnapshot.objects.filter(order=instance).exists():
         return
 
-    config = OrderCommissionConfig.get_active()
+    try:
+        config = OrderCommissionConfig.get_active()
+    except ValueError as e:
+        logger.warning(
+            "OrderPaymentSnapshot skipped for order %s: %s",
+            getattr(instance, "pk", instance),
+            e,
+        )
+        return
 
     food_subtotal = Decimal(str(instance.total_amount or 0))
     delivery_charge = Decimal(str(instance.delivery_charge or 0))

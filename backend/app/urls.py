@@ -98,6 +98,34 @@ urlpatterns = [
         views.AdminAllNutritionistsViewSet.as_view({"get": "list"}),
         name="admin-all-nutritionists",
     ),
+    # Admin order commission & snapshots (explicit routes — avoids router registration edge cases)
+    path(
+        "order-commission-config/",
+        OrderCommissionConfigViewSet.as_view({"get": "list", "post": "create"}),
+        name="order-commission-config-list",
+    ),
+    path(
+        "order-commission-config/<int:pk>/",
+        OrderCommissionConfigViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="order-commission-config-detail",
+    ),
+    path(
+        "order-payment-snapshot/",
+        OrderPaymentSnapshotAdminViewSet.as_view({"get": "list"}),
+        name="order-payment-snapshot-list",
+    ),
+    path(
+        "order-payment-snapshot/<int:pk>/",
+        OrderPaymentSnapshotAdminViewSet.as_view({"get": "retrieve"}),
+        name="order-payment-snapshot-detail",
+    ),
     path('', include(router.urls)),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),

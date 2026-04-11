@@ -1,14 +1,18 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FiSearch } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 import {
   createOrderCommissionConfig,
   getOrderCommissionConfigs,
   getOrderPaymentSnapshots,
   OrderCommissionConfig,
   OrderPaymentSnapshot,
+  SnapshotDatePeriod,
   updateOrderCommissionConfig,
 } from "./api";
 
@@ -16,6 +20,26 @@ const toNumber = (v: string): number => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
+
+const fmtRs = (s: string | undefined) => {
+  const n = Number(s);
+  if (!Number.isFinite(n)) return "—";
+  return `₹${n.toFixed(2)}`;
+};
+
+const PERIOD_OPTIONS: { value: SnapshotDatePeriod; label: string }[] = [
+  { value: "all", label: "All dates" },
+  { value: "today", label: "Today" },
+  { value: "tomorrow", label: "Tomorrow" },
+  { value: "this_week", label: "This week" },
+  { value: "last_week", label: "Last week" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "next_month", label: "Next month" },
+  { value: "this_quarter", label: "This quarter" },
+  { value: "this_year", label: "This year" },
+  { value: "custom_range", label: "Custom range" },
+];
 
 export default function OrderCommissionPage() {
   const [configs, setConfigs] = useState<OrderCommissionConfig[]>([]);
@@ -32,6 +56,24 @@ export default function OrderCommissionPage() {
   const [snapshotLoading, setSnapshotLoading] = useState(true);
   const [snapshotPage, setSnapshotPage] = useState(1);
   const [snapshotTotalPages, setSnapshotTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [billingMonth, setBillingMonth] = useState("");
+  const [period, setPeriod] = useState<SnapshotDatePeriod>("all");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [snapshotSummary, setSnapshotSummary] = useState<{
+    total_orders?: number;
+    total_food_subtotal?: string;
+    total_delivery_charge?: string;
+    total_grand_total?: string;
+    total_amount?: string;
+    total_platform_amount?: string;
+    total_kitchen_amount?: string;
+  }>({});
 
   const activeConfig = useMemo(
     () => configs.find((c) => c.is_active) ?? configs[0] ?? null,
@@ -55,24 +97,60 @@ export default function OrderCommissionPage() {
     }
   };
 
-  const loadSnapshots = async (page = 1) => {
-    setSnapshotLoading(true);
-    try {
-      const data = await getOrderPaymentSnapshots(page, 10, "");
-      setSnapshots(data.results || []);
-      setSnapshotTotalPages(data.total_pages || 1);
-      setSnapshotPage(page);
-    } catch {
-      setSnapshots([]);
-    } finally {
-      setSnapshotLoading(false);
+  const snapshotDateOptions = useMemo(() => {
+    if (billingMonth.trim()) return { billing_month: billingMonth.trim() };
+    if (period === "custom_range") {
+      return { period, start_date: customStart, end_date: customEnd };
     }
-  };
+    if (period !== "all") return { period };
+    return undefined;
+  }, [billingMonth, period, customStart, customEnd]);
+
+  const loadSnapshots = useCallback(
+    async (page = 1, size = pageSize, search = searchTerm) => {
+      setSnapshotLoading(true);
+      try {
+        const data = await getOrderPaymentSnapshots(page, size, search, snapshotDateOptions);
+        setSnapshots(data.results || []);
+        setSnapshotTotalPages(data.total_pages || 1);
+        setTotalItems(data.count || 0);
+        setSnapshotPage(page);
+        setSnapshotSummary({
+          total_orders: data.total_orders,
+          total_food_subtotal: data.total_food_subtotal,
+          total_delivery_charge: data.total_delivery_charge,
+          total_grand_total: data.total_grand_total,
+          total_amount: data.total_amount,
+          total_platform_amount: data.total_platform_amount,
+          total_kitchen_amount: data.total_kitchen_amount,
+        });
+      } catch {
+        setSnapshots([]);
+        setSnapshotSummary({});
+      } finally {
+        setSnapshotLoading(false);
+      }
+    },
+    [snapshotDateOptions, pageSize, searchTerm]
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== searchInput) {
+        setSearchTerm(searchInput);
+        setSnapshotPage(1);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, searchTerm]);
 
   useEffect(() => {
     void loadConfigs();
-    void loadSnapshots(1);
   }, []);
+
+  useEffect(() => {
+    void loadSnapshots(snapshotPage, pageSize, searchTerm);
+  }, [snapshotPage, pageSize, searchTerm, loadSnapshots]);
 
   useEffect(() => {
     if (!activeConfig) return;
@@ -188,51 +266,190 @@ export default function OrderCommissionPage() {
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">Order Payment Snapshots</h3>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Frozen split per order at creation time. Past orders remain unchanged even if config changes later.
-          </p>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Order Payment Snapshots</h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Frozen split per order at creation time. Past orders remain unchanged even if config changes later.
+              </p>
+            </div>
 
-          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 dark:border-white/[0.05]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="relative">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 sm:w-64"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label className="whitespace-nowrap text-sm dark:text-gray-400">Show:</Label>
+                <Select
+                  value={String(pageSize)}
+                  onChange={(val) => {
+                    setPageSize(Number(val));
+                    setSnapshotPage(1);
+                  }}
+                  options={[
+                    { value: "5", label: "5" },
+                    { value: "10", label: "10" },
+                    { value: "25", label: "25" },
+                    { value: "50", label: "50" },
+                  ]}
+                  className="w-20"
+                />
+                <span className="whitespace-nowrap text-sm text-gray-600">entries</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6 grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-white/[0.08] dark:bg-gray-900/40 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label className="text-xs text-gray-500 dark:text-gray-400">Calendar month</Label>
+              <input
+                type="month"
+                value={billingMonth}
+                onChange={(e) => {
+                  setBillingMonth(e.target.value);
+                  setSnapshotPage(1);
+                }}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500">If set, overrides the period preset (filters snapshot date).</p>
+            </div>
+            <div className="md:col-span-1 lg:col-span-2">
+              <Label className="text-xs text-gray-500 dark:text-gray-400">Period (same as order reports)</Label>
+              <Select
+                value={period}
+                onChange={(val) => {
+                  setPeriod(val as SnapshotDatePeriod);
+                  setSnapshotPage(1);
+                }}
+                options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                className="mt-1 w-full"
+              />
+            </div>
+            {period === "custom_range" && (
+              <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-2">
+                <div>
+                  <Label className="text-xs text-gray-500">From</Label>
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => {
+                      setCustomStart(e.target.value);
+                      setSnapshotPage(1);
+                    }}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">To</Label>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => {
+                      setCustomEnd(e.target.value);
+                      setSnapshotPage(1);
+                    }}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/[0.08] dark:bg-gray-900/50">
+              <p className="text-[10px] font-semibold uppercase text-gray-500">Orders (filter)</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{snapshotSummary.total_orders ?? "—"}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/[0.08] dark:bg-gray-900/50">
+              <p className="text-[10px] font-semibold uppercase text-gray-500">Food subtotal</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{fmtRs(snapshotSummary.total_food_subtotal)}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/[0.08] dark:bg-gray-900/50">
+              <p className="text-[10px] font-semibold uppercase text-gray-500">Delivery</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{fmtRs(snapshotSummary.total_delivery_charge)}</p>
+            </div>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+              <p className="text-[10px] font-semibold uppercase text-emerald-800 dark:text-emerald-300">Total amount</p>
+              <p className="text-lg font-bold text-emerald-900 dark:text-emerald-200">
+                {fmtRs(snapshotSummary.total_amount ?? snapshotSummary.total_grand_total)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-950/30">
+              <p className="text-[10px] font-semibold uppercase text-blue-800 dark:text-blue-300">Platform</p>
+              <p className="text-lg font-bold text-blue-900 dark:text-blue-200">{fmtRs(snapshotSummary.total_platform_amount)}</p>
+            </div>
+            <div className="rounded-lg border border-orange-200 bg-orange-50/80 px-3 py-2 dark:border-orange-900/40 dark:bg-orange-950/30">
+              <p className="text-[10px] font-semibold uppercase text-orange-800 dark:text-orange-300">Kitchen</p>
+              <p className="text-lg font-bold text-orange-900 dark:text-orange-200">{fmtRs(snapshotSummary.total_kitchen_amount)}</p>
+            </div>
+          </div>
+
+          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Showing {totalItems === 0 ? 0 : (snapshotPage - 1) * pageSize + 1} to{" "}
+            {Math.min(snapshotPage * pageSize, totalItems)} of {totalItems} entries
+            {searchTerm && ` (filtered from search)`}
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-white/[0.05]">
             <div className="max-w-full overflow-x-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
-                    <TableCell isHeader>#</TableCell>
-                    <TableCell isHeader>Order</TableCell>
-                    <TableCell isHeader>Food Subtotal</TableCell>
-                    <TableCell isHeader>Delivery</TableCell>
-                    <TableCell isHeader>Grand Total</TableCell>
-                    <TableCell isHeader>Platform</TableCell>
-                    <TableCell isHeader>Kitchen</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">#</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Order</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Customer</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Food Subtotal</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Delivery</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Grand Total</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Platform</TableCell>
+                    <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Kitchen</TableCell>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                   {snapshotLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-gray-500">
+                      <TableCell colSpan={8} className="py-8 text-center text-gray-500">
                         Loading snapshots...
                       </TableCell>
                     </TableRow>
                   ) : snapshots.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-gray-500">
+                      <TableCell colSpan={8} className="py-8 text-center text-gray-500">
                         No snapshots found
                       </TableCell>
                     </TableRow>
                   ) : (
                     snapshots.map((row, idx) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{(snapshotPage - 1) * 10 + idx + 1}</TableCell>
-                        <TableCell>#{row.order}</TableCell>
-                        <TableCell>Rs {row.food_subtotal}</TableCell>
-                        <TableCell>Rs {row.delivery_charge}</TableCell>
-                        <TableCell>Rs {row.grand_total}</TableCell>
-                        <TableCell>
-                          Rs {row.platform_amount} ({row.platform_percent}%)
+                      <TableRow key={row.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/20">
+                        <TableCell className="px-5 py-4 text-start text-theme-sm font-medium text-gray-800 dark:text-white/90">
+                          {(snapshotPage - 1) * pageSize + idx + 1}
                         </TableCell>
-                        <TableCell>
-                          Rs {row.kitchen_amount} ({row.kitchen_percent}%)
+                        <TableCell className="px-5 py-4 text-start text-theme-sm font-bold text-gray-800 dark:text-white/90">
+                          #{row.order_id ?? row.order}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-700 dark:text-gray-300">
+                          {row.customer_display || "—"}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-800 dark:text-white/90">Rs {row.food_subtotal}</TableCell>
+                        <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-800 dark:text-white/90">Rs {row.delivery_charge}</TableCell>
+                        <TableCell className="px-5 py-4 text-start text-theme-sm font-bold text-gray-800 dark:text-white/90">Rs {row.grand_total}</TableCell>
+                        <TableCell className="px-5 py-4 text-start text-theme-sm">
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600 dark:bg-blue-900/30">
+                            Rs {row.platform_amount} ({row.platform_percent}%)
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-start text-theme-sm">
+                          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600 dark:bg-orange-900/30">
+                            Rs {row.kitchen_amount} ({row.kitchen_percent}%)
+                          </span>
                         </TableCell>
                       </TableRow>
                     ))
@@ -243,26 +460,41 @@ export default function OrderCommissionPage() {
           </div>
 
           {snapshotTotalPages > 1 && (
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => void loadSnapshots(Math.max(1, snapshotPage - 1))}
-                disabled={snapshotPage === 1 || snapshotLoading}
-                className="rounded-md border px-3 py-1 text-sm disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Page {snapshotPage} / {snapshotTotalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => void loadSnapshots(Math.min(snapshotTotalPages, snapshotPage + 1))}
-                disabled={snapshotPage >= snapshotTotalPages || snapshotLoading}
-                className="rounded-md border px-3 py-1 text-sm disabled:opacity-50"
-              >
-                Next
-              </button>
+            <div className="mt-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSnapshotPage(Math.max(1, snapshotPage - 1))}
+                  disabled={snapshotPage === 1 || snapshotLoading}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: snapshotTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setSnapshotPage(pageNum)}
+                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                        snapshotPage === pageNum
+                          ? "border border-blue-600 bg-blue-600 text-white"
+                          : "border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setSnapshotPage(Math.min(snapshotTotalPages, snapshotPage + 1))}
+                  disabled={snapshotPage === snapshotTotalPages || snapshotLoading}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Page {snapshotPage} of {snapshotTotalPages}
+              </div>
             </div>
           )}
         </section>

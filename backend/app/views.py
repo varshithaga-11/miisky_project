@@ -537,14 +537,36 @@ class AdminAllOrdersView(APIView):
     def get(self, request):
         search = request.query_params.get('search', '').strip()
         microkitchen = request.query_params.get('microkitchen', '').strip()
-        
-        # We'll pull from both Order (non-patient/general) and UserDietPlan (patient plans)
-        # to give a comprehensive view, or just Order if that's the primary tracking.
-        # For now, let's focus on the 'Order' model as it's the most "standard" order.
+
         qs = Order.objects.all().select_related('user', 'micro_kitchen', 'delivery_slab').order_by('-created_at')
-        
+
         if microkitchen:
             qs = qs.filter(micro_kitchen_id=microkitchen)
+
+        # Optional calendar month: billing_month=YYYY-MM (filters order created_at)
+        billing_month = (request.query_params.get("billing_month") or "").strip()
+        if billing_month and len(billing_month) >= 7:
+            try:
+                parts = billing_month.split("-")
+                y, m = int(parts[0]), int(parts[1])
+                from .utils.date_utils import month_start_end
+
+                s, e = month_start_end(y, m)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except (ValueError, TypeError, IndexError):
+                pass
+        else:
+            period = (request.query_params.get("period") or "all").strip()
+            if period != "all":
+                from .utils.date_utils import get_period_range
+
+                start_date = request.query_params.get("start_date")
+                end_date = request.query_params.get("end_date")
+                try:
+                    s, e = get_period_range(period, start_date, end_date)
+                    qs = qs.filter(created_at__date__range=[s, e])
+                except Exception as ex:
+                    print(f"AdminAllOrdersView date filter: {ex}")
 
         if search:
             qs = qs.filter(
@@ -555,9 +577,21 @@ class AdminAllOrdersView(APIView):
                 Q(status__icontains=search)
             )
 
+        order_stats = qs.aggregate(
+            total_orders=Count("id"),
+            total_order_amount=Sum("final_amount"),
+        )
+        snap_stats = (
+            OrderPaymentSnapshot.objects.filter(order_id__in=qs.values("id"))
+            .aggregate(
+                total_kitchen_amount=Sum("kitchen_amount"),
+                total_platform_amount=Sum("platform_amount"),
+            )
+        )
+
         paginator = Pagination()
         paginated_qs = paginator.paginate_queryset(qs, request)
-        
+
         results = []
         for o in paginated_qs:
             results.append({
@@ -569,8 +603,13 @@ class AdminAllOrdersView(APIView):
                 "status": o.status,
                 "created_at": o.created_at,
             })
-            
-        return paginator.get_paginated_response(results)
+
+        response = paginator.get_paginated_response(results)
+        response.data["total_orders"] = order_stats["total_orders"] or 0
+        response.data["total_amount"] = str(order_stats["total_order_amount"] or 0)
+        response.data["total_kitchen_amount"] = str(snap_stats["total_kitchen_amount"] or 0)
+        response.data["total_platform_amount"] = str(snap_stats["total_platform_amount"] or 0)
+        return response
 
 
 class AdminKitchenPayoutsView(APIView):
@@ -840,6 +879,113 @@ class SupplyChainOrderDeliveryReceiptUpsertView(APIView):
             receipt, context={"request": request}
         ).data
         return Response(data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class OrderCommissionConfigViewSet(viewsets.ModelViewSet):
+    """Admin: manage global platform/kitchen commission split for customer orders."""
+
+    queryset = OrderCommissionConfig.objects.all().order_by("-is_active", "-id")
+    serializer_class = OrderCommissionConfigSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = None
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class OrderPaymentSnapshotAdminViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin: paginated list of frozen order payment splits (read-only)."""
+
+    queryset = OrderPaymentSnapshot.objects.select_related(
+        "order",
+        "order__user",
+        "order__micro_kitchen",
+    ).order_by("-created_at")
+    serializer_class = AdminOrderPaymentSnapshotSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        qs = OrderPaymentSnapshot.objects.select_related(
+            "order",
+            "order__user",
+            "order__micro_kitchen",
+        ).order_by("-created_at")
+
+        # Optional calendar month: billing_month=YYYY-MM (filters snapshot created_at)
+        billing_month = (self.request.query_params.get("billing_month") or "").strip()
+        if billing_month and len(billing_month) >= 7:
+            try:
+                parts = billing_month.split("-")
+                y, m = int(parts[0]), int(parts[1])
+                from .utils.date_utils import month_start_end
+
+                s, e = month_start_end(y, m)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except (ValueError, TypeError, IndexError):
+                pass
+        else:
+            period = (self.request.query_params.get("period") or "all").strip()
+            if period != "all":
+                from .utils.date_utils import get_period_range
+
+                start_date = self.request.query_params.get("start_date")
+                end_date = self.request.query_params.get("end_date")
+                try:
+                    s, e = get_period_range(period, start_date, end_date)
+                    qs = qs.filter(created_at__date__range=[s, e])
+                except Exception as ex:
+                    print(f"OrderPaymentSnapshotAdminViewSet date filter: {ex}")
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if search.isdigit():
+                qs = qs.filter(order_id=int(search))
+            else:
+                qs = qs.filter(
+                    Q(order__user__first_name__icontains=search)
+                    | Q(order__user__last_name__icontains=search)
+                    | Q(order__user__username__icontains=search)
+                    | Q(order__micro_kitchen__brand_name__icontains=search)
+                )
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        stats = queryset.aggregate(
+            total_orders=Count("id"),
+            total_kitchen_amount=Sum("kitchen_amount"),
+            total_platform_amount=Sum("platform_amount"),
+            total_food_subtotal=Sum("food_subtotal"),
+            total_delivery_charge=Sum("delivery_charge"),
+            total_grand_total=Sum("grand_total"),
+        )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data["total_orders"] = stats["total_orders"] or 0
+            response.data["total_kitchen_amount"] = str(stats["total_kitchen_amount"] or 0)
+            response.data["total_platform_amount"] = str(stats["total_platform_amount"] or 0)
+            response.data["total_food_subtotal"] = str(stats["total_food_subtotal"] or 0)
+            response.data["total_delivery_charge"] = str(stats["total_delivery_charge"] or 0)
+            response.data["total_grand_total"] = str(stats["total_grand_total"] or 0)
+            response.data["total_amount"] = str(stats["total_grand_total"] or 0)
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "total_orders": stats["total_orders"] or 0,
+                "total_kitchen_amount": str(stats["total_kitchen_amount"] or 0),
+                "total_platform_amount": str(stats["total_platform_amount"] or 0),
+                "total_food_subtotal": str(stats["total_food_subtotal"] or 0),
+                "total_delivery_charge": str(stats["total_delivery_charge"] or 0),
+                "total_grand_total": str(stats["total_grand_total"] or 0),
+                "total_amount": str(stats["total_grand_total"] or 0),
+            }
+        )
 
 
 class PartnerPayoutTransactionListView(generics.ListAPIView):

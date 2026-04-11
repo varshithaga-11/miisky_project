@@ -1,6 +1,12 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
+/** If `__API_URL__` already includes `/api`, `createApiUrl("api/...")` can produce `/api/api/`. */
+function buildApiUrl(path: string): string {
+  const url = createApiUrl(path);
+  return url.replace(/\/api\/api\//g, "/api/");
+}
+
 export interface OrderCommissionConfig {
   id?: number;
   platform_commission_percent: string;
@@ -15,6 +21,11 @@ export interface OrderCommissionConfig {
 export interface OrderPaymentSnapshot {
   id: number;
   order: number;
+  order_id?: number;
+  order_status?: string;
+  order_type?: string;
+  order_created_at?: string;
+  customer_display?: string;
   food_subtotal: string;
   delivery_charge: string;
   grand_total: string;
@@ -25,6 +36,20 @@ export interface OrderPaymentSnapshot {
   created_at: string;
 }
 
+/** Same values as `get_period_range` in backend `app/utils/date_utils.py` (and order list). */
+export type SnapshotDatePeriod =
+  | "all"
+  | "today"
+  | "tomorrow"
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "next_month"
+  | "this_quarter"
+  | "this_year"
+  | "custom_range";
+
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
@@ -32,13 +57,21 @@ export interface PaginatedResponse<T> {
   current_page?: number;
   total_pages?: number;
   results: T[];
+  total_orders?: number;
+  total_kitchen_amount?: string;
+  total_platform_amount?: string;
+  total_food_subtotal?: string;
+  total_delivery_charge?: string;
+  total_grand_total?: string;
+  /** Sum of grand totals (same as total_grand_total); customer order totals for the filter. */
+  total_amount?: string;
 }
 
 const COMMISSION_BASE = "api/order-commission-config/";
 const SNAPSHOT_BASE = "api/order-payment-snapshot/";
 
 export const getOrderCommissionConfigs = async (): Promise<OrderCommissionConfig[]> => {
-  const res = await axios.get(createApiUrl(COMMISSION_BASE), {
+  const res = await axios.get(buildApiUrl(COMMISSION_BASE), {
     headers: await getAuthHeaders(),
   });
   return res.data as OrderCommissionConfig[];
@@ -47,7 +80,7 @@ export const getOrderCommissionConfigs = async (): Promise<OrderCommissionConfig
 export const createOrderCommissionConfig = async (
   payload: Omit<OrderCommissionConfig, "id" | "created_at" | "updated_at">
 ): Promise<OrderCommissionConfig> => {
-  const res = await axios.post(createApiUrl(COMMISSION_BASE), payload, {
+  const res = await axios.post(buildApiUrl(COMMISSION_BASE), payload, {
     headers: await getAuthHeaders(),
   });
   return res.data as OrderCommissionConfig;
@@ -57,7 +90,7 @@ export const updateOrderCommissionConfig = async (
   id: number,
   payload: Partial<OrderCommissionConfig>
 ): Promise<OrderCommissionConfig> => {
-  const res = await axios.put(createApiUrl(`${COMMISSION_BASE}${id}/`), payload, {
+  const res = await axios.put(buildApiUrl(`${COMMISSION_BASE}${id}/`), payload, {
     headers: await getAuthHeaders(),
   });
   return res.data as OrderCommissionConfig;
@@ -66,10 +99,27 @@ export const updateOrderCommissionConfig = async (
 export const getOrderPaymentSnapshots = async (
   page: number = 1,
   limit: number = 10,
-  search: string = ""
+  search: string = "",
+  options?: {
+    period?: SnapshotDatePeriod;
+    start_date?: string;
+    end_date?: string;
+    /** YYYY-MM — if set, filters that month (snapshot `created_at`); takes precedence over `period`. */
+    billing_month?: string;
+  }
 ): Promise<PaginatedResponse<OrderPaymentSnapshot>> => {
-  const res = await axios.get(createApiUrl(SNAPSHOT_BASE), {
-    params: { page, limit, search },
+  const params: Record<string, string | number | undefined> = { page, limit, search: search.trim() || undefined };
+  if (options?.billing_month?.trim()) {
+    params.billing_month = options.billing_month.trim();
+  } else if (options?.period && options.period !== "all") {
+    params.period = options.period;
+    if (options.period === "custom_range") {
+      if (options.start_date) params.start_date = options.start_date;
+      if (options.end_date) params.end_date = options.end_date;
+    }
+  }
+  const res = await axios.get(buildApiUrl(SNAPSHOT_BASE), {
+    params,
     headers: await getAuthHeaders(),
   });
   return res.data as PaginatedResponse<OrderPaymentSnapshot>;

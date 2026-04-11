@@ -27,7 +27,7 @@ import {
   Search,
   X,
   CalendarRange,
-  Heart,
+  Activity,
 } from "lucide-react"; // 👈 Example icons
 
 import { HorizontaLDots } from "../../icons";
@@ -63,7 +63,7 @@ const adminNavItems: NavItem[] = [
     ],
   },
   {
-    icon: <Heart className="w-5 h-5" />,
+    icon: <Activity className="w-5 h-5" />,
     name: "Questionnaire masters",
     subItems: [
       { name: "Health conditions", path: "/admin/health-condition-master" },

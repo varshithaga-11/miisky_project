@@ -2750,6 +2750,63 @@ class OrderSerializer(serializers.ModelSerializer):
         }
 
 
+class OrderCommissionConfigSerializer(serializers.ModelSerializer):
+    """Admin CRUD for global order commission split (platform + kitchen = 100%)."""
+
+    created_by = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = OrderCommissionConfig
+        fields = [
+            "id",
+            "platform_commission_percent",
+            "kitchen_commission_percent",
+            "is_active",
+            "notes",
+            "created_by",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class AdminOrderPaymentSnapshotSerializer(serializers.ModelSerializer):
+    """Admin read-only list of frozen order payment splits."""
+
+    order = serializers.PrimaryKeyRelatedField(read_only=True)
+    order_id = serializers.IntegerField(source="order.id", read_only=True)
+    order_status = serializers.CharField(source="order.status", read_only=True)
+    order_type = serializers.CharField(source="order.order_type", read_only=True)
+    order_created_at = serializers.DateTimeField(source="order.created_at", read_only=True)
+    customer_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderPaymentSnapshot
+        fields = [
+            "id",
+            "order",
+            "order_id",
+            "order_status",
+            "order_type",
+            "order_created_at",
+            "customer_display",
+            "food_subtotal",
+            "delivery_charge",
+            "grand_total",
+            "platform_percent",
+            "kitchen_percent",
+            "platform_amount",
+            "kitchen_amount",
+            "created_at",
+        ]
+
+    def get_customer_display(self, obj):
+        u = getattr(obj.order, "user", None)
+        if not u:
+            return ""
+        name = f"{(u.first_name or '').strip()} {(u.last_name or '').strip()}".strip()
+        return name or getattr(u, "username", None) or ""
+
+
 class OrderPaymentSnapshotKitchenSerializer(serializers.ModelSerializer):
     """
     Read-only snapshot of platform vs kitchen split for one order (micro kitchen portal).

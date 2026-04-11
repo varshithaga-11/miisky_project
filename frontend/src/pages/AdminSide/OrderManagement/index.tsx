@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiSearch, FiEye, FiDownload } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -6,8 +6,28 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
-import { getAllOrders, getMicroKitchens, getOrderById } from "./api";
+import { getAllOrders, getMicroKitchens, getOrderById, OrderListDatePeriod } from "./api";
 import OrderDetailModal from "./OrderDetailModal";
+
+const fmtRs = (s: string | undefined) => {
+  const n = Number(s);
+  if (!Number.isFinite(n)) return "—";
+  return `₹${n.toFixed(2)}`;
+};
+
+const PERIOD_OPTIONS: { value: OrderListDatePeriod; label: string }[] = [
+  { value: "all", label: "All dates" },
+  { value: "today", label: "Today" },
+  { value: "tomorrow", label: "Tomorrow" },
+  { value: "this_week", label: "This week" },
+  { value: "last_week", label: "Last week" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "next_month", label: "Next month" },
+  { value: "this_quarter", label: "This quarter" },
+  { value: "this_year", label: "This year" },
+  { value: "custom_range", label: "Custom range" },
+];
 
 interface OrderRow {
   id: number;
@@ -33,6 +53,26 @@ const OrderManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
+  const [billingMonth, setBillingMonth] = useState("");
+  const [period, setPeriod] = useState<OrderListDatePeriod>("all");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [orderSummary, setOrderSummary] = useState<{
+    total_orders?: number;
+    total_amount?: string;
+    total_kitchen_amount?: string;
+    total_platform_amount?: string;
+  }>({});
+
+  const dateFilterOptions = useMemo(() => {
+    if (billingMonth.trim()) return { billing_month: billingMonth.trim() };
+    if (period === "custom_range") {
+      return { period, start_date: customStart, end_date: customEnd };
+    }
+    if (period !== "all") return { period };
+    return undefined;
+  }, [billingMonth, period, customStart, customEnd]);
+
   useEffect(() => {
     const fetchKitchens = async () => {
       try {
@@ -49,22 +89,28 @@ const OrderManagementPage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getAllOrders(currentPage, pageSize, searchTerm, selectedKitchen);
-        setRows(res.results || []);
+        const res = await getAllOrders(currentPage, pageSize, searchTerm, selectedKitchen, dateFilterOptions);
+        setRows((res.results || []) as OrderRow[]);
         setTotalItems(res.count || 0);
         setTotalPages(res.total_pages || 0);
+        setOrderSummary({
+          total_orders: res.total_orders,
+          total_amount: res.total_amount,
+          total_kitchen_amount: res.total_kitchen_amount,
+          total_platform_amount: res.total_platform_amount,
+        });
       } catch (e) {
         console.error(e);
-        // Fallback or empty state
         setRows([]);
         setTotalItems(0);
         setTotalPages(0);
+        setOrderSummary({});
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [currentPage, pageSize, searchTerm, selectedKitchen]);
+  }, [currentPage, pageSize, searchTerm, selectedKitchen, dateFilterOptions]);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -92,7 +138,7 @@ const OrderManagementPage: React.FC = () => {
     try {
       setLoading(true);
       // Fetch with a high limit to export all matching records based on current filters
-      const res = await getAllOrders(1, 10000, searchTerm, selectedKitchen);
+      const res = await getAllOrders(1, 10000, searchTerm, selectedKitchen, dateFilterOptions);
       const allRows = res.results || [];
       
       if (allRows.length === 0) {
@@ -168,7 +214,9 @@ const OrderManagementPage: React.FC = () => {
 
               <div className="flex items-center gap-4">
                 <div className="flex flex-col text-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-medium">Total Orders: {totalItems}</span>
+                  <span className="font-medium">
+                    Total Orders: {orderSummary.total_orders ?? totalItems}
+                  </span>
                   <span>
                     Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
                     {Math.min(currentPage * pageSize, totalItems)}
@@ -199,6 +247,81 @@ const OrderManagementPage: React.FC = () => {
                   <FiDownload /> Export
                 </Button>
               </div>
+            </div>
+          </div>
+
+          <div className="mb-6 grid grid-cols-1 gap-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-gray-700 dark:bg-gray-800/40 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label className="text-xs text-gray-500 dark:text-gray-400">Calendar month</Label>
+              <input
+                type="month"
+                value={billingMonth}
+                onChange={(e) => {
+                  setBillingMonth(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500">If set, overrides period (filters by order date).</p>
+            </div>
+            <div className="md:col-span-1 lg:col-span-2">
+              <Label className="text-xs text-gray-500 dark:text-gray-400">Period</Label>
+              <Select
+                value={period}
+                onChange={(val) => {
+                  setPeriod(val as OrderListDatePeriod);
+                  setCurrentPage(1);
+                }}
+                options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                className="mt-1 w-full"
+              />
+            </div>
+            {period === "custom_range" && (
+              <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-2">
+                <div>
+                  <Label className="text-xs text-gray-500">From</Label>
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => {
+                      setCustomStart(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="mt-1 rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">To</Label>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => {
+                      setCustomEnd(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="mt-1 rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900/50">
+              <p className="text-[10px] font-semibold uppercase text-gray-500">Orders (filter)</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{orderSummary.total_orders ?? "—"}</p>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+              <p className="text-[10px] font-semibold uppercase text-emerald-800 dark:text-emerald-300">Total amount</p>
+              <p className="text-lg font-bold text-emerald-900 dark:text-emerald-200">{fmtRs(orderSummary.total_amount)}</p>
+            </div>
+            <div className="rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-950/30">
+              <p className="text-[10px] font-semibold uppercase text-blue-800 dark:text-blue-300">Platform</p>
+              <p className="text-lg font-bold text-blue-900 dark:text-blue-200">{fmtRs(orderSummary.total_platform_amount)}</p>
+            </div>
+            <div className="rounded-xl border border-orange-200 bg-orange-50/80 px-3 py-2 dark:border-orange-900/40 dark:bg-orange-950/30">
+              <p className="text-[10px] font-semibold uppercase text-orange-800 dark:text-orange-300">Kitchen</p>
+              <p className="text-lg font-bold text-orange-900 dark:text-orange-200">{fmtRs(orderSummary.total_kitchen_amount)}</p>
             </div>
           </div>
 
