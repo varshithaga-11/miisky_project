@@ -131,6 +131,7 @@ const adminNavItems: NavItem[] = [
       { name: "Micro Kitchens", path: "/admin/micro-kitchen-information" },
       { name: "Nutritionists", path: "/admin/nutrition-information" },
       { name: "Doctors", path: "/admin/doctor-overview" },
+      { name: "Supply chain", path: "/admin/supply-chain-overview" },
     ],
   },
   {

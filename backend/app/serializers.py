@@ -2920,6 +2920,57 @@ class OrderSerializer(serializers.ModelSerializer):
         }
 
 
+class AdminSupplyChainOrderRowSerializer(serializers.ModelSerializer):
+    """Admin dossier: order totals, split snapshot, and delivery receipt flag."""
+
+    kitchen_brand = serializers.CharField(source="micro_kitchen.brand_name", read_only=True, allow_null=True)
+    patient_label = serializers.SerializerMethodField()
+    payment_snapshot = serializers.SerializerMethodField()
+    receipt_uploaded = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "status",
+            "order_type",
+            "total_amount",
+            "delivery_charge",
+            "final_amount",
+            "delivery_distance_km",
+            "created_at",
+            "kitchen_brand",
+            "patient_label",
+            "payment_snapshot",
+            "receipt_uploaded",
+        ]
+
+    def get_patient_label(self, obj):
+        u = obj.user
+        if not u:
+            return None
+        name = f"{u.first_name or ''} {u.last_name or ''}".strip()
+        return name or getattr(u, "username", None) or getattr(u, "email", None)
+
+    def get_payment_snapshot(self, obj):
+        ps = getattr(obj, "payment_snapshot", None)
+        if not ps:
+            return None
+        return {
+            "food_subtotal": str(ps.food_subtotal),
+            "delivery_charge": str(ps.delivery_charge),
+            "grand_total": str(ps.grand_total),
+            "platform_amount": str(ps.platform_amount),
+            "kitchen_amount": str(ps.kitchen_amount),
+            "platform_percent": str(ps.platform_percent),
+            "kitchen_percent": str(ps.kitchen_percent),
+        }
+
+    def get_receipt_uploaded(self, obj):
+        r = getattr(obj, "supply_chain_delivery_receipt", None)
+        return bool(r and getattr(r, "receipt_image", None))
+
+
 class OrderCommissionConfigSerializer(serializers.ModelSerializer):
     """Admin CRUD for global order commission split (platform + kitchen = 100%)."""
 
@@ -3599,6 +3650,34 @@ class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
         if getattr(value, "role", None) != "supply_chain":
             raise serializers.ValidationError("Only supply-chain users can be added to team.")
         return value
+
+
+class AdminSupplyChainKitchenTeamRowSerializer(serializers.ModelSerializer):
+    """Read-only: micro kitchen context for a delivery team membership."""
+
+    micro_kitchen_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenDeliveryTeam
+        fields = [
+            "id",
+            "role",
+            "is_active",
+            "zone_name",
+            "pincode",
+            "assigned_on",
+            "micro_kitchen_details",
+        ]
+
+    def get_micro_kitchen_details(self, obj):
+        mk = obj.micro_kitchen
+        if not mk:
+            return None
+        return {
+            "id": mk.id,
+            "brand_name": mk.brand_name,
+            "kitchen_code": mk.kitchen_code,
+        }
 
 
 class DeliverySlotSerializer(serializers.ModelSerializer):

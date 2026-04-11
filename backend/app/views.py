@@ -6425,6 +6425,101 @@ class AdminDoctorPatientCommentsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+class AdminSupplyChainOverviewViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin-only: list users with role=supply_chain."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["username", "email", "first_name", "last_name", "mobile"]
+
+    def get_queryset(self):
+        return UserRegister.objects.filter(role="supply_chain").order_by("-id")
+
+    def get_serializer_class(self):
+        return UserManagementSerializer
+
+
+class AdminSupplyChainOverviewDetailView(APIView):
+    """
+    Admin-only: kitchens, plan-delivered patients, orders (with payment snapshot),
+    delivery questionnaire (DeliveryProfile), and planned leave for one supply-chain user.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        uid = request.query_params.get("user")
+        if not uid:
+            return Response({"detail": "Missing user id."}, status=status.HTTP_400_BAD_REQUEST)
+        u = UserRegister.objects.filter(pk=uid).first()
+        if not u:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        if getattr(u, "role", None) != "supply_chain":
+            return Response(
+                {
+                    "detail": (
+                        f"This user is not a supply chain account (role: {getattr(u, 'role', 'unknown')}). "
+                        "Open the dossier from a row in the supply chain list."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        team_qs = (
+            MicroKitchenDeliveryTeam.objects.filter(delivery_person_id=uid)
+            .select_related("micro_kitchen")
+            .order_by("-assigned_on")
+        )
+
+        slot_prefetch = Prefetch(
+            "slot_delivery_persons",
+            queryset=DietPlanSlotDeliveryPerson.objects.select_related(
+                "delivery_slot", "delivery_person"
+            ),
+        )
+        plan_qs = (
+            DietPlanDeliveryAssignment.objects.filter(
+                Q(delivery_person_id=uid) | Q(slot_delivery_persons__delivery_person_id=uid)
+            )
+            .distinct()
+            .select_related(
+                "user_diet_plan",
+                "user",
+                "micro_kitchen",
+                "delivery_person",
+                "default_slot",
+            )
+            .prefetch_related("delivery_slots", slot_prefetch)
+            .order_by("-assigned_on")[:250]
+        )
+
+        orders_qs = (
+            Order.objects.filter(delivery_person_id=uid)
+            .select_related(
+                "user",
+                "micro_kitchen",
+                "payment_snapshot",
+                "supply_chain_delivery_receipt",
+            )
+            .order_by("-created_at")[:150]
+        )
+
+        profile = DeliveryProfile.objects.filter(user_id=uid).select_related("verified_by").first()
+        leaves_qs = SupplyChainDeliveryLeave.objects.filter(user_id=uid).order_by("-start_date")[:80]
+
+        return Response(
+            {
+                "user": UserManagementSerializer(u).data,
+                "kitchen_team": AdminSupplyChainKitchenTeamRowSerializer(team_qs, many=True).data,
+                "plan_assignments": DietPlanDeliveryAssignmentSerializer(plan_qs, many=True).data,
+                "orders": AdminSupplyChainOrderRowSerializer(orders_qs, many=True).data,
+                "delivery_profile": DeliveryProfileSerializer(profile).data if profile else None,
+                "planned_leaves": SupplyChainDeliveryLeaveSerializer(leaves_qs, many=True).data,
+            }
+        )
+
+
 # ── Support Tickets ───────────────────────────────────────────────────────────
 
 class TicketCategoryViewSet(viewsets.ModelViewSet):
