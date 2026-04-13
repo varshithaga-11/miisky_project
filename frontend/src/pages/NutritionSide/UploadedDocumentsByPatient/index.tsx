@@ -9,12 +9,6 @@ import {
     NutritionistReview,
     ClinicalReviewDashboardResponse,
 } from "./api";
-import { markReadByTitle } from "../../../api/notifications";
-import {
-    NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
-    dispatchHealthReportUploadUnreadRefresh,
-} from "../../../constants/notifications";
-import { useNotifications } from "../../../context/NotificationContext";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiFileText, FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiInfo, FiChevronLeft, FiChevronRight, FiEye, FiDownload } from "react-icons/fi";
 import { resolveMediaUrl } from "../../AdminSide/PatientOverview/api";
@@ -38,8 +32,6 @@ function getReportDownloadFilename(report: PatientHealthReport): string {
 }
 
 const UploadedDocumentsByPatientPage: React.FC = () => {
-    const { fetchNotifications } = useNotifications();
-
     const [searchInput, setSearchInput] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [page, setPage] = useState(1);
@@ -133,17 +125,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
     };
 
     const selectPatient = (mapping: ClinicalReviewPatientRow) => {
-        const uid = mapping.user.id;
-        setExplicitPatientId(uid);
-        (async () => {
-            try {
-                await markReadByTitle(NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD, uid);
-                await fetchNotifications();
-                dispatchHealthReportUploadUnreadRefresh();
-            } catch {
-                /* non-blocking */
-            }
-        })();
+        setExplicitPatientId(mapping.user.id);
     };
 
     const goToPage = (p: number) => {

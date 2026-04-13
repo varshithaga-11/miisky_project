@@ -7,7 +7,7 @@ import { getNotificationsListPath } from "../../utils/notificationsNavigation";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAllAsRead } = useNotifications();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -17,14 +17,17 @@ export default function NotificationDropdown() {
     setIsOpen(false);
   }
 
-  const handleBellClick = () => {
+  const handleClick = () => {
     toggleDropdown();
+    if (unreadCount > 0) {
+      markAllAsRead();
+    }
   };
   return (
     <div className="relative">
       <button
         className="relative flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full dropdown-toggle hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-        onClick={handleBellClick}
+        onClick={handleClick}
       >
         <span
           className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${
@@ -53,7 +56,7 @@ export default function NotificationDropdown() {
         onClose={closeDropdown}
         className="absolute -right-[240px] mt-[17px] flex h-[480px] w-[350px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:w-[361px] lg:right-0"
       >
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700 gap-2">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
           <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
             Notifications {unreadCount > 0 && (
               <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
@@ -61,17 +64,6 @@ export default function NotificationDropdown() {
               </span>
             )}
           </h5>
-          {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                void markAllAsRead();
-              }}
-              className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              Mark all read
-            </button>
-          )}
           <button
             onClick={toggleDropdown}
             className="text-gray-500 transition dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -106,10 +98,7 @@ export default function NotificationDropdown() {
             notifications.slice(0, 5).map((notification) => (
               <li key={notification.id}>
                 <DropdownItem
-                  onItemClick={() => {
-                    closeDropdown();
-                    if (!notification.is_read) void markAsRead(notification.id);
-                  }}
+                  onItemClick={closeDropdown}
                   className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">

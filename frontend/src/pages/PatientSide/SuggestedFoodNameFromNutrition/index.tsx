@@ -9,13 +9,6 @@ import {
   PatientFoodRecommendation,
   FoodNameNutritionDetail,
 } from "./api";
-import { markReadByTitle } from "../../../api/notifications";
-import {
-  NOTIFICATION_TITLE_FOOD_SUGGESTION,
-  dispatchSuggestedFoodUnreadRefresh,
-  dispatchSidebarNotificationBadgesRefresh,
-} from "../../../constants/notifications";
-import { useNotifications } from "../../../context/NotificationContext";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { Modal } from "../../../components/ui/modal";
 import Button from "../../../components/ui/button/Button";
@@ -74,7 +67,6 @@ function CompositionBlock({ data }: { data: Record<string, unknown> | null | und
 }
 
 const SuggestedFoodNameFromNutritionPage: React.FC = () => {
-  const { fetchNotifications } = useNotifications();
   const [rows, setRows] = useState<PatientFoodRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
@@ -99,25 +91,6 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
     };
     void load();
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await markReadByTitle(NOTIFICATION_TITLE_FOOD_SUGGESTION);
-        if (!cancelled) {
-          await fetchNotifications();
-          dispatchSuggestedFoodUnreadRefresh();
-          dispatchSidebarNotificationBadgesRefresh();
-        }
-      } catch {
-        /* non-blocking */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchNotifications]);
 
   const openNutritionDetail = useCallback(async (foodId: number, foodLabel: string) => {
     setDetailOpen(true);
