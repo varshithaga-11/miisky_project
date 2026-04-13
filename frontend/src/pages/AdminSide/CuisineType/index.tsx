@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getCuisineTypeList, deleteCuisineType, patchCuisineType, CuisineType } from "./cuisinetypeapi";
@@ -12,6 +12,8 @@ import Button from "../../../components/ui/button/Button";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 import Switch from "../../../components/form/switch/Switch";
 
 const CuisineTypePage: React.FC = () => {
@@ -22,6 +24,8 @@ const CuisineTypePage: React.FC = () => {
   const [editId, setEditId] = useState<number | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,13 +33,15 @@ const CuisineTypePage: React.FC = () => {
 
   useEffect(() => {
     fetchCuisines();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchCuisines = async () => {
     setLoading(true);
     try {
       const resp = await getCuisineTypeList(currentPage, pageSize, searchTerm);
       setCuisines(resp.results);
+      setTotalItems(resp.count);
+      setTotalPages(resp.total_pages);
     } catch (err) {
       console.error(err);
     } finally {
@@ -110,58 +116,130 @@ const CuisineTypePage: React.FC = () => {
           <Button size="sm" className="flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
             <FiPlus /> Add Cuisine
           </Button>
+
+          <div className="flex items-center gap-2">
+            <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Show:</Label>
+            <Select
+              value={String(pageSize)}
+              onChange={(val) => { setPageSize(Number(val)); setCurrentPage(1); }}
+              options={[
+                { value: "5", label: "5" },
+                { value: "10", label: "10" },
+                { value: "25", label: "25" },
+                { value: "50", label: "50" },
+              ]}
+              className="w-20"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="mb-4 flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-        <FiInfo className="w-4 h-4" />
-        <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
+      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+          <FiInfo className="w-4 h-4" />
+          <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+           Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">#</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Name</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Approved</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-right">Actions</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-               <TableRow><TableCell colSpan={3} className="text-center py-10">Loading...</TableCell></TableRow>
-            ) : cuisines.length === 0 ? (
-               <TableRow><TableCell colSpan={3} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
-            ) : (
-                cuisines.map((item, idx) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                        <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
-                        <TableCell className="px-5 py-4 font-medium">{item.name}</TableCell>
-                        <TableCell className="px-5 py-4">
-                            <Switch 
-                                label="" 
-                                key={`${item.id}-${item.is_approved}`}
-                                defaultChecked={item.is_approved} 
-                                onChange={() => handleToggleApproval(item.id!, item.is_approved || false)} 
-                            />
-                        </TableCell>
-                        <TableCell className="px-5 py-4 text-right">
-                            <div className="flex justify-end gap-3">
-                                <button className="text-blue-600 hover:text-blue-800" onClick={() => { setEditId(item.id!); setIsEditModalOpen(true); }}>
-                                    <FiEdit />
-                                </button>
-                                <button className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item.id!)}>
-                                    <FiTrash2 />
-                                </button>
-                            </div>
-                        </TableCell>
-                    </TableRow>
-                ))
-            )}
-          </TableBody>
-        </Table>
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">#</TableCell>
+                <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Approved</TableCell>
+                <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-end">Actions</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {loading ? (
+                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">Loading...</TableCell></TableRow>
+              ) : cuisines.length === 0 ? (
+                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
+              ) : (
+                  cuisines.map((item, idx) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                          <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
+                          <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{item.name}</TableCell>
+                          <TableCell className="px-5 py-4">
+                              <Switch 
+                                  label="" 
+                                  key={`${item.id}-${item.is_approved}`}
+                                  defaultChecked={item.is_approved} 
+                                  onChange={() => handleToggleApproval(item.id!, item.is_approved || false)} 
+                              />
+                          </TableCell>
+                          <TableCell className="px-5 py-4">
+                              <div className="flex justify-end gap-3">
+                                  <button 
+                                      className="text-blue-600 hover:text-blue-800 transition-colors" 
+                                      onClick={() => { setEditId(item.id!); setIsEditModalOpen(true); }}
+                                      title="Edit"
+                                  >
+                                      <FiEdit />
+                                  </button>
+                                  <button 
+                                      className="text-red-600 hover:text-red-800 transition-colors" 
+                                      onClick={() => handleDelete(item.id!)}
+                                      title="Delete"
+                                  >
+                                      <FiTrash2 />
+                                  </button>
+                              </div>
+                          </TableCell>
+                      </TableRow>
+                  ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
+            >
+              <FiChevronLeft /> Previous
+            </button>
+            
+            <div className="flex items-center gap-1">
+               {Array.from({ length: totalPages }, (_, i) => i + 1)
+                 .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                 .map((p, i, arr) => (
+                   <React.Fragment key={p}>
+                     {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-gray-400">...</span>}
+                     <button
+                       onClick={() => setCurrentPage(p)}
+                       className={`px-3 py-1 text-sm rounded ${currentPage === p ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                     >
+                       {p}
+                     </button>
+                   </React.Fragment>
+                 ))
+               }
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
+            >
+              Next <FiChevronRight />
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       {isAddModalOpen && <AddCuisineType onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchCuisines()} />}
       {isEditModalOpen && editId && <EditCuisineType cuisineId={editId} onClose={() => setIsEditModalOpen(false)} onUpdated={() => fetchCuisines()} />}

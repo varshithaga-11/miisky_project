@@ -3092,6 +3092,7 @@ class UnitViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UnitSerializer
     permission_classes = [AllowAny]
+    pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 

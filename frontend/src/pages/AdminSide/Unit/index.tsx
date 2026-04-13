@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo } from "react-icons/fi";
+import React, { useEffect, useState, useMemo } from "react";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getUnitList, deleteUnit, patchUnit, Unit } from "./unitapi";
@@ -12,6 +12,8 @@ import EditUnit from "./EditUnit";
 import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 
 const UnitManagementPage: React.FC = () => {
   const [units, setUnits] = useState<Unit[]>([]);
@@ -22,16 +24,22 @@ const UnitManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     fetchUnits();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchUnits = async () => {
     setLoading(true);
     try {
-      const list = await getUnitList();
-      setUnits(list);
+      const resp = await getUnitList(currentPage, pageSize, searchTerm);
+      setUnits(resp.results);
+      setTotalItems(resp.count);
+      setTotalPages(resp.total_pages);
     } catch {
       console.error("Failed to load units.");
     } finally {
@@ -84,9 +92,7 @@ const UnitManagementPage: React.FC = () => {
     }
   };
 
-  const filteredUnits = useMemo(() => {
-    return units.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [units, searchTerm]);
+
 
   return (
     <>
@@ -101,7 +107,7 @@ const UnitManagementPage: React.FC = () => {
               type="text"
               placeholder="Search units..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
             <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
@@ -112,16 +118,31 @@ const UnitManagementPage: React.FC = () => {
               <FiPlus />
               Add Unit
             </Button>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm dark:text-gray-400 whitespace-nowrap">Show:</Label>
+              <Select
+                value={String(pageSize)}
+                onChange={(val) => { setPageSize(Number(val)); setCurrentPage(1); }}
+                options={[
+                  { value: "5", label: "5" },
+                  { value: "10", label: "10" },
+                  { value: "25", label: "25" },
+                  { value: "50", label: "50" },
+                ]}
+                className="w-20"
+              />
+            </div>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm text-gray-600 dark:text-gray-400 gap-2">
-          <div>
-            Showing {filteredUnits.length} of {units.length} entries
-          </div>
           <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
             <FiInfo className="w-4 h-4" />
             <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
+          </div>
+          <div>
+            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
         </div>
       </div>
@@ -142,14 +163,14 @@ const UnitManagementPage: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">Loading units...</TableCell>
                 </TableRow>
-              ) : filteredUnits.length === 0 ? (
+              ) : units.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No units found</TableCell>
                 </TableRow>
               ) : (
-                filteredUnits.map((u, i) => (
+                units.map((u, i) => (
                   <TableRow key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                    <TableCell className="px-5 py-4">{i + 1}</TableCell>
+                    <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{u.name}</TableCell>
                     <TableCell className="px-5 py-4">
                         <Switch 
@@ -176,6 +197,48 @@ const UnitManagementPage: React.FC = () => {
           </Table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
+            >
+              <FiChevronLeft /> Previous
+            </button>
+            
+            <div className="flex items-center gap-1">
+               {Array.from({ length: totalPages }, (_, i) => i + 1)
+                 .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                 .map((p, i, arr) => (
+                   <React.Fragment key={p}>
+                     {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-gray-400">...</span>}
+                     <button
+                       onClick={() => setCurrentPage(p)}
+                       className={`px-3 py-1 text-sm rounded ${currentPage === p ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                     >
+                       {p}
+                     </button>
+                   </React.Fragment>
+                 ))
+               }
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
+            >
+              Next <FiChevronRight />
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       {isAddModalOpen && <AddUnit onClose={() => setIsAddModalOpen(false)} onAdd={() => { fetchUnits(); setIsAddModalOpen(false); }} />}
       {isEditModalOpen && editUnitId && (

@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo } from "react-icons/fi";
+import React, { useEffect, useState, useMemo } from "react";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMealTypeList, deleteMealType, patchMealType, MealType } from "./mealtypeapi";
@@ -247,20 +247,38 @@ const MealTypeManagementPage: React.FC = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
             >
-              Previous
+              <FiChevronLeft /> Previous
             </button>
-            <span className="text-sm dark:text-gray-400">
-               Page {currentPage} of {totalPages}
-            </span>
+            
+            <div className="flex items-center gap-1">
+               {Array.from({ length: totalPages }, (_, i) => i + 1)
+                 .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                 .map((p, i, arr) => (
+                   <React.Fragment key={p}>
+                     {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-gray-400">...</span>}
+                     <button
+                       onClick={() => setCurrentPage(p)}
+                       className={`px-3 py-1 text-sm rounded ${currentPage === p ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                     >
+                       {p}
+                     </button>
+                   </React.Fragment>
+                 ))
+               }
+            </div>
+
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
             >
-              Next
+              Next <FiChevronRight />
             </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
           </div>
         </div>
       )}
