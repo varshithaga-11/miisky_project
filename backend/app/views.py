@@ -5156,15 +5156,13 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create_meals(self, request):
-        """Allows nutritionist to set multiple meals at once. Uses update_or_create per (user, meal_date, meal_type)."""
+        """Bulk save meals: each item with id updates that row; items without id create new rows (same meal_type/day ok)."""
         data = request.data
         if not isinstance(data, list):
             return Response({"detail": "Expected a list of meal objects."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Use BulkUserMealSerializer (no UniqueTogetherValidator - we handle via update_or_create)
         serializer = BulkUserMealSerializer(data=data, many=True)
         if serializer.is_valid():
-            # Handle potential duplicates (unique_together: user, date, meal_type)
             reassignment_cache = {}
 
             def resolve_kitchen_id_for_date(plan, meal_date):
@@ -5202,38 +5200,45 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
                 return current_kitchen_id
 
+            base_qs = self.get_queryset()
+
             for item in serializer.validated_data:
                 udp = item['user_diet_plan']
                 meal_date = item['meal_date']
                 target_kitchen_id = resolve_kitchen_id_for_date(udp, meal_date)
+                meal_id = item.get('id')
 
-                meal_obj, created = UserMeal.objects.get_or_create(
+                if meal_id:
+                    meal_obj = base_qs.filter(pk=meal_id).first()
+                    if not meal_obj:
+                        return Response(
+                            {"detail": f"UserMeal id {meal_id} not found or not permitted."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    meal_obj.user = item['user']
+                    meal_obj.meal_date = meal_date
+                    meal_obj.meal_type = item['meal_type']
+                    meal_obj.food = item['food']
+                    meal_obj.quantity = item.get('quantity')
+                    meal_obj.user_diet_plan = udp
+                    meal_obj.notes = item.get('notes')
+                    meal_obj.packaging_material = item.get('packaging_material')
+                    meal_obj.micro_kitchen_id = target_kitchen_id
+                    meal_obj.save()
+                    continue
+
+                meal_obj = UserMeal.objects.create(
                     user=item['user'],
                     meal_date=meal_date,
                     meal_type=item['meal_type'],
-                    defaults={
-                        'food': item['food'],
-                        'quantity': item.get('quantity'),
-                        'user_diet_plan': udp,
-                        'notes': item.get('notes'),
-                        'packaging_material': item.get('packaging_material'),
-                        'micro_kitchen_id': target_kitchen_id,
-                    }
+                    food=item['food'],
+                    quantity=item.get('quantity'),
+                    user_diet_plan=udp,
+                    notes=item.get('notes'),
+                    packaging_material=item.get('packaging_material'),
+                    micro_kitchen_id=target_kitchen_id,
                 )
-
-                if created:
-                    DeliveryAssignment.ensure_for_meal(meal_obj)
-                    continue
-
-                meal_obj.food = item['food']
-                meal_obj.quantity = item.get('quantity')
-                meal_obj.user_diet_plan = udp
-                meal_obj.notes = item.get('notes')
-                meal_obj.packaging_material = item.get('packaging_material')
-                # Always align with resolved historical owner for that date.
-                meal_obj.micro_kitchen_id = target_kitchen_id
-
-                meal_obj.save()
+                DeliveryAssignment.ensure_for_meal(meal_obj)
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

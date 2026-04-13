@@ -2639,11 +2639,23 @@ class UserMealSerializer(serializers.ModelSerializer):
 
 
 class BulkUserMealSerializer(serializers.ModelSerializer):
-    """Serializer for bulk create/update - no UniqueTogetherValidator (handled by update_or_create)."""
+    """Bulk save: optional id updates an existing row; omit id to create (multiple same meal_type/day allowed)."""
+    id = serializers.IntegerField(required=False, allow_null=True)
+
     class Meta:
         model = UserMeal
-        fields = ['user', 'user_diet_plan', 'meal_type', 'food', 'quantity', 'meal_date', 'notes', 'packaging_material']
-        validators = []  # Skip UniqueTogetherValidator - backend uses update_or_create
+        fields = [
+            'id',
+            'user',
+            'user_diet_plan',
+            'meal_type',
+            'food',
+            'quantity',
+            'meal_date',
+            'notes',
+            'packaging_material',
+        ]
+        validators = []
 
 
 class PatientUnavailabilitySerializer(serializers.ModelSerializer):

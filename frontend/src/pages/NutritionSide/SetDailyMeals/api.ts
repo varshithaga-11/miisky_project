@@ -283,6 +283,7 @@ export const getFoodByIdNutrition = async (foodId: number): Promise<FoodNutritio
 
 export const saveBulkMeals = async (meals: UserMeal[]): Promise<unknown> => {
     const payload = meals.map((m) => ({
+        ...(m.id != null && { id: m.id }),
         user: m.user,
         user_diet_plan: m.user_diet_plan,
         meal_type: m.meal_type,
