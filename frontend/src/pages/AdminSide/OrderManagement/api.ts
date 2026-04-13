@@ -3,7 +3,6 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
 /** Same period keys as `get_period_range` in backend `app/utils/date_utils.py`. */
 export type OrderListDatePeriod =
-  | "all"
   | "today"
   | "tomorrow"
   | "this_week"
@@ -26,6 +25,8 @@ export interface AdminAllOrdersResponse {
   total_orders?: number;
   /** Sum of `final_amount` for filtered orders. */
   total_amount?: string;
+  /** Sum of `delivery_charge` for filtered orders. */
+  total_delivery_charge?: string;
   /** Sum of snapshot kitchen splits for filtered orders (0 if no snapshot). */
   total_kitchen_amount?: string;
   /** Sum of snapshot platform splits for filtered orders (0 if no snapshot). */
@@ -57,7 +58,7 @@ export const getAllOrders = async (
   };
   if (options?.billing_month?.trim()) {
     params.billing_month = options.billing_month.trim();
-  } else if (options?.period && options.period !== "all") {
+  } else if (options?.period) {
     params.period = options.period;
     if (options.period === "custom_range") {
       if (options.start_date) params.start_date = options.start_date;

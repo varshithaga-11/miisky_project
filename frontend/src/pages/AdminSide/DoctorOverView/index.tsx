@@ -16,13 +16,15 @@ import {
   FiMail,
   FiChevronRight,
   FiChevronLeft,
-  FiActivity,
   FiMessageSquare,
   FiX,
   FiCheckCircle,
   FiClock,
 } from "react-icons/fi";
 import Button from "../../../components/ui/button/Button";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 
 type DoctorRow = {
   id: number;
@@ -376,6 +378,7 @@ const DoctorOverViewPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [limit, setLimit] = useState(10);
   const [viewingId, setViewingId] = useState<number | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorRow | null>(null);
@@ -386,6 +389,7 @@ const DoctorOverViewPage: React.FC = () => {
       const data = await getAdminDoctorList(page, search, lim);
       setDoctors((data.results || []) as DoctorRow[]);
       setTotalPages(data.total_pages || 1);
+      setTotalItems(data.count ?? 0);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load doctors");
@@ -411,7 +415,7 @@ const DoctorOverViewPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900 pb-12">
+    <>
       <PageMeta
         title="Doctor Overview"
         description="View registered doctors and comments left on patients"
@@ -419,179 +423,174 @@ const DoctorOverViewPage: React.FC = () => {
       <PageBreadcrumb pageTitle="Doctor Overview" />
       <ToastContainer position="bottom-right" className="z-[99999]" />
 
-      <div className="px-4 md:px-8">
-        <div className="mb-8 flex flex-col md:flex-row gap-6 justify-between items-center">
-          <div className="flex gap-4 items-center">
-            <div className="p-4 bg-emerald-600 rounded-[24px] text-white shadow-xl shadow-emerald-600/20 italic">
-              <FiActivity size={28} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                Doctors
-              </h1>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                Review profiles and patient comments
-              </p>
-            </div>
-          </div>
-
-          <div className="relative w-full md:w-96 shadow-sm group">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name, email, phone…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-gray-800 rounded-[28px] border border-transparent focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm tracking-tight shadow-emerald-500/5"
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800/40 rounded-[44px] overflow-hidden border border-gray-100 dark:border-white/5 shadow-2xl backdrop-blur-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50/50 dark:bg-white/[0.02] border-b dark:border-white/5">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                    Doctor
-                  </th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                    Contact
-                  </th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                    Status
-                  </th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic text-right">
-                    Patients
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                {loading && doctors.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-8 py-24 text-center">
-                      <div className="inline-flex flex-col items-center gap-4">
-                        <div className="size-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-xs font-black uppercase text-gray-400 tracking-widest italic animate-pulse">
-                          Loading…
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : doctors.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-8 py-24 text-center">
-                      <div className="flex flex-col items-center gap-6">
-                        <FiUser size={64} className="text-gray-100 dark:text-gray-800" />
-                        <h3 className="text-xl font-black text-gray-200 dark:text-gray-700 uppercase tracking-tighter italic">
-                          No doctors match this search
-                        </h3>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  doctors.map((doc) => (
-                    <tr
-                      key={doc.id}
-                      className="group hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-all duration-300"
-                    >
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="size-14 rounded-[20px] bg-gray-100 dark:bg-gray-700 overflow-hidden ring-4 ring-gray-100 dark:ring-white/5 shadow-inner">
-                            {doc.photo ? (
-                              <img
-                                src={doc.photo}
-                                className="w-full h-full object-cover"
-                                alt=""
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                <FiUser size={24} />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-emerald-600 transition-colors">
-                              {doc.first_name} {doc.last_name}
-                            </div>
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                              ID #{doc.id}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-tight flex flex-col gap-1">
-                          <span className="flex items-center gap-1">
-                            <FiMail /> {doc.email}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <FiPhone /> {doc.mobile || "N/A"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">{getStatusBadge(doc.is_active)}</td>
-                      <td className="px-8 py-6 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedDoctor(doc);
-                            setViewingId(doc.id);
-                          }}
-                          className="px-6 py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2 ml-auto shadow-xl shadow-black/10 dark:shadow-white/5"
-                        >
-                          View patients <FiChevronRight />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="flex items-center gap-2">
+            <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
+            <Select
+              value={String(limit)}
+              onChange={(val) => {
+                setLimit(Number(val));
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: "10", label: "10" },
+                { value: "20", label: "20" },
+                { value: "50", label: "50" },
+                { value: "100", label: "100" },
+              ]}
+              className="w-20"
+            />
+            <span className="text-sm text-gray-600 whitespace-nowrap">entries</span>
           </div>
-
-          <div className="px-8 py-6 bg-gray-50/50 dark:bg-white/[0.02] border-t dark:border-white/5 flex justify-between items-center flex-wrap gap-4">
-            <div className="flex items-center gap-6">
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                Page {currentPage} of {totalPages}
-              </div>
-              <select
-                value={limit}
-                onChange={(e) => {
-                  setLimit(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 rounded-xl px-3 py-1.5 text-[10px] font-black uppercase outline-none focus:border-emerald-500 shadow-sm"
-              >
-                <option value={10}>10 / page</option>
-                <option value={20}>20 / page</option>
-                <option value={50}>50 / page</option>
-                <option value={100}>100 / page</option>
-              </select>
-            </div>
-            <div className="flex gap-4">
-              <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                variant="outline"
-                size="sm"
-                className="rounded-xl font-black uppercase tracking-widest text-[10px]"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                variant="outline"
-                size="sm"
-                className="rounded-xl font-black uppercase tracking-widest text-[10px]"
-              >
-                Next
-              </Button>
-            </div>
+        </div>
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems === 0 ? 0 : (currentPage - 1) * limit + 1} to{" "}
+            {Math.min(currentPage * limit, totalItems)} of {totalItems} entries
           </div>
         </div>
       </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Doctor
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Contact
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Status
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Patients
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {loading && doctors.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 italic">
+                    Loading doctors…
+                  </TableCell>
+                </TableRow>
+              ) : doctors.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 italic">
+                    No doctors match this search
+                  </TableCell>
+                </TableRow>
+              ) : (
+                doctors.map((doc) => (
+                  <TableRow key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden border border-gray-200 dark:border-gray-600">
+                          {doc.photo ? (
+                            <img src={doc.photo} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <FiUser size={22} />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-800 text-theme-sm dark:text-white/90">
+                            {doc.first_name} {doc.last_name}
+                          </div>
+                          <div className="text-theme-xs text-gray-500 dark:text-gray-400">ID #{doc.id}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="text-theme-xs text-gray-600 dark:text-gray-400 flex flex-col gap-1">
+                        <span className="flex items-center gap-1">
+                          <FiMail className="shrink-0" /> {doc.email}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FiPhone className="shrink-0" /> {doc.mobile || "N/A"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">{getStatusBadge(doc.is_active)}</TableCell>
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDoctor(doc);
+                          setViewingId(doc.id);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium"
+                      >
+                        View patients <FiChevronRight className="text-lg" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-blue-600 text-white border border-blue-600"
+                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Next
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       <DoctorCommentsModal
         doctor={selectedDoctor}
@@ -601,7 +600,7 @@ const DoctorOverViewPage: React.FC = () => {
           setSelectedDoctor(null);
         }}
       />
-    </div>
+    </>
   );
 };
 

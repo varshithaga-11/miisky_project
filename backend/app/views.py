@@ -577,9 +577,11 @@ class AdminAllOrdersView(APIView):
                 Q(status__icontains=search)
             )
 
+        # Same filtered queryset as list rows: sums for final bill, delivery, and payment snapshot splits.
         order_stats = qs.aggregate(
             total_orders=Count("id"),
             total_order_amount=Sum("final_amount"),
+            total_delivery_charge=Sum("delivery_charge"),
         )
         snap_stats = (
             OrderPaymentSnapshot.objects.filter(order_id__in=qs.values("id"))
@@ -588,6 +590,11 @@ class AdminAllOrdersView(APIView):
                 total_platform_amount=Sum("platform_amount"),
             )
         )
+
+        def _money_str(val):
+            if val is None:
+                return "0.00"
+            return f"{Decimal(str(val)):.2f}"
 
         paginator = Pagination()
         paginated_qs = paginator.paginate_queryset(qs, request)
@@ -600,15 +607,17 @@ class AdminAllOrdersView(APIView):
                 "patient_name": f"{o.user.first_name} {o.user.last_name}" if o.user else "Unknown Guest",
                 "kitchen_name": o.micro_kitchen.brand_name if o.micro_kitchen else "Not Assigned",
                 "amount": float(o.final_amount),
+                "delivery_charge": float(o.delivery_charge or 0),
                 "status": o.status,
                 "created_at": o.created_at,
             })
 
         response = paginator.get_paginated_response(results)
         response.data["total_orders"] = order_stats["total_orders"] or 0
-        response.data["total_amount"] = str(order_stats["total_order_amount"] or 0)
-        response.data["total_kitchen_amount"] = str(snap_stats["total_kitchen_amount"] or 0)
-        response.data["total_platform_amount"] = str(snap_stats["total_platform_amount"] or 0)
+        response.data["total_amount"] = _money_str(order_stats["total_order_amount"])
+        response.data["total_delivery_charge"] = _money_str(order_stats["total_delivery_charge"])
+        response.data["total_kitchen_amount"] = _money_str(snap_stats["total_kitchen_amount"])
+        response.data["total_platform_amount"] = _money_str(snap_stats["total_platform_amount"])
         return response
 
 
