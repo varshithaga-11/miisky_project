@@ -3613,7 +3613,7 @@ class AdminNutritionistDetailSerializer(serializers.ModelSerializer):
 class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRegister
-        fields = ["id", "username", "first_name", "last_name", "role"]
+        fields = ["id", "username", "first_name", "last_name", "role", "mobile"]
 
 
 class TicketCategorySerializer(serializers.ModelSerializer):

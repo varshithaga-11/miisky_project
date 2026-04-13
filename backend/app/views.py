@@ -8263,14 +8263,15 @@ class KitchenMealDeliveryViewSet(
 class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
     serializer_class = SupplyChainDeliveryLeaveSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         u = self.request.user
         role = getattr(u, "role", None)
         if role == "supply_chain":
-            return SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")
-        if role == "micro_kitchen":
+            qs = SupplyChainDeliveryLeave.objects.filter(user=u).select_related("user")
+        elif role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return SupplyChainDeliveryLeave.objects.none()
@@ -8285,12 +8286,44 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
                 .distinct()
             )
             dp_ids.discard(None)
-            return (
-                SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids)
-                .select_related("user")
-                .order_by("-start_date")
+            qs = SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids).select_related("user")
+        else:
+            return SupplyChainDeliveryLeave.objects.none()
+
+        # List: filter by created_on (record date) + search; same params as date_utils.get_period_range.
+        if self.action == "list":
+            qs = self._apply_leave_list_filters(qs)
+            return qs.order_by("-created_on")
+        return qs.order_by("-start_date")
+
+    def _apply_leave_list_filters(self, qs):
+        request = self.request
+        period = request.query_params.get("period")
+        if period and period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = request.query_params.get("start_date")
+            end_date = request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_on__date__range=[s, e])
+            except Exception as ex:
+                print(f"leave list period filter: {ex}")
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            q = (
+                Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__username__icontains=search)
+                | Q(notes__icontains=search)
             )
-        return SupplyChainDeliveryLeave.objects.none()
+            if search.isdigit():
+                try:
+                    q |= Q(id=int(search))
+                except ValueError:
+                    pass
+            qs = qs.filter(q)
+        return qs
 
     def perform_create(self, serializer):
         if getattr(self.request.user, "role", None) != "supply_chain":
