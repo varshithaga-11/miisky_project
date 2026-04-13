@@ -85,23 +85,13 @@ def _notification_user_display(user):
     return name or getattr(user, "username", None) or "Someone"
 
 
-# Stable notification titles (no DB category column). Used for filters and mark_read_by_title.
+# Stable notification titles (match frontend constants if used for filters/mark-read).
 NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD = "New patient health document"
 NOTIFICATION_TITLE_REVIEW = "Your health documents were reviewed"
-# Must match PatientFoodRecommendationViewSet (do not change that viewset's strings independently).
-NOTIFICATION_TITLE_FOOD_SUGGESTION = "New food suggested by your nutritionist"
-
-NOTIFICATION_TITLE_MARK_READ_ALLOWLIST = frozenset(
-    {
-        NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
-        NOTIFICATION_TITLE_REVIEW,
-        NOTIFICATION_TITLE_FOOD_SUGGESTION,
-    }
-)
 
 
 def _notification_patient_id_token(patient_id: int) -> str:
-    """Embedded in upload notification bodies so nutritionists can scope mark-read per patient."""
+    """Embedded in health-upload bodies so clients can scope per-patient without DB metadata."""
     return f"__miisky_patient_id={patient_id}__"
 
 
@@ -3833,7 +3823,27 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         return self._prefetch_report_reviews(queryset.filter(user=user))
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        instance = serializer.save(user=self.request.user)
+        mapping = UserNutritionistMapping.objects.filter(
+            user=self.request.user, is_active=True
+        ).first()
+        if not mapping or not mapping.nutritionist_id:
+            return
+        patient_name = _notification_user_display(self.request.user)
+        doc_label = (instance.title or "").strip() or (
+            getattr(instance.report_file, "name", None) or "file"
+        )
+        rtype = (instance.report_type or "").strip() or "document"
+        body_text = (
+            f'{patient_name} uploaded "{doc_label}" ({rtype}). '
+            "Open Allotted Patients → Patient Documents to review."
+        )
+        body_text = f"{body_text}\n{_notification_patient_id_token(self.request.user.id)}"
+        Notification.objects.create(
+            user_id=mapping.nutritionist_id,
+            title=NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
+            body=body_text,
+        )
 
 
 class NutritionistReviewViewSet(viewsets.ModelViewSet):
@@ -3888,9 +3898,26 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if getattr(user, 'role', None) == 'doctor':
-            serializer.save(doctor=user, nutritionist=None)
+            instance = serializer.save(doctor=user, nutritionist=None)
         else:
-            serializer.save(nutritionist=user)
+            instance = serializer.save(nutritionist=user)
+
+        patient = instance.user
+        if patient:
+            reviewer_name = _notification_user_display(user)
+            titles = [t for t in instance.reports.values_list("title", flat=True) if t]
+            if titles:
+                preview = ", ".join(titles[:3])
+                if len(titles) > 3:
+                    preview = f"{preview}…"
+                body = f'{reviewer_name} left feedback on {preview}.'
+            else:
+                body = f"{reviewer_name} left feedback on your health documents."
+            Notification.objects.create(
+                user=patient,
+                title=NOTIFICATION_TITLE_REVIEW,
+                body=body,
+            )
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
     queryset = UserDietPlan.objects.all().select_related(
