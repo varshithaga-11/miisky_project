@@ -2,11 +2,18 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyHealthReports, uploadHealthReport, deleteHealthReport, PatientHealthReport } from "./api";
+import { markCategoryRead } from "../../../api/notifications";
+import {
+    NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT,
+    dispatchHealthReportReviewUnreadRefresh,
+} from "../../../constants/notifications";
+import { useNotifications } from "../../../context/NotificationContext";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiInfo, FiMessageSquare, FiSearch, FiX } from "react-icons/fi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const HealthReportUploadPage: React.FC = () => {
+    const { fetchNotifications } = useNotifications();
     const [reports, setReports] = useState<PatientHealthReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -36,6 +43,24 @@ const HealthReportUploadPage: React.FC = () => {
     useEffect(() => {
         fetchReports();
     }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                await markCategoryRead(NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT);
+                if (!cancelled) {
+                    await fetchNotifications();
+                    dispatchHealthReportReviewUnreadRefresh();
+                }
+            } catch {
+                /* ignore mark-read failures */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [fetchNotifications]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -89,19 +114,27 @@ const HealthReportUploadPage: React.FC = () => {
     };
 
     const filteredReports = React.useMemo(() => {
-        if (!searchTerm.trim()) return reports;
-        const q = searchTerm.toLowerCase();
-        return reports.filter((r) => {
-            if ((r.title && r.title.toLowerCase().includes(q)) || (r.report_type && r.report_type.toLowerCase().includes(q))) {
-                return true;
-            }
-            return (r.reviews || []).some((rv) => {
-                const text = [rv.comments, rv.nutritionist_name, rv.doctor_name, rv.nutritionist_only_name]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
-                return text.includes(q);
+        const q = searchTerm.trim().toLowerCase();
+        let list = reports;
+        if (q) {
+            list = reports.filter((r) => {
+                if ((r.title && r.title.toLowerCase().includes(q)) || (r.report_type && r.report_type.toLowerCase().includes(q))) {
+                    return true;
+                }
+                return (r.reviews || []).some((rv) => {
+                    const text = [rv.comments, rv.nutritionist_name, rv.doctor_name, rv.nutritionist_only_name]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+                    return text.includes(q);
+                });
             });
+        }
+        return [...list].sort((a, b) => {
+            const ta = new Date(a.uploaded_on).getTime();
+            const tb = new Date(b.uploaded_on).getTime();
+            if (tb !== ta) return tb - ta;
+            return b.id - a.id;
         });
     }, [reports, searchTerm]);
 
