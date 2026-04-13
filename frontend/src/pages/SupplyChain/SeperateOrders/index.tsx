@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  getMyOrders,
+  getSupplyChainAssignedOrdersList,
+  getSupplyChainAssignedOrderDetail,
   updateOrderStatus,
   Order,
   OrderDatePeriod,
+  SupplyChainOrderListRow,
 } from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -13,7 +15,6 @@ import {
   FiPackage,
   FiLoader,
   FiMapPin,
-  FiChevronDown,
   FiChevronUp,
   FiEye,
   FiSearch,
@@ -41,7 +42,9 @@ const PERIOD_OPTIONS: { value: OrderDatePeriod; label: string }[] = [
 ];
 
 const SupplyChainSeperateOrdersPage: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<SupplyChainOrderListRow[]>([]);
+  const [orderDetailById, setOrderDetailById] = useState<Record<number, Order>>({});
+  const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -66,7 +69,7 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      const data = await getMyOrders(
+      const data = await getSupplyChainAssignedOrdersList(
         currentPage,
         pageSize,
         statusFilter,
@@ -87,6 +90,20 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
     }
   };
 
+  const loadOrderDetail = async (orderId: number, force = false) => {
+    if (!force && orderDetailById[orderId]) return;
+    setDetailLoadingId(orderId);
+    try {
+      const data = await getSupplyChainAssignedOrderDetail(orderId);
+      setOrderDetailById((prev) => ({ ...prev, [orderId]: data }));
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load order details");
+    } finally {
+      setDetailLoadingId(null);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       void fetchOrders();
@@ -103,7 +120,15 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
     try {
       await updateOrderStatus(orderId, status);
       toast.success(`Order marked as ${status}`);
-      void fetchOrders();
+      setOrderDetailById((prev) => {
+        const next = { ...prev };
+        delete next[orderId];
+        return next;
+      });
+      await fetchOrders();
+      if (expandedOrderId === orderId) {
+        await loadOrderDetail(orderId, true);
+      }
     } catch (error) {
       toast.error("Failed to update status");
     } finally {
@@ -139,7 +164,12 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
   };
 
   const toggleRow = (orderId: number) => {
-    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    if (expandedOrderId === orderId) {
+      setExpandedOrderId(null);
+      return;
+    }
+    setExpandedOrderId(orderId);
+    void loadOrderDetail(orderId);
   };
 
   return (
@@ -270,10 +300,10 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
                 <TableHeader>
                   <TableRow className="bg-gray-50/50 dark:bg-gray-900/40">
                     <TableCell isHeader className="px-6 py-4">
-                      Order ID
+                      Customer
                     </TableCell>
                     <TableCell isHeader className="px-6 py-4">
-                      Customer
+                      Mobile
                     </TableCell>
                     <TableCell isHeader className="px-6 py-4">
                       Kitchen
@@ -304,7 +334,9 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    orders.map((order) => (
+                    orders.map((order) => {
+                      const fullOrder = orderDetailById[order.id];
+                      return (
                       <React.Fragment key={order.id}>
                         <TableRow
                           className={`hover:bg-gray-50/80 dark:hover:bg-white/[0.02] cursor-pointer transition-colors ${
@@ -312,19 +344,14 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
                           }`}
                           onClick={() => toggleRow(order.id!)}
                         >
-                          <TableCell className="px-6 py-4 font-black text-gray-900 dark:text-white">
-                            #{order.id}
+                          <TableCell className="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                            {order.customer_name?.trim() || "—"}
                           </TableCell>
-                          <TableCell className="px-6 py-4">
-                            <div className="flex flex-col">
-                              <span className="font-bold text-gray-900 dark:text-white">
-                                {order.user_details?.first_name} {order.user_details?.last_name}
-                              </span>
-                              <span className="text-xs text-gray-400">{order.user_details?.mobile}</span>
-                            </div>
+                          <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                            {order.customer_mobile?.trim() || "—"}
                           </TableCell>
                           <TableCell className="px-6 py-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {order.kitchen_details?.brand_name ?? "—"}
+                            {order.kitchen_name ?? "—"}
                           </TableCell>
                           <TableCell className="px-6 py-4">
                             <span className="px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] font-black uppercase text-gray-600 dark:text-gray-300">
@@ -341,7 +368,7 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-6 py-4 font-black text-emerald-600 dark:text-emerald-400">
-                            ₹{Number(order.final_amount ?? order.total_amount).toFixed(2)}
+                            ₹{Number(order.final_amount).toFixed(2)}
                           </TableCell>
                           <TableCell className="px-6 py-4 text-xs text-gray-500">
                             {order.created_at ? new Date(order.created_at).toLocaleDateString() : ""}
@@ -387,85 +414,101 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
                                   animate={{ opacity: 1, height: "auto" }}
                                   exit={{ opacity: 0, height: 0 }}
                                 >
-                                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                    <div className="space-y-6">
-                                      <div>
-                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                          <FiPackage size={14} className="text-indigo-500" /> Items
-                                        </h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                          {order.items?.map((item) => {
-                                            const itemImageUrl = getImageUrl(item.food_details?.image);
-                                            return (
-                                              <div
-                                                key={item.id}
-                                                className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm"
-                                              >
-                                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-700 flex-shrink-0">
-                                                  {itemImageUrl ? (
-                                                    <img
-                                                      src={itemImageUrl}
-                                                      className="w-full h-full object-cover"
-                                                      alt=""
-                                                    />
-                                                  ) : null}
-                                                </div>
-                                                <div>
-                                                  <p className="text-xs font-black text-gray-900 dark:text-white leading-tight">
-                                                    {item.food_details?.name}
-                                                  </p>
-                                                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">
-                                                    {item.quantity} × ₹{item.price}
-                                                  </p>
-                                                </div>
+                                  {detailLoadingId === order.id && !fullOrder ? (
+                                    <div className="flex items-center gap-3 text-gray-500 py-6">
+                                      <FiLoader className="animate-spin text-indigo-500" size={24} />
+                                      <span className="text-sm font-bold">Loading order #{order.id}…</span>
+                                    </div>
+                                  ) : fullOrder ? (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                          <div className="space-y-6">
+                                            <div>
+                                              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                <FiPackage size={14} className="text-indigo-500" /> Items
+                                              </h4>
+                                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {fullOrder.items?.map((item) => {
+                                                  const itemImageUrl = getImageUrl(item.food_details?.image);
+                                                  return (
+                                                    <div
+                                                      key={item.id}
+                                                      className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm"
+                                                    >
+                                                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-700 flex-shrink-0">
+                                                        {itemImageUrl ? (
+                                                          <img
+                                                            src={itemImageUrl}
+                                                            className="w-full h-full object-cover"
+                                                            alt=""
+                                                          />
+                                                        ) : null}
+                                                      </div>
+                                                      <div>
+                                                        <p className="text-xs font-black text-gray-900 dark:text-white leading-tight">
+                                                          {item.food_details?.name}
+                                                        </p>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">
+                                                          {item.quantity} × ₹{item.price}
+                                                        </p>
+                                                      </div>
+                                                    </div>
+                                                  );
+                                                })}
                                               </div>
-                                            );
-                                          })}
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
+                                              <OrderDeliverySummary
+                                                order={fullOrder}
+                                                className="!p-0"
+                                                liveDistanceKm={distanceKmBetween(
+                                                  coordsFromFields(
+                                                    fullOrder.user_details?.latitude,
+                                                    fullOrder.user_details?.longitude
+                                                  ),
+                                                  coordsFromFields(
+                                                    fullOrder.kitchen_details?.latitude,
+                                                    fullOrder.kitchen_details?.longitude
+                                                  )
+                                                )}
+                                                liveDistanceLabel="Straight-line distance (Kitchen to customer)"
+                                              />
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                              <FiMapPin size={14} className="text-indigo-500" /> Delivery address
+                                            </h4>
+                                            <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
+                                              <div>
+                                                <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">
+                                                  Street address
+                                                </p>
+                                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                  {fullOrder.delivery_address?.trim() || "—"}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">
+                                                  Address from map / GPS
+                                                </p>
+                                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                  {fullOrder.delivery_lat_lng_address?.trim() || "—"}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
-                                        <OrderDeliverySummary
-                                          order={order}
-                                          className="!p-0"
-                                          liveDistanceKm={distanceKmBetween(
-                                            coordsFromFields(order.user_details?.latitude, order.user_details?.longitude),
-                                            coordsFromFields(order.kitchen_details?.latitude, order.kitchen_details?.longitude)
-                                          )}
-                                          liveDistanceLabel="Straight-line distance (Kitchen to customer)"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <FiMapPin size={14} className="text-indigo-500" /> Delivery address
-                                      </h4>
-                                      <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
-                                        <div>
-                                          <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">
-                                            Street address
-                                          </p>
-                                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
-                                            {order.delivery_address?.trim() || "—"}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">
-                                            Address from map / GPS
-                                          </p>
-                                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
-                                            {order.delivery_lat_lng_address?.trim() || "—"}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
+                                  ) : (
+                                    <p className="text-sm text-gray-500">Could not load this order.</p>
+                                  )}
                                 </motion.div>
                               </TableCell>
                             </TableRow>
                           )}
                         </AnimatePresence>
                       </React.Fragment>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

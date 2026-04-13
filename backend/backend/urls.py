@@ -21,8 +21,21 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from app.views import MicroKitchenOrdersViewSet
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Registered before `api/` include so these paths always resolve (avoids 404 if nested urlconf order differs).
+    path(
+        'api/micro-kitchen-orders/',
+        MicroKitchenOrdersViewSet.as_view({'get': 'list'}),
+        name='micro-kitchen-orders-list',
+    ),
+    path(
+        'api/micro-kitchen-orders/<int:pk>/',
+        MicroKitchenOrdersViewSet.as_view({'get': 'retrieve'}),
+        name='micro-kitchen-orders-detail',
+    ),
     path('api/', include('app.urls')),
     path('api/website/', include('website.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

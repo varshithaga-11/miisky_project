@@ -174,6 +174,147 @@ export type PaginatedOrders = {
   currentPage?: number;
 };
 
+/** Lightweight row from `GET /api/supply-chain-assigned-orders/` (list only). */
+export type SupplyChainOrderListRow = {
+  id: number;
+  customer_name: string;
+  customer_mobile: string | null;
+  kitchen_name: string | null;
+  order_type: string;
+  status: string;
+  final_amount: string | number;
+  created_at: string;
+};
+
+export type PaginatedSupplyChainOrderList = {
+  results: SupplyChainOrderListRow[];
+  count: number;
+  totalPages?: number;
+  currentPage?: number;
+};
+
+const buildSupplyChainAssignedOrdersQuery = (
+  page: number,
+  limit: number,
+  status?: string,
+  type?: string,
+  search?: string,
+  period?: OrderDatePeriod | string,
+  customRangeStart?: string,
+  customRangeEnd?: string
+) => {
+  let url = createApiUrl(`api/supply-chain-assigned-orders/?page=${page}&limit=${limit}`);
+  if (status && status !== "all") url += `&status=${status}`;
+  if (type && type !== "all") url += `&order_type=${type}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (period && period !== "all") {
+    url += `&period=${encodeURIComponent(period)}`;
+    if (period === "custom_range" && customRangeStart && customRangeEnd) {
+      url += `&start_date=${encodeURIComponent(customRangeStart)}&end_date=${encodeURIComponent(customRangeEnd)}`;
+    }
+  }
+  return url;
+};
+
+/** Supply-chain delivery person: paginated list with minimal columns (use detail endpoint for full order). */
+export const getSupplyChainAssignedOrdersList = async (
+  page = 1,
+  limit = 10,
+  status?: string,
+  type?: string,
+  search?: string,
+  period?: OrderDatePeriod | string,
+  customRangeStart?: string,
+  customRangeEnd?: string
+): Promise<PaginatedSupplyChainOrderList> => {
+  const url = buildSupplyChainAssignedOrdersQuery(
+    page,
+    limit,
+    status,
+    type,
+    search,
+    period,
+    customRangeStart,
+    customRangeEnd
+  );
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  const d = response.data;
+  if (Array.isArray(d)) {
+    return { results: d, count: d.length, totalPages: 1, currentPage: 1 };
+  }
+  return {
+    results: d?.results ?? [],
+    count: d?.count ?? 0,
+    totalPages: d?.total_pages ?? 1,
+    currentPage: d?.current_page ?? page,
+  };
+};
+
+/** Full order for supply-chain user (same assignment scope as list). */
+export const getSupplyChainAssignedOrderDetail = async (orderId: number): Promise<Order> => {
+  const url = createApiUrl(`api/supply-chain-assigned-orders/${orderId}/`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+/** Lightweight row from `GET /api/micro-kitchen-orders/` (list only). */
+export type MicroKitchenOrderListRow = {
+  id: number;
+  customer_name: string;
+  customer_mobile: string | null;
+  order_type: string;
+  status: string;
+  final_amount: string | number;
+  created_at: string;
+};
+
+export type PaginatedMicroKitchenOrderList = {
+  results: MicroKitchenOrderListRow[];
+  count: number;
+  totalPages?: number;
+  currentPage?: number;
+};
+
+export const getMicroKitchenOrdersList = async (
+  page = 1,
+  limit = 10,
+  status?: string,
+  type?: string,
+  search?: string,
+  period?: OrderDatePeriod | string,
+  customRangeStart?: string,
+  customRangeEnd?: string
+): Promise<PaginatedMicroKitchenOrderList> => {
+  let url = createApiUrl(`api/micro-kitchen-orders/?page=${page}&limit=${limit}`);
+  if (status && status !== "all") url += `&status=${status}`;
+  if (type && type !== "all") url += `&order_type=${type}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (period && period !== "all") {
+    url += `&period=${encodeURIComponent(period)}`;
+    if (period === "custom_range" && customRangeStart && customRangeEnd) {
+      url += `&start_date=${encodeURIComponent(customRangeStart)}&end_date=${encodeURIComponent(customRangeEnd)}`;
+    }
+  }
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  const d = response.data;
+  if (Array.isArray(d)) {
+    return { results: d, count: d.length, totalPages: 1, currentPage: 1 };
+  }
+  return {
+    results: d?.results ?? [],
+    count: d?.count ?? 0,
+    totalPages: d?.total_pages ?? 1,
+    currentPage: d?.current_page ?? page,
+  };
+};
+
+/** Full order for micro-kitchen user (same kitchen scope as list). */
+export const getMicroKitchenOrderDetail = async (orderId: number): Promise<Order> => {
+  const url = createApiUrl(`api/micro-kitchen-orders/${orderId}/`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
 export const getMyOrders = async (
   page = 1,
   limit = 10,
