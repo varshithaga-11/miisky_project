@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getCuisineTypeList, deleteCuisineType, CuisineType } from "./cuisinetypeapi";
+import { getCuisineTypeList, deleteCuisineType, patchCuisineType, CuisineType } from "./cuisinetypeapi";
 import { getFoodList } from "../Food/foodapi";
 import AddCuisineType from "./AddCuisineType";
 import EditCuisineType from "./EditCuisineType";
@@ -12,6 +12,7 @@ import Button from "../../../components/ui/button/Button";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Switch from "../../../components/form/switch/Switch";
 
 const CuisineTypePage: React.FC = () => {
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
@@ -39,6 +40,16 @@ const CuisineTypePage: React.FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
+    try {
+      await patchCuisineType(id, { is_approved: !currentStatus });
+      toast.success(`Cuisine type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
+      fetchCuisines();
+    } catch {
+      toast.error("Failed to update approval status.");
     }
   };
 
@@ -104,6 +115,7 @@ const CuisineTypePage: React.FC = () => {
             <TableRow>
               <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">#</TableCell>
               <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Name</TableCell>
+              <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Approved</TableCell>
               <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-right">Actions</TableCell>
             </TableRow>
           </TableHeader>
@@ -117,6 +129,14 @@ const CuisineTypePage: React.FC = () => {
                     <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
                         <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
                         <TableCell className="px-5 py-4 font-medium">{item.name}</TableCell>
+                        <TableCell className="px-5 py-4">
+                            <Switch 
+                                label="" 
+                                key={`${item.id}-${item.is_approved}`}
+                                defaultChecked={item.is_approved} 
+                                onChange={() => handleToggleApproval(item.id!, item.is_approved || false)} 
+                            />
+                        </TableCell>
                         <TableCell className="px-5 py-4 text-right">
                             <div className="flex justify-end gap-3">
                                 <button className="text-blue-600 hover:text-blue-800" onClick={() => { setEditId(item.id!); setIsEditModalOpen(true); }}>

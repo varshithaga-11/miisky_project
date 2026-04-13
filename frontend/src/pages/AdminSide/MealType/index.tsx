@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getMealTypeList, deleteMealType, MealType } from "./mealtypeapi";
+import { getMealTypeList, deleteMealType, patchMealType, MealType } from "./mealtypeapi";
 import { getFoodList } from "../Food/foodapi";
 import AddMealType from "./AddMealType";
 import EditMealType from "./EditMealType";
@@ -13,6 +13,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Switch from "../../../components/form/switch/Switch";
 
 const MealTypeManagementPage: React.FC = () => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
@@ -77,6 +78,16 @@ const MealTypeManagementPage: React.FC = () => {
       toast.error("Failed to delete meal type.");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
+    try {
+      await patchMealType(id, { is_approved: !currentStatus });
+      toast.success(`Meal type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
+      fetchMealTypes();
+    } catch {
+      toast.error("Failed to update approval status.");
     }
   };
 
@@ -178,6 +189,7 @@ const MealTypeManagementPage: React.FC = () => {
                     Meal Type Name {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -195,6 +207,14 @@ const MealTypeManagementPage: React.FC = () => {
                   <TableRow key={mealType.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{mealType.name}</TableCell>
+                    <TableCell className="px-5 py-4">
+                      <Switch 
+                        label="" 
+                        key={`${mealType.id}-${mealType.is_approved}`}
+                        defaultChecked={mealType.is_approved} 
+                        onChange={() => handleToggleApproval(mealType.id!, mealType.is_approved || false)} 
+                      />
+                    </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditMealTypeId(mealType.id!); setIsEditModalOpen(true); }}>

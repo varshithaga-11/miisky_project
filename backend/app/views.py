@@ -1749,14 +1749,14 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
         micro_kitchen_id = request.query_params.get('micro_kitchen')
         if not micro_kitchen_id:
             return Response({'error': 'micro_kitchen required'}, status=400)
-        qs = self.queryset.filter(micro_kitchen_id=micro_kitchen_id, is_available=True)
+        qs = self.queryset.filter(micro_kitchen_id=micro_kitchen_id, is_available=True, food__is_approved=True)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='available', permission_classes=[AllowAny])
     def available(self, request):
         """Public: list all available MicroKitchenFood (is_available=True). Optional: micro_kitchen, search."""
-        qs = self.queryset.filter(is_available=True)
+        qs = self.queryset.filter(is_available=True, food__is_approved=True)
         micro_kitchen_id = request.query_params.get('micro_kitchen')
         search = request.query_params.get('search', '').strip()
         if micro_kitchen_id:
@@ -1782,6 +1782,9 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
             return qs
         profile = MicroKitchenProfile.objects.filter(user=user).first()
         if not profile:
+            # If standard user (patient/nutritionist) accessing list, only show approved foods
+            if user.role in ('patient', 'nutritionist'):
+                return qs.filter(food__is_approved=True)
             return self.queryset.none()
         # Micro-kitchen users only see their own menu
         return self.queryset.filter(micro_kitchen=profile)
@@ -2581,12 +2584,17 @@ class MealTypeViewSet(viewsets.ModelViewSet):
         PUT    /app/mealtype/{id}/  → update
         DELETE /app/mealtype/{id}/  → delete
     """
-    queryset = MealType.objects.all()
     serializer_class = MealTypeSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            return MealType.objects.all()
+        return MealType.objects.filter(is_approved=True)
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_mealtypes(self, request):
@@ -2611,12 +2619,17 @@ class PackagingMaterialViewSet(viewsets.ModelViewSet):
 
 
 class CuisineTypeViewSet(viewsets.ModelViewSet):
-    queryset = CuisineType.objects.all()
     serializer_class = CuisineTypeSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            return CuisineType.objects.all()
+        return CuisineType.objects.filter(is_approved=True)
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_cuisinetypes(self, request):
@@ -2647,14 +2660,25 @@ class FoodViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def get_queryset(self):
-        queryset = Food.objects.prefetch_related(
-            'meal_types',
-            'cuisine_types',
-            'foodingredient_set__ingredient',
-            'foodingredient_set__unit',
-            'foodstep_set',
-            'nutrition'
-        ).all()
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            queryset = Food.objects.prefetch_related(
+                'meal_types',
+                'cuisine_types',
+                'foodingredient_set__ingredient',
+                'foodingredient_set__unit',
+                'foodstep_set',
+                'nutrition'
+            ).all()
+        else:
+            queryset = Food.objects.prefetch_related(
+                'meal_types',
+                'cuisine_types',
+                'foodingredient_set__ingredient',
+                'foodingredient_set__unit',
+                'foodstep_set',
+                'nutrition'
+            ).filter(is_approved=True)
         meal_type = self.request.query_params.get('meal_type')
         cuisine_type = self.request.query_params.get('cuisine_type')
         micro_kitchen = self.request.query_params.get('micro_kitchen')
@@ -3028,12 +3052,17 @@ class IngredientViewSet(viewsets.ModelViewSet):
     CRUD for ingredients.
     Endpoints: /app/ingredient/
     """
-    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+    def get_queryset(self):
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            return Ingredient.objects.all()
+        return Ingredient.objects.filter(is_approved=True)
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_ingredients(self, request):
@@ -3047,11 +3076,16 @@ class UnitViewSet(viewsets.ModelViewSet):
     CRUD for units (Gram, Cup, Tablespoon, etc.).
     Endpoints: /app/unit/
     """
-    queryset = Unit.objects.all()
     serializer_class = UnitSerializer
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+    def get_queryset(self):
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            return Unit.objects.all()
+        return Unit.objects.filter(is_approved=True)
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_units(self, request):
@@ -3073,9 +3107,15 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
     search_fields = ['food__name', 'ingredient__name']
 
     def get_queryset(self):
-        qs = FoodIngredient.objects.select_related(
-            'food', 'ingredient', 'unit'
-        ).all()
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            qs = FoodIngredient.objects.select_related(
+                'food', 'ingredient', 'unit'
+            ).all()
+        else:
+            qs = FoodIngredient.objects.select_related(
+                'food', 'ingredient', 'unit'
+            ).filter(is_approved=True)
         food_id = self.request.query_params.get('food')
         if food_id:
             qs = qs.filter(food_id=food_id)

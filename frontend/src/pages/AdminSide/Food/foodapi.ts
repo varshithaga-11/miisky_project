@@ -28,6 +28,7 @@ export interface FoodNutrition {
 export interface CuisineType {
   id: number;
   name: string;
+  is_approved?: boolean;
 }
 
 export interface Food {
@@ -43,6 +44,7 @@ export interface Food {
   ingredients?: any[];
   steps?: any[];
   price?: number;
+  is_approved?: boolean;
 }
 
 export interface PaginatedResponses<T> {
@@ -127,6 +129,15 @@ export const updateFood = async (id: number, data: FormData) => {
   return response.data;
 };
 
+// Partial Update
+export const patchFood = async (id: number, data: Partial<Food>) => {
+  const url = createApiUrl(`api/food/${id}/`);
+  const response = await axios.patch(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
 // Delete
 export const deleteFood = async (id: number) => {
   const url = createApiUrl(`api/food/${id}/`);
@@ -179,6 +190,15 @@ export interface MicroKitchenFoodMenuItem {
 }
 
 // Cuisine Type
+// Partial Update for CuisineType
+export const patchCuisineType = async (id: number, data: Partial<CuisineType>) => {
+  const url = createApiUrl(`api/cuisinetype/${id}/`);
+  const response = await axios.patch(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
 export const getCuisineTypeList = async (
   page: number = 1,
   limit: number | "all" = 10,

@@ -87,12 +87,12 @@ router.register(r'nutritionist-reassignment', NutritionistReassignmentViewSet, b
 router.register(r'kitchen-reassignment', MicroKitchenReassignmentViewSet, basename='kitchen-reassignment')
 
 # Food System routes
-router.register(r'mealtype',      MealTypeViewSet)
+router.register(r'mealtype',      MealTypeViewSet,    basename='mealtype')
 router.register(r'packagingmaterial', PackagingMaterialViewSet)
-router.register(r'cuisinetype',   CuisineTypeViewSet)
+router.register(r'cuisinetype',   CuisineTypeViewSet, basename='cuisinetype')
 router.register(r'food',          FoodViewSet, basename='food')
-router.register(r'ingredient',    IngredientViewSet)
-router.register(r'unit',          UnitViewSet)
+router.register(r'ingredient',    IngredientViewSet,  basename='ingredient')
+router.register(r'unit',          UnitViewSet,        basename='unit')
 router.register(r'foodingredient', FoodIngredientViewSet, basename='foodingredient')
 router.register(r'foodstep',      FoodStepViewSet,       basename='foodstep')
 router.register(r'foodnutrition', FoodNutritionViewSet)
