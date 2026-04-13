@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiActivity } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiActivity, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getHealthParameterList, deleteHealthParameter, HealthParameter } from "./healthparameterapi";
 import AddHealthParameter from "./AddHealthParameter";
 import EditHealthParameter from "./EditHealthParameter";
+import ViewHealthParameter from "./ViewHealthParameter";
 import ImportButton from "../../../components/common/ImportButton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
@@ -20,7 +21,9 @@ const HealthParameterManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [viewingId, setViewingId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
@@ -198,6 +201,9 @@ const HealthParameterManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm">
                       <div className="flex items-center gap-3">
+                        <button className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" title="View" onClick={() => { setViewingId(p.id!); setIsViewOpen(true); }}>
+                          <FiEye className="text-lg" />
+                        </button>
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditingId(p.id!); setIsEditOpen(true); }}>
                           <FiEdit className="text-lg" />
                         </button>
@@ -249,6 +255,12 @@ const HealthParameterManagement: React.FC = () => {
           id={editingId}
           onClose={() => setIsEditOpen(false)}
           onUpdate={() => { fetchParams(); setIsEditOpen(false); setEditingId(null); }}
+        />
+      )}
+      {isViewOpen && viewingId !== null && (
+        <ViewHealthParameter
+          id={viewingId}
+          onClose={() => { setIsViewOpen(false); setViewingId(null); }}
         />
       )}
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiMessageSquare, FiPlus, FiRefreshCw, FiSend, FiPaperclip, FiFile, FiDownload, FiX } from "react-icons/fi";
+import { FiMessageSquare, FiPlus, FiRefreshCw, FiSend, FiUser, FiPaperclip, FiFile, FiDownload, FiX } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -99,6 +99,16 @@ const SupportTicketPage: React.FC = () => {
     }
   };
 
+  const loadProviders = async () => {
+    if (providers.kitchens.length > 0 || providers.nutritionists.length > 0) return;
+    try {
+      const data = await getServiceProviders();
+      setProviders(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const loadTickets = async () => {
     setLoading(true);
     try {
@@ -126,19 +136,8 @@ const SupportTicketPage: React.FC = () => {
     }
   };
 
-  const loadProviders = async () => {
-    if (providers.kitchens.length > 0 || providers.nutritionists.length > 0) return;
-    try {
-      const data = await getServiceProviders();
-      setProviders(data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    // Modal-specific data (categories, providers) is now fetched on-demand
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Categories and providers loaded on demand
   }, []);
 
   useEffect(() => {
@@ -164,9 +163,9 @@ const SupportTicketPage: React.FC = () => {
     }
   }, [form.target_user_type, providers]);
 
-  const handleOpenCreateModal = () => {
-    setIsNewOpen(true);
+  const handleOpenNewTicket = () => {
     loadCategories();
+    setIsNewOpen(true);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -248,70 +247,62 @@ const SupportTicketPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 font-bold text-xs uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700"
           >
-            <option value="all">All Channels</option>
+            <option value="all">All</option>
             <option value="open">Open</option>
             <option value="in_progress">In Progress</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
           </select>
-          <Button variant="outline" size="sm" onClick={loadTickets} className="inline-flex items-center gap-2 font-black uppercase tracking-widest text-[10px]">
+          <Button variant="outline" size="sm" onClick={loadTickets} className="inline-flex items-center gap-2">
             <FiRefreshCw className={loading ? "animate-spin" : ""} /> Refresh
           </Button>
         </div>
 
-        <Button size="sm" onClick={handleOpenCreateModal} className="inline-flex items-center gap-2 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20">
-          <FiPlus /> Create Ticket
+        <Button size="sm" onClick={handleOpenNewTicket} className="inline-flex items-center gap-2">
+          <FiPlus /> New Ticket
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 rounded-[32px] border border-gray-200 dark:border-white/[0.05] bg-white dark:bg-white/[0.02] overflow-hidden shadow-sm">
-          <div className="px-6 py-5 border-b border-gray-100 dark:border-white/[0.05] flex items-center justify-between bg-gray-50/50 dark:bg-black/20">
-            <div className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-xs">My Tickets</div>
-            <div className="text-[10px] font-black bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full">{loading ? "..." : `${filteredTickets.length}`}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Ticket List */}
+        <div className="lg:col-span-1 rounded-2xl border border-gray-200 dark:border-white/[0.05] bg-white dark:bg-white/[0.03] overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05] flex items-center justify-between">
+            <div className="font-semibold text-gray-900 dark:text-white">My Tickets</div>
+            <div className="text-xs text-gray-500">{loading ? "Loading..." : `${filteredTickets.length}`}</div>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto divide-y divide-gray-100 dark:divide-white/[0.05] no-scrollbar">
+          <div className="max-h-[70vh] overflow-y-auto divide-y divide-gray-100 dark:divide-white/[0.05]">
             {filteredTickets.length === 0 ? (
-              <div className="px-4 py-20 text-center">
-                <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <FiMessageSquare size={32} />
-                </div>
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">No tickets found</p>
+              <div className="px-4 py-10 text-center text-gray-500">
+                <FiMessageSquare className="mx-auto mb-2 text-gray-300" size={32} />
+                <p className="text-sm">No tickets found</p>
               </div>
             ) : (
               filteredTickets.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setActiveTicket(t)}
-                  className={`w-full text-left px-6 py-5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors relative group ${activeTicket?.id === t.id ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
+                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${activeTicket?.id === t.id ? "bg-blue-50 dark:bg-blue-900/10" : ""
                     }`}
                 >
-                  {activeTicket?.id === t.id && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
-                  )}
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-black text-gray-900 dark:text-white truncate uppercase tracking-tight text-sm">#{t.id} {t.title}</div>
+                      <div className="font-medium text-gray-900 dark:text-white truncate">#{t.id} {t.title}</div>
+                      <div className="text-xs text-gray-500 truncate">{t.description}</div>
+                      <div className="text-[11px] text-gray-500 truncate mt-1">
+                        From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
+                      </div>
                     </div>
                     <div className="shrink-0">{getStatusBadge(t.status)}</div>
                   </div>
-                  <div className="text-[11px] font-medium text-gray-500 truncate mb-4 italic">
-                    {t.description}
-                  </div>
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
-                    From: {formatNameWithRole(t.created_by_details)} • To: {formatNameWithRole(t.assigned_to_details)}
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                    <span className={`inline-flex items-center gap-1.5 ${t.priority === 'high' ? 'text-rose-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-blue-500'
-                      }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${t.priority === 'high' ? 'bg-rose-500' : t.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-                        }`} />
+                  <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                    <span className={`inline-flex items-center gap-1.5 font-semibold ${t.priority === 'high' ? 'text-rose-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-blue-500'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${t.priority === 'high' ? 'bg-rose-500' : t.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`} />
                       {t.priority}
                     </span>
-                    <span className="text-gray-400">{t.created_at ? new Date(t.created_at).toLocaleDateString() : ""}</span>
+                    <span>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ""}</span>
                   </div>
                 </button>
               ))
@@ -319,39 +310,45 @@ const SupportTicketPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-2 rounded-[32px] border border-gray-200 dark:border-white/[0.05] bg-white dark:bg-white/[0.02] overflow-hidden shadow-sm flex flex-col min-h-[70vh]">
-          <div className="px-6 py-5 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50/50 dark:bg-black/20 shrink-0">
+        {/* Chat Panel */}
+        <div className="lg:col-span-2 rounded-2xl border border-gray-200 dark:border-white/[0.05] bg-white dark:bg-white/[0.03] overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
             {activeTicket ? (
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-black text-gray-900 dark:text-white truncate uppercase tracking-tight text-base">
+                  <div className="font-semibold text-gray-900 dark:text-white truncate">
                     Ticket #{activeTicket.id} — {activeTicket.title}
                   </div>
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-                    Channel: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority} • From: {formatNameWithRole(activeTicket.created_by_details)} • To: {formatNameWithRole(activeTicket.assigned_to_details)}
+                  <div className="text-xs text-gray-500">
+                    Status: {activeTicket.status.replace("_", " ")} • Priority: {activeTicket.priority}
+                    {" "}• From: {formatNameWithRole(activeTicket.created_by_details)} • To: {formatNameWithRole(activeTicket.assigned_to_details)}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => loadMessages(activeTicket.id)} className="font-black uppercase tracking-widest text-[9px]">
-                  Sync Chat
+                <Button variant="outline" size="sm" onClick={() => loadMessages(activeTicket.id)}>
+                  Refresh chat
                 </Button>
               </div>
             ) : (
-              <div className="text-gray-400 font-black uppercase tracking-widest text-xs">Communication Protocol</div>
+              <div className="text-gray-500">Select a ticket to view chat</div>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6 no-scrollbar custom-chat-layout">
+          <div className="h-[55vh] overflow-y-auto px-4 py-4 space-y-3">
             {!activeTicket ? (
-              <div className="h-full flex flex-col items-center justify-center opacity-30">
-                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-[40px] flex items-center justify-center mb-6">
-                  <FiMessageSquare size={48} />
+              <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-4">
+                <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/10 rounded-full flex items-center justify-center text-blue-500">
+                  <FiMessageSquare size={36} />
                 </div>
-                <p className="font-black uppercase tracking-[0.3em] text-[11px]">Select active ticket thread</p>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Ticket Selected</h3>
+                  <p className="text-sm text-gray-500 max-w-xs mx-auto mt-1">Select a ticket from the left to view the conversation or create a new one.</p>
+                </div>
+                <Button onClick={handleOpenNewTicket} className="rounded-2xl px-8 shadow-lg shadow-blue-500/20">
+                  Create New Ticket
+                </Button>
               </div>
             ) : conversation.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest italic">Awaiting response from support team...</p>
-              </div>
+              <div className="text-center text-gray-500 py-10">No messages yet</div>
             ) : (
               conversation.map((item) => {
                 const isMe = (item.type === "message" ? (item as TicketMessage).sender : (item as TicketAttachment).uploaded_by) === currentUserId;
@@ -360,17 +357,17 @@ const SupportTicketPage: React.FC = () => {
                   return (
                     <div key={`msg-${m.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
                       <div
-                        className={`max-w-[85%] rounded-[28px] px-6 py-4 shadow-sm transition-all duration-300 ${isMe
-                            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none shadow-blue-500/10"
-                            : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
+                        className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-300 ${isMe
+                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none"
+                          : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/[0.05] text-gray-800 dark:text-gray-100 rounded-tl-none"
                           }`}
                       >
-                        <div className={`flex items-center gap-2 mb-2 text-[9px] font-black uppercase tracking-wider ${isMe ? "text-blue-100" : "text-gray-500"}`}>
-                          {!isMe && <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />}
+                        <div className={`flex items-center gap-2 mb-1 text-[10px] font-medium uppercase tracking-wider ${isMe ? "text-blue-100" : "text-gray-500"}`}>
+                          {!isMe && <FiUser className="animate-pulse" />}
                           <span>{isMe ? "You" : formatName(m.sender_details)}</span>
                         </div>
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{m.message}</div>
-                        <div className={`mt-3 text-[8px] text-right font-black uppercase tracking-tighter ${isMe ? "text-blue-100/70" : "text-gray-400"}`}>
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">{m.message}</div>
+                        <div className={`mt-1.5 text-[9px] text-right font-medium ${isMe ? "text-blue-100/70" : "text-gray-400"}`}>
                           {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
                         </div>
                       </div>
@@ -381,22 +378,22 @@ const SupportTicketPage: React.FC = () => {
                   const fileName = a.file.split("/").pop() || "Attachment";
                   return (
                     <div key={`att-${a.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
-                      <div className={`max-w-[85%] rounded-[28px] px-6 py-5 shadow-sm border-2 border-dashed transition-all ${isMe ? "bg-blue-50/50 border-blue-200 text-blue-900 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm border border-dashed transition-all ${isMe ? "bg-blue-50 border-blue-200 text-blue-800 rounded-tr-none" : "bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none"
                         }`}>
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isMe ? "bg-blue-200 text-blue-700" : "bg-gray-200 text-gray-500"}`}>
-                            <FiFile className="w-6 h-6" />
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isMe ? "bg-blue-100 text-blue-600" : "bg-gray-200 text-gray-500"}`}>
+                            <FiFile className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-black truncate uppercase tracking-tight">{fileName}</div>
-                            <div className="text-[10px] font-black uppercase opacity-60 mt-1">Shared by {isMe ? "you" : formatName(a.uploaded_by_details)}</div>
+                            <div className="text-xs font-bold truncate">{fileName}</div>
+                            <div className="text-[10px] opacity-70">Shared by {isMe ? "you" : formatName(a.uploaded_by_details)}</div>
                           </div>
-                          <a href={a.file} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/50 rounded-xl flex items-center justify-center hover:bg-white transition-all shadow-sm">
+                          <a href={a.file} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <FiDownload className="w-4 h-4" />
                           </a>
                         </div>
-                        <div className="mt-4 flex justify-end">
-                          <span className="text-[8px] font-black uppercase tracking-tighter opacity-50">
+                        <div className="mt-2 flex justify-end">
+                          <span className="text-[9px] font-medium opacity-60">
                             {a.uploaded_at ? new Date(a.uploaded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
                           </span>
                         </div>
@@ -409,37 +406,37 @@ const SupportTicketPage: React.FC = () => {
           </div>
 
           {activeTicket && (
-            <div className="px-6 py-5 border-t border-gray-100 dark:border-white/[0.05] space-y-4 shrink-0 bg-gray-50/30 dark:bg-black/10">
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] space-y-3">
               {pendingFile && (
-                <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-2xl max-w-sm transition-all animate-in fade-in slide-in-from-bottom-4 shadow-sm">
-                  <div className="p-2.5 bg-blue-200 dark:bg-blue-900/40 text-blue-700 rounded-xl">
-                    <FiFile className="w-5 h-5" />
+                <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl max-w-xs transition-all animate-in fade-in slide-in-from-bottom-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                    <FiFile className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0 pr-2">
-                    <div className="text-xs font-black text-blue-900 dark:text-blue-100 truncate uppercase">{pendingFile.name}</div>
-                    <div className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-0.5">Ready for upload</div>
+                    <div className="text-xs font-bold text-blue-900 dark:text-blue-200 truncate">{pendingFile.name}</div>
+                    <div className="text-[10px] text-blue-600">Ready to send</div>
                   </div>
                   <button
                     onClick={() => setPendingFile(null)}
-                    className="p-2 hover:bg-rose-100 hover:text-rose-600 text-gray-400 rounded-xl transition-all"
+                    className="p-1.5 hover:bg-red-100 hover:text-red-600 text-gray-400 rounded-full transition-colors"
                   >
                     <FiX className="w-4 h-4" />
                   </button>
                 </div>
               )}
 
-              <div className="flex gap-4 items-end">
-                <label className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${pendingFile ? "border-blue-500 bg-blue-100 text-blue-600" : "border-gray-200 dark:border-white/10 hover:border-blue-400 text-gray-400 hover:text-blue-500"
+              <div className="flex gap-2 items-end">
+                <label className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border-2 border-dashed transition-all cursor-pointer ${pendingFile ? "border-blue-500 bg-blue-50 text-blue-600" : "border-gray-200 hover:border-blue-400 text-gray-400 hover:text-blue-500"
                   }`}>
-                  <FiPaperclip size={20} className={uploading ? "animate-spin" : ""} />
+                  <FiPaperclip className={uploading ? "animate-spin" : ""} />
                   <input type="file" className="hidden" onChange={handleFileSelect} />
                 </label>
                 <div className="flex-1">
                   <textarea
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="Brief description of your query..."
-                    className="w-full px-5 py-4 border-2 border-transparent rounded-[24px] bg-white dark:bg-gray-900 dark:border-white/5 resize-none max-h-32 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium shadow-inner"
+                    placeholder="Type your message..."
+                    className="w-full px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 resize-none max-h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                     rows={1}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
@@ -449,8 +446,8 @@ const SupportTicketPage: React.FC = () => {
                     }}
                   />
                 </div>
-                <Button onClick={handleSendMessage} disabled={uploading} className="h-14 w-14 rounded-2xl flex items-center justify-center p-0 shadow-xl shadow-blue-500/20 active:scale-90 flex-shrink-0">
-                  <FiSend size={24} />
+                <Button onClick={handleSendMessage} disabled={uploading} className="h-11 px-5 shadow-lg shadow-blue-500/20 active:scale-95">
+                  <FiSend />
                 </Button>
               </div>
             </div>
@@ -459,28 +456,28 @@ const SupportTicketPage: React.FC = () => {
       </div>
 
       {isNewOpen && (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-gray-900/80 backdrop-blur-md">
-          <div className="w-full max-w-2xl rounded-[48px] bg-white dark:bg-gray-900 p-10 border border-gray-100 dark:border-white/10 shadow-2xl relative">
-            <div className="flex items-center justify-between mb-10 pb-6 border-b border-gray-50 dark:border-white/5">
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-white/[0.05]">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">New Channel</div>
-                <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 italic">Awaiting Priority Specification</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-white">Create Support Ticket</div>
+                <div className="text-sm text-gray-500">Describe your issue and our team will respond</div>
               </div>
               <button
                 onClick={() => setIsNewOpen(false)}
-                className="w-12 h-12 bg-gray-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-gray-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gray-100 hover:bg-red-50 hover:text-red-600 transition-all text-gray-500"
               >
-                <FiX size={24} />
+                <FiX size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-8 max-h-[60vh] overflow-y-auto pr-1 no-scrollbar">
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">Ask To / Recipient Channel</label>
-                <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleCreate} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 no-scrollbar">
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 italic">Who is this for? / Ask To</label>
+                <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "admin", label: "MIISKY BASE", icon: "🏢" },
-                    { id: "kitchen", label: "MICRO KITCHEN", icon: "👨‍🍳" },
+                    { id: "admin", label: "Miisky Support", icon: "🏢" },
+                    { id: "kitchen", label: "My Kitchen", icon: "👨‍🍳" },
                   ].map((target) => (
                     <button
                       key={target.id}
@@ -491,47 +488,50 @@ const SupportTicketPage: React.FC = () => {
                           loadProviders();
                         }
                       }}
-                      className={`flex flex-col items-center justify-center p-4 rounded-[28px] border-2 transition-all gap-2 ${form.target_user_type === target.id
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-xl scale-105"
-                          : "border-gray-50 dark:border-white/5 hover:border-blue-200"
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1 ${form.target_user_type === target.id
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-md"
+                        : "border-gray-100 dark:border-white/5 hover:border-blue-200"
                         }`}
                     >
-                      <span className="text-2xl">{target.icon}</span>
-                      <span className="text-[9px] font-black uppercase tracking-tighter text-center">{target.label}</span>
+                      <span className="text-xl">{target.icon}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-tight">{target.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {(form.target_user_type === "kitchen") && (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-4">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic italic">
-                    Select Micro Kitchen
+              {form.target_user_type === "kitchen" && (
+                <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Select Kitchen
                   </label>
                   <select
                     value={form.assigned_to}
                     onChange={(e) => setForm(p => ({ ...p, assigned_to: e.target.value === "" ? "" : Number(e.target.value) }))}
-                    className="w-full px-5 py-4 border-2 border-transparent rounded-2xl bg-gray-50 dark:bg-gray-950 font-black text-xs uppercase tracking-tight focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="">-- IDENTIFY RECIPIENT --</option>
+                    <option value="">-- Choose --</option>
                     {providers.kitchens.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} {!p.is_active && "(OFFLINE/INACTIVE)"}
+                        {p.name} {!p.is_active && "(Inactive)"}
                       </option>
                     ))}
                   </select>
+                  {providers.kitchens.length === 0 && (
+                    <p className="text-[10px] text-amber-600 font-medium">Note: No specific kitchen found. Admin will route this for you.</p>
+                  )}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Context Category</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Category</label>
                   <select
                     value={form.category}
                     onChange={(e) => setForm((p) => ({ ...p, category: e.target.value === "" ? "" : Number(e.target.value) }))}
-                    className="w-full px-5 py-4 border-2 border-transparent rounded-2xl bg-gray-50 dark:bg-gray-950 font-black text-xs uppercase tracking-tight focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700"
                   >
-                    <option value="">Choose Path</option>
+                    <option value="">Select</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -539,45 +539,46 @@ const SupportTicketPage: React.FC = () => {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Issue Priority</label>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Priority</label>
                   <select
                     value={form.priority}
                     onChange={(e) => setForm((p) => ({ ...p, priority: e.target.value as SupportTicketPriority }))}
-                    className="w-full px-5 py-4 border-2 border-transparent rounded-2xl bg-gray-50 dark:bg-gray-950 font-black text-xs uppercase tracking-tight focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700"
                   >
-                    <option value="low">Low Impact</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">Critical Need</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                   </select>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Subject Header</label>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Title</label>
                 <input
                   value={form.title}
                   onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  className="w-full px-5 py-4 border-2 border-transparent rounded-2xl bg-gray-50 dark:bg-gray-950 font-black text-sm tracking-tight focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none"
-                  placeholder="Concise issue summary..."
+                  className="w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700"
+                  placeholder="Short summary"
                 />
               </div>
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Description</label>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                  className="w-full px-5 py-4 border-2 border-transparent rounded-3xl bg-gray-50 dark:bg-gray-950 font-medium text-sm tracking-tight focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none"
-                  rows={4}
-                  placeholder="Provide comprehensive details of the observed anomaly..."
+                  className="w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700"
+                  rows={5}
+                  placeholder="Explain the issue in detail"
                 />
               </div>
 
-              <div className="flex justify-end gap-4 pt-4">
-                <Button type="submit" className="px-10 py-5 h-auto rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/30">
-                  Initialize Ticket
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsNewOpen(false)}>
+                  Cancel
                 </Button>
+                <Button type="submit">Create Ticket</Button>
               </div>
             </form>
           </div>
