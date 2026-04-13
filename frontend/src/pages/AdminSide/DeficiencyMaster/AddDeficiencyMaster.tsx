@@ -13,13 +13,14 @@ interface Props {
 
 const AddDeficiencyMaster: React.FC<Props> = ({ onClose, onAdd }) => {
   const [name, setName] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createDeficiencyMaster({ name: name.trim() });
+      await createDeficiencyMaster({ name: name.trim(), sort_order: Number(sortOrder) || 0 });
       toast.success("Created.");
       setTimeout(() => {
         onAdd();
@@ -46,6 +47,17 @@ const AddDeficiencyMaster: React.FC<Props> = ({ onClose, onAdd }) => {
           <div>
             <Label htmlFor="name">Name *</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={loading} placeholder="e.g. Vitamin B12" />
+          </div>
+          <div>
+            <Label htmlFor="sort_order">Sort order</Label>
+            <Input
+              id="sort_order"
+              type="number"
+              min={0}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(e.target.value))}
+              disabled={loading}
+            />
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>

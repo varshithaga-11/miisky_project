@@ -77,6 +77,8 @@ export interface Order {
   delivery_slab_details?: { id?: number; min_km: string; max_km: string; charge: string } | null;
   final_amount?: number | string | null;
   delivery_address: string;
+  /** Reverse-geocoded / map label saved when the order was placed. */
+  delivery_lat_lng_address?: string | null;
   /** Supply-chain user id assigned by the kitchen to deliver this order (`app_order.delivery_person_id`). */
   delivery_person?: number | null;
   delivery_person_details?: {
@@ -129,12 +131,25 @@ export const getCartCheckoutPreview = async (cartId: number): Promise<CheckoutPr
   return response.data;
 };
 
-export const placeOrder = async (cartId: number, deliveryAddress?: string) => {
+export type PlaceOrderDelivery = {
+  delivery_address?: string;
+  delivery_lat_lng_address?: string | null;
+};
+
+export const placeOrder = async (cartId: number, delivery: string | PlaceOrderDelivery) => {
   const url = createApiUrl("api/order/place-order/");
-  const response = await axios.post(url, {
-    cart_id: cartId,
-    delivery_address: deliveryAddress
-  }, { headers: await getAuthHeaders() });
+  const body: Record<string, unknown> = { cart_id: cartId };
+  if (typeof delivery === "string") {
+    body.delivery_address = delivery;
+  } else {
+    if (delivery.delivery_address !== undefined) {
+      body.delivery_address = delivery.delivery_address;
+    }
+    if (delivery.delivery_lat_lng_address !== undefined) {
+      body.delivery_lat_lng_address = delivery.delivery_lat_lng_address ?? "";
+    }
+  }
+  const response = await axios.post(url, body, { headers: await getAuthHeaders() });
   return response.data;
 };
 

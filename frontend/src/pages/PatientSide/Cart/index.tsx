@@ -32,7 +32,8 @@ const CartPage: React.FC = () => {
     const [carts, setCarts] = useState<Cart[]>([]);
     const [loading, setLoading] = useState(true);
     const [placing, setPlacing] = useState<number | null>(null);
-    const [address, setAddress] = useState("");
+    const [streetAddress, setStreetAddress] = useState("");
+    const [latLngAddress, setLatLngAddress] = useState("");
     const [checkoutByCartId, setCheckoutByCartId] = useState<
         Record<number, CheckoutPreview | null | undefined>
     >({});
@@ -56,7 +57,10 @@ const CartPage: React.FC = () => {
         try {
             const profile = await getLoggedProfile();
             if (profile?.address) {
-                setAddress(profile.address);
+                setStreetAddress(profile.address);
+            }
+            if (profile?.lat_lng_address) {
+                setLatLngAddress(profile.lat_lng_address);
             }
         } catch (err) {
             console.error("Failed to fetch user address", err);
@@ -122,13 +126,16 @@ const CartPage: React.FC = () => {
     };
 
     const handlePlaceOrder = async (cartId: number) => {
-        if (!address.trim()) {
-            toast.warning("Please provide a delivery address");
+        if (!streetAddress.trim() && !latLngAddress.trim()) {
+            toast.warning("Please provide a street address and/or map address for delivery");
             return;
         }
         setPlacing(cartId);
         try {
-            await placeOrder(cartId, address);
+            await placeOrder(cartId, {
+                delivery_address: streetAddress.trim(),
+                delivery_lat_lng_address: latLngAddress.trim(),
+            });
             toast.success("Order placed successfully!");
             fetchCarts();
         } catch (error) {
@@ -291,14 +298,32 @@ const CartPage: React.FC = () => {
                                                         </>
                                                     )}
                                                 </div>
-                                                <div className="space-y-3">
-                                                    <Label className="flex items-center gap-2"><FiMapPin className="text-indigo-500" /> Delivery Address</Label>
-                                                    <textarea 
-                                                        value={address}
-                                                        onChange={(e) => setAddress(e.target.value)}
-                                                        placeholder="Enter your complete delivery address here..."
-                                                        className="w-full p-6 bg-white dark:bg-gray-800 rounded-3xl border-none shadow-inner focus:ring-2 focus:ring-indigo-500 font-bold text-sm min-h-[120px] resize-none"
-                                                    />
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="flex items-center gap-2">
+                                                            <FiMapPin className="text-indigo-500" /> Street address
+                                                        </Label>
+                                                        <textarea
+                                                            value={streetAddress}
+                                                            onChange={(e) => setStreetAddress(e.target.value)}
+                                                            placeholder="House / street / area (residential address)…"
+                                                            className="w-full p-6 bg-white dark:bg-gray-800 rounded-3xl border-none shadow-inner focus:ring-2 focus:ring-indigo-500 font-bold text-sm min-h-[100px] resize-none"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-black text-gray-500 uppercase tracking-wider">
+                                                            Address from map / GPS
+                                                        </Label>
+                                                        <p className="text-[10px] text-gray-400 leading-snug">
+                                                            Pulled from your profile when available; edit here for this order if needed.
+                                                        </p>
+                                                        <textarea
+                                                            value={latLngAddress}
+                                                            onChange={(e) => setLatLngAddress(e.target.value)}
+                                                            placeholder="Reverse-geocoded label from your map coordinates…"
+                                                            className="w-full p-5 bg-white dark:bg-gray-800 rounded-3xl border-none shadow-inner focus:ring-2 focus:ring-indigo-500 font-bold text-sm min-h-[88px] resize-none"
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <Button 
                                                     className="w-full py-5 rounded-3xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:shadow-indigo-500/20"

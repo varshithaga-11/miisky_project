@@ -18,7 +18,6 @@ import {
   FiSearch,
   FiPhone,
   FiMail,
-  FiTruck,
   FiX,
   FiCheckCircle,
   FiClock,
@@ -28,7 +27,9 @@ import {
   FiCalendar,
   FiChevronRight,
 } from "react-icons/fi";
-import Button from "../../../components/ui/button/Button";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import Select from "../../../components/form/Select";
+import Label from "../../../components/form/Label";
 
 type SupplyChainRow = {
   id: number;
@@ -405,44 +406,76 @@ const SupplyChainDossierModal: React.FC<{
                   {!orders || orders.length === 0 ? (
                     <p className="text-sm text-gray-500">No orders assigned yet.</p>
                   ) : (
-                    <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-white/10">
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="bg-gray-50/80 dark:bg-white/[0.03] text-[10px] font-black uppercase text-gray-400">
-                            <th className="px-3 py-2">#</th>
-                            <th className="px-3 py-2">Patient</th>
-                            <th className="px-3 py-2">Kitchen</th>
-                            <th className="px-3 py-2">Status</th>
-                            <th className="px-3 py-2">Final</th>
-                            <th className="px-3 py-2">Receipt</th>
-                            <th className="px-3 py-2">Split</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                          {orders.map((o) => (
-                            <tr key={o.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
-                              <td className="px-3 py-2 font-mono">{o.id}</td>
-                              <td className="px-3 py-2">{o.patient_label ?? "—"}</td>
-                              <td className="px-3 py-2">{o.kitchen_brand ?? "—"}</td>
-                              <td className="px-3 py-2">{o.status}</td>
-                              <td className="px-3 py-2">₹{o.final_amount}</td>
-                              <td className="px-3 py-2">{o.receipt_uploaded ? "Yes" : "—"}</td>
-                              <td className="px-3 py-2 max-w-[220px]">
-                                {o.payment_snapshot ? (
-                                  <span className="text-[10px] leading-tight block text-gray-500">
-                                    Platform ₹{o.payment_snapshot.platform_amount} / Kitchen ₹
-                                    {o.payment_snapshot.kitchen_amount}
-                                    <br />
-                                    Grand ₹{o.payment_snapshot.grand_total}
+                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+                      <div className="max-w-full overflow-x-auto">
+                        <Table>
+                          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                            <TableRow>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                #
+                              </TableCell>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                Patient
+                              </TableCell>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                Kitchen
+                              </TableCell>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                Status
+                              </TableCell>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                Final
+                              </TableCell>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                Receipt
+                              </TableCell>
+                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                Split
+                              </TableCell>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                            {orders.map((o) => (
+                              <TableRow key={o.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                                <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90 font-mono">
+                                  {o.id}
+                                </TableCell>
+                                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-800 dark:text-white/90">
+                                  {o.patient_label ?? "—"}
+                                </TableCell>
+                                <TableCell className="px-5 py-4 text-start">
+                                  <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium dark:bg-orange-900/30">
+                                    {o.kitchen_brand ?? "—"}
                                   </span>
-                                ) : (
-                                  "—"
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                </TableCell>
+                                <TableCell className="px-5 py-4 text-start">
+                                  <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium dark:bg-blue-900/30">
+                                    {o.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                                  ₹{o.final_amount}
+                                </TableCell>
+                                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-600 dark:text-gray-400">
+                                  {o.receipt_uploaded ? "Yes" : "—"}
+                                </TableCell>
+                                <TableCell className="px-5 py-4 text-start max-w-[220px]">
+                                  {o.payment_snapshot ? (
+                                    <span className="text-theme-xs leading-tight block text-gray-500 dark:text-gray-400">
+                                      Platform ₹{o.payment_snapshot.platform_amount} / Kitchen ₹
+                                      {o.payment_snapshot.kitchen_amount}
+                                      <br />
+                                      Grand ₹{o.payment_snapshot.grand_total}
+                                    </span>
+                                  ) : (
+                                    "—"
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -498,6 +531,7 @@ const SupplyChainOverViewPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [limit, setLimit] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<SupplyChainRow | null>(null);
@@ -509,6 +543,7 @@ const SupplyChainOverViewPage: React.FC = () => {
       const data = await getAdminSupplyChainList(page, search, lim);
       setRows((data.results || []) as SupplyChainRow[]);
       setTotalPages(data.total_pages || 1);
+      setTotalItems(typeof data.count === "number" ? data.count : 0);
     } catch (e) {
       console.error(e);
       toast.error("Failed to load supply chain users");
@@ -539,7 +574,7 @@ const SupplyChainOverViewPage: React.FC = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900 pb-12">
+    <>
       <PageMeta
         title="Supply chain overview"
         description="Micro kitchens, allotted patients, orders, and delivery profiles"
@@ -547,167 +582,171 @@ const SupplyChainOverViewPage: React.FC = () => {
       <PageBreadcrumb pageTitle="Supply chain overview" />
       <ToastContainer position="bottom-right" className="z-[99999]" />
 
-      <div className="px-4 md:px-8">
-        <div className="mb-8 flex flex-col md:flex-row gap-6 justify-between items-center">
-          <div className="flex gap-4 items-center">
-            <div className="p-4 bg-amber-600 rounded-[24px] text-white shadow-xl shadow-amber-600/20 italic">
-              <FiTruck size={28} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                Supply chain
-              </h1>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                Delivery staff, kitchens, and assignments
-              </p>
-            </div>
-          </div>
-
-          <div className="relative w-full md:w-96 shadow-sm group">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-amber-500 transition-colors" />
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search name, email, phone…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-gray-800 rounded-[28px] border border-transparent focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/5 outline-none font-bold text-sm tracking-tight"
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800/40 rounded-[44px] overflow-hidden border border-gray-100 dark:border-white/5 shadow-2xl backdrop-blur-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50/50 dark:bg-white/[0.02] border-b dark:border-white/5">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                    Person
-                  </th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                    Contact
-                  </th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                    Status
-                  </th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic text-right">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                {loading && rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-8 py-24 text-center">
-                      <div className="inline-flex flex-col items-center gap-4">
-                        <div className="size-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-xs font-black uppercase text-gray-400 tracking-widest italic">
-                          Loading…
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-8 py-24 text-center text-gray-500">
-                      No supply chain users found.
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((r) => (
-                    <tr
-                      key={r.id}
-                      className="group hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-all duration-300"
-                    >
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="size-14 rounded-[20px] bg-gray-100 dark:bg-gray-700 overflow-hidden ring-4 ring-gray-100 dark:ring-white/5 shadow-inner">
-                            {r.photo ? (
-                              <img src={r.photo} className="w-full h-full object-cover" alt="" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                <FiUser size={24} />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-amber-600 transition-colors">
-                              {r.first_name} {r.last_name}
-                            </div>
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                              ID #{r.id}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-tight flex flex-col gap-1">
-                          <span className="flex items-center gap-1">
-                            <FiMail /> {r.email}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <FiPhone /> {r.mobile || "N/A"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">{statusBadge(r.is_active)}</td>
-                      <td className="px-8 py-6 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openDetails(r)}
-                          className="px-6 py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2 ml-auto shadow-xl shadow-black/10 dark:shadow-white/5"
-                        >
-                          View details <FiChevronRight />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="flex items-center gap-2">
+            <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
+            <Select
+              value={String(limit)}
+              onChange={(val) => {
+                setLimit(Number(val));
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: "10", label: "10" },
+                { value: "20", label: "20" },
+                { value: "50", label: "50" },
+                { value: "100", label: "100" },
+              ]}
+              className="w-20"
+            />
+            <span className="text-sm text-gray-600 whitespace-nowrap">entries</span>
           </div>
-
-          <div className="px-8 py-6 bg-gray-50/50 dark:bg-white/[0.02] border-t dark:border-white/5 flex justify-between items-center flex-wrap gap-4">
-            <div className="flex items-center gap-6">
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                Page {currentPage} of {totalPages}
-              </div>
-              <select
-                value={limit}
-                onChange={(e) => {
-                  setLimit(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 rounded-xl px-3 py-1.5 text-[10px] font-black uppercase outline-none focus:border-amber-500 shadow-sm"
-              >
-                <option value={10}>10 / page</option>
-                <option value={20}>20 / page</option>
-                <option value={50}>50 / page</option>
-                <option value={100}>100 / page</option>
-              </select>
-            </div>
-            <div className="flex gap-4">
-              <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                variant="outline"
-                size="sm"
-                className="rounded-xl font-black uppercase tracking-widest text-[10px]"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                variant="outline"
-                size="sm"
-                className="rounded-xl font-black uppercase tracking-widest text-[10px]"
-              >
-                Next
-              </Button>
-            </div>
+        </div>
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems === 0 ? 0 : (currentPage - 1) * limit + 1} to{" "}
+            {Math.min(currentPage * limit, totalItems)} of {totalItems} entries
           </div>
         </div>
       </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Person
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Contact
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Status
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {loading && rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 italic">
+                    Loading supply chain users…
+                  </TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 italic">
+                    No supply chain users found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((r) => (
+                  <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden border border-gray-200 dark:border-gray-600">
+                          {r.photo ? (
+                            <img src={r.photo} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <FiUser size={22} />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-800 text-theme-sm dark:text-white/90">
+                            {r.first_name} {r.last_name}
+                          </div>
+                          <div className="text-theme-xs text-gray-500 dark:text-gray-400">ID #{r.id}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="text-theme-xs text-gray-600 dark:text-gray-400 flex flex-col gap-1">
+                        <span className="flex items-center gap-1">
+                          <FiMail className="shrink-0" /> {r.email}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FiPhone className="shrink-0" /> {r.mobile || "N/A"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">{statusBadge(r.is_active)}</TableCell>
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
+                      <button
+                        type="button"
+                        onClick={() => openDetails(r)}
+                        className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium"
+                      >
+                        View details <FiChevronRight className="text-lg" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-blue-600 text-white border border-blue-600"
+                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Next
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       <SupplyChainDossierModal
         person={selected}
@@ -718,7 +757,7 @@ const SupplyChainOverViewPage: React.FC = () => {
           setSelected(null);
         }}
       />
-    </div>
+    </>
   );
 };
 

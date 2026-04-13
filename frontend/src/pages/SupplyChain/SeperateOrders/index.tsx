@@ -439,10 +439,23 @@ const SupplyChainSeperateOrdersPage: React.FC = () => {
                                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                         <FiMapPin size={14} className="text-indigo-500" /> Delivery address
                                       </h4>
-                                      <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
-                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
-                                          {order.delivery_address}
-                                        </p>
+                                      <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
+                                        <div>
+                                          <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">
+                                            Street address
+                                          </p>
+                                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                                            {order.delivery_address?.trim() || "—"}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">
+                                            Address from map / GPS
+                                          </p>
+                                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                                            {order.delivery_lat_lng_address?.trim() || "—"}
+                                          </p>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>

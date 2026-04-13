@@ -29,6 +29,7 @@ export interface UserRegister {
   dob?: string | null;
   gender?: "male" | "female" | "other" | null;
   address?: string | null;
+  lat_lng_address?: string | null;
   zip_code?: string | null;
   country?: number | null;
   state?: number | null;
@@ -502,9 +503,15 @@ const UserManagementPage: React.FC = () => {
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{viewUser.joined_date || "—"}</p>
               </div>
               <div className="md:col-span-2 space-y-1 border-t border-gray-100 dark:border-white/[0.05] pt-4">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Address</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Street address</span>
                 <p className="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">
-                  {viewUser.address || "No address provided"}
+                  {viewUser.address || "—"}
+                </p>
+              </div>
+              <div className="md:col-span-2 space-y-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Address from map / GPS</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">
+                  {viewUser.lat_lng_address || "—"}
                 </p>
               </div>
             </div>

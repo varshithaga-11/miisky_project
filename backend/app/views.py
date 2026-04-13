@@ -587,9 +587,11 @@ class AdminAllOrdersView(APIView):
                 Q(status__icontains=search)
             )
 
+        # Same filtered queryset as list rows: sums for final bill, delivery, and payment snapshot splits.
         order_stats = qs.aggregate(
             total_orders=Count("id"),
             total_order_amount=Sum("final_amount"),
+            total_delivery_charge=Sum("delivery_charge"),
         )
         snap_stats = (
             OrderPaymentSnapshot.objects.filter(order_id__in=qs.values("id"))
@@ -598,6 +600,11 @@ class AdminAllOrdersView(APIView):
                 total_platform_amount=Sum("platform_amount"),
             )
         )
+
+        def _money_str(val):
+            if val is None:
+                return "0.00"
+            return f"{Decimal(str(val)):.2f}"
 
         paginator = Pagination()
         paginated_qs = paginator.paginate_queryset(qs, request)
@@ -610,15 +617,17 @@ class AdminAllOrdersView(APIView):
                 "patient_name": f"{o.user.first_name} {o.user.last_name}" if o.user else "Unknown Guest",
                 "kitchen_name": o.micro_kitchen.brand_name if o.micro_kitchen else "Not Assigned",
                 "amount": float(o.final_amount),
+                "delivery_charge": float(o.delivery_charge or 0),
                 "status": o.status,
                 "created_at": o.created_at,
             })
 
         response = paginator.get_paginated_response(results)
         response.data["total_orders"] = order_stats["total_orders"] or 0
-        response.data["total_amount"] = str(order_stats["total_order_amount"] or 0)
-        response.data["total_kitchen_amount"] = str(snap_stats["total_kitchen_amount"] or 0)
-        response.data["total_platform_amount"] = str(snap_stats["total_platform_amount"] or 0)
+        response.data["total_amount"] = _money_str(order_stats["total_order_amount"])
+        response.data["total_delivery_charge"] = _money_str(order_stats["total_delivery_charge"])
+        response.data["total_kitchen_amount"] = _money_str(snap_stats["total_kitchen_amount"])
+        response.data["total_platform_amount"] = _money_str(snap_stats["total_platform_amount"])
         return response
 
 
@@ -1497,7 +1506,7 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
 
 
 class HealthConditionMasterViewSet(viewsets.ModelViewSet):
-    queryset = HealthConditionMaster.objects.all().order_by("name")
+    queryset = HealthConditionMaster.objects.all().order_by("sort_order", "name")
     serializer_class = HealthConditionMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
@@ -1512,7 +1521,7 @@ class HealthConditionMasterViewSet(viewsets.ModelViewSet):
 
 
 class SymptomMasterViewSet(viewsets.ModelViewSet):
-    queryset = SymptomMaster.objects.all().order_by("name")
+    queryset = SymptomMaster.objects.all().order_by("sort_order", "name")
     serializer_class = SymptomMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
@@ -1527,7 +1536,7 @@ class SymptomMasterViewSet(viewsets.ModelViewSet):
 
 
 class AutoimmuneMasterViewSet(viewsets.ModelViewSet):
-    queryset = AutoimmuneMaster.objects.all().order_by("name")
+    queryset = AutoimmuneMaster.objects.all().order_by("sort_order", "name")
     serializer_class = AutoimmuneMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
@@ -1542,7 +1551,7 @@ class AutoimmuneMasterViewSet(viewsets.ModelViewSet):
 
 
 class DeficiencyMasterViewSet(viewsets.ModelViewSet):
-    queryset = DeficiencyMaster.objects.all().order_by("name")
+    queryset = DeficiencyMaster.objects.all().order_by("sort_order", "name")
     serializer_class = DeficiencyMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
@@ -1557,7 +1566,7 @@ class DeficiencyMasterViewSet(viewsets.ModelViewSet):
 
 
 class DigestiveIssueMasterViewSet(viewsets.ModelViewSet):
-    queryset = DigestiveIssueMaster.objects.all().order_by("name")
+    queryset = DigestiveIssueMaster.objects.all().order_by("sort_order", "name")
     serializer_class = DigestiveIssueMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
@@ -1572,7 +1581,7 @@ class DigestiveIssueMasterViewSet(viewsets.ModelViewSet):
 
 
 class SkinIssueMasterViewSet(viewsets.ModelViewSet):
-    queryset = SkinIssueMaster.objects.all().order_by("name")
+    queryset = SkinIssueMaster.objects.all().order_by("sort_order", "name")
     serializer_class = SkinIssueMasterSerializer
     permission_classes = [AuthenticatedReadAdminWrite]
     pagination_class = Pagination
@@ -3291,12 +3300,12 @@ class TemplateDownloadView(APIView):
             },
 
             "questionnaire": {
-                "health-condition": ["name", "category"],
-                "symptom": ["name"],
-                "autoimmune": ["name"],
-                "deficiency": ["name"],
-                "digestive-issue": ["name"],
-                "skin-issue": ["name"],
+                "health-condition": ["name", "category", "sort_order"],
+                "symptom": ["name", "sort_order"],
+                "autoimmune": ["name", "sort_order"],
+                "deficiency": ["name", "sort_order"],
+                "digestive-issue": ["name", "sort_order"],
+                "skin-issue": ["name", "sort_order"],
                 "habit": ["name", "sort_order"],
                 "activity": ["name", "sort_order"],
             },
@@ -3601,38 +3610,38 @@ class TemplateDownloadView(APIView):
                 ["Sugar", "100g", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
             ],
             "health-condition": [
-                ["Pre-Diabetic", "metabolic"], ["Diabetes Type I", "metabolic"], ["Diabetes Type II", "metabolic"], ["Juvenile Diabetes", "metabolic"],
-                ["Hypertension", "chronic"], ["Cardiac Issues", "chronic"], ["CKD", "chronic"], ["Anemia", "other"],
-                ["Thyroid", "metabolic"], ["Migraine", "chronic"], ["PCOD & PCOS", "metabolic"], ["Triglycerides", "metabolic"],
-                ["Cholesterol", "metabolic"], ["Cancer", "chronic"], ["Gout", "metabolic"], ["Osteoporosis", "chronic"],
-                ["Obesity", "metabolic"], ["Urine Infection", "infectious"], ["Glucoma", "chronic"], ["Malaria", "infectious"],
-                ["Dengue", "infectious"], ["Chicken Pox", "infectious"], ["Herpes", "infectious"], ["Gall Stone", "digestive"],
-                ["Fatty Liver", "digestive"], ["Liver Cirrhosis", "digestive"], ["Kidney Stone", "other"], ["IBS", "digestive"], ["Gastritis", "digestive"]
+                ["Pre-Diabetic", "metabolic", "0"], ["Diabetes Type I", "metabolic", "1"], ["Diabetes Type II", "metabolic", "2"], ["Juvenile Diabetes", "metabolic", "3"],
+                ["Hypertension", "chronic", "4"], ["Cardiac Issues", "chronic", "5"], ["CKD", "chronic", "6"], ["Anemia", "other", "7"],
+                ["Thyroid", "metabolic", "8"], ["Migraine", "chronic", "9"], ["PCOD & PCOS", "metabolic", "10"], ["Triglycerides", "metabolic", "11"],
+                ["Cholesterol", "metabolic", "12"], ["Cancer", "chronic", "13"], ["Gout", "metabolic", "14"], ["Osteoporosis", "chronic", "15"],
+                ["Obesity", "metabolic", "16"], ["Urine Infection", "infectious", "17"], ["Glucoma", "chronic", "18"], ["Malaria", "infectious", "19"],
+                ["Dengue", "infectious", "20"], ["Chicken Pox", "infectious", "21"], ["Herpes", "infectious", "22"], ["Gall Stone", "digestive", "23"],
+                ["Fatty Liver", "digestive", "24"], ["Liver Cirrhosis", "digestive", "25"], ["Kidney Stone", "other", "26"], ["IBS", "digestive", "27"], ["Gastritis", "digestive", "28"]
             ],
             "symptom": [
-                ["Fatigue"], ["Sudden weight loss"], ["Sudden weight Gain"], ["Muscle pain"], ["Joint pain"],
-                ["Hair loss"], ["Bloating"], ["Diarrhoea"], ["Constipation"], ["Numbness/tingling"],
-                ["Difficulty Concentrating"], ["Palpitations"], ["Blurry vision"], ["Mouth ulcers"]
+                ["Fatigue", "0"], ["Sudden weight loss", "1"], ["Sudden weight Gain", "2"], ["Muscle pain", "3"], ["Joint pain", "4"],
+                ["Hair loss", "5"], ["Bloating", "6"], ["Diarrhoea", "7"], ["Constipation", "8"], ["Numbness/tingling", "9"],
+                ["Difficulty Concentrating", "10"], ["Palpitations", "11"], ["Blurry vision", "12"], ["Mouth ulcers", "13"]
             ],
             "autoimmune": [
-                ["Rheumatoid Arthritis"], ["Celiac disease"], ["Pernicious Anemia"], ["Vitiligo"], ["Addison’s disease"],
-                ["Ulcerative Colitis"], ["Crohn’s disease"], ["Guillain- Barre Syndrome"], ["Kawasaki disease"], ["Psoriasis"],
-                ["Alopecia Areata"], ["Fibromyalgia"]
+                ["Rheumatoid Arthritis", "0"], ["Celiac disease", "1"], ["Pernicious Anemia", "2"], ["Vitiligo", "3"], ["Addison’s disease", "4"],
+                ["Ulcerative Colitis", "5"], ["Crohn’s disease", "6"], ["Guillain- Barre Syndrome", "7"], ["Kawasaki disease", "8"], ["Psoriasis", "9"],
+                ["Alopecia Areata", "10"], ["Fibromyalgia", "11"]
             ],
             "deficiency": [
-                ["Vitamin A"], ["Vitamin B1"], ["Vitamin B9"], ["Vitamin B12"], ["Vitamin C"],
-                ["Vitamin D3"], ["Vitamin K"], ["Calcium"], ["Magnesium"], ["Zinc"],
-                ["Iron"], ["Potassium"], ["Sodium"]
+                ["Vitamin A", "0"], ["Vitamin B1", "1"], ["Vitamin B9", "2"], ["Vitamin B12", "3"], ["Vitamin C", "4"],
+                ["Vitamin D3", "5"], ["Vitamin K", "6"], ["Calcium", "7"], ["Magnesium", "8"], ["Zinc", "9"],
+                ["Iron", "10"], ["Potassium", "11"], ["Sodium", "12"]
             ],
             "digestive-issue": [
-                ["Acid Reflux / GERD"], ["IBS (Irritable Bowel Syndrome)"], ["Bloating / Gas"], ["Chronic Constipation"], ["Chronic Diarrhea"],
-                ["Gastritis"], ["Peptic Ulcer"], ["Crohn's Disease"], ["Celiac Disease"], ["Food Intolerance"],
-                ["Gallstones"], ["Ulcerative Colitis"], ["Hemorrhoids"], ["Diverticulitis"], ["Lactose Intolerance"],
-                ["Hiatal Hernia"], ["Fatty Liver"], ["Pancreatitis"], ["Stomach Flu / Gastroenteritis"], ["Indigestion / Dyspepsia"],
-                ["Heartburn"], ["Nausea"], ["Abdominal Pain"], ["Loss of Appetite"], ["Small Intestinal Bacterial Overgrowth (SIBO)"]
+                ["Acid Reflux / GERD", "0"], ["IBS (Irritable Bowel Syndrome)", "1"], ["Bloating / Gas", "2"], ["Chronic Constipation", "3"], ["Chronic Diarrhea", "4"],
+                ["Gastritis", "5"], ["Peptic Ulcer", "6"], ["Crohn's Disease", "7"], ["Celiac Disease", "8"], ["Food Intolerance", "9"],
+                ["Gallstones", "10"], ["Ulcerative Colitis", "11"], ["Hemorrhoids", "12"], ["Diverticulitis", "13"], ["Lactose Intolerance", "14"],
+                ["Hiatal Hernia", "15"], ["Fatty Liver", "16"], ["Pancreatitis", "17"], ["Stomach Flu / Gastroenteritis", "18"], ["Indigestion / Dyspepsia", "19"],
+                ["Heartburn", "20"], ["Nausea", "21"], ["Abdominal Pain", "22"], ["Loss of Appetite", "23"], ["Small Intestinal Bacterial Overgrowth (SIBO)", "24"]
             ],
             "skin-issue": [
-                ["Allergy"], ["Acne prone"], ["Eczema"], ["Dandruff"], ["Dryness"], ["Itchiness"]
+                ["Allergy", "0"], ["Acne prone", "1"], ["Eczema", "2"], ["Dandruff", "3"], ["Dryness", "4"], ["Itchiness", "5"]
             ],
             "habit": [
                 ["Regular exercise", "0"],
@@ -5651,6 +5660,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Q(user__first_name__icontains=search) |
                 Q(user__last_name__icontains=search) |
                 Q(delivery_address__icontains=search) |
+                Q(delivery_lat_lng_address__icontains=search) |
                 Q(id__icontains=search)
             )
 
@@ -5744,6 +5754,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             customer = request.user
             kitchen_profile = cart.micro_kitchen
 
+            if 'delivery_lat_lng_address' in request.data:
+                dlg_val = request.data.get('delivery_lat_lng_address') or ''
+            else:
+                dlg_val = getattr(customer, 'lat_lng_address', '') or ''
+
             order = Order.objects.create(
                 user=customer,
                 micro_kitchen=kitchen_profile,
@@ -5754,6 +5769,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 delivery_slab=slab,
                 final_amount=final_dec,
                 delivery_address=delivery_address or (getattr(customer, 'address', '') or ''),
+                delivery_lat_lng_address=dlg_val,
                 status='placed',
             )
 

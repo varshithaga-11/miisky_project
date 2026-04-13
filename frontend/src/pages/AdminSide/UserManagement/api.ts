@@ -15,6 +15,7 @@ export interface UserRegister {
   gender?: "male" | "female" | "other" | null;
   photo?: File | string | null;
   address?: string | null;
+  lat_lng_address?: string | null;
   city?: number | null;
   zip_code?: string | null;
   state?: number | null;

@@ -4,6 +4,7 @@ import axios from "axios";
 export interface SymptomMaster {
   id?: number;
   name: string;
+  sort_order?: number;
 }
 
 export interface PaginatedResponses<T> {

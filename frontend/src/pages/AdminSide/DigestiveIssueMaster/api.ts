@@ -4,6 +4,7 @@ import axios from "axios";
 export interface DigestiveIssueMaster {
   id?: number;
   name: string;
+  sort_order?: number;
 }
 
 export interface PaginatedResponses<T> {

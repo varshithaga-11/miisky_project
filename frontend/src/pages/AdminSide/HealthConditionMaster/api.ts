@@ -5,6 +5,7 @@ export interface HealthConditionMaster {
   id?: number;
   name: string;
   category: string;
+  sort_order?: number;
 }
 
 export interface PaginatedResponses<T> {

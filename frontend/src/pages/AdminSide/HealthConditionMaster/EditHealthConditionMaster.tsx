@@ -25,6 +25,7 @@ interface Props {
 const EditHealthConditionMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("other");
+  const [sortOrder, setSortOrder] = useState(0);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -33,9 +34,10 @@ const EditHealthConditionMaster: React.FC<Props> = ({ recordId, isOpen, onClose,
     if (isOpen && recordId) {
       setLoading(true);
       getHealthConditionMasterById(recordId)
-        .then((data: { name: string; category: string }) => {
+        .then((data: { name: string; category: string; sort_order?: number }) => {
           setName(data.name);
           setCategory(data.category || "other");
+          setSortOrder(data.sort_order ?? 0);
         })
         .catch(() => setError("Failed to load."))
         .finally(() => setLoading(false));
@@ -46,7 +48,7 @@ const EditHealthConditionMaster: React.FC<Props> = ({ recordId, isOpen, onClose,
     e.preventDefault();
     setSaving(true);
     try {
-      await updateHealthConditionMaster(recordId, { name: name.trim(), category });
+      await updateHealthConditionMaster(recordId, { name: name.trim(), category, sort_order: Number(sortOrder) || 0 });
       toast.success("Updated.");
       setTimeout(() => {
         onUpdated();
@@ -93,6 +95,17 @@ const EditHealthConditionMaster: React.FC<Props> = ({ recordId, isOpen, onClose,
             <div>
               <Label htmlFor="category">Category *</Label>
               <Select value={category} onChange={(val) => setCategory(String(val))} options={CATEGORY_OPTIONS} className="w-full" />
+            </div>
+            <div>
+              <Label htmlFor="sort_order">Sort order</Label>
+              <Input
+                id="sort_order"
+                type="number"
+                min={0}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(Number(e.target.value))}
+                disabled={saving}
+              />
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <Button type="button" variant="outline" onClick={onClose} disabled={saving}>

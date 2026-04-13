@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
 import { getAllOrders, getMicroKitchens, getOrderById, OrderListDatePeriod } from "./api";
 import OrderDetailModal from "./OrderDetailModal";
 
@@ -16,7 +17,6 @@ const fmtRs = (s: string | undefined) => {
 };
 
 const PERIOD_OPTIONS: { value: OrderListDatePeriod; label: string }[] = [
-  { value: "all", label: "All dates" },
   { value: "today", label: "Today" },
   { value: "tomorrow", label: "Tomorrow" },
   { value: "this_week", label: "This week" },
@@ -35,6 +35,7 @@ interface OrderRow {
   patient_name: string;
   kitchen_name: string;
   amount: number;
+  delivery_charge: number;
   status: string;
   created_at: string;
 }
@@ -44,6 +45,7 @@ const OrderManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -53,25 +55,23 @@ const OrderManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
-  const [billingMonth, setBillingMonth] = useState("");
-  const [period, setPeriod] = useState<OrderListDatePeriod>("all");
+  const [period, setPeriod] = useState<OrderListDatePeriod>("this_month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [orderSummary, setOrderSummary] = useState<{
     total_orders?: number;
     total_amount?: string;
+    total_delivery_charge?: string;
     total_kitchen_amount?: string;
     total_platform_amount?: string;
   }>({});
 
   const dateFilterOptions = useMemo(() => {
-    if (billingMonth.trim()) return { billing_month: billingMonth.trim() };
     if (period === "custom_range") {
       return { period, start_date: customStart, end_date: customEnd };
     }
-    if (period !== "all") return { period };
-    return undefined;
-  }, [billingMonth, period, customStart, customEnd]);
+    return { period };
+  }, [period, customStart, customEnd]);
 
   useEffect(() => {
     const fetchKitchens = async () => {
@@ -86,6 +86,16 @@ const OrderManagementPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== searchInput) {
+        setSearchTerm(searchInput);
+        setCurrentPage(1);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, searchTerm]);
+
+  useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
@@ -96,6 +106,7 @@ const OrderManagementPage: React.FC = () => {
         setOrderSummary({
           total_orders: res.total_orders,
           total_amount: res.total_amount,
+          total_delivery_charge: res.total_delivery_charge,
           total_kitchen_amount: res.total_kitchen_amount,
           total_platform_amount: res.total_platform_amount,
         });
@@ -114,10 +125,14 @@ const OrderManagementPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'active': return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10';
-      case 'pending': return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
-      case 'completed': return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10';
-      default: return 'text-gray-500 bg-gray-50 dark:bg-gray-500/10';
+      case "active":
+        return "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30";
+      case "pending":
+        return "bg-amber-50 text-amber-600 dark:bg-amber-900/30";
+      case "completed":
+        return "bg-blue-50 text-blue-600 dark:bg-blue-900/30";
+      default:
+        return "bg-gray-50 text-gray-600 dark:bg-gray-500/10";
     }
   };
 
@@ -137,30 +152,32 @@ const OrderManagementPage: React.FC = () => {
   const handleExport = async () => {
     try {
       setLoading(true);
-      // Fetch with a high limit to export all matching records based on current filters
       const res = await getAllOrders(1, 10000, searchTerm, selectedKitchen, dateFilterOptions);
       const allRows = res.results || [];
-      
+
       if (allRows.length === 0) {
         return;
       }
 
-      const headers = ["Order ID", "Patient Name", "Kitchen", "Amount", "Status", "Date"];
-      const csvRows = allRows.map((r: any) => [
-        `"${r.order_id || `#ORD-${r.id}`}"`,
-        `"${r.patient_name}"`,
-        `"${r.kitchen_name || "—"}"`,
-        r.amount,
-        `"${r.status}"`,
-        `"${new Date(r.created_at).toLocaleString()}"`
-      ].join(","));
+      const headers = ["Order ID", "Patient Name", "Kitchen", "Amount", "Delivery charge", "Status", "Date"];
+      const csvRows = allRows.map((r: any) =>
+        [
+          `"${r.order_id || `#ORD-${r.id}`}"`,
+          `"${r.patient_name}"`,
+          `"${r.kitchen_name || "—"}"`,
+          r.amount,
+          r.delivery_charge ?? 0,
+          `"${r.status}"`,
+          `"${new Date(r.created_at).toLocaleString()}"`,
+        ].join(",")
+      );
 
       const csvContent = [headers.join(","), ...csvRows].join("\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `miisky_orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `miisky_orders_export_${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -171,101 +188,47 @@ const OrderManagementPage: React.FC = () => {
     }
   };
 
+  if (loading && rows.length === 0) {
+    return <div className="text-black dark:text-white p-6">Loading orders...</div>;
+  }
+
   return (
     <>
       <PageMeta title="Orders Management" description="Oversight of all patient and non-patient orders" />
       <PageBreadcrumb pageTitle="Orders Management" />
 
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-sm transition-all duration-300">
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-              <div className="relative flex-1 max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search Order ID, Patient, Kitchen..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-all"
-                />
-                <FiSearch className="w-5 h-5 text-gray-400 absolute left-3.5 top-3" />
-              </div>
-
-              <div className="flex-1 max-w-xs">
-                <Select
-                  value={selectedKitchen}
-                  onChange={(val) => {
-                    setSelectedKitchen(val);
-                    setCurrentPage(1);
-                  }}
-                  options={[
-                    { value: "", label: "All Micro-Kitchens" },
-                    ...kitchens.map((k) => ({
-                      value: String(k.id),
-                      label: k.brand_name || `Kitchen #${k.id}`,
-                    })),
-                  ]}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-all shadow-sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col text-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-medium">
-                    Total Orders: {orderSummary.total_orders ?? totalItems}
-                  </span>
-                  <span>
-                    Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
-                    {Math.min(currentPage * pageSize, totalItems)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm dark:text-gray-400 whitespace-nowrap font-medium">Show:</Label>
-                  <Select
-                    value={String(pageSize)}
-                    onChange={(val) => {
-                      setPageSize(Number(val));
-                      setCurrentPage(1);
-                    }}
-                    options={[
-                      { value: "10", label: "10" },
-                      { value: "25", label: "25" },
-                      { value: "50", label: "50" },
-                    ]}
-                    className="w-24 px-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl"
-                  />
-                </div>
-                <Button 
-                  variant="outline" 
-                  onClick={handleExport}
-                  disabled={loading || rows.length === 0}
-                  className="flex items-center gap-2 rounded-xl py-2.5 px-4 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
-                >
-                  <FiDownload /> Export
-                </Button>
-              </div>
-            </div>
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search Order ID, Patient, Kitchen..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            />
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-gray-700 dark:bg-gray-800/40 md:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400">Calendar month</Label>
-              <input
-                type="month"
-                value={billingMonth}
-                onChange={(e) => {
-                  setBillingMonth(e.target.value);
+          <div className="flex flex-col sm:flex-row gap-4 flex-1 min-w-0">
+            <div className="w-full sm:w-56">
+              <Select
+                value={selectedKitchen}
+                onChange={(val) => {
+                  setSelectedKitchen(val);
                   setCurrentPage(1);
                 }}
-                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                options={[
+                  { value: "", label: "All Micro-Kitchens" },
+                  ...kitchens.map((k) => ({
+                    value: String(k.id),
+                    label: k.brand_name || `Kitchen #${k.id}`,
+                  })),
+                ]}
+                className="w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">If set, overrides period (filters by order date).</p>
             </div>
-            <div className="md:col-span-1 lg:col-span-2">
-              <Label className="text-xs text-gray-500 dark:text-gray-400">Period</Label>
+            <div className="w-full sm:w-48">
               <Select
                 value={period}
                 onChange={(val) => {
@@ -273,161 +236,240 @@ const OrderManagementPage: React.FC = () => {
                   setCurrentPage(1);
                 }}
                 options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-                className="mt-1 w-full"
+                className="w-full"
               />
             </div>
-            {period === "custom_range" && (
-              <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-2">
-                <div>
-                  <Label className="text-xs text-gray-500">From</Label>
-                  <input
-                    type="date"
-                    value={customStart}
-                    onChange={(e) => {
-                      setCustomStart(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="mt-1 rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500">To</Label>
-                  <input
-                    type="date"
-                    value={customEnd}
-                    onChange={(e) => {
-                      setCustomEnd(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="mt-1 rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900/50">
-              <p className="text-[10px] font-semibold uppercase text-gray-500">Orders (filter)</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{orderSummary.total_orders ?? "—"}</p>
-            </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-              <p className="text-[10px] font-semibold uppercase text-emerald-800 dark:text-emerald-300">Total amount</p>
-              <p className="text-lg font-bold text-emerald-900 dark:text-emerald-200">{fmtRs(orderSummary.total_amount)}</p>
-            </div>
-            <div className="rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-950/30">
-              <p className="text-[10px] font-semibold uppercase text-blue-800 dark:text-blue-300">Platform</p>
-              <p className="text-lg font-bold text-blue-900 dark:text-blue-200">{fmtRs(orderSummary.total_platform_amount)}</p>
-            </div>
-            <div className="rounded-xl border border-orange-200 bg-orange-50/80 px-3 py-2 dark:border-orange-900/40 dark:bg-orange-950/30">
-              <p className="text-[10px] font-semibold uppercase text-orange-800 dark:text-orange-300">Kitchen</p>
-              <p className="text-lg font-bold text-orange-900 dark:text-orange-200">{fmtRs(orderSummary.total_kitchen_amount)}</p>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-            <div className="max-w-full overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-slate-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                  <TableRow>
-                    <TableCell isHeader className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">#</TableCell>
-                    <TableCell isHeader className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Order Details</TableCell>
-                    <TableCell isHeader className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Kitchen</TableCell>
-                    <TableCell isHeader className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Amount</TableCell>
-                    <TableCell isHeader className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</TableCell>
-                    <TableCell isHeader className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Action</TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="px-6 py-12 text-center text-gray-400 italic">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-                          <span>Loading orders...</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="px-6 py-12 text-center text-gray-400 italic">
-                        <div className="flex flex-col items-center gap-2 text-gray-400">
-                          <span className="text-4xl">📦</span>
-                          <span>No orders found</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    rows.map((r, index) => (
-                      <TableRow key={r.id} className="hover:bg-slate-50/50 dark:hover:bg-gray-800/40 transition-colors">
-                        <TableCell className="px-6 py-5">{(currentPage - 1) * pageSize + index + 1}</TableCell>
-                        <TableCell className="px-6 py-5">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 dark:text-white">{r.order_id || `#ORD-${r.id}`}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{r.patient_name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-6 py-5">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{r.kitchen_name || "—"}</span>
-                        </TableCell>
-                        <TableCell className="px-6 py-5">
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">₹{r.amount}</span>
-                        </TableCell>
-                        <TableCell className="px-6 py-5">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(r.status)}`}>
-                            {r.status || "Unknown"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-6 py-5 text-right">
-                          <button 
-                            onClick={() => handleViewDetails(r.id)}
-                            className="inline-flex items-center gap-1.5 text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-bold opacity-80 hover:opacity-100 transition-all"
-                          >
-                            <FiEye className="w-4 h-4" /> Details
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+          <div className="flex flex-wrap items-center gap-4 xl:ml-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExport}
+              disabled={loading || rows.length === 0}
+              className="inline-flex items-center gap-2"
+            >
+              <FiDownload /> Export
+            </Button>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
+              <Select
+                value={String(pageSize)}
+                onChange={(val) => {
+                  setPageSize(Number(val));
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { value: "5", label: "5" },
+                  { value: "10", label: "10" },
+                  { value: "25", label: "25" },
+                  { value: "50", label: "50" },
+                ]}
+                className="w-20"
+              />
+              <span className="text-sm text-gray-600 whitespace-nowrap">entries</span>
             </div>
           </div>
+        </div>
 
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                Page <span className="text-gray-900 dark:text-white font-bold">{currentPage}</span> of {totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-xl px-4 py-2 shadow-sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-xl px-4 py-2 shadow-sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+        {period === "custom_range" && (
+          <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
+            <div className="w-full sm:w-48">
+              <DatePicker2
+                id="order-mgmt-range-start"
+                label="From"
+                value={customStart}
+                placeholder="Start date"
+                maxDate={customEnd || undefined}
+                onChange={(date) => {
+                  setCustomStart(date);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
-          )}
+            <div className="w-full sm:w-48">
+              <DatePicker2
+                id="order-mgmt-range-end"
+                label="To"
+                value={customEnd}
+                placeholder="End date"
+                minDate={customStart || undefined}
+                onChange={(date) => {
+                  setCustomEnd(date);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-3 justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+          <div>
+            Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
+            {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+            {searchTerm && ` (filtered from search)`}
+          </div>
+          <div className="text-gray-600 dark:text-gray-400">
+            Total orders (filter): <span className="font-medium text-gray-800 dark:text-white">{orderSummary.total_orders ?? totalItems}</span>
+          </div>
         </div>
       </div>
-      <OrderDetailModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        order={selectedOrder} 
-      />
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-white/[0.05] dark:bg-white/[0.03]">
+          <p className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400">Orders (filter)</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{orderSummary.total_orders ?? "—"}</p>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+          <p className="text-[10px] font-semibold uppercase text-emerald-800 dark:text-emerald-300">Total amount</p>
+          <p className="text-lg font-bold text-emerald-900 dark:text-emerald-200">{fmtRs(orderSummary.total_amount)}</p>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2 dark:border-violet-900/40 dark:bg-violet-950/30">
+          <p className="text-[10px] font-semibold uppercase text-violet-800 dark:text-violet-300">Delivery charges</p>
+          <p className="text-lg font-bold text-violet-900 dark:text-violet-200">{fmtRs(orderSummary.total_delivery_charge)}</p>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-950/30">
+          <p className="text-[10px] font-semibold uppercase text-blue-800 dark:text-blue-300">Platform</p>
+          <p className="text-lg font-bold text-blue-900 dark:text-blue-200">{fmtRs(orderSummary.total_platform_amount)}</p>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-orange-200 bg-orange-50/80 px-3 py-2 dark:border-orange-900/40 dark:bg-orange-950/30">
+          <p className="text-[10px] font-semibold uppercase text-orange-800 dark:text-orange-300">Kitchen</p>
+          <p className="text-lg font-bold text-orange-900 dark:text-orange-200">{fmtRs(orderSummary.total_kitchen_amount)}</p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  #
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Order details
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Kitchen
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Amount
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Delivery
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Status
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Loading orders...
+                  </TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    No orders found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((r, index) => (
+                  <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-gray-800 text-theme-sm dark:text-white/90">
+                          {r.order_id || `#ORD-${r.id}`}
+                        </span>
+                        <span className="text-theme-xs text-gray-500 dark:text-gray-400">{r.patient_name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium dark:bg-orange-900/30">
+                        {r.kitchen_name || "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      ₹{r.amount}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {fmtRs(String(r.delivery_charge ?? 0))}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(r.status)}`}>
+                        {r.status || "Unknown"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start text-theme-sm">
+                      <button
+                        type="button"
+                        onClick={() => handleViewDetails(r.id)}
+                        disabled={modalLoading}
+                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium disabled:opacity-50"
+                      >
+                        <FiEye className="text-lg" /> Details
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-blue-600 text-white border border-blue-600"
+                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              Next
+            </button>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
+
+      <OrderDetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} order={selectedOrder} />
     </>
   );
 };
