@@ -3598,16 +3598,12 @@ class PatientFoodRecommendation(models.Model):
     quantity = models.CharField(max_length=100, blank=True, null=True)  
     # e.g., "1 bowl", "2 slices", "100g"
 
-    meal_time = models.CharField(
-        max_length=50,
-        choices=[
-            ('breakfast', 'Breakfast'),
-            ('lunch', 'Lunch'),
-            ('dinner', 'Dinner'),
-            ('snack', 'Snack'),
-        ],
+    meal_time = models.ForeignKey(
+        MealType,
+        on_delete=models.SET_NULL,
         blank=True,
-        null=True
+        null=True,
+        related_name='food_recommendations'
     )
 
     # Core requirement

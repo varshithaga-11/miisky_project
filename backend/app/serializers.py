@@ -3990,6 +3990,7 @@ class AdminSupplyChainPlannedLeaveListSerializer(SupplyChainDeliveryLeaveSeriali
 class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
     patient_details = serializers.SerializerMethodField(read_only=True)
     food_details = serializers.SerializerMethodField(read_only=True)
+    meal_time_details = serializers.SerializerMethodField(read_only=True)
     recommended_by_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -4002,13 +4003,14 @@ class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
             "food_details",
             "quantity",
             "meal_time",
+            "meal_time_details",
             "notes",
             "comment",
             "recommended_by",
             "recommended_by_details",
             "recommended_on",
         ]
-        read_only_fields = ["id", "recommended_by", "recommended_on", "recommended_by_details", "patient_details", "food_details"]
+        read_only_fields = ["id", "recommended_by", "recommended_on", "recommended_by_details", "patient_details", "food_details", "meal_time_details"]
 
     def get_patient_details(self, obj):
         u = obj.patient
@@ -4026,6 +4028,12 @@ class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
         if not f:
             return None
         return {"id": f.id, "name": f.name, "code": f.code}
+
+    def get_meal_time_details(self, obj):
+        m = obj.meal_time
+        if not m:
+            return None
+        return {"id": m.id, "name": m.name}
 
     def get_recommended_by_details(self, obj):
         u = obj.recommended_by

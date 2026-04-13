@@ -12,18 +12,14 @@ import {
   createFoodRecommendation,
   deleteFoodRecommendation,
   fetchFoodRecommendationsForPatient,
+  getMealTypeList,
+  MealType,
   PatientFoodRecommendation,
 } from "./api";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 
-const MEAL_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "Any time" },
-  { value: "breakfast", label: "Breakfast" },
-  { value: "lunch", label: "Lunch" },
-  { value: "dinner", label: "Dinner" },
-  { value: "snack", label: "Snack" },
-];
+
 
 const SuggestFoodNameToPatientsPage: React.FC = () => {
   const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -34,7 +30,9 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
   const [foodOptions, setFoodOptions] = useState<Option<number>[]>([]);
   const [selectedFoodId, setSelectedFoodId] = useState<number | undefined>(undefined);
   const [quantity, setQuantity] = useState("");
-  const [mealTime, setMealTime] = useState("");
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [mealTypeOptions, setMealTypeOptions] = useState<Option<number>[]>([]);
+  const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | undefined>(undefined);
   const [notes, setNotes] = useState("");
   const [comment, setComment] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -70,8 +68,12 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
         if (data.length && selectedPatientId === undefined) {
           setSelectedPatientId(data[0].user.id);
         }
+        const mtRes = await getMealTypeList(1, "all");
+        const mts = mtRes.results || [];
+        setMealTypes(mts);
+        setMealTypeOptions(mts.map(m => ({ value: m.id as number, label: m.name })));
       } catch {
-        toast.error("Failed to load allotted patients.");
+        toast.error("Failed to load allotted patients or meal types.");
       } finally {
         setLoading(false);
       }
@@ -108,17 +110,17 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
     setSaving(true);
     try {
       const created = await createFoodRecommendation({
-        patient: selectedPatientId,
-        food: selectedFoodId,
+        patient: selectedPatientId!,
+        food: selectedFoodId!,
         quantity: quantity.trim() || null,
-        meal_time: mealTime || null,
+        meal_time: selectedMealTypeId ?? null,
         notes: notes.trim() || null,
         comment: comment.trim() || null,
       });
       setRows((prev) => [created, ...prev]);
       setSelectedFoodId(undefined);
       setQuantity("");
-      setMealTime("");
+      setSelectedMealTypeId(undefined);
       setNotes("");
       setComment("");
       toast.success("Food suggestion saved.");
@@ -217,17 +219,12 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Meal time</label>
-                <select
-                  value={mealTime}
-                  onChange={(e) => setMealTime(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  {MEAL_OPTIONS.map((o) => (
-                    <option key={o.value || "any"} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                <SearchableSelect<number>
+                  options={mealTypeOptions}
+                  value={selectedMealTypeId}
+                  onChange={(v) => setSelectedMealTypeId(v)}
+                  placeholder="Select meal time..."
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Notes</label>
@@ -307,7 +304,7 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.quantity || "—"}</TableCell>
                     <TableCell className="px-4 py-3 capitalize text-gray-700 dark:text-gray-300">
-                      {r.meal_time?.replace("_", " ") || "—"}
+                      {r.meal_time_details?.name || "—"}
                     </TableCell>
                     <TableCell className="max-w-xs px-4 py-3 text-gray-600 dark:text-gray-400">
                       <div className="line-clamp-2">{r.notes || r.comment || "—"}</div>

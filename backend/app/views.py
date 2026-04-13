@@ -2671,11 +2671,11 @@ class FoodViewSet(viewsets.ModelViewSet):
                 'nutrition'
             ).all()
         else:
+            # Prefetch only approved ingredients and units for the nutritionist/patient view
             queryset = Food.objects.prefetch_related(
-                'meal_types',
-                'cuisine_types',
-                'foodingredient_set__ingredient',
-                'foodingredient_set__unit',
+                Prefetch('meal_types', queryset=MealType.objects.filter(is_approved=True)),
+                Prefetch('cuisine_types', queryset=CuisineType.objects.filter(is_approved=True)),
+                Prefetch('foodingredient_set', queryset=FoodIngredient.objects.filter(is_approved=True).select_related('ingredient', 'unit')),
                 'foodstep_set',
                 'nutrition'
             ).filter(is_approved=True)
@@ -2718,7 +2718,11 @@ class FoodByIdViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, pk=None):
-        nutrition = FoodNutrition.objects.select_related("food").filter(food_id=pk).first()
+        role = getattr(request.user, "role", None)
+        qs = FoodNutrition.objects.select_related("food").filter(food_id=pk)
+        if role not in ("admin", "master"):
+            qs = qs.filter(food__is_approved=True)
+        nutrition = qs.first()
         if not nutrition:
             return Response({"detail": "Food nutrition not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(FoodByIdNutritionSerializer(nutrition).data)
@@ -4418,7 +4422,7 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
             limit = int(request.query_params.get("limit", 5))
         except ValueError:
             limit = 5
-        limit = max(1, min(limit, 50))
+        limit = max(1, min(limit, 200))
         try:
             mt_page = int(request.query_params.get("meal_types_page", 1))
         except ValueError:
@@ -4431,13 +4435,13 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
         cuisine_id = request.query_params.get("cuisine_id")
         meal_type_id = request.query_params.get("meal_type_id")
 
-        mt_qs = MealType.objects.all().order_by("name")
+        mt_qs = MealType.objects.filter(is_approved=True).order_by("name")
         if cuisine_id:
-            mt_qs = mt_qs.filter(food__cuisine_types__id=cuisine_id).distinct()
+            mt_qs = mt_qs.filter(food__cuisine_types__id=cuisine_id, food__is_approved=True).distinct()
 
-        cu_qs = CuisineType.objects.all().order_by("name")
+        cu_qs = CuisineType.objects.filter(is_approved=True).order_by("name")
         if meal_type_id:
-            cu_qs = cu_qs.filter(food__meal_types__id=meal_type_id).distinct()
+            cu_qs = cu_qs.filter(food__meal_types__id=meal_type_id, food__is_approved=True).distinct()
 
         mt_count = mt_qs.count()
         cu_count = cu_qs.count()
@@ -4808,7 +4812,7 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
         meal_type = request.query_params.get("meal_type")
         cuisine_type = request.query_params.get("cuisine_type")
 
-        qs = Food.objects.all().order_by("name")
+        qs = Food.objects.filter(is_approved=True).order_by("name")
         if meal_type:
             qs = qs.filter(meal_types=meal_type)
         if cuisine_type:

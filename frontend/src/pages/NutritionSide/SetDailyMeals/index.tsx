@@ -5,6 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import {
     getSetDailyMealsPatients,
     getActivePlansForPatient,
@@ -164,7 +165,7 @@ const SetDailyMealsPage: React.FC = () => {
         const loadMt = async () => {
             try {
                 const fo = await getSetDailyMealsFilterOptions({
-                    limit: 5,
+                    limit: 100,
                     meal_types_page: mtPage,
                     cuisines_page: 1,
                     meal_type_id: selectedMealTypeId || "",
@@ -185,7 +186,7 @@ const SetDailyMealsPage: React.FC = () => {
         const loadCu = async () => {
             try {
                 const fo = await getSetDailyMealsFilterOptions({
-                    limit: 5,
+                    limit: 100,
                     meal_types_page: 1,
                     cuisines_page: cuPage,
                     meal_type_id: selectedMealTypeId || "",
@@ -672,22 +673,18 @@ const SetDailyMealsPage: React.FC = () => {
                                         className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/50"
                                     />
                                 </div>
-                                <select
+                                <SearchableSelect<number | "">
+                                    placeholder="All meal types"
+                                    options={mealTypes.map(m => ({ value: m.id!, label: m.name }))}
                                     value={selectedMealTypeId}
-                                    onChange={(e) => setSelectedMealTypeId(e.target.value ? Number(e.target.value) : "")}
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none"
-                                >
-                                    <option value="">All meal types</option>
-                                    {mealTypes.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                </select>
-                                <select
+                                    onChange={(v: number | "") => setSelectedMealTypeId(v)}
+                                />
+                                <SearchableSelect<number | "">
+                                    placeholder="All cuisines"
+                                    options={cuisines.map(c => ({ value: c.id!, label: c.name }))}
                                     value={selectedCuisineId}
-                                    onChange={(e) => setSelectedCuisineId(e.target.value ? Number(e.target.value) : "")}
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-sm font-medium outline-none"
-                                >
-                                    <option value="">All cuisines</option>
-                                    {cuisines.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+                                    onChange={(v: number | "") => setSelectedCuisineId(v)}
+                                />
                                 <div className="flex gap-2 justify-between">
                                     <button
                                         type="button"

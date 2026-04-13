@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getCuisineTypeList, deleteCuisineType, patchCuisineType, CuisineType } from "./cuisinetypeapi";
@@ -44,6 +44,10 @@ const CuisineTypePage: React.FC = () => {
   };
 
   const handleToggleApproval = async (id: number, currentStatus: boolean) => {
+    // Show instruction toast
+    if (!currentStatus) {
+      toast.info("Please don't repeat the words it may cause some issues.");
+    }
     try {
       await patchCuisineType(id, { is_approved: !currentStatus });
       toast.success(`Cuisine type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
@@ -107,6 +111,11 @@ const CuisineTypePage: React.FC = () => {
             <FiPlus /> Add Cuisine
           </Button>
         </div>
+      </div>
+
+      <div className="mb-4 flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+        <FiInfo className="w-4 h-4" />
+        <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
