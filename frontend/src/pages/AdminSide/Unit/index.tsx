@@ -58,7 +58,7 @@ const UnitManagementPage: React.FC = () => {
     if (!approvalTarget) return;
     const { id, currentStatus } = approvalTarget;
     if (!currentStatus) {
-      toast.info("Please don't repeat the words — it may cause some issues.");
+      // toast.info("Please don't repeat the words — it may cause some issues.");
     }
     setIsApprovingLoading(true);
     try {
