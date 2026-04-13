@@ -143,6 +143,7 @@ import PatientInstructionsPage from "./pages/PatientSide/Instructions/index";
 import NonPatientInstructionsPage from "./pages/NonPatient/Instructions/index";
 import MicroKitchenInstructionsPage from "./pages/MicroKitchenSide/Instructions/index";
 import MicroKitchenDeliveryManagementPage from "./pages/MicroKitchenSide/DeliveryManagement/index";
+import MicroKitchenPlannedLeavePage from "./pages/MicroKitchenSide/PlannedLeave/index";
 import MicroKitchenGlobalDeliveryPage from "./pages/MicroKitchenSide/DeliveryManagement/GlobalAssignments";
 import MicroKitchenDailyDeliveryPage from "./pages/MicroKitchenSide/DeliveryManagement/DailyReassignments";
 import MicroKitchenDeliveryPersonInfoPage from "./pages/MicroKitchenSide/DeliveryPersonInfo/index";
@@ -394,6 +395,7 @@ export function appRoutes() {
           <Route path="microkitchen/delivery/daily" element={<MicroKitchenDailyDeliveryPage />} />
           <Route path="microkitchen/delivery/team-members" element={<SupplyChainTeamMemberForMKPage />} />
           <Route path="microkitchen/delivery/profiles" element={<MicroKitchenDeliveryPersonInfoPage />} />
+          <Route path="microkitchen/planned-leave" element={<MicroKitchenPlannedLeavePage />} />
           <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
           <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />

@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { assignOrderDeliveryPerson, getMyOrders, updateOrderStatus, Order } from "../../NonPatient/orderapi";
+import {
+    assignOrderDeliveryPerson,
+    getMicroKitchenOrdersList,
+    getMicroKitchenOrderDetail,
+    updateOrderStatus,
+    Order,
+    MicroKitchenOrderListRow,
+} from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
-import { FiPackage, FiLoader, FiMapPin, FiUser, FiCalendar, FiDollarSign, FiStar, FiMessageSquare, FiChevronDown, FiChevronUp, FiEye, FiSearch } from "react-icons/fi";
+import { FiPackage, FiLoader, FiMapPin, FiStar, FiChevronUp, FiEye, FiSearch } from "react-icons/fi";
 import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { coordsFromFields, distanceKmBetween } from "../../../components/orders/orderGeo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +20,9 @@ import Button from "../../../components/ui/button/Button";
 import { fetchSupplyChainUsers, SupplyChainUser } from "../DeliveryManagement/api";
 
 const SeparateOrdersPage: React.FC = () => {
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [orders, setOrders] = useState<MicroKitchenOrderListRow[]>([]);
+    const [orderDetailById, setOrderDetailById] = useState<Record<number, Order>>({});
+    const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState<number | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -31,7 +40,7 @@ const SeparateOrdersPage: React.FC = () => {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const data = await getMyOrders(currentPage, pageSize, statusFilter, typeFilter, search);
+            const data = await getMicroKitchenOrdersList(currentPage, pageSize, statusFilter, typeFilter, search);
             setOrders(data.results || []);
             setTotalItems(data.count || 0);
         } catch (error) {
@@ -39,6 +48,20 @@ const SeparateOrdersPage: React.FC = () => {
             toast.error("Failed to load orders");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadOrderDetail = async (orderId: number, force = false) => {
+        if (!force && orderDetailById[orderId]) return;
+        setDetailLoadingId(orderId);
+        try {
+            const data = await getMicroKitchenOrderDetail(orderId);
+            setOrderDetailById((prev) => ({ ...prev, [orderId]: data }));
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to load order details");
+        } finally {
+            setDetailLoadingId(null);
         }
     };
 
@@ -71,7 +94,15 @@ const SeparateOrdersPage: React.FC = () => {
         try {
             await updateOrderStatus(orderId, status);
             toast.success(`Order marked as ${status}`);
-            fetchOrders();
+            setOrderDetailById((prev) => {
+                const next = { ...prev };
+                delete next[orderId];
+                return next;
+            });
+            await fetchOrders();
+            if (expandedOrderId === orderId) {
+                await loadOrderDetail(orderId, true);
+            }
         } catch (error) {
             toast.error("Failed to update status");
         } finally {
@@ -111,7 +142,12 @@ const SeparateOrdersPage: React.FC = () => {
     const totalPages = Math.ceil(totalItems / pageSize);
 
     const toggleRow = (orderId: number) => {
-        setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+        if (expandedOrderId === orderId) {
+            setExpandedOrderId(null);
+            return;
+        }
+        setExpandedOrderId(orderId);
+        void loadOrderDetail(orderId);
     };
 
     const filteredTeamMembersForOrder = (orderId: number): SupplyChainUser[] => {
@@ -153,7 +189,13 @@ const SeparateOrdersPage: React.FC = () => {
                 delete next[oid];
                 return next;
             });
+            setOrderDetailById((prev) => {
+                const next = { ...prev };
+                delete next[oid];
+                return next;
+            });
             await fetchOrders();
+            await loadOrderDetail(oid, true);
         } catch (error) {
             console.error(error);
             toast.error("Could not save delivery person.");
@@ -246,8 +288,8 @@ const SeparateOrdersPage: React.FC = () => {
                                 <Table className="min-w-[900px]">
                                 <TableHeader>
                                     <TableRow className="bg-gray-50/50 dark:bg-gray-900/40">
-                                        <TableCell isHeader className="px-6 py-4">Order ID</TableCell>
                                         <TableCell isHeader className="px-6 py-4">Customer</TableCell>
+                                        <TableCell isHeader className="px-6 py-4">Mobile</TableCell>
                                         <TableCell isHeader className="px-6 py-4">Type</TableCell>
                                         <TableCell isHeader className="px-6 py-4">Status</TableCell>
                                         <TableCell isHeader className="px-6 py-4">Amount</TableCell>
@@ -256,18 +298,26 @@ const SeparateOrdersPage: React.FC = () => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {orders.map((order) => (
+                                    {orders.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="px-6 py-16 text-center text-gray-500 font-medium">
+                                                No orders match your filters.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                    orders.map((order) => {
+                                        const fullOrder = orderDetailById[order.id];
+                                        return (
                                         <React.Fragment key={order.id}>
                                             <TableRow
                                                 className={`hover:bg-gray-50/80 dark:hover:bg-white/[0.02] cursor-pointer transition-colors ${expandedOrderId === order.id ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
                                                 onClick={() => toggleRow(order.id!)}
                                             >
-                                                <TableCell className="px-6 py-4 font-black text-gray-900 dark:text-white">#{order.id}</TableCell>
-                                                <TableCell className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-gray-900 dark:text-white">{order.user_details?.first_name} {order.user_details?.last_name}</span>
-                                                        <span className="text-xs text-gray-400">{order.user_details?.mobile}</span>
-                                                    </div>
+                                                <TableCell className="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                                                    {order.customer_name?.trim() || "—"}
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                                    {order.customer_mobile?.trim() || "—"}
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
                                                     <span className="px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] font-black uppercase text-gray-600 dark:text-gray-300">
@@ -280,7 +330,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4 font-black text-emerald-600 dark:text-emerald-400">
-                                                    ₹{Number(order.final_amount ?? order.total_amount).toFixed(2)}
+                                                    ₹{Number(order.final_amount).toFixed(2)}
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4 text-xs text-gray-500">
                                                     {order.created_at ? new Date(order.created_at).toLocaleDateString() : ""}
@@ -321,6 +371,12 @@ const SeparateOrdersPage: React.FC = () => {
                                                                 animate={{ opacity: 1, height: 'auto' }}
                                                                 exit={{ opacity: 0, height: 0 }}
                                                             >
+                                                                {detailLoadingId === order.id && !fullOrder ? (
+                                                                    <div className="flex items-center gap-3 text-gray-500 py-6">
+                                                                        <FiLoader className="animate-spin text-indigo-500" size={24} />
+                                                                        <span className="text-sm font-bold">Loading order #{order.id}…</span>
+                                                                    </div>
+                                                                ) : fullOrder ? (
                                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                                                     <div className="space-y-6">
                                                                         <div>
@@ -328,7 +384,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 <FiPackage size={14} className="text-indigo-500" /> Items Breakdown
                                                                             </h4>
                                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                                {order.items?.map((item) => {
+                                                                                {fullOrder.items?.map((item) => {
                                                                                     const itemImageUrl = getImageUrl(item.food_details?.image);
                                                                                     return (
                                                                                     <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
@@ -353,11 +409,11 @@ const SeparateOrdersPage: React.FC = () => {
 
                                                                         <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
                                                                             <OrderDeliverySummary
-                                                                                order={order}
+                                                                                order={fullOrder}
                                                                                 className="!p-0"
                                                                                 liveDistanceKm={distanceKmBetween(
-                                                                                    coordsFromFields(order.user_details?.latitude, order.user_details?.longitude),
-                                                                                    coordsFromFields(order.kitchen_details?.latitude, order.kitchen_details?.longitude)
+                                                                                    coordsFromFields(fullOrder.user_details?.latitude, fullOrder.user_details?.longitude),
+                                                                                    coordsFromFields(fullOrder.kitchen_details?.latitude, fullOrder.kitchen_details?.longitude)
                                                                                 )}
                                                                                 liveDistanceLabel="Straight-line distance (Kitchen to Patient)"
                                                                             />
@@ -394,7 +450,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         <option value="temporary">Temporary</option>
                                                                                     </select>
                                                                                     <select
-                                                                                        value={deliveryPersonSelectValue(order)}
+                                                                                        value={deliveryPersonSelectValue(fullOrder)}
                                                                                         onChange={(e) =>
                                                                                             setSelectedPersonByOrder((prev) => ({
                                                                                                 ...prev,
@@ -404,7 +460,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         className="rounded-lg border-none bg-gray-100 dark:bg-gray-700 px-3 py-2 text-xs font-bold"
                                                                                     >
                                                                                         <option value="">None / unassigned</option>
-                                                                                        {deliveryPersonOptionsForOrder(order).map((u) => (
+                                                                                        {deliveryPersonOptionsForOrder(fullOrder).map((u) => (
                                                                                             <option key={u.id} value={u.id}>
                                                                                                 {`${u.first_name || ""} ${u.last_name || ""}`.trim()}
                                                                                                 {u.team_role ? ` (${u.team_role})` : ""}
@@ -412,12 +468,12 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         ))}
                                                                                     </select>
                                                                                 </div>
-                                                                                {order.delivery_person_details && (
+                                                                                {fullOrder.delivery_person_details && (
                                                                                     <p className="mt-2 text-[10px] text-gray-500 dark:text-gray-400">
                                                                                         Currently saved:{" "}
                                                                                         <span className="font-bold text-gray-700 dark:text-gray-300">
-                                                                                            {`${order.delivery_person_details.first_name || ""} ${order.delivery_person_details.last_name || ""}`.trim() ||
-                                                                                                `#${order.delivery_person}`}
+                                                                                            {`${fullOrder.delivery_person_details.first_name || ""} ${fullOrder.delivery_person_details.last_name || ""}`.trim() ||
+                                                                                                `#${fullOrder.delivery_person}`}
                                                                                         </span>
                                                                                     </p>
                                                                                 )}
@@ -428,7 +484,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         variant="primary"
                                                                                         className="!rounded-xl !px-4 !py-2 text-xs font-black"
                                                                                         disabled={savingDeliveryForOrderId === order.id}
-                                                                                        onClick={() => saveDeliveryAssignment(order)}
+                                                                                        onClick={() => saveDeliveryAssignment(fullOrder)}
                                                                                     >
                                                                                         {savingDeliveryForOrderId === order.id ? "Saving…" : "Save delivery person"}
                                                                                     </Button>
@@ -438,19 +494,19 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 <div>
                                                                                     <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">Street address</p>
                                                                                     <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
-                                                                                        {order.delivery_address?.trim() || "—"}
+                                                                                        {fullOrder.delivery_address?.trim() || "—"}
                                                                                     </p>
                                                                                 </div>
                                                                                 <div>
                                                                                     <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">Address from map / GPS</p>
                                                                                     <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
-                                                                                        {order.delivery_lat_lng_address?.trim() || "—"}
+                                                                                        {fullOrder.delivery_lat_lng_address?.trim() || "—"}
                                                                                     </p>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
 
-                                                                        {order.ratings && order.ratings.length > 0 && (
+                                                                        {fullOrder.ratings && fullOrder.ratings.length > 0 && (
                                                                             <div>
                                                                                 <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                                                                     <FiStar size={14} className="text-amber-500" /> Feedback
@@ -458,22 +514,27 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 <div className="p-4 rounded-2xl bg-amber-50/30 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-500/10">
                                                                                     <div className="flex items-center gap-1 mb-2">
                                                                                         {[1, 2, 3, 4, 5].map((s) => (
-                                                                                            <FiStar key={s} size={10} className={s <= order.ratings![0].rating ? "text-amber-500 fill-amber-500" : "text-gray-300"} />
+                                                                                            <FiStar key={s} size={10} className={s <= fullOrder.ratings![0].rating ? "text-amber-500 fill-amber-500" : "text-gray-300"} />
                                                                                         ))}
                                                                                     </div>
-                                                                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic">"{order.ratings[0].review}"</p>
+                                                                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic">"{fullOrder.ratings[0].review}"</p>
                                                                                 </div>
                                                                             </div>
                                                                         )}
                                                                     </div>
                                                                 </div>
+                                                                ) : (
+                                                                    <p className="text-sm text-gray-500">Could not load this order.</p>
+                                                                )}
                                                             </motion.div>
                                                         </TableCell>
                                                     </TableRow>
                                                 )}
                                             </AnimatePresence>
                                         </React.Fragment>
-                                    ))}
+                                        );
+                                    })
+                                    )}
                                 </TableBody>
                             </Table>
                             </div>

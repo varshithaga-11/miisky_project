@@ -155,6 +155,17 @@ urlpatterns = [
         OrderPaymentSnapshotAdminViewSet.as_view({"get": "retrieve"}),
         name="order-payment-snapshot-detail",
     ),
+    # Explicit routes (same ViewSet as before); ensures list/detail resolve even if router order varies.
+    path(
+        "supply-chain-assigned-orders/",
+        SupplyChainAssignedOrdersViewSet.as_view({"get": "list"}),
+        name="supply-chain-assigned-orders-list",
+    ),
+    path(
+        "supply-chain-assigned-orders/<int:pk>/",
+        SupplyChainAssignedOrdersViewSet.as_view({"get": "retrieve"}),
+        name="supply-chain-assigned-orders-detail",
+    ),
     path('', include(router.urls)),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),

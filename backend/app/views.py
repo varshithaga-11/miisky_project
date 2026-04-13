@@ -5883,6 +5883,156 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(order).data)
 
 
+class SupplyChainAssignedOrdersViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Supply-chain: orders where the current user is `delivery_person`.
+    - list: SupplyChainOrderListSerializer (lightweight table columns).
+    - retrieve: OrderSerializer (full order including items, addresses, slab, etc.).
+    """
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, "role", None) != "supply_chain":
+            return Order.objects.none()
+        qs = (
+            Order.objects.filter(delivery_person=user)
+            .select_related("user", "micro_kitchen", "micro_kitchen__user", "delivery_slab", "delivery_person")
+            .order_by("-created_at")
+        )
+        if self.action == "retrieve":
+            qs = qs.prefetch_related("items__food", "ratings")
+        return self._apply_supply_chain_order_filters(qs)
+
+    def _apply_supply_chain_order_filters(self, qs):
+        request = self.request
+        st = request.query_params.get("status")
+        if st and st != "all":
+            qs = qs.filter(status=st)
+        order_type = request.query_params.get("order_type")
+        if order_type and order_type != "all":
+            qs = qs.filter(order_type=order_type)
+        search = request.query_params.get("search")
+        if search:
+            qs = qs.filter(
+                Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(delivery_address__icontains=search)
+                | Q(delivery_lat_lng_address__icontains=search)
+                | Q(id__icontains=search)
+            )
+        period = request.query_params.get("period")
+        if period and period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = request.query_params.get("start_date")
+            end_date = request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except Exception as ex:
+                print(f"Error calculating date range: {ex}")
+        return qs
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return SupplyChainOrderListSerializer
+        return OrderSerializer
+
+    def list(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Only supply-chain users can access this list."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Only supply-chain users can access this resource."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().retrieve(request, *args, **kwargs)
+
+
+class MicroKitchenOrdersViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Micro kitchen: orders for the kitchen tied to the current user (`micro_kitchen__user`).
+    - list: MicroKitchenOrderListSerializer (compact table row).
+    - retrieve: OrderSerializer (full order).
+    """
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, "role", None) != "micro_kitchen":
+            return Order.objects.none()
+        qs = (
+            Order.objects.filter(micro_kitchen__user=user)
+            .select_related("user", "micro_kitchen", "micro_kitchen__user", "delivery_slab", "delivery_person")
+            .order_by("-created_at")
+        )
+        if self.action == "retrieve":
+            qs = qs.prefetch_related("items__food", "ratings")
+        return self._apply_micro_kitchen_order_filters(qs)
+
+    def _apply_micro_kitchen_order_filters(self, qs):
+        request = self.request
+        st = request.query_params.get("status")
+        if st and st != "all":
+            qs = qs.filter(status=st)
+        order_type = request.query_params.get("order_type")
+        if order_type and order_type != "all":
+            qs = qs.filter(order_type=order_type)
+        search = request.query_params.get("search")
+        if search:
+            qs = qs.filter(
+                Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(delivery_address__icontains=search)
+                | Q(delivery_lat_lng_address__icontains=search)
+                | Q(id__icontains=search)
+            )
+        period = request.query_params.get("period")
+        if period and period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = request.query_params.get("start_date")
+            end_date = request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except Exception as ex:
+                print(f"Error calculating date range: {ex}")
+        return qs
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return MicroKitchenOrderListSerializer
+        return OrderSerializer
+
+    def list(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response(
+                {"detail": "Only micro-kitchen users can access this list."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response(
+                {"detail": "Only micro-kitchen users can access this resource."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().retrieve(request, *args, **kwargs)
+
+
 class DeliveryChargeSlabViewSet(viewsets.ModelViewSet):
     serializer_class = DeliveryChargeSlabSerializer
     permission_classes = [IsAuthenticated]
@@ -8153,14 +8303,15 @@ class KitchenMealDeliveryViewSet(
 class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
     serializer_class = SupplyChainDeliveryLeaveSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         u = self.request.user
         role = getattr(u, "role", None)
         if role == "supply_chain":
-            return SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")
-        if role == "micro_kitchen":
+            qs = SupplyChainDeliveryLeave.objects.filter(user=u).select_related("user")
+        elif role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return SupplyChainDeliveryLeave.objects.none()
@@ -8175,12 +8326,44 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
                 .distinct()
             )
             dp_ids.discard(None)
-            return (
-                SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids)
-                .select_related("user")
-                .order_by("-start_date")
+            qs = SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids).select_related("user")
+        else:
+            return SupplyChainDeliveryLeave.objects.none()
+
+        # List: filter by created_on (record date) + search; same params as date_utils.get_period_range.
+        if self.action == "list":
+            qs = self._apply_leave_list_filters(qs)
+            return qs.order_by("-created_on")
+        return qs.order_by("-start_date")
+
+    def _apply_leave_list_filters(self, qs):
+        request = self.request
+        period = request.query_params.get("period")
+        if period and period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = request.query_params.get("start_date")
+            end_date = request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_on__date__range=[s, e])
+            except Exception as ex:
+                print(f"leave list period filter: {ex}")
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            q = (
+                Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__username__icontains=search)
+                | Q(notes__icontains=search)
             )
-        return SupplyChainDeliveryLeave.objects.none()
+            if search.isdigit():
+                try:
+                    q |= Q(id=int(search))
+                except ValueError:
+                    pass
+            qs = qs.filter(q)
+        return qs
 
     def perform_create(self, serializer):
         if getattr(self.request.user, "role", None) != "supply_chain":

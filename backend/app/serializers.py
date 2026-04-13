@@ -2852,6 +2852,66 @@ class DeliveryChargeSlabSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class SupplyChainOrderListSerializer(serializers.ModelSerializer):
+    """
+    Minimal fields for supply-chain assigned orders table (list only).
+    Full detail uses OrderSerializer via retrieve on the same viewset.
+    """
+
+    customer_name = serializers.SerializerMethodField()
+    customer_mobile = serializers.CharField(source="user.mobile", read_only=True, allow_null=True)
+    kitchen_name = serializers.CharField(source="micro_kitchen.brand_name", read_only=True, allow_null=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "customer_name",
+            "customer_mobile",
+            "kitchen_name",
+            "order_type",
+            "status",
+            "final_amount",
+            "created_at",
+        ]
+
+    def get_customer_name(self, obj):
+        u = obj.user
+        if not u:
+            return ""
+        parts = [u.first_name or "", u.last_name or ""]
+        return " ".join(p for p in parts if p).strip() or ""
+
+
+class MicroKitchenOrderListSerializer(serializers.ModelSerializer):
+    """
+    Minimal fields for micro-kitchen order table (list only).
+    Full detail uses OrderSerializer via retrieve on MicroKitchenOrdersViewSet.
+    """
+
+    customer_name = serializers.SerializerMethodField()
+    customer_mobile = serializers.CharField(source="user.mobile", read_only=True, allow_null=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "customer_name",
+            "customer_mobile",
+            "order_type",
+            "status",
+            "final_amount",
+            "created_at",
+        ]
+
+    def get_customer_name(self, obj):
+        u = obj.user
+        if not u:
+            return ""
+        parts = [u.first_name or "", u.last_name or ""]
+        return " ".join(p for p in parts if p).strip() or ""
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = serializers.SerializerMethodField(read_only=True)
@@ -3553,7 +3613,7 @@ class AdminNutritionistDetailSerializer(serializers.ModelSerializer):
 class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRegister
-        fields = ["id", "username", "first_name", "last_name", "role"]
+        fields = ["id", "username", "first_name", "last_name", "role", "mobile"]
 
 
 class TicketCategorySerializer(serializers.ModelSerializer):
