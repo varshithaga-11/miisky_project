@@ -4,6 +4,7 @@ import axios from "axios";
 export interface Unit {
   id?: number;
   name: string;
+  is_approved?: boolean;
 }
 
 // Create
@@ -37,6 +38,15 @@ export const getUnitById = async (id: number) => {
 export const updateUnit = async (id: number, data: Partial<Unit>) => {
   const url = createApiUrl(`api/unit/${id}/`);
   const response = await axios.put(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// Partial Update
+export const patchUnit = async (id: number, data: Partial<Unit>) => {
+  const url = createApiUrl(`api/unit/${id}/`);
+  const response = await axios.patch(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;

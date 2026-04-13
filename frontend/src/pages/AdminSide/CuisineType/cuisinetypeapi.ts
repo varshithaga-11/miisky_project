@@ -4,6 +4,7 @@ import axios from "axios";
 export interface CuisineType {
   id?: number;
   name: string;
+  is_approved?: boolean;
 }
 
 export interface PaginatedResponses<T> {
@@ -73,6 +74,15 @@ export const getCuisineTypeById = async (id: number) => {
 export const updateCuisineType = async (id: number, data: Partial<CuisineType>) => {
   const url = createApiUrl(`api/cuisinetype/${id}/`);
   const response = await axios.put(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// Partial Update
+export const patchCuisineType = async (id: number, data: Partial<CuisineType>) => {
+  const url = createApiUrl(`api/cuisinetype/${id}/`);
+  const response = await axios.patch(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;

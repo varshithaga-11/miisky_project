@@ -10,6 +10,7 @@ export interface FoodIngredient {
   unit: number;
   unit_name?: string;
   notes?: string;
+  is_approved?: boolean;
 }
 
 export interface PaginatedResponses<T> {
@@ -78,6 +79,15 @@ export const getFoodIngredientList = async (
 export const updateFoodIngredient = async (id: number, data: Partial<FoodIngredient>) => {
   const url = createApiUrl(`api/foodingredient/${id}/`);
   const response = await axios.put(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// Partial Update
+export const patchFoodIngredient = async (id: number, data: Partial<FoodIngredient>) => {
+  const url = createApiUrl(`api/foodingredient/${id}/`);
+  const response = await axios.patch(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;

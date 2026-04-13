@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getIngredientList, deleteIngredient, Ingredient } from "./ingredientapi";
+import { getIngredientList, deleteIngredient, patchIngredient, Ingredient } from "./ingredientapi";
 import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Switch from "../../../components/form/switch/Switch";
 import AddIngredient from "./AddIngredient";
 import EditIngredient from "./EditIngredient";
 import ImportButton from "../../../components/common/ImportButton";
@@ -43,6 +44,16 @@ const IngredientManagementPage: React.FC = () => {
       console.error("Failed to load ingredients.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
+    try {
+      await patchIngredient(id, { is_approved: !currentStatus });
+      toast.success(`Ingredient ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
+      fetchIngredients();
+    } catch {
+      toast.error("Failed to update approval status.");
     }
   };
 
@@ -133,6 +144,7 @@ const IngredientManagementPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Ingredient Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -150,6 +162,14 @@ const IngredientManagementPage: React.FC = () => {
                   <TableRow key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{u.name}</TableCell>
+                    <TableCell className="px-5 py-4">
+                      <Switch 
+                        label="" 
+                        key={`${u.id}-${u.is_approved}`}
+                        defaultChecked={u.is_approved} 
+                        onChange={() => handleToggleApproval(u.id!, u.is_approved || false)} 
+                      />
+                    </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditIngredientId(u.id!); setIsEditModalOpen(true); }}>

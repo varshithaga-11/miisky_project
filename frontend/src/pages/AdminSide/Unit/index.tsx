@@ -2,10 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getUnitList, deleteUnit, Unit } from "./unitapi";
+import { getUnitList, deleteUnit, patchUnit, Unit } from "./unitapi";
 import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Switch from "../../../components/form/switch/Switch";
 import AddUnit from "./AddUnit";
 import EditUnit from "./EditUnit";
 import ImportButton from "../../../components/common/ImportButton";
@@ -35,6 +36,16 @@ const UnitManagementPage: React.FC = () => {
       console.error("Failed to load units.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
+    try {
+      await patchUnit(id, { is_approved: !currentStatus });
+      toast.success(`Unit ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
+      fetchUnits();
+    } catch {
+      toast.error("Failed to update approval status.");
     }
   };
 
@@ -114,6 +125,7 @@ const UnitManagementPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Unit Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -131,6 +143,14 @@ const UnitManagementPage: React.FC = () => {
                   <TableRow key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{i + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{u.name}</TableCell>
+                    <TableCell className="px-5 py-4">
+                        <Switch 
+                            label="" 
+                            key={`${u.id}-${u.is_approved}`}
+                            defaultChecked={u.is_approved} 
+                            onChange={() => handleToggleApproval(u.id!, u.is_approved || false)} 
+                        />
+                    </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditUnitId(u.id!); setIsEditModalOpen(true); }}>

@@ -4,6 +4,7 @@ import axios from "axios";
 export interface MealType {
   id?: number;
   name: string;
+  is_approved?: boolean;
 }
 
 export interface PaginatedResponses<T> {
@@ -75,6 +76,15 @@ export const getMealTypeById = async (id: number) => {
 export const updateMealType = async (id: number, data: Partial<MealType>) => {
   const url = createApiUrl(`api/mealtype/${id}/`);
   const response = await axios.put(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// Partial Update
+export const patchMealType = async (id: number, data: Partial<MealType>) => {
+  const url = createApiUrl(`api/mealtype/${id}/`);
+  const response = await axios.patch(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;

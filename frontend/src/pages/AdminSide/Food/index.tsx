@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getFoodList, deleteFood, Food } from "./foodapi";
+import { getFoodList, deleteFood, patchFood, Food } from "./foodapi";
 import AddFood from "./AddFood";
 import EditFood from "./EditFood";
 import FoodDetailModal from "./FoodDetailModal";
@@ -18,6 +18,7 @@ import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import { getCuisineTypeList, CuisineType } from "./foodapi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Switch from "../../../components/form/switch/Switch";
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -115,6 +116,16 @@ const FoodManagementPage: React.FC = () => {
       toast.error("Failed to delete food item.");
     } finally {
       setIsDeleting(false);
+    }
+  };
+  
+  const handleToggleApproval = async (foodId: number, currentStatus: boolean) => {
+    try {
+      await patchFood(foodId, { is_approved: !currentStatus });
+      toast.success(`Food ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
+      fetchFoods();
+    } catch {
+      toast.error("Failed to update approval status.");
     }
   };
 
@@ -260,9 +271,10 @@ const FoodManagementPage: React.FC = () => {
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400 cursor-pointer" onClick={() => handleSort('price')}>
                   <div className="flex items-center gap-2">
-                    Price (₹) {sortField === 'price' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                  Price (₹) {sortField === 'price' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -317,6 +329,14 @@ const FoodManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">
                       {food.price ? `₹${food.price}` : <span className="text-gray-400 font-normal italic">N/A</span>}
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                      <Switch
+                        label=""
+                        key={`${food.id}-${food.is_approved}`}
+                        defaultChecked={food.is_approved}
+                        onChange={() => handleToggleApproval(food.id!, food.is_approved || false)}
+                      />
                     </TableCell>
                     <TableCell className="px-5 py-4">
                        <div className="flex items-center gap-3 text-lg">

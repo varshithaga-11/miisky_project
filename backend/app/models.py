@@ -837,6 +837,8 @@ class MealType(models.Model):
     name = models.CharField(max_length=100)
     # Example: Breakfast, Lunch, Dinner, Snacks
 
+    is_approved = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
 
@@ -844,6 +846,8 @@ class MealType(models.Model):
 class CuisineType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     # Example: North Indian, South Indian, Chinese, Italian
+
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -878,6 +882,8 @@ class Food(models.Model):
     micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='foods')
 
     price = models.IntegerField(null=True, blank=True)
+
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -938,6 +944,8 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=150)
     # Example: Rice, Urad Dal, Ragi Flour, Salt, Water
 
+    is_approved = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
 
@@ -958,6 +966,8 @@ class Unit(models.Model):
     """
     name = models.CharField(max_length=50)
     # Example: Gram, Kilogram, Cup, Tablespoon, Teaspoon, Piece
+
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -997,6 +1007,8 @@ class FoodIngredient(models.Model):
 
     notes = models.CharField(max_length=200, blank=True, null=True)
     # Example: roasted, chopped, grated
+
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.food.name} - {self.ingredient.name}"
