@@ -17,8 +17,6 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from "../../api/notifications";
-import { dispatchSidebarNotificationBadgesRefresh } from "../../constants/notifications";
-import { useNotifications } from "../../context/NotificationContext";
 import PageMeta from "../common/PageMeta";
 import Label from "../form/Label";
 import Select from "../form/Select";
@@ -33,7 +31,6 @@ interface NotificationItem {
 }
 
 export default function NotificationsRichPage() {
-  const { fetchNotifications } = useNotifications();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filter, setFilter] = useState<"all" | "read" | "unread">("all");
   const [loading, setLoading] = useState<boolean>(true);
@@ -95,8 +92,6 @@ export default function NotificationsRichPage() {
       );
       toast.success("Notification marked as read");
       fetchAllNotifications(currentPageNumber, pageSize, periodFilter);
-      void fetchNotifications();
-      dispatchSidebarNotificationBadgesRefresh();
     } catch {
       toast.error("Failed to mark notification as read");
     }
@@ -108,8 +103,6 @@ export default function NotificationsRichPage() {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       toast.success("All notifications marked as read");
       fetchAllNotifications(currentPageNumber, pageSize, periodFilter);
-      void fetchNotifications();
-      dispatchSidebarNotificationBadgesRefresh();
     } catch {
       toast.error("Failed to mark all as read");
     }
@@ -566,7 +559,8 @@ export default function NotificationsRichPage() {
                             <button
                               type="button"
                               onClick={() => handleMarkAsRead(n.id)}
-                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl shrink-0
+                              className="opacity-0 group-hover:opacity-100 transition-all duration-300 
+                                     inline-flex items-center gap-2 px-4 py-2 rounded-xl 
                                      bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700
                                      text-white text-xs font-bold shadow-lg shadow-brand-500/30
                                      hover:shadow-xl hover:shadow-brand-500/40

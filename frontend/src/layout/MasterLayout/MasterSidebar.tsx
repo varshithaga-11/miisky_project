@@ -34,7 +34,6 @@ import { HorizontaLDots } from "../../icons";
 
 import { useSidebar } from "../../context/SidebarContext";
 import { getUserRoleFromToken } from "../../utils/auth";
-import { usePatientHealthReportUploadUnreadCount } from "../../hooks/usePatientHealthReportUploadUnreadCount";
 
 type NavItem = {
   name: string;
@@ -646,16 +645,9 @@ const masterNavItems: NavItem[] = [
   },
 ];
 
-const PATIENT_DOCUMENTS_NAV_PATH = "/nutrition/uploaded-documents";
-
-const PATIENT_HEALTH_REPORTS_PATH = "/patient/health-reports";
-const PATIENT_SUGGESTED_FOODS_PATH = "/patient/suggested-foods";
-
 const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
-  const userRole = getUserRoleFromToken();
-  const { count: healthReportsNavUnread, foodSuggestionCount } = usePatientHealthReportUploadUnreadCount();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -727,9 +719,8 @@ const MasterSidebar: React.FC = () => {
         <li key={nav.name}>
           {nav.subItems ? (
             <button
-              type="button"
               onClick={() => handleSubmenuToggle(index)}
-              className={`menu-item group flex w-full items-center gap-2 ${openSubmenu?.index === index
+              className={`menu-item group ${openSubmenu?.index === index
                 ? "menu-item-active"
                 : "menu-item-inactive"
                 } cursor-pointer ${!isExpanded && !isHovered
@@ -746,29 +737,15 @@ const MasterSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <>
-                  <span className="menu-item-text flex min-w-0 flex-1 items-center gap-2">
-                    {nav.name}
-                    {nav.subItems?.some((s) => s.path === PATIENT_DOCUMENTS_NAV_PATH) &&
-                      healthReportsNavUnread > 0 && (
-                        <span
-                          className={`menu-dropdown-badge inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-md px-1 text-[10px] font-black uppercase ${
-                            openSubmenu?.index === index
-                              ? "menu-dropdown-badge-active"
-                              : "menu-dropdown-badge-inactive"
-                          }`}
-                        >
-                          {healthReportsNavUnread > 99 ? "99+" : healthReportsNavUnread}
-                        </span>
-                      )}
-                  </span>
-                  <ChevronDownIcon
-                    className={`ml-auto w-5 h-5 shrink-0 transition-transform duration-200 ${openSubmenu?.index === index
-                      ? "rotate-180 text-brand-500"
-                      : ""
-                      }`}
-                  />
-                </>
+                <span className="menu-item-text">{nav.name}</span>
+              )}
+              {(isExpanded || isHovered || isMobileOpen) && (
+                <ChevronDownIcon
+                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.index === index
+                    ? "rotate-180 text-brand-500"
+                    : ""
+                    }`}
+                />
               )}
             </button>
           ) : (
@@ -789,22 +766,7 @@ const MasterSidebar: React.FC = () => {
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text flex min-w-0 flex-1 items-center gap-2">
-                    {nav.name}
-                    {userRole === "patient" &&
-                      nav.path === PATIENT_HEALTH_REPORTS_PATH &&
-                      healthReportsNavUnread > 0 && (
-                        <span
-                          className={`menu-dropdown-badge inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-md px-1 text-[10px] font-black uppercase ${
-                            isActive(nav.path)
-                              ? "menu-dropdown-badge-active"
-                              : "menu-dropdown-badge-inactive"
-                          }`}
-                        >
-                          {healthReportsNavUnread > 99 ? "99+" : healthReportsNavUnread}
-                        </span>
-                      )}
-                  </span>
+                  <span className="menu-item-text">{nav.name}</span>
                 )}
               </Link>
             )
@@ -834,55 +796,30 @@ const MasterSidebar: React.FC = () => {
                         }`}
                     >
                       {subItem.name}
-                      <span className="ml-auto flex items-center gap-1">
-                        {subItem.path === PATIENT_DOCUMENTS_NAV_PATH &&
-                          healthReportsNavUnread > 0 && (
+                      {(subItem.new || subItem.pro) && (
+                        <span className="flex items-center gap-1 ml-auto">
+                          {subItem.new && (
                             <span
                               className={`menu-dropdown-badge ${isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
                                 }`}
                             >
-                              {healthReportsNavUnread > 99 ? "99+" : healthReportsNavUnread}
+                              new
                             </span>
                           )}
-                        {userRole === "patient" &&
-                          subItem.path === PATIENT_SUGGESTED_FOODS_PATH &&
-                          foodSuggestionCount > 0 && (
+                          {subItem.pro && (
                             <span
                               className={`menu-dropdown-badge ${isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
                                 }`}
                             >
-                              {foodSuggestionCount > 99 ? "99+" : foodSuggestionCount}
+                              pro
                             </span>
                           )}
-                        {(subItem.new || subItem.pro) && (
-                          <>
-                            {subItem.new && (
-                              <span
-                                className={`menu-dropdown-badge ${isActive(subItem.path)
-                                  ? "menu-dropdown-badge-active"
-                                  : "menu-dropdown-badge-inactive"
-                                  }`}
-                              >
-                                new
-                              </span>
-                            )}
-                            {subItem.pro && (
-                              <span
-                                className={`menu-dropdown-badge ${isActive(subItem.path)
-                                  ? "menu-dropdown-badge-active"
-                                  : "menu-dropdown-badge-inactive"
-                                  }`}
-                              >
-                                pro
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </span>
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}

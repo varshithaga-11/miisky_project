@@ -127,25 +127,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  useEffect(() => {
-    const access = localStorage.getItem('access');
-    if (!access) return;
-
-    const refetchIfAuthed = () => {
-      if (localStorage.getItem('access')) void fetchNotifications();
-    };
-    const onVis = () => {
-      if (document.visibilityState === 'visible') refetchIfAuthed();
-    };
-    const onFocus = () => refetchIfAuthed();
-    document.addEventListener('visibilitychange', onVis);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', onVis);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [fetchNotifications]);
-
   const value: NotificationContextType = {
     notifications,
     unreadCount,
