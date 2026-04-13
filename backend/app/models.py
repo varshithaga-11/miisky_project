@@ -2350,6 +2350,15 @@ class Notification(models.Model):
     body = models.TextField(blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    category = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    # Patient who triggered the notification (e.g. uploaded a health report); recipient is `user`.
+    related_patient = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications_about_patient",
+    )
 
     def __str__(self):
         return f"{self.title} → {self.user.username}"

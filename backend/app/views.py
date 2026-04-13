@@ -85,6 +85,16 @@ def _notification_user_display(user):
     return name or getattr(user, "username", None) or "Someone"
 
 
+NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT_UPLOAD = "patient_health_report_upload"
+NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT = "nutritionist_review_health_report"
+NOTIFICATION_MARK_READ_ALLOWED_CATEGORIES = frozenset(
+    {
+        NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT_UPLOAD,
+        NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT,
+    }
+)
+
+
 # Create your views here.
 class IsAdminRole(BasePermission):
     """Allow only authenticated users with role='admin'."""
@@ -3708,7 +3718,7 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         from django.db.models import Prefetch
         from .models import NutritionistReview
 
-        return queryset.prefetch_related(
+        return queryset.order_by("-uploaded_on", "-id").prefetch_related(
             Prefetch(
                 "reviews",
                 queryset=NutritionistReview.objects.select_related(
@@ -3773,7 +3783,27 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         return self._prefetch_report_reviews(queryset.filter(user=user))
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        instance = serializer.save(user=self.request.user)
+        mapping = UserNutritionistMapping.objects.filter(
+            user=self.request.user, is_active=True
+        ).first()
+        if not mapping or not mapping.nutritionist_id:
+            return
+        patient_name = _notification_user_display(self.request.user)
+        doc_label = (instance.title or "").strip() or (
+            getattr(instance.report_file, "name", None) or "file"
+        )
+        rtype = (instance.report_type or "").strip() or "document"
+        Notification.objects.create(
+            user_id=mapping.nutritionist_id,
+            title="New patient health document",
+            body=(
+                f'{patient_name} uploaded "{doc_label}" ({rtype}). '
+                "Open Allotted Patients → Patient Documents to review."
+            ),
+            category=NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT_UPLOAD,
+            related_patient=self.request.user,
+        )
 
 
 class NutritionistReviewViewSet(viewsets.ModelViewSet):
@@ -3828,9 +3858,29 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if getattr(user, 'role', None) == 'doctor':
-            serializer.save(doctor=user, nutritionist=None)
+            instance = serializer.save(doctor=user, nutritionist=None)
         else:
-            serializer.save(nutritionist=user)
+            instance = serializer.save(nutritionist=user)
+
+        patient = instance.user
+        if patient:
+            reviewer_name = _notification_user_display(user)
+            titles = [t for t in instance.reports.values_list("title", flat=True) if t]
+            if titles:
+                preview = ", ".join(titles[:3])
+                if len(titles) > 3:
+                    preview = f"{preview}…"
+                body = f'{reviewer_name} left feedback on {preview}.'
+            else:
+                body = f"{reviewer_name} left feedback on your health documents."
+            title = f"{reviewer_name} reviewed your health documents"
+            Notification.objects.create(
+                user=patient,
+                title=title,
+                body=body,
+                category=NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT,
+                related_patient=None,
+            )
 
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
@@ -7156,6 +7206,10 @@ class NotificationViewSet(
             elif str(is_read).lower() == "false":
                 qs = qs.filter(is_read=False)
 
+        category = (params.get("category") or "").strip()
+        if category:
+            qs = qs.filter(category=category)
+
         period = (params.get("period") or "").strip()
         start_s = params.get("start_date")
         end_s = params.get("end_date")
@@ -7217,11 +7271,77 @@ class NotificationViewSet(
         serializer = self.get_serializer(queryset, many=True)
         return Response({"counts": counts, "results": serializer.data})
 
+    @action(detail=False, methods=["get"], url_path="unread_count")
+    def unread_count(self, request):
+        """Total unread for the current user (no period/category filters). Used by header badge."""
+        n = Notification.objects.filter(user=request.user, is_read=False).count()
+        return Response({"unread": n})
+
     @action(detail=False, methods=["post"], url_path="mark_all_read")
     def mark_all_read(self, request):
         updated_count = Notification.objects.filter(
             user=request.user,
             is_read=False,
+        ).update(is_read=True)
+        return Response(
+            {
+                "message": f"Marked {updated_count} notifications as read",
+                "updated_count": updated_count,
+            }
+        )
+
+    @action(detail=False, methods=["post"], url_path="mark_category_read")
+    def mark_category_read(self, request):
+        category = (request.data.get("category") or "").strip()
+        if category not in NOTIFICATION_MARK_READ_ALLOWED_CATEGORIES:
+            return Response(
+                {"detail": "Invalid or unsupported category."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        role = getattr(request.user, "role", None)
+
+        if category == NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT:
+            if role != "patient":
+                return Response(
+                    {"detail": "Only patients can clear this category."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            patient_id_raw = request.data.get("patient_id")
+            if patient_id_raw is not None and patient_id_raw != "":
+                return Response(
+                    {"detail": "Do not send patient_id for this category."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            updated_count = Notification.objects.filter(
+                user=request.user,
+                category=category,
+                is_read=False,
+            ).update(is_read=True)
+            return Response(
+                {
+                    "message": f"Marked {updated_count} notifications as read",
+                    "updated_count": updated_count,
+                }
+            )
+
+        patient_id_raw = request.data.get("patient_id")
+        if patient_id_raw is None or patient_id_raw == "":
+            return Response(
+                {"detail": "patient_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            patient_id = int(patient_id_raw)
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Invalid patient_id."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        updated_count = Notification.objects.filter(
+            user=request.user,
+            category=category,
+            is_read=False,
+            related_patient_id=patient_id,
         ).update(is_read=True)
         return Response(
             {

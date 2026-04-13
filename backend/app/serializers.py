@@ -3685,8 +3685,25 @@ class TicketAttachmentSerializer(serializers.ModelSerializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ["id", "user", "title", "body", "is_read", "created_at"]
-        read_only_fields = ["id", "user", "title", "body", "created_at"]
+        fields = [
+            "id",
+            "user",
+            "title",
+            "body",
+            "is_read",
+            "created_at",
+            "category",
+            "related_patient_id",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "title",
+            "body",
+            "created_at",
+            "category",
+            "related_patient_id",
+        ]
 
 
 # --- Diet plan delivery (micro kitchen / admin) ---
