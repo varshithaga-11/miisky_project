@@ -2552,6 +2552,7 @@ class UserMealSerializer(serializers.ModelSerializer):
             'meal_type_details',
             'food', 'food_details',
             'quantity', 'meal_date', 'is_consumed', 'consumed_at',
+            'status',
             'notes', 'packaging_material', 'packaging_material_details',
             'micro_kitchen', 'micro_kitchen_details', 'delivery_person_details',
             'delivery_assignment_id', 'delivery_slot_details',
@@ -2643,6 +2644,95 @@ class BulkUserMealSerializer(serializers.ModelSerializer):
         model = UserMeal
         fields = ['user', 'user_diet_plan', 'meal_type', 'food', 'quantity', 'meal_date', 'notes', 'packaging_material']
         validators = []  # Skip UniqueTogetherValidator - backend uses update_or_create
+
+
+class PatientUnavailabilitySerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    meal_type_details = serializers.SerializerMethodField(read_only=True)
+    user_diet_plan_details = serializers.SerializerMethodField(read_only=True)
+    skip_meal_count = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PatientUnavailability
+        fields = [
+            "id",
+            "user",
+            "user_details",
+            "user_diet_plan",
+            "user_diet_plan_details",
+            "from_date",
+            "to_date",
+            "scope",
+            "meal_type",
+            "meal_type_details",
+            "reason",
+            "status",
+            "requested_on",
+            "reviewed_by",
+            "reviewed_on",
+            "review_notes",
+            "skip_meal_count",
+        ]
+        read_only_fields = ["requested_on", "reviewed_by", "reviewed_on", "skip_meal_count"]
+
+    def validate(self, attrs):
+        instance = getattr(self, "instance", None)
+        scope = attrs.get("scope", getattr(instance, "scope", "all"))
+        meal_type = attrs.get("meal_type", getattr(instance, "meal_type", None))
+        from_date = attrs.get("from_date", getattr(instance, "from_date", None))
+        to_date = attrs.get("to_date", getattr(instance, "to_date", None))
+
+        if from_date and to_date and to_date < from_date:
+            raise serializers.ValidationError("to_date must be on or after from_date.")
+        if scope == "meal_type" and not meal_type:
+            raise serializers.ValidationError("meal_type is required when scope is 'meal_type'.")
+        return attrs
+
+    def get_user_details(self, obj):
+        if not obj.user:
+            return None
+        return {
+            "id": obj.user.id,
+            "first_name": obj.user.first_name or "",
+            "last_name": obj.user.last_name or "",
+            "email": obj.user.email,
+            "mobile": getattr(obj.user, "mobile", None),
+        }
+
+    def get_meal_type_details(self, obj):
+        if not obj.meal_type:
+            return None
+        return {
+            "id": obj.meal_type.id,
+            "name": obj.meal_type.name,
+        }
+
+    def get_user_diet_plan_details(self, obj):
+        if not obj.user_diet_plan:
+            return None
+        return {
+            "id": obj.user_diet_plan.id,
+            "status": obj.user_diet_plan.status,
+            "start_date": obj.user_diet_plan.start_date,
+            "end_date": obj.user_diet_plan.end_date,
+        }
+
+    def get_skip_meal_count(self, obj):
+        qs = UserMeal.objects.filter(
+            user_diet_plan_id=obj.user_diet_plan_id,
+            user_id=obj.user_id,
+            meal_date__range=[obj.from_date, obj.to_date],
+        )
+        if obj.scope == "meal_type" and obj.meal_type_id:
+            qs = qs.filter(meal_type_id=obj.meal_type_id)
+        return qs.count()
+
+
+class UnavailabilityImpactRowSerializer(serializers.Serializer):
+    meal_date = serializers.DateField()
+    meal_type_id = serializers.IntegerField(allow_null=True)
+    meal_type_name = serializers.CharField(allow_null=True)
+    meal_count = serializers.IntegerField()
 
 
 class MeetingRequestSerializer(serializers.ModelSerializer):

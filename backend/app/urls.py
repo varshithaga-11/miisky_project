@@ -61,6 +61,7 @@ router.register(r'set-daily-meals', SetDailyMealsViewSet, basename='set-daily-me
 router.register(r'patienthealthreport', PatientHealthReportViewSet, basename='patienthealthreport')
 router.register(r'nutritionistreview', NutritionistReviewViewSet, basename='nutritionistreview')
 router.register(r'usermeal', UserMealViewSet, basename='usermeal')
+router.register(r'patient-unavailability', PatientUnavailabilityViewSet, basename='patient-unavailability')
 router.register(r'userdietplan', UserDietPlanViewSet, basename='userdietplan')
 router.register(r'patient-food-recommendation', PatientFoodRecommendationViewSet, basename='patient-food-recommendation')
 router.register(r'meetingrequest', MeetingRequestViewSet, basename='meetingrequest')

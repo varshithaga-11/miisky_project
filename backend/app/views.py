@@ -85,10 +85,6 @@ def _notification_user_display(user):
     return name or getattr(user, "username", None) or "Someone"
 
 
-# Stable notification titles (match frontend constants if used for filters/mark-read).
-NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD = "New patient health document"
-NOTIFICATION_TITLE_REVIEW = "Your health documents were reviewed"
-
 
 def _notification_patient_id_token(patient_id: int) -> str:
     """Embedded in health-upload bodies so clients can scope per-patient without DB metadata."""
@@ -3828,28 +3824,7 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         return self._prefetch_report_reviews(queryset.filter(user=user))
 
     def perform_create(self, serializer):
-        instance = serializer.save(user=self.request.user)
-        mapping = UserNutritionistMapping.objects.filter(
-            user=self.request.user, is_active=True
-        ).first()
-        if not mapping or not mapping.nutritionist_id:
-            return
-        patient_name = _notification_user_display(self.request.user)
-        doc_label = (instance.title or "").strip() or (
-            getattr(instance.report_file, "name", None) or "file"
-        )
-        rtype = (instance.report_type or "").strip() or "document"
-        body_text = (
-            f'{patient_name} uploaded "{doc_label}" ({rtype}). '
-            "Open Allotted Patients → Patient Documents to review."
-        )
-        body_text = f"{body_text}\n{_notification_patient_id_token(self.request.user.id)}"
-        Notification.objects.create(
-            user_id=mapping.nutritionist_id,
-            title=NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
-            body=body_text,
-        )
-
+        serializer.save(user=self.request.user)
 
 class NutritionistReviewViewSet(viewsets.ModelViewSet):
     queryset = NutritionistReview.objects.all().select_related('nutritionist', 'doctor', 'user')
@@ -3903,26 +3878,9 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if getattr(user, 'role', None) == 'doctor':
-            instance = serializer.save(doctor=user, nutritionist=None)
+            serializer.save(doctor=user, nutritionist=None)
         else:
-            instance = serializer.save(nutritionist=user)
-
-        patient = instance.user
-        if patient:
-            reviewer_name = _notification_user_display(user)
-            titles = [t for t in instance.reports.values_list("title", flat=True) if t]
-            if titles:
-                preview = ", ".join(titles[:3])
-                if len(titles) > 3:
-                    preview = f"{preview}…"
-                body = f'{reviewer_name} left feedback on {preview}.'
-            else:
-                body = f"{reviewer_name} left feedback on your health documents."
-            Notification.objects.create(
-                user=patient,
-                title=NOTIFICATION_TITLE_REVIEW,
-                body=body,
-            )
+            serializer.save(nutritionist=user)
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
     queryset = UserDietPlan.objects.all().select_related(
@@ -4899,7 +4857,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_diet_plan__user_id__in=all_relevant_patient_ids)
         elif user.role == "micro_kitchen":
             # Meals scheduled for this kitchen (per-slot; supports mid-plan reassignment)
-            queryset = queryset.filter(micro_kitchen__user=user)
+            queryset = queryset.filter(micro_kitchen__user=user).exclude(status=UserMeal.STATUS_SKIPPED)
         else:
             queryset = queryset.filter(user=user)
 
@@ -4918,6 +4876,12 @@ class UserMealViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(meal_date__month=month, meal_date__year=year)
 
         return queryset.order_by('meal_date', 'meal_type__id')
+
+    def _micro_kitchen_execution_queryset(self, request):
+        if getattr(request.user, 'role', None) != 'micro_kitchen':
+            raise PermissionDenied("Only micro kitchen users can access this endpoint.")
+        qs = self.filter_queryset(self.get_queryset())
+        return qs.exclude(status=UserMeal.STATUS_SKIPPED)
 
     def perform_create(self, serializer):
         udp = serializer.validated_data.get('user_diet_plan')
@@ -4971,6 +4935,11 @@ class UserMealViewSet(viewsets.ModelViewSet):
             return Response(
                 {"detail": "This meal is not scheduled for your kitchen."},
                 status=status.HTTP_403_FORBIDDEN,
+            )
+        if meal.status == UserMeal.STATUS_SKIPPED:
+            return Response(
+                {"detail": "Skipped meals cannot be assigned for delivery."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         delivery_person_id = request.data.get('delivery_person_id')
         if not delivery_person_id:
@@ -5034,7 +5003,10 @@ class UserMealViewSet(viewsets.ModelViewSet):
         if isinstance(only_unassigned, str):
             only_unassigned = only_unassigned.lower() in ('1', 'true', 'yes')
         patient_id = request.data.get('user')
-        meals = UserMeal.objects.filter(micro_kitchen=mk, meal_date__range=[start_date, end_date])
+        meals = UserMeal.objects.filter(
+            micro_kitchen=mk,
+            meal_date__range=[start_date, end_date],
+        ).exclude(status=UserMeal.STATUS_SKIPPED)
         if patient_id:
             try:
                 meals = meals.filter(user_id=int(patient_id))
@@ -5089,7 +5061,9 @@ class UserMealViewSet(viewsets.ModelViewSet):
 
         # Scope to logged-in user's role
         if getattr(user, 'role', None) == 'micro_kitchen':
-            queryset = queryset.filter(micro_kitchen__user=user)
+            queryset = queryset.filter(micro_kitchen__user=user).exclude(
+                status=UserMeal.STATUS_SKIPPED
+            )
         elif getattr(user, 'role', None) == 'nutritionist':
             mapped_patient_ids = UserNutritionistMapping.objects.filter(
                 nutritionist=user, is_active=True
@@ -5127,6 +5101,37 @@ class UserMealViewSet(viewsets.ModelViewSet):
             end_date = date(today.year, today.month, last_day)
             queryset = queryset.filter(meal_date__lte=end_date)
             
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='execution-list', pagination_class=None)
+    def execution_list(self, request):
+        """
+        Micro-kitchen daily execution list (already filtered to non-skipped meals).
+        """
+        queryset = self._micro_kitchen_execution_queryset(request)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='prep-list', pagination_class=None)
+    def prep_list(self, request):
+        """
+        Kitchen prep list: only meals that still need preparation.
+        """
+        queryset = self._micro_kitchen_execution_queryset(request).exclude(
+            status=UserMeal.STATUS_DELIVERED
+        )
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='delivery-list', pagination_class=None)
+    def delivery_list(self, request):
+        """
+        Delivery list: executable meals excluding skipped rows.
+        """
+        queryset = self._micro_kitchen_execution_queryset(request).exclude(
+            status=UserMeal.STATUS_DELIVERED
+        )
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -5212,6 +5217,177 @@ class UserMealViewSet(viewsets.ModelViewSet):
                 meal_obj.save()
             return Response({"status": "successfully processed bulk meals"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
+    """
+    Nutrition control panel for patient unavailability approvals/rejections.
+    """
+
+    queryset = PatientUnavailability.objects.all().select_related(
+        "user", "user_diet_plan", "meal_type", "reviewed_by"
+    )
+    serializer_class = PatientUnavailabilitySerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "reason",
+        "status",
+    ]
+
+    def _target_meals_queryset(self, request_obj):
+        meals = UserMeal.objects.filter(
+            user_id=request_obj.user_id,
+            user_diet_plan_id=request_obj.user_diet_plan_id,
+            meal_date__range=[request_obj.from_date, request_obj.to_date],
+        )
+        if request_obj.scope == "meal_type" and request_obj.meal_type_id:
+            meals = meals.filter(meal_type_id=request_obj.meal_type_id)
+        return meals
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = self.queryset
+
+        status_filter = self.request.query_params.get("status")
+        patient_id = self.request.query_params.get("user")
+        plan_id = self.request.query_params.get("user_diet_plan")
+        start_date = self.request.query_params.get("from_date")
+        end_date = self.request.query_params.get("to_date")
+
+        role = getattr(user, "role", None)
+        if role in ("admin", "nutritionist"):
+            pass
+        elif role in ("patient", "non_patient"):
+            qs = qs.filter(user=user)
+        elif role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=user).first()
+            if not mk:
+                return qs.none()
+            qs = qs.filter(user_diet_plan__micro_kitchen=mk)
+        else:
+            return qs.none()
+
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        if patient_id:
+            qs = qs.filter(user_id=patient_id)
+        if plan_id:
+            qs = qs.filter(user_diet_plan_id=plan_id)
+        if start_date:
+            qs = qs.filter(to_date__gte=start_date)
+        if end_date:
+            qs = qs.filter(from_date__lte=end_date)
+
+        return qs.order_by("-requested_on")
+
+    def perform_create(self, serializer):
+        actor = self.request.user
+        actor_role = getattr(actor, "role", None)
+
+        if actor_role in ("patient", "non_patient"):
+            serializer.save(user=actor)
+            return
+
+        if actor_role in ("nutritionist", "admin"):
+            serializer.save()
+            return
+
+        raise PermissionDenied("Only patient, nutritionist, or admin can create requests.")
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        req_obj = self.get_object()
+        role = getattr(request.user, "role", None)
+        if role not in ("nutritionist", "admin"):
+            return Response(
+                {"detail": "Only nutritionist/admin can approve."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if req_obj.status == PatientUnavailability.STATUS_CANCELLED:
+            return Response(
+                {"detail": "Cannot approve a cancelled request."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        notes = request.data.get("review_notes")
+        with transaction.atomic():
+            req_obj.status = PatientUnavailability.STATUS_APPROVED
+            req_obj.reviewed_by = request.user
+            req_obj.reviewed_on = timezone.now()
+            req_obj.review_notes = notes
+            req_obj.save(update_fields=["status", "reviewed_by", "reviewed_on", "review_notes"])
+
+            skipped_count = self._target_meals_queryset(req_obj).exclude(
+                status=UserMeal.STATUS_DELIVERED
+            ).update(status=UserMeal.STATUS_SKIPPED)
+
+        payload = self.get_serializer(req_obj).data
+        payload["skipped_meals_count"] = skipped_count
+        return Response(payload)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        req_obj = self.get_object()
+        role = getattr(request.user, "role", None)
+        if role not in ("nutritionist", "admin"):
+            return Response(
+                {"detail": "Only nutritionist/admin can reject."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        req_obj.status = PatientUnavailability.STATUS_REJECTED
+        req_obj.reviewed_by = request.user
+        req_obj.reviewed_on = timezone.now()
+        req_obj.review_notes = request.data.get("review_notes")
+        req_obj.save(update_fields=["status", "reviewed_by", "reviewed_on", "review_notes"])
+        return Response(self.get_serializer(req_obj).data)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        req_obj = self.get_object()
+        role = getattr(request.user, "role", None)
+        is_owner = req_obj.user_id == request.user.id
+        if role not in ("nutritionist", "admin") and not is_owner:
+            return Response(
+                {"detail": "Only owner/nutritionist/admin can cancel."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        req_obj.status = PatientUnavailability.STATUS_CANCELLED
+        req_obj.reviewed_by = request.user
+        req_obj.reviewed_on = timezone.now()
+        req_obj.review_notes = request.data.get("review_notes")
+        req_obj.save(update_fields=["status", "reviewed_by", "reviewed_on", "review_notes"])
+        return Response(self.get_serializer(req_obj).data)
+
+    @action(detail=True, methods=["get"], url_path="impact", pagination_class=None)
+    def impact(self, request, pk=None):
+        req_obj = self.get_object()
+        meals = self._target_meals_queryset(req_obj)
+        grouped = (
+            meals.values("meal_date", "meal_type_id", "meal_type__name")
+            .annotate(meal_count=Count("id"))
+            .order_by("meal_date", "meal_type_id")
+        )
+        rows = [
+            {
+                "meal_date": row["meal_date"],
+                "meal_type_id": row["meal_type_id"],
+                "meal_type_name": row["meal_type__name"],
+                "meal_count": row["meal_count"],
+            }
+            for row in grouped
+        ]
+        return Response(
+            {
+                "request": self.get_serializer(req_obj).data,
+                "impact_rows": UnavailabilityImpactRowSerializer(rows, many=True).data,
+                "total_meals": sum(r["meal_count"] for r in rows),
+            }
+        )
 
 
 class MeetingRequestViewSet(viewsets.ModelViewSet):

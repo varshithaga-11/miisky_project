@@ -1884,6 +1884,16 @@ class UserMeal(models.Model):
     Stores personalized meals for each user per day.
     THIS is where Option 2 (personalization) actually happens.
     """
+    STATUS_SCHEDULED = "scheduled"
+    STATUS_SKIPPED = "skipped"
+    STATUS_PREPARED = "prepared"
+    STATUS_DELIVERED = "delivered"
+    STATUS_CHOICES = [
+        (STATUS_SCHEDULED, "Scheduled"),
+        (STATUS_SKIPPED, "Skipped"),
+        (STATUS_PREPARED, "Prepared"),
+        (STATUS_DELIVERED, "Delivered"),
+    ]
 
     user = models.ForeignKey(
         UserRegister,
@@ -1923,6 +1933,14 @@ class UserMeal(models.Model):
     consumed_at = models.DateTimeField(null=True, blank=True)
 
     notes = models.TextField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_SCHEDULED,
+        db_index=True,
+        help_text="Execution status used by kitchen and delivery flows.",
+    )
 
     packaging_material = models.ForeignKey(
         PackagingMaterial,
@@ -3568,6 +3586,143 @@ class DeliveryRating(models.Model):
 
     def __str__(self):
         return f"Rating {self.rating}/5 → {self.assignment.delivery_person}"
+
+
+class PatientUnavailability(models.Model):
+    """
+    Patient signals they will be unavailable on certain dates.
+    Delivery and kitchen prep are skipped for affected UserMeals.
+
+    scope='all'       -> skip every meal on those dates
+    scope='meal_type' -> skip only the specified meal_type (e.g. just Dinner)
+    """
+
+    SCOPE_CHOICES = [
+        ("all", "All meals"),
+        ("meal_type", "Specific meal type"),
+    ]
+
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+
+    user = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="unavailabilities",
+    )
+    user_diet_plan = models.ForeignKey(
+        UserDietPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="unavailabilities",
+        help_text="Which active plan this pause applies to.",
+    )
+
+    from_date = models.DateField()
+    to_date = models.DateField(
+        help_text="Inclusive. For a single day set from_date == to_date."
+    )
+
+    scope = models.CharField(
+        max_length=20,
+        choices=SCOPE_CHOICES,
+        default="all",
+    )
+    meal_type = models.ForeignKey(
+        MealType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="patient_unavailabilities",
+        help_text="Required only when scope='meal_type'.",
+    )
+    reason = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Patient's optional note (travel, hospital, etc.).",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+
+    requested_on = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_unavailabilities",
+    )
+    reviewed_on = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["from_date"]
+        verbose_name = "Patient unavailability"
+        verbose_name_plural = "Patient unavailabilities"
+
+    def clean(self):
+        if self.to_date and self.from_date and self.to_date < self.from_date:
+            raise ValidationError("to_date must be on or after from_date.")
+        if self.scope == "meal_type" and not self.meal_type_id:
+            raise ValidationError("meal_type is required when scope is 'meal_type'.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def covers_date(self, target_date) -> bool:
+        """Returns True if this unavailability blocks the given date."""
+        return (
+            self.status == self.STATUS_APPROVED
+            and self.from_date <= target_date <= self.to_date
+        )
+
+    def __str__(self):
+        scope_label = f" ({self.meal_type})" if self.meal_type_id else ""
+        return (
+            f"{self.user} unavailable {self.from_date}->{self.to_date}"
+            f"{scope_label} [{self.status}]"
+        )
+
+
+def is_patient_available(user_diet_plan, target_date, meal_type=None) -> bool:
+    """
+    Helper to decide if a patient's meal should execute for a date/meal_type.
+    """
+    if not user_diet_plan:
+        return True
+
+    qs = PatientUnavailability.objects.filter(
+        user_diet_plan=user_diet_plan,
+        status=PatientUnavailability.STATUS_APPROVED,
+        from_date__lte=target_date,
+        to_date__gte=target_date,
+    )
+    if not qs.exists():
+        return True
+
+    if not meal_type:
+        return not qs.filter(scope="all").exists()
+
+    meal_type_id = meal_type.id if hasattr(meal_type, "id") else meal_type
+    if qs.filter(scope="all").exists():
+        return False
+    return not qs.filter(scope="meal_type", meal_type_id=meal_type_id).exists()
 
 
 
