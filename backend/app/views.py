@@ -3768,7 +3768,7 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         from django.db.models import Prefetch
         from .models import NutritionistReview
 
-        return queryset.order_by("-uploaded_on", "-id").prefetch_related(
+        return queryset.prefetch_related(
             Prefetch(
                 "reviews",
                 queryset=NutritionistReview.objects.select_related(
@@ -3833,27 +3833,7 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         return self._prefetch_report_reviews(queryset.filter(user=user))
 
     def perform_create(self, serializer):
-        instance = serializer.save(user=self.request.user)
-        mapping = UserNutritionistMapping.objects.filter(
-            user=self.request.user, is_active=True
-        ).first()
-        if not mapping or not mapping.nutritionist_id:
-            return
-        patient_name = _notification_user_display(self.request.user)
-        doc_label = (instance.title or "").strip() or (
-            getattr(instance.report_file, "name", None) or "file"
-        )
-        rtype = (instance.report_type or "").strip() or "document"
-        body_text = (
-            f'{patient_name} uploaded "{doc_label}" ({rtype}). '
-            "Open Allotted Patients → Patient Documents to review."
-        )
-        body_text = f"{body_text}\n{_notification_patient_id_token(self.request.user.id)}"
-        Notification.objects.create(
-            user_id=mapping.nutritionist_id,
-            title=NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
-            body=body_text,
-        )
+        serializer.save(user=self.request.user)
 
 
 class NutritionistReviewViewSet(viewsets.ModelViewSet):
@@ -3908,27 +3888,9 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if getattr(user, 'role', None) == 'doctor':
-            instance = serializer.save(doctor=user, nutritionist=None)
+            serializer.save(doctor=user, nutritionist=None)
         else:
-            instance = serializer.save(nutritionist=user)
-
-        patient = instance.user
-        if patient:
-            reviewer_name = _notification_user_display(user)
-            titles = [t for t in instance.reports.values_list("title", flat=True) if t]
-            if titles:
-                preview = ", ".join(titles[:3])
-                if len(titles) > 3:
-                    preview = f"{preview}…"
-                body = f'{reviewer_name} left feedback on {preview}.'
-            else:
-                body = f"{reviewer_name} left feedback on your health documents."
-            Notification.objects.create(
-                user=patient,
-                title=NOTIFICATION_TITLE_REVIEW,
-                body=body,
-            )
-
+            serializer.save(nutritionist=user)
 
 class UserDietPlanViewSet(viewsets.ModelViewSet):
     queryset = UserDietPlan.objects.all().select_related(
@@ -7230,6 +7192,7 @@ class TicketAttachmentViewSet(viewsets.ModelViewSet):
         serializer.save(uploaded_by=u)
 
 
+# ── Notifications ─────────────────────────────────────────────────────────────
 class NotificationViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -7252,10 +7215,6 @@ class NotificationViewSet(
                 qs = qs.filter(is_read=True)
             elif str(is_read).lower() == "false":
                 qs = qs.filter(is_read=False)
-
-        title_filter = (params.get("title") or "").strip()
-        if title_filter:
-            qs = qs.filter(title=title_filter)
 
         period = (params.get("period") or "").strip()
         start_s = params.get("start_date")
@@ -7318,128 +7277,12 @@ class NotificationViewSet(
         serializer = self.get_serializer(queryset, many=True)
         return Response({"counts": counts, "results": serializer.data})
 
-    @action(detail=False, methods=["get"], url_path="unread_count")
-    def unread_count(self, request):
-        """
-        Unread count for the current user.
-        Optional query: title=<exact> to scope; patient_id=<int> only with title=health upload
-        for nutritionists (body token match).
-        """
-        qs = Notification.objects.filter(user=request.user, is_read=False)
-        title = (request.query_params.get("title") or "").strip()
-        patient_id_raw = request.query_params.get("patient_id")
-        if title:
-            qs = qs.filter(title=title)
-        if patient_id_raw is not None and str(patient_id_raw).strip() != "":
-            try:
-                patient_id = int(patient_id_raw)
-            except (TypeError, ValueError):
-                return Response(
-                    {"detail": "Invalid patient_id."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            role = getattr(request.user, "role", None)
-            if title != NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD or role != "nutritionist":
-                return Response(
-                    {
-                        "detail": "patient_id is only valid with the health-upload title for nutritionists.",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            qs = qs.filter(body__contains=_notification_patient_id_token(patient_id))
-        return Response({"unread": qs.count()})
-
     @action(detail=False, methods=["post"], url_path="mark_all_read")
     def mark_all_read(self, request):
         updated_count = Notification.objects.filter(
             user=request.user,
             is_read=False,
         ).update(is_read=True)
-        return Response(
-            {
-                "message": f"Marked {updated_count} notifications as read",
-                "updated_count": updated_count,
-            }
-        )
-
-    @action(detail=False, methods=["post"], url_path="mark_read")
-    def mark_read(self, request):
-        """Mark specific notifications as read (ids must belong to the current user)."""
-        ids = request.data.get("ids")
-        if not isinstance(ids, list) or not ids:
-            return Response(
-                {"detail": "ids must be a non-empty list."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        clean_ids = []
-        for x in ids[:500]:
-            try:
-                clean_ids.append(int(x))
-            except (TypeError, ValueError):
-                continue
-        if not clean_ids:
-            return Response(
-                {"detail": "No valid notification ids."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        updated_count = Notification.objects.filter(
-            user=request.user,
-            id__in=clean_ids,
-            is_read=False,
-        ).update(is_read=True)
-        return Response(
-            {
-                "message": f"Marked {updated_count} notifications as read",
-                "updated_count": updated_count,
-            }
-        )
-
-    @action(detail=False, methods=["post"], url_path="mark_read_by_title")
-    def mark_read_by_title(self, request):
-        """Bulk mark unread by allowlisted title; nutritionist health-upload requires patient_id."""
-        title = (request.data.get("title") or "").strip()
-        if title not in NOTIFICATION_TITLE_MARK_READ_ALLOWLIST:
-            return Response(
-                {"detail": "Invalid or unsupported title."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        role = getattr(request.user, "role", None)
-        qs = Notification.objects.filter(user=request.user, title=title, is_read=False)
-
-        if title == NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD:
-            if role != "nutritionist":
-                return Response(
-                    {"detail": "Only nutritionists can clear health-upload notifications this way."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            patient_id_raw = request.data.get("patient_id")
-            if patient_id_raw is None or patient_id_raw == "":
-                return Response(
-                    {"detail": "patient_id is required for this title."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            try:
-                patient_id = int(patient_id_raw)
-            except (TypeError, ValueError):
-                return Response(
-                    {"detail": "Invalid patient_id."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            qs = qs.filter(body__contains=_notification_patient_id_token(patient_id))
-        elif title == NOTIFICATION_TITLE_REVIEW:
-            if role != "patient":
-                return Response(
-                    {"detail": "Only patients can clear review notifications this way."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-        elif title == NOTIFICATION_TITLE_FOOD_SUGGESTION:
-            if role != "patient":
-                return Response(
-                    {"detail": "Only patients can clear food-suggestion notifications this way."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
-        updated_count = qs.update(is_read=True)
         return Response(
             {
                 "message": f"Marked {updated_count} notifications as read",
