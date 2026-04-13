@@ -649,12 +649,13 @@ const masterNavItems: NavItem[] = [
 const PATIENT_DOCUMENTS_NAV_PATH = "/nutrition/uploaded-documents";
 
 const PATIENT_HEALTH_REPORTS_PATH = "/patient/health-reports";
+const PATIENT_SUGGESTED_FOODS_PATH = "/patient/suggested-foods";
 
 const MasterSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
   const userRole = getUserRoleFromToken();
-  const { count: healthReportsNavUnread } = usePatientHealthReportUploadUnreadCount();
+  const { count: healthReportsNavUnread, foodSuggestionCount } = usePatientHealthReportUploadUnreadCount();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -843,6 +844,18 @@ const MasterSidebar: React.FC = () => {
                                 }`}
                             >
                               {healthReportsNavUnread > 99 ? "99+" : healthReportsNavUnread}
+                            </span>
+                          )}
+                        {userRole === "patient" &&
+                          subItem.path === PATIENT_SUGGESTED_FOODS_PATH &&
+                          foodSuggestionCount > 0 && (
+                            <span
+                              className={`menu-dropdown-badge ${isActive(subItem.path)
+                                ? "menu-dropdown-badge-active"
+                                : "menu-dropdown-badge-inactive"
+                                }`}
+                            >
+                              {foodSuggestionCount > 99 ? "99+" : foodSuggestionCount}
                             </span>
                           )}
                         {(subItem.new || subItem.pro) && (

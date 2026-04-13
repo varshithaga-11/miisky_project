@@ -3692,8 +3692,6 @@ class NotificationSerializer(serializers.ModelSerializer):
             "body",
             "is_read",
             "created_at",
-            "category",
-            "related_patient_id",
         ]
         read_only_fields = [
             "id",
@@ -3701,8 +3699,6 @@ class NotificationSerializer(serializers.ModelSerializer):
             "title",
             "body",
             "created_at",
-            "category",
-            "related_patient_id",
         ]
 
 

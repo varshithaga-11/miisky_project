@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyHealthReports, uploadHealthReport, deleteHealthReport, PatientHealthReport } from "./api";
-import { markCategoryRead } from "../../../api/notifications";
+import { markReadByTitle } from "../../../api/notifications";
 import {
-    NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT,
+    NOTIFICATION_TITLE_REVIEW,
     dispatchHealthReportReviewUnreadRefresh,
 } from "../../../constants/notifications";
 import { useNotifications } from "../../../context/NotificationContext";
@@ -48,7 +48,7 @@ const HealthReportUploadPage: React.FC = () => {
         let cancelled = false;
         (async () => {
             try {
-                await markCategoryRead(NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT);
+                await markReadByTitle(NOTIFICATION_TITLE_REVIEW);
                 if (!cancelled) {
                     await fetchNotifications();
                     dispatchHealthReportReviewUnreadRefresh();

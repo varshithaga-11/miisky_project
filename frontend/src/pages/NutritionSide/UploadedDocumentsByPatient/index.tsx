@@ -9,8 +9,11 @@ import {
     NutritionistReview,
     ClinicalReviewDashboardResponse,
 } from "./api";
-import { markCategoryRead } from "../../../api/notifications";
-import { NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT, dispatchHealthReportUploadUnreadRefresh } from "../../../constants/notifications";
+import { markReadByTitle } from "../../../api/notifications";
+import {
+    NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
+    dispatchHealthReportUploadUnreadRefresh,
+} from "../../../constants/notifications";
 import { useNotifications } from "../../../context/NotificationContext";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiFileText, FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiInfo, FiChevronLeft, FiChevronRight, FiEye, FiDownload } from "react-icons/fi";
@@ -134,7 +137,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
         setExplicitPatientId(uid);
         (async () => {
             try {
-                await markCategoryRead(NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT, uid);
+                await markReadByTitle(NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD, uid);
                 await fetchNotifications();
                 dispatchHealthReportUploadUnreadRefresh();
             } catch {

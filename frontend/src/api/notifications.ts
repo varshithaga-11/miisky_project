@@ -8,9 +8,6 @@ export interface NotificationData {
   body: string;
   is_read: boolean;
   created_at: string;
-  category?: string;
-  /** Patient user id when notification is about a specific patient (e.g. health upload). */
-  related_patient_id?: number | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -35,7 +32,7 @@ export const getAllNotifications = async (
   period?: string,
   start_date?: string,
   end_date?: string,
-  category?: string
+  title?: string
 ): Promise<PaginatedResponse<NotificationData>> => {
   let url = createApiUrl(`api/notifications/?page=${page}`);
   if (limit) url += limit === "all" ? `&limit=all` : `&limit=${limit}`;
@@ -44,7 +41,7 @@ export const getAllNotifications = async (
   if (period === "custom" && start_date && end_date) {
     url += `&start_date=${encodeURIComponent(start_date)}&end_date=${encodeURIComponent(end_date)}`;
   }
-  if (category) url += `&category=${encodeURIComponent(category)}`;
+  if (title) url += `&title=${encodeURIComponent(title)}`;
 
   const response = await axios.get<PaginatedResponse<NotificationData>>(url, {
     headers: await getAuthHeaders(),
@@ -58,21 +55,33 @@ export const markAllNotificationsRead = async () => {
   return response.data;
 };
 
-/** Nutritionist: pass `patientId`. Patient (bulk clear for category): omit `patientId`. */
-export const markCategoryRead = async (category: string, patientId?: number) => {
-  const url = createApiUrl(`api/notifications/mark_category_read/`);
-  const body: { category: string; patient_id?: number } = { category };
+/** Bulk mark by allowlisted notification title (see backend NOTIFICATION_TITLE_*). */
+export const markReadByTitle = async (title: string, patientId?: number) => {
+  const url = createApiUrl(`api/notifications/mark_read_by_title/`);
+  const body: { title: string; patient_id?: number } = { title };
   if (patientId !== undefined) body.patient_id = patientId;
   const response = await axios.post(url, body, { headers: await getAuthHeaders() });
   return response.data;
 };
 
-/** Unread count for a single category (uses server `counts.unread`; `limit=all` avoids pagination quirks). */
-export async function fetchUnreadCountByCategory(category: string): Promise<number> {
-  const data = await getAllNotifications(1, "all", "false", undefined, undefined, undefined, category);
-  if (typeof data.counts?.unread === "number") return data.counts.unread;
-  const results = Array.isArray(data.results) ? data.results : [];
-  return results.filter((n) => !n.is_read).length;
+/** Mark specific notification rows (must belong to current user). */
+export const markNotificationsReadByIds = async (ids: number[]) => {
+  const url = createApiUrl(`api/notifications/mark_read/`);
+  const response = await axios.post(url, { ids }, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+/** Unread count for optional exact title; nutritionists may pass patientId with health-upload title. */
+export async function fetchUnreadCountByTitle(title: string, patientId?: number): Promise<number> {
+  let url = createApiUrl(`api/notifications/unread_count/`);
+  const params = new URLSearchParams();
+  params.set("title", title);
+  if (patientId !== undefined) params.set("patient_id", String(patientId));
+  url += `?${params.toString()}`;
+  const response = await axios.get<{ unread: number }>(url, {
+    headers: await getAuthHeaders(),
+  });
+  return typeof response.data.unread === "number" ? response.data.unread : 0;
 }
 
 export const markNotificationRead = async (notificationId: number) => {
@@ -81,7 +90,7 @@ export const markNotificationRead = async (notificationId: number) => {
   return response.data;
 };
 
-/** Total unread for header badge (matches server; avoids paginated list quirks with limit=1). */
+/** Total unread for header badge (matches server; no title filter). */
 export async function fetchTotalUnreadCount(): Promise<number> {
   const url = createApiUrl(`api/notifications/unread_count/`);
   const response = await axios.get<{ unread: number }>(url, {

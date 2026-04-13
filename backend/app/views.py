@@ -85,14 +85,24 @@ def _notification_user_display(user):
     return name or getattr(user, "username", None) or "Someone"
 
 
-NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT_UPLOAD = "patient_health_report_upload"
-NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT = "nutritionist_review_health_report"
-NOTIFICATION_MARK_READ_ALLOWED_CATEGORIES = frozenset(
+# Stable notification titles (no DB category column). Used for filters and mark_read_by_title.
+NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD = "New patient health document"
+NOTIFICATION_TITLE_REVIEW = "Your health documents were reviewed"
+# Must match PatientFoodRecommendationViewSet (do not change that viewset's strings independently).
+NOTIFICATION_TITLE_FOOD_SUGGESTION = "New food suggested by your nutritionist"
+
+NOTIFICATION_TITLE_MARK_READ_ALLOWLIST = frozenset(
     {
-        NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT_UPLOAD,
-        NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT,
+        NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
+        NOTIFICATION_TITLE_REVIEW,
+        NOTIFICATION_TITLE_FOOD_SUGGESTION,
     }
 )
+
+
+def _notification_patient_id_token(patient_id: int) -> str:
+    """Embedded in upload notification bodies so nutritionists can scope mark-read per patient."""
+    return f"__miisky_patient_id={patient_id}__"
 
 
 # Create your views here.
@@ -3794,15 +3804,15 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
             getattr(instance.report_file, "name", None) or "file"
         )
         rtype = (instance.report_type or "").strip() or "document"
+        body_text = (
+            f'{patient_name} uploaded "{doc_label}" ({rtype}). '
+            "Open Allotted Patients → Patient Documents to review."
+        )
+        body_text = f"{body_text}\n{_notification_patient_id_token(self.request.user.id)}"
         Notification.objects.create(
             user_id=mapping.nutritionist_id,
-            title="New patient health document",
-            body=(
-                f'{patient_name} uploaded "{doc_label}" ({rtype}). '
-                "Open Allotted Patients → Patient Documents to review."
-            ),
-            category=NOTIFICATION_CATEGORY_PATIENT_HEALTH_REPORT_UPLOAD,
-            related_patient=self.request.user,
+            title=NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD,
+            body=body_text,
         )
 
 
@@ -3873,13 +3883,10 @@ class NutritionistReviewViewSet(viewsets.ModelViewSet):
                 body = f'{reviewer_name} left feedback on {preview}.'
             else:
                 body = f"{reviewer_name} left feedback on your health documents."
-            title = f"{reviewer_name} reviewed your health documents"
             Notification.objects.create(
                 user=patient,
-                title=title,
+                title=NOTIFICATION_TITLE_REVIEW,
                 body=body,
-                category=NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT,
-                related_patient=None,
             )
 
 
@@ -7206,9 +7213,9 @@ class NotificationViewSet(
             elif str(is_read).lower() == "false":
                 qs = qs.filter(is_read=False)
 
-        category = (params.get("category") or "").strip()
-        if category:
-            qs = qs.filter(category=category)
+        title_filter = (params.get("title") or "").strip()
+        if title_filter:
+            qs = qs.filter(title=title_filter)
 
         period = (params.get("period") or "").strip()
         start_s = params.get("start_date")
@@ -7273,9 +7280,34 @@ class NotificationViewSet(
 
     @action(detail=False, methods=["get"], url_path="unread_count")
     def unread_count(self, request):
-        """Total unread for the current user (no period/category filters). Used by header badge."""
-        n = Notification.objects.filter(user=request.user, is_read=False).count()
-        return Response({"unread": n})
+        """
+        Unread count for the current user.
+        Optional query: title=<exact> to scope; patient_id=<int> only with title=health upload
+        for nutritionists (body token match).
+        """
+        qs = Notification.objects.filter(user=request.user, is_read=False)
+        title = (request.query_params.get("title") or "").strip()
+        patient_id_raw = request.query_params.get("patient_id")
+        if title:
+            qs = qs.filter(title=title)
+        if patient_id_raw is not None and str(patient_id_raw).strip() != "":
+            try:
+                patient_id = int(patient_id_raw)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "Invalid patient_id."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            role = getattr(request.user, "role", None)
+            if title != NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD or role != "nutritionist":
+                return Response(
+                    {
+                        "detail": "patient_id is only valid with the health-upload title for nutritionists.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            qs = qs.filter(body__contains=_notification_patient_id_token(patient_id))
+        return Response({"unread": qs.count()})
 
     @action(detail=False, methods=["post"], url_path="mark_all_read")
     def mark_all_read(self, request):
@@ -7290,59 +7322,84 @@ class NotificationViewSet(
             }
         )
 
-    @action(detail=False, methods=["post"], url_path="mark_category_read")
-    def mark_category_read(self, request):
-        category = (request.data.get("category") or "").strip()
-        if category not in NOTIFICATION_MARK_READ_ALLOWED_CATEGORIES:
+    @action(detail=False, methods=["post"], url_path="mark_read")
+    def mark_read(self, request):
+        """Mark specific notifications as read (ids must belong to the current user)."""
+        ids = request.data.get("ids")
+        if not isinstance(ids, list) or not ids:
             return Response(
-                {"detail": "Invalid or unsupported category."},
+                {"detail": "ids must be a non-empty list."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        role = getattr(request.user, "role", None)
-
-        if category == NOTIFICATION_CATEGORY_NUTRITIONIST_REVIEW_HEALTH_REPORT:
-            if role != "patient":
-                return Response(
-                    {"detail": "Only patients can clear this category."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            patient_id_raw = request.data.get("patient_id")
-            if patient_id_raw is not None and patient_id_raw != "":
-                return Response(
-                    {"detail": "Do not send patient_id for this category."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            updated_count = Notification.objects.filter(
-                user=request.user,
-                category=category,
-                is_read=False,
-            ).update(is_read=True)
+        clean_ids = []
+        for x in ids[:500]:
+            try:
+                clean_ids.append(int(x))
+            except (TypeError, ValueError):
+                continue
+        if not clean_ids:
             return Response(
-                {
-                    "message": f"Marked {updated_count} notifications as read",
-                    "updated_count": updated_count,
-                }
-            )
-
-        patient_id_raw = request.data.get("patient_id")
-        if patient_id_raw is None or patient_id_raw == "":
-            return Response(
-                {"detail": "patient_id is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        try:
-            patient_id = int(patient_id_raw)
-        except (TypeError, ValueError):
-            return Response(
-                {"detail": "Invalid patient_id."},
+                {"detail": "No valid notification ids."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         updated_count = Notification.objects.filter(
             user=request.user,
-            category=category,
+            id__in=clean_ids,
             is_read=False,
-            related_patient_id=patient_id,
         ).update(is_read=True)
+        return Response(
+            {
+                "message": f"Marked {updated_count} notifications as read",
+                "updated_count": updated_count,
+            }
+        )
+
+    @action(detail=False, methods=["post"], url_path="mark_read_by_title")
+    def mark_read_by_title(self, request):
+        """Bulk mark unread by allowlisted title; nutritionist health-upload requires patient_id."""
+        title = (request.data.get("title") or "").strip()
+        if title not in NOTIFICATION_TITLE_MARK_READ_ALLOWLIST:
+            return Response(
+                {"detail": "Invalid or unsupported title."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        role = getattr(request.user, "role", None)
+        qs = Notification.objects.filter(user=request.user, title=title, is_read=False)
+
+        if title == NOTIFICATION_TITLE_PATIENT_HEALTH_UPLOAD:
+            if role != "nutritionist":
+                return Response(
+                    {"detail": "Only nutritionists can clear health-upload notifications this way."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            patient_id_raw = request.data.get("patient_id")
+            if patient_id_raw is None or patient_id_raw == "":
+                return Response(
+                    {"detail": "patient_id is required for this title."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                patient_id = int(patient_id_raw)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "Invalid patient_id."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            qs = qs.filter(body__contains=_notification_patient_id_token(patient_id))
+        elif title == NOTIFICATION_TITLE_REVIEW:
+            if role != "patient":
+                return Response(
+                    {"detail": "Only patients can clear review notifications this way."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        elif title == NOTIFICATION_TITLE_FOOD_SUGGESTION:
+            if role != "patient":
+                return Response(
+                    {"detail": "Only patients can clear food-suggestion notifications this way."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        updated_count = qs.update(is_read=True)
         return Response(
             {
                 "message": f"Marked {updated_count} notifications as read",
