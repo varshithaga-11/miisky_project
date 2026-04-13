@@ -3600,7 +3600,7 @@ class PatientUnavailability(models.Model):
     Delivery and kitchen prep are skipped for affected UserMeals.
 
     scope='all'       -> skip every meal on those dates
-    scope='meal_type' -> skip only the specified meal_type (e.g. just Dinner)
+    scope='meal_type' -> skip only the selected meal types (one or more)
     """
 
     SCOPE_CHOICES = [
@@ -3645,19 +3645,18 @@ class PatientUnavailability(models.Model):
         choices=SCOPE_CHOICES,
         default="all",
     )
-    meal_type = models.ForeignKey(
+    meal_types = models.ManyToManyField(
         MealType,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="patient_unavailabilities",
-        help_text="Required only when scope='meal_type'.",
+        help_text="When scope='meal_type', select one or more meal types to skip.",
     )
     reason = models.TextField(
         null=True,
         blank=True,
         help_text="Patient's optional note (travel, hospital, etc.).",
     )
+    patient_comments = models.TextField(null=True, blank=True)
 
     status = models.CharField(
         max_length=20,
@@ -3684,8 +3683,7 @@ class PatientUnavailability(models.Model):
     def clean(self):
         if self.to_date and self.from_date and self.to_date < self.from_date:
             raise ValidationError("to_date must be on or after from_date.")
-        if self.scope == "meal_type" and not self.meal_type_id:
-            raise ValidationError("meal_type is required when scope is 'meal_type'.")
+        # meal_types (M2M) is validated in PatientUnavailabilitySerializer; not reliable in clean() before first save.
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -3699,7 +3697,11 @@ class PatientUnavailability(models.Model):
         )
 
     def __str__(self):
-        scope_label = f" ({self.meal_type})" if self.meal_type_id else ""
+        scope_label = ""
+        if self.scope == "meal_type" and self.pk:
+            names = ", ".join(self.meal_types.values_list("name", flat=True))
+            if names:
+                scope_label = f" ({names})"
         return (
             f"{self.user} unavailable {self.from_date}->{self.to_date}"
             f"{scope_label} [{self.status}]"
@@ -3728,7 +3730,7 @@ def is_patient_available(user_diet_plan, target_date, meal_type=None) -> bool:
     meal_type_id = meal_type.id if hasattr(meal_type, "id") else meal_type
     if qs.filter(scope="all").exists():
         return False
-    return not qs.filter(scope="meal_type", meal_type_id=meal_type_id).exists()
+    return not qs.filter(scope="meal_type", meal_types__id=meal_type_id).exists()
 
 
 

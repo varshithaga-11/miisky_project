@@ -2648,7 +2648,7 @@ class BulkUserMealSerializer(serializers.ModelSerializer):
 
 class PatientUnavailabilitySerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
-    meal_type_details = serializers.SerializerMethodField(read_only=True)
+    meal_types_details = serializers.SerializerMethodField(read_only=True)
     user_diet_plan_details = serializers.SerializerMethodField(read_only=True)
     skip_meal_count = serializers.SerializerMethodField(read_only=True)
 
@@ -2663,9 +2663,10 @@ class PatientUnavailabilitySerializer(serializers.ModelSerializer):
             "from_date",
             "to_date",
             "scope",
-            "meal_type",
-            "meal_type_details",
+            "meal_types",
+            "meal_types_details",
             "reason",
+            "patient_comments",
             "status",
             "requested_on",
             "reviewed_by",
@@ -2677,15 +2678,22 @@ class PatientUnavailabilitySerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         instance = getattr(self, "instance", None)
-        scope = attrs.get("scope", getattr(instance, "scope", "all"))
-        meal_type = attrs.get("meal_type", getattr(instance, "meal_type", None))
-        from_date = attrs.get("from_date", getattr(instance, "from_date", None))
-        to_date = attrs.get("to_date", getattr(instance, "to_date", None))
+        scope = attrs.get("scope", getattr(instance, "scope", "all") if instance else "all")
+        from_date = attrs.get("from_date", getattr(instance, "from_date", None) if instance else None)
+        to_date = attrs.get("to_date", getattr(instance, "to_date", None) if instance else None)
 
         if from_date and to_date and to_date < from_date:
             raise serializers.ValidationError("to_date must be on or after from_date.")
-        if scope == "meal_type" and not meal_type:
-            raise serializers.ValidationError("meal_type is required when scope is 'meal_type'.")
+
+        meal_types_in = attrs.get("meal_types", serializers.empty)
+        if meal_types_in is serializers.empty:
+            meal_count = instance.meal_types.count() if instance else 0
+        else:
+            meal_count = len(meal_types_in) if meal_types_in else 0
+        if scope == "meal_type" and meal_count == 0:
+            raise serializers.ValidationError(
+                {"meal_types": "Select at least one meal type when scope is 'meal_type'."}
+            )
         return attrs
 
     def get_user_details(self, obj):
@@ -2699,13 +2707,8 @@ class PatientUnavailabilitySerializer(serializers.ModelSerializer):
             "mobile": getattr(obj.user, "mobile", None),
         }
 
-    def get_meal_type_details(self, obj):
-        if not obj.meal_type:
-            return None
-        return {
-            "id": obj.meal_type.id,
-            "name": obj.meal_type.name,
-        }
+    def get_meal_types_details(self, obj):
+        return [{"id": m.id, "name": m.name} for m in obj.meal_types.all().order_by("id")]
 
     def get_user_diet_plan_details(self, obj):
         if not obj.user_diet_plan:
@@ -2723,8 +2726,10 @@ class PatientUnavailabilitySerializer(serializers.ModelSerializer):
             user_id=obj.user_id,
             meal_date__range=[obj.from_date, obj.to_date],
         )
-        if obj.scope == "meal_type" and obj.meal_type_id:
-            qs = qs.filter(meal_type_id=obj.meal_type_id)
+        if obj.scope == "meal_type":
+            ids = list(obj.meal_types.values_list("id", flat=True))
+            if ids:
+                qs = qs.filter(meal_type_id__in=ids)
         return qs.count()
 
 

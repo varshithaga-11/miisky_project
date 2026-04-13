@@ -5244,8 +5244,8 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
     """
 
     queryset = PatientUnavailability.objects.all().select_related(
-        "user", "user_diet_plan", "meal_type", "reviewed_by"
-    )
+        "user", "user_diet_plan", "reviewed_by"
+    ).prefetch_related("meal_types")
     serializer_class = PatientUnavailabilitySerializer
     permission_classes = [IsAuthenticated]
     pagination_class = Pagination
@@ -5264,8 +5264,10 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
             user_diet_plan_id=request_obj.user_diet_plan_id,
             meal_date__range=[request_obj.from_date, request_obj.to_date],
         )
-        if request_obj.scope == "meal_type" and request_obj.meal_type_id:
-            meals = meals.filter(meal_type_id=request_obj.meal_type_id)
+        if request_obj.scope == "meal_type":
+            ids = list(request_obj.meal_types.values_list("id", flat=True))
+            if ids:
+                meals = meals.filter(meal_type_id__in=ids)
         return meals
 
     def get_queryset(self):

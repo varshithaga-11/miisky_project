@@ -148,6 +148,9 @@ import MicroKitchenGlobalDeliveryPage from "./pages/MicroKitchenSide/DeliveryMan
 import MicroKitchenDailyDeliveryPage from "./pages/MicroKitchenSide/DeliveryManagement/DailyReassignments";
 import MicroKitchenDeliveryPersonInfoPage from "./pages/MicroKitchenSide/DeliveryPersonInfo/index";
 import SupplyChainTeamMemberForMKPage from "./pages/MicroKitchenSide/SupplyChainTeamMemberForMK";
+import NutritionPatientUnavailabilityPage from "./pages/NutritionSide/PatientUnavailability/index";
+import PatientUnavailabilityRequestPage from "./pages/PatientSide/PatientUnavailability/index";
+import KitchenExecutionPage from "./pages/MicroKitchenSide/KitchenExecution/index";
 
 
 // Master Side Pages
@@ -365,9 +368,11 @@ export function appRoutes() {
           <Route path="patient/notifications" element={<PatientNotificationsPage />} />
           <Route path="patient/instructions" element={<PatientInstructionsPage />} />
           <Route path="patient/suggested-foods" element={<SuggestedFoodNameFromNutritionPage />} />
+          <Route path="patient/unavailability" element={<PatientUnavailabilityRequestPage />} />
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
+          <Route path="nutrition/patient-unavailability" element={<NutritionPatientUnavailabilityPage />} />
           <Route path="nutrition/uploaded-documents" element={<UploadedDocumentsByPatientPage />} />
           <Route path="nutrition/suggest-foods" element={<SuggestFoodNameToPatientsPage />} />
           <Route path="nutrition/suggest-plan" element={<SuggestPlanToPatientsPage />} />
@@ -386,6 +391,7 @@ export function appRoutes() {
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
           <Route path="microkitchen/daily-prep" element={<MealsBasedOnDailyPage />} />
+          <Route path="microkitchen/kitchen-execution" element={<KitchenExecutionPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
           <Route path="microkitchen/order-payments" element={<MicroKitchenOrderPaymentSnapshotsPage />} />

@@ -224,6 +224,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/meals-allotted",
   },
   {
+    icon: <CalendarRange className="w-5 h-5" />,
+    name: "Away / meal skip",
+    path: "/patient/unavailability",
+  },
+  {
     icon: <Video className="w-5 h-5" />,
     name: "Consultation",
     path: "/patient/meeting-request",
@@ -294,6 +299,11 @@ const nutritionistNavItems: NavItem[] = [
     icon: <Layers className="w-5 h-5" />,
     name: "Meal Optimizer",
     path: "/nutrition/set-meals",
+  },
+  {
+    icon: <CalendarRange className="w-5 h-5" />,
+    name: "Patient unavailability",
+    path: "/nutrition/patient-unavailability",
   },
 
   {
@@ -404,6 +414,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <Truck className="w-5 h-5" />,
     name: "Daily Prep(From Patients)",
     path: "/microkitchen/daily-prep",
+  },
+  {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "Kitchen execution",
+    path: "/microkitchen/kitchen-execution",
   },
   {
     icon: <Package className="w-5 h-5" />,
