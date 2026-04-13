@@ -15,6 +15,7 @@ interface Props {
 
 const EditDeficiencyMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -22,7 +23,10 @@ const EditDeficiencyMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUp
     if (isOpen && recordId) {
       setLoading(true);
       getDeficiencyMasterById(recordId)
-        .then((data: { name: string }) => setName(data.name))
+        .then((data: { name: string; sort_order?: number }) => {
+          setName(data.name);
+          setSortOrder(data.sort_order ?? 0);
+        })
         .finally(() => setLoading(false));
     }
   }, [isOpen, recordId]);
@@ -31,7 +35,7 @@ const EditDeficiencyMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUp
     e.preventDefault();
     setSaving(true);
     try {
-      await updateDeficiencyMaster(recordId, { name: name.trim() });
+      await updateDeficiencyMaster(recordId, { name: name.trim(), sort_order: Number(sortOrder) || 0 });
       toast.success("Updated.");
       setTimeout(() => {
         onUpdated();
@@ -63,6 +67,17 @@ const EditDeficiencyMaster: React.FC<Props> = ({ recordId, isOpen, onClose, onUp
             <div>
               <Label htmlFor="name">Name *</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={saving} />
+            </div>
+            <div>
+              <Label htmlFor="sort_order">Sort order</Label>
+              <Input
+                id="sort_order"
+                type="number"
+                min={0}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(Number(e.target.value))}
+                disabled={saving}
+              />
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <Button type="button" variant="outline" onClick={onClose} disabled={saving}>

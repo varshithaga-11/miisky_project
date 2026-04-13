@@ -40,7 +40,7 @@ const HealthConditionMasterPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [pageSize, setPageSize] = useState(10);
-  const [sortField, setSortField] = useState<keyof HealthConditionMaster | null>(null);
+  const [sortField, setSortField] = useState<keyof HealthConditionMaster | null>("sort_order");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
@@ -92,10 +92,13 @@ const HealthConditionMasterPage: React.FC = () => {
   const sortedRows = useMemo(() => {
     if (!sortField) return rows;
     return [...rows].sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      const as = aValue == null ? "" : String(aValue);
-      const bs = bValue == null ? "" : String(bValue);
+      const av = a[sortField];
+      const bv = b[sortField];
+      if (sortField === "sort_order" && typeof av === "number" && typeof bv === "number") {
+        return sortDirection === "asc" ? av - bv : bv - av;
+      }
+      const as = av == null ? "" : String(av);
+      const bs = bv == null ? "" : String(bv);
       const cmp = as.localeCompare(bs);
       return sortDirection === "asc" ? cmp : -cmp;
     });
@@ -197,6 +200,18 @@ const HealthConditionMasterPage: React.FC = () => {
                     </span>
                   </div>
                 </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  onClick={() => handleSort("sort_order")}
+                >
+                  <div className="flex items-center gap-2">
+                    Sort order
+                    <span className="text-gray-300 dark:text-gray-600">
+                      {sortField === "sort_order" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                    </span>
+                  </div>
+                </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Action
                 </TableCell>
@@ -205,7 +220,7 @@ const HealthConditionMasterPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500">
+                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500">
                     No records found
                   </TableCell>
                 </TableRow>
@@ -229,6 +244,9 @@ const HealthConditionMasterPage: React.FC = () => {
                             {CATEGORY_LABEL[row.category] ?? row.category}
                         </span>
                     </TableCell>
+                    <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90">
+                      {row.sort_order}
+                    </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <div className="flex items-center gap-3">
                         <button
@@ -242,10 +260,10 @@ const HealthConditionMasterPage: React.FC = () => {
                         >
                           <FiEdit />
                         </button>
-                        <button 
-                          type="button" 
-                          className="text-red-600 hover:text-red-800 text-lg transition-colors" 
-                          title="Delete" 
+                        <button
+                          type="button"
+                          className="text-red-600 hover:text-red-800 text-lg transition-colors"
+                          title="Delete"
                           onClick={() => void handleDelete(row.id!)}
                         >
                           <FiTrash2 />

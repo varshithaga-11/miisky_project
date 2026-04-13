@@ -23,13 +23,14 @@ interface Props {
 const AddHealthConditionMaster: React.FC<Props> = ({ onClose, onAdd }) => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("other");
+  const [sortOrder, setSortOrder] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createHealthConditionMaster({ name: name.trim(), category });
+      await createHealthConditionMaster({ name: name.trim(), category, sort_order: Number(sortOrder) || 0 });
       toast.success("Health condition created.");
       setTimeout(() => {
         onAdd();
@@ -74,6 +75,17 @@ const AddHealthConditionMaster: React.FC<Props> = ({ onClose, onAdd }) => {
               onChange={(val) => setCategory(String(val))}
               options={CATEGORY_OPTIONS}
               className="w-full"
+            />
+          </div>
+          <div>
+            <Label htmlFor="sort_order">Sort order</Label>
+            <Input
+              id="sort_order"
+              type="number"
+              min={0}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(e.target.value))}
+              disabled={loading}
             />
           </div>
           <div className="flex justify-end gap-2 mt-6">
