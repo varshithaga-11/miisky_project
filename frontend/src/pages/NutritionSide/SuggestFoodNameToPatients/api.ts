@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createApiUrl, getAuthHeaders } from "../../../access/access";
+import { getMealTypeList, MealType } from "../../AdminSide/MealType/mealtypeapi";
 
 export type PatientFoodRecommendation = {
   id: number;
@@ -13,13 +14,17 @@ export type PatientFoodRecommendation = {
   food: number;
   food_details?: { id: number; name: string; code?: string | null } | null;
   quantity: string | null;
-  meal_time: string | null;
-  notes: string | null;
-  comment: string | null;
-  recommended_by: number | null;
-  recommended_by_details?: { id: number; first_name: string; last_name: string } | null;
-  recommended_on: string;
+  meal_time?: number | null;
+  meal_time_details?: { id: number; name: string } | null;
+  notes?: string | null;
+  comment?: string | null;
+  recommended_by?: number;
+  recommended_by_details?: { id: number; username: string } | null;
+  recommended_on?: string;
 };
+
+export { getMealTypeList };
+export type { MealType };
 
 export const fetchFoodRecommendationsForPatient = async (
   patientUserId: number
@@ -33,7 +38,7 @@ export const createFoodRecommendation = async (payload: {
   patient: number;
   food: number;
   quantity?: string | null;
-  meal_time?: string | null;
+  meal_time?: number | null;
   notes?: string | null;
   comment?: string | null;
 }): Promise<PatientFoodRecommendation> => {

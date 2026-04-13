@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getIngredientList, deleteIngredient, patchIngredient, Ingredient } from "./ingredientapi";
@@ -48,6 +48,10 @@ const IngredientManagementPage: React.FC = () => {
   };
 
   const handleToggleApproval = async (id: number, currentStatus: boolean) => {
+    // Show instruction toast
+    if (!currentStatus) {
+      toast.info("Please don't repeat the words it may cause some issues.");
+    }
     try {
       await patchIngredient(id, { is_approved: !currentStatus });
       toast.success(`Ingredient ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
@@ -130,9 +134,13 @@ const IngredientManagementPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm text-gray-600 dark:text-gray-400 gap-2">
           <div>
             Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+          </div>
+          <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+            <FiInfo className="w-4 h-4" />
+            <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { FiPlus, FiEye, FiSearch, FiBox, FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiEye, FiSearch, FiBox, FiEdit, FiTrash2, FiInfo } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getFoodList, Food } from "../Food/foodapi";
+import { getFoodList, Food, patchFood } from "../Food/foodapi";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import { deleteFullRecipe } from "./recipeapi";
 import AddRecipeModal from "./AddRecipeModal";
@@ -18,6 +18,7 @@ import { createApiUrl } from "../../../access/access";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getCuisineTypeList, CuisineType } from "../Food/foodapi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import Switch from "../../../components/form/switch/Switch";
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -87,6 +88,19 @@ const RecipeManagementPage: React.FC = () => {
             toast.error("Failed to delete recipe data.");
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleToggleApproval = async (foodId: number, currentStatus: boolean) => {
+        if (!currentStatus) {
+            toast.info("Please don't repeat the words it may cause some issues.");
+        }
+        try {
+            await patchFood(foodId, { is_approved: !currentStatus });
+            toast.success(`Recipe ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
+            fetchData();
+        } catch {
+            toast.error("Failed to update approval status.");
         }
     };
 
@@ -185,9 +199,13 @@ const RecipeManagementPage: React.FC = () => {
                     </div>
                 </div>
                 
-                <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm text-gray-600 dark:text-gray-400 gap-2">
                     <div>
                         Showing {filteredFoods.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredFoods.length)} of {filteredFoods.length} entries
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+                        <FiInfo className="w-4 h-4" />
+                        <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
                     </div>
                 </div>
             </div>
@@ -201,6 +219,7 @@ const RecipeManagementPage: React.FC = () => {
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Image</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Food Name</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Meal Types</TableCell>
+                                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Actions</TableCell>
                             </TableRow>
                         </TableHeader>
@@ -250,6 +269,14 @@ const RecipeManagementPage: React.FC = () => {
                                                     <span className="text-gray-400 text-xs italic">none</span>
                                                 )}
                                             </div>
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4">
+                                            <Switch 
+                                                label=""
+                                                key={`${food.id}-${food.is_approved}`}
+                                                defaultChecked={food.is_approved}
+                                                onChange={() => handleToggleApproval(food.id!, food.is_approved || false)}
+                                            />
                                         </TableCell>
                                         <TableCell className="px-5 py-4">
                                             <div className="flex items-center gap-3">
