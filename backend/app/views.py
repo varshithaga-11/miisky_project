@@ -5610,6 +5610,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Q(user__first_name__icontains=search) |
                 Q(user__last_name__icontains=search) |
                 Q(delivery_address__icontains=search) |
+                Q(delivery_lat_lng_address__icontains=search) |
                 Q(id__icontains=search)
             )
 
@@ -5703,6 +5704,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             customer = request.user
             kitchen_profile = cart.micro_kitchen
 
+            if 'delivery_lat_lng_address' in request.data:
+                dlg_val = request.data.get('delivery_lat_lng_address') or ''
+            else:
+                dlg_val = getattr(customer, 'lat_lng_address', '') or ''
+
             order = Order.objects.create(
                 user=customer,
                 micro_kitchen=kitchen_profile,
@@ -5713,6 +5719,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 delivery_slab=slab,
                 final_amount=final_dec,
                 delivery_address=delivery_address or (getattr(customer, 'address', '') or ''),
+                delivery_lat_lng_address=dlg_val,
                 status='placed',
             )
 

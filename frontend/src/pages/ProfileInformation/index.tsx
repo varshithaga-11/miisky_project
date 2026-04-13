@@ -136,10 +136,10 @@ const ProfileInformation: React.FC = () => {
         handleFieldChange("longitude", lng);
         const address = await reverseGeocode(lat, lng);
         if (address) {
-            handleFieldChange("address", address);
-            toast.success("Location and address updated");
+            handleFieldChange("lat_lng_address", address);
+            toast.success("Location and map address updated");
         } else {
-            toast.success("Location captured (address could not be fetched)");
+            toast.success("Location captured (map address could not be fetched)");
         }
     };
 
@@ -563,6 +563,18 @@ const ProfileInformation: React.FC = () => {
                                                     placeholder="e.g. 77.5946"
                                                 />
                                             </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Address from map / GPS</Label>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                Reverse-geocoded label for your coordinates; street address stays above.
+                                            </p>
+                                            <TextArea
+                                                placeholder="Filled when you use location or map pick…"
+                                                value={profile.lat_lng_address || ""}
+                                                onChange={(val) => handleTextAreaChange("lat_lng_address", val)}
+                                                rows={3}
+                                            />
                                         </div>
                                         {(profile?.latitude != null || profile?.longitude != null) && (
                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">

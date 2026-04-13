@@ -82,6 +82,7 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'gender',
             'photo',
             'address',
+            'lat_lng_address',
             'city',
             'city_name',
             'zip_code',
@@ -203,7 +204,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'role',
             'first_name', 'last_name', 'mobile', 'whatsapp',
-            'dob', 'gender', 'photo', 'address', 'city',
+            'dob', 'gender', 'photo', 'address', 'lat_lng_address', 'city',
             'zip_code', 'state', 'country', 'latitude', 'longitude',
             'joined_date', 'is_active', 'created_on'
         ]
@@ -2867,6 +2868,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_amount', 'delivery_distance_km', 'delivery_charge', 'delivery_slab',
             'delivery_slab_details', 'final_amount',
             'delivery_address',
+            'delivery_lat_lng_address',
             'delivery_person', 'delivery_person_details',
             'items', 'ratings', 'created_at',
         ]

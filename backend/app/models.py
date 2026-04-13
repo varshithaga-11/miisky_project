@@ -88,6 +88,7 @@ class UserRegister(AbstractUser):
     # Location (for nearest-microkitchen / geo queries; PointField-ready: use lat/lng for now)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    lat_lng_address = models.CharField(max_length=255, null=True, blank=True)
 
 
     joined_date = models.DateTimeField(null=True, blank=True)
@@ -2270,6 +2271,8 @@ class Order(models.Model):
     final_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     delivery_address = models.TextField()
+
+    delivery_lat_lng_address = models.CharField(max_length=255, blank=True, default="")
 
     delivery_person = models.ForeignKey(
         UserRegister,

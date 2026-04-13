@@ -35,6 +35,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
   const [gender, setGender] = useState<UserRegister["gender"]>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [address, setAddress] = useState("");
+  const [latLngAddress, setLatLngAddress] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [joinedDate, setJoinedDate] = useState("");
 
@@ -98,10 +99,10 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
     setLongitude(lng);
     const resolved = await reverseGeocode(lat, lng);
     if (resolved) {
-      setAddress(resolved);
-      toast.success("Location and address updated");
+      setLatLngAddress(resolved);
+      toast.success("Location and map address updated");
     } else {
-      toast.success("Location captured (address could not be fetched)");
+      toast.success("Location captured (map address could not be fetched)");
     }
   };
 
@@ -143,6 +144,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
       if (data?.[0]) {
         setLatitude(parseFloat(data[0].lat));
         setLongitude(parseFloat(data[0].lon));
+        if (data[0].display_name) setLatLngAddress(data[0].display_name);
         toast.success("Coordinates from address");
       } else {
         toast.error("Address not found. Try a more complete address.");
@@ -183,6 +185,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
       gender: gender || null,
       photo: photo || null,
       address: address || null,
+      lat_lng_address: latLngAddress || null,
       zip_code: zipCode || null,
       country: countryId ? Number(countryId) : null,
       state: stateId ? Number(stateId) : null,
@@ -364,7 +367,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
           </div>
 
           <div>
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">Street address</Label>
             <Input id="address" type="text" value={address} onChange={(e) => setAddress(e.target.value)} disabled={loading} />
           </div>
 
@@ -460,6 +463,20 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
                 Saved: {latitude?.toFixed(5) ?? "—"}, {longitude?.toFixed(5) ?? "—"}
               </p>
             )}
+            <div className="mt-3 space-y-1">
+              <Label htmlFor="latLngAddress" className="text-xs">
+                Address from map / GPS
+              </Label>
+              <textarea
+                id="latLngAddress"
+                rows={3}
+                value={latLngAddress}
+                onChange={(e) => setLatLngAddress(e.target.value)}
+                disabled={loading}
+                placeholder="Filled when you use location, map, or get coordinates from address"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+              />
+            </div>
           </div>
 
           <div>
