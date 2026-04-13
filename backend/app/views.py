@@ -3824,7 +3824,26 @@ class PatientHealthReportViewSet(viewsets.ModelViewSet):
         return self._prefetch_report_reviews(queryset.filter(user=user))
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        report = serializer.save(user=self.request.user)
+        patient = self.request.user
+
+        # Notify active allotted nutritionist when patient uploads a report.
+        if getattr(patient, "role", None) in {"patient", "non_patient"}:
+            mapping = (
+                UserNutritionistMapping.objects.select_related("nutritionist")
+                .filter(user=patient, is_active=True, nutritionist__isnull=False)
+                .order_by("-assigned_on")
+                .first()
+            )
+            if mapping and mapping.nutritionist_id:
+                patient_name = _notification_user_display(patient)
+                uploaded_at = timezone.localtime(report.uploaded_on).strftime("%d %b %Y %I:%M %p")
+                report_name = (report.title or "").strip() or "Health report"
+                Notification.objects.create(
+                    user_id=mapping.nutritionist_id,
+                    title="New patient health report uploaded",
+                    body=f"{patient_name} uploaded \"{report_name}\" on {uploaded_at}.",
+                )
 
 class NutritionistReviewViewSet(viewsets.ModelViewSet):
     queryset = NutritionistReview.objects.all().select_related('nutritionist', 'doctor', 'user')
