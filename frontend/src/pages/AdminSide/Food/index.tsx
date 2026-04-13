@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus, FiEye, FiInfo } from "react-icons/fi";
+import React, { useEffect, useState, useMemo } from "react";
+import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus, FiEye, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getFoodList, deleteFood, patchFood, Food } from "./foodapi";
@@ -18,7 +18,7 @@ import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import { getCuisineTypeList, CuisineType } from "./foodapi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import Switch from "../../../components/form/switch/Switch";
+
 
 const getImageUrl = (imagePath: string | undefined | null) => {
   if (!imagePath) return "";
@@ -47,8 +47,11 @@ const FoodManagementPage: React.FC = () => {
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
   const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
   const [filterOptionsLoaded, setFilterOptionsLoaded] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
+  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
+  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,17 +122,45 @@ const FoodManagementPage: React.FC = () => {
     }
   };
   
-  const handleToggleApproval = async (foodId: number, currentStatus: boolean) => {
-    // Show instruction toast
+  const handleApprovalClick = (id: number, currentStatus: boolean) => {
+    setApprovalTarget({ id, currentStatus });
+  };
+
+  const confirmApproval = async () => {
+    if (!approvalTarget) return;
+    const { id, currentStatus } = approvalTarget;
     if (!currentStatus) {
-      toast.info("Please don't repeat the words it may cause some issues.");
+      toast.info("Please don't repeat the words — it may cause some issues.");
     }
+    setIsApprovingLoading(true);
     try {
-      await patchFood(foodId, { is_approved: !currentStatus });
+      await patchFood(id, { is_approved: !currentStatus });
       toast.success(`Food ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
       fetchFoods();
     } catch {
       toast.error("Failed to update approval status.");
+    } finally {
+      setIsApprovingLoading(false);
+      setApprovalTarget(null);
+    }
+  };
+
+  const handleRejectClick = (id: number) => {
+    setRejectionTarget(id);
+  };
+
+  const confirmRejection = async () => {
+    if (rejectionTarget === null) return;
+    setIsApprovingLoading(true);
+    try {
+      await patchFood(rejectionTarget, { is_rejected: true, is_approved: false });
+      toast.success("Food rejected successfully.");
+      fetchFoods();
+    } catch {
+      toast.error("Failed to reject food.");
+    } finally {
+      setIsApprovingLoading(false);
+      setRejectionTarget(null);
     }
   };
 
@@ -146,7 +177,7 @@ const FoodManagementPage: React.FC = () => {
 
   const sortedFoods = useMemo(() => {
     if (!sortField) return foods;
-    return [...foods].sort((a, b) => {
+    return [...foods].sort((a: Food, b: Food) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       if (aValue === undefined && bValue === undefined) return 0;
@@ -195,7 +226,7 @@ const FoodManagementPage: React.FC = () => {
               <SearchableSelect
                 options={[
                   { value: "", label: "All Meal Types" },
-                  ...mealTypes.map(m => ({ value: m.id!, label: m.name }))
+                  ...mealTypes.map((m: MealType) => ({ value: m.id!, label: m.name }))
                 ]}
                 value={selectedMealTypeId}
                 onFocus={loadFilterOptions}
@@ -211,7 +242,7 @@ const FoodManagementPage: React.FC = () => {
               <SearchableSelect
                 options={[
                   { value: "", label: "All Cuisines" },
-                  ...cuisineTypes.map(c => ({ value: c.id!, label: c.name }))
+                  ...cuisineTypes.map((c: CuisineType) => ({ value: c.id!, label: c.name }))
                 ]}
                 value={selectedCuisineTypeId}
                 onFocus={loadFilterOptions}
@@ -296,7 +327,7 @@ const FoodManagementPage: React.FC = () => {
                   <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">No food items found</TableCell>
                 </TableRow>
               ) : (
-                sortedFoods.map((food, index) => (
+                sortedFoods.map((food: Food, index: number) => (
                   <TableRow key={food.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4">
@@ -339,12 +370,36 @@ const FoodManagementPage: React.FC = () => {
                       {food.price ? `₹${food.price}` : <span className="text-gray-400 font-normal italic">N/A</span>}
                     </TableCell>
                     <TableCell className="px-5 py-4">
-                      <Switch
-                        label=""
-                        key={`${food.id}-${food.is_approved}`}
-                        defaultChecked={food.is_approved}
-                        onChange={() => handleToggleApproval(food.id!, food.is_approved || false)}
-                      />
+                      {food.is_approved ? (
+                        <button
+                          onClick={() => handleApprovalClick(food.id!, true)}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                          title="Click to disapprove"
+                        >
+                          <FiCheck size={12} /> Approved
+                        </button>
+                      ) : food.is_rejected ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                          <FiX size={12} /> Rejected
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleApprovalClick(food.id!, false)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                            title="Click to approve"
+                          >
+                            <FiCheck size={12} /> Accept
+                          </button>
+                          <button
+                            onClick={() => handleRejectClick(food.id!)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                            title="Click to reject"
+                          >
+                            <FiX size={12} /> Reject
+                          </button>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4">
                        <div className="flex items-center gap-3 text-lg">
@@ -371,7 +426,7 @@ const FoodManagementPage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
             >
@@ -381,7 +436,7 @@ const FoodManagementPage: React.FC = () => {
                Page {currentPage} of {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
             >
@@ -408,13 +463,38 @@ const FoodManagementPage: React.FC = () => {
       )}
 
       <ConfirmationModal
+        isOpen={rejectionTarget !== null}
+        onClose={() => setRejectionTarget(null)}
+        onConfirm={confirmRejection}
+        title="Reject Food Item"
+        message="Are you sure you want to reject this food item?"
+        confirmText="Yes, Reject"
+        cancelText="No"
+        variant="danger"
+      />
+
+      <ConfirmationModal
         isOpen={idToDelete !== null}
         onClose={() => setIdToDelete(null)}
         onConfirm={confirmDelete}
         isLoading={isDeleting}
         title="Delete Food Item?"
-        message="Are you sure you want to delete this food item? Any active plans or recipes using this food may be affected. This action is permanent."
+        message="Are you sure you want to remove this food item? Any active plans or recipes using this food may be affected. This action is permanent."
         confirmText="Delete Food"
+      />
+
+      <ConfirmationModal
+        isOpen={approvalTarget !== null}
+        onClose={() => setApprovalTarget(null)}
+        onConfirm={confirmApproval}
+        isLoading={isApprovingLoading}
+        title={approvalTarget?.currentStatus ? "Disapprove Food?" : "Approve Food?"}
+        message={
+          approvalTarget?.currentStatus
+            ? "Are you sure you want to disapprove this food item? It will no longer be visible to other users."
+            : "Are you sure you want to approve this food item? Please ensure there are no duplicate entries before approving."
+        }
+        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );

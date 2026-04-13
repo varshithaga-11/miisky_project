@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMealTypeList, deleteMealType, patchMealType, MealType } from "./mealtypeapi";
@@ -13,7 +13,6 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import Switch from "../../../components/form/switch/Switch";
 
 const MealTypeManagementPage: React.FC = () => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
@@ -26,6 +25,9 @@ const MealTypeManagementPage: React.FC = () => {
   const [sortField, setSortField] = useState<keyof MealType | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
+  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
+  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,17 +83,45 @@ const MealTypeManagementPage: React.FC = () => {
     }
   };
 
-  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
-    // Show instruction toast
+  const handleApprovalClick = (id: number, currentStatus: boolean) => {
+    setApprovalTarget({ id, currentStatus });
+  };
+
+  const confirmApproval = async () => {
+    if (!approvalTarget) return;
+    const { id, currentStatus } = approvalTarget;
     if (!currentStatus) {
-      toast.info("Please don't repeat the words it may cause some issues.");
+      toast.info("Please don't repeat the words — it may cause some issues.");
     }
+    setIsApprovingLoading(true);
     try {
       await patchMealType(id, { is_approved: !currentStatus });
       toast.success(`Meal type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
       fetchMealTypes();
     } catch {
       toast.error("Failed to update approval status.");
+    } finally {
+      setIsApprovingLoading(false);
+      setApprovalTarget(null);
+    }
+  };
+
+  const handleRejectClick = (id: number) => {
+    setRejectionTarget(id);
+  };
+
+  const confirmRejection = async () => {
+    if (rejectionTarget === null) return;
+    setIsApprovingLoading(true);
+    try {
+      await patchMealType(rejectionTarget, { is_rejected: true, is_approved: false });
+      toast.success("Meal type rejected successfully.");
+      fetchMealTypes();
+    } catch {
+      toast.error("Failed to reject meal type.");
+    } finally {
+      setIsApprovingLoading(false);
+      setRejectionTarget(null);
     }
   };
 
@@ -211,17 +241,41 @@ const MealTypeManagementPage: React.FC = () => {
                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No meal types found</TableCell>
                 </TableRow>
               ) : (
-                sortedMealTypes.map((mealType, index) => (
+                sortedMealTypes.map((mealType: MealType, index: number) => (
                   <TableRow key={mealType.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{mealType.name}</TableCell>
                     <TableCell className="px-5 py-4">
-                      <Switch 
-                        label="" 
-                        key={`${mealType.id}-${mealType.is_approved}`}
-                        defaultChecked={mealType.is_approved} 
-                        onChange={() => handleToggleApproval(mealType.id!, mealType.is_approved || false)} 
-                      />
+                      {mealType.is_approved ? (
+                        <button
+                          onClick={() => handleApprovalClick(mealType.id!, true)}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                          title="Click to disapprove"
+                        >
+                          <FiCheck size={12} /> Approved
+                        </button>
+                      ) : mealType.is_rejected ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                          <FiX size={12} /> Rejected
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleApprovalClick(mealType.id!, false)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                            title="Click to approve"
+                          >
+                            <FiCheck size={12} /> Accept
+                          </button>
+                          <button
+                            onClick={() => handleRejectClick(mealType.id!)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                            title="Click to reject"
+                          >
+                            <FiX size={12} /> Reject
+                          </button>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -245,7 +299,7 @@ const MealTypeManagementPage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
             >
@@ -253,9 +307,9 @@ const MealTypeManagementPage: React.FC = () => {
             </button>
             
             <div className="flex items-center gap-1">
-               {Array.from({ length: totalPages }, (_, i) => i + 1)
-                 .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                 .map((p, i, arr) => (
+               {Array.from({ length: totalPages }, (_, i: number) => i + 1)
+                 .filter((p: number) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                 .map((p: number, i: number, arr: number[]) => (
                    <React.Fragment key={p}>
                      {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-gray-400">...</span>}
                      <button
@@ -270,7 +324,7 @@ const MealTypeManagementPage: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
             >
@@ -294,6 +348,17 @@ const MealTypeManagementPage: React.FC = () => {
       )}
 
       <ConfirmationModal
+        isOpen={rejectionTarget !== null}
+        onClose={() => setRejectionTarget(null)}
+        onConfirm={confirmRejection}
+        title="Reject Meal Type"
+        message="Are you sure you want to reject this meal type?"
+        confirmText="Yes, Reject"
+        cancelText="No"
+        variant="danger"
+      />
+
+      <ConfirmationModal
         isOpen={recordToDelete !== null}
         onClose={() => setRecordToDelete(null)}
         onConfirm={confirmDelete}
@@ -301,6 +366,20 @@ const MealTypeManagementPage: React.FC = () => {
         title="Delete Meal Type?"
         message="Are you sure you want to remove this meal type? This action is permanent."
         confirmText="Delete Meal Type"
+      />
+
+      <ConfirmationModal
+        isOpen={approvalTarget !== null}
+        onClose={() => setApprovalTarget(null)}
+        onConfirm={confirmApproval}
+        isLoading={isApprovingLoading}
+        title={approvalTarget?.currentStatus ? "Disapprove Meal Type?" : "Approve Meal Type?"}
+        message={
+          approvalTarget?.currentStatus
+            ? "Are you sure you want to disapprove this meal type? It will no longer be visible to other users."
+            : "Are you sure you want to approve this meal type? Please ensure there are no duplicate entries before approving."
+        }
+        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );

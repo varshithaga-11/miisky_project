@@ -5,6 +5,7 @@ export interface CuisineType {
   id?: number;
   name: string;
   is_approved?: boolean;
+  is_rejected?: boolean;
 }
 
 export interface PaginatedResponses<T> {

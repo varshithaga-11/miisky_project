@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getFoodIngredientList, deleteFoodIngredient, patchFoodIngredient, FoodIngredient } from "./foodingredientapi";
@@ -13,7 +13,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import Switch from "../../../components/form/switch/Switch";
+
 
 const FoodIngredientManagementPage: React.FC = () => {
   const [foodIngredients, setFoodIngredients] = useState<FoodIngredient[]>([]);
@@ -25,8 +25,11 @@ const FoodIngredientManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [selectedFoodId, setSelectedFoodId] = useState<string>("");
-  const [isDeleting, setIsDeleting] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
+  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
+  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,17 +61,26 @@ const FoodIngredientManagementPage: React.FC = () => {
     }
   };
 
-  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
-    // Show instruction toast
+  const handleApprovalClick = (id: number, currentStatus: boolean) => {
+    setApprovalTarget({ id, currentStatus });
+  };
+
+  const confirmApproval = async () => {
+    if (!approvalTarget) return;
+    const { id, currentStatus } = approvalTarget;
     if (!currentStatus) {
-      toast.info("Please don't repeat the words it may cause some issues.");
+      toast.info("Please don't repeat the words — it may cause some issues.");
     }
+    setIsApprovingLoading(true);
     try {
       await patchFoodIngredient(id, { is_approved: !currentStatus });
       toast.success(`Item ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
       fetchFoodIngredients();
     } catch {
       toast.error("Failed to update approval status.");
+    } finally {
+      setIsApprovingLoading(false);
+      setApprovalTarget(null);
     }
   };
 
@@ -91,9 +103,28 @@ const FoodIngredientManagementPage: React.FC = () => {
     }
   };
 
+  const handleRejectClick = (id: number) => {
+    setRejectionTarget(id);
+  };
+
+  const confirmRejection = async () => {
+    if (rejectionTarget === null) return;
+    setIsApprovingLoading(true);
+    try {
+      await patchFoodIngredient(rejectionTarget, { is_rejected: true, is_approved: false });
+      toast.success("Food ingredient rejected successfully.");
+      fetchFoodIngredients();
+    } catch {
+      toast.error("Failed to reject food ingredient.");
+    } finally {
+      setIsApprovingLoading(false);
+      setRejectionTarget(null);
+    }
+  };
+
   const foodOptions = [
     { value: "all", label: "All Foods" },
-    ...foods.map(f => ({ value: String(f.id), label: f.name }))
+    ...foods.map((f: Food) => ({ value: String(f.id), label: f.name }))
   ];
 
   return (
@@ -184,10 +215,10 @@ const FoodIngredientManagementPage: React.FC = () => {
                   <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">No recipe ingredients found.</TableCell>
                 </TableRow>
               ) : (
-                foodIngredients.map((fi, i) => (
+                foodIngredients.map((fi: FoodIngredient, i: number) => (
                   <TableRow key={fi.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                    <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{foods.find(f => f.id === fi.food)?.name || "N/A"}</TableCell>
+                    <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{foods.find((f: Food) => f.id === fi.food)?.name || "N/A"}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{fi.ingredient_name || "N/A"}</TableCell>
                     <TableCell className="px-5 py-4">{fi.quantity}</TableCell>
                     <TableCell className="px-5 py-4">
@@ -196,12 +227,36 @@ const FoodIngredientManagementPage: React.FC = () => {
                        </span>
                     </TableCell>
                     <TableCell className="px-5 py-4">
-                        <Switch 
-                            label="" 
-                            key={`${fi.id}-${fi.is_approved}`}
-                            defaultChecked={fi.is_approved} 
-                            onChange={() => handleToggleApproval(fi.id!, fi.is_approved || false)} 
-                        />
+                         {fi.is_approved ? (
+                           <button
+                             onClick={() => handleApprovalClick(fi.id!, true)}
+                             className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                             title="Click to disapprove"
+                           >
+                             <FiCheck size={12} /> Approved
+                           </button>
+                         ) : fi.is_rejected ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                            <FiX size={12} /> Rejected
+                          </span>
+                         ) : (
+                         <div className="flex items-center gap-2">
+                           <button
+                             onClick={() => handleApprovalClick(fi.id!, false)}
+                             className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                             title="Click to approve"
+                           >
+                             <FiCheck size={12} /> Accept
+                           </button>
+                           <button
+                             onClick={() => handleRejectClick(fi.id!)}
+                             className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                             title="Click to reject"
+                           >
+                             <FiX size={12} /> Reject
+                           </button>
+                         </div>
+                         )}
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -225,7 +280,7 @@ const FoodIngredientManagementPage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
             >
@@ -235,7 +290,7 @@ const FoodIngredientManagementPage: React.FC = () => {
                Page {currentPage} of {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50"
             >
@@ -263,13 +318,38 @@ const FoodIngredientManagementPage: React.FC = () => {
       )}
 
       <ConfirmationModal
+        isOpen={rejectionTarget !== null}
+        onClose={() => setRejectionTarget(null)}
+        onConfirm={confirmRejection}
+        title="Reject Food Ingredient"
+        message="Are you sure you want to reject this food ingredient?"
+        confirmText="Yes, Reject"
+        cancelText="No"
+        variant="danger"
+      />
+
+      <ConfirmationModal
         isOpen={idToDelete !== null}
         onClose={() => setIdToDelete(null)}
         onConfirm={confirmDelete}
         isLoading={isDeleting}
         title="Delete Food Ingredient?"
-        message="Are you sure you want to remove this ingredient from the recipe? This action cannot be undone."
-        confirmText="Delete Ingredient"
+        message="Are you sure you want to remove this food ingredient? This action is permanent."
+        confirmText="Delete Food Ingredient"
+      />
+
+      <ConfirmationModal
+        isOpen={approvalTarget !== null}
+        onClose={() => setApprovalTarget(null)}
+        onConfirm={confirmApproval}
+        isLoading={isApprovingLoading}
+        title={approvalTarget?.currentStatus ? "Disapprove Item?" : "Approve Item?"}
+        message={
+          approvalTarget?.currentStatus
+            ? "Are you sure you want to disapprove this item? It will no longer be visible to other users."
+            : "Are you sure you want to approve this item? Please ensure there are no duplicate entries before approving."
+        }
+        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );

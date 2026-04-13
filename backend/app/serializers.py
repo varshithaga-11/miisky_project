@@ -346,7 +346,7 @@ class CitySerializer(serializers.ModelSerializer):
 class MealTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealType
-        fields = ["id", "name", "is_approved"]
+        fields = ["id", "name", "is_approved", "is_rejected"]
 
     def validate_name(self, value):
         query = MealType.objects.filter(name__iexact=value.strip())
@@ -374,7 +374,7 @@ class PackagingMaterialSerializer(serializers.ModelSerializer):
 class CuisineTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CuisineType
-        fields = ["id", "name", "is_approved"]
+        fields = ["id", "name", "is_approved", "is_rejected"]
 
     def validate_name(self, value):
         query = CuisineType.objects.filter(name__iexact=value.strip())
@@ -425,7 +425,7 @@ class FoodByIdNutritionSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ["id", "name", "is_approved"]
+        fields = ["id", "name", "is_approved", "is_rejected"]
 
     def validate_name(self, value):
         query = Ingredient.objects.filter(name__iexact=value.strip())
@@ -439,7 +439,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
-        fields = ["id", "name", "is_approved"]
+        fields = ["id", "name", "is_approved", "is_rejected"]
 
     def validate_name(self, value):
         query = Unit.objects.filter(name__iexact=value.strip())
@@ -463,7 +463,7 @@ class FoodIngredientSerializer(serializers.ModelSerializer):
         model = FoodIngredient
         fields = ['id', 'food', 'ingredient', 'ingredient_name',
                   'quantity', 'unit', 'unit_name', 'notes',
-                  'food_name_input', 'ingredient_name_input', 'unit_name_input', 'is_approved']
+                  'food_name_input', 'ingredient_name_input', 'unit_name_input', 'is_approved', 'is_rejected']
         validators = []  # Disable default unique_together validator to allow update_or_create
 
     def create(self, validated_data):
@@ -620,7 +620,7 @@ class FoodSerializer(serializers.ModelSerializer):
                   'meal_type_names_input', 'cuisine_type_names_input',
                   'calories', 'protein', 'carbs', 'fat', 'fiber', 'serving_size',
                   'glycemic_index', 'sugar', 'saturated_fat', 'trans_fat', 'cholesterol',
-                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price', 'is_approved']
+                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price', 'is_approved', 'is_rejected']
 
     def create(self, validated_data):
         meal_names = validated_data.pop('meal_type_names_input', None)

@@ -11,6 +11,7 @@ export interface FoodIngredient {
   unit_name?: string;
   notes?: string;
   is_approved?: boolean;
+  is_rejected?: boolean;
 }
 
 export interface PaginatedResponses<T> {

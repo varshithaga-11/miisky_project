@@ -5,6 +5,7 @@ export interface Unit {
   id?: number;
   name: string;
   is_approved?: boolean;
+  is_rejected?: boolean;
 }
 
 // Create

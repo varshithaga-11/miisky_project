@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiSearch, FiPlus, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getCuisineTypeList, deleteCuisineType, patchCuisineType, CuisineType } from "./cuisinetypeapi";
@@ -14,7 +14,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
-import Switch from "../../../components/form/switch/Switch";
 
 const CuisineTypePage: React.FC = () => {
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
@@ -24,6 +23,9 @@ const CuisineTypePage: React.FC = () => {
   const [editId, setEditId] = useState<number | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
+  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
+  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   
@@ -49,17 +51,26 @@ const CuisineTypePage: React.FC = () => {
     }
   };
 
-  const handleToggleApproval = async (id: number, currentStatus: boolean) => {
-    // Show instruction toast
+  const handleApprovalClick = (id: number, currentStatus: boolean) => {
+    setApprovalTarget({ id, currentStatus });
+  };
+
+  const confirmApproval = async () => {
+    if (!approvalTarget) return;
+    const { id, currentStatus } = approvalTarget;
     if (!currentStatus) {
-      toast.info("Please don't repeat the words it may cause some issues.");
+      toast.info("Please don't repeat the words — it may cause some issues.");
     }
+    setIsApprovingLoading(true);
     try {
       await patchCuisineType(id, { is_approved: !currentStatus });
       toast.success(`Cuisine type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
       fetchCuisines();
     } catch {
       toast.error("Failed to update approval status.");
+    } finally {
+      setIsApprovingLoading(false);
+      setApprovalTarget(null);
     }
   };
 
@@ -90,6 +101,25 @@ const CuisineTypePage: React.FC = () => {
       toast.error("Failed to delete cuisine type");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleRejectClick = (id: number) => {
+    setRejectionTarget(id);
+  };
+
+  const confirmRejection = async () => {
+    if (rejectionTarget === null) return;
+    setIsApprovingLoading(true);
+    try {
+      await patchCuisineType(rejectionTarget, { is_rejected: true, is_approved: false });
+      toast.success("Cuisine type rejected successfully.");
+      fetchCuisines();
+    } catch {
+      toast.error("Failed to reject cuisine type.");
+    } finally {
+      setIsApprovingLoading(false);
+      setRejectionTarget(null);
     }
   };
 
@@ -161,17 +191,41 @@ const CuisineTypePage: React.FC = () => {
               ) : cuisines.length === 0 ? (
                  <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
               ) : (
-                  cuisines.map((item, idx) => (
+                  cuisines.map((item: CuisineType, idx: number) => (
                       <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                           <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
                           <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{item.name}</TableCell>
                           <TableCell className="px-5 py-4">
-                              <Switch 
-                                  label="" 
-                                  key={`${item.id}-${item.is_approved}`}
-                                  defaultChecked={item.is_approved} 
-                                  onChange={() => handleToggleApproval(item.id!, item.is_approved || false)} 
-                              />
+                              {item.is_approved ? (
+                                <button
+                                  onClick={() => handleApprovalClick(item.id!, true)}
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                                  title="Click to disapprove"
+                                >
+                                  <FiCheck size={12} /> Approved
+                                </button>
+                              ) : item.is_rejected ? (
+                                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                                    <FiX size={12} /> Rejected
+                                  </span>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleApprovalClick(item.id!, false)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                                      title="Click to approve"
+                                    >
+                                      <FiCheck size={12} /> Accept
+                                    </button>
+                                    <button
+                                      onClick={() => handleRejectClick(item.id!)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                                      title="Click to reject"
+                                    >
+                                      <FiX size={12} /> Reject
+                                    </button>
+                                  </div>
+                                )}
                           </TableCell>
                           <TableCell className="px-5 py-4">
                               <div className="flex justify-end gap-3">
@@ -203,7 +257,7 @@ const CuisineTypePage: React.FC = () => {
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
             >
@@ -211,9 +265,9 @@ const CuisineTypePage: React.FC = () => {
             </button>
             
             <div className="flex items-center gap-1">
-               {Array.from({ length: totalPages }, (_, i) => i + 1)
-                 .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                 .map((p, i, arr) => (
+               {Array.from({ length: totalPages }, (_, i: number) => i + 1)
+                 .filter((p: number) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                 .map((p: number, i: number, arr: number[]) => (
                    <React.Fragment key={p}>
                      {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-gray-400">...</span>}
                      <button
@@ -228,7 +282,7 @@ const CuisineTypePage: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
             >
@@ -245,6 +299,17 @@ const CuisineTypePage: React.FC = () => {
       {isEditModalOpen && editId && <EditCuisineType cuisineId={editId} onClose={() => setIsEditModalOpen(false)} onUpdated={() => fetchCuisines()} />}
 
       <ConfirmationModal
+        isOpen={rejectionTarget !== null}
+        onClose={() => setRejectionTarget(null)}
+        onConfirm={confirmRejection}
+        title="Reject Cuisine Type"
+        message="Are you sure you want to reject this cuisine type?"
+        confirmText="Yes, Reject"
+        cancelText="No"
+        variant="danger"
+      />
+
+      <ConfirmationModal
         isOpen={recordToDelete !== null}
         onClose={() => setRecordToDelete(null)}
         onConfirm={confirmDelete}
@@ -252,6 +317,20 @@ const CuisineTypePage: React.FC = () => {
         title="Delete Cuisine Type?"
         message="Are you sure you want to remove this cuisine type? This action is permanent."
         confirmText="Delete Cuisine"
+      />
+
+      <ConfirmationModal
+        isOpen={approvalTarget !== null}
+        onClose={() => setApprovalTarget(null)}
+        onConfirm={confirmApproval}
+        isLoading={isApprovingLoading}
+        title={approvalTarget?.currentStatus ? "Disapprove Cuisine Type?" : "Approve Cuisine Type?"}
+        message={
+          approvalTarget?.currentStatus
+            ? "Are you sure you want to disapprove this cuisine type? It will no longer be visible to other users."
+            : "Are you sure you want to approve this cuisine type? Please ensure there are no duplicate entries before approving."
+        }
+        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );

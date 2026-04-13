@@ -838,6 +838,7 @@ class MealType(models.Model):
     # Example: Breakfast, Lunch, Dinner, Snacks
 
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -848,6 +849,7 @@ class CuisineType(models.Model):
     # Example: North Indian, South Indian, Chinese, Italian
 
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -884,6 +886,7 @@ class Food(models.Model):
     price = models.IntegerField(null=True, blank=True)
 
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -945,6 +948,7 @@ class Ingredient(models.Model):
     # Example: Rice, Urad Dal, Ragi Flour, Salt, Water
 
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -968,6 +972,7 @@ class Unit(models.Model):
     # Example: Gram, Kilogram, Cup, Tablespoon, Teaspoon, Piece
 
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -1009,6 +1014,7 @@ class FoodIngredient(models.Model):
     # Example: roasted, chopped, grated
 
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.food.name} - {self.ingredient.name}"
