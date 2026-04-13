@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from serializers.import_validators import get_model_and_serializer
+from .import_validators import get_model_and_serializer
 
 class ImportService:
     @staticmethod
@@ -98,6 +98,22 @@ class ImportService:
                         # Only delete if it's not the same key (e.g., 'food_name' -> 'food_name_input')
                         # This prevents the "Incorrect type. Expected pk value, received str" error.
                         del mapped_row_data[excel_key]
+
+            # Force pending status for new imports if the model supports approval workflow
+            # This ensures imported data starts in 'accept/reject' state as requested
+            # excluding packaging and delivery as specified.
+            if submenu not in ['packaging', 'delivery'] and module not in ['delivery']:
+                try:
+                    Model._meta.get_field('is_approved')
+                    mapped_row_data['is_approved'] = False
+                except:
+                    pass
+                    
+                try:
+                    Model._meta.get_field('is_rejected')
+                    mapped_row_data['is_rejected'] = False
+                except:
+                    pass
 
             # Inject created_at if not present and the model/serializer might expect it
             if 'created_at' not in mapped_row_data or not mapped_row_data['created_at']:
@@ -267,6 +283,11 @@ class ImportService:
                             food_name = row_data.get('food_name_input')
                             food_obj = Food.objects.get(name=str(food_name).strip())
                             
+                            # Mark food as pending re-approval when recipe is updated/imported
+                            food_obj.is_approved = False
+                            food_obj.is_rejected = False
+                            food_obj.save()
+                            
                             # Process Ingredients 1-3
                             for i in range(1, 4):
                                 ing_name = clean_row.get(f'ingredient_name{i}')
@@ -283,7 +304,9 @@ class ImportService:
                                         defaults={
                                             "quantity": float(clean_row.get(f'quantity{i}', 0) or 0),
                                             "unit": unit_obj,
-                                            "notes": clean_row.get(f'notes{i}', '')
+                                            "notes": clean_row.get(f'notes{i}', ''),
+                                            "is_approved": False,
+                                            "is_rejected": False
                                         }
                                     )
                             

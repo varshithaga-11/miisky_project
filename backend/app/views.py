@@ -3118,8 +3118,15 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
                 'food', 'ingredient', 'unit'
             ).filter(is_approved=True)
         food_id = self.request.query_params.get('food')
-        if food_id:
+        ingredient_id = self.request.query_params.get('ingredient')
+        unit_id = self.request.query_params.get('unit')
+        
+        if food_id and food_id not in ('undefined', 'null', ''):
             qs = qs.filter(food_id=food_id)
+        if ingredient_id and ingredient_id not in ('undefined', 'null', ''):
+            qs = qs.filter(ingredient_id=ingredient_id)
+        if unit_id and unit_id not in ('undefined', 'null', ''):
+            qs = qs.filter(unit_id=unit_id)
         return qs
 
     @action(detail=False, methods=['get'], url_path='all')

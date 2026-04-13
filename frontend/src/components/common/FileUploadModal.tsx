@@ -157,7 +157,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const getColumns = () => {
     if (excelData.length === 0) return [];
     return Object.keys(excelData[0]).filter(header => 
-      !['errors', 'status', 'is_error', 'id', 'is_old', 'branch_status', 'department_status', 'designation_status'].includes(header) && !header.endsWith('_input')
+      !['errors', 'status', 'is_error', 'id', 'is_old', 'branch_status', 'department_status', 'designation_status', 'Unnamed: 0', 'is_approved', 'is_rejected'].includes(header) && !header.endsWith('_input')
     );
   };
 
@@ -417,7 +417,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                       )}
                                       <div className="flex flex-wrap gap-8 text-xs">
                                         {Object.entries(row).map(([k, v]) => {
-                                          if(['errors', 'status', 'is_error', 'is_old'].includes(k) || k.endsWith('_input')) return null;
+                                          if(['errors', 'status', 'is_error', 'is_old', 'Unnamed: 0', 'is_approved', 'is_rejected'].includes(k) || k.endsWith('_input')) return null;
                                           return (
                                             <div key={k}>
                                               <span className="font-bold text-gray-500 uppercase tracking-tight">{k.replace(/_/g, ' ')}:</span>

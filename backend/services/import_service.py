@@ -1,6 +1,6 @@
 from django.db import transaction
 from typing import List, Dict, Any
-from serializers.import_validators import get_model_and_serializer
+from app.services.import_validators import get_model_and_serializer
 
 class ImportService:
     @staticmethod
