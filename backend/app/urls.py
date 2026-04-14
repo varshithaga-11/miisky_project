@@ -124,6 +124,16 @@ urlpatterns = [
     path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
     path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
     path(
+        "micro-kitchen-orders/",
+        MicroKitchenOrdersViewSet.as_view({"get": "list"}),
+        name="micro-kitchen-orders-list",
+    ),
+    path(
+        "micro-kitchen-orders/<int:pk>/",
+        MicroKitchenOrdersViewSet.as_view({"get": "retrieve"}),
+        name="micro-kitchen-orders-detail",
+    ),
+    path(
         "usernutritionistmapping/all-nutritionists/",
         views.AdminAllNutritionistsViewSet.as_view({"get": "list"}),
         name="admin-all-nutritionists",

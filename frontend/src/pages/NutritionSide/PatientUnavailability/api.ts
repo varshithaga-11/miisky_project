@@ -35,28 +35,45 @@ export interface PatientUnavailabilityItem {
     skip_meal_count?: number;
 }
 
-function unwrapList(data: unknown): PatientUnavailabilityItem[] {
-    if (Array.isArray(data)) return data;
-    const d = data as { results?: PatientUnavailabilityItem[] };
-    return d?.results ?? [];
+export interface PaginatedResponses<T> {
+    count: number;
+    next: number | null;
+    previous: number | null;
+    current_page: number;
+    total_pages: number;
+    results: T[];
 }
 
 export async function fetchPatientUnavailability(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
     status?: string;
-    user?: string;
+    user?: string | number;
     from_date?: string;
     to_date?: string;
-}): Promise<PatientUnavailabilityItem[]> {
-    const search = new URLSearchParams();
-    if (params.status) search.append("status", params.status);
-    if (params.user) search.append("user", params.user);
-    if (params.from_date) search.append("from_date", params.from_date);
-    if (params.to_date) search.append("to_date", params.to_date);
-    const q = search.toString();
+}): Promise<PaginatedResponses<PatientUnavailabilityItem>> {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append("page", params.page.toString());
+    if (params.limit) searchParams.append("limit", params.limit.toString());
+    if (params.search) searchParams.append("search", params.search);
+    if (params.status) searchParams.append("status", params.status);
+    if (params.user) searchParams.append("user", params.user.toString());
+    if (params.from_date) searchParams.append("from_date", params.from_date);
+    if (params.to_date) searchParams.append("to_date", params.to_date);
+
+    const q = searchParams.toString();
     const url = createApiUrl(q ? `api/patient-unavailability/?${q}` : "api/patient-unavailability/");
     const response = await axios.get(url, { headers: await getAuthHeaders() });
-    return unwrapList(response.data);
+    return response.data;
 }
+
+export async function fetchMyPatients(): Promise<any[]> {
+    const url = createApiUrl("api/usernutritionistmapping/my-patients/");
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+}
+
 
 export async function approveUnavailability(
     id: number,

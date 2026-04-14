@@ -5484,7 +5484,12 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
         end_date = self.request.query_params.get("to_date")
 
         role = getattr(user, "role", None)
-        if role in ("admin", "nutritionist"):
+        if role == "nutritionist":
+            mapped_patient_ids = UserNutritionistMapping.objects.filter(
+                nutritionist=user, is_active=True
+            ).values_list("user_id", flat=True)
+            qs = qs.filter(user_id__in=mapped_patient_ids)
+        elif role == "admin":
             pass
         elif role in ("patient", "non_patient"):
             qs = qs.filter(user=user)

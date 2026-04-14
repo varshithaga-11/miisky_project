@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'app',
     'website',
+    'medicaldevice',
 ]
 
 MIDDLEWARE = [
