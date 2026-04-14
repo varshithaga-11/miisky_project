@@ -4739,6 +4739,133 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
             }
         )
 
+    @action(detail=False, methods=["get"], url_path="plan-meals-range")
+    def plan_meals_range(self, request):
+        """
+        Same meals + patient_unavailabilities as plan-meals, but the window is explicit
+        start_date and end_date (YYYY-MM-DD) instead of offset_days/days. Clamped to plan
+        dates; max span 60 days.
+        """
+        err = self._nutritionist_only(request)
+        if err:
+            return err
+        user_id = request.query_params.get("user_id")
+        plan_id = request.query_params.get("plan_id")
+        start_s = request.query_params.get("start_date")
+        end_s = request.query_params.get("end_date")
+        if not user_id or not plan_id or not start_s or not end_s:
+            return Response(
+                {
+                    "detail": "user_id, plan_id, start_date, and end_date are required (YYYY-MM-DD)."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            uid = int(user_id)
+            pid = int(plan_id)
+        except ValueError:
+            return Response(
+                {"detail": "Invalid ids."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            req_start = datetime.strptime(start_s.strip(), "%Y-%m-%d").date()
+            req_end = datetime.strptime(end_s.strip(), "%Y-%m-%d").date()
+        except ValueError:
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if req_end < req_start:
+            return Response(
+                {"detail": "end_date must be on or after start_date."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if uid not in _set_daily_meals_allowed_patient_ids(request.user):
+            return Response(
+                {"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        plan = UserDietPlan.objects.filter(id=pid, user_id=uid).first()
+        if not plan:
+            return Response(
+                {"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not plan.start_date or not plan.end_date:
+            return Response(
+                {
+                    "plan_id": plan.id,
+                    "requested_start": req_start,
+                    "requested_end": req_end,
+                    "range_start": None,
+                    "range_end": None,
+                    "meals": [],
+                    "patient_unavailabilities": [],
+                }
+            )
+
+        window_start = max(req_start, plan.start_date)
+        window_end = min(req_end, plan.end_date)
+        if window_start > window_end:
+            return Response(
+                {
+                    "plan_id": plan.id,
+                    "requested_start": req_start,
+                    "requested_end": req_end,
+                    "range_start": None,
+                    "range_end": None,
+                    "meals": [],
+                    "patient_unavailabilities": [],
+                }
+            )
+
+        span_days = (window_end - window_start).days + 1
+        if span_days > 60:
+            return Response(
+                {"detail": "Date range cannot exceed 60 days."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        meals_qs = (
+            UserMeal.objects.filter(
+                user_id=uid,
+                user_diet_plan_id=pid,
+                meal_date__range=[window_start, window_end],
+            )
+            .select_related(
+                "meal_type",
+                "food",
+                "packaging_material",
+                "micro_kitchen",
+                "user_diet_plan",
+            )
+            .prefetch_related(
+                Prefetch(
+                    "deliveries",
+                    queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                        "delivery_person", "delivery_slot"
+                    ),
+                )
+            )
+            .order_by("meal_date", "meal_type__id")
+        )
+        meals_data = UserMealSerializer(meals_qs, many=True).data
+
+        return Response(
+            {
+                "plan_id": plan.id,
+                "requested_start": req_start,
+                "requested_end": req_end,
+                "range_start": window_start,
+                "range_end": window_end,
+                "meals": meals_data,
+                "patient_unavailabilities": _patient_unavailabilities_overlapping_window(
+                    uid, pid, window_start, window_end
+                ),
+            }
+        )
+
     @action(detail=False, methods=["get"], url_path="calendar-month")
     def calendar_month(self, request):
         err = self._nutritionist_only(request)

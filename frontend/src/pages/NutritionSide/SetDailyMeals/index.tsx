@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -6,6 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import SearchableSelect from "../../../components/form/SearchableSelect";
+import DatePicker3 from "../../../components/form/date-picker3";
 import {
     getSetDailyMealsPatients,
     getActivePlansForPatient,
@@ -15,6 +16,7 @@ import {
     getSetDailyMealsFoods,
     getSetDailyMealsPatientDetail,
     getSetDailyMealsPlanMeals,
+    getSetDailyMealsPlanMealsByRange,
     getSetDailyMealsCalendarMonth,
     getPackagingMaterialList,
     getFoodByIdNutrition,
@@ -36,6 +38,19 @@ import { jwtDecode } from "jwt-decode";
 
 const DRAG_TYPE = "food-item";
 
+type ScheduleMode = "day" | "range" | "selectedRange";
+
+function getDatesInRange(start: string, end: string): string[] {
+    const dates: string[] = [];
+    const last = new Date(end);
+    const d = new Date(start);
+    while (d <= last) {
+        dates.push(d.toISOString().split("T")[0]);
+        d.setDate(d.getDate() + 1);
+    }
+    return dates;
+}
+
 const SetDailyMealsPage: React.FC = () => {
     const todayStr = new Date().toISOString().split("T")[0];
     const [patients, setPatients] = useState<MappedPatientResponse[]>([]);
@@ -46,9 +61,11 @@ const SetDailyMealsPage: React.FC = () => {
     const [foods, setFoods] = useState<Food[]>([]);
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
-    const [isRangeMode, setIsRangeMode] = useState(false);
+    const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("day");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
+    const [selectedRangeStart, setSelectedRangeStart] = useState<string>("");
+    const [selectedRangeEnd, setSelectedRangeEnd] = useState<string>("");
     const [selectedDate, setSelectedDate] = useState<string>("");
 
     const [dailyEntries, setDailyEntries] = useState<Partial<UserMeal>[]>([]);
@@ -221,6 +238,8 @@ const SetDailyMealsPage: React.FC = () => {
                         const planEnd = currentPlan.end_date || planStart;
                         setStartDate(planStart);
                         setEndDate(planEnd);
+                        setSelectedRangeStart(planStart);
+                        setSelectedRangeEnd(planEnd);
                         const today = new Date().toISOString().split("T")[0];
                         const inRange = today >= planStart && today <= planEnd;
                         // Default to today if it's within the plan range, or if the plan started in the past
@@ -235,6 +254,8 @@ const SetDailyMealsPage: React.FC = () => {
                     } else {
                         setStartDate("");
                         setEndDate("");
+                        setSelectedRangeStart("");
+                        setSelectedRangeEnd("");
                         setSelectedDate("");
                         setDailyEntries([]);
                     }
@@ -247,6 +268,8 @@ const SetDailyMealsPage: React.FC = () => {
             setActivePlan(null);
             setStartDate("");
             setEndDate("");
+            setSelectedRangeStart("");
+            setSelectedRangeEnd("");
             setSelectedDate("");
             setDailyEntries([]);
             setRangeMealsAccum([]);
@@ -254,6 +277,7 @@ const SetDailyMealsPage: React.FC = () => {
             setDayPatientUnavailabilities([]);
             setRangeDayCount(10);
             setRangeHasMore(false);
+            setScheduleMode("day");
         }
     }, [selectedPatient]);
 
@@ -265,34 +289,76 @@ const SetDailyMealsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        if (selectedPatient && activePlan) {
-            if (isRangeMode) {
-                setDayPatientUnavailabilities([]);
-                setRangeDayCount(10);
-                setRangeMealsLoading(true);
-                (async () => {
-                    try {
-                        const res = await getSetDailyMealsPlanMeals({
-                            user_id: selectedPatient.user.id,
-                            plan_id: activePlan.id,
-                            offset_days: 0,
-                            days: 10,
-                        });
-                        setRangeMealsAccum(res.meals);
-                        setRangeHasMore(res.has_more);
-                        setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
-                    } catch {
-                        toast.error("Failed to load range meals");
-                    } finally {
-                        setRangeMealsLoading(false);
-                    }
-                })();
-            } else if (selectedDate) {
-                setRangePatientUnavailabilities([]);
-                fetchDailyMeals(selectedPatient.user.id, selectedDate);
+        if (!selectedPatient || !activePlan) return;
+        if (scheduleMode === "range") {
+            setDayPatientUnavailabilities([]);
+            setRangeDayCount(10);
+            setRangeMealsLoading(true);
+            (async () => {
+                try {
+                    const res = await getSetDailyMealsPlanMeals({
+                        user_id: selectedPatient.user.id,
+                        plan_id: activePlan.id,
+                        offset_days: 0,
+                        days: 10,
+                    });
+                    setRangeMealsAccum(res.meals);
+                    setRangeHasMore(res.has_more);
+                    setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
+                } catch {
+                    toast.error("Failed to load range meals");
+                } finally {
+                    setRangeMealsLoading(false);
+                }
+            })();
+        } else if (scheduleMode === "selectedRange") {
+            const pMin = activePlan.start_date || "";
+            const pMax = activePlan.end_date || "";
+            if (!selectedRangeStart || !selectedRangeEnd || !pMin || !pMax) return;
+            let s = selectedRangeStart < pMin ? pMin : selectedRangeStart;
+            let e = selectedRangeEnd > pMax ? pMax : selectedRangeEnd;
+            if (e < s) {
+                toast.error("Invalid selected range.");
+                return;
             }
+            const spanDays =
+                (new Date(e).getTime() - new Date(s).getTime()) / 86400000 + 1;
+            if (spanDays > 60) {
+                toast.error("Selected range cannot exceed 60 days.");
+                return;
+            }
+            setDayPatientUnavailabilities([]);
+            setRangeMealsLoading(true);
+            (async () => {
+                try {
+                    const res = await getSetDailyMealsPlanMealsByRange({
+                        user_id: selectedPatient.user.id,
+                        plan_id: activePlan.id,
+                        start_date: s,
+                        end_date: e,
+                    });
+                    setRangeMealsAccum(res.meals);
+                    setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
+                } catch {
+                    toast.error("Failed to load selected range meals");
+                } finally {
+                    setRangeMealsLoading(false);
+                }
+            })();
+        } else if (selectedDate) {
+            setRangePatientUnavailabilities([]);
+            fetchDailyMeals(selectedPatient.user.id, selectedDate);
         }
-    }, [selectedPatient, activePlan, selectedDate, isRangeMode, startDate, endDate]);
+    }, [
+        selectedPatient,
+        activePlan,
+        selectedDate,
+        scheduleMode,
+        startDate,
+        endDate,
+        selectedRangeStart,
+        selectedRangeEnd,
+    ]);
 
     const fetchDailyMeals = async (pid: number, date: string) => {
         try {
@@ -305,7 +371,7 @@ const SetDailyMealsPage: React.FC = () => {
     };
 
     const loadMoreRangeMeals = useCallback(async () => {
-        if (!selectedPatient || !activePlan || !rangeHasMore || rangeMealsLoading || rangeMealsFetchLockRef.current) return;
+        if (scheduleMode !== "range" || !selectedPatient || !activePlan || !rangeHasMore || rangeMealsLoading || rangeMealsFetchLockRef.current) return;
         rangeMealsFetchLockRef.current = true;
         setRangeMealsLoading(true);
         try {
@@ -325,10 +391,10 @@ const SetDailyMealsPage: React.FC = () => {
             setRangeMealsLoading(false);
             rangeMealsFetchLockRef.current = false;
         }
-    }, [selectedPatient, activePlan, rangeHasMore, rangeMealsLoading, rangeDayCount]);
+    }, [scheduleMode, selectedPatient, activePlan, rangeHasMore, rangeMealsLoading, rangeDayCount]);
 
     useEffect(() => {
-        if (!isRangeMode || !rangeHasMore || !selectedPatient || !activePlan) return;
+        if (scheduleMode !== "range" || !rangeHasMore || !selectedPatient || !activePlan) return;
         const el = rangeLoadMoreSentinelRef.current;
         if (!el) return;
         const obs = new IntersectionObserver(
@@ -339,7 +405,7 @@ const SetDailyMealsPage: React.FC = () => {
         );
         obs.observe(el);
         return () => obs.disconnect();
-    }, [isRangeMode, rangeHasMore, rangeMealsLoading, selectedPatient, activePlan, loadMoreRangeMeals, viewMode]);
+    }, [scheduleMode, rangeHasMore, rangeMealsLoading, selectedPatient, activePlan, loadMoreRangeMeals, viewMode]);
 
     useEffect(() => {
         setFoodsPage(1);
@@ -385,21 +451,10 @@ const SetDailyMealsPage: React.FC = () => {
     }, [viewMode, selectedPatient, activePlan, calMonth, calYear]);
 
     useEffect(() => {
-        if (isRangeMode) {
+        if (scheduleMode === "range" || scheduleMode === "selectedRange") {
             setDailyEntries(rangeMealsAccum);
         }
-    }, [isRangeMode, rangeMealsAccum]);
-
-    const getDatesInRange = (start: string, end: string) => {
-        const dates: string[] = [];
-        const last = new Date(end);
-        const d = new Date(start);
-        while (d <= last) {
-            dates.push(d.toISOString().split("T")[0]);
-            d.setDate(d.getDate() + 1);
-        }
-        return dates;
-    };
+    }, [scheduleMode, rangeMealsAccum]);
 
     const planMinDate = activePlan?.start_date || "";
     const planMaxDate = activePlan?.end_date || "";
@@ -410,13 +465,34 @@ const SetDailyMealsPage: React.FC = () => {
     const fullRangeDates =
         effectiveStart && effectiveEnd ? getDatesInRange(effectiveStart, effectiveEnd) : [];
 
+    const selectedRangeClamped = useMemo(() => {
+        if (!selectedRangeStart || !selectedRangeEnd) return { start: "", end: "" };
+        let s = selectedRangeStart;
+        let e = selectedRangeEnd;
+        if (planMinDate && s < planMinDate) s = planMinDate;
+        if (planMaxDate && e > planMaxDate) e = planMaxDate;
+        if (e < s) return { start: "", end: "" };
+        return { start: s, end: e };
+    }, [selectedRangeStart, selectedRangeEnd, planMinDate, planMaxDate]);
+
+    const selectedRangeFullDates = useMemo(() => {
+        if (scheduleMode !== "selectedRange") return [];
+        const { start, end } = selectedRangeClamped;
+        if (!start || !end) return [];
+        return getDatesInRange(start, end);
+    }, [scheduleMode, selectedRangeClamped.start, selectedRangeClamped.end]);
+
     const datesToShow: string[] = !activePlan
         ? []
-        : isRangeMode
+        : scheduleMode === "range"
           ? fullRangeDates.slice(0, Math.min(rangeDayCount, fullRangeDates.length))
-          : selectedDate
-            ? [selectedDate]
-            : [];
+          : scheduleMode === "selectedRange"
+            ? selectedRangeFullDates
+            : selectedDate
+              ? [selectedDate]
+              : [];
+
+    const isRangeSchedule = scheduleMode === "range" || scheduleMode === "selectedRange";
 
     const filteredFoods = foods;
 
@@ -564,10 +640,12 @@ const SetDailyMealsPage: React.FC = () => {
         setSaving(true);
         try {
             await saveBulkMeals(mealsWithPackaging);
-            toast.success(`Successfully saved ${specificDate ? `schedule for ${specificDate}` : isRangeMode ? "range" : "daily"} schedule`);
+            toast.success(
+                `Successfully saved ${specificDate ? `schedule for ${specificDate}` : scheduleMode !== "day" ? "range" : "daily"} schedule`
+            );
             setShowSaveButton(false);
             if (selectedPatient && activePlan) {
-                if (isRangeMode) {
+                if (scheduleMode === "range") {
                     setRangeDayCount(10);
                     try {
                         const res = await getSetDailyMealsPlanMeals({
@@ -581,6 +659,27 @@ const SetDailyMealsPage: React.FC = () => {
                         setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
                     } catch {
                         /* ignore */
+                    }
+                } else if (scheduleMode === "selectedRange") {
+                    const pMin = activePlan.start_date || "";
+                    const pMax = activePlan.end_date || "";
+                    if (selectedRangeStart && selectedRangeEnd && pMin && pMax) {
+                        const s = selectedRangeStart < pMin ? pMin : selectedRangeStart;
+                        const e = selectedRangeEnd > pMax ? pMax : selectedRangeEnd;
+                        if (e >= s) {
+                            try {
+                                const res = await getSetDailyMealsPlanMealsByRange({
+                                    user_id: selectedPatient.user.id,
+                                    plan_id: activePlan.id,
+                                    start_date: s,
+                                    end_date: e,
+                                });
+                                setRangeMealsAccum(res.meals);
+                                setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
+                            } catch {
+                                /* ignore */
+                            }
+                        }
                     }
                 } else {
                     fetchDailyMeals(selectedPatient.user.id, specificDate || selectedDate);
@@ -882,18 +981,32 @@ const SetDailyMealsPage: React.FC = () => {
                                                 ))}
                                             </select>
                                         </div>
-                                        <div className="flex p-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                        <div className="flex p-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl flex-wrap">
                                             <button
-                                                onClick={() => setIsRangeMode(false)}
-                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${!isRangeMode ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                                            >Day</button>
+                                                type="button"
+                                                onClick={() => setScheduleMode("day")}
+                                                className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${scheduleMode === "day" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-700"}`}
+                                            >
+                                                Day
+                                            </button>
                                             <button
-                                                onClick={() => setIsRangeMode(true)}
-                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${isRangeMode ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                                            >Range</button>
+                                                type="button"
+                                                onClick={() => setScheduleMode("range")}
+                                                className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${scheduleMode === "range" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-700"}`}
+                                            >
+                                                Range
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setScheduleMode("selectedRange")}
+                                                className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${scheduleMode === "selectedRange" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-700"}`}
+                                                title="Load only the dates you pick (max 60 days)"
+                                            >
+                                                Selected range
+                                            </button>
                                         </div>
-                                        {isRangeMode ? (
-                                            <div className="flex items-center gap-2">
+                                        {scheduleMode === "range" ? (
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <input
                                                     type="date"
                                                     value={startDate}
@@ -919,6 +1032,53 @@ const SetDailyMealsPage: React.FC = () => {
                                                     }}
                                                     className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none"
                                                 />
+                                            </div>
+                                        ) : scheduleMode === "selectedRange" ? (
+                                            <div className="flex flex-col gap-2 min-w-0">
+                                                <div className="flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-3 flex-wrap">
+                                                    <div className="w-full sm:w-[min(200px,100%)] [&_input]:h-9 [&_input]:py-1.5 [&_input]:text-xs [&_input]:rounded-xl">
+                                                        <DatePicker3
+                                                            key={`sel-start-${selectedPatient?.user.id}-${activePlan?.id}`}
+                                                            id="set-daily-selected-range-start"
+                                                            mode="single"
+                                                            label="Start date"
+                                                            value={selectedRangeStart || planMinDate}
+                                                            minDate={planMinDate > todayStr ? planMinDate : todayStr}
+                                                            maxDate={selectedRangeEnd || planMaxDate}
+                                                            placeholder="Start"
+                                                            onChange={(s) => {
+                                                                setSelectedRangeStart(s);
+                                                                if (selectedRangeEnd && s > selectedRangeEnd) {
+                                                                    setSelectedRangeEnd(s);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <span className="hidden sm:inline text-gray-400 pb-2 font-bold">→</span>
+                                                    <div className="w-full sm:w-[min(200px,100%)] [&_input]:h-9 [&_input]:py-1.5 [&_input]:text-xs [&_input]:rounded-xl">
+                                                        <DatePicker3
+                                                            key={`sel-end-${selectedPatient?.user.id}-${activePlan?.id}`}
+                                                            id="set-daily-selected-range-end"
+                                                            mode="single"
+                                                            label="End date"
+                                                            value={selectedRangeEnd || planMaxDate}
+                                                            minDate={selectedRangeStart || (planMinDate > todayStr ? planMinDate : todayStr)}
+                                                            maxDate={planMaxDate}
+                                                            placeholder="End"
+                                                            onChange={(e) => {
+                                                                setSelectedRangeEnd(e);
+                                                                if (selectedRangeStart && e < selectedRangeStart) {
+                                                                    setSelectedRangeStart(e);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {selectedRangeClamped.start && selectedRangeClamped.end ? (
+                                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold">
+                                                        Loaded: {selectedRangeClamped.start} → {selectedRangeClamped.end} (plan limits apply; max 60 days)
+                                                    </p>
+                                                ) : null}
                                             </div>
                                         ) : (
                                             <input
@@ -1055,7 +1215,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                         </div>
 
                                                         {(() => {
-                                                            const dayUnavails = isRangeMode
+                                                            const dayUnavails = isRangeSchedule
                                                                 ? rangePatientUnavailabilities.filter(
                                                                       (u) => u.from_date <= dateStr && u.to_date >= dateStr
                                                                   )
@@ -1180,7 +1340,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                 </motion.div>
                                             );
                                         })}
-                                        {isRangeMode && rangeHasMore && (
+                                        {scheduleMode === "range" && rangeHasMore && (
                                             <div className="flex flex-col items-center pt-6 pb-2">
                                                 <div ref={rangeLoadMoreSentinelRef} className="h-px w-full" aria-hidden />
                                                 {rangeMealsLoading && (
@@ -1188,6 +1348,13 @@ const SetDailyMealsPage: React.FC = () => {
                                                         Loading more days…
                                                     </p>
                                                 )}
+                                            </div>
+                                        )}
+                                        {scheduleMode === "selectedRange" && rangeMealsLoading && (
+                                            <div className="flex justify-center pt-6 pb-2">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider py-3">
+                                                    Loading selected range…
+                                                </p>
                                             </div>
                                         )}
                                     </div>

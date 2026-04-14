@@ -252,6 +252,34 @@ export const getSetDailyMealsPlanMeals = async (params: {
     return response.data;
 };
 
+/** Explicit start/end window (max 60 days on server). Same meals + patient_unavailabilities shape as plan-meals. */
+export const getSetDailyMealsPlanMealsByRange = async (params: {
+    user_id: number;
+    plan_id: number;
+    start_date: string;
+    end_date: string;
+}): Promise<{
+    plan_id: number;
+    requested_start: string | null;
+    requested_end: string | null;
+    range_start: string | null;
+    range_end: string | null;
+    meals: UserMeal[];
+    patient_unavailabilities: PatientUnavailability[];
+}> => {
+    const url = createApiUrl("api/set-daily-meals/plan-meals-range/");
+    const response = await axios.get(url, {
+        headers: await getAuthHeaders(),
+        params: {
+            user_id: params.user_id,
+            plan_id: params.plan_id,
+            start_date: params.start_date,
+            end_date: params.end_date,
+        },
+    });
+    return response.data;
+};
+
 export const getSetDailyMealsCalendarMonth = async (params: {
     user_id: number;
     plan_id: number;
