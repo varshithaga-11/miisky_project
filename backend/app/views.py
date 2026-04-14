@@ -1667,7 +1667,7 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='list_minimal', pagination_class=None)
     def list_minimal(self, request):
-        qs = self.get_queryset().values('id', 'brand_name', 'cuisine_type')
+        qs = self.filter_queryset(self.get_queryset()).values('id', 'brand_name', 'cuisine_type')
         return Response(list(qs))
 
     def get_queryset(self):
@@ -3206,7 +3206,7 @@ class DietPlanViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='list_minimal', pagination_class=None)
     def list_minimal(self, request):
         # final_amount is a property, so we can't use .values() on it.
-        qs = self.get_queryset()
+        qs = self.filter_queryset(self.get_queryset())
         data = [
             {
                 "id": p.id,

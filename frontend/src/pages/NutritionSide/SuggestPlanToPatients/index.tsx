@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
@@ -50,6 +50,24 @@ const SuggestPlanToPatientsPage: React.FC = () => {
   const [statusUpdateTarget, setStatusUpdateTarget] = useState<{id: number, status: string} | null>(null);
 
 
+  const loadPlanOptions = useCallback(async (search: string) => {
+    try {
+      const data = await getDietPlansMinimal(search);
+      setPlans(data);
+    } catch {
+      setPlans([]);
+    }
+  }, []);
+
+  const loadKitchenOptions = useCallback(async (search: string) => {
+    try {
+      const data = await getMicroKitchensMinimal(search);
+      setKitchens(data);
+    } catch {
+      setKitchens([]);
+    }
+  }, []);
+
   const handleStatusUpdate = (id: number, newStatus: string) => {
     if (submitting) return;
     setStatusUpdateTarget({ id, status: newStatus });
@@ -83,25 +101,19 @@ const SuggestPlanToPatientsPage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [patientsData, plansData, kitchensData] = await Promise.all([
-          getMyPatients(),
-          getDietPlansMinimal(),
-          getMicroKitchensMinimal(),
-        ]);
+        const patientsData = await getMyPatients();
         setPatients(patientsData);
-        setPlans(plansData);
-        setKitchens(kitchensData);
         if (patientsData.length > 0 && !selectedPatient) {
           setSelectedPatient(patientsData[0]);
         }
       } catch (err) {
-        toast.error("Failed to load data");
+        toast.error("Failed to load patients");
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, []); // Only patients on mount. Plans/Kitchens are lazy-loaded.
 
   useEffect(() => {
     if (selectedPatient) {
@@ -332,6 +344,8 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                           }))}
                         value={switchKitchenId}
                         onChange={(val) => setSwitchKitchenId(val)}
+                        onSearch={(q) => void loadKitchenOptions(q)}
+                        onFocus={() => void loadKitchenOptions("")}
                         placeholder="Select new kitchen"
                         className="md:col-span-1"
                       />
@@ -391,6 +405,8 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                           }))}
                           value={selectedPlanId}
                           onChange={(val) => setSelectedPlanId(val)}
+                          onSearch={(q) => void loadPlanOptions(q)}
+                          onFocus={() => void loadPlanOptions("")}
                           placeholder="Select plan"
                           required
                         />
@@ -404,6 +420,8 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                           }))}
                           value={selectedKitchenId}
                           onChange={(val) => setSelectedKitchenId(val)}
+                          onSearch={(q) => void loadKitchenOptions(q)}
+                          onFocus={() => void loadKitchenOptions("")}
                           placeholder="Select kitchen"
                           required
                         />

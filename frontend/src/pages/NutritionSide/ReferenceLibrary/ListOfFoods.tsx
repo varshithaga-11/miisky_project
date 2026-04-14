@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { FiLayers, FiSearch, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -46,19 +46,31 @@ const ListOfFoods: React.FC = () => {
     fetchFoods();
   }, [currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId]);
 
+  const loadMealTypeOptions = useCallback(async (search: string) => {
+    try {
+      const res = await getMealTypeList(1, "all", search || undefined);
+      setMealTypes(res.results || []);
+    } catch {
+      setMealTypes([]);
+    }
+  }, []);
+
+  const loadCuisineTypeOptions = useCallback(async (search: string) => {
+    try {
+      const res = await getCuisineTypeList(1, "all", search || undefined);
+      setCuisineTypes(res.results || []);
+    } catch {
+      setCuisineTypes([]);
+    }
+  }, []);
+
   const fetchFoods = async () => {
     setLoading(true);
     try {
-      const [foodRes, mealRes, cuisineRes] = await Promise.all([
-        getFoodList(currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId),
-        getMealTypeList(1, "all"),
-        getCuisineTypeList(1, "all")
-      ]);
+      const foodRes = await getFoodList(currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId);
       setFoods(foodRes.results);
       setTotalItems(foodRes.count);
       setTotalPages(foodRes.total_pages);
-      setMealTypes(mealRes.results);
-      setCuisineTypes(cuisineRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -122,6 +134,8 @@ const ListOfFoods: React.FC = () => {
                   setSelectedMealTypeId(val as number | "");
                   setCurrentPage(1);
                 }}
+                onSearch={(q) => void loadMealTypeOptions(q)}
+                onFocus={() => void loadMealTypeOptions("")}
                 placeholder="Filter by Meal Type"
               />
             </div>
@@ -137,6 +151,8 @@ const ListOfFoods: React.FC = () => {
                   setSelectedCuisineTypeId(val as number | "");
                   setCurrentPage(1);
                 }}
+                onSearch={(q) => void loadCuisineTypeOptions(q)}
+                onFocus={() => void loadCuisineTypeOptions("")}
                 placeholder="Filter by Cuisine"
               />
             </div>

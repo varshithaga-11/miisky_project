@@ -59,6 +59,21 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
     }
   }, []);
 
+  const loadMealTypeOptions = useCallback(async (search: string) => {
+    try {
+      const res = await getMealTypeList(1, "all", search || undefined);
+      const list = res.results ?? [];
+      setMealTypeOptions(
+        list.map((m) => ({
+          value: m.id as number,
+          label: m.name,
+        }))
+      );
+    } catch {
+      setMealTypeOptions([]);
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -68,22 +83,16 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
         if (data.length && selectedPatientId === undefined) {
           setSelectedPatientId(data[0].user.id);
         }
-        const mtRes = await getMealTypeList(1, "all");
-        const mts = mtRes.results || [];
-        setMealTypes(mts);
-        setMealTypeOptions(mts.map(m => ({ value: m.id as number, label: m.name })));
       } catch {
-        toast.error("Failed to load allotted patients or meal types.");
+        toast.error("Failed to load allotted patients.");
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, []); // Only load patients once on mount
 
-  useEffect(() => {
-    void loadFoodOptions("");
-  }, [loadFoodOptions]);
+
 
   useEffect(() => {
     if (!selectedPatientId) {
@@ -223,6 +232,8 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
                   options={mealTypeOptions}
                   value={selectedMealTypeId}
                   onChange={(v) => setSelectedMealTypeId(v)}
+                  onSearch={(q) => void loadMealTypeOptions(q)}
+                  onFocus={() => void loadMealTypeOptions("")}
                   placeholder="Select meal time..."
                 />
               </div>
