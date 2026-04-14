@@ -43,3 +43,30 @@ export function getUserIdFromToken(): number | null {
   }
 }
 
+export function getDashboardPath(role?: AppRole | null): string {
+  const r = role ?? getUserRoleFromToken();
+  if (!r) return "/";
+
+  switch (r) {
+    case "master":
+      return "/master/dashboard";
+    case "admin":
+      return "/admin/dashboard";
+    case "patient":
+      return "/patient/dashboard";
+    case "nutritionist":
+      return "/nutrition/dashboard";
+    case "micro_kitchen":
+      return "/microkitchen/dashboard";
+    case "non_patient":
+      return "/non-patient/dashboard";
+    case "supply_chain":
+      return "/supplychain/dashboard";
+    case "doctor":
+      return "/doctor/all-patients";
+    case "food_buyer":
+      return "/admin/dashboard";
+    default:
+      return "/";
+  }
+}

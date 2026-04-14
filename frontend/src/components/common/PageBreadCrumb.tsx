@@ -1,12 +1,15 @@
 "use client";
 
 import { Link } from "react-router";
+import { getDashboardPath } from "../../utils/auth";
 
 interface BreadcrumbProps {
   pageTitle: string;
 }
 
 const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
+  const dashboardPath = getDashboardPath();
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
@@ -16,7 +19,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
         <ol className="flex items-center gap-1.5">
           <li>
             <Link
-              to="/" // ✅ Next.js way
+              to={dashboardPath}
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
             >
               Home
