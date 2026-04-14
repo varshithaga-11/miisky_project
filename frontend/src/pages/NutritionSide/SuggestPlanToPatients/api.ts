@@ -120,14 +120,14 @@ export const updatePlanStatus = async (id: number, status: string): Promise<User
 export type MinimalDietPlan = { id: number; title: string; code: string; final_amount: string; no_of_days: number | null };
 export type MinimalMicroKitchen = { id: number; brand_name: string; cuisine_type: string | null };
 
-export const getDietPlansMinimal = async (): Promise<MinimalDietPlan[]> => {
-  const url = createApiUrl("api/dietplan/list_minimal/");
+export const getDietPlansMinimal = async (search?: string): Promise<MinimalDietPlan[]> => {
+  const url = createApiUrl(`api/dietplan/list_minimal/${search ? `?search=${encodeURIComponent(search)}` : ""}`);
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   return response.data;
 };
 
-export const getMicroKitchensMinimal = async (): Promise<MinimalMicroKitchen[]> => {
-  const url = createApiUrl("api/microkitchenprofile/list_minimal/");
+export const getMicroKitchensMinimal = async (search?: string): Promise<MinimalMicroKitchen[]> => {
+  const url = createApiUrl(`api/microkitchenprofile/list_minimal/${search ? `?search=${encodeURIComponent(search)}` : ""}`);
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   return response.data;
 };
