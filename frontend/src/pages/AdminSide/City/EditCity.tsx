@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getCityById, updateCity } from "./cityapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCountryList, Country } from "../Country/countryapi";
@@ -28,44 +28,76 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
   const [error, setError] = useState("");
   const [searchCountry, setSearchCountry] = useState("");
   const [searchState, setSearchState] = useState("");
+  const [hasInteractedCountries, setHasInteractedCountries] = useState(false);
+  const [hasInteractedStates, setHasInteractedStates] = useState(false);
+  const fetchingCountriesRef = useRef(false);
+  const fetchingStatesRef = useRef(false);
 
   useEffect(() => {
+    if (!hasInteractedCountries && !searchCountry) return;
+    if (fetchingCountriesRef.current) return;
+    fetchingCountriesRef.current = true;
     const timer = setTimeout(() => {
       getCountryList(1, "all", searchCountry)
         .then((res) => setCountries(res.results))
-        .catch((err) => console.error(err));
+        .catch((err) => console.error(err))
+        .finally(() => { fetchingCountriesRef.current = false; });
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchCountry]);
+  }, [searchCountry, hasInteractedCountries]);
 
   useEffect(() => {
+    if (!hasInteractedStates && !searchState && states.length === 0) {
+       // If we need initial states for form and haven't fetched yet 
+       // but here we wait for form to trigger if needed or user to focus
+    }
+    if (!hasInteractedStates && !searchState) return;
+    if (fetchingStatesRef.current) return;
+    fetchingStatesRef.current = true;
     const timer = setTimeout(() => {
       getStateList(1, "all", searchState)
         .then((res) => setStates(res.results))
-        .catch((err) => console.error(err));
+        .catch((err) => console.error(err))
+        .finally(() => { fetchingStatesRef.current = false; });
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchState]);
+  }, [searchState, hasInteractedStates]);
 
   useEffect(() => {
-    if (isOpen && cityId && states.length > 0) {
-      setLoading(true);
-      getCityById(cityId)
-        .then((data) => {
-          setName(data.name);
-          const cityStateId = data.state;
-          setStateId(String(cityStateId || ""));
+    if (isOpen && cityId) {
+      const initializeData = async () => {
+        setLoading(true);
+        try {
+          // Fetch required data in parallel only if needed
+          const [cityData, allStates] = await Promise.all([
+            getCityById(cityId),
+            states.length === 0 ? getStateList(1, "all") : Promise.resolve({ results: states })
+          ]);
 
-          // Find country for this state
-          const stateObj = states.find(s => s.id === cityStateId);
+          setName(cityData.name);
+          const cityStateId = cityData.state;
+          setStateId(String(cityStateId || ""));
+          
+          if (states.length === 0) setStates(allStates.results);
+
+          const stateObj = allStates.results.find((s: any) => s.id === cityStateId);
           if (stateObj) {
             setCountryId(String(stateObj.country || ""));
+            // Fetch country list to populate options if not already there
+            if (countries.length === 0) {
+                const countryRes = await getCountryList(1, "all");
+                setCountries(countryRes.results);
+            }
           }
-        })
-        .catch(() => setError("Failed to load city data"))
-        .finally(() => setLoading(false));
+        } catch (err) {
+          setError("Failed to load city data");
+        } finally {
+          setLoading(false);
+        }
+      };
+      initializeData();
     }
-  }, [isOpen, cityId, states]);
+  }, [isOpen, cityId]);
 
   useEffect(() => {
     if (countryId) {
@@ -133,7 +165,9 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
                 onChange={(val) => {
                   setCountryId(val as string);
                   setStateId(""); // Reset state when country changes
+                  setHasInteractedCountries(true);
                 }}
+                onFocus={() => setHasInteractedCountries(true)}
                 onSearch={setSearchCountry}
                 options={countryOptions}
                 className="w-full"
@@ -144,7 +178,11 @@ const EditCity: React.FC<EditCityProps> = ({ cityId, isOpen, onClose, onUpdated 
               <Label htmlFor="state">State *</Label>
               <SearchableSelect
                 value={stateId}
-                onChange={(val) => setStateId(val as string)}
+                onChange={(val) => {
+                  setStateId(val as string);
+                  setHasInteractedStates(true);
+                }}
+                onFocus={() => setHasInteractedStates(true)}
                 onSearch={setSearchState}
                 options={stateOptions}
                 className="w-full"

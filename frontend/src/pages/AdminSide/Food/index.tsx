@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { FiTrash2, FiEdit, FiLayers, FiSearch, FiPlus, FiEye, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -46,7 +46,8 @@ const FoodManagementPage: React.FC = () => {
   const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
   const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
-  const [filterOptionsLoaded, setFilterOptionsLoaded] = useState(false);
+  const [mealTypesLoaded, setMealTypesLoaded] = useState(false);
+  const [cuisineTypesLoaded, setCuisineTypesLoaded] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
@@ -58,6 +59,8 @@ const FoodManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [pageSize, setPageSize] = useState(10);
+  const fetchingMealsRef = useRef(false);
+  const fetchingCuisinesRef = useRef(false);
 
   useEffect(() => {
     fetchFoods();
@@ -77,18 +80,31 @@ const FoodManagementPage: React.FC = () => {
     }
   };
 
-  const loadFilterOptions = async () => {
-    if (filterOptionsLoaded) return;
+  const fetchMealTypes = async () => {
+    if (mealTypesLoaded || fetchingMealsRef.current) return;
+    fetchingMealsRef.current = true;
     try {
-      const [mealRes, cuisineRes] = await Promise.all([
-        getMealTypeList(1, "all"),
-        getCuisineTypeList(1, "all")
-      ]);
+      const mealRes = await getMealTypeList(1, "all");
       setMealTypes(mealRes.results);
-      setCuisineTypes(cuisineRes.results);
-      setFilterOptionsLoaded(true);
+      setMealTypesLoaded(true);
     } catch (err) {
-      console.error("Error loading filter options:", err);
+      console.error("Error loading meal types:", err);
+    } finally {
+      fetchingMealsRef.current = false;
+    }
+  };
+
+  const fetchCuisineTypes = async () => {
+    if (cuisineTypesLoaded || fetchingCuisinesRef.current) return;
+    fetchingCuisinesRef.current = true;
+    try {
+      const cuisineRes = await getCuisineTypeList(1, "all");
+      setCuisineTypes(cuisineRes.results);
+      setCuisineTypesLoaded(true);
+    } catch (err) {
+      console.error("Error loading cuisine types:", err);
+    } finally {
+      fetchingCuisinesRef.current = false;
     }
   };
 
@@ -214,7 +230,7 @@ const FoodManagementPage: React.FC = () => {
               type="text"
               placeholder="Search food or meal type..."
               value={searchTerm}
-              onFocus={loadFilterOptions}
+              onFocus={() => { fetchMealTypes(); fetchCuisineTypes(); }}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
@@ -229,7 +245,7 @@ const FoodManagementPage: React.FC = () => {
                   ...mealTypes.map((m: MealType) => ({ value: m.id!, label: m.name }))
                 ]}
                 value={selectedMealTypeId}
-                onFocus={loadFilterOptions}
+                onFocus={fetchMealTypes}
                 onChange={(val) => {
                   setSelectedMealTypeId(val as number | "");
                   setCurrentPage(1);
@@ -245,7 +261,7 @@ const FoodManagementPage: React.FC = () => {
                   ...cuisineTypes.map((c: CuisineType) => ({ value: c.id!, label: c.name }))
                 ]}
                 value={selectedCuisineTypeId}
-                onFocus={loadFilterOptions}
+                onFocus={fetchCuisineTypes}
                 onChange={(val) => {
                   setSelectedCuisineTypeId(val as number | "");
                   setCurrentPage(1);

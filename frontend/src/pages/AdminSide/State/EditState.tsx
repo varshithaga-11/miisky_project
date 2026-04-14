@@ -24,14 +24,18 @@ const EditState: React.FC<EditStateProps> = ({ stateId, isOpen, onClose, onUpdat
   const [error, setError] = useState("");
   const [searchCountry, setSearchCountry] = useState("");
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   useEffect(() => {
+    if (!hasInteracted && !searchCountry) return;
+
     const timer = setTimeout(() => {
       getCountryList(1, "all", searchCountry)
         .then((res) => setCountries(res.results))
         .catch((err) => console.error("Error fetching countries:", err));
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchCountry]);
+  }, [searchCountry, hasInteracted]);
 
   useEffect(() => {
     if (isOpen && stateId) {
@@ -95,7 +99,11 @@ const EditState: React.FC<EditStateProps> = ({ stateId, isOpen, onClose, onUpdat
               <Label htmlFor="country">Country *</Label>
               <SearchableSelect
                 value={countryId}
-                onChange={(val) => setCountryId(val as string)}
+                onChange={(val) => {
+                  setCountryId(val as string);
+                  setHasInteracted(true);
+                }}
+                onFocus={() => setHasInteracted(true)}
                 onSearch={setSearchCountry}
                 options={countryOptions}
                 className="w-full"

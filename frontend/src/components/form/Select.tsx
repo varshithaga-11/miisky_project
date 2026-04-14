@@ -11,6 +11,7 @@ interface SelectProps {
   disabled?: boolean;           // optional disabled
   error?: string;               // optional error message
   required?: boolean; // <-- add required
+  onFocus?: () => void;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -22,6 +23,7 @@ const Select: React.FC<SelectProps> = ({
   disabled = false,
   error,
   required = false, // <-- default false
+  onFocus,
 
 }) => {
   const [open, setOpen] = useState(false);
@@ -49,7 +51,11 @@ const Select: React.FC<SelectProps> = ({
     <div ref={ref} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={() => { setOpen(o => !o); setTouched(true); }}
+        onClick={() => { 
+          if (!open) onFocus?.();
+          setOpen(o => !o); 
+          setTouched(true); 
+        }}
         disabled={disabled}
         className={`h-11 w-full rounded-lg border border-gray-300 dark:border-gray-700
                   bg-white dark:bg-gray-900 px-4 pr-10 text-left text-sm

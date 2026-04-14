@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Food } from "../Food/foodapi";
 import { getIngredientList, Ingredient } from "../Ingredient/ingredientapi";
 import { getUnitList, Unit } from "../Unit/unitapi";
@@ -32,6 +32,10 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
     
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(false);
+    const [ingredientsLoaded, setIngredientsLoaded] = useState(false);
+    const [unitsLoaded, setUnitsLoaded] = useState(false);
+    const fetchingIngredientsRef = useRef(false);
+    const fetchingUnitsRef = useRef(false);
 
     useEffect(() => {
         if (isOpen && food) {
@@ -39,18 +43,52 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
         }
     }, [isOpen, food]);
 
+    const fetchIngredients = async () => {
+        if (ingredientsLoaded || fetchingIngredientsRef.current) return;
+        fetchingIngredientsRef.current = true;
+        try {
+            const res = await getIngredientList(1, "all");
+            setIngredients(res.results || []);
+            setIngredientsLoaded(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            fetchingIngredientsRef.current = false;
+        }
+    };
+
+    const fetchUnits = async () => {
+        if (unitsLoaded || fetchingUnitsRef.current) return;
+        fetchingUnitsRef.current = true;
+        try {
+            const res = await getUnitList(1, "all");
+            setUnits(res.results);
+            setUnitsLoaded(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            fetchingUnitsRef.current = false;
+        }
+    };
+
     const fetchInitialData = async () => {
         setInitialLoading(true);
         try {
-            const [ingList, unitList, existingIngs, existingSteps] = await Promise.all([
-                getIngredientList(1, "all"),
-                getUnitList(),
+            const [existingIngs, existingSteps, ingList, unitList] = await Promise.all([
                 getFoodIngredientList(1, "all", undefined, food!.id),
-                getFoodStepList(1, "all", undefined, food!.id)
+                getFoodStepList(1, "all", undefined, food!.id),
+                ingredients.length === 0 ? getIngredientList(1, "all") : Promise.resolve({ results: ingredients }),
+                units.length === 0 ? getUnitList(1, "all") : Promise.resolve({ results: units })
             ]);
             
-            setIngredients(ingList.results || []);
-            setUnits(unitList);
+            if (ingredients.length === 0) {
+                setIngredients(ingList.results || []);
+                setIngredientsLoaded(true);
+            }
+            if (units.length === 0) {
+                setUnits((unitList as any).results);
+                setUnitsLoaded(true);
+            }
 
             if (existingIngs.results && existingIngs.results.length > 0) {
                 setIngredientRows(existingIngs.results.map((i: any) => ({
@@ -174,6 +212,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
                                                 <div className="grid grid-cols-1 gap-3">
                                                     <Select
                                                         value={row.ingredient}
+                                                        onFocus={fetchIngredients}
                                                         onChange={v => handleIngChange(idx, "ingredient", v)}
                                                         options={[{ value: "", label: "Ingredient" }, ...ingredients.map(i => ({ value: String(i.id), label: i.name }))]}
                                                     />
@@ -181,6 +220,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
                                                         <Input placeholder="Qty" type="number" value={row.quantity} onChange={e => handleIngChange(idx, "quantity", e.target.value)} />
                                                         <Select
                                                             value={row.unit}
+                                                            onFocus={fetchUnits}
                                                             onChange={v => handleIngChange(idx, "unit", v)}
                                                             options={[{ value: "", label: "Unit" }, ...units.map(u => ({ value: String(u.id), label: u.name }))]}
                                                         />

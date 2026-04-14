@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getFoodById, updateFood, updateFoodNutrition, createFoodNutrition, Food, FoodNutrition, getCuisineTypeList, CuisineType } from "./foodapi";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import Button from "../../../components/ui/button/Button";
@@ -27,6 +27,10 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [mealOptionsLoaded, setMealOptionsLoaded] = useState(false);
+  const [cuisineOptionsLoaded, setCuisineOptionsLoaded] = useState(false);
+  const fetchingMealsRef = useRef(false);
+  const fetchingCuisinesRef = useRef(false);
 
   // Nutrition state
   const [nutrition, setNutrition] = useState<Partial<FoodNutrition>>({
@@ -51,24 +55,64 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
     serving_size: "",
   });
 
-  useEffect(() => {
-    getMealTypeList(1, "all").then(res => setMealTypes(res.results)).catch(console.error);
-    getCuisineTypeList(1, "all").then(res => setCuisines(res.results)).catch(console.error);
-  }, []);
+  const fetchMealTypes = async () => {
+    if (mealOptionsLoaded || fetchingMealsRef.current) return;
+    fetchingMealsRef.current = true;
+    try {
+      const res = await getMealTypeList(1, "all");
+      setMealTypes(res.results);
+      setMealOptionsLoaded(true);
+    } catch (err) {
+      console.error("Error loading meal options:", err);
+    } finally {
+      fetchingMealsRef.current = false;
+    }
+  };
+
+  const fetchCuisineTypes = async () => {
+    if (cuisineOptionsLoaded || fetchingCuisinesRef.current) return;
+    fetchingCuisinesRef.current = true;
+    try {
+      const res = await getCuisineTypeList(1, "all");
+      setCuisines(res.results);
+      setCuisineOptionsLoaded(true);
+    } catch (err) {
+      console.error("Error loading cuisine options:", err);
+    } finally {
+      fetchingCuisinesRef.current = false;
+    }
+  };
 
   useEffect(() => {
     if (isOpen && foodId) {
-      setLoading(true);
-      getFoodById(foodId)
-        .then((data: Food) => {
-          setName(data.name);
-          setSelectedMealTypes(data.meal_types.map(String));
-          setSelectedCuisines(data.cuisine_types ? data.cuisine_types.map(String) : []);
-          setDescription(data.description || "");
-          setExistingImage(data.image || null);
-          setPrice(data.price ? String(data.price) : "");
-          if (data.nutrition) {
-            setNutrition(data.nutrition);
+      const initializeData = async () => {
+        setLoading(true);
+        try {
+          // Fetch required data in parallel only if needed
+          const [foodData, mealsRes, cuisinesRes] = await Promise.all([
+            getFoodById(foodId),
+            mealTypes.length === 0 ? getMealTypeList(1, "all") : Promise.resolve({ results: mealTypes }),
+            cuisines.length === 0 ? getCuisineTypeList(1, "all") : Promise.resolve({ results: cuisines })
+          ]);
+
+          setName(foodData.name);
+          setSelectedMealTypes(foodData.meal_types.map(String));
+          setSelectedCuisines(foodData.cuisine_types ? foodData.cuisine_types.map(String) : []);
+          setDescription(foodData.description || "");
+          setExistingImage(foodData.image || null);
+          setPrice(foodData.price ? String(foodData.price) : "");
+          
+          if (mealTypes.length === 0) {
+            setMealTypes(mealsRes.results);
+            setMealOptionsLoaded(true);
+          }
+          if (cuisines.length === 0) {
+            setCuisines(cuisinesRes.results);
+            setCuisineOptionsLoaded(true);
+          }
+
+          if (foodData.nutrition) {
+            setNutrition(foodData.nutrition);
           } else {
              setNutrition({
                 calories: undefined,
@@ -92,9 +136,13 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                 serving_size: "",
               });
           }
-        })
-        .catch(() => toast.error("Failed to load food data"))
-        .finally(() => setLoading(false));
+        } catch (err) {
+          toast.error("Failed to load food data");
+        } finally {
+          setLoading(false);
+        }
+      };
+      initializeData();
     }
   }, [isOpen, foodId]);
 
@@ -186,10 +234,10 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                   <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                       <MultiSelect label="Meal Types *" options={mealTypeOptions} defaultSelected={selectedMealTypes} onChange={setSelectedMealTypes} />
+                       <MultiSelect label="Meal Types *" options={mealTypeOptions} defaultSelected={selectedMealTypes} onChange={setSelectedMealTypes} onFocus={fetchMealTypes} />
                     </div>
                     <div className="md:col-span-2">
-                       <MultiSelect label="Cuisine Types" options={cuisineOptions} defaultSelected={selectedCuisines} onChange={setSelectedCuisines} />
+                       <MultiSelect label="Cuisine Types" options={cuisineOptions} defaultSelected={selectedCuisines} onChange={setSelectedCuisines} onFocus={fetchCuisineTypes} />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="name">Food Name *</Label>

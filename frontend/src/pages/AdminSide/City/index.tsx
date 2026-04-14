@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -40,27 +40,50 @@ const CityManagementPage: React.FC = () => {
   const [sortField, setSortField] = useState<keyof City | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  const fetchingCountriesRef = useRef(false);
+  const fetchingStatesRef = useRef(false);
+
   useEffect(() => {
-    fetchData();
+    fetchCities();
   }, [currentPage, pageSize, searchTerm, selectedStateId, selectedCountryId]);
 
-  const fetchData = async () => {
+  const fetchCities = async () => {
     setLoading(true);
     try {
-      const [cityRes, stateRes, countryRes] = await Promise.all([
-        getCityList(currentPage, pageSize, searchTerm, selectedStateId, selectedCountryId),
-        getStateList(1, "all"),
-        getCountryList(1, "all")
-      ]);
+      const cityRes = await getCityList(currentPage, pageSize, searchTerm, selectedStateId, selectedCountryId);
       setCities(cityRes.results);
       setTotalItems(cityRes.count);
       setTotalPages(cityRes.total_pages);
-      setStates(stateRes.results);
-      setCountries(countryRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStates = async () => {
+    if (states.length > 0 || fetchingStatesRef.current) return;
+    fetchingStatesRef.current = true;
+    try {
+      const stateRes = await getStateList(1, "all");
+      setStates(stateRes.results);
+    } catch (err: unknown) {
+      console.error(err);
+    } finally {
+      fetchingStatesRef.current = false;
+    }
+  };
+
+  const fetchCountries = async () => {
+    if (countries.length > 0 || fetchingCountriesRef.current) return;
+    fetchingCountriesRef.current = true;
+    try {
+      const countryRes = await getCountryList(1, "all");
+      setCountries(countryRes.results);
+    } catch (err: unknown) {
+      console.error(err);
+    } finally {
+      fetchingCountriesRef.current = false;
     }
   };
 
@@ -104,7 +127,7 @@ const CityManagementPage: React.FC = () => {
       await deleteCity(cityToDelete);
       toast.success("City deleted successfully.");
       setCityToDelete(null);
-      fetchData();
+      fetchCities();
     } catch {
       toast.error("Failed to delete city. Please try again later.");
     } finally {
@@ -174,6 +197,7 @@ const CityManagementPage: React.FC = () => {
               placeholder="Search city or state..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              onFocus={() => { fetchCountries(); fetchStates(); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
@@ -191,6 +215,7 @@ const CityManagementPage: React.FC = () => {
                   setSelectedStateId(""); // Reset state filter when country changes
                   setCurrentPage(1);
                 }}
+                onFocus={fetchCountries}
                 placeholder="Filter by Country"
               />
             </div>
@@ -208,13 +233,14 @@ const CityManagementPage: React.FC = () => {
                   setSelectedStateId(val as number | "");
                   setCurrentPage(1);
                 }}
+                onFocus={fetchStates}
                 placeholder="Filter by State"
               />
             </div>
           </div>
           
           <div className="flex items-center gap-6">
-            <ImportButton onSuccess={fetchData} />
+            <ImportButton onSuccess={fetchCities} />
             <Button 
                 size="sm" 
                 className="inline-flex items-center gap-2"
@@ -371,13 +397,13 @@ const CityManagementPage: React.FC = () => {
         </div>
       )}
 
-      {isAddModalOpen && <AddCity onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchData()} />}
+      {isAddModalOpen && <AddCity onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchCities()} />}
       {isEditModalOpen && editCityId !== null && (
         <EditCity
           cityId={editCityId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={() => { fetchData(); setIsEditModalOpen(false); setEditCityId(null); }}
+          onUpdated={() => { fetchCities(); setIsEditModalOpen(false); setEditCityId(null); }}
         />
       )}
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FiPlus, FiEye, FiSearch, FiBox, FiEdit, FiTrash2, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiX } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -41,6 +41,11 @@ const RecipeManagementPage: React.FC = () => {
     const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
     const [selectedMealTypeId, setSelectedMealTypeId] = useState<number | "">("");
     const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
+    const [mealTypesLoaded, setMealTypesLoaded] = useState(false);
+    const [cuisineTypesLoaded, setCuisineTypesLoaded] = useState(false);
+    const fetchingMealsRef = useRef(false);
+    const fetchingCuisinesRef = useRef(false);
+    const fetchingFoodsRef = useRef(false);
     
     // Modals
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -54,25 +59,55 @@ const RecipeManagementPage: React.FC = () => {
     const [isApprovingLoading, setIsApprovingLoading] = useState(false);
 
     useEffect(() => {
-        fetchData();
+        fetchFoods();
     }, []);
 
-    const fetchData = async () => {
+    const fetchFoods = async () => {
+        if (fetchingFoodsRef.current) return;
+        fetchingFoodsRef.current = true;
         setLoading(true);
         try {
-            const [foodRes, mealRes, cuisineRes] = await Promise.all([
-                getFoodList(1, "all") as Promise<{ results: Food[] }>,
-                getMealTypeList(1, "all") as Promise<{ results: MealType[] }>,
-                getCuisineTypeList(1, "all") as Promise<{ results: CuisineType[] }>
-            ]);
+            const foodRes = await getFoodList(1, "all") as { results: Food[] };
             setFoods(foodRes.results);
-            setMealTypes(mealRes.results);
-            setCuisineTypes(cuisineRes.results);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
+            fetchingFoodsRef.current = false;
         }
+    };
+
+    const fetchMealTypes = async () => {
+        if (mealTypesLoaded || fetchingMealsRef.current) return;
+        fetchingMealsRef.current = true;
+        try {
+            const mealRes = await getMealTypeList(1, "all") as { results: MealType[] };
+            setMealTypes(mealRes.results);
+            setMealTypesLoaded(true);
+        } catch (err) {
+            console.error("Error loading meal types:", err);
+        } finally {
+            fetchingMealsRef.current = false;
+        }
+    };
+
+    const fetchCuisineTypes = async () => {
+        if (cuisineTypesLoaded || fetchingCuisinesRef.current) return;
+        fetchingCuisinesRef.current = true;
+        try {
+            const cuisineRes = await getCuisineTypeList(1, "all") as { results: CuisineType[] };
+            setCuisineTypes(cuisineRes.results);
+            setCuisineTypesLoaded(true);
+        } catch (err) {
+            console.error("Error loading cuisine types:", err);
+        } finally {
+            fetchingCuisinesRef.current = false;
+        }
+    };
+
+    const fetchData = async () => {
+        // Compatibility wrapper for components that expect fetchData
+        await Promise.all([fetchFoods(), fetchMealTypes(), fetchCuisineTypes()]);
     };
 
     const handleDelete = (foodId: number) => {
@@ -164,6 +199,7 @@ const RecipeManagementPage: React.FC = () => {
                             placeholder="Search recipes..." 
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             value={searchTerm}
+                            onFocus={() => { fetchMealTypes(); fetchCuisineTypes(); }}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                         <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
@@ -177,6 +213,7 @@ const RecipeManagementPage: React.FC = () => {
                                     ...mealTypes.map(m => ({ value: m.id!, label: m.name }))
                                 ]}
                                 value={selectedMealTypeId}
+                                onFocus={fetchMealTypes}
                                 onChange={(val) => {
                                     setSelectedMealTypeId(val as number | "");
                                     setCurrentPage(1);
@@ -192,6 +229,7 @@ const RecipeManagementPage: React.FC = () => {
                                     ...cuisineTypes.map(c => ({ value: c.id!, label: c.name }))
                                 ]}
                                 value={selectedCuisineTypeId}
+                                onFocus={fetchCuisineTypes}
                                 onChange={(val) => {
                                     setSelectedCuisineTypeId(val as number | "");
                                     setCurrentPage(1);

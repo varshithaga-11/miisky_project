@@ -25,23 +25,28 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
   const [searchCountry, setSearchCountry] = useState("");
   const [searchState, setSearchState] = useState("");
 
+  const [hasInteractedCountries, setHasInteractedCountries] = useState(false);
+  const [hasInteractedStates, setHasInteractedStates] = useState(false);
+
   useEffect(() => {
+    if (!hasInteractedCountries && !searchCountry) return;
     const timer = setTimeout(() => {
       getCountryList(1, "all", searchCountry)
         .then((res) => setCountries(res.results))
         .catch((err) => console.error(err));
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchCountry]);
+  }, [searchCountry, hasInteractedCountries]);
 
   useEffect(() => {
+    if (!hasInteractedStates && !searchState) return;
     const timer = setTimeout(() => {
       getStateList(1, "all", searchState)
         .then((res) => setStates(res.results))
         .catch((err) => console.error(err));
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchState]);
+  }, [searchState, hasInteractedStates]);
 
   useEffect(() => {
     if (countryId) {
@@ -112,7 +117,13 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
             <Label htmlFor="country">Country *</Label>
             <SearchableSelect
               value={countryId}
-              onChange={(val) => setCountryId(val as string)}
+              onChange={(val) => {
+                setCountryId(val as string);
+                setHasInteractedCountries(true);
+              }}
+              onFocus={() => {
+                setHasInteractedCountries(true);
+              }}
               onSearch={setSearchCountry}
               options={countryOptions}
               className="w-full"
@@ -123,7 +134,13 @@ const AddCity: React.FC<AddCityProps> = ({ onClose, onAdd }) => {
             <Label htmlFor="state">State *</Label>
             <SearchableSelect
               value={stateId}
-              onChange={(val) => setStateId(val as string)}
+              onChange={(val) => {
+                setStateId(val as string);
+                setHasInteractedStates(true);
+              }}
+              onFocus={() => {
+                setHasInteractedStates(true);
+              }}
               onSearch={setSearchState}
               options={stateOptions}
               className="w-full"

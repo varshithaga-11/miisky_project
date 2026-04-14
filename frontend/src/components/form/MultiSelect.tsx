@@ -11,6 +11,7 @@ interface MultiSelectProps {
   options: Option[];
   defaultSelected?: string[];
   onChange?: (selected: string[]) => void;
+  onFocus?: () => void;
   disabled?: boolean;
 }
 
@@ -19,6 +20,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   options,
   defaultSelected = [],
   onChange,
+  onFocus,
   disabled = false,
 }) => {
   const [selectedOptions, setSelectedOptions] =
@@ -26,7 +28,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => {
-    if (!disabled) setIsOpen((prev) => !prev);
+    if (!disabled) {
+      if (!isOpen) onFocus?.();
+      setIsOpen((prev) => !prev);
+    }
   };
 
   const handleSelect = (optionValue: string) => {

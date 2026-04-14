@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -37,28 +37,42 @@ const StateManagementPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<keyof State | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const fetchingCountriesRef = useRef(false);
+
+
 
   useEffect(() => {
-    fetchData();
+    fetchStates();
   }, [currentPage, pageSize, searchTerm, selectedCountryId]);
 
-  const fetchData = async () => {
+  const fetchStates = async () => {
     setLoading(true);
     try {
-      const [stateRes, countryRes] = await Promise.all([
-        getStateList(currentPage, pageSize, searchTerm, selectedCountryId),
-        getCountryList(1, "all")
-      ]);
+      const stateRes = await getStateList(currentPage, pageSize, searchTerm, selectedCountryId);
       setStates(stateRes.results);
       setTotalItems(stateRes.count);
       setTotalPages(stateRes.total_pages);
-      setCountries(countryRes.results);
     } catch (err: unknown) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchCountries = async () => {
+    if (countries.length > 0 || fetchingCountriesRef.current) return;
+    fetchingCountriesRef.current = true;
+    try {
+      const countryRes = await getCountryList(1, "all");
+      setCountries(countryRes.results);
+    } catch (err: unknown) {
+      console.error(err);
+    } finally {
+      fetchingCountriesRef.current = false;
+    }
+  };
+
+
 
   const getCountryName = (state: State) => {
     return state.country_name || countries.find(c => c.id === state.country)?.name || "N/A";
@@ -107,7 +121,7 @@ const StateManagementPage: React.FC = () => {
       await deleteState(stateToDelete);
       toast.success("State deleted successfully.");
       setStateToDelete(null);
-      fetchData();
+      fetchStates();
     } catch {
       toast.error("Failed to delete state. Please try again later.");
     } finally {
@@ -174,6 +188,7 @@ const StateManagementPage: React.FC = () => {
               placeholder="Search state or country..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              onFocus={fetchCountries}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
@@ -189,12 +204,13 @@ const StateManagementPage: React.FC = () => {
                  setSelectedCountryId(val as number | "");
                  setCurrentPage(1);
                }}
+               onFocus={fetchCountries}
                placeholder="Filter by Country"
              />
           </div>
           
           <div className="flex items-center gap-6">
-            <ImportButton onSuccess={fetchData} />
+            <ImportButton onSuccess={fetchStates} />
             <Button 
                 size="sm" 
                 className="inline-flex items-center gap-2"
@@ -334,13 +350,13 @@ const StateManagementPage: React.FC = () => {
         </div>
       )}
 
-      {isAddModalOpen && <AddState onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchData()} />}
+      {isAddModalOpen && <AddState onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchStates()} />}
       {isEditModalOpen && editStateId !== null && (
         <EditState
           stateId={editStateId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={() => { fetchData(); setIsEditModalOpen(false); setEditStateId(null); }}
+          onUpdated={() => { fetchStates(); setIsEditModalOpen(false); setEditStateId(null); }}
         />
       )}
 

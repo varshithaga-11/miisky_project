@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createFood, createFoodNutrition, Food, FoodNutrition, getCuisineTypeList, CuisineType } from "./foodapi";
 import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import Button from "../../../components/ui/button/Button";
@@ -23,6 +23,10 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   const [image, setImage] = useState<File | null>(null);
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mealOptionsLoaded, setMealOptionsLoaded] = useState(false);
+  const [cuisineOptionsLoaded, setCuisineOptionsLoaded] = useState(false);
+  const fetchingMealsRef = useRef(false);
+  const fetchingCuisinesRef = useRef(false);
 
   // Nutrition state
   const [nutrition, setNutrition] = useState<Partial<FoodNutrition>>({
@@ -47,10 +51,33 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
     serving_size: "",
   });
 
-  useEffect(() => {
-    getMealTypeList(1, "all").then(res => setMealTypes(res.results)).catch(console.error);
-    getCuisineTypeList(1, "all").then(res => setCuisines(res.results)).catch(console.error);
-  }, []);
+  const fetchMealTypes = async () => {
+    if (mealOptionsLoaded || fetchingMealsRef.current) return;
+    fetchingMealsRef.current = true;
+    try {
+      const res = await getMealTypeList(1, "all");
+      setMealTypes(res.results);
+      setMealOptionsLoaded(true);
+    } catch (err) {
+      console.error("Error loading meal options:", err);
+    } finally {
+      fetchingMealsRef.current = false;
+    }
+  };
+
+  const fetchCuisineTypes = async () => {
+    if (cuisineOptionsLoaded || fetchingCuisinesRef.current) return;
+    fetchingCuisinesRef.current = true;
+    try {
+      const res = await getCuisineTypeList(1, "all");
+      setCuisines(res.results);
+      setCuisineOptionsLoaded(true);
+    } catch (err) {
+      console.error("Error loading cuisine options:", err);
+    } finally {
+      fetchingCuisinesRef.current = false;
+    }
+  };
 
   const handleNutritionChange = (field: keyof FoodNutrition, value: any) => {
     setNutrition(prev => ({ ...prev, [field]: value === "" ? undefined : value }));
@@ -141,10 +168,10 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                 <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <MultiSelect label="Meal Types *" options={mealTypeOptions} onChange={setSelectedMealTypes} />
+                    <MultiSelect label="Meal Types *" options={mealTypeOptions} onChange={setSelectedMealTypes} onFocus={fetchMealTypes} />
                   </div>
                   <div className="md:col-span-2">
-                    <MultiSelect label="Cuisine Types" options={cuisineOptions} onChange={setSelectedCuisines} />
+                    <MultiSelect label="Cuisine Types" options={cuisineOptions} onChange={setSelectedCuisines} onFocus={fetchCuisineTypes} />
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="name">Food Name *</Label>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getFoodList, Food } from "../Food/foodapi";
 import { getIngredientList, Ingredient } from "../Ingredient/ingredientapi";
 import { getUnitList, Unit } from "../Unit/unitapi";
@@ -31,13 +31,58 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
     ]);
     
     const [loading, setLoading] = useState(false);
+    
+    const [foodsLoaded, setFoodsLoaded] = useState(false);
+    const [ingredientsLoaded, setIngredientsLoaded] = useState(false);
+    const [unitsLoaded, setUnitsLoaded] = useState(false);
+    const fetchingFoodsRef = useRef(false);
+    const fetchingIngredientsRef = useRef(false);
+    const fetchingUnitsRef = useRef(false);
+
+    const fetchFoods = async () => {
+        if (foodsLoaded || fetchingFoodsRef.current) return;
+        fetchingFoodsRef.current = true;
+        try {
+            const res = await getFoodList(1, "all");
+            setFoods(res.results);
+            setFoodsLoaded(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            fetchingFoodsRef.current = false;
+        }
+    };
+
+    const fetchIngredients = async () => {
+        if (ingredientsLoaded || fetchingIngredientsRef.current) return;
+        fetchingIngredientsRef.current = true;
+        try {
+            const res = await getIngredientList(1, "all");
+            setIngredients(res.results);
+            setIngredientsLoaded(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            fetchingIngredientsRef.current = false;
+        }
+    };
+
+    const fetchUnits = async () => {
+        if (unitsLoaded || fetchingUnitsRef.current) return;
+        fetchingUnitsRef.current = true;
+        try {
+            const res = await getUnitList(1, "all");
+            setUnits(res.results);
+            setUnitsLoaded(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            fetchingUnitsRef.current = false;
+        }
+    };
 
     useEffect(() => {
-        if (isOpen) {
-            getFoodList(1, "all").then(res => setFoods(res.results)).catch(console.error);
-            getIngredientList(1, "all").then(res => setIngredients(res.results)).catch(console.error);
-            getUnitList().then(setUnits).catch(console.error);
-        }
+        // No eager fetching on mount
     }, [isOpen]);
 
     const addIngredientRow = () => {
@@ -126,6 +171,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
                             </label>
                             <Select
                                 value={selectedFoodId}
+                                onFocus={fetchFoods}
                                 onChange={setSelectedFoodId}
                                 options={[{ value: "", label: "Choose a Food..." }, ...foods.filter(f => (!f.ingredients || f.ingredients.length === 0) && (!f.steps || f.steps.length === 0)).map(f => ({ value: String(f.id), label: f.name }))]}
                                 className="max-w-md"
@@ -149,6 +195,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
                                             <div className="grid grid-cols-1 gap-3">
                                                 <Select
                                                     value={row.ingredient}
+                                                    onFocus={fetchIngredients}
                                                     onChange={v => handleIngChange(idx, "ingredient", v)}
                                                     options={[{ value: "", label: "Ingredient" }, ...ingredients.map(i => ({ value: String(i.id), label: i.name }))]}
                                                 />
@@ -156,6 +203,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
                                                     <Input placeholder="Qty" type="number" value={row.quantity} onChange={e => handleIngChange(idx, "quantity", e.target.value)} />
                                                     <Select
                                                         value={row.unit}
+                                                        onFocus={fetchUnits}
                                                         onChange={v => handleIngChange(idx, "unit", v)}
                                                         options={[{ value: "", label: "Unit" }, ...units.map(u => ({ value: String(u.id), label: u.name }))]}
                                                     />

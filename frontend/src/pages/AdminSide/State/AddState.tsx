@@ -20,14 +20,18 @@ const AddState: React.FC<AddStateProps> = ({ onClose, onAdd }) => {
   const [loading, setLoading] = useState(false);
   const [searchCountry, setSearchCountry] = useState("");
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   useEffect(() => {
+    if (!hasInteracted && !searchCountry) return;
+
     const timer = setTimeout(() => {
       getCountryList(1, "all", searchCountry)
         .then((res) => setCountries(res.results))
         .catch((err) => console.error("Error fetching countries:", err));
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchCountry]);
+  }, [searchCountry, hasInteracted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +86,11 @@ const AddState: React.FC<AddStateProps> = ({ onClose, onAdd }) => {
             <Label htmlFor="country">Country *</Label>
             <SearchableSelect
               value={countryId}
-              onChange={(val) => setCountryId(val as string)}
+              onChange={(val) => {
+                setCountryId(val as string);
+                setHasInteracted(true);
+              }}
+              onFocus={() => setHasInteracted(true)}
               onSearch={setSearchCountry}
               options={countryOptions}
               className="w-full"
