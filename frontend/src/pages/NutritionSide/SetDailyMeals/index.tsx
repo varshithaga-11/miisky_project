@@ -129,6 +129,10 @@ const SetDailyMealsPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        setViewMode("list");
+    }, [selectedPatient?.user.id]);
+
+    useEffect(() => {
         const t = window.setTimeout(() => setDebouncedPatientSearch(patientSearchInput.trim()), 300);
         return () => window.clearTimeout(t);
     }, [patientSearchInput]);
@@ -984,21 +988,30 @@ const SetDailyMealsPage: React.FC = () => {
                                         <div className="flex p-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl flex-wrap">
                                             <button
                                                 type="button"
-                                                onClick={() => setScheduleMode("day")}
+                                                onClick={() => {
+                                                    setScheduleMode("day");
+                                                    setViewMode("list");
+                                                }}
                                                 className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${scheduleMode === "day" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-700"}`}
                                             >
                                                 Day
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setScheduleMode("range")}
+                                                onClick={() => {
+                                                    setScheduleMode("range");
+                                                    setViewMode("list");
+                                                }}
                                                 className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${scheduleMode === "range" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-700"}`}
                                             >
                                                 Range
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setScheduleMode("selectedRange")}
+                                                onClick={() => {
+                                                    setScheduleMode("selectedRange");
+                                                    setViewMode("list");
+                                                }}
                                                 className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${scheduleMode === "selectedRange" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-700"}`}
                                                 title="Load only the dates you pick (max 60 days)"
                                             >
