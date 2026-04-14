@@ -5519,7 +5519,29 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
         actor_role = getattr(actor, "role", None)
 
         if actor_role in ("patient", "non_patient"):
-            serializer.save(user=actor)
+            req_obj = serializer.save(user=actor)
+
+            nutritionist_id = (
+                UserNutritionistMapping.objects.filter(user=actor, is_active=True)
+                .values_list("nutritionist_id", flat=True)
+                .first()
+            )
+            if not nutritionist_id:
+                fallback_plan = UserDietPlan.objects.filter(
+                    user=actor, status="active"
+                ).values("nutritionist_id").first()
+                nutritionist_id = fallback_plan.get("nutritionist_id") if fallback_plan else None
+
+            if nutritionist_id:
+                patient_name = _notification_user_display(actor)
+                Notification.objects.create(
+                    user_id=nutritionist_id,
+                    title="New patient unavailability request",
+                    body=(
+                        f"{patient_name} requested unavailability from {req_obj.from_date} "
+                        f"to {req_obj.to_date}. Review it in Patient Unavailability."
+                    ),
+                )
             return
 
         if actor_role in ("nutritionist", "admin"):
@@ -5555,6 +5577,17 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
                 status=UserMeal.STATUS_DELIVERED
             ).update(status=UserMeal.STATUS_SKIPPED)
 
+        if req_obj.user_id:
+            reviewer_name = _notification_user_display(request.user)
+            Notification.objects.create(
+                user_id=req_obj.user_id,
+                title="Unavailability request approved",
+                body=(
+                    f"{reviewer_name} approved your unavailability request "
+                    f"for {req_obj.from_date} to {req_obj.to_date}."
+                ),
+            )
+
         payload = self.get_serializer(req_obj).data
         payload["skipped_meals_count"] = skipped_count
         return Response(payload)
@@ -5573,6 +5606,21 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
         req_obj.reviewed_on = timezone.now()
         req_obj.review_notes = request.data.get("review_notes")
         req_obj.save(update_fields=["status", "reviewed_by", "reviewed_on", "review_notes"])
+
+        if req_obj.user_id:
+            reviewer_name = _notification_user_display(request.user)
+            note_suffix = ""
+            if req_obj.review_notes:
+                note_suffix = f" Note: {req_obj.review_notes}"
+            Notification.objects.create(
+                user_id=req_obj.user_id,
+                title="Unavailability request rejected",
+                body=(
+                    f"{reviewer_name} rejected your unavailability request "
+                    f"for {req_obj.from_date} to {req_obj.to_date}.{note_suffix}"
+                ),
+            )
+
         return Response(self.get_serializer(req_obj).data)
 
     @action(detail=True, methods=["post"])
@@ -5711,6 +5759,8 @@ class MeetingRequestViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(meeting, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
+        return Response(self.get_serializer(meeting).data, status=status.HTTP_200_OK)
 
 
 class NutritionistAvailabilityViewSet(viewsets.ModelViewSet):

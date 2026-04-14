@@ -81,7 +81,7 @@ export const getNutritionistMeetings = async (): Promise<MeetingRequest[]> => {
 };
 
 export const updateMeetingStatus = async (id: number, data: Partial<MeetingRequest>) => {
-    const url = createApiUrl(`api/meetingrequest/${id}/`);
+    const url = createApiUrl(`api/meetingrequest/${id}/update-status/`);
     const resp = await axios.patch(url, data, { headers: await getAuthHeaders() });
     return resp.data;
 };
