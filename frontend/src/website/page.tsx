@@ -10,6 +10,7 @@ import Service from "./components/sections/home1/Service";
 import Team from "./components/sections/home1/Team";
 import Working from "./components/sections/home1/Working";
 import GoogleMapSection from "./components/sections/home1/GoogleMap";
+import HomeImageCaption from "./components/sections/home1/HomeImageCaption";
 
 export default function HomePage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();
@@ -31,6 +32,7 @@ export default function HomePage() {
             <Portfolio/>
             <News/>
             <GoogleMapSection/>
+            <HomeImageCaption/>
         </div>
     );
 }
