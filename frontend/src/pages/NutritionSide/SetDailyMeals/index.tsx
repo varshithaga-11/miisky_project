@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -86,6 +86,8 @@ const SetDailyMealsPage: React.FC = () => {
     const [rangeDayCount, setRangeDayCount] = useState(10);
     const [rangeHasMore, setRangeHasMore] = useState(false);
     const [rangeMealsLoading, setRangeMealsLoading] = useState(false);
+    const rangeLoadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
+    const rangeMealsFetchLockRef = useRef(false);
 
     const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
     const [calYear, setCalYear] = useState(() => new Date().getFullYear());
@@ -286,8 +288,9 @@ const SetDailyMealsPage: React.FC = () => {
         }
     };
 
-    const loadMoreRangeMeals = async () => {
-        if (!selectedPatient || !activePlan || !rangeHasMore || rangeMealsLoading) return;
+    const loadMoreRangeMeals = useCallback(async () => {
+        if (!selectedPatient || !activePlan || !rangeHasMore || rangeMealsLoading || rangeMealsFetchLockRef.current) return;
+        rangeMealsFetchLockRef.current = true;
         setRangeMealsLoading(true);
         try {
             const res = await getSetDailyMealsPlanMeals({
@@ -303,8 +306,23 @@ const SetDailyMealsPage: React.FC = () => {
             toast.error("Failed to load more days");
         } finally {
             setRangeMealsLoading(false);
+            rangeMealsFetchLockRef.current = false;
         }
-    };
+    }, [selectedPatient, activePlan, rangeHasMore, rangeMealsLoading, rangeDayCount]);
+
+    useEffect(() => {
+        if (!isRangeMode || !rangeHasMore || !selectedPatient || !activePlan) return;
+        const el = rangeLoadMoreSentinelRef.current;
+        if (!el) return;
+        const obs = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) void loadMoreRangeMeals();
+            },
+            { root: null, rootMargin: "240px", threshold: 0 }
+        );
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, [isRangeMode, rangeHasMore, rangeMealsLoading, selectedPatient, activePlan, loadMoreRangeMeals, viewMode]);
 
     useEffect(() => {
         setFoodsPage(1);
@@ -1102,15 +1120,13 @@ const SetDailyMealsPage: React.FC = () => {
                                             );
                                         })}
                                         {isRangeMode && rangeHasMore && (
-                                            <div className="flex justify-center pt-6">
-                                                <button
-                                                    type="button"
-                                                    onClick={loadMoreRangeMeals}
-                                                    disabled={rangeMealsLoading}
-                                                    className="px-6 py-3 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-black uppercase disabled:opacity-50"
-                                                >
-                                                    {rangeMealsLoading ? "Loading…" : "Load next 10 days"}
-                                                </button>
+                                            <div className="flex flex-col items-center pt-6 pb-2">
+                                                <div ref={rangeLoadMoreSentinelRef} className="h-px w-full" aria-hidden />
+                                                {rangeMealsLoading && (
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider py-3">
+                                                        Loading more days…
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
