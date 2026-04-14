@@ -4313,6 +4313,27 @@ def _set_daily_meals_allowed_patient_ids(nutritionist_user):
     return mapped | original
 
 
+def _patient_unavailabilities_overlapping_window(user_id, plan_id, window_start, window_end):
+    """
+    PatientUnavailability rows overlapping [window_start, window_end] for the same user.
+    Includes plan-specific rows and rows with no plan set (same patient).
+    Excludes cancelled requests.
+    """
+    qs = (
+        PatientUnavailability.objects.filter(
+            user_id=user_id,
+            from_date__lte=window_end,
+            to_date__gte=window_start,
+        )
+        .exclude(status=PatientUnavailability.STATUS_CANCELLED)
+        .filter(Q(user_diet_plan_id=plan_id) | Q(user_diet_plan__isnull=True))
+        .select_related("user", "user_diet_plan", "reviewed_by")
+        .prefetch_related("meal_types")
+        .order_by("from_date", "id")
+    )
+    return PatientUnavailabilitySerializer(qs, many=True).data
+
+
 class SetDailyMealsViewSet(viewsets.ViewSet):
     """
     Nutritionist-only endpoints for Set Daily Meals page:
@@ -4650,6 +4671,7 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
                     "next_offset_days": None,
                     "has_more": False,
                     "meals": [],
+                    "patient_unavailabilities": [],
                 }
             )
 
@@ -4666,6 +4688,7 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
                     "next_offset_days": None,
                     "has_more": False,
                     "meals": [],
+                    "patient_unavailabilities": [],
                 }
             )
 
@@ -4710,6 +4733,9 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
                 "next_offset_days": next_offset if has_more else None,
                 "has_more": has_more,
                 "meals": meals_data,
+                "patient_unavailabilities": _patient_unavailabilities_overlapping_window(
+                    uid, pid, window_start, window_end
+                ),
             }
         )
 
@@ -4902,6 +4928,44 @@ class UserMealViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(meal_date__month=month, meal_date__year=year)
 
         return queryset.order_by('meal_date', 'meal_type__id')
+
+    def list(self, request, *args, **kwargs):
+        """Include overlapping PatientUnavailability records when filtering by user + meal_date (Set Daily Meals)."""
+        response = super().list(request, *args, **kwargs)
+        meal_date = request.query_params.get("meal_date")
+        user_id = request.query_params.get("user")
+        if not meal_date or not user_id:
+            return response
+        try:
+            day = datetime.strptime(meal_date, "%Y-%m-%d").date()
+            uid = int(user_id)
+        except (ValueError, TypeError):
+            return response
+        qs = (
+            PatientUnavailability.objects.filter(
+                user_id=uid,
+                from_date__lte=day,
+                to_date__gte=day,
+            )
+            .exclude(status=PatientUnavailability.STATUS_CANCELLED)
+        )
+        plan_id = request.query_params.get("user_diet_plan")
+        if plan_id:
+            try:
+                pid = int(plan_id)
+            except (ValueError, TypeError):
+                pid = None
+            if pid is not None:
+                qs = qs.filter(Q(user_diet_plan_id=pid) | Q(user_diet_plan__isnull=True))
+        qs = (
+            qs.select_related("user", "user_diet_plan", "reviewed_by")
+            .prefetch_related("meal_types")
+            .order_by("from_date", "id")
+        )
+        extra = PatientUnavailabilitySerializer(qs, many=True).data
+        if isinstance(response.data, dict):
+            response.data["patient_unavailabilities"] = extra
+        return response
 
     def _micro_kitchen_execution_queryset(self, request):
         if getattr(request.user, 'role', None) != 'micro_kitchen':

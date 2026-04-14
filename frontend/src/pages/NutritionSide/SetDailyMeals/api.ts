@@ -22,6 +22,20 @@ export type {
     MicroKitchenProfile,
 };
 
+/** Unavailability request (patient pause / travel) — returned by plan-meals and usermeal list. */
+export interface PatientUnavailability {
+    id: number;
+    from_date: string;
+    to_date: string;
+    scope: "all" | "meal_type";
+    meal_types_details?: { id: number; name: string }[];
+    reason?: string | null;
+    patient_comments?: string | null;
+    status: string;
+    requested_on?: string;
+    review_notes?: string | null;
+}
+
 export interface UserMeal {
     id?: number;
     user: number;
@@ -103,11 +117,21 @@ export const getActivePlansForPatient = async (patientId: number): Promise<UserD
     return results;
 };
 
-export const getUserDailyMeals = async (patientId: number, date: string): Promise<UserMeal[]> => {
-    const url = createApiUrl(`api/usermeal/?user=${patientId}&meal_date=${date}`);
+export const getUserDailyMeals = async (
+    patientId: number,
+    date: string,
+    planId?: number
+): Promise<{ meals: UserMeal[]; patient_unavailabilities: PatientUnavailability[] }> => {
+    const params = new URLSearchParams({ user: String(patientId), meal_date: date });
+    if (planId != null) params.set("user_diet_plan", String(planId));
+    const url = createApiUrl(`api/usermeal/?${params.toString()}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     const data = response.data;
-    return Array.isArray(data) ? data : data?.results ?? [];
+    const meals = Array.isArray(data) ? data : data?.results ?? [];
+    const patient_unavailabilities = Array.isArray(data?.patient_unavailabilities)
+        ? data.patient_unavailabilities
+        : [];
+    return { meals, patient_unavailabilities };
 };
 
 export const getUserMealsList = async (
@@ -213,6 +237,7 @@ export const getSetDailyMealsPlanMeals = async (params: {
     next_offset_days: number | null;
     has_more: boolean;
     meals: UserMeal[];
+    patient_unavailabilities: PatientUnavailability[];
 }> => {
     const url = createApiUrl("api/set-daily-meals/plan-meals/");
     const response = await axios.get(url, {

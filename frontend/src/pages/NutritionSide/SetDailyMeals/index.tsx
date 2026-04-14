@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -27,6 +27,7 @@ import type {
     Food,
     CuisineType,
     FoodNutritionById,
+    PatientUnavailability,
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage, FiMapPin, FiEye, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
@@ -83,9 +84,13 @@ const SetDailyMealsPage: React.FC = () => {
     const [foodsLoading, setFoodsLoading] = useState(false);
 
     const [rangeMealsAccum, setRangeMealsAccum] = useState<UserMeal[]>([]);
+    const [rangePatientUnavailabilities, setRangePatientUnavailabilities] = useState<PatientUnavailability[]>([]);
+    const [dayPatientUnavailabilities, setDayPatientUnavailabilities] = useState<PatientUnavailability[]>([]);
     const [rangeDayCount, setRangeDayCount] = useState(10);
     const [rangeHasMore, setRangeHasMore] = useState(false);
     const [rangeMealsLoading, setRangeMealsLoading] = useState(false);
+    const rangeLoadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
+    const rangeMealsFetchLockRef = useRef(false);
 
     const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
     const [calYear, setCalYear] = useState(() => new Date().getFullYear());
@@ -245,14 +250,24 @@ const SetDailyMealsPage: React.FC = () => {
             setSelectedDate("");
             setDailyEntries([]);
             setRangeMealsAccum([]);
+            setRangePatientUnavailabilities([]);
+            setDayPatientUnavailabilities([]);
             setRangeDayCount(10);
             setRangeHasMore(false);
         }
     }, [selectedPatient]);
 
+    const mergeUnavailById = (prev: PatientUnavailability[], next: PatientUnavailability[]) => {
+        const m = new Map<number, PatientUnavailability>();
+        for (const u of prev) m.set(u.id, u);
+        for (const u of next) m.set(u.id, u);
+        return Array.from(m.values()).sort((a, b) => a.from_date.localeCompare(b.from_date) || a.id - b.id);
+    };
+
     useEffect(() => {
         if (selectedPatient && activePlan) {
             if (isRangeMode) {
+                setDayPatientUnavailabilities([]);
                 setRangeDayCount(10);
                 setRangeMealsLoading(true);
                 (async () => {
@@ -265,6 +280,7 @@ const SetDailyMealsPage: React.FC = () => {
                         });
                         setRangeMealsAccum(res.meals);
                         setRangeHasMore(res.has_more);
+                        setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
                     } catch {
                         toast.error("Failed to load range meals");
                     } finally {
@@ -272,6 +288,7 @@ const SetDailyMealsPage: React.FC = () => {
                     }
                 })();
             } else if (selectedDate) {
+                setRangePatientUnavailabilities([]);
                 fetchDailyMeals(selectedPatient.user.id, selectedDate);
             }
         }
@@ -279,15 +296,17 @@ const SetDailyMealsPage: React.FC = () => {
 
     const fetchDailyMeals = async (pid: number, date: string) => {
         try {
-            const meals = await getUserDailyMeals(pid, date);
+            const { meals, patient_unavailabilities } = await getUserDailyMeals(pid, date, activePlan?.id);
             setDailyEntries(meals);
+            setDayPatientUnavailabilities(patient_unavailabilities);
         } catch {
             toast.error("Failed to load daily schedule");
         }
     };
 
-    const loadMoreRangeMeals = async () => {
-        if (!selectedPatient || !activePlan || !rangeHasMore || rangeMealsLoading) return;
+    const loadMoreRangeMeals = useCallback(async () => {
+        if (!selectedPatient || !activePlan || !rangeHasMore || rangeMealsLoading || rangeMealsFetchLockRef.current) return;
+        rangeMealsFetchLockRef.current = true;
         setRangeMealsLoading(true);
         try {
             const res = await getSetDailyMealsPlanMeals({
@@ -298,13 +317,29 @@ const SetDailyMealsPage: React.FC = () => {
             });
             setRangeMealsAccum((prev) => [...prev, ...res.meals]);
             setRangeHasMore(res.has_more);
+            setRangePatientUnavailabilities((prev) => mergeUnavailById(prev, res.patient_unavailabilities ?? []));
             setRangeDayCount((c) => c + 10);
         } catch {
             toast.error("Failed to load more days");
         } finally {
             setRangeMealsLoading(false);
+            rangeMealsFetchLockRef.current = false;
         }
-    };
+    }, [selectedPatient, activePlan, rangeHasMore, rangeMealsLoading, rangeDayCount]);
+
+    useEffect(() => {
+        if (!isRangeMode || !rangeHasMore || !selectedPatient || !activePlan) return;
+        const el = rangeLoadMoreSentinelRef.current;
+        if (!el) return;
+        const obs = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) void loadMoreRangeMeals();
+            },
+            { root: null, rootMargin: "240px", threshold: 0 }
+        );
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, [isRangeMode, rangeHasMore, rangeMealsLoading, selectedPatient, activePlan, loadMoreRangeMeals, viewMode]);
 
     useEffect(() => {
         setFoodsPage(1);
@@ -543,6 +578,7 @@ const SetDailyMealsPage: React.FC = () => {
                         });
                         setRangeMealsAccum(res.meals);
                         setRangeHasMore(res.has_more);
+                        setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
                     } catch {
                         /* ignore */
                     }
@@ -1018,6 +1054,49 @@ const SetDailyMealsPage: React.FC = () => {
                                                             </div>
                                                         </div>
 
+                                                        {(() => {
+                                                            const dayUnavails = isRangeMode
+                                                                ? rangePatientUnavailabilities.filter(
+                                                                      (u) => u.from_date <= dateStr && u.to_date >= dateStr
+                                                                  )
+                                                                : dayPatientUnavailabilities;
+                                                            if (dayUnavails.length === 0) return null;
+                                                            return (
+                                                                <div className="mb-4 space-y-2">
+                                                                    {dayUnavails.map((u) => (
+                                                                        <div
+                                                                            key={u.id}
+                                                                            className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/90 dark:bg-amber-900/25 px-4 py-3 text-xs"
+                                                                        >
+                                                                            <p className="font-black uppercase text-amber-800 dark:text-amber-200 tracking-wide">
+                                                                                Patient unavailability
+                                                                            </p>
+                                                                            <p className="text-amber-900/90 dark:text-amber-100/90 mt-1">
+                                                                                {u.from_date} → {u.to_date}
+                                                                                {u.scope === "meal_type" && u.meal_types_details?.length
+                                                                                    ? ` · ${u.meal_types_details.map((m) => m.name).join(", ")}`
+                                                                                    : " · All meals"}
+                                                                            </p>
+                                                                            {u.reason ? (
+                                                                                <p className="mt-1 text-gray-700 dark:text-gray-300">
+                                                                                    <span className="font-bold">Reason:</span> {u.reason}
+                                                                                </p>
+                                                                            ) : null}
+                                                                            {u.patient_comments ? (
+                                                                                <p className="mt-1 text-gray-700 dark:text-gray-300">
+                                                                                    <span className="font-bold">Patient note:</span>{" "}
+                                                                                    {u.patient_comments}
+                                                                                </p>
+                                                                            ) : null}
+                                                                            <p className="mt-1 text-[10px] font-bold text-amber-700/80 uppercase">
+                                                                                Status: {u.status}
+                                                                            </p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        })()}
+
                                                         <div className="space-y-3">
                                                             {dayEntries.length === 0 ? (
                                                                 <p className="text-gray-400 text-xs font-medium py-4 text-center">No meals yet — drag from the left</p>
@@ -1102,15 +1181,13 @@ const SetDailyMealsPage: React.FC = () => {
                                             );
                                         })}
                                         {isRangeMode && rangeHasMore && (
-                                            <div className="flex justify-center pt-6">
-                                                <button
-                                                    type="button"
-                                                    onClick={loadMoreRangeMeals}
-                                                    disabled={rangeMealsLoading}
-                                                    className="px-6 py-3 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-black uppercase disabled:opacity-50"
-                                                >
-                                                    {rangeMealsLoading ? "Loading…" : "Load next 10 days"}
-                                                </button>
+                                            <div className="flex flex-col items-center pt-6 pb-2">
+                                                <div ref={rangeLoadMoreSentinelRef} className="h-px w-full" aria-hidden />
+                                                {rangeMealsLoading && (
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider py-3">
+                                                        Loading more days…
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
