@@ -27,6 +27,7 @@ import type {
     Food,
     CuisineType,
     FoodNutritionById,
+    PatientUnavailability,
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiSave, FiCalendar, FiActivity, FiTrash2, FiInfo, FiCheckCircle, FiMenu, FiSearch, FiPackage, FiMapPin, FiEye, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
@@ -83,6 +84,8 @@ const SetDailyMealsPage: React.FC = () => {
     const [foodsLoading, setFoodsLoading] = useState(false);
 
     const [rangeMealsAccum, setRangeMealsAccum] = useState<UserMeal[]>([]);
+    const [rangePatientUnavailabilities, setRangePatientUnavailabilities] = useState<PatientUnavailability[]>([]);
+    const [dayPatientUnavailabilities, setDayPatientUnavailabilities] = useState<PatientUnavailability[]>([]);
     const [rangeDayCount, setRangeDayCount] = useState(10);
     const [rangeHasMore, setRangeHasMore] = useState(false);
     const [rangeMealsLoading, setRangeMealsLoading] = useState(false);
@@ -247,14 +250,24 @@ const SetDailyMealsPage: React.FC = () => {
             setSelectedDate("");
             setDailyEntries([]);
             setRangeMealsAccum([]);
+            setRangePatientUnavailabilities([]);
+            setDayPatientUnavailabilities([]);
             setRangeDayCount(10);
             setRangeHasMore(false);
         }
     }, [selectedPatient]);
 
+    const mergeUnavailById = (prev: PatientUnavailability[], next: PatientUnavailability[]) => {
+        const m = new Map<number, PatientUnavailability>();
+        for (const u of prev) m.set(u.id, u);
+        for (const u of next) m.set(u.id, u);
+        return Array.from(m.values()).sort((a, b) => a.from_date.localeCompare(b.from_date) || a.id - b.id);
+    };
+
     useEffect(() => {
         if (selectedPatient && activePlan) {
             if (isRangeMode) {
+                setDayPatientUnavailabilities([]);
                 setRangeDayCount(10);
                 setRangeMealsLoading(true);
                 (async () => {
@@ -267,6 +280,7 @@ const SetDailyMealsPage: React.FC = () => {
                         });
                         setRangeMealsAccum(res.meals);
                         setRangeHasMore(res.has_more);
+                        setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
                     } catch {
                         toast.error("Failed to load range meals");
                     } finally {
@@ -274,6 +288,7 @@ const SetDailyMealsPage: React.FC = () => {
                     }
                 })();
             } else if (selectedDate) {
+                setRangePatientUnavailabilities([]);
                 fetchDailyMeals(selectedPatient.user.id, selectedDate);
             }
         }
@@ -281,8 +296,9 @@ const SetDailyMealsPage: React.FC = () => {
 
     const fetchDailyMeals = async (pid: number, date: string) => {
         try {
-            const meals = await getUserDailyMeals(pid, date);
+            const { meals, patient_unavailabilities } = await getUserDailyMeals(pid, date, activePlan?.id);
             setDailyEntries(meals);
+            setDayPatientUnavailabilities(patient_unavailabilities);
         } catch {
             toast.error("Failed to load daily schedule");
         }
@@ -301,6 +317,7 @@ const SetDailyMealsPage: React.FC = () => {
             });
             setRangeMealsAccum((prev) => [...prev, ...res.meals]);
             setRangeHasMore(res.has_more);
+            setRangePatientUnavailabilities((prev) => mergeUnavailById(prev, res.patient_unavailabilities ?? []));
             setRangeDayCount((c) => c + 10);
         } catch {
             toast.error("Failed to load more days");
@@ -561,6 +578,7 @@ const SetDailyMealsPage: React.FC = () => {
                         });
                         setRangeMealsAccum(res.meals);
                         setRangeHasMore(res.has_more);
+                        setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
                     } catch {
                         /* ignore */
                     }
@@ -1035,6 +1053,49 @@ const SetDailyMealsPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </div>
+
+                                                        {(() => {
+                                                            const dayUnavails = isRangeMode
+                                                                ? rangePatientUnavailabilities.filter(
+                                                                      (u) => u.from_date <= dateStr && u.to_date >= dateStr
+                                                                  )
+                                                                : dayPatientUnavailabilities;
+                                                            if (dayUnavails.length === 0) return null;
+                                                            return (
+                                                                <div className="mb-4 space-y-2">
+                                                                    {dayUnavails.map((u) => (
+                                                                        <div
+                                                                            key={u.id}
+                                                                            className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/90 dark:bg-amber-900/25 px-4 py-3 text-xs"
+                                                                        >
+                                                                            <p className="font-black uppercase text-amber-800 dark:text-amber-200 tracking-wide">
+                                                                                Patient unavailability
+                                                                            </p>
+                                                                            <p className="text-amber-900/90 dark:text-amber-100/90 mt-1">
+                                                                                {u.from_date} → {u.to_date}
+                                                                                {u.scope === "meal_type" && u.meal_types_details?.length
+                                                                                    ? ` · ${u.meal_types_details.map((m) => m.name).join(", ")}`
+                                                                                    : " · All meals"}
+                                                                            </p>
+                                                                            {u.reason ? (
+                                                                                <p className="mt-1 text-gray-700 dark:text-gray-300">
+                                                                                    <span className="font-bold">Reason:</span> {u.reason}
+                                                                                </p>
+                                                                            ) : null}
+                                                                            {u.patient_comments ? (
+                                                                                <p className="mt-1 text-gray-700 dark:text-gray-300">
+                                                                                    <span className="font-bold">Patient note:</span>{" "}
+                                                                                    {u.patient_comments}
+                                                                                </p>
+                                                                            ) : null}
+                                                                            <p className="mt-1 text-[10px] font-bold text-amber-700/80 uppercase">
+                                                                                Status: {u.status}
+                                                                            </p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        })()}
 
                                                         <div className="space-y-3">
                                                             {dayEntries.length === 0 ? (
