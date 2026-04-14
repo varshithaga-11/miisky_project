@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
@@ -125,6 +125,15 @@ export default function PatientQuestionnairePage() {
 
   const [hcRows, setHcRows] = useState<Record<number, HcRowState>>({});
 
+  const [hcMastersLoaded, setHcMastersLoaded] = useState(false);
+  const [step3MastersLoaded, setStep3MastersLoaded] = useState(false);
+  const fetchingStep2Ref = useRef(false);
+  const fetchingStep3Ref = useRef(false);
+  const questionnaireLoadedRef = useRef(false);
+
+  // Source-of-truth mapping tracks (ensures we init state from API exactly once per category)
+  const initializedMap = useRef<Record<string, boolean>>({});
+
   const [symptomIds, setSymptomIds] = useState<number[]>([]);
   const [autoimmuneIds, setAutoimmuneIds] = useState<number[]>([]);
   const [deficiencyIds, setDeficiencyIds] = useState<number[]>([]);
@@ -145,78 +154,57 @@ export default function PatientQuestionnairePage() {
 
   const setField = (key: keyof UserQuestionnaire, value: unknown) => setData((p) => ({ ...p, [key]: value }));
 
+  // 1. Initial Load (Base Data + Step 1 Masters)
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const [
-          res,
-          hcm,
-          sm,
-          am,
-          dm,
-          dig,
-          sk,
-          hm,
-          actm,
-        ] = await Promise.all([
+        const [res, hm, actm] = await Promise.all([
           getMyQuestionnaire(),
-          fetchHealthConditionMasters(),
-          fetchSymptomMasters(),
-          fetchAutoimmuneMasters(),
-          fetchDeficiencyMasters(),
-          fetchDigestiveIssueMasters(),
-          fetchSkinIssueMasters(),
           fetchHabitMasters(),
           fetchActivityMasters(),
         ]);
 
         setData(res || {});
-        setHcMasters(hcm);
-        setSymptomMasters(sm);
-        setAutoimmuneMasters(am);
-        setDeficiencyMasters(dm);
-        setDigestiveMasters(dig);
-        setSkinMasters(sk);
         setHabitMasters(hm);
         setActivityMasters(actm);
+        questionnaireLoadedRef.current = true;
 
-        setHcRows(initHcRows(hcm, res?.health_conditions));
-
-        setSymptomIds(namesToIds(res?.symptoms, sm));
-        setAutoimmuneIds(namesToIds(res?.autoimmune_diseases, am));
-        setDeficiencyIds(namesToIds(res?.deficiencies, dm));
-        setDigestiveIds(namesToIds(res?.digestive_issues, dig));
-        setSkinIds(namesToIds(res?.skin_issues, sk));
-        setHabitIds(namesToIds(res?.habits, hm));
-        setPhysicalActivityIds(namesToIds(res?.physical_activities, actm));
-
-        const hx: Record<number, { other_text: string }> = {};
-        if (Array.isArray(res.habits)) {
-          for (const row of res.habits) {
-            if (row && typeof row === "object" && "id" in row) {
-              const r = row as { id: number; other_text?: string | null };
-              if (r.other_text) hx[r.id] = { other_text: String(r.other_text) };
-            }
-          }
-        }
-        setHabitExtras(hx);
-
-        const ax: Record<number, { other_text: string; duration_minutes?: string }> = {};
-        if (Array.isArray(res.physical_activities)) {
-          for (const row of res.physical_activities) {
-            if (row && typeof row === "object" && "id" in row) {
-              const r = row as { id: number; other_text?: string | null; duration_minutes?: number | null };
-              if (r.other_text || r.duration_minutes != null) {
-                ax[r.id] = {
-                  other_text: r.other_text ? String(r.other_text) : "",
-                  ...(r.duration_minutes != null ? { duration_minutes: String(r.duration_minutes) } : {}),
-                };
+        // Initialize Step 1 states
+        if (!initializedMap.current.habits) {
+          setHabitIds(namesToIds(res?.habits, hm));
+          const hx: Record<number, { other_text: string }> = {};
+          if (Array.isArray(res.habits)) {
+            for (const row of res.habits) {
+              if (row && typeof row === "object" && "id" in row) {
+                const r = row as { id: number; other_text?: string | null };
+                if (r.other_text) hx[r.id] = { other_text: String(r.other_text) };
               }
             }
           }
+          setHabitExtras(hx);
+          initializedMap.current.habits = true;
         }
-        setActivityExtras(ax);
+
+        if (!initializedMap.current.activities) {
+          setPhysicalActivityIds(namesToIds(res?.physical_activities, actm));
+          const ax: Record<number, { other_text: string; duration_minutes?: string }> = {};
+          if (Array.isArray(res.physical_activities)) {
+            for (const row of res.physical_activities) {
+              if (row && typeof row === "object" && "id" in row) {
+                const r = row as { id: number; other_text?: string | null; duration_minutes?: number | null };
+                if (r.other_text || r.duration_minutes != null) {
+                  ax[r.id] = {
+                    other_text: r.other_text ? String(r.other_text) : "",
+                    ...(r.duration_minutes != null ? { duration_minutes: String(r.duration_minutes) } : {}),
+                  };
+                }
+              }
+            }
+          }
+          setActivityExtras(ax);
+          initializedMap.current.activities = true;
+        }
 
         setFoodPreferencesText(
           res?.food_preferences == null
@@ -235,6 +223,80 @@ export default function PatientQuestionnairePage() {
       }
     })();
   }, []);
+
+  // 2. Step-based Lazy Loading
+  useEffect(() => {
+    if (step === 2 && !hcMastersLoaded && !fetchingStep2Ref.current) {
+      (async () => {
+        fetchingStep2Ref.current = true;
+        try {
+          const hcm = await fetchHealthConditionMasters();
+          setHcMasters(hcm);
+          setHcMastersLoaded(true);
+        } catch (err) {
+          console.error("Error loading Step 2 masters:", err);
+        } finally {
+          fetchingStep2Ref.current = false;
+        }
+      })();
+    } else if (step === 3 && !step3MastersLoaded && !fetchingStep3Ref.current) {
+      (async () => {
+        fetchingStep3Ref.current = true;
+        try {
+          const [sm, am, dm, dig, sk] = await Promise.all([
+            fetchSymptomMasters(),
+            fetchAutoimmuneMasters(),
+            fetchDeficiencyMasters(),
+            fetchDigestiveIssueMasters(),
+            fetchSkinIssueMasters(),
+          ]);
+          setSymptomMasters(sm);
+          setAutoimmuneMasters(am);
+          setDeficiencyMasters(dm);
+          setDigestiveMasters(dig);
+          setSkinMasters(sk);
+          setStep3MastersLoaded(true);
+        } catch (err) {
+          console.error("Error loading Step 3 masters:", err);
+        } finally {
+          fetchingStep3Ref.current = false;
+        }
+      })();
+    }
+  }, [step, hcMastersLoaded, step3MastersLoaded]);
+
+  // 3. Deferred Initializations (run once prerequisite masters are loaded)
+  useEffect(() => {
+    if (hcMastersLoaded && questionnaireLoadedRef.current && !initializedMap.current.hc) {
+      setHcRows(initHcRows(hcMasters, data.health_conditions));
+      initializedMap.current.hc = true;
+    }
+  }, [hcMastersLoaded, data.health_conditions, hcMasters]);
+
+  useEffect(() => {
+    if (step3MastersLoaded && questionnaireLoadedRef.current) {
+      if (!initializedMap.current.symptoms) {
+        setSymptomIds(namesToIds(data.symptoms, symptomMasters));
+        initializedMap.current.symptoms = true;
+      }
+      if (!initializedMap.current.autoimmune) {
+        setAutoimmuneIds(namesToIds(data.autoimmune_diseases, autoimmuneMasters));
+        initializedMap.current.autoimmune = true;
+      }
+      if (!initializedMap.current.deficiencies) {
+        setDeficiencyIds(namesToIds(data.deficiencies, deficiencyMasters));
+        initializedMap.current.deficiencies = true;
+      }
+      if (!initializedMap.current.digestive) {
+        setDigestiveIds(namesToIds(data.digestive_issues, digestiveMasters));
+        initializedMap.current.digestive = true;
+      }
+      if (!initializedMap.current.skin) {
+        setSkinIds(namesToIds(data.skin_issues, skinMasters));
+        initializedMap.current.skin = true;
+      }
+    }
+  }, [step3MastersLoaded, data, symptomMasters, autoimmuneMasters, deficiencyMasters, digestiveMasters, skinMasters]);
 
   const toggleId = (list: number[], setList: (v: number[]) => void, id: number) => {
     if (list.includes(id)) setList(list.filter((x) => x !== id));

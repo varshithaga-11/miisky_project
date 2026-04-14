@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -19,22 +19,39 @@ const NonPatientFoodsPage: React.FC = () => {
     const [selectedKitchen, setSelectedKitchen] = useState<string>("all");
     const [addingToCart, setAddingToCart] = useState<number | null>(null);
     const [quantities, setQuantities] = useState<Record<number, number>>({});
+    
+    // Lazy load states
+    const [kitchensLoaded, setKitchensLoaded] = useState(false);
+    const [profileLoaded, setProfileLoaded] = useState(false);
+    const fetchingKitchensRef = useRef(false);
+    const fetchingProfileRef = useRef(false);
+    const fetchingFoodsRef = useRef(false);
 
     const fetchProfile = async () => {
+        if (profileLoaded || fetchingProfileRef.current) return;
+        fetchingProfileRef.current = true;
         try {
             const data = await getProfile();
             setUserProfile(data);
+            setProfileLoaded(true);
         } catch (err) {
             console.error("Failed to load user profile for distance calculation", err);
+        } finally {
+            fetchingProfileRef.current = false;
         }
     };
 
     const fetchKitchens = async () => {
+        if (kitchensLoaded || fetchingKitchensRef.current) return;
+        fetchingKitchensRef.current = true;
         try {
             const data = await getApprovedMicroKitchens("");
             setKitchens(data.results || []);
+            setKitchensLoaded(true);
         } catch (err) {
             console.error(err);
+        } finally {
+            fetchingKitchensRef.current = false;
         }
     };
 
@@ -53,6 +70,8 @@ const NonPatientFoodsPage: React.FC = () => {
     const hasLocation = userProfile?.latitude && userProfile?.longitude;
 
     const fetchFoods = async () => {
+        if (fetchingFoodsRef.current) return;
+        fetchingFoodsRef.current = true;
         setLoading(true);
         try {
             const data = await getAvailableMicroKitchenFoods(
@@ -65,12 +84,14 @@ const NonPatientFoodsPage: React.FC = () => {
             toast.error("Failed to load foods");
         } finally {
             setLoading(false);
+            fetchingFoodsRef.current = false;
         }
     };
 
     useEffect(() => {
+        fetchFoods();
+        // Base profile load to allow distance sorting
         fetchProfile();
-        fetchKitchens();
     }, []);
 
     useEffect(() => {
@@ -142,6 +163,7 @@ const NonPatientFoodsPage: React.FC = () => {
                                 type="text"
                                 placeholder="Search by food or kitchen name..."
                                 value={search}
+                                onFocus={() => { fetchKitchens(); fetchProfile(); }}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full pl-14 pr-6 py-4 bg-white dark:bg-gray-800 rounded-[30px] border-none shadow-xl shadow-gray-200/40 dark:shadow-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-sm"
                             />
@@ -149,6 +171,7 @@ const NonPatientFoodsPage: React.FC = () => {
                         <div className="w-full sm:w-72">
                             <select
                                 value={selectedKitchen}
+                                onFocus={fetchKitchens}
                                 onChange={(e) => setSelectedKitchen(e.target.value)}
                                 className="w-full px-6 py-4 bg-white dark:bg-gray-800 rounded-[30px] border-none shadow-xl shadow-gray-200/40 dark:shadow-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
                             >

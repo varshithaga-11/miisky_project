@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
@@ -37,22 +37,46 @@ const PatientPaymentHistoryPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const pageSize = 10;
+    
+    // Lazy refs
+    const [kitchensLoaded, setKitchensLoaded] = useState(false);
+    const fetchingKitchensRef = useRef(false);
+    const fetchingDataRef = useRef<string | null>(null); // tracks current request unique key
+    const currentRequestRef = useRef(0); // for race conditions
 
     const fetchKitchenList = async () => {
+        if (kitchensLoaded || fetchingKitchensRef.current) return;
+        fetchingKitchensRef.current = true;
         try {
             const data = await getApprovedMicroKitchens();
             setKitchens(data.results || []);
-        } catch (e) { console.error(e); }
+            setKitchensLoaded(true);
+        } catch (e) { 
+            console.error(e); 
+        } finally {
+            fetchingKitchensRef.current = false;
+        }
     };
 
     const fetchData = async () => {
+        const requestKey = JSON.stringify({
+            viewType, debouncedSearch, period, startDate, endDate, selectedKitchen, currentPage
+        });
+        if (fetchingDataRef.current === requestKey) return;
+
+        const requestId = currentRequestRef.current + 1;
+        currentRequestRef.current = requestId;
+        fetchingDataRef.current = requestKey;
+
         setLoading(true);
         try {
+            let data: any;
             if (viewType === "diet_plans") {
-                const data = await getDietPlanHistory();
+                data = await getDietPlanHistory();
+                if (currentRequestRef.current !== requestId) return;
                 setTransactions(data);
                 setTotalItems(data.length);
-                const totalAmount = data.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                const totalAmount = data.reduce((acc: number, curr: any) => acc + Number(curr.amount || 0), 0);
                 setStats({ total_records: data.length, total_amount: totalAmount });
             } else {
                 const params = {
@@ -64,7 +88,8 @@ const PatientPaymentHistoryPage: React.FC = () => {
                     page: currentPage,
                     limit: pageSize,
                 };
-                const data = await getOrderHistory(params);
+                data = await getOrderHistory(params);
+                if (currentRequestRef.current !== requestId) return;
                 setTransactions(data.results);
                 setTotalItems(data.count);
                 setStats({
@@ -76,13 +101,19 @@ const PatientPaymentHistoryPage: React.FC = () => {
             console.error(error);
             toast.error(`Failed to load ${viewType.replace('_', ' ')} history`);
         } finally {
-            setLoading(false);
+            if (currentRequestRef.current === requestId) {
+                setLoading(false);
+                fetchingDataRef.current = null;
+            }
         }
     };
 
     useEffect(() => {
-        fetchKitchenList();
-    }, []);
+        // Only fetch kitchens if user is on meal_orders or focuses the dropdown
+        if (viewType === "meal_orders") {
+            fetchKitchenList();
+        }
+    }, [viewType]);
 
     useEffect(() => {
         fetchData();
@@ -191,6 +222,7 @@ const PatientPaymentHistoryPage: React.FC = () => {
                              <label className="text-[10px] uppercase font-black text-gray-400 ml-1 tracking-widest">Kitchen</label>
                              <Select 
                                 value={selectedKitchen}
+                                onFocus={fetchKitchenList}
                                 onChange={setSelectedKitchen}
                                 options={[
                                     { value: "all", label: "All Kitchens" },
