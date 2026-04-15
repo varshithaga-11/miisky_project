@@ -3,7 +3,8 @@ Miisky Svasth - operational master data (Miisky Technovation / miisky.com).
 
 This app is separate from ``website`` (CMS). Models follow stakeholder master
 tables: medical areas, biomarkers, data sources (UV / visible / IR / ECG / PPG /
-accelerometer / gas), devices, algorithms, mappings, and raw ADC transfer.
+accelerometer / gas), devices, algorithms, mappings, raw ADC transfer, and
+optional processed biomarker results for the analytics pipeline.
 
 Example rows are given in each model docstring.
 """
@@ -29,12 +30,13 @@ class MedicalArea(models.Model):
     medical_code = models.CharField(max_length=40, unique=True, db_index=True)
     description = models.CharField(max_length=500)
     explanation = models.TextField(blank=True, null=True)
+    sort_order = models.PositiveIntegerField(default=0, help_text="Display order in admin and APIs.")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["medical_code"]
+        ordering = ["sort_order", "medical_code"]
         verbose_name = "Medical area"
         verbose_name_plural = "Medical areas"
 
@@ -73,6 +75,8 @@ class PatientCategory(models.Model):
     age_max = models.PositiveSmallIntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["code"]
@@ -113,12 +117,20 @@ class Biomarker(models.Model):
     conversion_factor = models.FloatField(blank=True, null=True)
     alternative_measurement = models.CharField(max_length=200, blank=True, null=True)
     standard_norm = models.TextField(blank=True, null=True)
+    loinc_code = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text="Optional LOINC for interoperability.",
+    )
+    sort_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["biomarker_code"]
+        ordering = ["sort_order", "biomarker_code"]
         verbose_name = "Biomarker"
         verbose_name_plural = "Biomarkers"
 
@@ -152,6 +164,8 @@ class DataSourceCategory(models.Model):
     sort_order = models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["hierarchy_code", "sort_order"]
@@ -180,6 +194,7 @@ class DataSource(models.Model):
     extra = models.JSONField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["source_code"]
@@ -207,6 +222,9 @@ class DeviceMaster(models.Model):
     device_id = models.CharField(max_length=80, unique=True, db_index=True)
     device_sub_code = models.CharField(max_length=80, blank=True, null=True)
     device_title = models.CharField(max_length=200)
+    serial_number = models.CharField(max_length=120, blank=True, null=True, db_index=True)
+    firmware_version = models.CharField(max_length=80, blank=True, null=True)
+    hardware_revision = models.CharField(max_length=80, blank=True, null=True)
     date_operational = models.DateField(blank=True, null=True)
     image = models.ImageField(upload_to="medicaldevice/devices/", blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
@@ -244,6 +262,7 @@ class Algorithm(models.Model):
     version_date = models.DateField(blank=True, null=True)
     testing_date = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True, help_text="Inactive algorithms stay in DB for audit but are not offered for new flows.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -270,7 +289,9 @@ class PersonalizedAlgorithm(models.Model):
     )
     external_patient_key = models.CharField(max_length=80, db_index=True)
     tuning_params = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
@@ -311,6 +332,8 @@ class BiomarkerMedicalAreaMapping(models.Model):
     critical_max = models.FloatField(blank=True, null=True)
     normal_range_text = models.CharField(max_length=120, blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
@@ -346,6 +369,9 @@ class DeviceBiomarkerParameterMapping(models.Model):
     biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="device_parameter_maps")
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name="device_parameter_maps")
     version_code = models.CharField(max_length=40)
+    is_enabled = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
@@ -388,6 +414,8 @@ class BiomarkerSourceMapping(models.Model):
     )
     multi_source_title = models.CharField(max_length=200, blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
@@ -434,8 +462,11 @@ class DevicePatientMapping(models.Model):
     mobile_sim_no = models.CharField(max_length=40, blank=True, null=True)
     mobile_imei_no = models.CharField(max_length=40, blank=True, null=True)
     device_wifi_id = models.CharField(max_length=80, blank=True, null=True)
+    is_primary = models.BooleanField(default=True, help_text="Current active mapping for this patient-device pair.")
+    notes = models.TextField(blank=True, null=True)
     mapped_at = models.DateTimeField(auto_now_add=True)
     unmapped_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-mapped_at"]
@@ -471,6 +502,10 @@ class DeviceAlgorithmFlow(models.Model):
     )
     android_app_id = models.CharField(max_length=200, blank=True, null=True)
     version_control_no = models.CharField(max_length=80, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["device", "device_sub_id"]
@@ -496,8 +531,30 @@ class BasicDataTransfer(models.Model):
         adc_values=[412, 415, 418, ...]
     """
 
+    PROCESSING_STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("PROCESSED", "Processed"),
+        ("FAILED", "Failed"),
+        ("SKIPPED", "Skipped"),
+    ]
+
     device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="raw_transfers")
     device_sub_id = models.CharField(max_length=80, blank=True, null=True)
+    biomarker = models.ForeignKey(
+        Biomarker,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="raw_transfers",
+        help_text="When the uplink is already tied to a biomarker channel.",
+    )
+    data_source = models.ForeignKey(
+        DataSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="raw_transfers",
+    )
     source_type = models.CharField(
         max_length=40,
         help_text="Logical channel: UV, visible, IR, PPG, ECG, ACC, GAS, etc.",
@@ -506,15 +563,85 @@ class BasicDataTransfer(models.Model):
     reading_date = models.DateField()
     reading_time = models.TimeField()
     adc_values = models.JSONField()
+    processing_status = models.CharField(
+        max_length=20,
+        choices=PROCESSING_STATUS_CHOICES,
+        default="PENDING",
+        db_index=True,
+    )
+    error_message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-reading_date", "-reading_time"]
         indexes = [
             models.Index(fields=["device", "reading_date"]),
+            models.Index(fields=["processing_status", "reading_date"]),
         ]
         verbose_name = "Basic data transfer"
         verbose_name_plural = "Basic data transfers"
 
     def __str__(self) -> str:
         return f"{self.reading_id} @ {self.reading_date}"
+
+
+# -----------------------------------------------------------------------------
+# PROCESSED BIOMARKER RESULT — downstream of raw transfer + algorithm
+# -----------------------------------------------------------------------------
+
+
+class ProcessedBiomarkerResult(models.Model):
+    """
+    Clinical/engineering result after applying an algorithm to raw (or fused) data.
+
+    Example:
+        value=105.2, unit="mg/dL", interpretation="HIGH",
+        patient_id_external="PAT-88421", recorded_at=...
+    """
+
+    INTERPRETATION_CHOICES = [
+        ("NORMAL", "Normal"),
+        ("HIGH", "High"),
+        ("LOW", "Low"),
+        ("CRITICAL_HIGH", "Critical high"),
+        ("CRITICAL_LOW", "Critical low"),
+        ("UNKNOWN", "Unknown"),
+    ]
+
+    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="processed_results")
+    biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="processed_results")
+    patient_id_external = models.CharField(max_length=80, blank=True, null=True, db_index=True)
+    source_raw_reading = models.ForeignKey(
+        BasicDataTransfer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_results",
+    )
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_results",
+    )
+    value = models.FloatField()
+    unit = models.CharField(max_length=40, help_text="Snapshot of unit at computation time.")
+    interpretation = models.CharField(max_length=20, choices=INTERPRETATION_CHOICES, default="UNKNOWN")
+    recorded_at = models.DateTimeField(db_index=True)
+    confidence = models.FloatField(blank=True, null=True, help_text="0.0–1.0 when the model exposes it.")
+    extra = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-recorded_at"]
+        indexes = [
+            models.Index(fields=["device", "biomarker", "recorded_at"]),
+            models.Index(fields=["patient_id_external", "recorded_at"]),
+        ]
+        verbose_name = "Processed biomarker result"
+        verbose_name_plural = "Processed biomarker results"
+
+    def __str__(self) -> str:
+        return f"{self.biomarker.biomarker_code}={self.value} {self.unit} @ {self.recorded_at}"
