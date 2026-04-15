@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'db_food_with_data',
+#         'NAME': 'miisky_db',
 #         'USER': 'root',   # or your MySQL username
 #         'PASSWORD': '86604@Ga',
 #         'HOST': 'localhost',

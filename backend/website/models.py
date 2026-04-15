@@ -1085,4 +1085,3 @@ class StatCounter(UIDMixin):
     def __str__(self):
         return f"{self.title}: {self.value}{self.suffix or ''}"
 
-
