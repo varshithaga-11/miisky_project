@@ -23,7 +23,7 @@ const UserNutritionMappingPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [allotmentFilter, setAllotmentFilter] = useState("");
   const [mappingStatus, setMappingStatus] = useState<"all" | "mapped" | "unmapped">("all");
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("all");
+  const [selectedNutritionistName, setSelectedNutritionistName] = useState<string>("all");
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,8 +83,8 @@ const UserNutritionMappingPage: React.FC = () => {
       result = result.filter(r => (mappingStatus === "mapped" ? r.is_mapped : !r.is_mapped));
     }
 
-    if (selectedPatientId !== "all") {
-      result = result.filter(r => r.id.toString() === selectedPatientId);
+    if (selectedNutritionistName !== "all") {
+      result = result.filter(r => r.nutritionist_name === selectedNutritionistName);
     }
 
     if (searchTerm) {
@@ -102,13 +102,14 @@ const UserNutritionMappingPage: React.FC = () => {
     }
 
     return result;
-  }, [allRecords, mappingStatus, selectedPatientId, searchTerm, allotmentFilter]);
+  }, [allRecords, mappingStatus, selectedNutritionistName, searchTerm, allotmentFilter]);
 
-  // Unique patients for the dropdown filter
-  const patientOptions = useMemo(() => {
-    return allRecords
-      .map(r => ({ id: r.id.toString(), name: `${r.first_name || ""} ${r.last_name || ""} (${r.username})` }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  // Unique nutritionists for the dropdown filter
+  const nutritionistOptions = useMemo(() => {
+    const names = Array.from(new Set(allRecords.map(r => r.nutritionist_name)))
+      .filter(name => name !== "Not Assigned")
+      .sort((a,b) => a.localeCompare(b));
+    return names;
   }, [allRecords]);
 
   const handleAssignSuccess = () => {
@@ -165,7 +166,7 @@ const UserNutritionMappingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Filters Row 2: Status & Patient Dropdowns */}
+        {/* Filters Row 2: Status & Nutritionist Dropdowns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
           <select
             value={mappingStatus}
@@ -178,13 +179,13 @@ const UserNutritionMappingPage: React.FC = () => {
           </select>
 
           <select
-            value={selectedPatientId}
-            onChange={(e) => setSelectedPatientId(e.target.value)}
+            value={selectedNutritionistName}
+            onChange={(e) => setSelectedNutritionistName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
           >
-            <option value="all">Select Specific Patient...</option>
-            {patientOptions.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+            <option value="all">Select Specific Nutritionist...</option>
+            {nutritionistOptions.map(name => (
+              <option key={name} value={name}>{name}</option>
             ))}
           </select>
         </div>
@@ -193,13 +194,13 @@ const UserNutritionMappingPage: React.FC = () => {
           <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
             Total Records: {filteredRecords.length}
           </span>
-          {(searchTerm || allotmentFilter || mappingStatus !== "all" || selectedPatientId !== "all") && (
+          {(searchTerm || allotmentFilter || mappingStatus !== "all" || selectedNutritionistName !== "all") && (
             <button 
               onClick={() => { 
                 setSearchTerm(""); 
                 setAllotmentFilter(""); 
                 setMappingStatus("all");
-                setSelectedPatientId("all");
+                setSelectedNutritionistName("all");
               }}
               className="text-blue-600 hover:underline ml-2"
             >
