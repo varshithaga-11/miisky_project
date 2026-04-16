@@ -4,6 +4,7 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 export interface DailyMeal {
     id: number;
     user_diet_plan?: number;
+    status?: string;
     user_details: {
         id: number;
         first_name: string;

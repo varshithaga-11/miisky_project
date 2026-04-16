@@ -23,6 +23,7 @@ const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/SeparateOr
 const MicroKitchenDeliveryChargesPage = lazy(() => import("./pages/MicroKitchenSide/DeliveryCharges/index"));
 const PatientCartPage = lazy(() => import("./pages/PatientSide/Cart/index"));
 const PatientOrdersPage = lazy(() => import("./pages/PatientSide/Orders/index"));
+const MicroKitchenDeliveryFeedbackPage = lazy(() => import("./pages/MasterSide/DeliveryFeedback"));
 import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
@@ -391,6 +392,7 @@ export function appRoutes() {
           <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
           <Route path="nutrition/nutrition-mapping/user-mapping" element={<NutritionUserMappingPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
+          <Route path="microkitchen/delivery-feedback" element={<MicroKitchenDeliveryFeedbackPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />

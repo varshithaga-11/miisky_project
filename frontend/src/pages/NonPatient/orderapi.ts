@@ -426,10 +426,26 @@ export const getOrderDeliveryFeedback = async (
   return Array.isArray(response.data) ? response.data : [];
 };
 
+export const getMicroKitchenOrderDeliveryFeedback = async (
+  orderId: number
+): Promise<DeliveryFeedback[]> => {
+  const url = createApiUrl(`api/microkitchen/delivery-feedback/?order=${orderId}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
 export const getUserMealDeliveryFeedback = async (
   userMealId: number
 ): Promise<DeliveryFeedback[]> => {
   const url = createApiUrl(`api/delivery-feedback/?user_meal=${userMealId}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getMicroKitchenUserMealDeliveryFeedback = async (
+  userMealId: number
+): Promise<DeliveryFeedback[]> => {
+  const url = createApiUrl(`api/microkitchen/delivery-feedback/?user_meal=${userMealId}`);
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   return Array.isArray(response.data) ? response.data : [];
 };

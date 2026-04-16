@@ -474,6 +474,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/reviews",
   },
   {
+    icon: <Truck className="w-5 h-5" />,
+    name: "Delivery Reviews",
+    path: "/microkitchen/delivery-feedback",
+  },
+  {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",

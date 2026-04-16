@@ -13,11 +13,13 @@ import {
     bulkAssignDelivery,
 } from "./api";
 import type { DailyMeal, KitchenPatient } from "./api";
+import type { DeliveryFeedback } from "../../NonPatient/orderapi";
+import { getMicroKitchenUserMealDeliveryFeedback } from "../../NonPatient/orderapi";
 import { fetchPlanDeliveryAssignments, fetchSupplyChainUsers } from "../DeliveryManagement/api";
 import type { PlanDeliveryAssignment, SupplyChainUser } from "../DeliveryManagement/api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle } from "react-icons/fi";
+import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle, FiStar } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-icons/gi";
 
@@ -82,6 +84,8 @@ function globalDeliveryOptions(plan: PlanDeliveryAssignment | undefined): Array<
 
 const MealsBasedOnDailyPage: React.FC = () => {
     const [meals, setMeals] = useState<DailyMeal[]>([]);
+    const [deliveryFeedbackByMealId, setDeliveryFeedbackByMealId] = useState<Record<number, DeliveryFeedback[]>>({});
+    const [feedbackLoadingMealId, setFeedbackLoadingMealId] = useState<number | null>(null);
     const [patients, setPatients] = useState<KitchenPatient[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -109,6 +113,19 @@ const MealsBasedOnDailyPage: React.FC = () => {
     const [bulkPersonId, setBulkPersonId] = useState<string>("");
     const [bulkOnlyUnassigned, setBulkOnlyUnassigned] = useState(true);
     const [bulkSaving, setBulkSaving] = useState(false);
+
+    const loadMealFeedback = async (mealId: number) => {
+        if (deliveryFeedbackByMealId[mealId]) return;
+        setFeedbackLoadingMealId(mealId);
+        try {
+            const feedbacks = await getMicroKitchenUserMealDeliveryFeedback(mealId);
+            setDeliveryFeedbackByMealId((prev) => ({ ...prev, [mealId]: feedbacks }));
+        } catch {
+            setDeliveryFeedbackByMealId((prev) => ({ ...prev, [mealId]: [] }));
+        } finally {
+            setFeedbackLoadingMealId(null);
+        }
+    };
 
     const fetchPatients = async () => {
         try {
@@ -673,6 +690,76 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                                     </button>
                                                                 )}
                                                             </div>
+
+                                                            {m.status === "delivered" && (
+                                                                <div className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 shadow-sm space-y-3">
+                                                                    <div className="flex items-center justify-between gap-3">
+                                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                                            Delivery feedback
+                                                                        </p>
+                                                                        {!deliveryFeedbackByMealId[m.id] && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => void loadMealFeedback(m.id)}
+                                                                                className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest disabled:opacity-60"
+                                                                                disabled={feedbackLoadingMealId === m.id}
+                                                                            >
+                                                                                {feedbackLoadingMealId === m.id ? "Loading…" : "Load"}
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {(() => {
+                                                                        const feedbacks = deliveryFeedbackByMealId[m.id];
+                                                                        if (!feedbacks) return null;
+                                                                        const deliveryRating = feedbacks.find((f) => f.feedback_type === "rating");
+                                                                        const deliveryIssue = feedbacks.find((f) => f.feedback_type === "issue");
+                                                                        if (!deliveryRating && !deliveryIssue) {
+                                                                            return (
+                                                                                <p className="text-xs font-bold text-gray-500">
+                                                                                    No delivery feedback submitted yet.
+                                                                                </p>
+                                                                            );
+                                                                        }
+                                                                        return (
+                                                                            <div className="space-y-3">
+                                                                                {deliveryRating && (
+                                                                                    <div className="p-3 rounded-2xl bg-indigo-50/40 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/10">
+                                                                                        <div className="flex items-center gap-1 mb-2">
+                                                                                            {[1, 2, 3, 4, 5].map((s) => (
+                                                                                                <FiStar
+                                                                                                    key={s}
+                                                                                                    size={12}
+                                                                                                    className={s <= (deliveryRating.rating || 0) ? "text-amber-500 fill-amber-500" : "text-gray-300"}
+                                                                                                />
+                                                                                            ))}
+                                                                                            <span className="ml-2 text-[10px] font-black text-gray-700 dark:text-gray-300">
+                                                                                                {deliveryRating.rating}/5
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic">
+                                                                                            "{deliveryRating.review || "No written delivery review"}"
+                                                                                        </p>
+                                                                                    </div>
+                                                                                )}
+                                                                                {deliveryIssue && (
+                                                                                    <div className="p-3 rounded-2xl bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-500/10">
+                                                                                        <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1">
+                                                                                            Reported issue
+                                                                                        </p>
+                                                                                        <p className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                                                                                            {(deliveryIssue.issue_type || "issue").replace(/_/g, " ")}
+                                                                                        </p>
+                                                                                        <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic mt-1">
+                                                                                            "{deliveryIssue.description || "No extra issue details"}"
+                                                                                        </p>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+                                                                </div>
+                                                            )}
 
                                                             <div className="p-5 bg-gray-50/50 dark:bg-white/[0.03] rounded-3xl border border-transparent group-hover:border-indigo-100/30 transition-all">
                                                                 <p className="text-[10px] font-black text-gray-700 dark:text-gray-300 uppercase leading-relaxed line-clamp-2 italic">

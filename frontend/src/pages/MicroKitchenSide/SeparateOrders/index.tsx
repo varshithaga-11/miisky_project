@@ -6,6 +6,8 @@ import {
     updateOrderStatus,
     Order,
     MicroKitchenOrderListRow,
+    getMicroKitchenOrderDeliveryFeedback,
+    DeliveryFeedback,
 } from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -36,6 +38,7 @@ const SeparateOrdersPage: React.FC = () => {
     const [roleFilterByOrder, setRoleFilterByOrder] = useState<Record<number, "all" | "primary" | "backup" | "temporary">>({});
     const [selectedPersonByOrder, setSelectedPersonByOrder] = useState<Record<number, string>>({});
     const [savingDeliveryForOrderId, setSavingDeliveryForOrderId] = useState<number | null>(null);
+    const [deliveryFeedbackByOrderId, setDeliveryFeedbackByOrderId] = useState<Record<number, DeliveryFeedback[]>>({});
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -57,6 +60,12 @@ const SeparateOrdersPage: React.FC = () => {
         try {
             const data = await getMicroKitchenOrderDetail(orderId);
             setOrderDetailById((prev) => ({ ...prev, [orderId]: data }));
+            try {
+                const feedbacks = await getMicroKitchenOrderDeliveryFeedback(orderId);
+                setDeliveryFeedbackByOrderId((prev) => ({ ...prev, [orderId]: feedbacks }));
+            } catch {
+                setDeliveryFeedbackByOrderId((prev) => ({ ...prev, [orderId]: [] }));
+            }
         } catch (error) {
             console.error(error);
             toast.error("Failed to load order details");
@@ -521,6 +530,50 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                 </div>
                                                                             </div>
                                                                         )}
+
+                                                                        {(() => {
+                                                                            const feedbacks = deliveryFeedbackByOrderId[fullOrder.id] || [];
+                                                                            const deliveryRating = feedbacks.find((f) => f.feedback_type === "rating");
+                                                                            const deliveryIssue = feedbacks.find((f) => f.feedback_type === "issue");
+                                                                            if (!deliveryRating && !deliveryIssue) return null;
+                                                                            return (
+                                                                                <div>
+                                                                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                                                        <FiStar size={14} className="text-indigo-500" /> Delivery feedback
+                                                                                    </h4>
+                                                                                    <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/10 space-y-3">
+                                                                                        {deliveryRating && (
+                                                                                            <div>
+                                                                                                <div className="flex items-center gap-1 mb-2">
+                                                                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                                                                        <FiStar key={s} size={10} className={s <= (deliveryRating.rating || 0) ? "text-amber-500 fill-amber-500" : "text-gray-300"} />
+                                                                                                    ))}
+                                                                                                    <span className="ml-2 text-[10px] font-black text-gray-700 dark:text-gray-300">
+                                                                                                        {deliveryRating.rating}/5
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                                <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic">
+                                                                                                    "{deliveryRating.review || "No written delivery review"}"
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {deliveryIssue && (
+                                                                                            <div className="pt-2 border-t border-indigo-100/70 dark:border-white/5">
+                                                                                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1">
+                                                                                                    Reported issue
+                                                                                                </p>
+                                                                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                                                                                                    {(deliveryIssue.issue_type || "issue").replace(/_/g, " ")}
+                                                                                                </p>
+                                                                                                <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic mt-1">
+                                                                                                    "{deliveryIssue.description || "No extra issue details"}"
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
                                                                     </div>
                                                                 </div>
                                                                 ) : (

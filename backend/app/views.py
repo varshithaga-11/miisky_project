@@ -100,6 +100,22 @@ class IsAdminRole(BasePermission):
         return bool(u and u.is_authenticated and getattr(u, 'role', None) == 'admin')
 
 
+class IsMasterRole(BasePermission):
+    """Allow only authenticated users with role='master'."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        return bool(u and u.is_authenticated and getattr(u, "role", None) == "master")
+
+
+class IsMicroKitchenRole(BasePermission):
+    """Allow only authenticated users with role='micro_kitchen'."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        return bool(u and u.is_authenticated and getattr(u, "role", None) == "micro_kitchen")
+
+
 class IsAdminOrDoctorRole(BasePermission):
     """Allow authenticated users with role admin or doctor (shared admin-patient directory)."""
 
@@ -6180,6 +6196,130 @@ class DeliveryFeedbackView(APIView):
             SupplyChainDeliveryFeedbackSerializer(saved).data,
             status=status.HTTP_200_OK if instance else status.HTTP_201_CREATED,
         )
+
+
+class MicroKitchenDeliveryFeedbackView(APIView):
+    """
+    Micro-kitchen visibility API for delivery feedback.
+    - GET: list feedback for a kitchen's Order or UserMeal.
+      Query params: ?order=<id> OR ?user_meal=<id> (exactly one required)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def _validate_target(self, request):
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return None, Response(
+                {"detail": "Only micro-kitchen users can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        order_id = request.query_params.get("order")
+        user_meal_id = request.query_params.get("user_meal")
+        if bool(order_id) == bool(user_meal_id):
+            return None, Response(
+                {"detail": "Provide exactly one target: order or user_meal."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target = {"order": None, "user_meal": None}
+        if order_id:
+            order = get_object_or_404(Order, id=order_id, micro_kitchen__user=request.user)
+            target["order"] = order
+        if user_meal_id:
+            meal = get_object_or_404(UserMeal, id=user_meal_id, micro_kitchen__user=request.user)
+            target["user_meal"] = meal
+        return target, None
+
+    def get(self, request):
+        target, err = self._validate_target(request)
+        if err:
+            return err
+
+        qs = SupplyChainDeliveryFeedback.objects.all()
+        if target["order"]:
+            qs = qs.filter(order=target["order"])
+        if target["user_meal"]:
+            qs = qs.filter(user_meal=target["user_meal"])
+
+        feedback_type = (request.query_params.get("feedback_type") or "").strip()
+        if feedback_type in {
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+        }:
+            qs = qs.filter(feedback_type=feedback_type)
+
+        qs = qs.select_related("reported_by", "order", "user_meal").order_by("-created_at")
+        return Response(SupplyChainDeliveryFeedbackSerializer(qs, many=True).data)
+
+
+class MicroKitchenDeliveryFeedbackListView(APIView):
+    """
+    Micro-kitchen: view delivery feedback for the logged-in kitchen's orders/meals.
+    Query params:
+      - page, limit (optional)
+      - feedback_type: issue|rating (optional)
+      - order: order_id (optional)
+      - user_meal: user_meal_id (optional)
+      - search: matches reporter username/first/last (optional)
+    """
+
+    permission_classes = [IsAuthenticated, IsMicroKitchenRole]
+
+    def get(self, request):
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            Q(order__micro_kitchen__user=request.user)
+            | Q(user_meal__micro_kitchen__user=request.user)
+        ).select_related(
+            "reported_by", "order", "user_meal"
+        ).order_by("-created_at")
+
+        feedback_type = (request.query_params.get("feedback_type") or "").strip()
+        if feedback_type in {
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+        }:
+            qs = qs.filter(feedback_type=feedback_type)
+
+        order_id = request.query_params.get("order")
+        if order_id:
+            try:
+                qs = qs.filter(order_id=int(order_id))
+            except (ValueError, TypeError):
+                return Response({"detail": "Invalid order id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_meal_id = request.query_params.get("user_meal")
+        if user_meal_id:
+            try:
+                qs = qs.filter(user_meal_id=int(user_meal_id))
+            except (ValueError, TypeError):
+                return Response({"detail": "Invalid user_meal id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(reported_by__username__icontains=search)
+                | Q(reported_by__first_name__icontains=search)
+                | Q(reported_by__last_name__icontains=search)
+            )
+
+        try:
+            page = int(request.query_params.get("page", 1))
+        except (ValueError, TypeError):
+            page = 1
+        try:
+            limit = int(request.query_params.get("limit", 20))
+        except (ValueError, TypeError):
+            limit = 20
+        limit = max(1, min(limit, 200))
+
+        paginator = Pagination()
+        paginator.page_size = limit
+        paginator.page_query_param = "page"
+        paginator.page_size_query_param = "limit"
+        paged = paginator.paginate_queryset(qs, request, view=self)
+        ser = SupplyChainDeliveryFeedbackSerializer(paged, many=True)
+        return paginator.get_paginated_response(ser.data)
 
 
 class CartViewSet(viewsets.ModelViewSet):

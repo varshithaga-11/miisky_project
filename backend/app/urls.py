@@ -128,6 +128,8 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path("delivery-feedback/", views.DeliveryFeedbackView.as_view(), name="delivery-feedback"),
+    path("microkitchen/delivery-feedback/", views.MicroKitchenDeliveryFeedbackView.as_view(), name="microkitchen-delivery-feedback"),
+    path("microkitchen/delivery-feedback-list/", views.MicroKitchenDeliveryFeedbackListView.as_view(), name="microkitchen-delivery-feedback-list"),
     path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
     path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
     path(
