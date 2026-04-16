@@ -21,19 +21,7 @@ export default function DeliveryQuestionarePage() {
       try {
         const res = await getMyDeliveryProfile();
         setData(res || {});
-        const raw = res?.available_slots;
-        if (typeof raw === "string") {
-          try {
-            const parsed = JSON.parse(raw);
-            setSlotsText(typeof parsed === "object" ? JSON.stringify(parsed, null, 2) : raw);
-          } catch {
-            setSlotsText(raw);
-          }
-        } else if (raw != null) {
-          setSlotsText(JSON.stringify(raw, null, 2));
-        } else {
-          setSlotsText("");
-        }
+        setSlotsText(typeof res?.available_slots === "string" ? res.available_slots : "");
       } catch (err) {
         console.error(err);
         toast.error("Failed to load delivery questionnaire");
@@ -49,15 +37,7 @@ export default function DeliveryQuestionarePage() {
   const onSave = async () => {
     setSaving(true);
     try {
-      let slotsPayload: string | null = null;
-      const t = slotsText.trim();
-      if (t) {
-        try {
-          slotsPayload = JSON.stringify(JSON.parse(t));
-        } catch {
-          slotsPayload = t;
-        }
-      }
+      const slotsPayload = slotsText.trim() ? slotsText.trim() : null;
       const payload: Partial<DeliveryProfile> = {
         ...data,
         available_slots: slotsPayload,
@@ -356,9 +336,9 @@ export default function DeliveryQuestionarePage() {
                 id="available_slots"
                 value={slotsText}
                 onChange={(e) => setSlotsText(e.target.value)}
-                className="w-full border rounded-lg p-3 font-mono text-xs dark:bg-gray-800 dark:border-gray-700"
-                rows={6}
-                placeholder='Example JSON: [{"day":"Mon","from":"10:00","to":"14:00"}] or describe your availability.'
+                className="w-full border rounded-lg p-3 text-sm dark:bg-gray-800 dark:border-gray-700"
+                rows={4}
+                placeholder="Example: Mon-Fri 10:00 AM to 2:00 PM"
               />
             </div>
           </section>
