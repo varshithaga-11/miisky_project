@@ -2355,8 +2355,8 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                     "last_name": m.user.last_name,
                     "email": m.user.email,
                     "mobile": m.user.mobile,
-                    "allotted_by": f"{m.allotted_by.first_name or ''} {m.allotted_by.last_name or ''}".strip() or m.allotted_by.username if m.allotted_by else "System",
-                    "created_by": f"{m.user.created_by.first_name or ''} {m.user.created_by.last_name or ''}".strip() or m.user.created_by.username if m.user.created_by else "System"
+                    "allotted_by": f"{m.allotted_by.first_name or ''} {m.allotted_by.last_name or ''}".strip() or m.allotted_by.username if m.allotted_by else None,
+                    "created_by": f"{m.user.created_by.first_name or ''} {m.user.created_by.last_name or ''}".strip() or m.user.created_by.username if m.user.created_by else None
                 }
             )
 
@@ -2388,7 +2388,7 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                     "last_name": p.last_name,
                     "email": p.email,
                     "mobile": p.mobile,
-                    "created_by": f"{p.created_by.first_name or ''} {p.created_by.last_name or ''}".strip() or p.created_by.username if p.created_by else "System"
+                    "created_by": f"{p.created_by.first_name or ''} {p.created_by.last_name or ''}".strip() or p.created_by.username if p.created_by else None
                 }
             )
         return Response(results)

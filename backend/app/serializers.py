@@ -1889,7 +1889,7 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
                 'username': obj.allotted_by.username,
                 'name': f"{obj.allotted_by.first_name or ''} {obj.allotted_by.last_name or ''}".strip() or obj.allotted_by.username
             }
-        return {"id": None, "username": "System", "name": "System"}
+        return {"id": None, "username": None, "name": None}
 
     def get_user_details(self, obj):
         if obj.user:
@@ -1900,7 +1900,7 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
                 'last_name': obj.user.last_name,
                 'email': obj.user.email,
                 'mobile': obj.user.mobile,
-                'created_by_name': f"{obj.user.created_by.first_name or ''} {obj.user.created_by.last_name or ''}".strip() or obj.user.created_by.username if obj.user.created_by else "System"
+                'created_by_name': f"{obj.user.created_by.first_name or ''} {obj.user.created_by.last_name or ''}".strip() or obj.user.created_by.username if obj.user.created_by else None
             }
         return None
 

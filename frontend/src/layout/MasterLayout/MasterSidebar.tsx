@@ -300,7 +300,6 @@ const nutritionistNavItems: NavItem[] = [
     name: "Nutrition Mapping",
     subItems: [
       { name: "User Mapping", path: "/nutrition/nutrition-mapping/user-mapping" },
-      { name: "Reassignment Logs", path: "/nutrition/nutrition-mapping/reassignment-logs" },
     ],
   },
   {
