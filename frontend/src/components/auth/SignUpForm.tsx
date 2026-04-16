@@ -19,6 +19,7 @@ interface FormData {
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     first_name: '',
@@ -301,15 +302,27 @@ export default function SignUpForm() {
                   <Label>
                     Confirm Password<span className="text-error-500">*</span>
                   </Label>
-                  <Input
-                    placeholder="Confirm your password"
-                    type="password"
-                    id="password_confirm"
-                    name="password_confirm"
-                    value={formData.password_confirm}
-                    onChange={handleInputChange}
-                    className={!passwordsMatch && showPasswordError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="Confirm your password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      id="password_confirm"
+                      name="password_confirm"
+                      value={formData.password_confirm}
+                      onChange={handleInputChange}
+                      className={!passwordsMatch && showPasswordError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                    />
+                    <span
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      ) : (
+                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      )}
+                    </span>
+                  </div>
                   {showPasswordError && (
                     <p className="mt-1 text-sm text-red-500">
                       Passwords do not match

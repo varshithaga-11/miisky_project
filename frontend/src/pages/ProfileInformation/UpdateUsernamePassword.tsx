@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import InputField from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import Form from "../../components/form/Form";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import { createApiUrl, getAuthHeaders } from "../../access/access";
@@ -22,6 +23,9 @@ const UpdateUsernamePasswordPage: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -159,17 +163,29 @@ const UpdateUsernamePasswordPage: React.FC = () => {
               <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200" htmlFor="old_password">
                 Old Password<span className="text-red-500">*</span>
               </label>
-              <InputField
-                id="old_password"
-                name="old_password"
-                type="password"
-                value={form.old_password}
-                onChange={handleChange}
-                error={!!errors.old_password}
-                hint={errors.old_password}
-                required
-                placeholder="Enter old password"
-              />
+              <div className="relative">
+                <InputField
+                  id="old_password"
+                  name="old_password"
+                  type={showOldPassword ? "text" : "password"}
+                  value={form.old_password}
+                  onChange={handleChange}
+                  error={!!errors.old_password}
+                  hint={errors.old_password}
+                  required
+                  placeholder="Enter old password"
+                />
+                <span
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                >
+                  {showOldPassword ? (
+                    <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                  ) : (
+                    <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                  )}
+                </span>
+              </div>
             </div>
 
             {(updateType === "password" || updateType === "both") && (
@@ -178,16 +194,28 @@ const UpdateUsernamePasswordPage: React.FC = () => {
                   <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200" htmlFor="new_password">
                     New Password
                   </label>
-                  <InputField
-                    id="new_password"
-                    name="new_password"
-                    type="password"
-                    value={form.new_password}
-                    onChange={handleChange}
-                    error={!!errors.new_password}
-                    hint={errors.new_password}
-                    placeholder="Enter new password"
-                  />
+                  <div className="relative">
+                    <InputField
+                      id="new_password"
+                      name="new_password"
+                      type={showNewPassword ? "text" : "password"}
+                      value={form.new_password}
+                      onChange={handleChange}
+                      error={!!errors.new_password}
+                      hint={errors.new_password}
+                      placeholder="Enter new password"
+                    />
+                    <span
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                    >
+                      {showNewPassword ? (
+                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      ) : (
+                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      )}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label
@@ -196,16 +224,28 @@ const UpdateUsernamePasswordPage: React.FC = () => {
                   >
                     Confirm Password
                   </label>
-                  <InputField
-                    id="confirm_password"
-                    name="confirm_password"
-                    type="password"
-                    value={form.confirm_password}
-                    onChange={handleChange}
-                    error={!!errors.confirm_password}
-                    hint={errors.confirm_password}
-                    placeholder="Confirm new password"
-                  />
+                  <div className="relative">
+                    <InputField
+                      id="confirm_password"
+                      name="confirm_password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={form.confirm_password}
+                      onChange={handleChange}
+                      error={!!errors.confirm_password}
+                      hint={errors.confirm_password}
+                      placeholder="Confirm new password"
+                    />
+                    <span
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      ) : (
+                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      )}
+                    </span>
+                  </div>
                 </div>
               </>
             )}
