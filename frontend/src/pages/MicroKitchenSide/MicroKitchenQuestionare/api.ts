@@ -43,7 +43,6 @@ export type MicroKitchenProfile = {
   photo_entrance?: File | string | null;
   photo_kitchen?: File | string | null;
   photo_platform?: File | string | null;
-  additional_photos?: any;
   latitude?: number | null;
   longitude?: number | null;
   user_details?: { address?: string; city?: string; state?: string; country?: string };

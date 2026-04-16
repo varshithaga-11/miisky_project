@@ -116,8 +116,6 @@ export const fetchUserById = async (userId: number): Promise<PatientUserRow> => 
 export const fetchQuestionnairesForPatient = async (patientUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/userquestionnaire/", {
     user: patientUserId,
-    limit: 30,
-    page: 1,
   });
   return unwrapResults(data);
 };

@@ -217,7 +217,6 @@ class MicroKitchenProfile(models.Model):
     photo_entrance = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
     photo_kitchen = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
     photo_platform = models.ImageField(upload_to='kitchen/photos/', null=True, blank=True)
-    additional_photos = models.JSONField(null=True, blank=True)
 
     # Location: use user.latitude, user.longitude (UserRegister)
 

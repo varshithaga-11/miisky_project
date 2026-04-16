@@ -1485,6 +1485,23 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
             return qs.filter(user_id__in=mapped_ids)
         return qs.none()
 
+    def list(self, request, *args, **kwargs):
+        """
+        If `user` query param is provided, return full questionnaire rows
+        without pagination (single patient fetch use-case).
+        Otherwise keep standard paginated list behavior.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        if request.query_params.get("user"):
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):
         instance = UserQuestionnaire.objects.filter(user=request.user).first()

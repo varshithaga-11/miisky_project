@@ -108,6 +108,42 @@ function initHcRows(masters: MasterRow[], hc: UserQuestionnaire["health_conditio
   return out;
 }
 
+function normalizeMealSlots(value: unknown): string[] {
+  const fromArray = (arr: unknown[]): string[] =>
+    arr
+      .map((x) => (typeof x === "string" ? x.trim() : ""))
+      .filter(Boolean);
+
+  if (Array.isArray(value)) return fromArray(value);
+  if (typeof value !== "string") return [];
+  const raw = value.trim();
+  if (!raw || raw === "[]") return [];
+
+  // Handle quoted JSON payloads like "\"[]\"" from legacy rows.
+  if (
+    (raw.startsWith("\"") && raw.endsWith("\"")) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    return normalizeMealSlots(raw.slice(1, -1));
+  }
+
+  if ((raw.startsWith("[") && raw.endsWith("]")) || (raw.startsWith("{") && raw.endsWith("}"))) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return fromArray(parsed);
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  // Fallback: comma-separated text.
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function PatientQuestionnairePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -165,7 +201,7 @@ export default function PatientQuestionnairePage() {
           fetchActivityMasters(),
         ]);
 
-        setData(res || {});
+        setData({ ...(res || {}), meal_slots: normalizeMealSlots(res?.meal_slots) });
         setHabitMasters(hm);
         setActivityMasters(actm);
         questionnaireLoadedRef.current = true;
@@ -422,8 +458,12 @@ export default function PatientQuestionnairePage() {
         return aid;
       });
 
+    const normalizedMealSlots = normalizeMealSlots(data.meal_slots);
+
     return {
       ...data,
+      // MultiSelectField rejects quoted JSON-like values; send null when empty.
+      meal_slots: normalizedMealSlots.length > 0 ? normalizedMealSlots : null,
       health_conditions,
       symptoms: symptomIds,
       autoimmune_diseases: autoimmuneIds,

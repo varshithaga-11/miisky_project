@@ -78,9 +78,36 @@ export const getMyQuestionnaire = async (): Promise<UserQuestionnaire> => {
   return getJson<UserQuestionnaire>("api/userquestionnaire/me/");
 };
 
+function sanitizeMealSlotsForSave(value: unknown): string[] | null {
+  if (Array.isArray(value)) {
+    const out = value
+      .map((x) => (typeof x === "string" ? x.trim() : ""))
+      .filter(Boolean);
+    return out.length ? out : null;
+  }
+  if (typeof value !== "string") return null;
+  const raw = value.trim();
+  if (!raw || raw === "[]") return null;
+  if ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("'") && raw.endsWith("'"))) {
+    return sanitizeMealSlotsForSave(raw.slice(1, -1));
+  }
+  if (raw.startsWith("[") && raw.endsWith("]")) {
+    try {
+      return sanitizeMealSlotsForSave(JSON.parse(raw));
+    } catch {
+      return null;
+    }
+  }
+  return raw
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
 export const saveMyQuestionnaire = async (data: Partial<UserQuestionnaire>): Promise<UserQuestionnaire> => {
   const url = createApiUrl("api/userquestionnaire/me/");
-  const response = await axios.put(url, data, { headers: await getAuthHeaders() });
+  const payload = { ...data, meal_slots: sanitizeMealSlotsForSave(data.meal_slots) };
+  const response = await axios.put(url, payload, { headers: await getAuthHeaders() });
   return response.data;
 };
 

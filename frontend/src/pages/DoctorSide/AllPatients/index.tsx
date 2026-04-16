@@ -73,17 +73,29 @@ function QuestionnaireView({ data }: { data: any }) {
     </div>
   );
 
-  const BadgeList = ({ items }: { items: string[] }) => (
+  const BadgeList = ({ items }: { items: unknown[] }) => (
     <div className="flex flex-wrap gap-1.5">
       {items && items.length > 0 ? (
-        items.map((item, i) => (
-          <span
-            key={i}
-            className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-gray-300 text-[11px] font-semibold border border-slate-200 dark:border-white/10"
-          >
-            {item}
-          </span>
-        ))
+        items
+          .map((item) => {
+            if (typeof item === "string" || typeof item === "number") return String(item);
+            if (item && typeof item === "object") {
+              const obj = item as Record<string, unknown>;
+              if (typeof obj.name === "string" && obj.name.trim()) return obj.name;
+              if (typeof obj.label === "string" && obj.label.trim()) return obj.label;
+              if (typeof obj.value === "string" && obj.value.trim()) return obj.value;
+            }
+            return "";
+          })
+          .filter(Boolean)
+          .map((label, i) => (
+            <span
+              key={`${label}-${i}`}
+              className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-gray-300 text-[11px] font-semibold border border-slate-200 dark:border-white/10"
+            >
+              {label}
+            </span>
+          ))
       ) : (
         <span className="text-gray-400 italic text-xs">None reported</span>
       )}
@@ -108,6 +120,35 @@ function QuestionnaireView({ data }: { data: any }) {
           .filter(Boolean)
           .join(", ") || "—"
       : "—";
+
+  const foodPreferenceText = (() => {
+    const pref = data.food_preferences;
+    if (Array.isArray(pref)) return pref.filter(Boolean).join(", ") || "None reported";
+    if (typeof pref === "string") {
+      const raw = pref.trim();
+      if (!raw) return "None reported";
+      // Backend sometimes stores JSON as a text field (e.g. "[\"Onion -dont add\"]").
+      if ((raw.startsWith("[") && raw.endsWith("]")) || (raw.startsWith("{") && raw.endsWith("}"))) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed.filter(Boolean).join(", ") || "None reported";
+          if (parsed && typeof parsed === "object") {
+            const values = Object.values(parsed as Record<string, unknown>).filter(Boolean);
+            return values.length > 0 ? values.join(", ") : "None reported";
+          }
+          return String(parsed || "None reported");
+        } catch {
+          return raw;
+        }
+      }
+      return raw;
+    }
+    if (pref && typeof pref === "object") {
+      const list = Object.values(pref).filter(Boolean);
+      return list.length > 0 ? list.join(", ") : "None reported";
+    }
+    return "None reported";
+  })();
 
   return (
     <div className="space-y-6">
@@ -240,7 +281,7 @@ function QuestionnaireView({ data }: { data: any }) {
             Preferences
           </div>
           <div className="text-sm text-indigo-900 dark:text-indigo-200 font-medium">
-            {data.food_preferences?.length > 0 ? data.food_preferences.join(", ") : "None reported"}
+            {foodPreferenceText}
           </div>
         </div>
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
@@ -579,7 +620,7 @@ const AllPatientsPage: React.FC = () => {
             Close
           </Button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 min-h-0">
+        <div className="p-6 flex-1 min-h-0">
           {qLoading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
@@ -591,7 +632,7 @@ const AllPatientsPage: React.FC = () => {
                <p className="text-gray-500 dark:text-gray-400 font-medium">No questionnaire submitted for this patient.</p>
             </div>
           ) : (
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto max-h-[calc(90vh-140px)] overflow-y-auto pr-1 sm:pr-2 overscroll-contain">
               <QuestionnaireView data={qData} />
             </div>
           )}
