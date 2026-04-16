@@ -3567,36 +3567,70 @@ class SupplyChainDeliveryLeave(models.Model):
         return f"{self.user} | {self.start_date} -> {self.end_date}"
 
 
-class DeliveryIssue(models.Model):
-    assignment = models.ForeignKey(
-        DeliveryAssignment,
-        on_delete=models.SET_NULL,null=True,blank=True,
-        related_name='issues'
+class SupplyChainDeliveryFeedback(models.Model):
+    """
+    Unified supply-chain feedback table.
+    A feedback row can be linked to either:
+    1) a specific Order, or
+    2) a UserMeal.
+    """
+
+    FEEDBACK_TYPE_ISSUE = "issue"
+    FEEDBACK_TYPE_RATING = "rating"
+    FEEDBACK_TYPE_CHOICES = [
+        (FEEDBACK_TYPE_ISSUE, "Issue"),
+        (FEEDBACK_TYPE_RATING, "Rating"),
+    ]
+
+    ISSUE_TYPES = [
+        ("not_home", "Patient Not Home"),
+        ("wrong_address", "Wrong Address"),
+        ("food_damaged", "Food Damaged"),
+        ("late_delivery", "Late Delivery"),
+        ("kitchen_delay", "Kitchen Delay"),
+        ("other", "Other"),
+    ]
+
+
+
+    feedback_type = models.CharField(
+        max_length=20,
+        choices=FEEDBACK_TYPE_CHOICES,
+        default=FEEDBACK_TYPE_ISSUE,
     )
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="delivery_feedbacks",
+    )
+    user_meal = models.ForeignKey(
+        UserMeal,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="delivery_feedbacks",
+    )
+
     reported_by = models.ForeignKey(
         UserRegister,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        related_name="submitted_delivery_feedbacks",
     )
 
-    ISSUE_TYPES = [
-        ('not_home', 'Patient Not Home'),
-        ('wrong_address', 'Wrong Address'),
-        ('food_damaged', 'Food Damaged'),
-        ('late_delivery', 'Late Delivery'),
-        ('kitchen_delay', 'Kitchen Delay'),
-        ('other', 'Other'),
-    ]
-    issue_type = models.CharField(max_length=30, choices=ISSUE_TYPES)
-    description = models.TextField(null=True, blank=True)
+    rating = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    review = models.TextField(null=True, blank=True)
 
-    PRIORITY_CHOICES = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-    ]
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='low')
+    issue_type = models.CharField(max_length=30, choices=ISSUE_TYPES, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
 
     resolved = models.BooleanField(default=False)
     resolved_by = models.ForeignKey(
@@ -3604,53 +3638,42 @@ class DeliveryIssue(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='resolved_delivery_issues'
+        related_name="resolved_delivery_feedbacks",
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.issue_type} | {self.assignment} | {'Resolved' if self.resolved else 'Open'}"
-
-
-class DeliveryRating(models.Model):
-    assignment = models.OneToOneField(
-        DeliveryAssignment,
-        on_delete=models.SET_NULL,null=True,blank=True,
-        related_name='rating'
-    )
-    rated_by = models.ForeignKey(
-        UserRegister,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-    rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
-    review = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
     def clean(self):
         super().clean()
-        if not self.assignment_id:
-            return
-        a = self.assignment
-        if not a.is_active:
+
+        if bool(self.order_id) == bool(self.user_meal_id):
             raise ValidationError(
-                {'assignment': 'Rating must be linked to the active delivery row for this meal.'}
+                {"order": "Choose exactly one target: either Order or UserMeal."}
             )
-        if a.status != 'delivered':
-            raise ValidationError(
-                {'assignment': 'Rating is only allowed after delivery is completed.'}
-            )
+
+        if self.feedback_type == self.FEEDBACK_TYPE_RATING:
+            if self.rating is None:
+                raise ValidationError({"rating": "Rating is required for rating feedback."})
+
+            if self.order_id and self.order and self.order.status != "delivered":
+                raise ValidationError(
+                    {"order": "Rating is only allowed after order is delivered."}
+                )
+            if self.user_meal_id and self.user_meal and self.user_meal.status != "delivered":
+                raise ValidationError(
+                    {"user_meal": "Rating is only allowed after meal is delivered."}
+                )
+
+        if self.feedback_type == self.FEEDBACK_TYPE_ISSUE and not self.issue_type:
+            raise ValidationError({"issue_type": "Issue type is required for issue feedback."})
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Rating {self.rating}/5 → {self.assignment.delivery_person}"
+        target = self.order or self.user_meal
+        return f"{self.feedback_type.title()} feedback on {target}"
 
 
 class PatientUnavailability(models.Model):
