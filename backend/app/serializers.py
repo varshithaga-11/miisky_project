@@ -3933,6 +3933,79 @@ class DietPlanDeliveryAssignmentLogSerializer(serializers.ModelSerializer):
         ]
 
 
+class MicroKitchenGlobalAssignmentSummarySerializer(serializers.ModelSerializer):
+    """Collapsed card + list: patient, plan meta, reassignment count only."""
+
+    patient_details = serializers.SerializerMethodField()
+    user_diet_plan_details = serializers.SerializerMethodField()
+    reassignment_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = DietPlanDeliveryAssignment
+        fields = ["id", "user_diet_plan", "patient_details", "user_diet_plan_details", "reassignment_count"]
+
+    def get_patient_details(self, obj):
+        u = obj.user
+        if not u:
+            return None
+        return {"id": u.id, "first_name": u.first_name or "", "last_name": u.last_name or ""}
+
+    def get_user_diet_plan_details(self, obj):
+        p = obj.user_diet_plan
+        if not p:
+            return None
+        return {
+            "id": p.id,
+            "status": p.status,
+            "start_date": p.start_date,
+            "end_date": p.end_date,
+            "diet_plan_name": p.diet_plan.title if p.diet_plan else None,
+        }
+
+
+class MicroKitchenDeliveryDashboardAllottedPlanSerializer(serializers.ModelSerializer):
+    """Kitchen patient table: minimal fields, no delivery assignment payload."""
+
+    patient_details = serializers.SerializerMethodField()
+    diet_plan_name = serializers.SerializerMethodField()
+    nutritionist_name = serializers.SerializerMethodField()
+    has_global_assignment = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            "id",
+            "status",
+            "start_date",
+            "end_date",
+            "patient_details",
+            "diet_plan_name",
+            "nutritionist_name",
+            "has_global_assignment",
+        ]
+
+    def get_patient_details(self, obj):
+        u = obj.user
+        if not u:
+            return None
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+            "email": u.email or "",
+        }
+
+    def get_diet_plan_name(self, obj):
+        return obj.diet_plan.title if obj.diet_plan else "—"
+
+    def get_nutritionist_name(self, obj):
+        n = obj.nutritionist
+        if not n:
+            return None
+        s = f"{n.first_name or ''} {n.last_name or ''}".strip()
+        return s or None
+
+
 class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
     user_diet_plan_details = UserDietPlanDeliverySummarySerializer(source="user_diet_plan", read_only=True)
     delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
@@ -3987,6 +4060,30 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
                 }
             )
         return out
+
+
+class MicroKitchenGlobalAssignmentDetailSerializer(DietPlanDeliveryAssignmentSerializer):
+    """Expanded card: same nested data as full serializer without internal FK noise."""
+
+    class Meta(DietPlanDeliveryAssignmentSerializer.Meta):
+        fields = [
+            "id",
+            "user_diet_plan",
+            "user_diet_plan_details",
+            "patient_details",
+            "delivery_person",
+            "delivery_person_details",
+            "default_slot",
+            "default_slot_details",
+            "delivery_slots_details",
+            "delivery_slot_ids",
+            "slot_delivery_assignments",
+            "change_logs",
+            "is_active",
+            "assigned_on",
+            "notes",
+        ]
+        read_only_fields = ["assigned_on", "user_diet_plan"]
 
 
 class AdminSupplyChainPlanDeliveryAssignmentListSerializer(DietPlanDeliveryAssignmentSerializer):

@@ -30,6 +30,38 @@ export interface KitchenAllottedPlan {
   nutritionist_details?: { id: number; first_name: string; last_name: string; email: string } | null;
 }
 
+/** Lightweight row from GET micro-kitchen-delivery-dashboard/summary (patient table). */
+export interface DashboardAllottedPlanRow {
+  id: number;
+  status: string;
+  start_date: string | null;
+  end_date: string | null;
+  patient_details?: { id: number; first_name: string; last_name: string; email: string };
+  diet_plan_name: string;
+  nutritionist_name: string | null;
+  has_global_assignment: boolean;
+}
+
+/** Collapsed assignment card (no delivery person / slots until detail fetch). */
+export interface GlobalAssignmentSummaryRow {
+  id: number;
+  user_diet_plan: number;
+  reassignment_count: number;
+  patient_details?: { id: number; first_name: string; last_name: string };
+  user_diet_plan_details?: {
+    id: number;
+    status: string;
+    start_date: string | null;
+    end_date: string | null;
+    diet_plan_name?: string | null;
+  };
+}
+
+export interface MicroKitchenDeliveryDashboardSummary {
+  allotted_plans: DashboardAllottedPlanRow[];
+  assignment_summaries: GlobalAssignmentSummaryRow[];
+}
+
 export interface DeliverySlot {
   id: number;
   name: string;
@@ -140,6 +172,20 @@ export const fetchKitchenAllottedPlans = async (): Promise<KitchenAllottedPlan[]
   });
   const data = res.data;
   return Array.isArray(data) ? data : data?.results ?? [];
+};
+
+/** Initial page load for Global assignments: table + card list only (minimal payload). */
+export const fetchMicroKitchenDeliveryDashboardSummary = async (): Promise<MicroKitchenDeliveryDashboardSummary> => {
+  const url = createApiUrl("api/micro-kitchen-delivery-dashboard/summary/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+/** Expand one assignment card: delivery team, slots, logs (only when user expands). */
+export const fetchGlobalDeliveryAssignmentDetail = async (assignmentId: number): Promise<PlanDeliveryAssignment> => {
+  const url = createApiUrl(`api/micro-kitchen-global-delivery-assignments/${assignmentId}/`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
 };
 
 export const fetchDeliverySlots = async (): Promise<DeliverySlot[]> => {

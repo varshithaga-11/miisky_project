@@ -8617,6 +8617,97 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class MicroKitchenDeliveryDashboardSummaryAPIView(APIView):
+    """
+    Single lightweight GET for Global assignments page: allotted patient table rows + assignment card summaries.
+    Does not load delivery persons, slots, or change logs (those load on card expand).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if getattr(request.user, "role", None) != "micro_kitchen":
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+        if not mk:
+            return Response({"allotted_plans": [], "assignment_summaries": []})
+
+        from django.db.models import Count, Exists, OuterRef, Q
+
+        plan_qs = (
+            UserDietPlan.objects.filter(
+                Q(micro_kitchen=mk) | Q(original_micro_kitchen=mk),
+                status__in=["active", "approved", "payment_pending"],
+            )
+            .select_related("user", "diet_plan", "nutritionist")
+            .annotate(
+                has_global_assignment=Exists(
+                    DietPlanDeliveryAssignment.objects.filter(
+                        user_diet_plan_id=OuterRef("pk"),
+                        micro_kitchen=mk,
+                    )
+                )
+            )
+            .order_by("-id")
+        )
+        allotted_data = MicroKitchenDeliveryDashboardAllottedPlanSerializer(plan_qs, many=True).data
+
+        assignment_qs = (
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk)
+            .select_related("user", "user_diet_plan", "user_diet_plan__diet_plan")
+            .annotate(reassignment_count=Count("change_logs"))
+            .order_by("-assigned_on")
+        )
+        summaries = MicroKitchenGlobalAssignmentSummarySerializer(assignment_qs, many=True).data
+
+        return Response({
+            "allotted_plans": allotted_data,
+            "assignment_summaries": summaries,
+        })
+
+
+class MicroKitchenGlobalDeliveryAssignmentViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """
+    One assignment expanded: delivery persons, slots, per-slot mapping, reassignment logs.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = MicroKitchenGlobalAssignmentDetailSerializer
+    http_method_names = ["get", "head", "options"]
+
+    def get_queryset(self):
+        u = self.request.user
+        role = getattr(u, "role", None)
+        if role != "micro_kitchen":
+            return DietPlanDeliveryAssignment.objects.none()
+        mk = MicroKitchenProfile.objects.filter(user=u).first()
+        if not mk:
+            return DietPlanDeliveryAssignment.objects.none()
+        return (
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk)
+            .select_related(
+                "user",
+                "user_diet_plan",
+                "user_diet_plan__diet_plan",
+                "delivery_person",
+                "default_slot",
+            )
+            .prefetch_related(
+                "delivery_slots",
+                Prefetch(
+                    "slot_delivery_persons",
+                    queryset=DietPlanSlotDeliveryPerson.objects.select_related("delivery_slot", "delivery_person"),
+                ),
+                Prefetch(
+                    "change_logs",
+                    queryset=DietPlanDeliveryAssignmentLog.objects.select_related(
+                        "previous_delivery_person", "new_delivery_person", "changed_by"
+                    ).order_by("-effective_from", "-changed_on", "-id"),
+                ),
+            )
+        )
+
+
 class KitchenMealDeliveryViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,

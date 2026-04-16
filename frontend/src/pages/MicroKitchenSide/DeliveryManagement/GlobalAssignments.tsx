@@ -19,16 +19,17 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  fetchPlanDeliveryAssignments,
+  fetchMicroKitchenDeliveryDashboardSummary,
+  fetchGlobalDeliveryAssignmentDetail,
   fetchSupplyChainUsers,
   fetchDeliverySlots,
-  fetchKitchenAllottedPlans,
   createPlanDeliveryAssignment,
   patchPlanDeliveryAssignment,
   PlanDeliveryAssignment,
   SupplyChainUser,
   DeliverySlot,
-  KitchenAllottedPlan,
+  DashboardAllottedPlanRow,
+  GlobalAssignmentSummaryRow,
 } from "./api";
 import DatePicker2 from "../../../components/form/date-picker2";
 
@@ -90,7 +91,10 @@ function unionAddSlotIds(rows: AddPersonSlotRow[]): number[] {
   return [...s].sort((a, b) => a - b);
 }
 
-function distinctPerSlotPersonCount(row: PlanDeliveryAssignment): number {
+/** Merged row for UI: summary + lazy-loaded detail. */
+type AssignmentDisplayRow = PlanDeliveryAssignment & { reassignment_count?: number };
+
+function distinctPerSlotPersonCount(row: PlanDeliveryAssignment | AssignmentDisplayRow): number {
   const m = row.slot_delivery_assignments;
   if (!m?.length) return 0;
   return new Set(m.map((a) => a.delivery_person_id).filter(Boolean)).size;
@@ -127,11 +131,40 @@ function formatChangedOn(iso: string): string {
   }
 }
 
+function mergeAssignmentRow(
+  summary: GlobalAssignmentSummaryRow,
+  detail: PlanDeliveryAssignment | undefined
+): AssignmentDisplayRow {
+  if (!detail) {
+    return {
+      id: summary.id,
+      user_diet_plan: summary.user_diet_plan,
+      patient_details: summary.patient_details,
+      user_diet_plan_details: summary.user_diet_plan_details as PlanDeliveryAssignment["user_diet_plan_details"],
+      delivery_person: null,
+      default_slot: null,
+      is_active: true,
+      assigned_on: "",
+      notes: null,
+      reassignment_count: summary.reassignment_count,
+    } as AssignmentDisplayRow;
+  }
+  return {
+    ...detail,
+    patient_details: detail.patient_details ?? summary.patient_details,
+    user_diet_plan_details: detail.user_diet_plan_details ?? summary.user_diet_plan_details,
+    reassignment_count: summary.reassignment_count,
+  };
+}
+
 export default function GlobalAssignmentsPage() {
-  const [rows, setRows] = useState<PlanDeliveryAssignment[]>([]);
-  const [allottedPlans, setAllottedPlans] = useState<KitchenAllottedPlan[]>([]);
+  const [assignmentSummaries, setAssignmentSummaries] = useState<GlobalAssignmentSummaryRow[]>([]);
+  const [allottedPlans, setAllottedPlans] = useState<DashboardAllottedPlanRow[]>([]);
+  const [detailById, setDetailById] = useState<Record<number, PlanDeliveryAssignment>>({});
+  const [detailLoading, setDetailLoading] = useState<Record<number, boolean>>({});
   const [supplyUsers, setSupplyUsers] = useState<SupplyChainUser[]>([]);
   const [slots, setSlots] = useState<DeliverySlot[]>([]);
+  const [addResourcesLoading, setAddResourcesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Record<number, EditState>>({});
 
@@ -144,25 +177,24 @@ export default function GlobalAssignmentsPage() {
   /** Expanded patient cards (assignment id → open). Editing forces the card open. */
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
 
-  const planIdsWithAssignment = useMemo(() => new Set(rows.map((r) => r.user_diet_plan)), [rows]);
-
   const sortedAssignments = useMemo(() => {
-    return [...rows].sort((a, b) => {
+    return [...assignmentSummaries].sort((a, b) => {
       const na = personName(a.patient_details);
       const nb = personName(b.patient_details);
       return na.localeCompare(nb, undefined, { sensitivity: "base" });
     });
-  }, [rows]);
+  }, [assignmentSummaries]);
 
   const activePlansForSelect = useMemo(
-    () => allottedPlans.filter((p) => p.status === "active"),
+    () => allottedPlans.filter((p) => p.status === "active" && !p.has_global_assignment),
     [allottedPlans]
   );
 
-  /** Slots used per supply-chain user across assignments (union). */
+  /** Slots used per supply-chain user (only from assignments with loaded detail). */
   const slotIdsBySupplyUser = useMemo(() => {
     const m = new Map<number, Set<number>>();
-    for (const r of rows) {
+    for (const s of assignmentSummaries) {
+      const r = mergeAssignmentRow(s, detailById[s.id]);
       if (r.slot_delivery_assignments && r.slot_delivery_assignments.length > 0) {
         for (const a of r.slot_delivery_assignments) {
           if (a.delivery_person_id == null || a.delivery_slot_id == null) continue;
@@ -178,7 +210,7 @@ export default function GlobalAssignmentsPage() {
       m.set(r.delivery_person, set);
     }
     return m;
-  }, [rows]);
+  }, [assignmentSummaries, detailById]);
 
   const addAllSlotIds = useMemo(() => unionAddSlotIds(addRows), [addRows]);
 
@@ -196,19 +228,12 @@ export default function GlobalAssignmentsPage() {
     });
   }, [addRows]);
 
-  const load = async () => {
+  const loadDashboard = async () => {
     try {
       setLoading(true);
-      const [a, plans, su, sl] = await Promise.all([
-        fetchPlanDeliveryAssignments(),
-        fetchKitchenAllottedPlans(),
-        fetchSupplyChainUsers(),
-        fetchDeliverySlots(),
-      ]);
-      setRows(a);
-      setAllottedPlans(plans);
-      setSupplyUsers(su);
-      setSlots(sl);
+      const dash = await fetchMicroKitchenDeliveryDashboardSummary();
+      setAssignmentSummaries(dash.assignment_summaries);
+      setAllottedPlans(dash.allotted_plans);
     } catch (e) {
       console.error(e);
       toast.error("Could not load delivery data.");
@@ -218,20 +243,76 @@ export default function GlobalAssignmentsPage() {
   };
 
   useEffect(() => {
-    load();
+    loadDashboard();
   }, []);
 
-  const ensureEdit = (row: PlanDeliveryAssignment) => {
-    if (editing[row.id]) return;
-    const ids = rowSlotIds(row);
+  /** Supply chain + slots only when Add assignment modal opens. */
+  useEffect(() => {
+    if (!addOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setAddResourcesLoading(true);
+        const [su, sl] = await Promise.all([fetchSupplyChainUsers(), fetchDeliverySlots()]);
+        if (!cancelled) {
+          setSupplyUsers(su);
+          setSlots(sl);
+        }
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) toast.error("Could not load delivery team or slots.");
+      } finally {
+        if (!cancelled) setAddResourcesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [addOpen]);
+
+  const ensureSupplyAndSlotsLoaded = async () => {
+    if (supplyUsers.length > 0 && slots.length > 0) return;
+    try {
+      const [su, sl] = await Promise.all([fetchSupplyChainUsers(), fetchDeliverySlots()]);
+      setSupplyUsers(su);
+      setSlots(sl);
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not load supply chain users or delivery slots.");
+    }
+  };
+
+  const loadDetailForAssignment = async (assignmentId: number): Promise<PlanDeliveryAssignment | null> => {
+    if (detailById[assignmentId]) return detailById[assignmentId];
+    setDetailLoading((prev) => ({ ...prev, [assignmentId]: true }));
+    try {
+      const d = await fetchGlobalDeliveryAssignmentDetail(assignmentId);
+      setDetailById((prev) => ({ ...prev, [assignmentId]: d }));
+      return d;
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not load assignment details.");
+      return null;
+    } finally {
+      setDetailLoading((prev) => ({ ...prev, [assignmentId]: false }));
+    }
+  };
+
+  const ensureEdit = async (summary: GlobalAssignmentSummaryRow) => {
+    if (editing[summary.id]) return;
+    await ensureSupplyAndSlotsLoaded();
+    const detail = await loadDetailForAssignment(summary.id);
+    if (!detail) return;
+    const merged = mergeAssignmentRow(summary, detail);
+    const ids = rowSlotIds(merged);
     const primary =
-      row.default_slot != null ? String(row.default_slot) : ids.length ? String(ids[0]) : "";
+      merged.default_slot != null ? String(merged.default_slot) : ids.length ? String(ids[0]) : "";
     const todayIso = new Date().toISOString().slice(0, 10);
-    setExpandedCards((prev) => ({ ...prev, [row.id]: true }));
+    setExpandedCards((prev) => ({ ...prev, [summary.id]: true }));
     setEditing((prev) => ({
       ...prev,
-      [row.id]: {
-        personId: row.delivery_person != null ? String(row.delivery_person) : "",
+      [summary.id]: {
+        personId: merged.delivery_person != null ? String(merged.delivery_person) : "",
         slotIds: [...ids],
         primarySlotId: primary,
         reason: "reassigned",
@@ -240,9 +321,14 @@ export default function GlobalAssignmentsPage() {
     }));
   };
 
-  const toggleCardExpanded = (assignmentId: number) => {
+  const toggleCardExpanded = async (assignmentId: number) => {
     if (editing[assignmentId]) return;
-    setExpandedCards((prev) => ({ ...prev, [assignmentId]: !prev[assignmentId] }));
+    const opening = !expandedCards[assignmentId];
+    setExpandedCards((prev) => ({ ...prev, [assignmentId]: opening }));
+    if (opening) {
+      await ensureSupplyAndSlotsLoaded();
+      await loadDetailForAssignment(assignmentId);
+    }
   };
 
   const toggleEditSlot = (rowId: number, slotId: number) => {
@@ -260,7 +346,7 @@ export default function GlobalAssignmentsPage() {
     });
   };
 
-  const saveRow = async (row: PlanDeliveryAssignment) => {
+  const saveRow = async (row: AssignmentDisplayRow) => {
     const st = editing[row.id];
     if (!st) return;
     if (st.slotIds.length === 0) {
@@ -296,7 +382,8 @@ export default function GlobalAssignmentsPage() {
         return;
       }
       const updated = await patchPlanDeliveryAssignment(row.id, payload);
-      setRows((prev) => prev.map((r) => (r.id === row.id ? updated : r)));
+      setDetailById((prev) => ({ ...prev, [row.id]: updated }));
+      await loadDashboard();
       setEditing((prev) => {
         const next = { ...prev };
         delete next[row.id];
@@ -357,10 +444,8 @@ export default function GlobalAssignmentsPage() {
         primary_slot_id: prim,
         notes: addNotes.trim() || null,
       });
-      setRows((prev) => {
-        const others = prev.filter((r) => r.user_diet_plan !== created.user_diet_plan);
-        return [created, ...others];
-      });
+      setDetailById((prev) => ({ ...prev, [created.id]: created }));
+      await loadDashboard();
       toast.success("Delivery assignment saved.");
       setAddOpen(false);
       setAddPlanId("");
@@ -373,18 +458,6 @@ export default function GlobalAssignmentsPage() {
     } finally {
       setAddSaving(false);
     }
-  };
-
-  const patientName = (p: KitchenAllottedPlan) => {
-    const d = p.patient_details;
-    if (!d) return "—";
-    return `${d.first_name || ""} ${d.last_name || ""}`.trim() || "—";
-  };
-
-  const nutritionistName = (p: KitchenAllottedPlan) => {
-    const n = p.nutritionist_details;
-    if (!n) return "—";
-    return `${n.first_name || ""} ${n.last_name || ""}`.trim() || "—";
   };
 
   return (
@@ -468,14 +541,14 @@ export default function GlobalAssignmentsPage() {
                       </tr>
                     ) : (
                       allottedPlans.map((p) => {
-                        const has = planIdsWithAssignment.has(p.id);
+                        const has = p.has_global_assignment;
                         return (
                           <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800/80">
-                            <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">{patientName(p)}</td>
-                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{nutritionistName(p)}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                              {p.diet_plan_details?.plan_name || "—"}
+                            <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">
+                              {personName(p.patient_details)}
                             </td>
+                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{p.nutritionist_name ?? "—"}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.diet_plan_name || "—"}</td>
                             <td className="px-4 py-3 capitalize">{p.status.replace("_", " ")}</td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                               {p.start_date && p.end_date ? `${p.start_date} → ${p.end_date}` : "—"}
@@ -507,8 +580,9 @@ export default function GlobalAssignmentsPage() {
                 <span className="text-xs text-gray-500">(this micro-kitchen pool)</span>
               </div>
               {supplyUsers.length === 0 ? (
-                <p className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4">
-                  No team members found. Add members in Delivery management - Team members.
+                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30 rounded-xl p-4">
+                  Delivery team members load when you open <strong>Add assignment</strong> (keeps this page light). Add
+                  members under Delivery management → Team members if the list is empty.
                 </p>
               ) : (
                 <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -554,36 +628,40 @@ export default function GlobalAssignmentsPage() {
                   (effective date + reason).
                 </p>
               </div>
-              {rows.length === 0 ? (
+              {assignmentSummaries.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-12 text-center text-gray-500">
                   No plan delivery assignments yet. Use <strong>Add assignment</strong> for an active plan, or ask admin
                   to verify payment with delivery details.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {sortedAssignments.map((row) => {
-                    const st = editing[row.id];
-                    const patient = personName(row.patient_details);
+                  {sortedAssignments.map((summary) => {
+                    const st = editing[summary.id];
+                    const detail = detailById[summary.id];
+                    const detailBusy = !!detailLoading[summary.id];
+                    const merged = mergeAssignmentRow(summary, detail);
+                    const patient = personName(summary.patient_details);
                     const planTitle =
-                      row.user_diet_plan_details?.diet_plan_name?.trim() || `Plan #${row.user_diet_plan}`;
+                      summary.user_diet_plan_details?.diet_plan_name?.trim() || `Plan #${summary.user_diet_plan}`;
                     const planDates =
-                      row.user_diet_plan_details?.start_date && row.user_diet_plan_details?.end_date
-                        ? `${row.user_diet_plan_details.start_date} → ${row.user_diet_plan_details.end_date}`
+                      summary.user_diet_plan_details?.start_date && summary.user_diet_plan_details?.end_date
+                        ? `${summary.user_diet_plan_details.start_date} → ${summary.user_diet_plan_details.end_date}`
                         : "—";
-                    const currentDeliverer = personName(row.delivery_person_details);
-                    const slotShort = rowSlotsDisplay(row, slots);
-                    const logCount = row.change_logs?.length ?? 0;
-                    const isExpanded = expandedCards[row.id] || !!st;
+                    const currentDeliverer = personName(merged.delivery_person_details);
+                    const slotShort = rowSlotsDisplay(merged, slots);
+                    const logCount = summary.reassignment_count ?? 0;
+                    const isExpanded = expandedCards[summary.id] || !!st;
+                    const hasDeliveryDetail = !!(detail && !detailBusy);
 
                     return (
                       <div
-                        key={row.id}
+                        key={summary.id}
                         className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-stretch">
                           <button
                             type="button"
-                            onClick={() => toggleCardExpanded(row.id)}
+                            onClick={() => toggleCardExpanded(summary.id)}
                             className="flex flex-1 items-start gap-3 p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-w-0"
                           >
                             <span className="mt-0.5 shrink-0 text-gray-500 dark:text-gray-400">
@@ -606,24 +684,32 @@ export default function GlobalAssignmentsPage() {
                               <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{planTitle}</p>
                               <p className="text-xs text-gray-500 mt-1">
                                 Plan dates: {planDates}
-                                {row.user_diet_plan_details?.status && (
+                                {summary.user_diet_plan_details?.status && (
                                   <span className="ml-2 capitalize">
-                                    · Status: {row.user_diet_plan_details.status.replace("_", " ")}
+                                    · Status: {summary.user_diet_plan_details.status.replace("_", " ")}
                                   </span>
                                 )}
                               </p>
-                              <p className="text-sm text-gray-800 dark:text-gray-200 mt-2">
-                                <span className="text-gray-500 dark:text-gray-400">Delivers now:</span>{" "}
-                                <span className="font-semibold">{currentDeliverer}</span>
-                                <span className="text-gray-400 dark:text-gray-500"> · </span>
-                                <span className="text-gray-700 dark:text-gray-300">{slotShort}</span>
-                              </p>
+                              {detailBusy ? (
+                                <p className="text-xs text-gray-500 mt-2">Loading delivery details…</p>
+                              ) : hasDeliveryDetail ? (
+                                <p className="text-sm text-gray-800 dark:text-gray-200 mt-2">
+                                  <span className="text-gray-500 dark:text-gray-400">Delivers now:</span>{" "}
+                                  <span className="font-semibold">{currentDeliverer}</span>
+                                  <span className="text-gray-400 dark:text-gray-500"> · </span>
+                                  <span className="text-gray-700 dark:text-gray-300">{slotShort}</span>
+                                </p>
+                              ) : (
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Expand the card to load who delivers and slot details.
+                                </p>
+                              )}
                             </div>
                           </button>
                           <div className="flex flex-wrap gap-2 p-4 sm:border-l border-gray-200 dark:border-gray-800 sm:shrink-0 sm:items-start sm:justify-end bg-gray-50/80 dark:bg-gray-900/50">
                             <button
                               type="button"
-                              onClick={() => ensureEdit(row)}
+                              onClick={() => ensureEdit(summary)}
                               className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800"
                             >
                               Edit
@@ -631,7 +717,7 @@ export default function GlobalAssignmentsPage() {
                             {st && (
                               <button
                                 type="button"
-                                onClick={() => saveRow(row)}
+                                onClick={() => saveRow(merged)}
                                 className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500"
                               >
                                 <Save className="w-4 h-4" />
@@ -641,7 +727,16 @@ export default function GlobalAssignmentsPage() {
                           </div>
                         </div>
 
-                        {isExpanded && (
+                        {isExpanded &&
+                          (detailBusy && !detail ? (
+                            <div className="border-t border-gray-200 dark:border-gray-800 px-4 py-10 text-center text-sm text-gray-500">
+                              Loading assignment details…
+                            </div>
+                          ) : !detail ? (
+                            <div className="border-t border-red-200 dark:border-red-900/50 px-4 py-6 text-sm text-red-700 dark:text-red-300">
+                              Could not load delivery details for this plan. Try again or refresh the page.
+                            </div>
+                          ) : (
                           <div className="border-t border-gray-200 dark:border-gray-800 px-4 pb-5 pt-4 bg-gray-50/90 dark:bg-gray-950/40 space-y-4">
                             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 text-sm">
                               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
@@ -655,25 +750,25 @@ export default function GlobalAssignmentsPage() {
                                 <div>
                                   <dt className="text-xs text-gray-500">Primary slot (new meals)</dt>
                                   <dd className="font-medium">
-                                    {row.default_slot != null ? slotLabel(row.default_slot, slots) : "—"}
+                                    {merged.default_slot != null ? slotLabel(merged.default_slot, slots) : "—"}
                                   </dd>
                                 </div>
                                 <div>
                                   <dt className="text-xs text-gray-500">Global mapping saved</dt>
                                   <dd className="text-gray-600 dark:text-gray-400">
-                                    {row.assigned_on ? formatChangedOn(row.assigned_on) : "—"}
+                                    {merged.assigned_on ? formatChangedOn(merged.assigned_on) : "—"}
                                   </dd>
                                 </div>
                                 <div>
                                   <dt className="text-xs text-gray-500">Internal notes</dt>
                                   <dd className="text-gray-600 dark:text-gray-400">
-                                    {row.notes?.trim() ? row.notes : "—"}
+                                    {merged.notes?.trim() ? merged.notes : "—"}
                                   </dd>
                                 </div>
                               </dl>
                             </div>
 
-                        {st && distinctPerSlotPersonCount(row) > 1 && (
+                        {st && distinctPerSlotPersonCount(merged) > 1 && (
                           <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 border border-amber-200/80 dark:border-amber-800">
                             Saving here assigns one delivery person to every selected slot — the current per-slot
                             mapping will be replaced.
@@ -694,7 +789,7 @@ export default function GlobalAssignmentsPage() {
                                   onChange={(e) =>
                                     setEditing((prev) => ({
                                       ...prev,
-                                      [row.id]: { ...st, personId: e.target.value },
+                                      [merged.id]: { ...st, personId: e.target.value },
                                     }))
                                   }
                                 >
@@ -705,7 +800,7 @@ export default function GlobalAssignmentsPage() {
                                     </option>
                                   ))}
                                 </select>
-                                {st.personId && parseInt(st.personId, 10) !== row.delivery_person && (
+                                {st.personId && parseInt(st.personId, 10) !== merged.delivery_person && (
                                   <div className="mt-2 space-y-2">
                                     <div>
                                       <label className="text-xs text-gray-500">Reason (audit log)</label>
@@ -715,7 +810,7 @@ export default function GlobalAssignmentsPage() {
                                         onChange={(e) =>
                                           setEditing((prev) => ({
                                             ...prev,
-                                            [row.id]: { ...st, reason: e.target.value },
+                                            [merged.id]: { ...st, reason: e.target.value },
                                           }))
                                         }
                                       >
@@ -728,17 +823,17 @@ export default function GlobalAssignmentsPage() {
                                     </div>
                                     <div className="mt-1">
                                       <DatePicker2
-                                        id={`global-delivery-effective-from-${row.id}`}
+                                        id={`global-delivery-effective-from-${merged.id}`}
                                         label="Effective from"
                                         value={st.effectiveFrom}
                                         onChange={(date) =>
                                           setEditing((prev) => ({
                                             ...prev,
-                                            [row.id]: { ...st, effectiveFrom: date },
+                                            [merged.id]: { ...st, effectiveFrom: date },
                                           }))
                                         }
-                                        minDate={row.user_diet_plan_details?.start_date ?? undefined}
-                                        maxDate={row.user_diet_plan_details?.end_date ?? undefined}
+                                        minDate={merged.user_diet_plan_details?.start_date ?? undefined}
+                                        maxDate={merged.user_diet_plan_details?.end_date ?? undefined}
                                         placeholder="Select date"
                                       />
                                       <p className="mt-2 text-[11px] text-gray-500">
@@ -751,7 +846,7 @@ export default function GlobalAssignmentsPage() {
                               </>
                             ) : (
                               <p className="text-sm text-gray-800 dark:text-gray-200">
-                                {personName(row.delivery_person_details)}
+                                {personName(merged.delivery_person_details)}
                               </p>
                             )}
                           </div>
@@ -772,7 +867,7 @@ export default function GlobalAssignmentsPage() {
                                         type="checkbox"
                                         className="rounded border-gray-300"
                                         checked={st.slotIds.includes(s.id)}
-                                        onChange={() => toggleEditSlot(row.id, s.id)}
+                                        onChange={() => toggleEditSlot(merged.id, s.id)}
                                       />
                                       <span>{s.name}</span>
                                     </label>
@@ -791,16 +886,16 @@ export default function GlobalAssignmentsPage() {
                                           >
                                             <input
                                               type="radio"
-                                              name={`primary-${row.id}`}
+                                              name={`primary-${merged.id}`}
                                               className="border-gray-300"
                                               checked={st.primarySlotId === String(sid)}
                                               onChange={() =>
                                                 setEditing((prev) => {
-                                                  const cur = prev[row.id];
+                                                  const cur = prev[merged.id];
                                                   if (!cur) return prev;
                                                   return {
                                                     ...prev,
-                                                    [row.id]: { ...cur, primarySlotId: String(sid) },
+                                                    [merged.id]: { ...cur, primarySlotId: String(sid) },
                                                   };
                                                 })
                                               }
@@ -815,10 +910,10 @@ export default function GlobalAssignmentsPage() {
                               </div>
                             ) : (
                               <p className="text-sm text-gray-800 dark:text-gray-200">
-                                {rowSlotsDisplay(row, slots)}
-                                {rowSlotIds(row).length > 1 && row.default_slot != null && (
+                                {rowSlotsDisplay(merged, slots)}
+                                {rowSlotIds(merged).length > 1 && merged.default_slot != null && (
                                   <span className="block text-xs text-gray-500 mt-1">
-                                    Primary: {slotLabel(row.default_slot, slots)}
+                                    Primary: {slotLabel(merged.default_slot, slots)}
                                   </span>
                                 )}
                               </p>
@@ -826,13 +921,13 @@ export default function GlobalAssignmentsPage() {
                           </div>
                         </div>
 
-                        {!st && row.slot_delivery_assignments && row.slot_delivery_assignments.length > 0 && (
+                        {!st && merged.slot_delivery_assignments && merged.slot_delivery_assignments.length > 0 && (
                           <div className="mt-4 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/40 p-4">
                             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                               Who delivers which slot
                             </p>
                             <ul className="space-y-1.5 text-sm">
-                              {row.slot_delivery_assignments.map((a) => (
+                              {merged.slot_delivery_assignments.map((a) => (
                                 <li
                                   key={a.delivery_slot_id}
                                   className="flex justify-between gap-4 text-gray-800 dark:text-gray-200"
@@ -849,7 +944,7 @@ export default function GlobalAssignmentsPage() {
                           </div>
                         )}
 
-                        {row.change_logs && row.change_logs.length > 0 ? (
+                        {merged.change_logs && merged.change_logs.length > 0 ? (
                           <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/25 p-4">
                             <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-2">
                               <History className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -860,7 +955,7 @@ export default function GlobalAssignmentsPage() {
                               the new person is responsible for this patient&apos;s deliveries.
                             </p>
                             <ul className="space-y-4">
-                              {row.change_logs.map((log) => (
+                              {merged.change_logs.map((log) => (
                                 <li
                                   key={log.id}
                                   className="relative pl-4 border-l-2 border-indigo-300 dark:border-indigo-700 text-sm"
@@ -910,6 +1005,7 @@ export default function GlobalAssignmentsPage() {
                         )}
 
                           </div>
+                        )
                         )}
                       </div>
                     );
@@ -943,7 +1039,7 @@ export default function GlobalAssignmentsPage() {
                     <option value="">Select plan…</option>
                     {activePlansForSelect.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {patientName(p)} — {p.diet_plan_details?.plan_name || `Plan #${p.id}`}
+                        {personName(p.patient_details)} — {p.diet_plan_name || `Plan #${p.id}`}
                       </option>
                     ))}
                   </select>

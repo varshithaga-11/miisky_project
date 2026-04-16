@@ -42,6 +42,11 @@ router.register(
     basename='admin-supply-chain-planned-leaves',
 )
 router.register(r'micro-kitchen-patients', MicroKitchenPatientsViewSet, basename='micro-kitchen-patients')
+router.register(
+    r'micro-kitchen-global-delivery-assignments',
+    MicroKitchenGlobalDeliveryAssignmentViewSet,
+    basename='micro-kitchen-global-delivery-assignments',
+)
 router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
 router.register(r'health-condition-master', HealthConditionMasterViewSet, basename='health-condition-master')
 router.register(r'symptom-master', SymptomMasterViewSet, basename='symptom-master')
@@ -123,6 +128,11 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 urlpatterns = [
     path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
     path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
+    path(
+        "micro-kitchen-delivery-dashboard/summary/",
+        MicroKitchenDeliveryDashboardSummaryAPIView.as_view(),
+        name="micro-kitchen-delivery-dashboard-summary",
+    ),
     path(
         "micro-kitchen-orders/",
         MicroKitchenOrdersViewSet.as_view({"get": "list"}),
