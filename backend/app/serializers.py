@@ -1827,12 +1827,24 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
     nutritionist_details = serializers.SerializerMethodField(read_only=True)
     reassignment_details = serializers.SerializerMethodField(read_only=True)
 
+    allotted_by_details = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = UserNutritionistMapping
         fields = [
             'id', 'user', 'nutritionist', 'assigned_on', 'is_active',
             'user_details', 'nutritionist_details', 'reassignment_details',
+            'allotted_by', 'allotted_by_details',
         ]
+
+    def get_allotted_by_details(self, obj):
+        if obj.allotted_by:
+            return {
+                'id': obj.allotted_by.id,
+                'username': obj.allotted_by.username,
+                'name': f"{obj.allotted_by.first_name or ''} {obj.allotted_by.last_name or ''}".strip() or obj.allotted_by.username
+            }
+        return {"id": None, "username": "System", "name": "System"}
 
     def get_user_details(self, obj):
         if obj.user:
@@ -1843,6 +1855,7 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
                 'last_name': obj.user.last_name,
                 'email': obj.user.email,
                 'mobile': obj.user.mobile,
+                'created_by_name': f"{obj.user.created_by.first_name or ''} {obj.user.created_by.last_name or ''}".strip() or obj.user.created_by.username if obj.user.created_by else "System"
             }
         return None
 
@@ -2830,8 +2843,6 @@ class NutritionistRatingSerializer(serializers.ModelSerializer):
                 'last_name': obj.nutritionist.last_name,
             }
         return None
-
-        return super().create(validated_data)
 
 class MicroKitchenRatingSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)

@@ -151,6 +151,8 @@ import SupplyChainTeamMemberForMKPage from "./pages/MicroKitchenSide/SupplyChain
 import NutritionPatientUnavailabilityPage from "./pages/NutritionSide/PatientUnavailability/index";
 import PatientUnavailabilityRequestPage from "./pages/PatientSide/PatientUnavailability/index";
 import KitchenExecutionPage from "./pages/MicroKitchenSide/KitchenExecution/index";
+import NutritionUserMappingPage from "./pages/NutritionSide/NutritionMapping/UserMapping";
+import NutritionReassignmentLogsPage from "./pages/NutritionSide/NutritionMapping/ReassignmentLogs";
 
 
 // Master Side Pages
@@ -385,6 +387,8 @@ export function appRoutes() {
           <Route path="nutrition/plan-payouts" element={<NutritionPlanPayoutsPage />} />
           <Route path="nutrition/availability-calendar" element={<AvailabilityCalendar />} />
           <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
+          <Route path="nutrition/nutrition-mapping/user-mapping" element={<NutritionUserMappingPage />} />
+          <Route path="nutrition/nutrition-mapping/reassignment-logs" element={<NutritionReassignmentLogsPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />

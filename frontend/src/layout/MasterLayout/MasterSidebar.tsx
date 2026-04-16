@@ -296,6 +296,14 @@ const nutritionistNavItems: NavItem[] = [
     ],
   },
   {
+    icon: <Users className="w-5 h-5" />,
+    name: "Nutrition Mapping",
+    subItems: [
+      { name: "User Mapping", path: "/nutrition/nutrition-mapping/user-mapping" },
+      { name: "Reassignment Logs", path: "/nutrition/nutrition-mapping/reassignment-logs" },
+    ],
+  },
+  {
     icon: <Layers className="w-5 h-5" />,
     name: "Meal Optimizer",
     path: "/nutrition/set-meals",

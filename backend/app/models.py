@@ -100,6 +100,13 @@ class UserRegister(AbstractUser):
 
     is_active = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_users",
+    )
 
 
 class NutritionistProfile(models.Model):
@@ -1555,6 +1562,13 @@ class UserNutritionistMapping(models.Model):
     )
 
     assigned_on = models.DateTimeField(auto_now_add=True)
+    allotted_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="performed_allotments",
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:

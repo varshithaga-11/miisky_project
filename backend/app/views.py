@@ -110,6 +110,16 @@ class IsAdminOrDoctorRole(BasePermission):
         )
 
 
+class IsAdminOrNutritionistRole(BasePermission):
+    """Allow authenticated users with role admin or nutritionist."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        return bool(
+            u and u.is_authenticated and getattr(u, 'role', None) in ('admin', 'nutritionist')
+        )
+
+
 class AuthenticatedReadAdminWrite(BasePermission):
     """Any authenticated user may list/retrieve (for dropdowns); only admin may create/update/delete."""
 
@@ -2164,7 +2174,7 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
         return qs.none()
 
     def perform_create(self, serializer):
-        mapping = serializer.save()
+        mapping = serializer.save(allotted_by=self.request.user)
         if hasattr(mapping.user, "is_patient_mapped") and not mapping.user.is_patient_mapped:
             mapping.user.is_patient_mapped = True
             mapping.user.save(update_fields=["is_patient_mapped"])
@@ -2317,8 +2327,8 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="grouped-mappings")
     def grouped_mappings(self, request):
-        if request.user.role != "admin":
-            return Response({"detail": "Admin only."}, status=403)
+        if request.user.role not in ("admin", "nutritionist"):
+            return Response({"detail": "Admin or Nutritionist only."}, status=403)
 
         mappings = UserNutritionistMapping.objects.filter(is_active=True).select_related(
             "user", "nutritionist"
@@ -2345,6 +2355,8 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                     "last_name": m.user.last_name,
                     "email": m.user.email,
                     "mobile": m.user.mobile,
+                    "allotted_by": f"{m.allotted_by.first_name or ''} {m.allotted_by.last_name or ''}".strip() or m.allotted_by.username if m.allotted_by else "System",
+                    "created_by": f"{m.user.created_by.first_name or ''} {m.user.created_by.last_name or ''}".strip() or m.user.created_by.username if m.user.created_by else "System"
                 }
             )
 
@@ -2360,8 +2372,8 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="unmapped-patients")
     def unmapped_patients(self, request):
-        if request.user.role != "admin":
-            return Response({"detail": "Admin only."}, status=403)
+        if request.user.role not in ("admin", "nutritionist"):
+            return Response({"detail": "Admin or Nutritionist only."}, status=403)
 
         unmapped = UserRegister.objects.filter(
             role="patient", is_patient_mapped=False
@@ -2376,14 +2388,15 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                     "last_name": p.last_name,
                     "email": p.email,
                     "mobile": p.mobile,
+                    "created_by": f"{p.created_by.first_name or ''} {p.created_by.last_name or ''}".strip() or p.created_by.username if p.created_by else "System"
                 }
             )
         return Response(results)
 
     @action(detail=False, methods=["get"], url_path="all-nutritionists")
     def all_nutritionists(self, request):
-        if request.user.role != "admin":
-            return Response({"detail": "Admin only."}, status=403)
+        if request.user.role not in ("admin", "nutritionist"):
+            return Response({"detail": "Admin or Nutritionist only."}, status=403)
 
         nuts = UserRegister.objects.filter(role="nutritionist").order_by("username")
         results = []
@@ -2399,24 +2412,11 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
             )
         return Response(results)
 
-
-class AdminAllNutritionistsViewSet(viewsets.ViewSet):
-    """
-    Admin-only endpoint for listing nutritionists.
-    Kept separate from UserNutritionistMappingViewSet to provide a stable URL binding.
-    """
-
-    permission_classes = [IsAuthenticated, IsAdminOrDoctorRole]
-
-    def list(self, request):
-        qs = UserRegister.objects.filter(role="nutritionist").order_by("username")
-        return Response(AdminNutritionistListSerializer(qs, many=True).data)
-
     @action(
         detail=False,
         methods=["post"],
         url_path="reassign",
-        permission_classes=[IsAuthenticated, IsAdminRole],
+        permission_classes=[IsAuthenticated, IsAdminOrNutritionistRole],
     )
     def reassign(self, request):
         serializer = ReassignNutritionistSerializer(data=request.data)
@@ -2471,6 +2471,7 @@ class AdminAllNutritionistsViewSet(viewsets.ViewSet):
                 user=patient,
                 nutritionist=new_nutritionist,
                 is_active=True,
+                allotted_by=request.user,
             )
             new_mapping.save()
 
@@ -2487,15 +2488,27 @@ class AdminAllNutritionistsViewSet(viewsets.ViewSet):
             )
 
         from .plan_payment import refresh_ledger_payouts_if_exists
-
         refresh_ledger_payouts_if_exists(active_plan)
-
+        
         out = UserNutritionistMappingSerializer(
             UserNutritionistMapping.objects.select_related("user", "nutritionist").get(
                 pk=new_mapping.pk
             )
         )
         return Response(out.data, status=status.HTTP_201_CREATED)
+
+
+class AdminAllNutritionistsViewSet(viewsets.ViewSet):
+    """
+    Admin-only endpoint for listing nutritionists.
+    Kept separate from UserNutritionistMappingViewSet to provide a stable URL binding.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminOrDoctorRole | IsAdminOrNutritionistRole]
+
+    def list(self, request):
+        qs = UserRegister.objects.filter(role="nutritionist").order_by("username")
+        return Response(AdminNutritionistListSerializer(qs, many=True).data)
 
     @action(detail=False, methods=["get"], url_path="history")
     def history(self, request):
@@ -7793,7 +7806,7 @@ class NutritionistReassignmentViewSet(viewsets.ReadOnlyModelViewSet):
         'user', 'previous_nutritionist', 'new_nutritionist', 'reassigned_by', 'active_diet_plan'
     ).order_by('-reassigned_on')
     serializer_class = NutritionistReassignmentSerializer
-    permission_classes = [IsAuthenticated, IsAdminRole]
+    permission_classes = [IsAuthenticated, IsAdminOrNutritionistRole]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = [
@@ -7817,7 +7830,7 @@ class MicroKitchenReassignmentViewSet(viewsets.ReadOnlyModelViewSet):
         'user_diet_plan__user', 'previous_kitchen', 'new_kitchen', 'reassigned_by'
     ).order_by('-reassigned_on')
     serializer_class = MicroKitchenReassignmentSerializer
-    permission_classes = [IsAuthenticated, IsAdminRole]
+    permission_classes = [IsAuthenticated, IsAdminOrNutritionistRole]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = [
