@@ -50,6 +50,29 @@ export interface MicroKitchenRating {
   created_at: string;
 }
 
+export type DeliveryFeedbackType = "issue" | "rating";
+
+export interface DeliveryFeedback {
+  id: number;
+  feedback_type: DeliveryFeedbackType;
+  order: number | null;
+  user_meal: number | null;
+  rating: number | null;
+  review: string | null;
+  issue_type: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface UserMealLite {
+  id: number;
+  user_diet_plan: number;
+  meal_date: string;
+  status: string;
+  meal_type_details?: { id: number; name: string } | null;
+  food_details?: { id: number; name: string } | null;
+}
+
 export interface Order {
   id: number;
   user: number;
@@ -375,6 +398,52 @@ export const rateMicroKitchen = async (kitchenId: number, orderId: number, ratin
     review: review
   }, { headers: await getAuthHeaders() });
   return response.data;
+};
+
+export type SubmitDeliveryFeedbackPayload = {
+  order?: number;
+  user_meal?: number;
+  feedback_type: DeliveryFeedbackType;
+  rating?: number;
+  review?: string;
+  issue_type?: string;
+  description?: string;
+};
+
+export const submitDeliveryFeedback = async (
+  payload: SubmitDeliveryFeedbackPayload
+): Promise<DeliveryFeedback> => {
+  const url = createApiUrl("api/delivery-feedback/");
+  const response = await axios.post(url, payload, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const getOrderDeliveryFeedback = async (
+  orderId: number
+): Promise<DeliveryFeedback[]> => {
+  const url = createApiUrl(`api/delivery-feedback/?order=${orderId}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getUserMealDeliveryFeedback = async (
+  userMealId: number
+): Promise<DeliveryFeedback[]> => {
+  const url = createApiUrl(`api/delivery-feedback/?user_meal=${userMealId}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getUserMealsForPlanDate = async (
+  planId: number,
+  mealDate: string
+): Promise<UserMealLite[]> => {
+  const url = createApiUrl(`api/usermeal/?user_diet_plan=${planId}&meal_date=${mealDate}&limit=200`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  const data = response.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.results)) return data.results;
+  return [];
 };
 
 export const getLoggedProfile = async () => {

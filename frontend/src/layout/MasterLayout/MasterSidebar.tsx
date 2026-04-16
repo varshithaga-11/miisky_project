@@ -229,6 +229,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/unavailability",
   },
   {
+    icon: <Truck className="w-5 h-5" />,
+    name: "Delivery Issues",
+    path: "/patient/delivery-issues",
+  },
+  {
     icon: <Video className="w-5 h-5" />,
     name: "Consultation",
     path: "/patient/meeting-request",

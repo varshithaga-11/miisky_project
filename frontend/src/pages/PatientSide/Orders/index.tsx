@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { getMyOrders, Order, rateMicroKitchen } from "../../NonPatient/orderapi";
+import {
+    DeliveryFeedback,
+    getMyOrders,
+    getOrderDeliveryFeedback,
+    Order,
+    rateMicroKitchen,
+    submitDeliveryFeedback
+} from "../../NonPatient/orderapi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
@@ -104,11 +111,207 @@ const RatingModal: React.FC<{
     );
 };
 
+const DeliveryFeedbackModal: React.FC<{
+    order: Order;
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+}> = ({ order, isOpen, onClose, onSuccess }) => {
+    const [existingFeedbacks, setExistingFeedbacks] = useState<DeliveryFeedback[]>([]);
+    const [feedbackType, setFeedbackType] = useState<"rating" | "issue">("rating");
+    const [rating, setRating] = useState(0);
+    const [review, setReview] = useState("");
+    const [issueType, setIssueType] = useState("late_delivery");
+    const [description, setDescription] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setFeedbackType("rating");
+        setRating(0);
+        setReview("");
+        setIssueType("late_delivery");
+        setDescription("");
+        setExistingFeedbacks([]);
+    }, [isOpen, order.id]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const loadExisting = async () => {
+            try {
+                const feedbacks = await getOrderDeliveryFeedback(order.id);
+                setExistingFeedbacks(feedbacks);
+                const existingRating = feedbacks.find((f) => f.feedback_type === "rating");
+                const existingIssue = feedbacks.find((f) => f.feedback_type === "issue");
+                if (existingRating) {
+                    setRating(existingRating.rating || 0);
+                    setReview(existingRating.review || "");
+                }
+                if (existingIssue) {
+                    setIssueType(existingIssue.issue_type || "late_delivery");
+                    setDescription(existingIssue.description || "");
+                }
+                if (!existingRating && existingIssue) {
+                    setFeedbackType("issue");
+                }
+            } catch {
+                // Keep modal usable even if fetching prior feedback fails.
+            }
+        };
+        loadExisting();
+    }, [isOpen, order.id]);
+
+    const existingRating = existingFeedbacks.find((f) => f.feedback_type === "rating");
+    const existingIssue = existingFeedbacks.find((f) => f.feedback_type === "issue");
+
+    const handleSubmit = async () => {
+        if (feedbackType === "rating" && rating === 0) {
+            toast.error("Please provide a delivery rating");
+            return;
+        }
+        if (feedbackType === "issue" && !issueType) {
+            toast.error("Please select an issue type");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await submitDeliveryFeedback({
+                order: order.id,
+                feedback_type: feedbackType,
+                rating: feedbackType === "rating" ? rating : undefined,
+                review: feedbackType === "rating" ? review : undefined,
+                issue_type: feedbackType === "issue" ? issueType : undefined,
+                description: feedbackType === "issue" ? description : undefined,
+            });
+            toast.success(
+                feedbackType === "rating"
+                    ? "Delivery rating saved"
+                    : "Delivery issue submitted"
+            );
+            onSuccess();
+            onClose();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to submit delivery feedback");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-md">
+            <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-white dark:bg-gray-800 w-full max-w-xl rounded-[50px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5"
+            >
+                <div className="p-10 space-y-8">
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-tight mb-2">
+                            {existingRating || existingIssue ? "Edit Delivery Feedback" : "Delivery Feedback"}
+                        </h2>
+                        <p className="text-gray-400 font-medium italic">
+                            Share feedback about delivery for order #{order.id}.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-white/[0.03] p-2 rounded-2xl">
+                        <button
+                            onClick={() => setFeedbackType("rating")}
+                            className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${feedbackType === "rating"
+                                ? "bg-indigo-500 text-white"
+                                : "text-gray-500 hover:bg-white dark:hover:bg-white/[0.06]"
+                                }`}
+                        >
+                            Rate Delivery
+                        </button>
+                        <button
+                            onClick={() => setFeedbackType("issue")}
+                            className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${feedbackType === "issue"
+                                ? "bg-indigo-500 text-white"
+                                : "text-gray-500 hover:bg-white dark:hover:bg-white/[0.06]"
+                                }`}
+                        >
+                            Report Issue
+                        </button>
+                    </div>
+
+                    {feedbackType === "rating" ? (
+                        <>
+                            <div className="flex justify-center gap-3">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setRating(star)}
+                                        className={`p-4 rounded-3xl transition-all ${rating >= star
+                                            ? "bg-amber-100 text-amber-500 shadow-xl scale-110"
+                                            : "bg-gray-50 text-gray-300 dark:bg-white/[0.03]"
+                                            }`}
+                                    >
+                                        <FiStar className={`size-8 ${rating >= star ? "fill-amber-500" : ""}`} />
+                                    </button>
+                                ))}
+                            </div>
+                            <textarea
+                                value={review}
+                                onChange={(e) => setReview(e.target.value)}
+                                placeholder="Optional comments about delivery..."
+                                className="w-full px-5 py-4 bg-gray-50 dark:bg-white/[0.02] rounded-3xl outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
+                            />
+                        </>
+                    ) : (
+                        <div className="space-y-4">
+                            <select
+                                value={issueType}
+                                onChange={(e) => setIssueType(e.target.value)}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.02] rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                            >
+                                <option value="not_home">Patient Not Home</option>
+                                <option value="wrong_address">Wrong Address</option>
+                                <option value="food_damaged">Food Damaged</option>
+                                <option value="late_delivery">Late Delivery</option>
+                                <option value="kitchen_delay">Kitchen Delay</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Describe what went wrong..."
+                                className="w-full px-5 py-4 bg-gray-50 dark:bg-white/[0.02] rounded-3xl outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex gap-4">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-4 rounded-[18px] border-2 border-gray-100 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={submitting}
+                            className="flex-[2] flex items-center justify-center gap-3 px-8 py-4 bg-indigo-500 hover:bg-indigo-600/90 text-white rounded-[18px] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 transition-all disabled:opacity-50"
+                        >
+                            {submitting ? "Submitting..." : existingRating || existingIssue ? "Update Feedback" : "Submit Feedback"}
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
 const OrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [deliveryFeedbackByOrder, setDeliveryFeedbackByOrder] = useState<Record<number, DeliveryFeedback[]>>({});
     const [loading, setLoading] = useState(true);
     const [fetchingMore, setFetchingMore] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [selectedDeliveryOrder, setSelectedDeliveryOrder] = useState<Order | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [pageSize] = useState(10);
@@ -121,11 +324,25 @@ const OrdersPage: React.FC = () => {
         try {
             const data = await getMyOrders(page, pageSize);
             const newOrders = data.results;
+            const deliveredOrders = newOrders.filter((order) => order.status === "delivered");
+            const feedbackEntries = await Promise.all(
+                deliveredOrders.map(async (order) => {
+                    try {
+                        const feedbacks = await getOrderDeliveryFeedback(order.id);
+                        return [order.id, feedbacks] as const;
+                    } catch {
+                        return [order.id, []] as const;
+                    }
+                })
+            );
+            const feedbackMap = Object.fromEntries(feedbackEntries);
 
             if (page === 1) {
                 setOrders(newOrders);
+                setDeliveryFeedbackByOrder(feedbackMap);
             } else {
                 setOrders(prev => [...prev, ...newOrders]);
+                setDeliveryFeedbackByOrder(prev => ({ ...prev, ...feedbackMap }));
             }
 
             setTotalItems(data.count);
@@ -199,6 +416,9 @@ const OrdersPage: React.FC = () => {
                         <AnimatePresence>
                             {orders.map((order, idx) => {
                                 const userRating = order.ratings && order.ratings.length > 0 ? order.ratings[0] : null;
+                                const deliveryFeedbacks = deliveryFeedbackByOrder[order.id] || [];
+                                const deliveryRating = deliveryFeedbacks.find((f) => f.feedback_type === "rating");
+                                const deliveryIssue = deliveryFeedbacks.find((f) => f.feedback_type === "issue");
                                 return (
                                     <motion.div
                                         key={order.id}
@@ -274,6 +494,40 @@ const OrdersPage: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     )}
+
+                                                    {(deliveryRating || deliveryIssue) && (
+                                                        <div className="bg-indigo-50/60 dark:bg-indigo-900/10 p-6 rounded-[35px] border border-indigo-100/60 dark:border-indigo-500/10 flex flex-col gap-4">
+                                                            <p className="text-[10px] font-black text-indigo-500/70 uppercase tracking-widest leading-none">
+                                                                Your Delivery Feedback
+                                                            </p>
+                                                            {deliveryRating && (
+                                                                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                                                                    <div className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-indigo-100 dark:border-white/5">
+                                                                        {[1, 2, 3, 4, 5].map((s) => (
+                                                                            <FiStar key={s} size={14} className={s <= (deliveryRating.rating || 0) ? "text-amber-500 fill-amber-500" : "text-gray-200"} />
+                                                                        ))}
+                                                                        <span className="ml-2 text-xs font-black text-gray-900 dark:text-white">{deliveryRating.rating}/5</span>
+                                                                    </div>
+                                                                    <p className="text-sm font-bold text-gray-600 dark:text-gray-300 italic">
+                                                                        "{deliveryRating.review || "No written delivery review"}"
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            {deliveryIssue && (
+                                                                <div className="bg-white/80 dark:bg-gray-800/70 rounded-2xl px-4 py-3 border border-indigo-100/60 dark:border-white/5">
+                                                                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1">
+                                                                        Reported Issue
+                                                                    </p>
+                                                                    <p className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                                                                        {deliveryIssue.issue_type?.replace(/_/g, " ") || "Issue"}
+                                                                    </p>
+                                                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mt-1 italic">
+                                                                        "{deliveryIssue.description || "No extra issue details"}"
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -285,17 +539,28 @@ const OrdersPage: React.FC = () => {
                                                     <p className="text-xs font-black text-gray-400 dark:text-gray-500 text-center uppercase mb-6">Kitchen is {order.status}</p>
 
                                                     {order.status === 'delivered' && (
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                            onClick={() => setSelectedOrder(order)}
-                                                            className={`px-8 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/5 transition-all flex items-center gap-2 ${userRating
-                                                                ? "bg-amber-500 text-white border-transparent hover:bg-amber-600"
-                                                                : "bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white"
-                                                                }`}
-                                                        >
-                                                            <FiStar className="size-3" /> {userRating ? "Edit Review" : "Rate Food"}
-                                                        </motion.button>
+                                                        <div className="space-y-3">
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.05 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={() => setSelectedOrder(order)}
+                                                                className={`px-8 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/5 transition-all flex items-center gap-2 ${userRating
+                                                                    ? "bg-amber-500 text-white border-transparent hover:bg-amber-600"
+                                                                    : "bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white"
+                                                                    }`}
+                                                            >
+                                                                <FiStar className="size-3" /> {userRating ? "Edit Food Review" : "Rate Food"}
+                                                            </motion.button>
+
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.05 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={() => setSelectedDeliveryOrder(order)}
+                                                                className="px-8 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/5 transition-all flex items-center gap-2 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white"
+                                                            >
+                                                                <FiMessageSquare className="size-3" /> {deliveryRating || deliveryIssue ? "Edit Delivery Feedback" : "Rate / Issue Delivery"}
+                                                            </motion.button>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <div className="absolute top-0 right-0 p-12 opacity-5 translate-x-12 -translate-y-12 rotate-12">
@@ -331,6 +596,17 @@ const OrdersPage: React.FC = () => {
                     order={selectedOrder}
                     isOpen={!!selectedOrder}
                     onClose={() => setSelectedOrder(null)}
+                    onSuccess={() => {
+                        setCurrentPage(1);
+                        fetchOrders(1);
+                    }}
+                />
+            )}
+            {selectedDeliveryOrder && (
+                <DeliveryFeedbackModal
+                    order={selectedDeliveryOrder}
+                    isOpen={!!selectedDeliveryOrder}
+                    onClose={() => setSelectedDeliveryOrder(null)}
                     onSuccess={() => {
                         setCurrentPage(1);
                         fetchOrders(1);

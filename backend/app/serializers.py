@@ -2962,6 +2962,75 @@ class MicroKitchenRatingSerializer(serializers.ModelSerializer):
         return 'general'
 
 
+class SupplyChainDeliveryFeedbackSerializer(serializers.ModelSerializer):
+    reported_by_details = serializers.SerializerMethodField(read_only=True)
+    order_details = serializers.SerializerMethodField(read_only=True)
+    user_meal_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = SupplyChainDeliveryFeedback
+        fields = [
+            "id",
+            "feedback_type",
+            "order",
+            "order_details",
+            "user_meal",
+            "user_meal_details",
+            "reported_by",
+            "reported_by_details",
+            "rating",
+            "review",
+            "issue_type",
+            "description",
+            "resolved",
+            "resolved_by",
+            "resolved_at",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reported_by",
+            "resolved",
+            "resolved_by",
+            "resolved_at",
+            "created_at",
+        ]
+
+    def get_reported_by_details(self, obj):
+        user = getattr(obj, "reported_by", None)
+        if not user:
+            return None
+        return {
+            "id": user.id,
+            "first_name": user.first_name or "",
+            "last_name": user.last_name or "",
+            "username": user.username or "",
+        }
+
+    def get_order_details(self, obj):
+        order = getattr(obj, "order", None)
+        if not order:
+            return None
+        return {
+            "id": order.id,
+            "status": order.status,
+            "order_type": order.order_type,
+            "delivery_person": order.delivery_person_id,
+        }
+
+    def get_user_meal_details(self, obj):
+        meal = getattr(obj, "user_meal", None)
+        if not meal:
+            return None
+        return {
+            "id": meal.id,
+            "meal_date": meal.meal_date,
+            "status": meal.status,
+            "user_diet_plan": meal.user_diet_plan_id,
+            "delivery_assignment_id": meal.deliveries.filter(is_active=True).values_list("id", flat=True).first(),
+        }
+
+
 class CartItemSerializer(serializers.ModelSerializer):
     food_details = serializers.SerializerMethodField(read_only=True)
 

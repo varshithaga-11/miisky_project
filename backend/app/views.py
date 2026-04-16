@@ -6082,6 +6082,106 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
         micro_kitchen.total_reviews = stats['total'] or 0
         micro_kitchen.save()
 
+
+class DeliveryFeedbackView(APIView):
+    """
+    Unified API for delivery feedback based on SupplyChainDeliveryFeedback.
+    - POST: create (issue) or upsert (rating) feedback for order or user meal.
+    - GET: list logged-in user's feedback for order or user meal.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def _validate_target(self, request):
+        order_id = request.data.get("order") if request.method == "POST" else request.query_params.get("order")
+        user_meal_id = request.data.get("user_meal") if request.method == "POST" else request.query_params.get("user_meal")
+
+        if bool(order_id) == bool(user_meal_id):
+            return None, Response(
+                {"detail": "Provide exactly one target: order or user_meal."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target = {"order": None, "user_meal": None}
+        if order_id:
+            order = get_object_or_404(Order, id=order_id, user=request.user)
+            target["order"] = order
+        if user_meal_id:
+            meal = get_object_or_404(UserMeal, id=user_meal_id, user=request.user)
+            target["user_meal"] = meal
+        return target, None
+
+    def get(self, request):
+        target, err = self._validate_target(request)
+        if err:
+            return err
+
+        qs = SupplyChainDeliveryFeedback.objects.filter(reported_by=request.user)
+        if target["order"]:
+            qs = qs.filter(order=target["order"])
+        if target["user_meal"]:
+            qs = qs.filter(user_meal=target["user_meal"])
+
+        feedback_type = (request.query_params.get("feedback_type") or "").strip()
+        if feedback_type in {
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+        }:
+            qs = qs.filter(feedback_type=feedback_type)
+
+        qs = qs.select_related("reported_by", "order", "user_meal").order_by("-created_at")
+        return Response(SupplyChainDeliveryFeedbackSerializer(qs, many=True).data)
+
+    def post(self, request):
+        target, err = self._validate_target(request)
+        if err:
+            return err
+
+        feedback_type = (request.data.get("feedback_type") or "").strip() or SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE
+        if feedback_type not in {
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+        }:
+            return Response(
+                {"feedback_type": "Invalid feedback_type. Use 'issue' or 'rating'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = {
+            "feedback_type": feedback_type,
+            "order": target["order"].id if target["order"] else None,
+            "user_meal": target["user_meal"].id if target["user_meal"] else None,
+            "rating": request.data.get("rating"),
+            "review": request.data.get("review"),
+            "issue_type": request.data.get("issue_type"),
+            "description": request.data.get("description"),
+        }
+
+        # Keep one rating per user per target; issues are append-only.
+        instance = None
+        if feedback_type == SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING:
+            rating_qs = SupplyChainDeliveryFeedback.objects.filter(
+                reported_by=request.user,
+                feedback_type=SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+                order=target["order"],
+                user_meal=target["user_meal"],
+            ).order_by("-created_at")
+            instance = rating_qs.first()
+
+        serializer = SupplyChainDeliveryFeedbackSerializer(
+            instance=instance,
+            data=payload,
+            partial=bool(instance),
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        saved = serializer.save(reported_by=request.user)
+        return Response(
+            SupplyChainDeliveryFeedbackSerializer(saved).data,
+            status=status.HTTP_200_OK if instance else status.HTTP_201_CREATED,
+        )
+
+
 class CartViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CartSerializer

@@ -92,6 +92,7 @@ import NonPatientListOfMicroKitchenPage from "./pages/NonPatient/ListOfMicroKitc
 
 import HealthReportUploadPage from "./pages/PatientSide/HealthReportUpload/index";
 import MealsAllotedPage from "./pages/PatientSide/MealsAlloted/index";
+import PatientDeliveryIssuePage from "./pages/PatientSide/DeliveryIssue";
 import SendingMeetingRequest from "./pages/PatientSide/SendingMeetingRequest/index";
 import MeetingRequestsByPatients from "./pages/NutritionSide/MeetingRequestsByPatients/index";
 import ListOfMicroKitchensPage from "./pages/NutritionSide/ListOfMicroKitchens/index";
@@ -365,6 +366,7 @@ export function appRoutes() {
           <Route path="microkitchen/delivery-charges" element={<MicroKitchenDeliveryChargesPage />} />
           <Route path="patient/health-reports" element={<HealthReportUploadPage />} />
           <Route path="patient/meals-allotted" element={<MealsAllotedPage />} />
+          <Route path="patient/delivery-issues" element={<PatientDeliveryIssuePage />} />
           <Route path="patient/meeting-request" element={<SendingMeetingRequest />} />
           <Route path="patient/support-tickets" element={<PatientSupportTicketPage />} />
           <Route path="patient/notifications" element={<PatientNotificationsPage />} />
