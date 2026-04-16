@@ -3813,9 +3813,16 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class UserDietPlanDeliverySummarySerializer(serializers.ModelSerializer):
+    diet_plan_name = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = UserDietPlan
-        fields = ["id", "status", "start_date", "end_date"]
+        fields = ["id", "status", "start_date", "end_date", "diet_plan_name"]
+
+    def get_diet_plan_name(self, obj):
+        if getattr(obj, "diet_plan_id", None) and obj.diet_plan:
+            return getattr(obj.diet_plan, "title", None) or None
+        return None
 
 
 class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
@@ -3893,6 +3900,28 @@ class DeliverySlotSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "start_time", "end_time", "micro_kitchen", "micro_kitchen_brand"]
 
 
+class DietPlanDeliveryAssignmentLogSerializer(serializers.ModelSerializer):
+    previous_delivery_person_details = UserSummarySerializer(source="previous_delivery_person", read_only=True)
+    new_delivery_person_details = UserSummarySerializer(source="new_delivery_person", read_only=True)
+    changed_by_details = UserSummarySerializer(source="changed_by", read_only=True)
+
+    class Meta:
+        model = DietPlanDeliveryAssignmentLog
+        fields = [
+            "id",
+            "previous_delivery_person",
+            "previous_delivery_person_details",
+            "new_delivery_person",
+            "new_delivery_person_details",
+            "reason",
+            "notes",
+            "effective_from",
+            "changed_on",
+            "changed_by",
+            "changed_by_details",
+        ]
+
+
 class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
     user_diet_plan_details = UserDietPlanDeliverySummarySerializer(source="user_diet_plan", read_only=True)
     delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
@@ -3901,6 +3930,7 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
     delivery_slots_details = DeliverySlotSerializer(source="delivery_slots", many=True, read_only=True)
     delivery_slot_ids = serializers.SerializerMethodField(read_only=True)
     slot_delivery_assignments = serializers.SerializerMethodField(read_only=True)
+    change_logs = DietPlanDeliveryAssignmentLogSerializer(many=True, read_only=True)
 
     class Meta:
         model = DietPlanDeliveryAssignment
@@ -3918,6 +3948,7 @@ class DietPlanDeliveryAssignmentSerializer(serializers.ModelSerializer):
             "delivery_slots_details",
             "delivery_slot_ids",
             "slot_delivery_assignments",
+            "change_logs",
             "is_active",
             "assigned_on",
             "notes",

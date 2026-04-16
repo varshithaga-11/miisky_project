@@ -3200,6 +3200,24 @@ class DietPlanDeliveryAssignment(models.Model):
     def __str__(self):
         return f"Plan {self.user_diet_plan_id} → {self.delivery_person}"
 
+    def resolve_delivery_person_for_date(self, meal_date):
+        """
+        Who should deliver for this plan on meal_date, using DietPlanDeliveryAssignmentLog history.
+        When there are no change logs, falls back to current delivery_person / per-slot rows (see create_from_plan).
+        """
+        logs = self.change_logs.order_by("effective_from")
+        first = logs.first()
+        if first and meal_date < first.effective_from:
+            return first.previous_delivery_person
+        log = (
+            self.change_logs.filter(effective_from__lte=meal_date)
+            .order_by("-effective_from")
+            .first()
+        )
+        if log:
+            return log.new_delivery_person
+        return self.delivery_person
+
     def change_delivery_person(
         self,
         new_person,
@@ -3211,7 +3229,8 @@ class DietPlanDeliveryAssignment(models.Model):
     ):
         """
         Permanent mid-plan handoff: updates global assignment and appends an audit log.
-        Past DeliveryAssignment rows are unchanged; new UserMeals get the new person via create_from_plan.
+        DeliveryAssignment rows on or after effective_from that are still pending/assigned are updated to match
+        history; new UserMeals use resolve_delivery_person_for_date in create_from_plan when logs exist.
         """
         from django.utils import timezone as dj_tz
 
@@ -3422,7 +3441,9 @@ class DeliveryAssignment(models.Model):
 
         delivery_person = None
         delivery_slot = plan_assignment.default_slot if plan_assignment else None
-        if plan_assignment and delivery_slot:
+        if plan_assignment and plan_assignment.change_logs.exists():
+            delivery_person = plan_assignment.resolve_delivery_person_for_date(user_meal.meal_date)
+        elif plan_assignment and delivery_slot:
             slot_row = DietPlanSlotDeliveryPerson.objects.filter(
                 plan_assignment=plan_assignment,
                 delivery_slot=delivery_slot,
@@ -3440,6 +3461,31 @@ class DeliveryAssignment(models.Model):
             scheduled_date=user_meal.meal_date,
             status='assigned' if plan_assignment else 'pending',
         )
+
+    @classmethod
+    def sync_plan_assignments_from_effective_date(cls, plan_assignment, effective_from):
+        """
+        After a global delivery-person change with effective_from, align future daily rows that are not
+        yet in progress or completed.
+        """
+        from django.utils import timezone as dj_tz
+
+        if effective_from is None:
+            effective_from = dj_tz.now().date()
+        updatable = ["pending", "assigned"]
+        qs = cls.objects.filter(
+            user_meal__user_diet_plan=plan_assignment.user_diet_plan,
+            is_active=True,
+            scheduled_date__gte=effective_from,
+            status__in=updatable,
+        ).select_related("user_meal")
+        for da in qs.iterator(chunk_size=200):
+            um = da.user_meal
+            person = plan_assignment.resolve_delivery_person_for_date(um.meal_date)
+            if person is None:
+                continue
+            if da.delivery_person_id != person.id:
+                cls.objects.filter(pk=da.pk).update(delivery_person=person)
 
     @classmethod
     def ensure_for_meal(cls, user_meal):

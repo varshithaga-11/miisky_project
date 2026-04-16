@@ -46,6 +46,21 @@ export interface SlotDeliveryAssignmentRow {
   delivery_person_details?: { id: number; first_name: string; last_name: string; username?: string };
 }
 
+/** Audit row when global delivery person changes (effective_from + reason). */
+export interface DietPlanDeliveryChangeLog {
+  id: number;
+  previous_delivery_person: number | null;
+  previous_delivery_person_details?: { id: number; first_name: string; last_name: string; username?: string };
+  new_delivery_person: number | null;
+  new_delivery_person_details?: { id: number; first_name: string; last_name: string; username?: string };
+  reason: string;
+  notes: string | null;
+  effective_from: string | null;
+  changed_on: string;
+  changed_by: number | null;
+  changed_by_details?: { id: number; first_name: string; last_name: string; username?: string };
+}
+
 export interface PlanDeliveryAssignment {
   id: number;
   user_diet_plan: number;
@@ -54,6 +69,8 @@ export interface PlanDeliveryAssignment {
     status: string;
     start_date: string | null;
     end_date: string | null;
+    /** Diet plan template title from backend */
+    diet_plan_name?: string | null;
   };
   delivery_person: number | null;
   delivery_person_details?: { id: number; first_name: string; last_name: string; username?: string };
@@ -64,6 +81,8 @@ export interface PlanDeliveryAssignment {
   delivery_slots_details?: DeliverySlot[];
   /** When set, each slot maps to a delivery person (can differ per slot). */
   slot_delivery_assignments?: SlotDeliveryAssignmentRow[];
+  /** Global delivery-person changes (who → whom, effective from, reason). */
+  change_logs?: DietPlanDeliveryChangeLog[];
   patient_details?: { id: number; first_name: string; last_name: string };
   is_active: boolean;
   assigned_on: string;

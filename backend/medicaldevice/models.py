@@ -225,6 +225,13 @@ class DeviceMaster(models.Model):
     serial_number = models.CharField(max_length=120, blank=True, null=True, db_index=True)
     firmware_version = models.CharField(max_length=80, blank=True, null=True)
     hardware_revision = models.CharField(max_length=80, blank=True, null=True)
+    kiosk = models.ForeignKey(
+        "KioskMaster",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="devices",
+    )
     date_operational = models.DateField(blank=True, null=True)
     image = models.ImageField(upload_to="medicaldevice/devices/", blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
@@ -455,6 +462,13 @@ class DevicePatientMapping(models.Model):
     """
 
     device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="patient_maps")
+    patient_profile = models.ForeignKey(
+        "PatientProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="device_maps",
+    )
     device_ble_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
     device_mapping_number = models.CharField(max_length=80, blank=True, null=True)
     patient_id_external = models.CharField(max_length=80, db_index=True)
@@ -539,6 +553,13 @@ class BasicDataTransfer(models.Model):
     ]
 
     device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="raw_transfers")
+    patient_profile = models.ForeignKey(
+        "PatientProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="raw_transfers",
+    )
     device_sub_id = models.CharField(max_length=80, blank=True, null=True)
     biomarker = models.ForeignKey(
         Biomarker,
@@ -645,3 +666,240 @@ class ProcessedBiomarkerResult(models.Model):
 
     def __str__(self) -> str:
         return f"{self.biomarker.biomarker_code}={self.value} {self.unit} @ {self.recorded_at}"
+
+
+# -----------------------------------------------------------------------------
+# LEGACY SVASTH NORMALIZED TABLES (from old models2.py cleanup)
+# -----------------------------------------------------------------------------
+
+
+class KioskMaster(models.Model):
+    """
+    Normalized replacement for legacy kiosk tables.
+    Derived from: svasth_kiosk_master and kiosk fields in svasth_connect.
+    """
+
+    kiosk_code = models.CharField(max_length=50, unique=True, db_index=True)
+    kiosk_name = models.CharField(max_length=120)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    sim_no = models.CharField(max_length=40, blank=True, null=True)
+    state_name = models.CharField(max_length=80, blank=True, null=True)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "svasth_kiosk"
+        ordering = ["kiosk_code"]
+        verbose_name = "Kiosk master"
+        verbose_name_plural = "Kiosk masters"
+
+    def __str__(self) -> str:
+        return f"{self.kiosk_code} - {self.kiosk_name}"
+
+
+class PatientProfile(models.Model):
+    """
+    Patient registration profile for Svasth operational use.
+    Consolidates legacy: svasthpatientregistration / svasth_registration / RFID tables.
+    """
+
+    patient_external_id = models.CharField(max_length=80, unique=True, db_index=True)
+    vault_no = models.CharField(max_length=80, blank=True, null=True, db_index=True)
+    patient_ref_no = models.CharField(max_length=80, blank=True, null=True)
+    rfid_no = models.CharField(max_length=80, blank=True, null=True, db_index=True)
+    name = models.CharField(max_length=120)
+    mobile = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    age = models.PositiveSmallIntegerField(blank=True, null=True)
+    gender = models.CharField(max_length=20, blank=True, null=True)
+    hospital_name = models.CharField(max_length=120, blank=True, null=True)
+    clinic_name = models.CharField(max_length=120, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    brief_medical_history = models.TextField(blank=True, null=True)
+    registered_at = models.DateTimeField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "svasth_patient_profile"
+        ordering = ["-created_at"]
+        verbose_name = "Patient profile"
+        verbose_name_plural = "Patient profiles"
+
+    def __str__(self) -> str:
+        return f"{self.patient_external_id} - {self.name}"
+
+
+class DeviceTelemetrySnapshot(models.Model):
+    """
+    Structured snapshot replacing wide legacy svasth_connect payload rows.
+    Keep core vitals explicit and preserve uncommon payload in extra_payload.
+    """
+
+    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="telemetry_snapshots")
+    patient_profile = models.ForeignKey(
+        PatientProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="telemetry_snapshots",
+    )
+    kiosk = models.ForeignKey(
+        KioskMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="telemetry_snapshots",
+    )
+    reading_id = models.CharField(max_length=80, unique=True, db_index=True)
+    reading_at = models.DateTimeField(db_index=True)
+
+    temperature_c = models.FloatField(blank=True, null=True)
+    heart_rate_bpm = models.FloatField(blank=True, null=True)
+    spo2_percent = models.FloatField(blank=True, null=True)
+    glucose_mg_dl = models.FloatField(blank=True, null=True)
+    hb_g_dl = models.FloatField(blank=True, null=True)
+    bp_systolic = models.FloatField(blank=True, null=True)
+    bp_diastolic = models.FloatField(blank=True, null=True)
+    weight_kg = models.FloatField(blank=True, null=True)
+    height_cm = models.FloatField(blank=True, null=True)
+    bmi = models.FloatField(blank=True, null=True)
+    rr_rate = models.FloatField(blank=True, null=True)
+    ecg_peak = models.FloatField(blank=True, null=True)
+    ppg_peak = models.FloatField(blank=True, null=True)
+
+    battery_level = models.CharField(max_length=40, blank=True, null=True)
+    signal_status = models.CharField(max_length=40, blank=True, null=True)
+    status_id = models.IntegerField(blank=True, null=True)
+    extra_payload = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "svasth_telemetry_snapshot"
+        ordering = ["-reading_at"]
+        indexes = [
+            models.Index(fields=["device", "reading_at"]),
+            models.Index(fields=["patient_profile", "reading_at"]),
+        ]
+        verbose_name = "Device telemetry snapshot"
+        verbose_name_plural = "Device telemetry snapshots"
+
+    def __str__(self) -> str:
+        return f"{self.reading_id} - {self.device.device_id}"
+
+
+class ClinicalTrialObservation(models.Model):
+    """
+    Clean clinical trial capture model.
+    Consolidates useful columns from svasth_clinical_trial / tbl_clinical_trial_data.
+    """
+
+    trial_code = models.CharField(max_length=50, db_index=True)
+    participant_name = models.CharField(max_length=120)
+    patient_profile = models.ForeignKey(
+        PatientProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clinical_trial_observations",
+    )
+    device = models.ForeignKey(
+        DeviceMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clinical_trial_observations",
+    )
+    kiosk = models.ForeignKey(
+        KioskMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clinical_trial_observations",
+    )
+    non_invasive_glucose = models.FloatField(blank=True, null=True)
+    lab_glucose = models.FloatField(blank=True, null=True)
+    spo2_percent = models.FloatField(blank=True, null=True)
+    heart_rate_bpm = models.FloatField(blank=True, null=True)
+    temperature_c = models.FloatField(blank=True, null=True)
+    adc_values = models.JSONField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    observed_at = models.DateTimeField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "svasth_clinical_trial_observation"
+        ordering = ["-observed_at"]
+        verbose_name = "Clinical trial observation"
+        verbose_name_plural = "Clinical trial observations"
+
+    def __str__(self) -> str:
+        return f"{self.trial_code} - {self.participant_name}"
+
+
+class PatientDocument(models.Model):
+    """
+    Generic patient document/report upload store.
+    Consolidates legacy upload/report tables into one normalized table.
+    """
+
+    DOC_TYPE_CHOICES = [
+        ("REPORT", "Report"),
+        ("SCAN", "Scan"),
+        ("PRESCRIPTION", "Prescription"),
+        ("OTHER", "Other"),
+    ]
+
+    patient_profile = models.ForeignKey(
+        PatientProfile,
+        on_delete=models.CASCADE,
+        related_name="documents",
+    )
+    document_type = models.CharField(max_length=20, choices=DOC_TYPE_CHOICES, default="OTHER")
+    document_title = models.CharField(max_length=200, blank=True, null=True)
+    file_path = models.CharField(max_length=500)
+    uploaded_by = models.CharField(max_length=80, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = "svasth_patient_document"
+        ordering = ["-uploaded_at"]
+        verbose_name = "Patient document"
+        verbose_name_plural = "Patient documents"
+
+    def __str__(self) -> str:
+        return f"{self.patient_profile.patient_external_id} - {self.document_type}"
+
+
+class AlgorithmCalibration(models.Model):
+    """
+    Stores calibration/coefficient snapshots from legacy algorithm coefficient tables.
+    """
+
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.CASCADE,
+        related_name="calibrations",
+    )
+    std_mean = models.FloatField(blank=True, null=True)
+    std_dev = models.FloatField(blank=True, null=True)
+    coefficient = models.FloatField(blank=True, null=True)
+    variables_count = models.IntegerField(blank=True, null=True)
+    source_tag = models.CharField(max_length=80, blank=True, null=True)
+    uploaded_by = models.CharField(max_length=80, blank=True, null=True)
+    effective_from = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "svasth_algorithm_calibration"
+        ordering = ["-created_at"]
+        verbose_name = "Algorithm calibration"
+        verbose_name_plural = "Algorithm calibrations"
+
+    def __str__(self) -> str:
+        return f"{self.algorithm.algorithm_code} - calibration"

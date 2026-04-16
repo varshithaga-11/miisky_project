@@ -10,6 +10,9 @@ import {
   Truck,
   CheckCircle2,
   CircleDashed,
+  ChevronDown,
+  ChevronRight,
+  History,
 } from "lucide-react";
 import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
@@ -27,6 +30,7 @@ import {
   DeliverySlot,
   KitchenAllottedPlan,
 } from "./api";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 /** Slot ids for a row (M2M or legacy single default_slot). */
 function rowSlotIds(row: PlanDeliveryAssignment): number[] {
@@ -59,6 +63,8 @@ type EditState = {
   slotIds: number[];
   primarySlotId: string;
   reason: string;
+  /** YYYY-MM-DD — deliveries from this date onward use the new assignee (API + audit log). */
+  effectiveFrom: string;
 };
 
 type AddPersonSlotRow = {
@@ -99,6 +105,28 @@ const LOG_REASONS = [
   { value: "other", label: "Other" },
 ];
 
+const LOG_REASON_LABEL = Object.fromEntries(LOG_REASONS.map((r) => [r.value, r.label])) as Record<string, string>;
+
+function personName(d?: { first_name?: string; last_name?: string } | null): string {
+  if (!d) return "—";
+  const s = `${d.first_name || ""} ${d.last_name || ""}`.trim();
+  return s || "—";
+}
+
+function logReasonLabel(value: string): string {
+  return LOG_REASON_LABEL[value] ?? value.replace(/_/g, " ");
+}
+
+function formatChangedOn(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return iso;
+  }
+}
+
 export default function GlobalAssignmentsPage() {
   const [rows, setRows] = useState<PlanDeliveryAssignment[]>([]);
   const [allottedPlans, setAllottedPlans] = useState<KitchenAllottedPlan[]>([]);
@@ -113,8 +141,18 @@ export default function GlobalAssignmentsPage() {
   const [addPrimarySlotId, setAddPrimarySlotId] = useState("");
   const [addNotes, setAddNotes] = useState("");
   const [addSaving, setAddSaving] = useState(false);
+  /** Expanded patient cards (assignment id → open). Editing forces the card open. */
+  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
 
   const planIdsWithAssignment = useMemo(() => new Set(rows.map((r) => r.user_diet_plan)), [rows]);
+
+  const sortedAssignments = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      const na = personName(a.patient_details);
+      const nb = personName(b.patient_details);
+      return na.localeCompare(nb, undefined, { sensitivity: "base" });
+    });
+  }, [rows]);
 
   const activePlansForSelect = useMemo(
     () => allottedPlans.filter((p) => p.status === "active"),
@@ -188,6 +226,8 @@ export default function GlobalAssignmentsPage() {
     const ids = rowSlotIds(row);
     const primary =
       row.default_slot != null ? String(row.default_slot) : ids.length ? String(ids[0]) : "";
+    const todayIso = new Date().toISOString().slice(0, 10);
+    setExpandedCards((prev) => ({ ...prev, [row.id]: true }));
     setEditing((prev) => ({
       ...prev,
       [row.id]: {
@@ -195,8 +235,14 @@ export default function GlobalAssignmentsPage() {
         slotIds: [...ids],
         primarySlotId: primary,
         reason: "reassigned",
+        effectiveFrom: todayIso,
       },
     }));
+  };
+
+  const toggleCardExpanded = (assignmentId: number) => {
+    if (editing[assignmentId]) return;
+    setExpandedCards((prev) => ({ ...prev, [assignmentId]: !prev[assignmentId] }));
   };
 
   const toggleEditSlot = (rowId: number, slotId: number) => {
@@ -231,8 +277,13 @@ export default function GlobalAssignmentsPage() {
       const pid = st.personId ? parseInt(st.personId, 10) : undefined;
       const origIds = rowSlotIds(row);
       if (pid !== undefined && pid !== row.delivery_person) {
+        if (!st.effectiveFrom?.trim()) {
+          toast.error("Choose an effective-from date for the new delivery person.");
+          return;
+        }
         payload.delivery_person_id = pid;
         payload.reason = st.reason;
+        payload.effective_from = st.effectiveFrom;
       }
       if (!sortedIdsEqual(st.slotIds, origIds)) {
         payload.delivery_slot_ids = st.slotIds;
@@ -360,8 +411,10 @@ export default function GlobalAssignmentsPage() {
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Global delivery assignment</h1>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
-              Map <strong>supply chain</strong> staff to each active plan. You can assign different people to different
-              delivery slots, or one person to several slots (set a primary slot for new meals).{" "}
+              Map <strong>supply chain</strong> staff to each active plan. When you change the delivery person, pick an{" "}
+              <strong>effective from</strong> date so meals before that date stay with the previous assignee. You can
+              assign different people to different delivery slots, or one person to several slots (set a primary slot for
+              new meals).{" "}
               <Link className="text-indigo-600 underline" to="/microkitchen/delivery/daily">
                 Daily reassignment
               </Link>{" "}
@@ -492,45 +545,86 @@ export default function GlobalAssignmentsPage() {
             </section>
 
             <section>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
-                Current global assignments
-              </h2>
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Current global assignments
+                </h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  One patient per card (sorted A–Z). Expand to see who delivers, time slots, and any past reassignments
+                  (effective date + reason).
+                </p>
+              </div>
               {rows.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-12 text-center text-gray-500">
                   No plan delivery assignments yet. Use <strong>Add assignment</strong> for an active plan, or ask admin
                   to verify payment with delivery details.
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {rows.map((row) => {
+                <div className="space-y-3">
+                  {sortedAssignments.map((row) => {
                     const st = editing[row.id];
-                    const patient =
-                      row.patient_details &&
-                      `${row.patient_details.first_name || ""} ${row.patient_details.last_name || ""}`.trim();
+                    const patient = personName(row.patient_details);
+                    const planTitle =
+                      row.user_diet_plan_details?.diet_plan_name?.trim() || `Plan #${row.user_diet_plan}`;
+                    const planDates =
+                      row.user_diet_plan_details?.start_date && row.user_diet_plan_details?.end_date
+                        ? `${row.user_diet_plan_details.start_date} → ${row.user_diet_plan_details.end_date}`
+                        : "—";
+                    const currentDeliverer = personName(row.delivery_person_details);
+                    const slotShort = rowSlotsDisplay(row, slots);
+                    const logCount = row.change_logs?.length ?? 0;
+                    const isExpanded = expandedCards[row.id] || !!st;
+
                     return (
                       <div
                         key={row.id}
-                        className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm"
+                        className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden"
                       >
-                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Patient</p>
-                            <p className="text-lg font-semibold text-gray-900 dark:text-white">{patient || "—"}</p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Plan #{row.user_diet_plan}
-                              {row.user_diet_plan_details?.start_date && row.user_diet_plan_details?.end_date && (
-                                <>
-                                  {" "}
-                                  · {row.user_diet_plan_details.start_date} → {row.user_diet_plan_details.end_date}
-                                </>
+                        <div className="flex flex-col sm:flex-row sm:items-stretch">
+                          <button
+                            type="button"
+                            onClick={() => toggleCardExpanded(row.id)}
+                            className="flex flex-1 items-start gap-3 p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-w-0"
+                          >
+                            <span className="mt-0.5 shrink-0 text-gray-500 dark:text-gray-400">
+                              {isExpanded ? (
+                                <ChevronDown className="w-5 h-5" aria-hidden />
+                              ) : (
+                                <ChevronRight className="w-5 h-5" aria-hidden />
                               )}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 gap-y-1">
+                                <span className="text-lg font-semibold text-gray-900 dark:text-white">{patient}</span>
+                                {logCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                                    <History className="w-3.5 h-3.5" aria-hidden />
+                                    {logCount} reassignment{logCount !== 1 ? "s" : ""}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{planTitle}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Plan dates: {planDates}
+                                {row.user_diet_plan_details?.status && (
+                                  <span className="ml-2 capitalize">
+                                    · Status: {row.user_diet_plan_details.status.replace("_", " ")}
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-sm text-gray-800 dark:text-gray-200 mt-2">
+                                <span className="text-gray-500 dark:text-gray-400">Delivers now:</span>{" "}
+                                <span className="font-semibold">{currentDeliverer}</span>
+                                <span className="text-gray-400 dark:text-gray-500"> · </span>
+                                <span className="text-gray-700 dark:text-gray-300">{slotShort}</span>
+                              </p>
+                            </div>
+                          </button>
+                          <div className="flex flex-wrap gap-2 p-4 sm:border-l border-gray-200 dark:border-gray-800 sm:shrink-0 sm:items-start sm:justify-end bg-gray-50/80 dark:bg-gray-900/50">
                             <button
                               type="button"
                               onClick={() => ensureEdit(row)}
-                              className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                              className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800"
                             >
                               Edit
                             </button>
@@ -547,14 +641,46 @@ export default function GlobalAssignmentsPage() {
                           </div>
                         </div>
 
+                        {isExpanded && (
+                          <div className="border-t border-gray-200 dark:border-gray-800 px-4 pb-5 pt-4 bg-gray-50/90 dark:bg-gray-950/40 space-y-4">
+                            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 text-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                                Snapshot
+                              </p>
+                              <dl className="grid sm:grid-cols-2 gap-2 text-gray-800 dark:text-gray-200">
+                                <div>
+                                  <dt className="text-xs text-gray-500">Primary delivery contact (current)</dt>
+                                  <dd className="font-medium">{currentDeliverer}</dd>
+                                </div>
+                                <div>
+                                  <dt className="text-xs text-gray-500">Primary slot (new meals)</dt>
+                                  <dd className="font-medium">
+                                    {row.default_slot != null ? slotLabel(row.default_slot, slots) : "—"}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt className="text-xs text-gray-500">Global mapping saved</dt>
+                                  <dd className="text-gray-600 dark:text-gray-400">
+                                    {row.assigned_on ? formatChangedOn(row.assigned_on) : "—"}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt className="text-xs text-gray-500">Internal notes</dt>
+                                  <dd className="text-gray-600 dark:text-gray-400">
+                                    {row.notes?.trim() ? row.notes : "—"}
+                                  </dd>
+                                </div>
+                              </dl>
+                            </div>
+
                         {st && distinctPerSlotPersonCount(row) > 1 && (
-                          <p className="mt-3 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 border border-amber-200/80 dark:border-amber-800">
+                          <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 border border-amber-200/80 dark:border-amber-800">
                             Saving here assigns one delivery person to every selected slot — the current per-slot
                             mapping will be replaced.
                           </p>
                         )}
 
-                        <div className="mt-4 grid sm:grid-cols-2 gap-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
                           <div>
                             <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1">
                               <UserCircle2 className="w-3.5 h-3.5" />
@@ -580,32 +706,52 @@ export default function GlobalAssignmentsPage() {
                                   ))}
                                 </select>
                                 {st.personId && parseInt(st.personId, 10) !== row.delivery_person && (
-                                  <div className="mt-2">
-                                    <label className="text-xs text-gray-500">Reason (audit log)</label>
-                                    <select
-                                      className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                                      value={st.reason}
-                                      onChange={(e) =>
-                                        setEditing((prev) => ({
-                                          ...prev,
-                                          [row.id]: { ...st, reason: e.target.value },
-                                        }))
-                                      }
-                                    >
-                                      {LOG_REASONS.map((r) => (
-                                        <option key={r.value} value={r.value}>
-                                          {r.label}
-                                        </option>
-                                      ))}
-                                    </select>
+                                  <div className="mt-2 space-y-2">
+                                    <div>
+                                      <label className="text-xs text-gray-500">Reason (audit log)</label>
+                                      <select
+                                        className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                                        value={st.reason}
+                                        onChange={(e) =>
+                                          setEditing((prev) => ({
+                                            ...prev,
+                                            [row.id]: { ...st, reason: e.target.value },
+                                          }))
+                                        }
+                                      >
+                                        {LOG_REASONS.map((r) => (
+                                          <option key={r.value} value={r.value}>
+                                            {r.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className="mt-1">
+                                      <DatePicker2
+                                        id={`global-delivery-effective-from-${row.id}`}
+                                        label="Effective from"
+                                        value={st.effectiveFrom}
+                                        onChange={(date) =>
+                                          setEditing((prev) => ({
+                                            ...prev,
+                                            [row.id]: { ...st, effectiveFrom: date },
+                                          }))
+                                        }
+                                        minDate={row.user_diet_plan_details?.start_date ?? undefined}
+                                        maxDate={row.user_diet_plan_details?.end_date ?? undefined}
+                                        placeholder="Select date"
+                                      />
+                                      <p className="mt-2 text-[11px] text-gray-500">
+                                        New assignee applies from this date for scheduled deliveries and future meals
+                                        before this date stay with the previous person in the system.
+                                      </p>
+                                    </div>
                                   </div>
                                 )}
                               </>
                             ) : (
                               <p className="text-sm text-gray-800 dark:text-gray-200">
-                                {row.delivery_person_details
-                                  ? `${row.delivery_person_details.first_name || ""} ${row.delivery_person_details.last_name || ""}`
-                                  : "—"}
+                                {personName(row.delivery_person_details)}
                               </p>
                             )}
                           </div>
@@ -700,6 +846,69 @@ export default function GlobalAssignmentsPage() {
                                 </li>
                               ))}
                             </ul>
+                          </div>
+                        )}
+
+                        {row.change_logs && row.change_logs.length > 0 ? (
+                          <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/25 p-4">
+                            <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                              <History className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                              Reassignment history
+                            </h4>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                              Permanent handoffs saved in the audit log. <strong>Effective from</strong> is the first day
+                              the new person is responsible for this patient&apos;s deliveries.
+                            </p>
+                            <ul className="space-y-4">
+                              {row.change_logs.map((log) => (
+                                <li
+                                  key={log.id}
+                                  className="relative pl-4 border-l-2 border-indigo-300 dark:border-indigo-700 text-sm"
+                                >
+                                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                                    {personName(log.previous_delivery_person_details)}
+                                    <span className="text-gray-400 font-normal mx-1.5">→</span>
+                                    {personName(log.new_delivery_person_details)}
+                                  </p>
+                                  <dl className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                      <span>
+                                        <span className="text-gray-500">Effective from: </span>
+                                        <span className="font-medium text-gray-800 dark:text-gray-200">
+                                          {log.effective_from ?? "—"}
+                                        </span>
+                                      </span>
+                                      <span>
+                                        <span className="text-gray-500">Reason: </span>
+                                        {logReasonLabel(log.reason)}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-500">Recorded: </span>
+                                      {formatChangedOn(log.changed_on)}
+                                      {log.changed_by_details ? (
+                                        <span>
+                                          {" "}
+                                          · by {personName(log.changed_by_details)}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    {log.notes?.trim() ? (
+                                      <div className="text-gray-500 dark:text-gray-500 italic pt-1">
+                                        Notes: {log.notes}
+                                      </div>
+                                    ) : null}
+                                  </dl>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 bg-white/50 dark:bg-gray-900/30">
+                            No reassignment history yet — only the current delivery mapping applies for this plan.
+                          </p>
+                        )}
+
                           </div>
                         )}
                       </div>

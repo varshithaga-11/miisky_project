@@ -8267,6 +8267,7 @@ def _apply_slot_assignments_from_groups(assignment, groups, primary_slot_id):
 class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
     queryset = DietPlanDeliveryAssignment.objects.select_related(
         "user_diet_plan",
+        "user_diet_plan__diet_plan",
         "user",
         "micro_kitchen",
         "delivery_person",
@@ -8277,6 +8278,12 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
         Prefetch(
             "slot_delivery_persons",
             queryset=DietPlanSlotDeliveryPerson.objects.select_related("delivery_slot", "delivery_person"),
+        ),
+        Prefetch(
+            "change_logs",
+            queryset=DietPlanDeliveryAssignmentLog.objects.select_related(
+                "previous_delivery_person", "new_delivery_person", "changed_by"
+            ).order_by("-effective_from", "-changed_on", "-id"),
         ),
     ).all()
     serializer_class = DietPlanDeliveryAssignmentSerializer
@@ -8557,15 +8564,29 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
                 )
             reason = request.data.get("reason") or "reassigned"
             eff = _parse_iso_date(request.data.get("effective_from"))
+            eff_resolved = eff if eff is not None else timezone.now().date()
+            plan = instance.user_diet_plan
+            if plan is not None:
+                if plan.start_date and eff_resolved < plan.start_date:
+                    return Response(
+                        {"detail": "effective_from cannot be before the plan start date."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if plan.end_date and eff_resolved > plan.end_date:
+                    return Response(
+                        {"detail": "effective_from cannot be after the plan end date."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             instance.change_delivery_person(
                 new_dp,
                 changed_by=request.user,
-                effective_from=eff,
+                effective_from=eff_resolved,
                 reason=reason,
                 notes=request.data.get("change_notes"),
             )
             instance.refresh_from_db()
             _sync_slot_persons_from_single(instance, instance.delivery_person)
+            DeliveryAssignment.sync_plan_assignments_from_effective_date(instance, eff_resolved)
 
         if raw_slot_ids is None and not had_slot_assignments and slot_id is not None and str(slot_id).strip() != "":
             try:
