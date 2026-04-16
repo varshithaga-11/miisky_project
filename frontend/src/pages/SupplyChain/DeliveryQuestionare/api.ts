@@ -69,7 +69,23 @@ export const getMyDeliveryProfile = async (): Promise<DeliveryProfile> => {
 export const saveMyDeliveryProfile = async (data: Partial<DeliveryProfile>): Promise<DeliveryProfile> => {
   const url = createApiUrl("api/deliveryprofile/me/");
   const hasFile = FILE_KEYS.some((k) => data[k] instanceof File);
-  const payload = hasFile ? toFormData(data) : data;
+  const normalized: Partial<DeliveryProfile> = {
+    ...data,
+    available_slots:
+      typeof data.available_slots === "string"
+        ? (data.available_slots.trim() || null)
+        : null,
+  };
+  // For JSON updates (no new files), never send existing file URLs back to file fields.
+  // DRF file fields treat these as invalid non-file submissions.
+  if (!hasFile) {
+    FILE_KEYS.forEach((k) => {
+      if (typeof normalized[k] === "string") {
+        delete normalized[k];
+      }
+    });
+  }
+  const payload = hasFile ? toFormData(normalized) : normalized;
   const headers = hasFile ? await getAuthHeadersFile() : await getAuthHeaders();
   const response = await axios.put(url, payload as any, { headers });
   return response.data;
