@@ -1916,6 +1916,42 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
             }
         return None
 
+
+class PatientNutritionMappingSummarySerializer(serializers.ModelSerializer):
+    nutritionist_name = serializers.SerializerMethodField()
+    allotted_by_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    is_mapped = serializers.BooleanField(source='is_patient_mapped', read_only=True)
+
+    class Meta:
+        model = UserRegister
+        fields = [
+            'id', 'username', 'first_name', 'last_name',
+            'email', 'mobile', 'created_by_name',
+            'nutritionist_name', 'allotted_by_name', 'is_mapped'
+        ]
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return f"{obj.created_by.first_name or ''} {obj.created_by.last_name or ''}".strip() or obj.created_by.username
+        return None
+
+    def get_nutritionist_name(self, obj):
+        # We prefetch _active_mappings in the ViewSet for performance
+        mappings = getattr(obj, '_active_mappings', [])
+        if mappings:
+            m = mappings[0]
+            return f"{m.nutritionist.first_name or ''} {m.nutritionist.last_name or ''}".strip() or m.nutritionist.username
+        return "Not Assigned"
+
+    def get_allotted_by_name(self, obj):
+        mappings = getattr(obj, '_active_mappings', [])
+        if mappings:
+            m = mappings[0]
+            if m.allotted_by:
+                return f"{m.allotted_by.first_name or ''} {m.allotted_by.last_name or ''}".strip() or m.allotted_by.username
+        return "-"
+
     def get_reassignment_details(self, obj):
         reassign = NutritionistReassignment.objects.filter(new_mapping=obj).first()
         if reassign:

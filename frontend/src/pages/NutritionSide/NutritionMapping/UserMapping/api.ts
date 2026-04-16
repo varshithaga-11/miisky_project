@@ -109,3 +109,34 @@ export const getAllNutritionists = async (): Promise<SimpleUser[]> => {
   });
   return response.data;
 };
+
+export type MappingRecord = {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  mobile: string;
+  created_by_name: string | null;
+  nutritionist_name: string;
+  allotted_by_name: string;
+  is_mapped: boolean;
+};
+
+export type MappingSummaryParams = {
+  page?: number;
+  page_size?: number;
+  mapping_status?: string;
+  nutritionist_id?: string;
+  allotted_by?: string;
+  search?: string;
+};
+
+export const getMappingSummary = async (params: MappingSummaryParams): Promise<PaginatedResponses<MappingRecord>> => {
+  const url = createApiUrl("api/patient-nutrition-mapping-summary/");
+  const response = await axios.get<PaginatedResponses<MappingRecord>>(url, {
+    headers: await getAuthHeaders(),
+    params
+  });
+  return response.data;
+};

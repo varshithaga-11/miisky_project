@@ -2498,6 +2498,67 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
         return Response(out.data, status=status.HTTP_201_CREATED)
 
 
+class PatientNutritionMappingSummaryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Unified, paginated view for both mapped and unmapped patients.
+    Supports server-side filtering by status, nutritionist, and search.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = PatientNutritionMappingSummarySerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        from django.db.models import Prefetch, Q
+        
+        # Base queryset: only patients
+        queryset = UserRegister.objects.filter(role='patient').select_related('created_by')
+        
+        # 1. Search filter
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(email__icontains=search)
+            )
+
+        # 2. Mapping Status filter
+        mapping_status = self.request.query_params.get('mapping_status')
+        if mapping_status == 'mapped':
+            queryset = queryset.filter(is_patient_mapped=True)
+        elif mapping_status == 'unmapped':
+            queryset = queryset.filter(is_patient_mapped=False)
+
+        # 3. Nutritionist filter (by nutritionist ID)
+        nutritionist_id = self.request.query_params.get('nutritionist_id')
+        if nutritionist_id:
+            queryset = queryset.filter(
+                nutrition_mappings__nutritionist_id=nutritionist_id,
+                nutrition_mappings__is_active=True
+            )
+
+        # 4. Allotted By filter (by username/name)
+        allotted_by = self.request.query_params.get('allotted_by')
+        if allotted_by:
+           queryset = queryset.filter(
+                nutrition_mappings__is_active=True,
+                nutrition_mappings__allotted_by__username__icontains=allotted_by
+           )
+
+        # Final prefetch and distinct
+        active_mappings = UserNutritionistMapping.objects.filter(is_active=True).select_related('nutritionist', 'allotted_by')
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                'nutrition_mappings',
+                queryset=active_mappings,
+                to_attr='_active_mappings'
+            )
+        ).distinct().order_by('username')
+        
+        return queryset
+
+
 class AdminAllNutritionistsViewSet(viewsets.ViewSet):
     """
     Admin-only endpoint for listing nutritionists.
