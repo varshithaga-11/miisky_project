@@ -107,6 +107,7 @@ import DoctorAllPatientsPage from "./pages/DoctorSide/AllPatients/index";
 import DoctorSupportTicketPage from "./pages/DoctorSide/SupportTicket/index";
 import NonPatientInformationPage from "./pages/AdminSide/NonPatientInformation/index";
 import ProfileInformationPage from "./pages/ProfileInformation/index";
+import UpdateUsernamePasswordPage from "./pages/ProfileInformation/UpdateUsernamePassword";
 import TicketCategoryPage from "./pages/AdminSide/TicketCategory";
 import SupportTicketRequestsPage from "./pages/AdminSide/SupportTicketRequests";
 import PatientSupportTicketPage from "./pages/PatientSide/SupportTicket";
@@ -423,6 +424,7 @@ export function appRoutes() {
           {/* Others Page */}
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/profile-info" element={<ProfileInformationPage />} />
+          <Route path="/profile-info/security" element={<UpdateUsernamePasswordPage />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/blank" element={<Blank />} />
 

@@ -188,6 +188,8 @@ urlpatterns = [
         name="supply-chain-assigned-orders-detail",
     ),
     path('', include(router.urls)),
+    path("current-user/", CurrentUserView.as_view(), name="current-user"),
+    path("updateusernamepassword/", UserUpdateView.as_view(), name="updateusernamepassword"),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(),name='verifyotp'),
     path('resetpassword/', ResetPasswordView.as_view(), name='resetpassword'),

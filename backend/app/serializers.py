@@ -217,6 +217,51 @@ class ProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
+class UserUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False, allow_blank=False)
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=False, write_only=True, allow_blank=False)
+    confirm_password = serializers.CharField(required=False, write_only=True, allow_blank=False)
+
+    def validate_username(self, value):
+        user = self.context["request"].user
+        if UserRegister.objects.filter(username=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("Username already exists.")
+        return value
+
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        return value
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        old_password = attrs.get("old_password")
+        username = attrs.get("username")
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
+        if not old_password:
+            raise serializers.ValidationError({"old_password": "Old password is required."})
+        if not user.check_password(old_password):
+            raise serializers.ValidationError({"old_password": "Old password is incorrect."})
+
+        if not username and not new_password:
+            raise serializers.ValidationError(
+                {"non_field_errors": "Provide username and/or new password to update."}
+            )
+
+        if new_password is not None:
+            if not confirm_password:
+                raise serializers.ValidationError(
+                    {"confirm_password": "Confirm password is required when changing password."}
+                )
+            if new_password != confirm_password:
+                raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+
+        return attrs
+
+
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
