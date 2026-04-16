@@ -42,9 +42,9 @@ export default function AuthLayout({
                   className="h-12 w-auto mx-auto"
                 />
               </div>
-              <p className="text-center text-gray-400 dark:text-white/60 italic mt-2">
+              {/* <p className="text-center text-gray-400 dark:text-white/60 italic mt-2">
                 "Management Of "
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

@@ -12,8 +12,11 @@ import {
   FiDollarSign,
   FiPackage,
   FiPieChart,
+  FiMapPin,
 } from "react-icons/fi";
 import {
+  getMicroKitchenDeliveryProfilesNoPagination,
+  getMicroKitchenDeliveryTeamNoPagination,
   getMicroKitchenPatientsNoPagination,
   getMicroKitchenInspectionsNoPagination,
   getMicroKitchenReviewsPaginated,
@@ -21,9 +24,12 @@ import {
   getMicroKitchenFoodsPaginated,
   getMicroKitchenDailyMealsNoPagination,
   getMicroKitchenDeliverySlabs,
+  getMicroKitchenGlobalAssignmentsNoPagination,
   getKitchenSupportTickets,
+  getMicroKitchenMealDeliveryAssignmentsNoPagination,
   getMicroKitchenPayoutsNoPagination,
   getMicroKitchenAllottedPlanPayouts,
+  getMicroKitchenPlannedLeavesNoPagination,
   MicroKitchenProfile,
 } from "./api";
 import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
@@ -36,6 +42,11 @@ import {
   DisplayKitchenFoods,
   DisplayKitchenDailyPrep,
   DisplayKitchenDeliverySlabs,
+  DisplayKitchenDeliveryProfiles,
+  DisplayKitchenDeliveryTeam,
+  DisplayKitchenDailyReassignments,
+  DisplayKitchenGlobalAssignments,
+  DisplayKitchenPlannedLeaves,
   DisplayKitchenTickets,
   DisplayKitchenPayouts,
 } from "./MicroKitchenDataViews";
@@ -48,6 +59,11 @@ export type KitchenDataView =
   | "reviews"
   | "orders"
   | "delivery"
+  | "global_assignments"
+  | "daily_reassignments"
+  | "delivery_team"
+  | "planned_leaves"
+  | "delivery_profiles"
   | "payouts"
   | "allotted_plan_payouts"
   | "foods"
@@ -61,6 +77,11 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   reviews: "Patient Reviews",
   orders: "Micro Kitchen Orders",
   delivery: "Delivery charges & distance slabs",
+  global_assignments: "Global Delivery Assignments",
+  daily_reassignments: "Daily Delivery Reassignments",
+  delivery_team: "Delivery Team Members",
+  planned_leaves: "Team Planned Leave",
+  delivery_profiles: "Delivery Profiles",
   payouts: "Partner Payouts & Transfers",
   allotted_plan_payouts: "Allotted diet plan payouts",
   foods: "Food Available (Menu)",
@@ -75,6 +96,11 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "reviews", description: "Ratings and feedback from patients", icon: <FiStar /> },
   { key: "orders", description: "Orders with address, distance, delivery & line items", icon: <FiShoppingCart /> },
   { key: "delivery", description: "Distance slabs and charge amounts for this kitchen", icon: <FiDollarSign /> },
+  { key: "global_assignments", description: "Default delivery person allotment and per-slot coverage", icon: <FiTruck /> },
+  { key: "daily_reassignments", description: "Meal-level delivery reassignment rows for this kitchen", icon: <FiTruck /> },
+  { key: "delivery_team", description: "Delivery users attached to the kitchen team", icon: <FiUsers /> },
+  { key: "planned_leaves", description: "Leave records for delivery staff linked to this kitchen", icon: <FiClipboard /> },
+  { key: "delivery_profiles", description: "KYC and vehicle details of linked delivery staff", icon: <FiMapPin /> },
   { key: "payouts", description: "Earnings & patient billing trackers", icon: <FiPackage /> },
   { key: "allotted_plan_payouts", description: "Kitchen share from verified plan payments (allotted patients)", icon: <FiPieChart /> },
   { key: "foods", description: "Menu items currently provided by the kitchen", icon: <FiMenu /> },
@@ -146,6 +172,21 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "patients":
             setPayload(await getMicroKitchenPatientsNoPagination(id));
+            break;
+          case "delivery_team":
+            setPayload(await getMicroKitchenDeliveryTeamNoPagination(id));
+            break;
+          case "global_assignments":
+            setPayload(await getMicroKitchenGlobalAssignmentsNoPagination(id));
+            break;
+          case "daily_reassignments":
+            setPayload(await getMicroKitchenMealDeliveryAssignmentsNoPagination(id));
+            break;
+          case "planned_leaves":
+            setPayload(await getMicroKitchenPlannedLeavesNoPagination(id));
+            break;
+          case "delivery_profiles":
+            setPayload(await getMicroKitchenDeliveryProfilesNoPagination(id));
             break;
           case "inspections":
             setPayload(await getMicroKitchenInspectionsNoPagination(id));
@@ -249,24 +290,36 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto px-6 py-8 bg-gradient-to-b from-blue-50/20 to-white dark:from-gray-900 dark:to-gray-950">
           {screen === "hub" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 pb-10">
-              {MENU_ITEMS.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => loadView(item.key)}
-                  className="group text-left rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:border-blue-500 transition-all bg-white dark:bg-gray-900/50 relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-blue-600">
-                     {React.cloneElement(item.icon as React.ReactElement<any>, { size: 60 })}
-                  </div>
-                  <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-110 transition-transform">
-                     {item.icon}
-                  </div>
-                  <div className="font-bold text-gray-900 dark:text-white text-lg">{VIEW_TITLES[item.key]}</div>
-                  <div className="text-xs text-gray-500 mt-2 leading-relaxed italic">{item.description}</div>
-                </button>
-              ))}
+            <div className="space-y-10 pb-10">
+              <section>
+                <div className="mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                    Admin summary views
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Open read-only summaries for the micro kitchen and its delivery management modules.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                  {MENU_ITEMS.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => loadView(item.key)}
+                      className="group text-left rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:border-blue-500 transition-all bg-white dark:bg-gray-900/50 relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-blue-600">
+                        {React.cloneElement(item.icon as React.ReactElement<any>, { size: 60 })}
+                      </div>
+                      <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-110 transition-transform">
+                        {item.icon}
+                      </div>
+                      <div className="font-bold text-gray-900 dark:text-white text-lg">{VIEW_TITLES[item.key]}</div>
+                      <div className="text-xs text-gray-500 mt-2 leading-relaxed italic">{item.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </section>
             </div>
           )}
 
@@ -296,6 +349,11 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                     <>
                       {screen === "info" && <DisplayKitchenInfo kitchen={payload} />}
                       {screen === "patients" && <DisplayKitchenPatients items={payload} kitchen={kitchen} />}
+                      {screen === "delivery_team" && <DisplayKitchenDeliveryTeam items={payload} />}
+                      {screen === "global_assignments" && <DisplayKitchenGlobalAssignments items={payload} />}
+                      {screen === "daily_reassignments" && <DisplayKitchenDailyReassignments items={payload} />}
+                      {screen === "planned_leaves" && <DisplayKitchenPlannedLeaves items={payload} />}
+                      {screen === "delivery_profiles" && <DisplayKitchenDeliveryProfiles items={payload} />}
                       {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
                       {screen === "reviews" && (
                         <DisplayKitchenReviews

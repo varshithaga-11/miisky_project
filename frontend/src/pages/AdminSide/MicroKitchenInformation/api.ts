@@ -329,6 +329,172 @@ export type DeliveryChargeSlabAdmin = {
   charge: string;
 };
 
+export type AdminKitchenTeamMember = {
+  id: number;
+  micro_kitchen: number;
+  delivery_person: number;
+  delivery_person_details?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username?: string;
+    email?: string;
+    mobile?: string;
+  };
+  role: "primary" | "backup" | "temporary";
+  is_active: boolean;
+  zone_name: string | null;
+  pincode: string | null;
+  assigned_on: string;
+};
+
+export type AdminKitchenDeliverySlot = {
+  id: number;
+  name: string;
+  start_time: string | null;
+  end_time: string | null;
+  micro_kitchen: number | null;
+};
+
+export type AdminKitchenDeliveryUserSummary = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username?: string;
+};
+
+export type AdminKitchenGlobalAssignmentLog = {
+  id: number;
+  previous_delivery_person: number | null;
+  previous_delivery_person_details?: AdminKitchenDeliveryUserSummary;
+  new_delivery_person: number | null;
+  new_delivery_person_details?: AdminKitchenDeliveryUserSummary;
+  reason: string;
+  notes: string | null;
+  effective_from: string | null;
+  changed_on: string;
+  changed_by: number | null;
+  changed_by_details?: AdminKitchenDeliveryUserSummary;
+};
+
+export type AdminKitchenGlobalAssignment = {
+  id: number;
+  user_diet_plan: number;
+  user_diet_plan_details?: {
+    id: number;
+    status: string;
+    start_date: string | null;
+    end_date: string | null;
+    diet_plan_name?: string | null;
+  };
+  patient_details?: AdminKitchenDeliveryUserSummary;
+  delivery_person: number | null;
+  delivery_person_details?: AdminKitchenDeliveryUserSummary;
+  default_slot: number | null;
+  default_slot_details?: AdminKitchenDeliverySlot;
+  delivery_slots_details?: AdminKitchenDeliverySlot[];
+  delivery_slot_ids?: number[];
+  slot_delivery_assignments?: Array<{
+    delivery_slot_id: number;
+    delivery_slot_details?: AdminKitchenDeliverySlot;
+    delivery_person_id: number | null;
+    delivery_person_details?: AdminKitchenDeliveryUserSummary | null;
+  }>;
+  change_logs?: AdminKitchenGlobalAssignmentLog[];
+  is_active: boolean;
+  assigned_on: string;
+  notes: string | null;
+};
+
+export type AdminKitchenMealDeliveryAssignment = {
+  id: number;
+  user_meal: number;
+  user_meal_details?: {
+    id: number;
+    meal_date: string;
+    meal_type: string | null;
+    meal_type_details?: { name?: string } | null;
+    patient_name: string;
+    user_details?: {
+      first_name: string;
+      last_name: string;
+      mobile?: string;
+      address?: string;
+      latitude?: number | null;
+      longitude?: number | null;
+    };
+    food_details?: { name?: string } | null;
+    food_name?: string | null;
+    micro_kitchen_details?: { brand_name?: string; address?: string } | null;
+  };
+  plan_delivery_assignment: number | null;
+  delivery_person: number | null;
+  delivery_person_details?: AdminKitchenDeliveryUserSummary;
+  delivery_slot: number | null;
+  delivery_slot_details?: AdminKitchenDeliverySlot;
+  status: string;
+  scheduled_date: string;
+  scheduled_time: string | null;
+  picked_up_at?: string | null;
+  delivered_at?: string | null;
+  delivery_notes?: string | null;
+  is_active: boolean;
+  reassignment_reason: string | null;
+};
+
+export type AdminKitchenDeliveryProfile = {
+  id: number;
+  user?: number;
+  user_details?: {
+    id?: number;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    mobile?: string;
+  } | null;
+  vehicle_type?: string | null;
+  other_vehicle_name?: string | null;
+  vehicle_details?: string | null;
+  register_number?: string | null;
+  license_number?: string | null;
+  license_copy?: string | null;
+  rc_copy?: string | null;
+  insurance_copy?: string | null;
+  puc_image?: string | null;
+  aadhar_number?: string | null;
+  aadhar_image?: string | null;
+  pan_number?: string | null;
+  pan_image?: string | null;
+  bank_account_number?: string | null;
+  ifsc_code?: string | null;
+  account_holder_name?: string | null;
+  bank_name?: string | null;
+  available_slots?: string | null;
+  is_verified?: boolean;
+  verified_on?: string | null;
+};
+
+export type AdminKitchenPlannedLeave = {
+  id: number;
+  user: number;
+  user_details?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username?: string;
+    email?: string;
+    mobile?: string;
+  };
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  notes: string | null;
+  created_on?: string;
+};
+
 /** Admin: distance–charge slabs configured for this kitchen. */
 export const getMicroKitchenDeliverySlabs = async (microKitchenId: number): Promise<DeliveryChargeSlabAdmin[]> => {
   const url = createApiUrl(`api/deliverychargeslab/`);
@@ -340,6 +506,62 @@ export const getMicroKitchenDeliverySlabs = async (microKitchenId: number): Prom
   if (Array.isArray(d)) return d;
   return d?.results ?? [];
 };
+
+export const getMicroKitchenDeliveryTeamNoPagination = async (
+  microKitchenId: number
+): Promise<AdminKitchenTeamMember[]> => {
+  const url = createApiUrl(`api/admin-microkitchen-delivery-team-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data ?? [];
+};
+
+export const getMicroKitchenGlobalAssignmentsNoPagination = async (
+  microKitchenId: number
+): Promise<AdminKitchenGlobalAssignment[]> => {
+  const url = createApiUrl(`api/admin-microkitchen-global-assignments-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data ?? [];
+};
+
+export const getMicroKitchenMealDeliveryAssignmentsNoPagination = async (
+  microKitchenId: number
+): Promise<AdminKitchenMealDeliveryAssignment[]> => {
+  const url = createApiUrl(`api/admin-microkitchen-meal-delivery-assignments-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data ?? [];
+};
+
+export const getMicroKitchenDeliveryProfilesNoPagination = async (
+  microKitchenId: number
+): Promise<AdminKitchenDeliveryProfile[]> => {
+  const url = createApiUrl(`api/admin-microkitchen-delivery-profiles-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data ?? [];
+};
+
+export const getMicroKitchenPlannedLeavesNoPagination = async (
+  microKitchenId: number
+): Promise<AdminKitchenPlannedLeave[]> => {
+  const url = createApiUrl(`api/admin-microkitchen-planned-leaves-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data ?? [];
+};
+
 export const getMicroKitchenPayoutsNoPagination = async (microKitchenId: number) => {
   const url = createApiUrl(`api/admin-microkitchen-payouts-nopaginate/`);
   const response = await axios.get(url, {

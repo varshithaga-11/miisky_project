@@ -239,6 +239,31 @@ urlpatterns = [
         views.AdminMicroKitchenMealsNoPaginationView.as_view(),
         name="admin-microkitchen-meals-nopaginate",
     ),
+    path(
+        "admin-microkitchen-delivery-team-nopaginate/",
+        views.AdminMicroKitchenDeliveryTeamNoPaginationView.as_view(),
+        name="admin-microkitchen-delivery-team-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-global-assignments-nopaginate/",
+        views.AdminMicroKitchenGlobalAssignmentsNoPaginationView.as_view(),
+        name="admin-microkitchen-global-assignments-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-meal-delivery-assignments-nopaginate/",
+        views.AdminMicroKitchenMealDeliveryAssignmentsNoPaginationView.as_view(),
+        name="admin-microkitchen-meal-delivery-assignments-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-delivery-profiles-nopaginate/",
+        views.AdminMicroKitchenDeliveryProfilesNoPaginationView.as_view(),
+        name="admin-microkitchen-delivery-profiles-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-planned-leaves-nopaginate/",
+        views.AdminMicroKitchenPlannedLeavesNoPaginationView.as_view(),
+        name="admin-microkitchen-planned-leaves-nopaginate",
+    ),
     # Admin nutritionist panels (no pagination for modal display)
     path(
         "admin-nutritionist-patients-nopaginate/",

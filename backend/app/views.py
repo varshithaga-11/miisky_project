@@ -7278,6 +7278,164 @@ class AdminMicroKitchenMealsNoPaginationView(APIView):
         serializer = UserMealSerializer(qs, many=True)
         return Response(serializer.data)
 
+
+class AdminMicroKitchenDeliveryTeamNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = (
+            MicroKitchenDeliveryTeam.objects.filter(micro_kitchen_id=micro_kitchen_id)
+            .select_related("micro_kitchen", "delivery_person")
+            .order_by("-assigned_on")
+        )
+        serializer = MicroKitchenDeliveryTeamSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenGlobalAssignmentsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = (
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=micro_kitchen_id)
+            .select_related(
+                "user_diet_plan",
+                "user_diet_plan__diet_plan",
+                "user",
+                "micro_kitchen",
+                "delivery_person",
+                "default_slot",
+                "assigned_by",
+            )
+            .prefetch_related(
+                "delivery_slots",
+                Prefetch(
+                    "slot_delivery_persons",
+                    queryset=DietPlanSlotDeliveryPerson.objects.select_related("delivery_slot", "delivery_person"),
+                ),
+                Prefetch(
+                    "change_logs",
+                    queryset=DietPlanDeliveryAssignmentLog.objects.select_related(
+                        "previous_delivery_person", "new_delivery_person", "changed_by"
+                    ).order_by("-effective_from", "-changed_on", "-id"),
+                ),
+            )
+            .order_by("-assigned_on")
+        )
+        serializer = MicroKitchenGlobalAssignmentDetailSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenMealDeliveryAssignmentsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        qs = (
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=micro_kitchen_id, is_active=True)
+            .select_related(
+                "user_meal",
+                "user_meal__user",
+                "user_meal__meal_type",
+                "user_meal__food",
+                "user_meal__micro_kitchen",
+                "delivery_person",
+                "delivery_slot",
+                "plan_delivery_assignment",
+            )
+            .order_by("-scheduled_date", "-id")
+        )
+        serializer = KitchenMealDeliverySerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenDeliveryProfilesNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        team_ids = set(
+            MicroKitchenDeliveryTeam.objects.filter(micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        global_ids = set(
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        slot_ids = set(
+            DietPlanSlotDeliveryPerson.objects.filter(
+                plan_assignment__micro_kitchen_id=micro_kitchen_id
+            ).values_list("delivery_person_id", flat=True)
+        )
+        daily_ids = set(
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        user_ids = team_ids | global_ids | slot_ids | daily_ids
+        user_ids.discard(None)
+
+        qs = (
+            DeliveryProfile.objects.filter(user_id__in=user_ids)
+            .select_related("user", "verified_by")
+            .order_by("user__first_name", "user__last_name", "id")
+        )
+        serializer = DeliveryProfileSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenPlannedLeavesNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        dp_ids = set(
+            MicroKitchenDeliveryTeam.objects.filter(micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            DietPlanSlotDeliveryPerson.objects.filter(
+                plan_assignment__micro_kitchen_id=micro_kitchen_id
+            ).values_list("delivery_person_id", flat=True)
+        )
+        dp_ids |= set(
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids.discard(None)
+
+        qs = SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids).select_related("user").order_by(
+            "-created_on", "-id"
+        )
+        serializer = SupplyChainDeliveryLeaveSerializer(qs, many=True)
+        return Response(serializer.data)
+
 # ---- Admin Nutritionist panels (NO pagination) -----------------------------
 
 class AdminNutritionistPatientsNoPaginationView(APIView):

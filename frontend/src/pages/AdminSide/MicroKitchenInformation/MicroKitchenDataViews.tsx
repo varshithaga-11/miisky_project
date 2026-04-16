@@ -8,7 +8,14 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { InfoRow, InfoSection, EmptyState } from "../PatientOverview/PatientDataViews";
 import { createApiUrl } from "../../../access/access";
 import { AdminOrderList } from "../shared/AdminOrderList";
-import type { DeliveryChargeSlabAdmin } from "./api";
+import type {
+  AdminKitchenDeliveryProfile,
+  AdminKitchenGlobalAssignment,
+  AdminKitchenMealDeliveryAssignment,
+  AdminKitchenPlannedLeave,
+  AdminKitchenTeamMember,
+  DeliveryChargeSlabAdmin,
+} from "./api";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -785,4 +792,308 @@ export function DisplayKitchenPayouts({ items }: { items: any[] }) {
             })}
         </div>
     );
+}
+
+function formatPersonName(person?: {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  email?: string;
+} | null) {
+  if (!person) return "—";
+  const full = `${person.first_name || ""} ${person.last_name || ""}`.trim();
+  return full || person.username || person.email || "—";
+}
+
+export function DisplayKitchenDeliveryTeam({ items }: { items: AdminKitchenTeamMember[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No delivery team members linked to this kitchen." />;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {items.map((member) => (
+        <div
+          key={member.id}
+          className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/70 dark:bg-gray-800/30 shadow-sm"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="font-bold text-gray-900 dark:text-white">
+                {formatPersonName(member.delivery_person_details)}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {member.delivery_person_details?.mobile || member.delivery_person_details?.email || "No contact info"}
+              </div>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                member.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {member.is_active ? "Active" : "Inactive"}
+            </span>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Role</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{member.role}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Assigned on</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{member.assigned_on || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Zone</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{member.zone_name || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Pincode</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{member.pincode || "—"}</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenGlobalAssignments({ items }: { items: AdminKitchenGlobalAssignment[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No global delivery assignments found." />;
+  return (
+    <div className="space-y-4">
+      {items.map((assignment) => (
+        <div
+          key={assignment.id}
+          className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/70 dark:bg-gray-800/30 shadow-sm"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="font-bold text-gray-900 dark:text-white">
+                {formatPersonName(assignment.patient_details)}{" "}
+                <span className="text-gray-400">· {assignment.user_diet_plan_details?.diet_plan_name || "Diet plan"}</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {assignment.user_diet_plan_details?.start_date || "—"} to {assignment.user_diet_plan_details?.end_date || "—"}
+              </div>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                assignment.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {assignment.is_active ? "Active" : "Inactive"}
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-900/30 p-4">
+              <div className="text-[10px] font-black uppercase text-gray-400 mb-1">Default delivery person</div>
+              <div className="font-semibold text-gray-900 dark:text-white">
+                {formatPersonName(assignment.delivery_person_details)}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Default slot: {assignment.default_slot_details?.name || "—"}
+              </div>
+            </div>
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-900/30 p-4">
+              <div className="text-[10px] font-black uppercase text-gray-400 mb-1">Covered slots</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">
+                {assignment.delivery_slots_details?.length
+                  ? assignment.delivery_slots_details.map((slot) => slot.name).join(", ")
+                  : "—"}
+              </div>
+            </div>
+          </div>
+
+          {assignment.slot_delivery_assignments && assignment.slot_delivery_assignments.length > 0 && (
+            <div className="mt-4">
+              <div className="text-[10px] font-black uppercase text-gray-400 mb-2">Per-slot assignment</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {assignment.slot_delivery_assignments.map((slot) => (
+                  <div
+                    key={`${assignment.id}-${slot.delivery_slot_id}`}
+                    className="rounded-xl border border-gray-100 dark:border-white/[0.05] p-3 bg-gray-50/80 dark:bg-gray-900/20"
+                  >
+                    <div className="font-semibold text-gray-900 dark:text-white">
+                      {slot.delivery_slot_details?.name || `Slot #${slot.delivery_slot_id}`}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatPersonName(slot.delivery_person_details || undefined)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {assignment.change_logs && assignment.change_logs.length > 0 && (
+            <div className="mt-4">
+              <div className="text-[10px] font-black uppercase text-gray-400 mb-2">Reassignment history</div>
+              <div className="space-y-2">
+                {assignment.change_logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="rounded-xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/60 dark:bg-amber-900/10 p-3 text-sm"
+                  >
+                    <div className="font-medium text-gray-800 dark:text-gray-200">
+                      {formatPersonName(log.previous_delivery_person_details)} to {formatPersonName(log.new_delivery_person_details)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {log.reason || "Reassigned"} · Effective {log.effective_from || "—"}
+                    </div>
+                    {log.notes && <div className="text-xs text-gray-500 mt-1">{log.notes}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenDailyReassignments({ items }: { items: AdminKitchenMealDeliveryAssignment[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No daily delivery reassignments found." />;
+  return (
+    <div className="space-y-4">
+      {items.map((row) => (
+        <div
+          key={row.id}
+          className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/70 dark:bg-gray-800/30 shadow-sm"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="font-bold text-gray-900 dark:text-white">
+                {row.user_meal_details?.patient_name || "Patient"} · {row.user_meal_details?.food_name || "Meal"}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {row.user_meal_details?.meal_date || row.scheduled_date || "—"} · {row.user_meal_details?.meal_type || "—"}
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-700">
+              {row.status}
+            </span>
+          </div>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Delivery person</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{formatPersonName(row.delivery_person_details)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Slot</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{row.delivery_slot_details?.name || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Scheduled</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{row.scheduled_date || "—"}</div>
+            </div>
+          </div>
+          {row.reassignment_reason && (
+            <div className="mt-3 text-xs text-amber-700 dark:text-amber-400 font-medium">
+              Reason: {row.reassignment_reason}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenDeliveryProfiles({ items }: { items: AdminKitchenDeliveryProfile[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No delivery profiles found for this kitchen." />;
+  return (
+    <div className="space-y-4">
+      {items.map((row) => (
+        <div
+          key={row.id}
+          className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/70 dark:bg-gray-800/30 shadow-sm"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="font-bold text-gray-900 dark:text-white">{formatPersonName(row.user_details || undefined)}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {row.user_details?.mobile || row.user_details?.email || "No contact info"}
+              </div>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                row.is_verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {row.is_verified ? "Verified" : "Pending"}
+            </span>
+          </div>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Vehicle</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">
+                {row.vehicle_type || row.other_vehicle_name || "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Registration</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{row.register_number || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">License</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{row.license_number || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400">Verified on</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{row.verified_on || "—"}</div>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3 text-xs">
+            {row.license_copy && (
+              <a href={getMediaUrl(row.license_copy)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                License copy
+              </a>
+            )}
+            {row.rc_copy && (
+              <a href={getMediaUrl(row.rc_copy)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                RC copy
+              </a>
+            )}
+            {row.insurance_copy && (
+              <a href={getMediaUrl(row.insurance_copy)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                Insurance
+              </a>
+            )}
+            {row.puc_image && (
+              <a href={getMediaUrl(row.puc_image)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                PUC
+              </a>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenPlannedLeaves({ items }: { items: AdminKitchenPlannedLeave[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No planned leave entries found." />;
+  return (
+    <div className="space-y-3">
+      {items.map((row) => (
+        <div
+          key={row.id}
+          className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white/70 dark:bg-gray-800/30 shadow-sm"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="font-bold text-gray-900 dark:text-white">{formatPersonName(row.user_details)}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {row.start_date} to {row.end_date}
+                {row.start_time || row.end_time ? ` · ${row.start_time || "—"} to ${row.end_time || "—"}` : ""}
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-700">
+              {row.leave_type}
+            </span>
+          </div>
+          {row.notes && <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">{row.notes}</div>}
+        </div>
+      ))}
+    </div>
+  );
 }
