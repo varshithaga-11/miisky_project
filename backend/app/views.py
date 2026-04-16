@@ -6259,6 +6259,8 @@ class MicroKitchenDeliveryFeedbackListView(APIView):
     Query params:
       - page, limit (optional)
       - feedback_type: issue|rating (optional)
+      - target_type: order|user_meal (optional)
+      - order_type: patient|non_patient (optional, for order target)
       - order: order_id (optional)
       - user_meal: user_meal_id (optional)
       - search: matches reporter username/first/last (optional)
@@ -6280,6 +6282,16 @@ class MicroKitchenDeliveryFeedbackListView(APIView):
             SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
         }:
             qs = qs.filter(feedback_type=feedback_type)
+
+        target_type = (request.query_params.get("target_type") or "").strip()
+        if target_type == "order":
+            qs = qs.filter(order__isnull=False)
+        elif target_type == "user_meal":
+            qs = qs.filter(user_meal__isnull=False)
+
+        order_type = (request.query_params.get("order_type") or "").strip()
+        if order_type in {"patient", "non_patient"}:
+            qs = qs.filter(order__order_type=order_type)
 
         order_id = request.query_params.get("order")
         if order_id:
@@ -6311,6 +6323,77 @@ class MicroKitchenDeliveryFeedbackListView(APIView):
             limit = int(request.query_params.get("limit", 20))
         except (ValueError, TypeError):
             limit = 20
+        limit = max(1, min(limit, 200))
+
+        paginator = Pagination()
+        paginator.page_size = limit
+        paginator.page_query_param = "page"
+        paginator.page_size_query_param = "limit"
+        paged = paginator.paginate_queryset(qs, request, view=self)
+        ser = SupplyChainDeliveryFeedbackSerializer(paged, many=True)
+        return paginator.get_paginated_response(ser.data)
+
+
+class SupplyChainDeliveryFeedbackListView(APIView):
+    """
+    Supply-chain: view feedback for deliveries handled by the logged-in delivery person.
+    Query params:
+      - page, limit (optional)
+      - feedback_type: issue|rating (optional)
+      - target_type: order|user_meal (optional)
+      - order_type: patient|non_patient (optional, for order target)
+      - search: matches reporter username/first/last (optional)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if getattr(request.user, "role", None) != "supply_chain":
+            return Response(
+                {"detail": "Only supply-chain users can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            Q(order__delivery_person=request.user)
+            | Q(user_meal__deliveries__delivery_person=request.user)
+        ).select_related(
+            "reported_by", "order", "user_meal"
+        ).order_by("-created_at").distinct()
+
+        feedback_type = (request.query_params.get("feedback_type") or "").strip()
+        if feedback_type in {
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+        }:
+            qs = qs.filter(feedback_type=feedback_type)
+
+        target_type = (request.query_params.get("target_type") or "").strip()
+        if target_type == "order":
+            qs = qs.filter(order__isnull=False)
+        elif target_type == "user_meal":
+            qs = qs.filter(user_meal__isnull=False)
+
+        order_type = (request.query_params.get("order_type") or "").strip()
+        if order_type in {"patient", "non_patient"}:
+            qs = qs.filter(order__order_type=order_type)
+
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(reported_by__username__icontains=search)
+                | Q(reported_by__first_name__icontains=search)
+                | Q(reported_by__last_name__icontains=search)
+            )
+
+        try:
+            page = int(request.query_params.get("page", 1))
+        except (ValueError, TypeError):
+            page = 1
+        try:
+            limit = int(request.query_params.get("limit", 10))
+        except (ValueError, TypeError):
+            limit = 10
         limit = max(1, min(limit, 200))
 
         paginator = Pagination()

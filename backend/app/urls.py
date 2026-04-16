@@ -130,6 +130,7 @@ urlpatterns = [
     path("delivery-feedback/", views.DeliveryFeedbackView.as_view(), name="delivery-feedback"),
     path("microkitchen/delivery-feedback/", views.MicroKitchenDeliveryFeedbackView.as_view(), name="microkitchen-delivery-feedback"),
     path("microkitchen/delivery-feedback-list/", views.MicroKitchenDeliveryFeedbackListView.as_view(), name="microkitchen-delivery-feedback-list"),
+    path("supplychain/delivery-feedback-list/", views.SupplyChainDeliveryFeedbackListView.as_view(), name="supplychain-delivery-feedback-list"),
     path('delivery-staff/', DeliveryStaffListView.as_view(), name='delivery-staff'),
     path('supply-chain-users/', SupplyChainUsersListView.as_view(), name='supply-chain-users'),
     path(

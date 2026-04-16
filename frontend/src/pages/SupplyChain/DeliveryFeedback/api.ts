@@ -43,23 +43,23 @@ export type Paginated<T> = {
   results: T[];
 };
 
-export async function fetchMicroKitchenDeliveryFeedbackList(params: {
+export async function fetchSupplyChainDeliveryFeedbackList(params: {
   page?: number;
   limit?: number;
   feedback_type?: "all" | DeliveryFeedbackType;
+  target_type?: "all" | "order" | "user_meal";
+  order_type?: "all" | "patient" | "non_patient";
   search?: string;
-  order?: string;
-  user_meal?: string;
 }): Promise<Paginated<DeliveryFeedbackRow>> {
   const q = new URLSearchParams();
   q.set("page", String(params.page ?? 1));
-  q.set("limit", String(params.limit ?? 20));
+  q.set("limit", String(params.limit ?? 10));
   if (params.feedback_type && params.feedback_type !== "all") q.set("feedback_type", params.feedback_type);
+  if (params.target_type && params.target_type !== "all") q.set("target_type", params.target_type);
+  if (params.order_type && params.order_type !== "all") q.set("order_type", params.order_type);
   if (params.search) q.set("search", params.search);
-  if (params.order) q.set("order", params.order);
-  if (params.user_meal) q.set("user_meal", params.user_meal);
 
-  const url = createApiUrl(`api/microkitchen/delivery-feedback-list/?${q.toString()}`);
+  const url = createApiUrl(`api/supplychain/delivery-feedback-list/?${q.toString()}`);
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   const data = response.data;
   return {
@@ -71,4 +71,3 @@ export async function fetchMicroKitchenDeliveryFeedbackList(params: {
     results: Array.isArray(data?.results) ? data.results : [],
   };
 }
-

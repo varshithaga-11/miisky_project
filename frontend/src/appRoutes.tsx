@@ -23,7 +23,7 @@ const KitchenOrdersPage = lazy(() => import("./pages/MicroKitchenSide/SeparateOr
 const MicroKitchenDeliveryChargesPage = lazy(() => import("./pages/MicroKitchenSide/DeliveryCharges/index"));
 const PatientCartPage = lazy(() => import("./pages/PatientSide/Cart/index"));
 const PatientOrdersPage = lazy(() => import("./pages/PatientSide/Orders/index"));
-const MicroKitchenDeliveryFeedbackPage = lazy(() => import("./pages/MasterSide/DeliveryFeedback"));
+const MicroKitchenDeliveryFeedbackPage = lazy(() => import("./pages/MicroKitchenSide/DeliveryFeedback"));
 import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 
 import UserManagementPage from "./pages/AdminSide/UserManagement/index";
@@ -123,6 +123,7 @@ import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
 import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
 import SupplyChainSupportTicketPage from "./pages/SupplyChain/SupportTicket/index";
+import SupplyChainDeliveryFeedbackPage from "./pages/SupplyChain/DeliveryFeedback";
 import PatientDashboardPage from "./pages/PatientSide/Dashboard/index";
 import NutritionDashboardPage from "./pages/NutritionSide/Dashboard/index";
 import MicroKitchenDashboardPage from "./pages/MicroKitchenSide/Dashboard/index";
@@ -417,6 +418,7 @@ export function appRoutes() {
           <Route path="supplychain/seperate-orders" element={<SupplyChainSeperateOrdersPage />} />
           <Route path="supplychain/earnings" element={<SupplyChainEarningsPage />} />
           <Route path="supplychain/planned-leave" element={<SupplyChainPlannedLeavePage />} />
+          <Route path="supplychain/delivery-feedback" element={<SupplyChainDeliveryFeedbackPage />} />
           <Route path="supplychain/delivery-questionnaire" element={<DeliveryQuestionarePage />} />
           <Route path="supplychain/support-tickets" element={<SupplyChainSupportTicketPage />} />
           <Route path="supplychain/notifications" element={<SupplyChainNotificationsPage />} />

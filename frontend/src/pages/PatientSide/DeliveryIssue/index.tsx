@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
+import DatePicker2 from "../../../components/form/date-picker2";
 import { toast, ToastContainer } from "react-toastify";
 import { fetchMealsByPlanDate, fetchMyDietPlans, submitDeliveryIssue, UserDietPlanRow, UserMealLite } from "./api";
 
@@ -105,11 +106,13 @@ const PatientDeliveryIssuePage: React.FC = () => {
               ))}
             </select>
 
-            <input
-              type="date"
+            <DatePicker2
+              id="delivery-issue-date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={setSelectedDate}
+              placeholder="Select date"
+              minDate={selectedPlan?.start_date || undefined}
+              maxDate={selectedPlan?.end_date || undefined}
             />
 
             <button
