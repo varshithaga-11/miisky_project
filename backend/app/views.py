@@ -931,7 +931,12 @@ class MicroKitchenSupplyChainPayoutListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAuthenticated]
     pagination_class = Pagination
-    serializer_class = MicroKitchenSupplyChainPayoutSerializer
+    serializer_class = MicroKitchenSupplyChainPayoutListSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return MicroKitchenSupplyChainPayoutSerializer
+        return MicroKitchenSupplyChainPayoutListSerializer
 
     def _micro_kitchen(self):
         if getattr(self.request.user, "role", None) != "micro_kitchen":
@@ -951,10 +956,6 @@ class MicroKitchenSupplyChainPayoutListCreateView(generics.ListCreateAPIView):
         patient_id = (self.request.query_params.get("patient_id") or "").strip()
         if patient_id.isdigit():
             qs = qs.filter(patient_id=int(patient_id))
-
-        delivery_person_id = (self.request.query_params.get("delivery_person_id") or "").strip()
-        if delivery_person_id.isdigit():
-            qs = qs.filter(delivery_person_id=int(delivery_person_id))
 
         status_param = (self.request.query_params.get("status") or "").strip().lower()
         if status_param in ("pending", "paid"):
@@ -1068,7 +1069,7 @@ class SupplyChainPayoutEarningsListView(generics.ListAPIView):
 
     permission_classes = [IsAuthenticated]
     pagination_class = Pagination
-    serializer_class = MicroKitchenSupplyChainPayoutSerializer
+    serializer_class = SupplyChainPayoutEarningsListSerializer
 
     def get_queryset(self):
         if getattr(self.request.user, "role", None) != "supply_chain":
@@ -1141,6 +1142,45 @@ class SupplyChainPayoutEarningsListView(generics.ListAPIView):
                 "pending_amount": str(totals["pending_amount"] or 0),
             }
         )
+
+
+class SupplyChainPayoutProofUpsertView(APIView):
+    """Supply-chain portal: optionally save transaction id and screenshot for one payout row."""
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def patch(self, request, pk, *args, **kwargs):
+        if getattr(request.user, "role", None) != "supply_chain":
+            raise PermissionDenied("Only supply-chain users can access this endpoint.")
+
+        payout = get_object_or_404(
+            MicroKitchenSupplyChainPayout,
+            id=pk,
+            delivery_person=request.user,
+        )
+
+        touched = False
+        if "transaction_reference" in request.data:
+            payout.transaction_reference = (request.data.get("transaction_reference") or "").strip() or None
+            touched = True
+
+        screenshot = request.FILES.get("payment_screenshot")
+        if screenshot is not None:
+            payout.payment_screenshot = screenshot
+            touched = True
+
+        if not touched:
+            return Response(
+                {"detail": "Provide transaction_reference or payment_screenshot."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payout.save()
+        data = SupplyChainPayoutProofUpdateSerializer(
+            payout, context={"request": request}
+        ).data
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class OrderCommissionConfigViewSet(viewsets.ModelViewSet):

@@ -448,6 +448,11 @@ urlpatterns = [
         name="supply-chain-payout-earnings",
     ),
     path(
+        "supply-chain/payout-earnings/<int:pk>/proof/",
+        views.SupplyChainPayoutProofUpsertView.as_view(),
+        name="supply-chain-payout-earnings-proof",
+    ),
+    path(
         "admin/plan-payout-trackers/",
         views.AdminPayoutTrackersForPayView.as_view(),
         name="admin-plan-payout-trackers",

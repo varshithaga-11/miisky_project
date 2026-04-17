@@ -3740,6 +3740,10 @@ class MicroKitchenSupplyChainPayout(models.Model):
     period_from = models.DateField(null=True, blank=True)
     period_to = models.DateField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
+    transaction_reference = models.CharField(max_length=120, null=True, blank=True)
+    payment_screenshot = models.ImageField(
+        upload_to="supply_chain_payout_screenshots/", null=True, blank=True
+    )
 
     paid_on = models.DateTimeField(null=True, blank=True)
     paid_by = models.ForeignKey(

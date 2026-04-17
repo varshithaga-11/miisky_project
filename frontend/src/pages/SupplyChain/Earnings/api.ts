@@ -3,24 +3,18 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
 export type SupplyChainPayoutRow = {
   id: number;
-  micro_kitchen: number | null;
-  micro_kitchen_name: string;
-  delivery_person: number | null;
-  delivery_person_name: string;
-  user_diet_plan: number | null;
-  plan_name: string;
+  micro_kitchen_name: string | null;
   patient: number | null;
   patient_name: string;
+  plan_name: string;
   amount: string;
   status: "pending" | "paid";
   period_from: string | null;
   period_to: string | null;
-  notes: string | null;
+  transaction_reference: string | null;
+  payment_screenshot_url: string | null;
   paid_on: string | null;
-  paid_by: number | null;
-  paid_by_name: string;
   created_at: string;
-  updated_at: string;
 };
 
 export type PaginatedSupplyChainPayoutEarnings = {
@@ -38,7 +32,6 @@ export type PaginatedSupplyChainPayoutEarnings = {
 export type SupplyChainEarningsFilters = {
   status?: string;
   patient_id?: number | "";
-  delivery_person_id?: number | "";
   period?: string;
   start_date?: string;
   end_date?: string;
@@ -54,7 +47,6 @@ export async function getSupplyChainPayoutEarnings(
   if (search.trim()) params.search = search.trim();
   if (filters.status) params.status = filters.status;
   if (filters.patient_id) params.patient_id = Number(filters.patient_id);
-  if (filters.delivery_person_id) params.delivery_person_id = Number(filters.delivery_person_id);
   if (filters.period) params.period = filters.period;
   if (filters.start_date) params.start_date = filters.start_date;
   if (filters.end_date) params.end_date = filters.end_date;
@@ -63,5 +55,20 @@ export async function getSupplyChainPayoutEarnings(
     headers: await getAuthHeaders(),
     params,
   });
+  return res.data;
+}
+
+export async function upsertSupplyChainPayoutProof(
+  payoutId: number,
+  transactionReference: string,
+  screenshot: File | null
+): Promise<unknown> {
+  const url = createApiUrl(`api/supply-chain/payout-earnings/${payoutId}/proof/`);
+  const fd = new FormData();
+  fd.append("transaction_reference", transactionReference);
+  if (screenshot) fd.append("payment_screenshot", screenshot);
+  const headers = await getAuthHeaders();
+  const { Authorization } = headers;
+  const res = await axios.patch(url, fd, { headers: { Authorization } });
   return res.data;
 }

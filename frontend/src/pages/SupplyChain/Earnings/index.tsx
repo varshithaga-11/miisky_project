@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Wallet } from "lucide-react";
+import { ArrowLeft, ExternalLink, Upload, Wallet } from "lucide-react";
 import { FiSearch } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import Button from "../../../components/ui/button/Button";
 import {
   getSupplyChainPayoutEarnings,
   SupplyChainEarningsFilters,
   SupplyChainPayoutRow,
+  upsertSupplyChainPayoutProof,
 } from "./api";
 
 const fmtMoney = (s: string | undefined | null) => {
@@ -30,7 +32,6 @@ export default function SupplyChainEarningsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [patientFilter, setPatientFilter] = useState<number | "">("");
-  const [deliveryPersonFilter, setDeliveryPersonFilter] = useState<number | "">("");
   const [periodFilter, setPeriodFilter] = useState("this_month");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -39,6 +40,10 @@ export default function SupplyChainEarningsPage() {
   const [totalAmount, setTotalAmount] = useState<string>("0");
   const [paidAmount, setPaidAmount] = useState<string>("0");
   const [pendingAmount, setPendingAmount] = useState<string>("0");
+  const [proofRow, setProofRow] = useState<SupplyChainPayoutRow | null>(null);
+  const [proofTxRef, setProofTxRef] = useState("");
+  const [proofScreenshot, setProofScreenshot] = useState<File | null>(null);
+  const [savingProof, setSavingProof] = useState(false);
   const periodOptions = [
     { value: "today", label: "Today" },
     { value: "this_week", label: "This week" },
@@ -53,14 +58,6 @@ export default function SupplyChainEarningsPage() {
     const map = new Map<number, string>();
     rows.forEach((r) => {
       if (r.patient) map.set(r.patient, r.patient_name || `Patient #${r.patient}`);
-    });
-    return [...map.entries()].map(([id, label]) => ({ id, label }));
-  }, [rows]);
-
-  const uniqueDeliveryPeople = useMemo(() => {
-    const map = new Map<number, string>();
-    rows.forEach((r) => {
-      if (r.delivery_person) map.set(r.delivery_person, r.delivery_person_name || `User #${r.delivery_person}`);
     });
     return [...map.entries()].map(([id, label]) => ({ id, label }));
   }, [rows]);
@@ -84,7 +81,6 @@ export default function SupplyChainEarningsPage() {
         const filters: SupplyChainEarningsFilters = {
           status: statusFilter || undefined,
           patient_id: patientFilter,
-          delivery_person_id: deliveryPersonFilter,
           period: periodFilter,
           start_date: periodFilter === "custom_range" ? startDate || undefined : undefined,
           end_date: periodFilter === "custom_range" ? endDate || undefined : undefined,
@@ -109,7 +105,7 @@ export default function SupplyChainEarningsPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, debouncedSearch, statusFilter, patientFilter, deliveryPersonFilter, periodFilter, startDate, endDate]);
+  }, [page, pageSize, debouncedSearch, statusFilter, patientFilter, periodFilter, startDate, endDate]);
 
   const handleSort = (field: "amount" | "created_at") => {
     if (sortField === field) {
@@ -134,6 +130,46 @@ export default function SupplyChainEarningsPage() {
     });
     return sorted;
   }, [rows, sortField, sortDirection]);
+
+  const openProofModal = (row: SupplyChainPayoutRow) => {
+    setProofRow(row);
+    setProofTxRef(row.transaction_reference || "");
+    setProofScreenshot(null);
+  };
+
+  const closeProofModal = () => {
+    setProofRow(null);
+    setProofTxRef("");
+    setProofScreenshot(null);
+  };
+
+  const submitProof = async () => {
+    if (!proofRow) return;
+    setSavingProof(true);
+    try {
+      await upsertSupplyChainPayoutProof(proofRow.id, proofTxRef, proofScreenshot);
+      toast.success("Proof details updated");
+      closeProofModal();
+      const filters: SupplyChainEarningsFilters = {
+        status: statusFilter || undefined,
+        patient_id: patientFilter,
+        period: periodFilter,
+        start_date: periodFilter === "custom_range" ? startDate || undefined : undefined,
+        end_date: periodFilter === "custom_range" ? endDate || undefined : undefined,
+      };
+      const data = await getSupplyChainPayoutEarnings(page, pageSize, debouncedSearch, filters);
+      setRows(data.results ?? []);
+      setTotalPages(data.total_pages ?? 1);
+      setTotalCount(data.count ?? 0);
+      setTotalAmount(data.total_amount || "0");
+      setPaidAmount(data.paid_amount || "0");
+      setPendingAmount(data.pending_amount || "0");
+    } catch {
+      toast.error("Could not update proof details");
+    } finally {
+      setSavingProof(false);
+    }
+  };
 
   return (
     <>
@@ -210,7 +246,7 @@ export default function SupplyChainEarningsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <select
               value={statusFilter}
               onChange={(e) => {
@@ -236,22 +272,6 @@ export default function SupplyChainEarningsPage() {
               {uniquePatients.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={deliveryPersonFilter}
-              onChange={(e) => {
-                const v = e.target.value;
-                setDeliveryPersonFilter(v ? Number(v) : "");
-                setPage(1);
-              }}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900"
-            >
-              <option value="">All delivery persons</option>
-              {uniqueDeliveryPeople.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.label}
                 </option>
               ))}
             </select>
@@ -332,19 +352,22 @@ export default function SupplyChainEarningsPage() {
                   >
                     Created {sortField === "created_at" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                   </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Transaction ID</TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Screenshot</TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Paid on</TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={12} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={12} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       No payout records found.
                     </TableCell>
                   </TableRow>
@@ -383,8 +406,32 @@ export default function SupplyChainEarningsPage() {
                       <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300 whitespace-nowrap">
                         {new Date(r.created_at).toLocaleDateString()}
                       </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300">
+                        {r.transaction_reference || "—"}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300">
+                        {r.payment_screenshot_url ? (
+                          <a
+                            href={r.payment_screenshot_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-indigo-600 hover:underline"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            View
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
                       <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300 whitespace-nowrap">
                         {r.paid_on ? new Date(r.paid_on).toLocaleString() : "—"}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm">
+                        <Button size="sm" variant="outline" onClick={() => openProofModal(r)}>
+                          <Upload className="w-4 h-4 mr-1" />
+                          Proof
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -431,6 +478,45 @@ export default function SupplyChainEarningsPage() {
           </div>
         )}
       </div>
+      {proofRow && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          onClick={closeProofModal}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl max-w-lg w-full p-6 border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Upload payment proof</h2>
+            <p className="text-sm text-gray-500 mb-4">Order payout row #{proofRow.id}. Both fields are optional.</p>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Transaction ID</label>
+            <input
+              type="text"
+              value={proofTxRef}
+              onChange={(e) => setProofTxRef(e.target.value)}
+              placeholder="e.g. UPI/Bank reference"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm mb-4"
+            />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Screenshot</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProofScreenshot(e.target.files?.[0] ?? null)}
+              className="w-full text-sm mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" type="button" onClick={closeProofModal} disabled={savingProof}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={() => void submitProof()} disabled={savingProof}>
+                {savingProof ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

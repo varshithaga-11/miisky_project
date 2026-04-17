@@ -3490,6 +3490,7 @@ class MicroKitchenSupplyChainPayoutSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()
     plan_name = serializers.SerializerMethodField()
     paid_by_name = serializers.SerializerMethodField()
+    payment_screenshot_url = serializers.SerializerMethodField()
 
     class Meta:
         model = MicroKitchenSupplyChainPayout
@@ -3508,6 +3509,9 @@ class MicroKitchenSupplyChainPayoutSerializer(serializers.ModelSerializer):
             "period_from",
             "period_to",
             "notes",
+            "transaction_reference",
+            "payment_screenshot",
+            "payment_screenshot_url",
             "paid_on",
             "paid_by",
             "paid_by_name",
@@ -3538,6 +3542,15 @@ class MicroKitchenSupplyChainPayoutSerializer(serializers.ModelSerializer):
     def get_paid_by_name(self, obj):
         return self._user_label(obj.paid_by)
 
+    def get_payment_screenshot_url(self, obj):
+        if not obj.payment_screenshot:
+            return None
+        request = self.context.get("request")
+        url = obj.payment_screenshot.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
     def validate(self, attrs):
         plan = attrs.get("user_diet_plan") or getattr(self.instance, "user_diet_plan", None)
         patient = attrs.get("patient") or getattr(self.instance, "patient", None)
@@ -3546,6 +3559,121 @@ class MicroKitchenSupplyChainPayoutSerializer(serializers.ModelSerializer):
                 {"patient": "Selected patient does not belong to the selected diet plan."}
             )
         return attrs
+
+
+class MicroKitchenSupplyChainPayoutListSerializer(serializers.ModelSerializer):
+    delivery_person_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    plan_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenSupplyChainPayout
+        fields = [
+            "id",
+            "delivery_person",
+            "delivery_person_name",
+            "patient",
+            "patient_name",
+            "user_diet_plan",
+            "plan_name",
+            "period_from",
+            "period_to",
+            "amount",
+            "status",
+            "created_at",
+        ]
+
+    def _user_label(self, user):
+        if not user:
+            return ""
+        full_name = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip()
+        return full_name or (user.username or "")
+
+    def get_delivery_person_name(self, obj):
+        return self._user_label(obj.delivery_person)
+
+    def get_patient_name(self, obj):
+        return self._user_label(obj.patient)
+
+    def get_plan_name(self, obj):
+        plan = getattr(obj, "user_diet_plan", None)
+        if not plan:
+            return ""
+        dp = getattr(plan, "diet_plan", None)
+        return getattr(dp, "title", None) or f"Plan #{plan.id}"
+
+
+class SupplyChainPayoutEarningsListSerializer(serializers.ModelSerializer):
+    micro_kitchen_name = serializers.CharField(source="micro_kitchen.brand_name", read_only=True)
+    patient_name = serializers.SerializerMethodField()
+    plan_name = serializers.SerializerMethodField()
+    payment_screenshot_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenSupplyChainPayout
+        fields = [
+            "id",
+            "micro_kitchen_name",
+            "patient",
+            "patient_name",
+            "plan_name",
+            "period_from",
+            "period_to",
+            "amount",
+            "status",
+            "transaction_reference",
+            "payment_screenshot_url",
+            "created_at",
+            "paid_on",
+        ]
+
+    def _user_label(self, user):
+        if not user:
+            return ""
+        full_name = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip()
+        return full_name or (user.username or "")
+
+    def get_patient_name(self, obj):
+        return self._user_label(obj.patient)
+
+    def get_plan_name(self, obj):
+        plan = getattr(obj, "user_diet_plan", None)
+        if not plan:
+            return ""
+        dp = getattr(plan, "diet_plan", None)
+        return getattr(dp, "title", None) or f"Plan #{plan.id}"
+
+    def get_payment_screenshot_url(self, obj):
+        if not obj.payment_screenshot:
+            return None
+        request = self.context.get("request")
+        url = obj.payment_screenshot.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+
+class SupplyChainPayoutProofUpdateSerializer(serializers.ModelSerializer):
+    payment_screenshot_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenSupplyChainPayout
+        fields = [
+            "id",
+            "transaction_reference",
+            "payment_screenshot",
+            "payment_screenshot_url",
+            "updated_at",
+        ]
+
+    def get_payment_screenshot_url(self, obj):
+        if not obj.payment_screenshot:
+            return None
+        request = self.context.get("request")
+        url = obj.payment_screenshot.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
 
 class AdminPatientListSerializer(serializers.ModelSerializer):
