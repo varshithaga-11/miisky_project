@@ -4500,6 +4500,7 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
             "patient_name": (
                 f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username
             ),
+            "kitchen_brand": mk.brand_name if mk else "",
             "user_details": {
                 "first_name": u.first_name or "",
                 "last_name": u.last_name or "",

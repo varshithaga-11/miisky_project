@@ -13,6 +13,7 @@ type PropsType = {
   placeholder?: string;
   minDate?: string;
   maxDate?: string;
+  className?: string;
 };
 
 export default function DatePicker2({
@@ -24,6 +25,7 @@ export default function DatePicker2({
   placeholder,
   minDate,
   maxDate,
+  className,
 }: PropsType) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<flatpickr.Instance | null>(null);
@@ -92,7 +94,7 @@ export default function DatePicker2({
   }, [value]);
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div className={className} onClick={(e) => e.stopPropagation()}>
       {label && <Label htmlFor={id}>{label}</Label>}
       <div className="relative">
         <input

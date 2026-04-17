@@ -2,20 +2,22 @@ import React, { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
-  fetchAdminSupplyChainDeliveryProfile,
+  fetchAdminSupplyChainHubSummary,
   fetchAdminSupplyChainKitchenTeam,
-  fetchAdminSupplyChainOrders,
   fetchAdminSupplyChainPlanAssignments,
+  fetchAdminSupplyChainOrders,
+  fetchAdminSupplyChainDailyWork,
+  fetchAdminSupplyChainDeliveryProfile,
   fetchAdminSupplyChainPlannedLeaves,
   fetchAdminSupplyChainDeliveryRatings,
   fetchAdminSupplyChainEarnings,
   fetchAdminSupplyChainTickets,
-  fetchAdminSupplyChainHubSummary,
+  PaginatedResponse,
+  AdminSupplyChainEarningsPaginatedResp,
   getAdminSupplyChainList,
   type AdminSupplyChainOrderRow,
   type KitchenTeamRow,
   type DeliveryFeedbackRow,
-  type AdminSupplyChainEarningsResp,
 } from "./api";
 import { profileFileUrl } from "../../SupplyChain/DeliveryQuestionare/api";
 import { toast, ToastContainer } from "react-toastify";
@@ -38,16 +40,132 @@ import {
   FiDollarSign,
   FiActivity,
   FiGrid,
-  FiArrowLeft,
-  FiAlertCircle,
-  FiShoppingCart,
   FiTruck,
+  FiArrowLeft,
+  FiArrowRight,
+  FiCheck,
+  FiChevronLeft,
   FiMapPin,
   FiSettings,
+  FiAlertCircle,
 } from "react-icons/fi";
+
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+
+type PagState<T> = {
+  results: T[];
+  page: number;
+  hasMore: boolean;
+};
+
+const initialPag = {
+  results: [],
+  page: 1,
+  hasMore: true,
+};
+
+const Sentinel = ({ loading, hasMore }: { loading: boolean; hasMore: boolean }) => (
+  <div id="scroll-sentinel" className="h-20 flex items-center justify-center">
+    {loading ? (
+      <div className="flex items-center gap-2">
+        <div className="size-4 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin" />
+        <span className="text-[10px] font-black uppercase text-blue-600/50 tracking-widest italic">Loading more...</span>
+      </div>
+    ) : !hasMore ? (
+      <span className="text-[10px] font-black uppercase text-gray-300 tracking-[0.2em] italic">End of records</span>
+    ) : null}
+  </div>
+);
+
+export function FilterBar({
+  startDate,
+  endDate,
+  onFilterChange,
+  activePeriod,
+  onPeriodChange,
+  extra,
+}: {
+  startDate: string;
+  endDate: string;
+  activePeriod: string;
+  onPeriodChange: (p: string) => void;
+  onFilterChange: (s: string, e: string, p: string) => void;
+  extra?: React.ReactNode;
+}) {
+  const handlePeriodChange = (val: string) => {
+    onPeriodChange(val);
+    if (val === "custom") return;
+    if (val === "") {
+      onFilterChange("", "", "");
+      return;
+    }
+
+    const now = new Date();
+    const end = now.toISOString().split("T")[0];
+    let start = "";
+
+    switch (val) {
+      case "today":
+        start = end;
+        break;
+      case "weekly": {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        start = d.toISOString().split("T")[0];
+        break;
+      }
+      case "monthly": {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        start = d.toISOString().split("T")[0];
+        break;
+      }
+      case "yearly": {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 1);
+        start = d.toISOString().split("T")[0];
+        break;
+      }
+    }
+    onFilterChange(start, end, val);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-4 items-end bg-gray-50/50 dark:bg-white/10 p-5 rounded-[32px] border border-gray-100 dark:border-white/10 mb-6 shadow-sm transition-all duration-300">
+      <div className="space-y-1.5">
+        <Label className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-widest pl-1 italic">Quick Period</Label>
+        <Select 
+          value={activePeriod}
+          onChange={handlePeriodChange}
+          options={[
+            { value: "", label: "Select Period" },
+            { value: "today", label: "Today" },
+            { value: "weekly", label: "Last 7 Days" },
+            { value: "monthly", label: "Last 30 Days" },
+            { value: "yearly", label: "Last Year" },
+          ]}
+          className="w-44 h-11 text-xs font-bold rounded-2xl shadow-sm border-gray-200"
+        />
+      </div>
+
+      {extra}
+      <button 
+         onClick={() => {
+           onPeriodChange("");
+           onFilterChange("", "", "");
+         }}
+         className="h-11 px-5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1.5 group"
+      >
+        <div className="p-1.5 rounded-lg group-hover:bg-red-50 transition-colors">
+          <FiX size={14} />
+        </div>
+        Reset
+      </button>
+    </div>
+  );
+}
 
 type SupplyChainRow = {
   id: number;
@@ -59,7 +177,7 @@ type SupplyChainRow = {
   is_active: boolean;
 };
 
-type DossierTab = "overview" | "kitchens" | "plans" | "orders" | "earnings" | "profile" | "leave" | "ratings" | "issues" | "tickets";
+type DossierTab = "overview" | "kitchens" | "plans" | "daily-work" | "orders" | "earnings" | "profile" | "leave" | "ratings" | "issues" | "tickets";
 
 function PlanAssignmentCard({ row }: { row: Record<string, unknown> }) {
   const patient = row.patient_details as
@@ -203,129 +321,375 @@ function DeliveryProfilePanel({ profile }: { profile: Record<string, unknown> | 
 }
 
 
-function IssuesPanel({ ratings }: { ratings: DeliveryFeedbackRow[] | null }) {
+function IssuesPanel({ 
+  ratings, 
+  loadingMore, 
+  hasMore,
+  startDate,
+  endDate,
+  onFilterChange,
+  activePeriod,
+  onPeriodChange
+}: { 
+  ratings: DeliveryFeedbackRow[]; 
+  loadingMore: boolean; 
+  hasMore: boolean;
+  startDate: string;
+  endDate: string;
+  onFilterChange: (s: string, e: string, p: string) => void;
+  activePeriod: string;
+  onPeriodChange: (p: string) => void;
+}) {
   const issues = React.useMemo(() => {
-    return (ratings || []).filter((x) => x.feedback_type === "issue");
+    return (ratings || []).filter((x: DeliveryFeedbackRow) => x.feedback_type === "issue");
   }, [ratings]);
 
-  if (!issues || issues.length === 0) {
-    return (
-      <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
-        No delivery issues reported for this person.
-      </p>
-    );
-  }
-
   return (
-    <div className="grid gap-4">
-      {issues.map((r) => (
-        <div
-          key={r.id}
-          className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col sm:flex-row justify-between gap-4"
-        >
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
-                {r.issue_type?.replace("_", " ") || "Issue"}
-              </span>
-              <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${r.resolved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                {r.resolved ? "Resolved" : "Active"}
-              </span>
-              <span className="text-[10px] font-bold text-gray-400 italic">
-                {new Date(r.created_at).toLocaleString()}
-              </span>
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-200 mt-2 italic leading-relaxed">
-              &quot;{r.description || r.review || "No details provided"}&quot;
-            </p>
-            <div className="mt-4 pt-4 border-t dark:border-white/5 flex flex-wrap gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              <span>Order: <span className="text-blue-500">#{r.order_details?.id || r.order}</span></span>
-              <span>Reported By: {r.reported_by_details ? `${r.reported_by_details.first_name} ${r.reported_by_details.last_name}` : "Patient"}</span>
-            </div>
-          </div>
-          {r.resolved_at && (
-             <div className="sm:text-right text-[10px] text-gray-400">
-               <div className="font-black uppercase tracking-widest text-green-600 mb-1">Cleared At</div>
-               {new Date(r.resolved_at).toLocaleString()}
-             </div>
-          )}
+    <div className="space-y-4">
+      <FilterBar 
+        startDate={startDate} 
+        endDate={endDate} 
+        onFilterChange={onFilterChange} 
+        activePeriod={activePeriod}
+        onPeriodChange={onPeriodChange}
+      />
+      {(!issues || issues.length === 0) ? (
+        <div className="space-y-4">
+          <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
+            No delivery issues reported for this period.
+          </p>
+          <Sentinel loading={loadingMore} hasMore={hasMore} />
         </div>
-      ))}
+      ) : (
+        <div className="grid gap-4">
+          {issues.map((r: any) => (
+            <div
+              key={r.id}
+              className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col sm:flex-row justify-between gap-4"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-3 py-1 bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                    {r.issue_type?.replace("_", " ") || "Issue"}
+                  </span>
+                  <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${r.resolved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                    {r.resolved ? "Resolved" : "Active"}
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 italic">
+                    {new Date(r.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-200 mt-2 italic leading-relaxed">
+                  &quot;{r.description || r.review || "No details provided"}&quot;
+                </p>
+                <div className="mt-4 pt-4 border-t dark:border-white/5 flex flex-wrap gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <span>Order: <span className="text-blue-500">#{r.order_details?.id || r.order}</span></span>
+                  <span>Reported By: {r.reported_by_details ? `${r.reported_by_details.first_name} ${r.reported_by_details.last_name}` : "Patient"}</span>
+                </div>
+              </div>
+              {r.resolved_at && (
+                <div className="sm:text-right text-[10px] text-gray-400">
+                  <div className="font-black uppercase tracking-widest text-green-600 mb-1">Cleared At</div>
+                  {new Date(r.resolved_at).toLocaleString()}
+                </div>
+              )}
+            </div>
+          ))}
+          <Sentinel loading={loadingMore} hasMore={hasMore} />
+        </div>
+      )}
     </div>
   );
 }
 
-function EarningsPanel({ earnings }: { earnings: AdminSupplyChainEarningsResp | null }) {
-  if (!earnings || !earnings.results?.length) {
-    return <p className="text-sm text-gray-500 text-center py-8">No delivery earnings recorded yet.</p>;
-  }
+function RatingsPanel({ 
+  ratings, 
+  loadingMore, 
+  hasMore,
+  avgRating,
+  startDate,
+  endDate,
+  onFilterChange,
+  activePeriod,
+  onPeriodChange
+}: { 
+  ratings: DeliveryFeedbackRow[]; 
+  loadingMore: boolean; 
+  hasMore: boolean;
+  avgRating: string;
+  startDate: string;
+  endDate: string;
+  onFilterChange: (s: string, e: string, p: string) => void;
+  activePeriod: string;
+  onPeriodChange: (p: string) => void;
+}) {
+  const reviews = React.useMemo(() => {
+    return (ratings || []).filter((x) => x.feedback_type === "rating");
+  }, [ratings]);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between p-4 rounded-2xl bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-green-600 dark:text-green-400">Total Delivery Payout</p>
-          <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter italic">₹{earnings.total_delivery_earnings}</p>
+      <FilterBar 
+        startDate={startDate} 
+        endDate={endDate} 
+        onFilterChange={onFilterChange} 
+        activePeriod={activePeriod}
+        onPeriodChange={onPeriodChange}
+      />
+      {(!reviews || reviews.length === 0) ? (
+        <div className="space-y-4">
+          <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
+            No feedback records found for this period.
+          </p>
+          <Sentinel loading={loadingMore} hasMore={hasMore} />
         </div>
-        <div className="text-right text-[10px] font-bold text-gray-400 uppercase">
-          {earnings.total_orders} Orders Delivered
+      ) : (
+        <div className="space-y-4">
+           <div className="p-6 rounded-[32px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 flex items-center justify-between shadow-sm">
+              <div>
+                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Lifetime Rating</p>
+                 <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter italic mt-1">{avgRating} out of 5</p>
+              </div>
+              <FiStar className="size-10 text-amber-500 fill-amber-500 opacity-20" />
+           </div>
+           <ul className="space-y-4">
+             {reviews.map((fb: DeliveryFeedbackRow) => (
+               <li key={fb.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                     <span className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-600">
+                       Rating #{fb.id}
+                     </span>
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{new Date(fb.created_at).toLocaleDateString()}</span>
+                  </div>
+                  {fb.rating && (
+                    <div className="flex gap-1 mb-3">
+                      {Array.from({length: 5}).map((_, i) => (
+                        <FiStar key={i} size={18} className={i < (fb.rating||0) ? "text-amber-400 fill-amber-400" : "text-gray-200"} />
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200 italic leading-relaxed">"{fb.review || fb.description || "No comment provided."}"</p>
+                  {fb.reported_by_details && (
+                    <div className="mt-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">— {fb.reported_by_details.first_name} {fb.reported_by_details.last_name || ""}</div>
+                  )}
+               </li>
+             ))}
+             <Sentinel loading={loadingMore} hasMore={hasMore} />
+           </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EarningsPanel({
+  earnings,
+  loadingMore,
+  hasMore,
+  startDate,
+  endDate,
+  onFilterChange,
+  activePeriod,
+  onPeriodChange,
+}: {
+  earnings: PagState<any> & { total_orders: number; total_delivery_earnings: string };
+  loadingMore: boolean;
+  hasMore: boolean;
+  startDate: string;
+  endDate: string;
+  onFilterChange: (s: string, e: string, p: string) => void;
+  activePeriod: string;
+  onPeriodChange: (p: string) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <FilterBar 
+        startDate={startDate} 
+        endDate={endDate} 
+        onFilterChange={onFilterChange} 
+        activePeriod={activePeriod}
+        onPeriodChange={onPeriodChange}
+      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-8 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/20">
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-80">
+            Total Earnings
+          </p>
+          <p className="text-4xl font-black mt-1 italic tracking-tighter">
+            ₹{earnings.total_delivery_earnings}
+          </p>
+        </div>
+        <div className="p-8 rounded-[32px] bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/10 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Total Orders
+          </p>
+          <p className="text-4xl font-black mt-1 text-gray-900 dark:text-white italic tracking-tighter">
+            {earnings.total_orders}
+          </p>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-3xl border border-gray-100 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-sm">
         <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+          <TableHeader className="bg-gray-50/50 dark:bg-black/20">
             <TableRow>
-              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Date</TableCell>
-              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Kitchen</TableCell>
-              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Amount</TableCell>
-              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Receipt</TableCell>
+              <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Order</TableCell>
+              <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Kitchen</TableCell>
+              <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Earnings</TableCell>
+              <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Date</TableCell>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {earnings.results.map((e) => (
-              <TableRow key={e.id} className="hover:bg-gray-50 hover:dark:bg-white/[0.02]">
-                <TableCell className="px-5 py-3 text-theme-sm text-gray-800 dark:text-gray-200">
-                  {new Date(e.created_at).toLocaleDateString()}
+          <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
+            {earnings.results.map((e: any) => (
+              <TableRow key={e.id} className="hover:bg-blue-50/20 transition-colors">
+                <TableCell className="px-6 py-4 font-bold text-blue-600 italic">#{e.id}</TableCell>
+                <TableCell className="px-6 py-4">
+                  <p className="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-tight">{e.micro_kitchen_brand || "—"}</p>
                 </TableCell>
-                <TableCell className="px-5 py-3 text-theme-sm text-gray-800 dark:text-gray-200">
-                  {e.kitchen_name || "—"}
-                </TableCell>
-                <TableCell className="px-5 py-3 text-theme-sm font-black text-gray-900 dark:text-white">
-                  ₹{e.delivery_earning}
-                </TableCell>
-                <TableCell className="px-5 py-3 text-theme-sm">
-                  {e.receipt ? (
-                    <span className="text-green-600 text-[10px] font-black uppercase">Uploaded</span>
-                  ) : (
-                    <span className="text-gray-400 text-[10px] font-bold uppercase italic">—</span>
-                  )}
+                <TableCell className="px-6 py-4 font-black text-gray-900 dark:text-white italic">₹{e.delivery_charge}</TableCell>
+                <TableCell className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                   {new Date(e.created_at).toLocaleDateString()}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        <Sentinel loading={loadingMore} hasMore={hasMore} />
       </div>
     </div>
   );
 }
 
-function TicketsPanel({ tickets }: { tickets: any[] | null }) {
-  if (!tickets || !tickets.length) {
-    return <p className="text-sm text-gray-500 text-center py-8">No support tickets created by this person.</p>;
+function DailyWorkPanel({
+  dailyWork,
+  loadingMore,
+  hasMore,
+  startDate,
+  endDate,
+  onFilterChange,
+  activePeriod,
+  onPeriodChange,
+}: {
+  dailyWork: any[];
+  loadingMore: boolean;
+  hasMore: boolean;
+  startDate: string;
+  endDate: string;
+  onFilterChange: (start: string, end: string, period: string) => void;
+  activePeriod: string;
+  onPeriodChange: (p: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <FilterBar 
+        startDate={startDate} 
+        endDate={endDate} 
+        onFilterChange={onFilterChange} 
+        activePeriod={activePeriod}
+        onPeriodChange={onPeriodChange}
+      />
+
+      {!dailyWork || (dailyWork.length === 0 && !loadingMore) ? (
+        <div className="space-y-4">
+          <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
+            No daily meal assignments found for this period.
+          </p>
+          <Sentinel loading={loadingMore} hasMore={hasMore} />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] shadow-sm">
+            <Table>
+              <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
+                <TableRow>
+                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Meal & Time</TableCell>
+                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient & Kitchen</TableCell>
+                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Date</TableCell>
+                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Status</TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                {dailyWork.map((d: any) => (
+                  <TableRow key={d.id} className="hover:bg-blue-50/20 transition-colors">
+                    <TableCell className="px-6 py-5">
+                      <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">
+                        {d.user_meal_details?.meal_type || "Meal"}
+                      </p>
+                      <p className="text-[10px] text-blue-600 font-black uppercase mt-0.5 tracking-widest italic tracking-tighter">
+                        {d.scheduled_time || "Scheduled"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="px-6 py-5">
+                      <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">
+                        {d.user_meal_details?.patient_name || "—"}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest italic">
+                        {d.user_meal_details?.kitchen_brand || "—"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="px-6 py-5">
+                      <p className="text-xs font-bold text-gray-600 dark:text-gray-400 tabular-nums">
+                        {d.scheduled_date}
+                      </p>
+                    </TableCell>
+                    <TableCell className="px-6 py-5">
+                      <span
+                        className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                          d.status === "delivered" ? "bg-green-50 text-green-600" : d.status === "picked_up" ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"
+                        }`}
+                      >
+                        {d.status}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Sentinel loading={loadingMore} hasMore={hasMore} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TicketsPanel({
+  tickets,
+  loadingMore,
+  hasMore,
+}: {
+  tickets: any[];
+  loadingMore: boolean;
+  hasMore: boolean;
+}) {
+  if (!tickets || (tickets.length === 0 && !loadingMore)) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
+          No support tickets found.
+        </p>
+        <Sentinel loading={loadingMore} hasMore={hasMore} />
+      </div>
+    );
   }
 
   return (
-    <ul className="space-y-3">
-      {tickets.map((t) => (
-        <li key={t.id} className="p-4 rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-gray-800/40">
-          <div className="flex justify-between items-start mb-2">
-            <span className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-gray-500">
-              #{t.id} · {t.category_details?.name || "General"}
+    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {tickets.map((t: any) => (
+        <li
+          key={t.id}
+          className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col justify-between"
+        >
+          <div className="flex justify-between items-start mb-3 gap-2">
+            <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest">
+              #{t.id}
             </span>
-            <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-              t.status === "resolved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-            }`}>
+            <span
+              className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                t.status === "resolved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+              }`}
+            >
               {t.status}
             </span>
           </div>
@@ -336,6 +700,7 @@ function TicketsPanel({ tickets }: { tickets: any[] | null }) {
           </div>
         </li>
       ))}
+      <Sentinel loading={loadingMore} hasMore={hasMore} />
     </ul>
   );
 }
@@ -343,6 +708,12 @@ function TicketsPanel({ tickets }: { tickets: any[] | null }) {
 const MENU_ITEMS: { key: DossierTab; title: string; description: string; icon: any }[] = [
   { key: "kitchens", title: "Kitchen Assignments", description: "Kitchen teams and active delivery zones", icon: <FiLayers /> },
   { key: "plans", title: "Patient Allotments", description: "Currently allotted patients and delivery slots", icon: <FiUser /> },
+  {
+    key: "daily-work",
+    title: "Daily Work",
+    description: "Daily meal delivery assignments",
+    icon: <FiTruck />,
+  },
   { key: "orders", title: "Delivery Orders", description: "Detailed order history and delivery status", icon: <FiShoppingBag /> },
   { key: "earnings", title: "Payouts & Earnings", description: "Delivery fees, wallet balances, and payouts", icon: <FiDollarSign /> },
   { key: "ratings", title: "Ratings & Performance", description: "Average staff ratings and feedback from patients", icon: <FiStar /> },
@@ -362,6 +733,7 @@ const SupplyChainDossierModal: React.FC<{
     overview: false,
     kitchens: false,
     plans: false,
+    "daily-work": false,
     orders: false,
     earnings: false,
     profile: false,
@@ -380,17 +752,39 @@ const SupplyChainDossierModal: React.FC<{
     ticket_count: number;
   } | null>(null);
 
-  const [kitchenTeam, setKitchenTeam] = useState<KitchenTeamRow[] | null>(null);
-  const [plans, setPlans] = useState<unknown[] | null>(null);
-  const [orders, setOrders] = useState<AdminSupplyChainOrderRow[] | null>(null);
-  const [earnings, setEarnings] = useState<AdminSupplyChainEarningsResp | null>(null);
-  const [tickets, setTickets] = useState<any[] | null>(null);
-  const [deliveryProfile, setDeliveryProfile] = useState<Record<string, unknown> | null | undefined>(undefined);
-  const [plannedLeaves, setPlannedLeaves] = useState<unknown[] | null>(null);
-  const [deliveryRatings, setDeliveryRatings] = useState<DeliveryFeedbackRow[] | null>(null);
-  
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [kitchenTeam, setKitchenTeam] = useState<PagState<KitchenTeamRow>>(initialPag);
+  const [plans, setPlans] = useState<PagState<any>>(initialPag);
+  const [dailyWork, setDailyWork] = useState<PagState<any>>(initialPag);
+  const [orders, setOrders] = useState<PagState<AdminSupplyChainOrderRow>>(initialPag);
+  const [earnings, setEarnings] = useState<PagState<any> & { total_orders: number; total_delivery_earnings: string }>({
+    ...initialPag,
+    total_orders: 0,
+    total_delivery_earnings: "0",
+  });
+  const [tickets, setTickets] = useState<PagState<any>>(initialPag);
+  const [deliveryProfile, setDeliveryProfile] = useState<Record<string, unknown> | null | undefined>(undefined);
+  const [plannedLeaves, setPlannedLeaves] = useState<PagState<any>>(initialPag);
+  const [deliveryRatings, setDeliveryRatings] = useState<PagState<DeliveryFeedbackRow>>(initialPag);
+  const [dwStartDate, setDwStartDate] = useState("");
+  const [dwEndDate, setDwEndDate] = useState("");
+  const [dwPeriod, setDwPeriod] = useState("");
+
+  const [ordStartDate, setOrdStartDate] = useState("");
+  const [ordEndDate, setOrdEndDate] = useState("");
+  const [ordStatus, setOrdStatus] = useState("");
+  const [ordPeriod, setOrdPeriod] = useState("");
+
+  const [earnStartDate, setEarnStartDate] = useState("");
+  const [earnEndDate, setEarnEndDate] = useState("");
+  const [earnPeriod, setEarnPeriod] = useState("");
+
+  const [fbStartDate, setFbStartDate] = useState("");
+  const [fbEndDate, setFbEndDate] = useState("");
+  const [fbPeriod, setFbPeriod] = useState("");
 
   const fetchSummary = useCallback(async () => {
     if (!person) return;
@@ -419,6 +813,7 @@ const SupplyChainDossierModal: React.FC<{
         overview: false,
         kitchens: false,
         plans: false,
+        "daily-work": false,
         orders: false,
         earnings: false,
         profile: false,
@@ -428,15 +823,30 @@ const SupplyChainDossierModal: React.FC<{
         tickets: false,
       });
       setSummaryStats(null);
-      setKitchenTeam(null);
-      setPlans(null);
-      setOrders(null);
-      setEarnings(null);
-      setTickets(null);
+      setKitchenTeam(initialPag);
+      setPlans(initialPag);
+      setDailyWork(initialPag);
+      setOrders(initialPag);
+      setEarnings({ ...initialPag, total_orders: 0, total_delivery_earnings: "0" });
+      setTickets(initialPag);
       setDeliveryProfile(undefined);
-      setPlannedLeaves(null);
-      setDeliveryRatings(null);
+      setPlannedLeaves(initialPag);
+      setDeliveryRatings(initialPag);
+      setDwStartDate("");
+      setDwEndDate("");
+      setDwPeriod("");
+      setOrdStartDate("");
+      setOrdEndDate("");
+      setOrdStatus("");
+      setOrdPeriod("");
+      setEarnStartDate("");
+      setEarnEndDate("");
+      setEarnPeriod("");
+      setFbStartDate("");
+      setFbEndDate("");
+      setFbPeriod("");
       setError(null);
+      setLoadingMore(false);
     }
   }, [open, person]);
 
@@ -450,42 +860,153 @@ const SupplyChainDossierModal: React.FC<{
     try {
       const uid = person.id;
       switch (view) {
-        case "kitchens":
-          setKitchenTeam(await fetchAdminSupplyChainKitchenTeam(uid));
+        case "kitchens": {
+          const res = await fetchAdminSupplyChainKitchenTeam(uid, 1);
+          setKitchenTeam({ results: res.results, page: 1, hasMore: !!res.next });
           break;
-        case "plans":
-          setPlans(await fetchAdminSupplyChainPlanAssignments(uid));
+        }
+        case "plans": {
+          const res = await fetchAdminSupplyChainPlanAssignments(uid, 1);
+          setPlans({ results: res.results, page: 1, hasMore: !!res.next });
           break;
-        case "orders":
-          setOrders(await fetchAdminSupplyChainOrders(uid));
+        }
+        case "daily-work": {
+          const res = await fetchAdminSupplyChainDailyWork(uid, 1, 10, dwStartDate, dwEndDate, dwPeriod);
+          setDailyWork({ results: res.results, page: 1, hasMore: !!res.next });
           break;
-        case "earnings":
-          setEarnings(await fetchAdminSupplyChainEarnings(uid));
+        }
+        case "orders": {
+          const res = await fetchAdminSupplyChainOrders(uid, 1, 10, ordStartDate, ordEndDate, ordStatus, ordPeriod);
+          setOrders({ results: res.results, page: 1, hasMore: !!res.next });
           break;
-        case "tickets":
-          setTickets(await fetchAdminSupplyChainTickets(uid));
+        }
+        case "earnings": {
+          const res = await fetchAdminSupplyChainEarnings(uid, 1);
+          setEarnings({
+            results: res.results,
+            page: 1,
+            hasMore: !!res.next,
+            total_orders: res.total_orders,
+            total_delivery_earnings: res.total_delivery_earnings,
+          });
           break;
+        }
+        case "tickets": {
+          const res = await fetchAdminSupplyChainTickets(uid, 1);
+          setTickets({ results: res.results, page: 1, hasMore: !!res.next });
+          break;
+        }
         case "profile":
           setDeliveryProfile(await fetchAdminSupplyChainDeliveryProfile(uid));
           break;
-        case "leave":
-          setPlannedLeaves(await fetchAdminSupplyChainPlannedLeaves(uid));
+        case "leave": {
+          const res = await fetchAdminSupplyChainPlannedLeaves(uid, 1);
+          setPlannedLeaves({ results: res.results, page: 1, hasMore: !!res.next });
           break;
+        }
         case "ratings":
-        case "issues":
-          setDeliveryRatings(await fetchAdminSupplyChainDeliveryRatings(uid));
+        case "issues": {
+          const res = await fetchAdminSupplyChainDeliveryRatings(uid, 1);
+          setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
           break;
+        }
         default:
           break;
       }
-      setLoaded(prev => ({ ...prev, [view]: true }));
+      setLoaded((prev) => ({ ...prev, [view]: true }));
     } catch (e: any) {
       setError(e.message || "Failed to load data");
-      toast.error(e.message || "Failed to load data");
     } finally {
       setLoading(false);
     }
   }, [person, loaded]);
+
+  const loadMore = useCallback(async () => {
+    if (!person || loading || loadingMore || screen === "hub" || screen === "profile") return;
+    const uid = person.id;
+    const tab = screen;
+
+    try {
+      setLoadingMore(true);
+      switch (tab) {
+        case "kitchens": {
+          if (!kitchenTeam.hasMore) break;
+          const res = await fetchAdminSupplyChainKitchenTeam(uid, kitchenTeam.page + 1);
+          setKitchenTeam((prev: PagState<KitchenTeamRow>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+        case "plans": {
+          if (!plans.hasMore) break;
+          const res = await fetchAdminSupplyChainPlanAssignments(uid, plans.page + 1);
+          setPlans((prev: PagState<any>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+        case "daily-work": {
+          if (!dailyWork.hasMore) break;
+          const res = await fetchAdminSupplyChainDailyWork(uid, dailyWork.page + 1, 10, dwStartDate, dwEndDate, dwPeriod);
+          setDailyWork((prev: PagState<any>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+        case "orders": {
+          if (!orders.hasMore) break;
+          const res = await fetchAdminSupplyChainOrders(uid, orders.page + 1, 10, ordStartDate, ordEndDate, ordStatus, ordPeriod);
+          setOrders((prev: PagState<AdminSupplyChainOrderRow>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+        case "earnings": {
+          if (!earnings.hasMore) break;
+          const res = await fetchAdminSupplyChainEarnings(uid, earnings.page + 1, 10, earnStartDate, earnEndDate);
+          setEarnings((prev: PagState<any> & { total_orders: number; total_delivery_earnings: string }) => ({
+            ...prev,
+            results: [...prev.results, ...res.results],
+            page: prev.page + 1,
+            hasMore: !!res.next,
+            total_orders: res.total_orders,
+            total_delivery_earnings: res.total_delivery_earnings,
+          }));
+          break;
+        }
+        case "tickets": {
+          if (!tickets.hasMore) break;
+          const res = await fetchAdminSupplyChainTickets(uid, tickets.page + 1);
+          setTickets((prev: PagState<any>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+        case "leave": {
+          if (!plannedLeaves.hasMore) break;
+          const res = await fetchAdminSupplyChainPlannedLeaves(uid, plannedLeaves.page + 1);
+          setPlannedLeaves((prev: PagState<any>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+        case "ratings":
+        case "issues": {
+          if (!deliveryRatings.hasMore) break;
+          const res = await fetchAdminSupplyChainDeliveryRatings(uid, deliveryRatings.page + 1, 10, fbStartDate, fbEndDate);
+          setDeliveryRatings((prev: PagState<DeliveryFeedbackRow>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          break;
+        }
+      }
+    } catch (e: any) {
+      console.error("Load more failed", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [person, screen, loading, loadingMore, kitchenTeam, plans, dailyWork, orders, earnings, tickets, plannedLeaves, deliveryRatings]);
+
+  useEffect(() => {
+    if (screen === "hub" || screen === "profile" || loading) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const sen = document.getElementById("scroll-sentinel");
+    if (sen) obs.observe(sen);
+    return () => obs.disconnect();
+  }, [screen, loadMore, loading]);
 
   const goHub = () => {
     setScreen("hub");
@@ -494,10 +1015,11 @@ const SupplyChainDossierModal: React.FC<{
 
   const avgRating = React.useMemo(() => {
     if (summaryStats) return summaryStats.avg_rating.toFixed(1);
-    if (!deliveryRatings || deliveryRatings.length === 0) return "0.0";
-    const r = deliveryRatings.filter((x) => x.feedback_type === "rating" && x.rating);
+    const results = deliveryRatings.results;
+    if (!results || results.length === 0) return "0.0";
+    const r = results.filter((x: DeliveryFeedbackRow) => x.feedback_type === "rating" && x.rating);
     if (!r.length) return "0.0";
-    return (r.reduce((a, b) => a + (b.rating || 0), 0) / r.length).toFixed(1);
+    return (r.reduce((a: number, b: DeliveryFeedbackRow) => a + (b.rating || 0), 0) / r.length).toFixed(1);
   }, [deliveryRatings, summaryStats]);
 
   if (!open || !person) return null;
@@ -604,11 +1126,11 @@ const SupplyChainDossierModal: React.FC<{
                 <>
                   {screen === "kitchens" && (
                     <div className="space-y-4">
-                      {!kitchenTeam || kitchenTeam.length === 0 ? (
+                      {kitchenTeam.results.length === 0 && !loadingMore ? (
                         <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No kitchen team memberships found.</p>
                       ) : (
                         <ul className="grid gap-4">
-                          {kitchenTeam.map((k: KitchenTeamRow) => (
+                          {kitchenTeam.results.map((k: KitchenTeamRow) => (
                             <li key={k.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm hover:shadow-md transition-shadow">
                               <div className="font-black text-gray-900 dark:text-white text-lg uppercase tracking-tight italic">
                                 {k.micro_kitchen_details?.brand_name || k.micro_kitchen_details?.kitchen_code || `Kitchen #${k.micro_kitchen_details?.id ?? "?"}`}
@@ -620,6 +1142,7 @@ const SupplyChainDossierModal: React.FC<{
                               </div>
                             </li>
                           ))}
+                          <Sentinel loading={loadingMore} hasMore={kitchenTeam.hasMore} />
                         </ul>
                       )}
                     </div>
@@ -627,44 +1150,126 @@ const SupplyChainDossierModal: React.FC<{
 
                   {screen === "plans" && (
                     <div className="space-y-4">
-                      {!plans || plans.length === 0 ? (
+                      {plans.results.length === 0 && !loadingMore ? (
                         <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No plan delivery assignments found.</p>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {(plans as Record<string, unknown>[]).map((row) => (
-                            <PlanAssignmentCard key={String(row.id)} row={row} />
-                          ))}
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {(plans.results as Record<string, unknown>[]).map((row) => (
+                              <PlanAssignmentCard key={String(row.id)} row={row} />
+                            ))}
+                          </div>
+                          <Sentinel loading={loadingMore} hasMore={plans.hasMore} />
                         </div>
                       )}
                     </div>
                   )}
 
+                  {screen === "daily-work" && (
+                    <DailyWorkPanel 
+                      dailyWork={dailyWork.results} 
+                      loadingMore={loadingMore} 
+                      hasMore={dailyWork.hasMore} 
+                      startDate={dwStartDate}
+                      endDate={dwEndDate}
+                      activePeriod={dwPeriod}
+                      onPeriodChange={setDwPeriod}
+                      onFilterChange={(s, e, p) => {
+                        setDwStartDate(s);
+                        setDwEndDate(e);
+                        // Force reload
+                        const uid = person.id;
+                        (async () => {
+                           setLoading(true);
+                           try {
+                             const res = await fetchAdminSupplyChainDailyWork(uid, 1, 10, s, e, p);
+                             setDailyWork({ results: res.results, page: 1, hasMore: !!res.next });
+                             setLoaded(prev => ({ ...prev, "daily-work": true }));
+                           } finally {
+                             setLoading(false);
+                           }
+                        })();
+                      }}
+                    />
+                  )}
+
                   {screen === "orders" && (
                     <div className="space-y-4">
-                      {!orders || orders.length === 0 ? (
-                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No orders assigned to this person yet.</p>
+                      <FilterBar 
+                        startDate={ordStartDate} 
+                        endDate={ordEndDate} 
+                        activePeriod={ordPeriod}
+                        onPeriodChange={setOrdPeriod}
+                        onFilterChange={(s, e, p) => {
+                          setOrdStartDate(s);
+                          setOrdEndDate(e);
+                          const uid = person.id;
+                          (async () => {
+                             setLoading(true);
+                             try {
+                               const res = await fetchAdminSupplyChainOrders(uid, 1, 10, s, e, ordStatus, p);
+                               setOrders({ results: res.results, page: 1, hasMore: !!res.next });
+                             } finally { setLoading(false); }
+                          })();
+                        }}
+                        extra={
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-black uppercase text-gray-400 tracking-widest pl-1 italic">Status</Label>
+                            <Select 
+                              value={ordStatus} 
+                              onChange={(val) => {
+                                setOrdStatus(val);
+                                const uid = person.id;
+                                (async () => {
+                                   setLoading(true);
+                                   try {
+                                     const res = await fetchAdminSupplyChainOrders(uid, 1, 10, ordStartDate, ordEndDate, val, ordPeriod);
+                                     setOrders({ results: res.results, page: 1, hasMore: !!res.next });
+                                   } finally { setLoading(false); }
+                                })();
+                              }}
+                              options={[
+                                { value: "", label: "All Status" },
+                                { value: "pending", label: "Pending" },
+                                { value: "accepted", label: "Accepted" },
+                                { value: "picked_up", label: "Picked Up" },
+                                { value: "delivered", label: "Delivered" },
+                                { value: "cancelled", label: "Cancelled" },
+                              ]}
+                              className="w-full h-11 text-xs font-bold rounded-2xl"
+                            />
+                          </div>
+                        }
+                      />
+                      {orders.results.length === 0 && !loadingMore ? (
+                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed text-center">No delivery orders records found.</p>
                       ) : (
-                        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+                        <div className="overflow-hidden bg-white dark:bg-white/[0.02] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm">
                           <Table>
                             <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
                               <TableRow>
-                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Order ID</TableCell>
-                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient & Kitchen</TableCell>
-                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Amount</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Order</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient</TableCell>
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Status</TableCell>
                               </TableRow>
                             </TableHeader>
                             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                              {orders.map((o) => (
+                              {orders.results.map((o: AdminSupplyChainOrderRow) => (
                                 <TableRow key={o.id} className="hover:bg-blue-50/20 transition-colors">
-                                  <TableCell className="px-6 py-5 text-theme-sm font-black text-blue-600 italic tracking-tighter">#{o.id}</TableCell>
+                                  <TableCell className="px-6 py-5">
+                                     <p className="text-theme-sm font-black text-blue-600 italic tracking-tighter">#{o.id}</p>
+                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{o.created_at?.split("T")[0]}</p>
+                                  </TableCell>
                                   <TableCell className="px-6 py-5">
                                     <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{o.patient_label || "—"}</p>
                                     <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest italic">{o.kitchen_brand || "—"}</p>
                                   </TableCell>
-                                  <TableCell className="px-6 py-5 text-theme-sm font-black tracking-tighter">₹{o.final_amount}</TableCell>
                                   <TableCell className="px-6 py-5">
-                                    <span className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest">
+                                    <span
+                                      className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                                        o.status === "delivered" ? "bg-green-50 text-green-600" : o.status === "cancelled" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                                      }`}
+                                    >
                                       {o.status}
                                     </span>
                                   </TableCell>
@@ -672,76 +1277,112 @@ const SupplyChainDossierModal: React.FC<{
                               ))}
                             </TableBody>
                           </Table>
+                          <Sentinel loading={loadingMore} hasMore={orders.hasMore} />
                         </div>
                       )}
                     </div>
                   )}
 
-                  {screen === "earnings" && <EarningsPanel earnings={earnings} />}
+                  {screen === "earnings" && (
+                    <EarningsPanel 
+                       earnings={earnings} 
+                       loadingMore={loadingMore} 
+                       hasMore={earnings.hasMore}
+                       startDate={earnStartDate}
+                       endDate={earnEndDate}
+                       activePeriod={earnPeriod}
+                       onPeriodChange={setEarnPeriod}
+                       onFilterChange={(s, e) => {
+                          setEarnStartDate(s);
+                          setEarnEndDate(e);
+                          const uid = person.id;
+                          (async () => {
+                             setLoading(true);
+                             try {
+                               const res = await fetchAdminSupplyChainEarnings(uid, 1, 10, s, e);
+                               setEarnings({
+                                 results: res.results,
+                                 page: 1,
+                                 hasMore: !!res.next,
+                                 total_orders: res.total_orders,
+                                 total_delivery_earnings: res.total_delivery_earnings,
+                               });
+                             } finally { setLoading(false); }
+                          })();
+                       }}
+                    />
+                  )}
 
                   {screen === "profile" && <DeliveryProfilePanel profile={deliveryProfile ?? null} />}
 
                   {screen === "leave" && (
                     <div className="space-y-4">
-                      {!plannedLeaves || plannedLeaves.length === 0 ? (
+                      {plannedLeaves.results.length === 0 && !loadingMore ? (
                         <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No time-off records found.</p>
                       ) : (
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           {(plannedLeaves as Record<string, unknown>[]).map((L) => (
+                           {(plannedLeaves.results as Record<string, unknown>[]).map((L) => (
                             <li key={String(L.id)} className="rounded-3xl border border-gray-100 dark:border-white/10 p-5 bg-white dark:bg-white/[0.02] shadow-sm">
                               <div className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">{String(L.leave_type)}</div>
                               <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic text-lg">{String(L.start_date)} → {String(L.end_date)}</div>
                             </li>
                           ))}
+                          <Sentinel loading={loadingMore} hasMore={plannedLeaves.hasMore} />
                         </ul>
                       )}
                     </div>
                   )}
 
                   {screen === "ratings" && (
-                    <div className="space-y-4">
-                      {!deliveryRatings || deliveryRatings.length === 0 ? (
-                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No feedback records found yet.</p>
-                      ) : (
-                        <div className="space-y-4">
-                           <div className="p-6 rounded-[32px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 flex items-center justify-between">
-                              <div>
-                                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Lifetime Rating</p>
-                                 <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter italic italic mt-1">{avgRating} out of 5</p>
-                              </div>
-                              <FiStar className="size-10 text-amber-500 fill-amber-500 opacity-20" />
-                           </div>
-                           <ul className="space-y-4">
-                            {deliveryRatings.map((fb) => (
-                              <li key={fb.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white shadow-sm">
-                                 <div className="flex justify-between items-center mb-4">
-                                    <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                                      fb.feedback_type === 'rating' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
-                                    }`}>
-                                      {fb.feedback_type}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{new Date(fb.created_at).toLocaleDateString()}</span>
-                                 </div>
-                                 {fb.rating && (
-                                   <div className="flex gap-1 mb-3">
-                                     {Array.from({length: 5}).map((_, i) => (
-                                       <FiStar key={i} size={18} className={i < (fb.rating||0) ? "text-amber-400 fill-amber-400" : "text-gray-200"} />
-                                     ))}
-                                   </div>
-                                 )}
-                                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 italic leading-relaxed">"{fb.review || fb.description || "No comment provided."}"</p>
-                                 {fb.reported_by_details && (
-                                   <div className="mt-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">— {fb.reported_by_details.first_name} {fb.reported_by_details.last_name || ""}</div>
-                                 )}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
+                    <RatingsPanel 
+                      ratings={deliveryRatings.results}
+                      loadingMore={loadingMore}
+                      hasMore={deliveryRatings.hasMore}
+                      avgRating={avgRating}
+                      startDate={fbStartDate}
+                      endDate={fbEndDate}
+                      activePeriod={fbPeriod}
+                      onPeriodChange={setFbPeriod}
+                      onFilterChange={(s, e) => {
+                        setFbStartDate(s);
+                        setFbEndDate(e);
+                        const uid = person.id;
+                        (async () => {
+                           setLoading(true);
+                           try {
+                             const res = await fetchAdminSupplyChainDeliveryRatings(uid, 1, 10, s, e);
+                             setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
+                           } finally { setLoading(false); }
+                        })();
+                      }}
+                    />
                   )}
 
-                  {screen === "tickets" && <TicketsPanel tickets={tickets} />}
+                  {screen === "issues" && (
+                    <IssuesPanel 
+                      ratings={deliveryRatings.results} 
+                      loadingMore={loadingMore} 
+                      hasMore={deliveryRatings.hasMore} 
+                      startDate={fbStartDate}
+                      endDate={fbEndDate}
+                      activePeriod={fbPeriod}
+                      onPeriodChange={setFbPeriod}
+                      onFilterChange={(s, e) => {
+                        setFbStartDate(s);
+                        setFbEndDate(e);
+                        const uid = person.id;
+                        (async () => {
+                           setLoading(true);
+                           try {
+                             const res = await fetchAdminSupplyChainDeliveryRatings(uid, 1, 10, s, e);
+                             setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
+                           } finally { setLoading(false); }
+                        })();
+                      }}
+                    />
+                  )}
+
+                  {screen === "tickets" && <TicketsPanel tickets={tickets.results} loadingMore={loadingMore} hasMore={tickets.hasMore} />}
                 </>
               )}
             </div>

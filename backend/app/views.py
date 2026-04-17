@@ -5800,16 +5800,20 @@ class UserMealViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='execution-list', pagination_class=None)
+    @action(detail=False, methods=['get'], url_path='execution-list')
     def execution_list(self, request):
         """
         Micro-kitchen daily execution list (already filtered to non-skipped meals).
         """
         queryset = self._micro_kitchen_execution_queryset(request)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='prep-list', pagination_class=None)
+    @action(detail=False, methods=['get'], url_path='prep-list')
     def prep_list(self, request):
         """
         Kitchen prep list: only meals that still need preparation.
@@ -5817,10 +5821,14 @@ class UserMealViewSet(viewsets.ModelViewSet):
         queryset = self._micro_kitchen_execution_queryset(request).exclude(
             status=UserMeal.STATUS_DELIVERED
         )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='delivery-list', pagination_class=None)
+    @action(detail=False, methods=['get'], url_path='delivery-list')
     def delivery_list(self, request):
         """
         Delivery list: executable meals excluding skipped rows.
@@ -5828,6 +5836,10 @@ class UserMealViewSet(viewsets.ModelViewSet):
         queryset = self._micro_kitchen_execution_queryset(request).exclude(
             status=UserMeal.STATUS_DELIVERED
         )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -6403,9 +6415,22 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
                 Q(review__icontains=search) |
                 Q(order__id__icontains=search)
             )
-        order_type = self.request.query_params.get('order_type')
-        if order_type and order_type != 'all':
-            qs = qs.filter(order__order_type=order_type)
+        # New Date range filtering
+        period = self.request.query_params.get('period')
+        if period and period != 'all':
+            from .utils.date_utils import get_period_range
+            start_date = self.request.query_params.get('start_date')
+            end_date = self.request.query_params.get('end_date')
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except:
+                pass
+        else:
+            sd = self.request.query_params.get('start_date')
+            ed = self.request.query_params.get('end_date')
+            if sd and ed:
+                qs = qs.filter(created_at__date__range=[sd, ed])
 
         return qs.order_by('-created_at')
 
@@ -7611,125 +7636,244 @@ class AdminSupplyChainHubSummaryView(APIView):
 
 class AdminSupplyChainKitchenTeamNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
-        qs = MicroKitchenDeliveryTeam.objects.filter(delivery_person=u).select_related("micro_kitchen").order_by("-assigned_on")[:100]
+        qs = MicroKitchenDeliveryTeam.objects.filter(delivery_person=u).select_related("micro_kitchen").order_by("-assigned_on")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(AdminSupplyChainKitchenTeamListSerializer(page, many=True).data)
         return Response(AdminSupplyChainKitchenTeamListSerializer(qs, many=True).data)
 
 
 class AdminSupplyChainPlanAssignmentsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
         qs = DietPlanDeliveryAssignment.objects.filter(delivery_person=u).select_related(
             "user", "user_diet_plan"
-        ).order_by("-assigned_on")[:200]
+        ).order_by("-assigned_on")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(AdminSupplyChainPlanDeliveryAssignmentListSerializer(page, many=True).data)
         return Response(AdminSupplyChainPlanDeliveryAssignmentListSerializer(qs, many=True).data)
 
 
 class AdminSupplyChainOrdersNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
-        qs = Order.objects.filter(delivery_person=u).select_related("micro_kitchen", "user").order_by("-created_at")[:200]
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        status = request.query_params.get("status")
+
+        qs = Order.objects.filter(delivery_person=u)
+        if start_date:
+            qs = qs.filter(created_at__date__gte=start_date)
+        if end_date:
+            qs = qs.filter(created_at__date__lte=end_date)
+        if status:
+            qs = qs.filter(status=status)
+
+        qs = qs.select_related("micro_kitchen", "user").order_by("-created_at")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(AdminSupplyChainOrderRowSerializer(page, many=True).data)
         return Response(AdminSupplyChainOrderRowSerializer(qs, many=True).data)
 
 
 class AdminSupplyChainPlannedLeavesNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
-        qs = SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")[:100]
+        qs = SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(SupplyChainDeliveryLeaveSerializer(page, many=True).data)
         return Response(SupplyChainDeliveryLeaveSerializer(qs, many=True).data)
 
 
 class AdminSupplyChainDeliveryRatingsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
         qs = SupplyChainDeliveryFeedback.objects.filter(
             Q(order__delivery_person=u) | Q(user_meal__deliveries__delivery_person=u)
-        ).select_related(
+        )
+        if start_date:
+            qs = qs.filter(created_at__date__gte=start_date)
+        if end_date:
+            qs = qs.filter(created_at__date__lte=end_date)
+
+        qs = qs.select_related(
             "reported_by", "order", "user_meal"
-        ).distinct().order_by("-created_at")[:200]
+        ).distinct().order_by("-created_at")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(SupplyChainDeliveryFeedbackSerializer(page, many=True).data)
         return Response(SupplyChainDeliveryFeedbackSerializer(qs, many=True).data)
 
 
 class AdminSupplyChainEarningsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
-        qs = Order.objects.filter(delivery_person=u).order_by("-created_at")[:200]
-        total = qs.aggregate(Sum('delivery_charge'))['delivery_charge__sum'] or 0.00
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        base_qs = Order.objects.filter(delivery_person=u)
+        if start_date:
+            base_qs = base_qs.filter(created_at__date__gte=start_date)
+        if end_date:
+            base_qs = base_qs.filter(created_at__date__lte=end_date)
+
+        total = base_qs.aggregate(Sum('delivery_charge'))['delivery_charge__sum'] or 0.00
+        qs = base_qs.order_by("-created_at")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            res = paginator.get_paginated_response(SupplyChainDeliveryEarningsListSerializer(page, many=True).data)
+            res.data["total_orders"] = base_qs.count()
+            res.data["total_delivery_earnings"] = str(total)
+            return res
         return Response({
             "results": SupplyChainDeliveryEarningsListSerializer(qs, many=True).data,
-            "total_orders": qs.count(),
+            "total_orders": base_qs.count(),
             "total_delivery_earnings": str(total)
         })
 
 
 class AdminSupplyChainTicketsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
-        qs = SupportTicket.objects.filter(created_by=u).select_related("category").order_by("-created_at")[:100]
+        qs = SupportTicket.objects.filter(created_by=u).select_related("category").order_by("-created_at")
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(SupportTicketSerializer(page, many=True).data)
         return Response(SupportTicketSerializer(qs, many=True).data)
 
 
-
-
-class AdminMicroKitchenOrdersNoPaginationView(APIView):
+class AdminSupplyChainDailyWorkNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
-
+    pagination_class = Pagination
     def get(self, request):
-        micro_kitchen_id = request.query_params.get("micro_kitchen")
-        if not micro_kitchen_id:
-            return Response([])
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
 
-        qs = Order.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related("user", "micro_kitchen").order_by(
+        qs = DeliveryAssignment.objects.filter(delivery_person=u)
+
+        if start_date:
+            qs = qs.filter(scheduled_date__gte=start_date)
+        if end_date:
+            qs = qs.filter(scheduled_date__lte=end_date)
+        
+        if not start_date and not end_date:
+            qs = qs.filter(is_active=True)
+
+        qs = qs.select_related(
+            "user_meal", "user_meal__user", "user_meal__micro_kitchen", 
+            "user_meal__meal_type", "user_meal__food", "delivery_slot"
+        ).order_by("-scheduled_date", "-scheduled_time")
+        
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(KitchenMealDeliverySerializer(page, many=True).data)
+        return Response(KitchenMealDeliverySerializer(qs, many=True).data)
+
+
+
+
+class AdminMicroKitchenOrdersNoPaginationView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        micro_kitchen_id = self.request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Order.objects.none()
+
+        return Order.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related("user", "micro_kitchen").order_by(
             "-created_at"
         )
-        serializer = OrderSerializer(qs, many=True)
-        return Response(serializer.data)
 
 
-class AdminMicroKitchenFoodsNoPaginationView(APIView):
+class AdminMicroKitchenFoodsNoPaginationView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    serializer_class = FoodSerializer
 
-    def get(self, request):
-        micro_kitchen_id = request.query_params.get("micro_kitchen")
+    def get_queryset(self):
+        micro_kitchen_id = self.request.query_params.get("micro_kitchen")
         if not micro_kitchen_id:
-            return Response([])
-
-        qs = Food.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related("cuisine", "meal_type", "food_group").order_by("-id")
-        serializer = FoodSerializer(qs, many=True)
-        return Response(serializer.data)
+            return Food.objects.none()
+        return Food.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related("cuisine", "meal_type", "food_group").order_by("-id")
 
 
-class AdminMicroKitchenPayoutsNoPaginationView(APIView):
+class AdminMicroKitchenPayoutsNoPaginationView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    serializer_class = AdminPayoutTrackerForPayoutSerializer # Dummy, we override list
 
-    def get(self, request):
+    def list(self, request, *args, **kwargs):
         mk_id = request.query_params.get("micro_kitchen")
         if not mk_id:
             return Response([])
 
         # Filter trackers specifically for this Micro-Kitchen
-        trackers = PayoutTracker.objects.filter(
+        qs = PayoutTracker.objects.filter(
             micro_kitchen_id=mk_id
         ).select_related(
             "snapshot__user_diet_plan__user",
             "snapshot__user_diet_plan__diet_plan",
             "snapshot__user_diet_plan__nutritionist",
             "micro_kitchen"
-        ).order_by("-created_at")
+        )
+
+        period = request.query_params.get('period')
+        if period and period != 'all':
+            from .utils.date_utils import get_period_range
+            sd = request.query_params.get('start_date')
+            ed = request.query_params.get('end_date')
+            try:
+                s, e = get_period_range(period, sd, ed)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except:
+                pass
+        else:
+            sd = request.query_params.get('start_date')
+            ed = request.query_params.get('end_date')
+            if sd and ed:
+                qs = qs.filter(created_at__date__range=[sd, ed])
+
+        trackers = qs.order_by("-created_at")
 
         from collections import defaultdict
         patient_groups = defaultdict(lambda: {
@@ -7767,31 +7911,50 @@ class AdminMicroKitchenPayoutsNoPaginationView(APIView):
                 patient_groups[p_id]["trackers"].append(t_data)
             except:
                 continue
+        
+        grouped_list = list(patient_groups.values())
+        page = self.paginate_queryset(grouped_list)
+        if page is not None:
+             return self.get_paginated_response(page)
+        return Response(grouped_list)
 
-        return Response(list(patient_groups.values()))
 
-
-class AdminMicroKitchenMealsNoPaginationView(APIView):
+class AdminMicroKitchenMealsNoPaginationView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    serializer_class = UserMealSerializer
 
-    def get(self, request):
-        micro_kitchen_id = request.query_params.get("micro_kitchen")
-        month = request.query_params.get("month")
-        year = request.query_params.get("year")
+    def get_queryset(self):
+        micro_kitchen_id = self.request.query_params.get("micro_kitchen")
+        month = self.request.query_params.get("month")
+        year = self.request.query_params.get("year")
 
         if not micro_kitchen_id:
-            return Response([])
+            return UserMeal.objects.none()
 
         qs = UserMeal.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
             "user", "meal_type", "food", "packaging_material"
         )
 
-        if month and year:
+        period = self.request.query_params.get('period')
+        if period and period != 'all':
+            from .utils.date_utils import get_period_range
+            sd = self.request.query_params.get('start_date')
+            ed = self.request.query_params.get('end_date')
+            try:
+                s, e = get_period_range(period, sd, ed)
+                qs = qs.filter(meal_date__range=[s, e])
+            except:
+                pass
+        elif month and year:
             qs = qs.filter(meal_date__month=month, meal_date__year=year)
+        else:
+            sd = self.request.query_params.get('start_date')
+            ed = self.request.query_params.get('end_date')
+            if sd and ed:
+                qs = qs.filter(meal_date__range=[sd, ed])
 
-        qs = qs.order_by("-meal_date", "meal_type")
-        serializer = UserMealSerializer(qs, many=True)
-        return Response(serializer.data)
+        return qs.order_by("-meal_date", "meal_type")
 
 
 class AdminMicroKitchenDeliveryTeamNoPaginationView(APIView):

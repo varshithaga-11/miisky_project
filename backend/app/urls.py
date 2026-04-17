@@ -228,6 +228,10 @@ urlpatterns = [
         name="admin-supply-chain-orders-nopaginate",
     ),
     path(
+        "admin-supply-chain-daily-work-nopaginate/",
+        views.AdminSupplyChainDailyWorkNoPaginationView.as_view(),
+    ),
+    path(
         "admin-supply-chain-planned-leaves-nopaginate/",
         views.AdminSupplyChainPlannedLeavesNoPaginationView.as_view(),
         name="admin-supply-chain-planned-leaves-nopaginate",

@@ -66,11 +66,41 @@ function apiErrorDetail(err: unknown): string | null {
   return null;
 }
 
+export type PaginatedResponse<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
 async function getJson<T>(path: string, userId: number): Promise<T> {
   const url = createApiUrl(`${path}?user=${userId}`);
   try {
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data as T;
+  } catch (err) {
+    const detail = apiErrorDetail(err);
+    throw new Error(detail || "Request failed.");
+  }
+}
+
+async function getPaginatedJson<T>(
+  path: string,
+  userId: number,
+  page: number = 1,
+  limit: number = 10,
+  extraParams: Record<string, any> = {}
+): Promise<PaginatedResponse<T>> {
+  let paramStr = `user=${userId}&page=${page}&limit=${limit}`;
+  Object.entries(extraParams).forEach(([k, v]) => {
+    if (v != null && v !== "") {
+      paramStr += `&${k}=${encodeURIComponent(v)}`;
+    }
+  });
+  const url = createApiUrl(`${path}?${paramStr}`);
+  try {
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data as PaginatedResponse<T>;
   } catch (err) {
     const detail = apiErrorDetail(err);
     throw new Error(detail || "Request failed.");
@@ -89,16 +119,20 @@ export const fetchAdminSupplyChainHubSummary = (userId: number) =>
   }>("api/admin-supply-chain-hub-summary/", userId);
 
 /** GET api/admin-supply-chain-kitchen-team-nopaginate/?user= */
-export const fetchAdminSupplyChainKitchenTeam = (userId: number) =>
-  getJson<KitchenTeamRow[]>("api/admin-supply-chain-kitchen-team-nopaginate/", userId);
+export const fetchAdminSupplyChainKitchenTeam = (userId: number, page = 1, limit = 10) =>
+  getPaginatedJson<KitchenTeamRow>("api/admin-supply-chain-kitchen-team-nopaginate/", userId, page, limit);
 
 /** GET api/admin-supply-chain-plan-assignments-nopaginate/?user= */
-export const fetchAdminSupplyChainPlanAssignments = (userId: number) =>
-  getJson<unknown[]>("api/admin-supply-chain-plan-assignments-nopaginate/", userId);
+export const fetchAdminSupplyChainPlanAssignments = (userId: number, page = 1, limit = 10) =>
+  getPaginatedJson<any>("api/admin-supply-chain-plan-assignments-nopaginate/", userId, page, limit);
 
 /** GET api/admin-supply-chain-orders-nopaginate/?user= */
-export const fetchAdminSupplyChainOrders = (userId: number) =>
-  getJson<AdminSupplyChainOrderRow[]>("api/admin-supply-chain-orders-nopaginate/", userId);
+export const fetchAdminSupplyChainOrders = (userId: number, page = 1, limit = 10, startDate = "", endDate = "", status = "", period = "") =>
+  getPaginatedJson<AdminSupplyChainOrderRow>("api/admin-supply-chain-orders-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate, status, period });
+
+/** GET api/admin-supply-chain-daily-work-nopaginate/?user= */
+export const fetchAdminSupplyChainDailyWork = (userId: number, page = 1, limit = 10, startDate = "", endDate = "", period = "") =>
+  getPaginatedJson<any>("api/admin-supply-chain-daily-work-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate, period });
 
 /** GET api/admin-supply-chain-delivery-profile/?user= */
 export const fetchAdminSupplyChainDeliveryProfile = async (
@@ -112,8 +146,8 @@ export const fetchAdminSupplyChainDeliveryProfile = async (
 };
 
 /** GET api/admin-supply-chain-planned-leaves-nopaginate/?user= */
-export const fetchAdminSupplyChainPlannedLeaves = (userId: number) =>
-  getJson<unknown[]>("api/admin-supply-chain-planned-leaves-nopaginate/", userId);
+export const fetchAdminSupplyChainPlannedLeaves = (userId: number, page = 1, limit = 10) =>
+  getPaginatedJson<any>("api/admin-supply-chain-planned-leaves-nopaginate/", userId, page, limit);
 
 export type DeliveryFeedbackRow = {
   id: number;
@@ -147,19 +181,18 @@ export type DeliveryFeedbackRow = {
 };
 
 /** GET api/admin-supply-chain-delivery-ratings-nopaginate/?user= */
-export const fetchAdminSupplyChainDeliveryRatings = (userId: number) =>
-  getJson<DeliveryFeedbackRow[]>("api/admin-supply-chain-delivery-ratings-nopaginate/", userId);
+export const fetchAdminSupplyChainDeliveryRatings = (userId: number, page = 1, limit = 10, startDate = "", endDate = "") =>
+  getPaginatedJson<DeliveryFeedbackRow>("api/admin-supply-chain-delivery-ratings-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate });
 
-export type AdminSupplyChainEarningsResp = {
-  results: any[];
+export type AdminSupplyChainEarningsPaginatedResp = PaginatedResponse<any> & {
   total_orders: number;
   total_delivery_earnings: string;
 };
 
 /** GET api/admin-supply-chain-earnings-nopaginate/?user= */
-export const fetchAdminSupplyChainEarnings = (userId: number) =>
-  getJson<AdminSupplyChainEarningsResp>("api/admin-supply-chain-earnings-nopaginate/", userId);
+export const fetchAdminSupplyChainEarnings = (userId: number, page = 1, limit = 10, startDate = "", endDate = "") =>
+  getPaginatedJson<any>("api/admin-supply-chain-earnings-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate }) as Promise<AdminSupplyChainEarningsPaginatedResp>;
 
 /** GET api/admin-supply-chain-tickets-nopaginate/?user= */
-export const fetchAdminSupplyChainTickets = (userId: number) =>
-  getJson<any[]>("api/admin-supply-chain-tickets-nopaginate/", userId);
+export const fetchAdminSupplyChainTickets = (userId: number, page = 1, limit = 10) =>
+  getPaginatedJson<any>("api/admin-supply-chain-tickets-nopaginate/", userId, page, limit);

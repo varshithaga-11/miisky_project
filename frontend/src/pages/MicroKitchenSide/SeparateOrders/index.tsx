@@ -20,10 +20,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import { fetchSupplyChainUsers, SupplyChainUser } from "../DeliveryManagement/api";
+import { FilterBar } from "../../../components/common";
 
 const SeparateOrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<MicroKitchenOrderListRow[]>([]);
     const [orderDetailById, setOrderDetailById] = useState<Record<number, Order>>({});
+    const [deliveryFeedbackByOrderId, setDeliveryFeedbackByOrderId] = useState<Record<number, DeliveryFeedback[]>>({});
     const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState<number | null>(null);
@@ -38,19 +40,36 @@ const SeparateOrdersPage: React.FC = () => {
     const [roleFilterByOrder, setRoleFilterByOrder] = useState<Record<number, "all" | "primary" | "backup" | "temporary">>({});
     const [selectedPersonByOrder, setSelectedPersonByOrder] = useState<Record<number, string>>({});
     const [savingDeliveryForOrderId, setSavingDeliveryForOrderId] = useState<number | null>(null);
-    const [deliveryFeedbackByOrderId, setDeliveryFeedbackByOrderId] = useState<Record<number, DeliveryFeedback[]>>({});
+    const [idForFeedback, setIdForFeedback] = useState<number | null>(null);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
 
-    const fetchOrders = async () => {
-        setLoading(true);
+    // Filters
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [period, setPeriod] = useState("all");
+
+    const fetchOrders = async (p = 1, isLoadMore = false, s = search, st = statusFilter, t = typeFilter, sd = startDate, ed = endDate, per = period) => {
+        if (isLoadMore) setLoadingMore(true);
+        else setLoading(true);
+
         try {
-            const data = await getMicroKitchenOrdersList(currentPage, pageSize, statusFilter, typeFilter, search);
-            setOrders(data.results || []);
+            const data = await getMicroKitchenOrdersList(p, 10, st, t, s, per, sd, ed);
+            if (isLoadMore) {
+                setOrders(prev => [...prev, ...(data.results || [])]);
+            } else {
+                setOrders(data.results || []);
+            }
             setTotalItems(data.count || 0);
+            setCurrentPage(data.currentPage || p);
+            setHasMore(data.currentPage! < data.totalPages!);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load orders");
+            if (!isLoadMore) setOrders([]);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
 
@@ -76,10 +95,10 @@ const SeparateOrdersPage: React.FC = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchOrders();
-        }, search ? 500 : 0); // Debounce search
+            fetchOrders(1, false, search, statusFilter, typeFilter, startDate, endDate, period);
+        }, search ? 500 : 0);
         return () => clearTimeout(timer);
-    }, [currentPage, pageSize, statusFilter, typeFilter, search]);
+    }, [search, statusFilter, typeFilter, startDate, endDate, period]);
 
     useEffect(() => {
         const loadTeam = async () => {
@@ -93,10 +112,16 @@ const SeparateOrdersPage: React.FC = () => {
         loadTeam();
     }, []);
 
-    // Reset to page 1 when filters change
     useEffect(() => {
-        setCurrentPage(1);
-    }, [statusFilter, typeFilter, pageSize, search]);
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                fetchOrders(currentPage + 1, true);
+            }
+        }, { threshold: 0.1 });
+        const el = document.getElementById("order-sentinel");
+        if (el) observer.observe(el);
+        return () => observer.disconnect();
+    }, [hasMore, loading, loadingMore, currentPage]);
 
     const handleStatusUpdate = async (orderId: number, status: string) => {
         setUpdating(orderId);
@@ -226,69 +251,69 @@ const SeparateOrdersPage: React.FC = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-wrap items-end gap-4 mb-8">
-                    <div className="flex-1 min-w-[280px]">
-                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Search Customer Name / Address / Order ID</label>
-                        <div className="relative group/search">
-                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors" size={18} />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Start typing to search..."
-                                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                            />
+                <div className="space-y-6 mb-8">
+                    <div className="flex flex-wrap items-end gap-4">
+                        <div className="flex-1 min-w-[280px]">
+                            <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Search Customer Name / Address / Order ID</label>
+                            <div className="relative group/search">
+                                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors" size={18} />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Start typing to search..."
+                                    className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Status</label>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="placed">Placed</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="ready">Ready</option>
+                                <option value="picked_up">Picked Up</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Type</label>
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value)}
+                                className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm"
+                            >
+                                <option value="all">All Types</option>
+                                <option value="patient">Patient</option>
+                                <option value="non_patient">Non Patient</option>
+                            </select>
                         </div>
                     </div>
-                    <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Status</label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="placed">Placed</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="preparing">Preparing</option>
-                            <option value="ready">Ready</option>
-                            <option value="picked_up">Picked Up</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Order Type</label>
-                        <select
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm"
-                        >
-                            <option value="all">All Types</option>
-                            <option value="patient">Patient</option>
-                            <option value="non_patient">Non Patient</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Rows</label>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => setPageSize(Number(e.target.value))}
-                            className="px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm"
-                        >
-                            <option value={5}>5 Rows</option>
-                            <option value={10}>10 Rows</option>
-                            <option value={15}>15 Rows</option>
-                            <option value={20}>20 Rows</option>
-                            <option value={25}>25 Rows</option>
-                        </select>
-                    </div>
+
+                    <FilterBar 
+                        startDate={startDate}
+                        endDate={endDate}
+                        activePeriod={period}
+                        onPeriodChange={setPeriod}
+                        onFilterChange={(s: string, e: string, p: string) => {
+                            setStartDate(s);
+                            setEndDate(e);
+                            setPeriod(p);
+                        }}
+                    />
                 </div>
 
-                {loading ? (
+                {loading && currentPage === 1 ? (
                     <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-gray-800 rounded-[40px]">
                         <FiLoader className="animate-spin text-indigo-500 mb-4" size={40} />
-                        <p className="text-gray-400 font-bold text-sm">Loading orders...</p>
+                        <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Synchronizing records...</p>
                     </div>
                 ) : (
                     <div className="space-y-6">
@@ -309,8 +334,8 @@ const SeparateOrdersPage: React.FC = () => {
                                 <TableBody>
                                     {orders.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="px-6 py-16 text-center text-gray-500 font-medium">
-                                                No orders match your filters.
+                                            <TableCell colSpan={7} className="px-6 py-32 text-center text-gray-400 font-black uppercase tracking-widest">
+                                                No orders match your criteria.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -322,33 +347,40 @@ const SeparateOrdersPage: React.FC = () => {
                                                 className={`hover:bg-gray-50/80 dark:hover:bg-white/[0.02] cursor-pointer transition-colors ${expandedOrderId === order.id ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
                                                 onClick={() => toggleRow(order.id!)}
                                             >
-                                                <TableCell className="px-6 py-4 font-bold text-gray-900 dark:text-white">
-                                                    {order.customer_name?.trim() || "—"}
+                                                <TableCell className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="size-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-bold text-[10px] uppercase">
+                                                            {order.customer_name?.[0] || 'C'}
+                                                        </div>
+                                                        <span className="font-bold text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                                                            {order.customer_name?.trim() || "—"}
+                                                        </span>
+                                                    </div>
                                                 </TableCell>
-                                                <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                                <TableCell className="px-6 py-4 text-xs font-bold text-gray-500 group-hover:text-indigo-500 transition-colors">
                                                     {order.customer_mobile?.trim() || "—"}
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
-                                                    <span className="px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] font-black uppercase text-gray-600 dark:text-gray-300">
+                                                    <span className="px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-[9px] font-black uppercase text-gray-400 border border-gray-100 dark:border-white/5 tracking-widest">
                                                         {order.order_type?.replace("_", " ")}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${getStatusStyles(order.status)}`}>
+                                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest italic border shadow-sm ${getStatusStyles(order.status)}`}>
                                                         {order.status}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="px-6 py-4 font-black text-emerald-600 dark:text-emerald-400">
+                                                <TableCell className="px-6 py-4 font-black text-emerald-600 dark:text-emerald-400 italic">
                                                     ₹{Number(order.final_amount).toFixed(2)}
                                                 </TableCell>
-                                                <TableCell className="px-6 py-4 text-xs text-gray-500">
+                                                <TableCell className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                                                     {order.created_at ? new Date(order.created_at).toLocaleDateString() : ""}
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                                         <button
                                                             onClick={() => toggleRow(order.id!)}
-                                                            className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-100 transition-all"
+                                                            className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                                                         >
                                                             {expandedOrderId === order.id ? <FiChevronUp /> : <FiEye />}
                                                         </button>
@@ -356,7 +388,7 @@ const SeparateOrdersPage: React.FC = () => {
                                                             value={order.status}
                                                             onChange={(e) => handleStatusUpdate(order.id!, e.target.value)}
                                                             disabled={updating === order.id || order.status === "cancelled" || order.status === "delivered"}
-                                                            className="text-[10px] font-black uppercase bg-gray-100 dark:bg-gray-800 border-none rounded-lg focus:ring-0 cursor-pointer disabled:opacity-50 h-8"
+                                                            className="text-[9px] font-black uppercase bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-white/5 rounded-xl focus:ring-0 cursor-pointer disabled:opacity-50 h-9 px-3 tracking-widest italic"
                                                         >
                                                             <option value="placed">Placed</option>
                                                             <option value="accepted">Accepted</option>
@@ -370,45 +402,44 @@ const SeparateOrdersPage: React.FC = () => {
                                                 </TableCell>
                                             </TableRow>
 
-                                            {/* Expansion row */}
                                             <AnimatePresence>
                                                 {expandedOrderId === order.id && (
-                                                    <TableRow className="border-t border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/[0.01]">
+                                                    <TableRow className="border-t border-gray-50 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.005]">
                                                         <TableCell colSpan={7} className="px-8 py-8">
                                                             <motion.div
-                                                                initial={{ opacity: 0, height: 0 }}
-                                                                animate={{ opacity: 1, height: 'auto' }}
-                                                                exit={{ opacity: 0, height: 0 }}
+                                                                initial={{ opacity: 0, scale: 0.98 }}
+                                                                animate={{ opacity: 1, scale: 1 }}
+                                                                exit={{ opacity: 0, scale: 0.98 }}
                                                             >
                                                                 {detailLoadingId === order.id && !fullOrder ? (
-                                                                    <div className="flex items-center gap-3 text-gray-500 py-6">
-                                                                        <FiLoader className="animate-spin text-indigo-500" size={24} />
-                                                                        <span className="text-sm font-bold">Loading order #{order.id}…</span>
+                                                                    <div className="flex items-center gap-4 text-gray-400 py-12">
+                                                                        <div className="size-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest italic">Decrypting order details…</span>
                                                                     </div>
                                                                 ) : fullOrder ? (
                                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                                                    <div className="space-y-6">
-                                                                        <div>
-                                                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                                                <FiPackage size={14} className="text-indigo-500" /> Items Breakdown
+                                                                    <div className="space-y-8">
+                                                                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-50 dark:border-white/5 shadow-sm">
+                                                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                                                                <FiPackage size={14} className="text-indigo-500" /> Manifest Breakdown
                                                                             </h4>
-                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                                                 {fullOrder.items?.map((item) => {
                                                                                     const itemImageUrl = getImageUrl(item.food_details?.image);
                                                                                     return (
-                                                                                    <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
-                                                                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-700 flex-shrink-0">
+                                                                                    <div key={item.id} className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50/50 dark:bg-gray-950/50 border border-transparent hover:border-indigo-100 transition-all group">
+                                                                                        <div className="size-14 rounded-xl overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 flex-shrink-0">
                                                                                             {itemImageUrl ? (
                                                                                                 <img
                                                                                                     src={itemImageUrl}
-                                                                                                    className="w-full h-full object-cover"
+                                                                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                                                                     alt=""
                                                                                                 />
-                                                                                            ) : null}
+                                                                                            ) : <div className="w-full h-full flex items-center justify-center text-gray-200"><FiPackage size={20} /></div>}
                                                                                         </div>
                                                                                         <div>
-                                                                                            <p className="text-xs font-black text-gray-900 dark:text-white leading-tight">{item.food_details?.name}</p>
-                                                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{item.quantity} × ₹{item.price}</p>
+                                                                                            <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{item.food_details?.name}</p>
+                                                                                            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mt-1">{item.quantity} QTY × ₹{item.price}</p>
                                                                                         </div>
                                                                                     </div>
                                                                                     );
@@ -416,10 +447,10 @@ const SeparateOrdersPage: React.FC = () => {
                                                                             </div>
                                                                         </div>
 
-                                                                        <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm">
+                                                                        <div className="p-1 rounded-3xl bg-white dark:bg-gray-800 border border-gray-50 dark:border-white/5 shadow-sm">
                                                                             <OrderDeliverySummary
                                                                                 order={fullOrder}
-                                                                                className="!p-0"
+                                                                                className="!p-6"
                                                                                 liveDistanceKm={distanceKmBetween(
                                                                                     coordsFromFields(fullOrder.user_details?.latitude, fullOrder.user_details?.longitude),
                                                                                     coordsFromFields(fullOrder.kitchen_details?.latitude, fullOrder.kitchen_details?.longitude)
@@ -429,20 +460,13 @@ const SeparateOrdersPage: React.FC = () => {
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="space-y-6">
-                                                                        <div>
-                                                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                                                <FiMapPin size={14} className="text-indigo-500" /> Delivery Details
+                                                                    <div className="space-y-8">
+                                                                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-50 dark:border-white/5 shadow-sm">
+                                                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                                                                <FiMapPin size={14} className="text-indigo-500" /> Logistics Assignment
                                                                             </h4>
-                                                                            <div className="mb-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 p-3">
-                                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">
-                                                                                    Assign from team members
-                                                                                </p>
-                                                                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                                                                                    Saved on the order in the database (<span className="font-mono">app_order.delivery_person_id</span>
-                                                                                    ). Use Save to persist; the dropdown alone only updates this screen until you save.
-                                                                                </p>
-                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                            <div className="mb-6 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 p-5 space-y-4">
+                                                                                <div className="flex flex-col sm:flex-row gap-3">
                                                                                     <select
                                                                                         value={roleFilterByOrder[order.id!] || "all"}
                                                                                         onChange={(e) =>
@@ -451,9 +475,9 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                                 [order.id!]: e.target.value as "all" | "primary" | "backup" | "temporary",
                                                                                             }))
                                                                                         }
-                                                                                        className="rounded-lg border-none bg-gray-100 dark:bg-gray-700 px-3 py-2 text-xs font-bold"
+                                                                                        className="flex-1 rounded-xl border border-indigo-100 dark:border-indigo-900 bg-white dark:bg-gray-900 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest"
                                                                                     >
-                                                                                        <option value="all">All roles</option>
+                                                                                        <option value="all">Filer Role</option>
                                                                                         <option value="primary">Primary</option>
                                                                                         <option value="backup">Backup</option>
                                                                                         <option value="temporary">Temporary</option>
@@ -466,9 +490,9 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                                 [order.id!]: e.target.value,
                                                                                             }))
                                                                                         }
-                                                                                        className="rounded-lg border-none bg-gray-100 dark:bg-gray-700 px-3 py-2 text-xs font-bold"
+                                                                                        className="flex-[2] rounded-xl border border-indigo-100 dark:border-indigo-900 bg-white dark:bg-gray-900 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest italic"
                                                                                     >
-                                                                                        <option value="">None / unassigned</option>
+                                                                                        <option value="">Unassigned</option>
                                                                                         {deliveryPersonOptionsForOrder(fullOrder).map((u) => (
                                                                                             <option key={u.id} value={u.id}>
                                                                                                 {`${u.first_name || ""} ${u.last_name || ""}`.trim()}
@@ -477,38 +501,28 @@ const SeparateOrdersPage: React.FC = () => {
                                                                                         ))}
                                                                                     </select>
                                                                                 </div>
-                                                                                {fullOrder.delivery_person_details && (
-                                                                                    <p className="mt-2 text-[10px] text-gray-500 dark:text-gray-400">
-                                                                                        Currently saved:{" "}
-                                                                                        <span className="font-bold text-gray-700 dark:text-gray-300">
-                                                                                            {`${fullOrder.delivery_person_details.first_name || ""} ${fullOrder.delivery_person_details.last_name || ""}`.trim() ||
-                                                                                                `#${fullOrder.delivery_person}`}
-                                                                                        </span>
-                                                                                    </p>
-                                                                                )}
-                                                                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                                                    <Button
-                                                                                        type="button"
-                                                                                        size="sm"
-                                                                                        variant="primary"
-                                                                                        className="!rounded-xl !px-4 !py-2 text-xs font-black"
-                                                                                        disabled={savingDeliveryForOrderId === order.id}
-                                                                                        onClick={() => saveDeliveryAssignment(fullOrder)}
-                                                                                    >
-                                                                                        {savingDeliveryForOrderId === order.id ? "Saving…" : "Save delivery person"}
-                                                                                    </Button>
-                                                                                </div>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    variant="primary"
+                                                                                    className="w-full !rounded-xl !py-3 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+                                                                                    disabled={savingDeliveryForOrderId === order.id}
+                                                                                    onClick={() => saveDeliveryAssignment(fullOrder)}
+                                                                                >
+                                                                                    {savingDeliveryForOrderId === order.id ? "Synchronizing…" : "Confirm Logistics Update"}
+                                                                                </Button>
                                                                             </div>
-                                                                            <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
+                                                                            
+                                                                            <div className="space-y-6 px-2">
                                                                                 <div>
-                                                                                    <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">Street address</p>
-                                                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Primary address</p>
+                                                                                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 italic group-hover:text-indigo-600 transition-colors">
                                                                                         {fullOrder.delivery_address?.trim() || "—"}
                                                                                     </p>
                                                                                 </div>
                                                                                 <div>
-                                                                                    <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2">Address from map / GPS</p>
-                                                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">GPS Verification</p>
+                                                                                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 italic">
                                                                                         {fullOrder.delivery_lat_lng_address?.trim() || "—"}
                                                                                     </p>
                                                                                 </div>
@@ -516,68 +530,22 @@ const SeparateOrdersPage: React.FC = () => {
                                                                         </div>
 
                                                                         {fullOrder.ratings && fullOrder.ratings.length > 0 && (
-                                                                            <div>
-                                                                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                                                    <FiStar size={14} className="text-amber-500" /> Feedback
+                                                                            <div className="p-6 rounded-3xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-500/10">
+                                                                                <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                                                    <FiStar size={14} /> Consumer Experience
                                                                                 </h4>
-                                                                                <div className="p-4 rounded-2xl bg-amber-50/30 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-500/10">
-                                                                                    <div className="flex items-center gap-1 mb-2">
-                                                                                        {[1, 2, 3, 4, 5].map((s) => (
-                                                                                            <FiStar key={s} size={10} className={s <= fullOrder.ratings![0].rating ? "text-amber-500 fill-amber-500" : "text-gray-300"} />
-                                                                                        ))}
-                                                                                    </div>
-                                                                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic">"{fullOrder.ratings[0].review}"</p>
+                                                                                <div className="flex items-center gap-1 mb-3">
+                                                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                                                        <FiStar key={s} size={12} className={s <= fullOrder.ratings![0].rating ? "text-amber-500 fill-amber-500" : "text-gray-200"} />
+                                                                                    ))}
                                                                                 </div>
+                                                                                <p className="text-xs font-bold text-amber-700 dark:text-amber-300 italic leading-relaxed">"{fullOrder.ratings[0].review}"</p>
                                                                             </div>
                                                                         )}
-
-                                                                        {(() => {
-                                                                            const feedbacks = deliveryFeedbackByOrderId[fullOrder.id] || [];
-                                                                            const deliveryRating = feedbacks.find((f) => f.feedback_type === "rating");
-                                                                            const deliveryIssue = feedbacks.find((f) => f.feedback_type === "issue");
-                                                                            if (!deliveryRating && !deliveryIssue) return null;
-                                                                            return (
-                                                                                <div>
-                                                                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                                                        <FiStar size={14} className="text-indigo-500" /> Delivery feedback
-                                                                                    </h4>
-                                                                                    <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/10 space-y-3">
-                                                                                        {deliveryRating && (
-                                                                                            <div>
-                                                                                                <div className="flex items-center gap-1 mb-2">
-                                                                                                    {[1, 2, 3, 4, 5].map((s) => (
-                                                                                                        <FiStar key={s} size={10} className={s <= (deliveryRating.rating || 0) ? "text-amber-500 fill-amber-500" : "text-gray-300"} />
-                                                                                                    ))}
-                                                                                                    <span className="ml-2 text-[10px] font-black text-gray-700 dark:text-gray-300">
-                                                                                                        {deliveryRating.rating}/5
-                                                                                                    </span>
-                                                                                                </div>
-                                                                                                <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic">
-                                                                                                    "{deliveryRating.review || "No written delivery review"}"
-                                                                                                </p>
-                                                                                            </div>
-                                                                                        )}
-                                                                                        {deliveryIssue && (
-                                                                                            <div className="pt-2 border-t border-indigo-100/70 dark:border-white/5">
-                                                                                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1">
-                                                                                                    Reported issue
-                                                                                                </p>
-                                                                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">
-                                                                                                    {(deliveryIssue.issue_type || "issue").replace(/_/g, " ")}
-                                                                                                </p>
-                                                                                                <p className="text-xs font-bold text-gray-600 dark:text-gray-300 italic mt-1">
-                                                                                                    "{deliveryIssue.description || "No extra issue details"}"
-                                                                                                </p>
-                                                                                            </div>
-                                                                                        )}
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        })()}
                                                                     </div>
                                                                 </div>
                                                                 ) : (
-                                                                    <p className="text-sm text-gray-500">Could not load this order.</p>
+                                                                    <div className="py-12 text-center text-gray-400 text-[10px] font-black uppercase tracking-widest">Failed to retrieve unit record.</div>
                                                                 )}
                                                             </motion.div>
                                                         </TableCell>
@@ -593,61 +561,11 @@ const SeparateOrdersPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Pagination Buttons */}
-                        <div className="mt-8 flex items-center justify-between">
-                            <p className="text-xs text-gray-400 font-bold">
-                                Showing <span className="text-gray-900 dark:text-white">{(currentPage - 1) * pageSize + 1}</span> to{" "}
-                                <span className="text-gray-900 dark:text-white">
-                                    {Math.min(currentPage * pageSize, totalItems)}
-                                </span>{" "}
-                                of <span className="text-gray-900 dark:text-white">{totalItems}</span> orders
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setCurrentPage(currentPage - 1)}
-                                    disabled={currentPage === 1 || loading}
-                                    className="!rounded-xl h-10 px-4"
-                                >
-                                    Previous
-                                </Button>
-                                {[...Array(totalPages)].map((_, i) => {
-                                    const pageNum = i + 1;
-                                    // Show first, last, and pages around current
-                                    if (
-                                        pageNum === 1 ||
-                                        pageNum === totalPages ||
-                                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                                    ) {
-                                        return (
-                                            <Button
-                                                key={pageNum}
-                                                variant={currentPage === pageNum ? "primary" : "outline"}
-                                                onClick={() => setCurrentPage(pageNum)}
-                                                className={`!rounded-xl w-10 h-10 p-0 text-xs font-black ${currentPage === pageNum ? "shadow-lg shadow-indigo-500/20" : ""
-                                                    }`}
-                                            >
-                                                {pageNum}
-                                            </Button>
-                                        );
-                                    } else if (
-                                        (pageNum === currentPage - 2 && pageNum > 1) ||
-                                        (pageNum === currentPage + 2 && pageNum < totalPages)
-                                    ) {
-                                        return <span key={pageNum} className="text-gray-400">...</span>;
-                                    }
-                                    return null;
-                                })}
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setCurrentPage(currentPage + 1)}
-                                    disabled={currentPage === totalPages || loading}
-                                    className="!rounded-xl h-10 px-4"
-                                >
-                                    Next
-                                </Button>
+                        {hasMore && (
+                            <div id="order-sentinel" className="py-12 flex items-center justify-center">
+                                <div className="size-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>

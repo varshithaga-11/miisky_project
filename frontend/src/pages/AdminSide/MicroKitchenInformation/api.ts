@@ -164,11 +164,15 @@ export type MicroKitchenFoodRow = {
   food_details?: { id?: number; name?: string; description?: string; image?: string | null } | null;
 };
 
-export const getMicroKitchenPatients = async (microKitchenId: number) => {
-  const url = createApiUrl(`api/admin-microkitchen-patients/`);
+export const getMicroKitchenPatients = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 20
+): Promise<PaginatedResponse<any>> => {
+  const url = createApiUrl(`api/admin-microkitchen-patients-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, limit: 50, page: 1 },
+    params: { micro_kitchen: microKitchenId, page, limit },
   });
   return response.data;
 };
@@ -182,11 +186,15 @@ export const getMicroKitchenPatientsNoPagination = async (microKitchenId: number
   return response.data;
 };
 
-export const getMicroKitchenInspections = async (microKitchenId: number) => {
+export const getMicroKitchenInspections = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 20
+): Promise<PaginatedResponse<any>> => {
   const url = createApiUrl(`api/microkitcheninspection/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, limit: 20, page: 1 },
+    params: { micro_kitchen: microKitchenId, limit, page },
   });
   return response.data;
 };
@@ -263,17 +271,40 @@ export const getMicroKitchenAvailableFoodsNoPagination = async (microKitchenId: 
   return response.data;
 };
 
-export const getMicroKitchenDailyMealsNoPagination = async (
+export const getMicroKitchenDailyMeals = async (
   microKitchenId: number,
+  page: number = 1,
+  limit: number = 20,
+  period?: string,
+  startDate?: string,
+  endDate?: string,
   month?: number,
   year?: number
-) => {
+): Promise<PaginatedResponse<any>> => {
   const url = createApiUrl(`api/admin-microkitchen-meals-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, month, year },
+    params: { 
+      micro_kitchen: microKitchenId, 
+      page,
+      limit,
+      month, 
+      year, 
+      start_date: startDate, 
+      end_date: endDate, 
+      period 
+    },
   });
   return response.data;
+};
+
+export const getMicroKitchenDailyMealsNoPagination = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-meals-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data ?? [];
 };
 
 // --- Paginated versions for Infinite Scroll ---
@@ -281,12 +312,22 @@ export const getMicroKitchenDailyMealsNoPagination = async (
 export const getMicroKitchenReviewsPaginated = async (
   microKitchenId: number,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  startDate?: string,
+  endDate?: string,
+  period?: string
 ): Promise<PaginatedResponse<any>> => {
   const url = createApiUrl(`api/microkitchenrating/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, page, limit },
+    params: { 
+      micro_kitchen: microKitchenId, 
+      page, 
+      limit, 
+      start_date: startDate, 
+      end_date: endDate, 
+      period 
+    },
   });
   return response.data;
 };
@@ -294,12 +335,22 @@ export const getMicroKitchenReviewsPaginated = async (
 export const getMicroKitchenOrdersPaginated = async (
   microKitchenId: number,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  startDate?: string,
+  endDate?: string,
+  period?: string
 ): Promise<PaginatedResponse<any>> => {
   const url = createApiUrl(`api/order/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, page, limit },
+    params: { 
+      micro_kitchen: microKitchenId, 
+      page, 
+      limit, 
+      start_date: startDate, 
+      end_date: endDate, 
+      period 
+    },
   });
   return response.data;
 };
@@ -571,13 +622,36 @@ export const getMicroKitchenPlannedLeavesNoPagination = async (
   return response.data ?? [];
 };
 
+export const getMicroKitchenPayouts = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 20,
+  period?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<PaginatedResponse<any>> => {
+  const url = createApiUrl(`api/admin-microkitchen-payouts-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { 
+        micro_kitchen: microKitchenId, 
+        page,
+        limit,
+        start_date: startDate, 
+        end_date: endDate, 
+        period 
+    },
+  });
+  return response.data;
+};
+
 export const getMicroKitchenPayoutsNoPagination = async (microKitchenId: number) => {
   const url = createApiUrl(`api/admin-microkitchen-payouts-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
     params: { micro_kitchen: microKitchenId },
   });
-  return response.data;
+  return response.data ?? [];
 };
 
 /** Admin: order payment splits (snapshots) for this kitchen. */
@@ -598,14 +672,27 @@ export const getMicroKitchenOrderPaymentSnapshots = async (
 /** Admin: execution list (all meals status) for a specific date. */
 export const getMicroKitchenExecutionList = async (
   microKitchenId: number,
-  mealDate: string
-): Promise<any[]> => {
+  page: number = 1,
+  limit: number = 20,
+  period?: string,
+  startDate?: string,
+  endDate?: string,
+  mealDate?: string
+): Promise<PaginatedResponse<any>> => {
   const url = createApiUrl(`api/usermeal/execution-list/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, meal_date: mealDate },
+    params: { 
+        micro_kitchen: microKitchenId, 
+        page,
+        limit,
+        meal_date: mealDate, 
+        start_date: startDate, 
+        end_date: endDate, 
+        period 
+    },
   });
-  return response.data ?? [];
+  return response.data;
 };
 
 /** Admin hub: patients allotted to this kitchen (via diet plan), kitchen share payout lines only. */

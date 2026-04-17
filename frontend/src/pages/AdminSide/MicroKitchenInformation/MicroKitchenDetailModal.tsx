@@ -15,19 +15,27 @@ import {
   FiMapPin,
   FiClock,
 } from "react-icons/fi";
+import { FilterBar } from "../../../components/common";
 import {
   getMicroKitchenDeliveryProfilesNoPagination,
   getMicroKitchenDeliveryTeamNoPagination,
+  getMicroKitchenPatients,
   getMicroKitchenPatientsNoPagination,
+  getMicroKitchenInspections,
   getMicroKitchenInspectionsNoPagination,
   getMicroKitchenReviewsPaginated,
+  getMicroKitchenReviewsNoPagination,
   getMicroKitchenOrdersPaginated,
+  getMicroKitchenOrdersNoPagination,
   getMicroKitchenFoodsPaginated,
+  getMicroKitchenAvailableFoodsNoPagination,
+  getMicroKitchenDailyMeals,
   getMicroKitchenDailyMealsNoPagination,
   getMicroKitchenDeliverySlabs,
   getMicroKitchenGlobalAssignmentsNoPagination,
   getKitchenSupportTickets,
   getMicroKitchenMealDeliveryAssignmentsNoPagination,
+  getMicroKitchenPayouts,
   getMicroKitchenPayoutsNoPagination,
   getMicroKitchenAllottedPlanPayouts,
   getMicroKitchenPlannedLeavesNoPagination,
@@ -139,10 +147,30 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination state
+  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Filter states
+  const [ordPeriod, setOrdPeriod] = useState("");
+  const [ordStartDate, setOrdStartDate] = useState("");
+  const [ordEndDate, setOrdEndDate] = useState("");
+
+  const [revPeriod, setRevPeriod] = useState("");
+  const [revStartDate, setRevStartDate] = useState("");
+  const [revEndDate, setRevEndDate] = useState("");
+
+  const [prepPeriod, setPrepPeriod] = useState("");
+  const [prepStartDate, setPrepStartDate] = useState("");
+  const [prepEndDate, setPrepEndDate] = useState("");
+
+  const [execPeriod, setExecPeriod] = useState("");
+  const [execStartDate, setExecStartDate] = useState("");
+  const [execEndDate, setExecEndDate] = useState("");
+
+  const [payPeriod, setPayPeriod] = useState("");
+  const [payStartDate, setPayStartDate] = useState("");
+  const [payEndDate, setPayEndDate] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -152,6 +180,14 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     setLoading(false);
     setPage(1);
     setHasMore(false);
+    
+    // Reset filters on open if desired, or keep?
+    // User usually wants fresh state on modal open
+    setOrdPeriod(""); setOrdStartDate(""); setOrdEndDate("");
+    setRevPeriod(""); setRevStartDate(""); setRevEndDate("");
+    setPrepPeriod(""); setPrepStartDate(""); setPrepEndDate("");
+    setExecPeriod(""); setExecStartDate(""); setExecEndDate("");
+    setPayPeriod(""); setPayStartDate(""); setPayEndDate("");
   }, [open, kitchen.id]);
 
   const goHub = () => {
@@ -164,7 +200,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   };
 
   const loadView = useCallback(
-    async (view: KitchenDataView, p = 1, isLoadMore = false) => {
+    async (view: KitchenDataView, p = 1, isLoadMore = false, sd?: string, ed?: string, per?: string) => {
       const id = kitchen.id;
       if (view === "allotted_plan_payouts") {
         setScreen(view);
@@ -188,74 +224,74 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
         let res: any;
         switch (view) {
           case "info":
-            setPayload(kitchen);
+            setPayload({ results: kitchen, page: 1, hasMore: false });
             break;
           case "patients":
-            setPayload(await getMicroKitchenPatientsNoPagination(id));
+            res = await getMicroKitchenPatients(id, p);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "delivery_team":
-            setPayload(await getMicroKitchenDeliveryTeamNoPagination(id));
+            setPayload({ results: await getMicroKitchenDeliveryTeamNoPagination(id), page: 1, hasMore: false });
             break;
           case "global_assignments":
-            setPayload(await getMicroKitchenGlobalAssignmentsNoPagination(id));
+            setPayload({ results: await getMicroKitchenGlobalAssignmentsNoPagination(id), page: 1, hasMore: false });
             break;
           case "daily_reassignments":
-            setPayload(await getMicroKitchenMealDeliveryAssignmentsNoPagination(id));
+            setPayload({ results: await getMicroKitchenMealDeliveryAssignmentsNoPagination(id), page: 1, hasMore: false });
             break;
           case "planned_leaves":
-            setPayload(await getMicroKitchenPlannedLeavesNoPagination(id));
+            setPayload({ results: await getMicroKitchenPlannedLeavesNoPagination(id), page: 1, hasMore: false });
             break;
           case "delivery_profiles":
-            setPayload(await getMicroKitchenDeliveryProfilesNoPagination(id));
+            setPayload({ results: await getMicroKitchenDeliveryProfilesNoPagination(id), page: 1, hasMore: false });
             break;
           case "inspections":
-            setPayload(await getMicroKitchenInspectionsNoPagination(id));
+            res = await getMicroKitchenInspections(id, p);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "reviews":
-            res = await getMicroKitchenReviewsPaginated(id, p, 10);
-            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-            setHasMore(res.current_page < res.total_pages);
+            res = await getMicroKitchenReviewsPaginated(id, p, 10, sd, ed, per);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "orders":
-            res = await getMicroKitchenOrdersPaginated(id, p, 10);
-            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-            setHasMore(res.current_page < res.total_pages);
+            res = await getMicroKitchenOrdersPaginated(id, p, 10, sd, ed, per);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "foods":
             res = await getMicroKitchenFoodsPaginated(id, p, 20);
-            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-            setHasMore(res.current_page < res.total_pages);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "tickets":
             res = await getKitchenSupportTickets(kitchen.user, p, 10);
-            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-            setHasMore(res.current_page < res.total_pages);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "payouts":
-            setPayload(await getMicroKitchenPayoutsNoPagination(id));
+            res = await getMicroKitchenPayouts(id, p, 10, per, sd, ed);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "delivery_ratings":
-            setPayload(await getMicroKitchenDeliveryRatings(id));
+            setPayload({ results: await getMicroKitchenDeliveryRatings(id), page: 1, hasMore: false });
             break;
           case "delivery":
-            setPayload(await getMicroKitchenDeliverySlabs(id));
+            setPayload({ results: await getMicroKitchenDeliverySlabs(id), page: 1, hasMore: false });
             break;
           case "prep":
             const nowPrep = new Date();
-            setPayload(await getMicroKitchenDailyMealsNoPagination(id, nowPrep.getMonth() + 1, nowPrep.getFullYear()));
+            res = await getMicroKitchenDailyMeals(id, p, 20, per, sd, ed, nowPrep.getMonth() + 1, nowPrep.getFullYear());
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "execution":
-            const today = new Date().toISOString().split('T')[0];
-            setPayload(await getMicroKitchenExecutionList(id, today));
+            const td = new Date().toISOString().split('T')[0];
+            res = await getMicroKitchenExecutionList(id, p, 20, per, sd, ed, sd ? undefined : td);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "order_payments":
             res = await getMicroKitchenOrderPaymentSnapshots(id, p, 20);
-            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
-            setHasMore(res.current_page < res.total_pages);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           case "mk_plan_payouts":
-            // Reuse the existing payout view but with its own fetcher if needed, or mapping
-            setPayload(await getMicroKitchenPayoutsNoPagination(id));
+            res = await getMicroKitchenPayouts(id, p, 10, per, sd, ed);
+            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
             break;
           default:
             break;
@@ -270,16 +306,32 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     [kitchen]
   );
 
-  const handleLoadMore = () => {
-    const nextP = page + 1;
-    setPage(nextP);
-    loadView(screen as KitchenDataView, nextP, true);
-  };
+  const handleLoadMore = useCallback(() => {
+    if (loading || loadingMore || !payload?.hasMore || !screen || screen === "hub") return;
+    let sd, ed, per;
+    if (screen === 'orders') { sd = ordStartDate; ed = ordEndDate; per = ordPeriod; }
+    else if (screen === 'reviews') { sd = revStartDate; ed = revEndDate; per = revPeriod; }
+    else if (screen === 'prep') { sd = prepStartDate; ed = prepEndDate; per = prepPeriod; }
+    else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
+    else if (screen === 'payouts' || screen === 'mk_plan_payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
+    
+    loadView(screen as KitchenDataView, (payload.page || 1) + 1, true, sd, ed, per);
+  }, [loading, loadingMore, payload, screen, ordStartDate, ordEndDate, ordPeriod, revStartDate, revEndDate, revPeriod, prepStartDate, prepEndDate, prepPeriod, execStartDate, execEndDate, execPeriod, payStartDate, payEndDate, payPeriod, loadView]);
 
+  useEffect(() => {
+    if (!open || screen === "hub" || loading) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) handleLoadMore();
+    }, { threshold: 0.1 });
+    const el = document.getElementById("mk-sentinel");
+    if (el) observer.observe(el);
+    return () => observer.disconnect();
+  }, [open, screen, loading, handleLoadMore]);
   const handlePrepMonthChange = async (m: number, y: number) => {
     setLoading(true);
     try {
-      setPayload(await getMicroKitchenDailyMealsNoPagination(kitchen.id, m, y));
+      const res = await getMicroKitchenDailyMeals(kitchen.id, 1, 20, undefined, undefined, undefined, m, y);
+      setPayload({ results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -383,60 +435,181 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
 
                   {payload && (
                     <>
-                      {screen === "info" && <DisplayKitchenInfo kitchen={payload} />}
-                      {screen === "patients" && <DisplayKitchenPatients items={payload} kitchen={kitchen} />}
-                      {screen === "delivery_team" && <DisplayKitchenDeliveryTeam items={payload} />}
-                      {screen === "global_assignments" && <DisplayKitchenGlobalAssignments items={payload} />}
-                      {screen === "daily_reassignments" && <DisplayKitchenDailyReassignments items={payload} />}
-                      {screen === "planned_leaves" && <DisplayKitchenPlannedLeaves items={payload} />}
-                      {screen === "delivery_profiles" && <DisplayKitchenDeliveryProfiles items={payload} />}
-                      {screen === "inspections" && <DisplayKitchenInspections items={payload} />}
-                      {screen === "reviews" && (
-                        <DisplayKitchenReviews
-                          items={payload}
+                      {screen === "info" && <DisplayKitchenInfo kitchen={payload?.results} />}
+                      {screen === "patients" && (
+                        <DisplayKitchenPatients 
+                          items={payload?.results} 
+                          kitchen={kitchen} 
                           onLoadMore={handleLoadMore}
-                          hasMore={hasMore}
+                          hasMore={payload?.hasMore || false}
                           loadingMore={loadingMore}
                         />
+                      )}
+                      {screen === "delivery_team" && <DisplayKitchenDeliveryTeam items={payload?.results} />}
+                      {screen === "global_assignments" && <DisplayKitchenGlobalAssignments items={payload?.results} />}
+                      {screen === "daily_reassignments" && <DisplayKitchenDailyReassignments items={payload?.results} />}
+                      {screen === "planned_leaves" && <DisplayKitchenPlannedLeaves items={payload?.results} />}
+                      {screen === "delivery_profiles" && <DisplayKitchenDeliveryProfiles items={payload?.results} />}
+                      {screen === "inspections" && (
+                        <DisplayKitchenInspections 
+                          items={payload?.results} 
+                          onLoadMore={handleLoadMore}
+                          hasMore={payload?.hasMore || false}
+                          loadingMore={loadingMore}
+                        />
+                      )}
+                      {screen === "reviews" && (
+                        <div className="space-y-4">
+                           <FilterBar 
+                              startDate={revStartDate} 
+                              endDate={revEndDate} 
+                              activePeriod={revPeriod}
+                              onPeriodChange={setRevPeriod}
+                              onFilterChange={(s: string, e: string, p: string) => {
+                                setRevStartDate(s); setRevEndDate(e);
+                                setRevPeriod(p);
+                                loadView("reviews", 1, false, s, e, p);
+                              }}
+                           />
+                           <DisplayKitchenReviews 
+                              items={payload?.results} 
+                              onLoadMore={handleLoadMore}
+                              hasMore={payload?.hasMore || false}
+                              loadingMore={loadingMore}
+                           />
+                        </div>
                       )}
                       {screen === "orders" && (
-                        <DisplayKitchenOrders
-                          items={payload}
-                          onLoadMore={handleLoadMore}
-                          hasMore={hasMore}
-                          loadingMore={loadingMore}
-                        />
+                        <div className="space-y-4">
+                           <FilterBar 
+                              startDate={ordStartDate} 
+                              endDate={ordEndDate} 
+                              activePeriod={ordPeriod}
+                              onPeriodChange={setOrdPeriod}
+                              onFilterChange={(s, e, p) => {
+                                setOrdStartDate(s); setOrdEndDate(e);
+                                loadView("orders", 1, false, s, e, p);
+                              }}
+                           />
+                           <DisplayKitchenOrders
+                              items={payload?.results}
+                              onLoadMore={handleLoadMore}
+                              hasMore={payload?.hasMore || false}
+                              loadingMore={loadingMore}
+                           />
+                        </div>
                       )}
-                      {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload} />}
+                      {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload?.results} />}
                       {screen === "foods" && (
                         <DisplayKitchenFoods
-                          items={payload}
+                          items={payload?.results}
                           onLoadMore={handleLoadMore}
-                          hasMore={hasMore}
+                          hasMore={payload?.hasMore || false}
                           loadingMore={loadingMore}
                         />
                       )}
-                      {screen === "prep" && <DisplayKitchenDailyPrep items={payload} onMonthChange={handlePrepMonthChange} />}
+                      {screen === "prep" && (
+                        <DisplayKitchenDailyPrep 
+                          items={payload?.results} 
+                          onMonthChange={handlePrepMonthChange}
+                          onLoadMore={handleLoadMore}
+                          hasMore={payload?.hasMore || false}
+                          loadingMore={loadingMore}
+                        />
+                      )}
                       {screen === "tickets" && (
                         <DisplayKitchenTickets
-                          items={payload}
+                          items={payload?.results}
                           onLoadMore={handleLoadMore}
-                          hasMore={hasMore}
+                          hasMore={payload?.hasMore || false}
                           loadingMore={loadingMore}
                         />
                       )}
-                      {screen === "payouts" && <DisplayKitchenPayouts items={payload} />}
-                      {screen === "delivery_ratings" && <DisplayKitchenDeliveryRatings items={payload} />}
-                      {screen === "order_payments" && (
-                        <DisplayOrderPaymentSnapshots 
-                           items={payload} 
+                      {screen === "payouts" && (
+                        <div className="space-y-4">
+                           <FilterBar 
+                              startDate={payStartDate} 
+                              endDate={payEndDate} 
+                              activePeriod={payPeriod}
+                              onPeriodChange={setPayPeriod}
+                              onFilterChange={(s, e, p) => {
+                                setPayStartDate(s); setPayEndDate(e);
+                                loadView("payouts", 1, false, s, e, p);
+                              }}
+                           />
+                           <DisplayKitchenPayouts 
+                              items={payload?.results} 
+                              onLoadMore={handleLoadMore}
+                              hasMore={payload?.hasMore || false}
+                              loadingMore={loadingMore}
+                           />
+                        </div>
+                      )}
+                       {screen === "delivery_ratings" && (
+                        <DisplayKitchenDeliveryRatings 
+                          items={payload?.results} 
+                          onLoadMore={handleLoadMore}
+                          hasMore={payload?.hasMore || false}
+                          loadingMore={loadingMore}
                         />
                       )}
-                      {screen === "execution" && <DisplayKitchenExecution items={payload} />}
-                      {screen === "mk_plan_payouts" && <DisplayKitchenPlanPayouts items={payload} />}
+                      {screen === "order_payments" && (
+                        <DisplayOrderPaymentSnapshots 
+                           items={payload?.results} 
+                           onLoadMore={handleLoadMore}
+                           hasMore={payload?.hasMore || false}
+                           loadingMore={loadingMore}
+                        />
+                      )}
+                      {screen === "execution" && (
+                        <div className="space-y-4">
+                           <FilterBar 
+                              startDate={execStartDate} 
+                              endDate={execEndDate} 
+                              activePeriod={execPeriod}
+                              onPeriodChange={setExecPeriod}
+                              onFilterChange={(s, e, p) => {
+                                setExecStartDate(s); setExecEndDate(e);
+                                loadView("execution", 1, false, s, e, p);
+                              }}
+                           />
+                           <DisplayKitchenExecution 
+                              items={payload?.results} 
+                              onLoadMore={handleLoadMore}
+                              hasMore={payload?.hasMore || false}
+                              loadingMore={loadingMore}
+                           />
+                        </div>
+                      )}
+                      {screen === "mk_plan_payouts" && (
+                        <div className="space-y-4">
+                           <FilterBar 
+                              startDate={payStartDate} 
+                              endDate={payEndDate} 
+                              activePeriod={payPeriod}
+                              onPeriodChange={setPayPeriod}
+                              onFilterChange={(s, e, p) => {
+                                setPayStartDate(s); setPayEndDate(e);
+                                loadView("mk_plan_payouts", 1, false, s, e, p);
+                              }}
+                           />
+                           <DisplayKitchenPlanPayouts 
+                              items={payload?.results} 
+                              onLoadMore={handleLoadMore}
+                              hasMore={payload?.hasMore || false}
+                              loadingMore={loadingMore}
+                           />
+                        </div>
+                      )}
                     </>
                   )}
                 </>
+              )}
+              
+              {payload?.hasMore && (
+                <div id="mk-sentinel" className="h-20 flex items-center justify-center">
+                   <div className="size-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                </div>
               )}
             </div>
           )}

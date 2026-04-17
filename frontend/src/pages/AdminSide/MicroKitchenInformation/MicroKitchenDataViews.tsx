@@ -221,9 +221,15 @@ function distanceFromKitchen(
 export function DisplayKitchenPatients({
   items,
   kitchen,
+  onLoadMore,
+  hasMore,
+  loadingMore
 }: {
   items: any[];
   kitchen?: { brand_name?: string | null };
+  onLoadMore: () => void;
+  hasMore: boolean;
+  loadingMore: boolean;
 }) {
   if (!items || items.length === 0) return <EmptyState message="No patients assigned to this kitchen." />;
 
@@ -292,16 +298,33 @@ export function DisplayKitchenPatients({
           );
         })}
       </div>
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Patients"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 export function DisplayKitchenDailyPrep({ 
   items, 
-  onMonthChange 
+  onMonthChange,
+  onLoadMore,
+  hasMore,
+  loadingMore 
 }: { 
   items: any[]; 
   onMonthChange?: (m: number, y: number) => void;
+  onLoadMore: () => void;
+  hasMore: boolean;
+  loadingMore: boolean;
 }) {
   const [viewType, setViewType] = useState<"list" | "calendar">("calendar");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -382,11 +405,33 @@ export function DisplayKitchenDailyPrep({
           </div>
         )}
       </div>
+
+      {viewType === "list" && hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Schedule"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function DisplayKitchenInspections({ items }: { items: any[] }) {
+export function DisplayKitchenInspections({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}) {
   if (!items || items.length === 0) return <EmptyState message="No inspection history found." />;
   return (
     <div className="space-y-4">
@@ -769,92 +814,125 @@ function MealCard({ m }: { m: any }) {
   );
 }
 
-export function DisplayKitchenPayouts({ items }: { items: any[] }) {
+export function DisplayKitchenPayouts({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}) {
     if (!items || items.length === 0) return <EmptyState message="No patient-linked payout records found." />;
     return (
         <div className="space-y-8 pb-12">
-            {items.map((group: any) => {
-                if (!group || !group.patient) return null;
-                return (
-                    <div key={group.patient.id} className="p-8 rounded-[44px] bg-white border border-gray-100 dark:bg-gray-800/30 dark:border-white/5 shadow-sm overflow-hidden relative group">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b dark:border-white/5">
-                            <div className="flex items-center gap-5">
-                                <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-black text-xl shadow-inner uppercase italic">
-                                    {group.patient.name?.[0]}
+            <div className="space-y-8">
+                {items.map((group: any) => {
+                    if (!group || !group.patient) return null;
+                    return (
+                        <div key={group.patient.id} className="p-8 rounded-[44px] bg-white border border-gray-100 dark:bg-gray-800/30 dark:border-white/5 shadow-sm overflow-hidden relative group">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b dark:border-white/5">
+                                <div className="flex items-center gap-5">
+                                    <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-black text-xl shadow-inner uppercase italic">
+                                        {group.patient.name?.[0]}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2">{group.patient.name}</h3>
+                                        <div className="flex flex-wrap gap-4">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiUser size={12} /> ID: #{group.patient.id}</span>
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiList size={12} /> {group.trackers.length} Active Records</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2">{group.patient.name}</h3>
-                                    <div className="flex flex-wrap gap-4">
-                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiUser size={12} /> ID: #{group.patient.id}</span>
-                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiList size={12} /> {group.trackers.length} Active Records</span>
+                                <div className="text-right">
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 italic">Recipient: Micro Kitchen</div>
+                                    <div className="px-5 py-2 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase italic tracking-widest border border-indigo-100 dark:border-indigo-900/30 shadow-sm">
+                                        Financial Audit Tracked
                                     </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 italic">Recipient: Micro Kitchen</div>
-                                 <div className="px-5 py-2 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase italic tracking-widest border border-indigo-100 dark:border-indigo-900/30 shadow-sm">
-                                     Financial Audit Tracked
-                                 </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {group.trackers.map((p: any) => (
+                                    <div key={p.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-6 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-white dark:hover:bg-white/[0.03] transition-all relative overflow-hidden group/card shadow-sm hover:shadow-xl">
+                                        <div className="flex justify-between items-start gap-4 mb-4">
+                                            <div className="min-w-0">
+                                                    <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1 italic">
+                                                        #{p.id} · {p.payout_type?.toUpperCase()} · SNAPSHOT: {p.snapshot}
+                                                    </div>
+                                                    <div className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2 truncate">
+                                                        {p.recipient_label}
+                                                    </div>
+                                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-1.5 opacity-60">
+                                                        <FiCalendar size={10} /> {p.period_from} → {p.period_to}
+                                                    </div>
+                                            </div>
+                                            <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase italic shadow-sm border ${
+                                                    p.status === 'paid' ? "text-green-600 bg-green-50/50 border-green-100" : p.status === 'pending' ? "text-amber-600 bg-amber-50/50 border-amber-100" : "text-blue-600 bg-blue-50/50 border-blue-100"
+                                            }`}>
+                                                    {p.status}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-end justify-between gap-4 mt-6">
+                                            <div className="space-y-1">
+                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Remaining</div>
+                                                    <div className={`text-lg font-black ${parseFloat(p.remaining_amount) > 0 ? 'text-amber-600' : 'text-green-600'}`}>₹{parseFloat(p.remaining_amount).toFixed(2)}</div>
+                                            </div>
+                                            <div className="text-right space-y-1">
+                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Share (%{p.shared_percentage})</div>
+                                                    <div className="text-lg font-black text-gray-900 dark:text-white italic">₹{parseFloat(p.total_amount).toFixed(2)}</div>
+                                            </div>
+                                        </div>
+
+                                        {p.kitchen_reassignments && p.kitchen_reassignments.length > 0 && (
+                                            <div className="mt-4 pt-4 border-t dark:border-white/5">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <FiRefreshCcw size={10} className="text-amber-500 animate-spin-slow" />
+                                                        <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Migration Log</span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        {p.kitchen_reassignments.map((kr: any, idx: number) => (
+                                                            <div key={idx} className="text-[9px] text-gray-400 italic font-medium"> {kr.from} → {kr.to} · {kr.reason} ({new Date(kr.date).toLocaleDateString()})</div>
+                                                        ))}
+                                                    </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {group.trackers.map((p: any) => (
-                                 <div key={p.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-6 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-white dark:hover:bg-white/[0.03] transition-all relative overflow-hidden group/card shadow-sm hover:shadow-xl">
-                                      <div className="flex justify-between items-start gap-4 mb-4">
-                                           <div className="min-w-0">
-                                                <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1 italic">
-                                                    #{p.id} · {p.payout_type?.toUpperCase()} · SNAPSHOT: {p.snapshot}
-                                                </div>
-                                                <div className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2 truncate">
-                                                    {p.recipient_label}
-                                                </div>
-                                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-1.5 opacity-60">
-                                                    <FiCalendar size={10} /> {p.period_from} → {p.period_to}
-                                                </div>
-                                           </div>
-                                           <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase italic shadow-sm border ${
-                                                p.status === 'paid' ? "text-green-600 bg-green-50/50 border-green-100" : p.status === 'pending' ? "text-amber-600 bg-amber-50/50 border-amber-100" : "text-blue-600 bg-blue-50/50 border-blue-100"
-                                           }`}>
-                                                {p.status}
-                                           </div>
-                                      </div>
-
-                                      <div className="flex items-end justify-between gap-4 mt-6">
-                                           <div className="space-y-1">
-                                                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Remaining</div>
-                                                <div className={`text-lg font-black ${parseFloat(p.remaining_amount) > 0 ? 'text-amber-600' : 'text-green-600'}`}>₹{parseFloat(p.remaining_amount).toFixed(2)}</div>
-                                           </div>
-                                           <div className="text-right space-y-1">
-                                                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Share (%{p.shared_percentage})</div>
-                                                <div className="text-lg font-black text-gray-900 dark:text-white italic">₹{parseFloat(p.total_amount).toFixed(2)}</div>
-                                           </div>
-                                      </div>
-
-                                      {p.kitchen_reassignments && p.kitchen_reassignments.length > 0 && (
-                                           <div className="mt-4 pt-4 border-t dark:border-white/5">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                     <FiRefreshCcw size={10} className="text-amber-500 animate-spin-slow" />
-                                                     <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Migration Log</span>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    {p.kitchen_reassignments.map((kr: any, idx: number) => (
-                                                        <div key={idx} className="text-[9px] text-gray-400 italic font-medium"> {kr.from} → {kr.to} · {kr.reason} ({new Date(kr.date).toLocaleDateString()})</div>
-                                                    ))}
-                                                </div>
-                                           </div>
-                                      )}
-                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
+            {hasMore && (
+                <div className="pt-6 flex justify-center">
+                    <button
+                        onClick={onLoadMore}
+                        disabled={loadingMore}
+                        className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {loadingMore ? "Loading..." : "Load More Payouts"}
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
 
-export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }): React.ReactNode {
+export function DisplayKitchenDeliveryRatings({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}): React.ReactNode {
   if (!items || items.length === 0)
     return <EmptyState message="No delivery feedback found for this kitchen's orders." />;
 
@@ -950,6 +1028,17 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }): Reac
           </div>
         );
       })}
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Feedback"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1248,7 +1337,17 @@ export function DisplayKitchenPlannedLeaves({ items }: { items: AdminKitchenPlan
   );
 }
 
-export function DisplayOrderPaymentSnapshots({ items }: { items: any[] }) {
+export function DisplayOrderPaymentSnapshots({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}) {
   if (!items || items.length === 0) return <EmptyState message="No order payment snapshots found." />;
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/5">
@@ -1276,92 +1375,193 @@ export function DisplayOrderPaymentSnapshots({ items }: { items: any[] }) {
           ))}
         </tbody>
       </table>
+      {hasMore && (
+        <div className="p-6 flex justify-center border-t border-gray-100 dark:border-white/5 bg-gray-50/30">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Payments"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function DisplayKitchenExecution({ items }: { items: any[] }) {
+export function DisplayKitchenExecution({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}) {
   if (!items || items.length === 0) return <EmptyState message="No meals scheduled for this date." />;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {items.map((m) => (
-        <div key={m.id} className="p-4 rounded-3xl border border-gray-100 dark:border-white/5 bg-white/50 dark:bg-gray-800/20 shadow-sm flex items-center justify-between transition-all hover:bg-white dark:hover:bg-gray-800/40">
-           <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
-                 {m.meal_type_details?.name?.[0]}
-              </div>
-              <div>
-                 <div className="text-sm font-black text-gray-900 dark:text-white uppercase leading-none">{m.user_details?.first_name} {m.user_details?.last_name}</div>
-                 <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{m.food_details?.name}</div>
-              </div>
-           </div>
-           <div className="text-right">
-              <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
-                m.status === 'delivered' ? 'bg-green-100 text-green-600' : 
-                m.status === 'prepared' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
-              }`}>
-                {m.status || 'scheduled'}
-              </span>
-           </div>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {items.map((m) => (
+          <div key={m.id} className="p-4 rounded-3xl border border-gray-100 dark:border-white/5 bg-white/50 dark:bg-gray-800/20 shadow-sm flex items-center justify-between transition-all hover:bg-white dark:hover:bg-gray-800/40">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
+                   {m.meal_type_details?.name?.[0]}
+                </div>
+                <div>
+                   <div className="text-sm font-black text-gray-900 dark:text-white uppercase leading-none">{m.user_details?.first_name} {m.user_details?.last_name}</div>
+                   <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{m.food_details?.name}</div>
+                </div>
+             </div>
+             <div className="text-right">
+                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
+                  m.status === 'delivered' ? 'bg-green-100 text-green-600' : 
+                  m.status === 'prepared' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {m.status || 'scheduled'}
+                </span>
+             </div>
+          </div>
+        ))}
+      </div>
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Execution List"}
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
-export function DisplayKitchenPlanPayouts({ items }: { items: any[] }) {
+export function DisplayKitchenPlanPayouts({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}) {
   if (!items || items.length === 0) return <EmptyState message="No plan payout data found." />;
   return (
-    <div className="space-y-6">
-      {items.map((group: any) => {
-        const p = group.patient;
-        if (!p) return null;
-        return (
-          <div key={p.id} className="p-6 rounded-[32px] border border-gray-100 dark:border-white/5 bg-white/70 dark:bg-gray-800/30 shadow-sm">
-            <div className="flex items-center justify-between mb-4 border-b dark:border-white/5 pb-3">
-              <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter text-lg">{p.name || "Unknown Patient"}</div>
-              <div className="text-[10px] font-bold text-gray-400 uppercase">Patient ID: #{p.id}</div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 italic">Linked Plan Trackers</div>
-              <div className="grid grid-cols-1 gap-3">
-                {group.trackers.map((t: any) => (
-                  <div key={t.id} className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5 flex items-center justify-between group transition-all hover:border-indigo-200 dark:hover:border-indigo-900">
-                    <div className="flex items-center gap-4">
-                      <div className="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
-                        <FiClipboard size={18} />
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight">
-                          {t.plan_title || `Plan Ref #${t.id}`}
+    <div className="space-y-8">
+      <div className="space-y-6">
+        {items.map((group: any) => {
+          const p = group.patient;
+          if (!p) return null;
+          return (
+            <div key={p.id} className="p-6 rounded-[32px] border border-gray-100 dark:border-white/5 bg-white/70 dark:bg-gray-800/30 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b dark:border-white/5 pb-3">
+                <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter text-lg">{p.name || "Unknown Patient"}</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Patient ID: #{p.id}</div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 italic">Linked Plan Trackers</div>
+                <div className="grid grid-cols-1 gap-3">
+                  {group.trackers.map((t: any) => (
+                    <div key={t.id} className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5 flex items-center justify-between group transition-all hover:border-indigo-200 dark:hover:border-indigo-900">
+                      <div className="flex items-center gap-4">
+                        <div className="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                          <FiClipboard size={18} />
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] font-black text-gray-400 uppercase">Amount: ₹{t.total_amount}</span>
-                          <span className="size-1 rounded-full bg-gray-300" />
-                          <span className={`text-[10px] font-black uppercase ${t.status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>{t.status}</span>
+                        <div>
+                          <div className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight">
+                            {t.plan_title || `Plan Ref #${t.id}`}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-black text-gray-400 uppercase">Amount: ₹{t.total_amount}</span>
+                            <span className="size-1 rounded-full bg-gray-300" />
+                            <span className={`text-[10px] font-black uppercase ${t.status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>{t.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                          {t.payout_type === 'kitchen' ? 'Kitchen Share' : t.payout_type}
+                        </div>
+                        <div className="text-xs font-bold text-gray-500">
+                          {t.period_from ? new Date(t.period_from).toLocaleDateString() : '—'}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
-                        {t.payout_type === 'kitchen' ? 'Kitchen Share' : t.payout_type}
-                      </div>
-                      <div className="text-xs font-bold text-gray-500">
-                        {t.period_from ? new Date(t.period_from).toLocaleDateString() : '—'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t dark:border-white/5">
+                <p className="text-[10px] text-gray-500 italic leading-relaxed">This view shows the cumulative plan-based payouts for this patient as linked to this micro kitchen. For line-item audits, use "Partner Payouts & Transfers".</p>
               </div>
             </div>
-
-            <div className="mt-6 pt-4 border-t dark:border-white/5">
-              <p className="text-[10px] text-gray-500 italic leading-relaxed">This view shows the cumulative plan-based payouts for this patient as linked to this micro kitchen. For line-item audits, use "Partner Payouts & Transfers".</p>
+          );
+        })}
+      </div>
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Plan Payouts"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+export function DisplayStoreStaffItemsDeliveryFeedback({ 
+  items, 
+  onLoadMore, 
+  hasMore, 
+  loadingMore 
+}: { 
+  items: any[]; 
+  onLoadMore: () => void; 
+  hasMore: boolean; 
+  loadingMore: boolean; 
+}) {
+  if (!items || items.length === 0) return <EmptyState message="No item delivery feedback found." />;
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4">
+        {items.map((f: any) => (
+          <div key={f.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm transition-all hover:border-indigo-200">
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <div className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">#{f.order} · {f.food_name || "Food"}</div>
+                <div className="text-[10px] text-gray-400 mt-1 uppercase font-bold italic">{f.created_at ? new Date(f.created_at).toLocaleString() : "—"}</div>
+              </div>
+              <div className="px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase">
+                Rating: {f.rating} ★
+              </div>
             </div>
+            <p className="text-sm text-gray-700 dark:text-gray-200 italic">&quot; {f.feedback || "No comments"} &quot;</p>
           </div>
-        );
-      })}
+        ))}
+      </div>
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loadingMore ? "Loading..." : "Load More Feedback"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

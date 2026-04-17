@@ -34,13 +34,19 @@ export const getMicroKitchenRatings = async (params?: {
   order_type?: string; 
   page?: number;
   limit?: number;
+  period?: string;
+  start_date?: string;
+  end_date?: string;
 }) => {
   let url = createApiUrl("api/microkitchenrating/");
   const query = new URLSearchParams();
   if (params?.search) query.append('search', params.search);
-  if (params?.order_type) query.append('order_type', params.order_type);
+  if (params?.order_type && params.order_type !== 'all') query.append('order_type', params.order_type);
   if (params?.page) query.append('page', params.page.toString());
   if (params?.limit) query.append('limit', params.limit.toString());
+  if (params?.period && params.period !== 'all') query.append('period', params.period);
+  if (params?.start_date) query.append('start_date', params.start_date);
+  if (params?.end_date) query.append('end_date', params.end_date);
   
   if (query.toString()) url += `?${query.toString()}`;
 

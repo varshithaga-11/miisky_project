@@ -59,7 +59,8 @@ const Select: React.FC<SelectProps> = ({
         disabled={disabled}
         className={`h-11 w-full rounded-lg border border-gray-300 dark:border-gray-700
                   bg-white dark:bg-gray-900 px-4 pr-10 text-left text-sm
-                  text-gray-900 dark:text-white/90 focus:outline-none
+                  ${selected ? "text-blue-600 dark:text-blue-400 font-bold" : "text-gray-900 dark:text-white/90"}
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/20
                   ${disabled ? "opacity-50 cursor-not-allowed" : ""}
                   ${showError ? "border-red-500" : ""}`}
       >

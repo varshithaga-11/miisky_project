@@ -57,6 +57,15 @@ export interface KitchenPatient {
     };
 }
 
+export interface PaginatedDailyMeals {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: DailyMeal[];
+    current_page: number;
+    total_pages: number;
+}
+
 export const getKitchenPatients = async (): Promise<KitchenPatient[]> => {
     const url = createApiUrl("api/usermeal/kitchen-patients/");
     const response = await axios.get(url, { headers: await getAuthHeaders() });
@@ -68,16 +77,33 @@ export const getKitchenMeals = async (params: {
     meal_date?: string;
     start_date?: string;
     end_date?: string;
-}): Promise<DailyMeal[]> => {
+    page?: number;
+    limit?: number;
+    period?: string;
+}): Promise<PaginatedDailyMeals> => {
     const search = new URLSearchParams();
     if (params.user && params.user !== "all") search.append("user", params.user);
     if (params.meal_date) search.append("meal_date", params.meal_date);
     if (params.start_date) search.append("start_date", params.start_date);
     if (params.end_date) search.append("end_date", params.end_date);
+    if (params.page) search.append("page", params.page.toString());
+    if (params.limit) search.append("limit", params.limit.toString());
+    if (params.period && params.period !== 'all') search.append("period", params.period);
+
     const url = createApiUrl(`api/usermeal/?${search.toString()}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     const data = response.data;
-    return Array.isArray(data) ? data : data?.results ?? [];
+    if (Array.isArray(data)) {
+        return {
+            results: data,
+            count: data.length,
+            next: null,
+            previous: null,
+            current_page: 1,
+            total_pages: 1
+        };
+    }
+    return data;
 };
 
 export const getKitchenMealsMonthly = async (
