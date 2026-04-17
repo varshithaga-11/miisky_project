@@ -9756,6 +9756,19 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
         by_status = {}
         for row in base.values("status").annotate(c=Count("id")):
             by_status[row["status"]] = row["c"]
+        delivery_qs = (
+            base.select_related(
+                "user_meal__user",
+                "user_meal__meal_type",
+                "user_meal__food",
+                "user_meal__micro_kitchen",
+                "delivery_person",
+                "delivery_slot",
+                "plan_delivery_assignment",
+            )
+            .order_by("scheduled_date", "id")[:400]
+        )
+        deliveries_payload = KitchenMealDeliverySerializer(delivery_qs, many=True).data
         payload = {
             "leave_id": leave.id,
             "delivery_user_id": leave.user_id,
@@ -9769,6 +9782,7 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
                 {"date": str(row["scheduled_date"]), "count": row["c"]} for row in by_date
             ],
             "by_status": by_status,
+            "deliveries": deliveries_payload,
             "partial_day_note": (
                 "Partial-day leave: counts include all deliveries on those calendar days; "
                 "compare slot times manually if needed."
@@ -9791,6 +9805,11 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(created_on__date__range=[s, e])
             except Exception as ex:
                 print(f"leave list period filter: {ex}")
+        handling_status = (request.query_params.get("kitchen_handling_status") or "").strip()
+        if handling_status and handling_status != "all":
+            allowed = {"not_started", "in_progress", "complete"}
+            if handling_status in allowed:
+                qs = qs.filter(kitchen_handling_status=handling_status)
         search = (request.query_params.get("search") or "").strip()
         if search:
             q = (
@@ -9813,10 +9832,28 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def perform_update(self, serializer):
-        if getattr(self.request.user, "role", None) != "supply_chain":
+        role = getattr(self.request.user, "role", None)
+        if role == "micro_kitchen":
+            allowed = {"kitchen_handling_status"}
+            keys = set(serializer.validated_data.keys())
+            if not keys.issubset(allowed):
+                raise PermissionDenied(
+                    "Micro kitchen accounts may only update kitchen_handling_status on planned leave."
+                )
+            mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+            if not mk:
+                raise PermissionDenied()
+            dp_ids = self._delivery_person_ids_for_micro_kitchen(mk)
+            if serializer.instance.user_id not in dp_ids:
+                raise PermissionDenied()
+            serializer.save()
+            return
+        if role != "supply_chain":
             raise PermissionDenied()
         if serializer.instance.user_id != self.request.user.id:
             raise PermissionDenied()
+        # Kitchen progress tracking is micro-kitchen–only
+        serializer.validated_data.pop("kitchen_handling_status", None)
         serializer.save()
 
     def perform_destroy(self, instance):

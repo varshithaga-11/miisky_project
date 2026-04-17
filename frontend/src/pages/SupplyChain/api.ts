@@ -17,6 +17,8 @@ export interface SupplyChainLeave {
   start_time: string | null;
   end_time: string | null;
   notes: string | null;
+  /** Micro kitchen: meal reassignments / leave coverage progress */
+  kitchen_handling_status?: "not_started" | "in_progress" | "complete";
   created_on: string;
 }
 

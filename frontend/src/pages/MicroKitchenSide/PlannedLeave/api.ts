@@ -16,11 +16,15 @@ export const fetchMicroKitchenTeamLeaves = async (
   limit = 10,
   search?: string,
   period: OrderDatePeriod | string = "this_month",
+  kitchenHandlingStatus: KitchenHandlingStatus | "all" = "all",
   customRangeStart?: string,
   customRangeEnd?: string
 ): Promise<PaginatedTeamLeaves> => {
   let url = createApiUrl(`api/supply-chain-leave/?page=${page}&limit=${limit}`);
   if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (kitchenHandlingStatus && kitchenHandlingStatus !== "all") {
+    url += `&kitchen_handling_status=${encodeURIComponent(kitchenHandlingStatus)}`;
+  }
   if (period && period !== "all") {
     url += `&period=${encodeURIComponent(period)}`;
     if (period === "custom_range" && customRangeStart && customRangeEnd) {
@@ -40,6 +44,27 @@ export const fetchMicroKitchenTeamLeaves = async (
   };
 };
 
+/** Row shape matches KitchenMealDeliverySerializer (api/mealdeliveryassignment/). */
+export type LeaveImpactedDeliveryRow = {
+  id: number;
+  user_meal: number;
+  status: string;
+  scheduled_date: string;
+  delivery_person: number | null;
+  delivery_person_details?: { id: number; first_name: string; last_name: string; username?: string };
+  delivery_slot: number | null;
+  delivery_slot_details?: { id: number; name: string; start_time: string | null; end_time: string | null };
+  user_meal_details?: {
+    id: number;
+    meal_date: string;
+    meal_type?: string | null;
+    patient_name: string;
+    food_name?: string | null;
+    food_details?: { name?: string } | null;
+  };
+  reassignment_reason?: string | null;
+};
+
 /** GET .../supply-chain-leave/:id/meal-allotment-check/ — micro kitchen only */
 export type MealAllotmentCheckResponse = {
   leave_id: number;
@@ -52,6 +77,8 @@ export type MealAllotmentCheckResponse = {
   outstanding_deliveries: number;
   by_date: { date: string; count: number }[];
   by_status: Record<string, number>;
+  /** Up to 400 delivery rows for this leave window + person (for reassign UI). */
+  deliveries: LeaveImpactedDeliveryRow[];
   partial_day_note: string | null;
 };
 
@@ -60,5 +87,20 @@ export const fetchMealAllotmentCheckForLeave = async (
 ): Promise<MealAllotmentCheckResponse> => {
   const url = createApiUrl(`api/supply-chain-leave/${leaveId}/meal-allotment-check/`);
   const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+export type KitchenHandlingStatus = "not_started" | "in_progress" | "complete";
+
+export const patchKitchenLeaveHandlingStatus = async (
+  leaveId: number,
+  kitchen_handling_status: KitchenHandlingStatus
+) => {
+  const url = createApiUrl(`api/supply-chain-leave/${leaveId}/`);
+  const res = await axios.patch(
+    url,
+    { kitchen_handling_status },
+    { headers: await getAuthHeaders() }
+  );
   return res.data;
 };

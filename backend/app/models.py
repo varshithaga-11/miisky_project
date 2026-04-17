@@ -3560,6 +3560,20 @@ class SupplyChainDeliveryLeave(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
+
+    # Set by micro kitchen: meal reassignments / leave coverage progress (not the delivery person's HR leave type).
+    KITCHEN_HANDLING_STATUS_CHOICES = [
+        ("not_started", "Not started"),
+        ("in_progress", "Partially handled"),
+        ("complete", "Fully handled"),
+    ]
+    kitchen_handling_status = models.CharField(
+        max_length=20,
+        choices=KITCHEN_HANDLING_STATUS_CHOICES,
+        default="not_started",
+        db_index=True,
+    )
+
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
