@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Avg, Count, DecimalField, F, Max, Prefetch, Q, Sum, Value
+from django.db.models import Avg, Count, DecimalField, Exists, F, Max, OuterRef, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins, generics
@@ -2815,6 +2815,11 @@ class FoodViewSet(viewsets.ModelViewSet):
                 is_available=True
             ).values_list('food_id', flat=True).distinct()
             queryset = queryset.filter(id__in=available_food_ids)
+        recipe_only = self.request.query_params.get('recipe_only', '').lower() in ('true', '1')
+        if recipe_only:
+            has_ingredient = FoodIngredient.objects.filter(food_id=OuterRef('pk'))
+            has_step = FoodStep.objects.filter(food_id=OuterRef('pk'))
+            queryset = queryset.filter(Exists(has_ingredient) | Exists(has_step))
         return queryset.distinct()
     permission_classes = [AllowAny]
     pagination_class = Pagination
