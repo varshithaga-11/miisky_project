@@ -41,6 +41,7 @@ export type Paginated<T> = {
   current_page?: number;
   total_pages?: number;
   results: T[];
+  delivery_person_options?: Array<{ id: number; name: string }>;
 };
 
 export async function fetchMicroKitchenDeliveryFeedbackList(params: {
@@ -49,6 +50,7 @@ export async function fetchMicroKitchenDeliveryFeedbackList(params: {
   feedback_type?: "all" | DeliveryFeedbackType;
   target_type?: "all" | "order" | "user_meal";
   order_type?: "all" | "patient" | "non_patient";
+  delivery_person?: string;
   search?: string;
   order?: string;
   user_meal?: string;
@@ -59,6 +61,7 @@ export async function fetchMicroKitchenDeliveryFeedbackList(params: {
   if (params.feedback_type && params.feedback_type !== "all") q.set("feedback_type", params.feedback_type);
   if (params.target_type && params.target_type !== "all") q.set("target_type", params.target_type);
   if (params.order_type && params.order_type !== "all") q.set("order_type", params.order_type);
+  if (params.delivery_person) q.set("delivery_person", params.delivery_person);
   if (params.search) q.set("search", params.search);
   if (params.order) q.set("order", params.order);
   if (params.user_meal) q.set("user_meal", params.user_meal);
@@ -73,5 +76,8 @@ export async function fetchMicroKitchenDeliveryFeedbackList(params: {
     current_page: data?.current_page ?? 1,
     total_pages: data?.total_pages ?? 1,
     results: Array.isArray(data?.results) ? data.results : [],
+    delivery_person_options: Array.isArray(data?.delivery_person_options)
+      ? data.delivery_person_options
+      : [],
   };
 }

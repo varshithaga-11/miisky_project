@@ -15,6 +15,8 @@ const DeliveryFeedbackPage: React.FC = () => {
   const [feedbackType, setFeedbackType] = useState<"all" | "rating" | "issue">("all");
   const [targetType, setTargetType] = useState<"all" | "order" | "user_meal">("all");
   const [orderType, setOrderType] = useState<"all" | "patient" | "non_patient">("all");
+  const [deliveryPersonFilter, setDeliveryPersonFilter] = useState("");
+  const [deliveryPersonOptions, setDeliveryPersonOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [search, setSearch] = useState("");
   const [hasMore, setHasMore] = useState(true);
 
@@ -31,10 +33,12 @@ const DeliveryFeedbackPage: React.FC = () => {
           feedback_type: feedbackType,
           target_type: targetType,
           order_type: targetType === "order" ? orderType : "all",
+          delivery_person: deliveryPersonFilter || undefined,
           search: search.trim() || undefined,
         });
         setRows((prev) => (page === 1 ? data.results : [...prev, ...data.results]));
         setCount(data.count);
+        setDeliveryPersonOptions(data.delivery_person_options || []);
         setHasMore(page * limit < (data.count || 0));
       } catch (e) {
         console.error(e);
@@ -45,7 +49,7 @@ const DeliveryFeedbackPage: React.FC = () => {
       }
     };
     run();
-  }, [page, limit, feedbackType, targetType, orderType, search]);
+  }, [page, limit, feedbackType, targetType, orderType, deliveryPersonFilter, search]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -142,6 +146,22 @@ const DeliveryFeedbackPage: React.FC = () => {
                 <option value="all">All</option>
                 <option value="rating">Ratings</option>
                 <option value="issue">Issues</option>
+              </select>
+              <select
+                value={deliveryPersonFilter}
+                onChange={(e) => {
+                  setPage(1);
+                  setRows([]);
+                  setDeliveryPersonFilter(e.target.value);
+                }}
+                className="px-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              >
+                <option value="">All Delivery Persons</option>
+                {deliveryPersonOptions.map((d) => (
+                  <option key={d.id} value={String(d.id)}>
+                    {d.name}
+                  </option>
+                ))}
               </select>
               {targetType === "order" && (
                 <select

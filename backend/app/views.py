@@ -6545,6 +6545,7 @@ class MicroKitchenDeliveryFeedbackListView(APIView):
       - feedback_type: issue|rating (optional)
       - target_type: order|user_meal (optional)
       - order_type: patient|non_patient (optional, for order target)
+      - delivery_person: supply_chain user id (optional)
       - order: order_id (optional)
       - user_meal: user_meal_id (optional)
       - search: matches reporter username/first/last (optional)
@@ -6599,6 +6600,45 @@ class MicroKitchenDeliveryFeedbackListView(APIView):
                 | Q(reported_by__last_name__icontains=search)
             )
 
+        # Build delivery-person options from current (pre-delivery-person-filtered) scope.
+        options_qs = qs
+        order_person_ids = list(
+            options_qs.exclude(order__delivery_person__isnull=True)
+            .values_list("order__delivery_person_id", flat=True)
+            .distinct()
+        )
+        meal_person_ids = list(
+            options_qs.exclude(user_meal__deliveries__delivery_person__isnull=True)
+            .values_list("user_meal__deliveries__delivery_person_id", flat=True)
+            .distinct()
+        )
+        person_ids = sorted(set(order_person_ids + meal_person_ids))
+        delivery_person_options = []
+        if person_ids:
+            people = UserRegister.objects.filter(id__in=person_ids).values(
+                "id", "first_name", "last_name", "username"
+            )
+            for p in people:
+                full_name = f"{(p.get('first_name') or '').strip()} {(p.get('last_name') or '').strip()}".strip()
+                delivery_person_options.append(
+                    {
+                        "id": p["id"],
+                        "name": full_name or p.get("username") or f"#{p['id']}",
+                    }
+                )
+            delivery_person_options.sort(key=lambda x: x["name"].lower())
+
+        delivery_person_id = request.query_params.get("delivery_person")
+        if delivery_person_id:
+            try:
+                dpid = int(delivery_person_id)
+                qs = qs.filter(
+                    Q(order__delivery_person_id=dpid)
+                    | Q(user_meal__deliveries__delivery_person_id=dpid)
+                ).distinct()
+            except (ValueError, TypeError):
+                return Response({"detail": "Invalid delivery_person id."}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             page = int(request.query_params.get("page", 1))
         except (ValueError, TypeError):
@@ -6615,7 +6655,9 @@ class MicroKitchenDeliveryFeedbackListView(APIView):
         paginator.page_size_query_param = "limit"
         paged = paginator.paginate_queryset(qs, request, view=self)
         ser = SupplyChainDeliveryFeedbackSerializer(paged, many=True)
-        return paginator.get_paginated_response(ser.data)
+        response = paginator.get_paginated_response(ser.data)
+        response.data["delivery_person_options"] = delivery_person_options
+        return response
 
 
 class SupplyChainDeliveryFeedbackListView(APIView):
