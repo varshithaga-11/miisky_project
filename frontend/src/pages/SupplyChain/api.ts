@@ -22,11 +22,46 @@ export interface SupplyChainLeave {
   created_on: string;
 }
 
+export interface PaginatedSupplyChainLeaves {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: SupplyChainLeave[];
+}
+
 export const fetchSupplyChainLeaves = async (): Promise<SupplyChainLeave[]> => {
   const url = createApiUrl("api/supply-chain-leave/?limit=500");
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   const data = res.data;
   return Array.isArray(data) ? data : data?.results ?? [];
+};
+
+export const fetchSupplyChainLeavesPaginated = async (params: {
+  page?: number;
+  limit?: number;
+  period?: string;
+  start_date?: string;
+  end_date?: string;
+}): Promise<PaginatedSupplyChainLeaves> => {
+  const q = new URLSearchParams();
+  q.set("page", String(params.page ?? 1));
+  q.set("limit", String(params.limit ?? 10));
+  if (params.period && params.period !== "all") q.set("period", params.period);
+  if (params.start_date) q.set("start_date", params.start_date);
+  if (params.end_date) q.set("end_date", params.end_date);
+  const url = createApiUrl(`api/supply-chain-leave/?${q.toString()}`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  const data = res.data || {};
+  return {
+    count: data.count ?? 0,
+    next: data.next ?? null,
+    previous: data.previous ?? null,
+    current_page: data.current_page ?? 1,
+    total_pages: data.total_pages ?? 1,
+    results: Array.isArray(data.results) ? data.results : [],
+  };
 };
 
 export const createSupplyChainLeave = async (payload: {

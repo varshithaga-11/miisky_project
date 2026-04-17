@@ -9,7 +9,7 @@ import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  fetchSupplyChainLeaves,
+  fetchSupplyChainLeavesPaginated,
   createSupplyChainLeave,
   deleteSupplyChainLeave,
   SupplyChainLeave,
@@ -38,6 +38,13 @@ function formatLeaveRange(r: SupplyChainLeave): string {
 export default function SupplyChainPlannedLeavePage() {
   const [rows, setRows] = useState<SupplyChainLeave[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [period, setPeriod] = useState("this_month");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [useTimeWindow, setUseTimeWindow] = useState(false);
@@ -47,12 +54,30 @@ export default function SupplyChainPlannedLeavePage() {
   const [saving, setSaving] = useState(false);
   const [leaveToDelete, setLeaveToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const periodOptions = [
+    { value: "today", label: "Today" },
+    { value: "this_week", label: "This week" },
+    { value: "last_week", label: "Last week" },
+    { value: "this_month", label: "This month" },
+    { value: "last_month", label: "Last month" },
+    { value: "next_month", label: "Next month" },
+    { value: "this_year", label: "This year" },
+    { value: "custom_range", label: "Custom range" },
+  ];
 
   const load = async () => {
     try {
       setLoading(true);
-      const data = await fetchSupplyChainLeaves();
-      setRows(data);
+      const data = await fetchSupplyChainLeavesPaginated({
+        page,
+        limit: pageSize,
+        period,
+        start_date: period === "custom_range" ? filterStartDate || undefined : undefined,
+        end_date: period === "custom_range" ? filterEndDate || undefined : undefined,
+      });
+      setRows(data.results);
+      setCount(data.count);
+      setTotalPages(data.total_pages || 1);
     } catch (e) {
       console.error(e);
       toast.error("Could not load leave entries.");
@@ -63,7 +88,8 @@ export default function SupplyChainPlannedLeavePage() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, period, filterStartDate, filterEndDate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +134,7 @@ export default function SupplyChainPlannedLeavePage() {
       setTimeStart("");
       setTimeEnd("");
       setNotes("");
+      setPage(1);
       await load();
     } catch (err: any) {
       console.error(err);
@@ -128,6 +155,10 @@ export default function SupplyChainPlannedLeavePage() {
       await deleteSupplyChainLeave(leaveToDelete);
       toast.success("Leave entry removed successfully");
       setLeaveToDelete(null);
+      if (rows.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+        return;
+      }
       await load();
     } catch (err: any) {
       console.error(err);
@@ -256,8 +287,69 @@ export default function SupplyChainPlannedLeavePage() {
         </form>
 
         <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
             <h2 className="font-semibold text-gray-900 dark:text-white">Your upcoming leave</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <select
+                value={period}
+                onChange={(e) => {
+                  setPeriod(e.target.value);
+                  if (e.target.value !== "custom_range") {
+                    setFilterStartDate("");
+                    setFilterEndDate("");
+                  }
+                  setPage(1);
+                }}
+                className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              >
+                {periodOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              {period === "custom_range" && (
+                <>
+                  <DatePicker2
+                    id="leave-filter-start-date"
+                    value={filterStartDate}
+                    onChange={(v) => {
+                      setFilterStartDate(v);
+                      setPage(1);
+                    }}
+                    maxDate={filterEndDate || undefined}
+                    placeholder="Filter from"
+                  />
+                  <DatePicker2
+                    id="leave-filter-end-date"
+                    value={filterEndDate}
+                    onChange={(v) => {
+                      setFilterEndDate(v);
+                      setPage(1);
+                    }}
+                    minDate={filterStartDate || undefined}
+                    placeholder="Filter to"
+                  />
+                </>
+              )}
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              >
+                {[5, 10, 20, 50].map((n) => (
+                  <option key={n} value={n}>
+                    Show {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-gray-500">
+              Showing {count === 0 ? 0 : (page - 1) * pageSize + 1} to {Math.min(page * pageSize, count)} of {count}
+            </p>
           </div>
           {loading ? (
             <div className="p-10 text-center text-gray-500">Loading…</div>
@@ -284,6 +376,29 @@ export default function SupplyChainPlannedLeavePage() {
                 </li>
               ))}
             </ul>
+          )}
+          {totalPages > 1 && (
+            <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           )}
         </section>
       </div>

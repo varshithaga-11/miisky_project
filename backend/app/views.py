@@ -10126,7 +10126,8 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
             end_date = request.query_params.get("end_date")
             try:
                 s, e = get_period_range(period, start_date, end_date)
-                qs = qs.filter(created_on__date__range=[s, e])
+                # Filter leave rows that overlap selected date window.
+                qs = qs.filter(start_date__lte=e, end_date__gte=s)
             except Exception as ex:
                 print(f"leave list period filter: {ex}")
         handling_status = (request.query_params.get("kitchen_handling_status") or "").strip()
