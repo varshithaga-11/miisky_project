@@ -722,11 +722,19 @@ class MicroKitchenPlanPayoutsView(generics.ListAPIView):
     search_fields = ['first_name', 'last_name']
 
     def get_queryset(self):
-        if getattr(self.request.user, "role", None) != "micro_kitchen":
-             return UserRegister.objects.none()
-             
-        from .models import PayoutTracker, MicroKitchenProfile
-        mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+        user = self.request.user
+        role = getattr(user, "role", None)
+
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=user).first()
+        elif role == "admin":
+            mk_id = self.request.query_params.get("micro_kitchen")
+            if not mk_id:
+                return UserRegister.objects.none()
+            mk = MicroKitchenProfile.objects.filter(id=mk_id).first()
+        else:
+            return UserRegister.objects.none()
+
         if not mk:
             return UserRegister.objects.none()
 
@@ -755,10 +763,18 @@ class MicroKitchenOrderPaymentSnapshotsView(generics.ListAPIView):
         from .models import MicroKitchenProfile, OrderPaymentSnapshot
 
         user = self.request.user
-        if getattr(user, "role", None) != "micro_kitchen":
+        role = getattr(user, "role", None)
+
+        if role == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=user).first()
+        elif role == "admin":
+            mk_id = self.request.query_params.get("micro_kitchen")
+            if not mk_id:
+                return OrderPaymentSnapshot.objects.none()
+            mk = MicroKitchenProfile.objects.filter(id=mk_id).first()
+        else:
             return OrderPaymentSnapshot.objects.none()
 
-        mk = MicroKitchenProfile.objects.filter(user=user).first()
         if not mk:
             return OrderPaymentSnapshot.objects.none()
 
@@ -5545,9 +5561,22 @@ class UserMealViewSet(viewsets.ModelViewSet):
         return response
 
     def _micro_kitchen_execution_queryset(self, request):
-        if getattr(request.user, 'role', None) != 'micro_kitchen':
-            raise PermissionDenied("Only micro kitchen users can access this endpoint.")
+        user = request.user
+        role = getattr(user, 'role', None) 
+        
+        if role == 'micro_kitchen':
+            mk = MicroKitchenProfile.objects.filter(user=user).first()
+        elif role == 'admin':
+            mk_id = request.query_params.get('micro_kitchen')
+            if not mk_id:
+                raise PermissionDenied("Admin must provide micro_kitchen ID.")
+            mk = get_object_or_404(MicroKitchenProfile, id=mk_id)
+        else:
+            raise PermissionDenied("Only micro kitchen or admin users can access this endpoint.")
+            
         qs = self.filter_queryset(self.get_queryset())
+        if mk:
+            qs = qs.filter(micro_kitchen=mk)
         return qs.exclude(status=UserMeal.STATUS_SKIPPED)
 
     def perform_create(self, serializer):
@@ -7614,21 +7643,8 @@ class AdminSupplyChainPlannedLeavesNoPaginationView(APIView):
     def get(self, request):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None: return err
-        try:
-            qs = SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")[:100]
-            return Response(SupplyChainDeliveryLeaveSerializer(qs, many=True).data)
-        except Exception:
-            from django.db import connection
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id, start_at, end_at, notes, created_on FROM app_supplychaindeliveryleave WHERE user_id = %s ORDER BY start_at DESC LIMIT 100",
-                    [u.id]
-                )
-                rows = cursor.fetchall()
-            return Response([{
-                "id": r[0], "start_date": str(r[1]), "end_date": str(r[2]), "notes": r[3],
-                "created_on": str(r[4]), "leave_type": "Leave", "user": u.id
-            } for r in rows])
+        qs = SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")[:100]
+        return Response(SupplyChainDeliveryLeaveSerializer(qs, many=True).data)
 
 
 class AdminSupplyChainDeliveryRatingsNoPaginationView(APIView):

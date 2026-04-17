@@ -580,6 +580,34 @@ export const getMicroKitchenPayoutsNoPagination = async (microKitchenId: number)
   return response.data;
 };
 
+/** Admin: order payment splits (snapshots) for this kitchen. */
+export const getMicroKitchenOrderPaymentSnapshots = async (
+  microKitchenId: number,
+  page = 1,
+  limit = 20,
+  search = ""
+): Promise<any> => {
+  const url = createApiUrl(`api/microkitchen/order-payment-snapshots/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, page, limit, search },
+  });
+  return response.data;
+};
+
+/** Admin: execution list (all meals status) for a specific date. */
+export const getMicroKitchenExecutionList = async (
+  microKitchenId: number,
+  mealDate: string
+): Promise<any[]> => {
+  const url = createApiUrl(`api/usermeal/execution-list/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, meal_date: mealDate },
+  });
+  return response.data ?? [];
+};
+
 /** Admin hub: patients allotted to this kitchen (via diet plan), kitchen share payout lines only. */
 export async function getMicroKitchenAllottedPlanPayouts(
   microKitchenId: number,

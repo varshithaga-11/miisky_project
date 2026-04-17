@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FiClock, FiInfo, FiCheck, FiList, FiCalendar, FiUser, FiPackage, FiHash, FiNavigation2, FiRefreshCcw, FiStar, FiTruck } from "react-icons/fi";
+import { FiClock, FiInfo, FiCheck, FiList, FiCalendar, FiUser, FiPackage, FiHash, FiNavigation2, FiRefreshCcw, FiStar, FiTruck, FiClipboard } from "react-icons/fi";
 import { haversineKm, parseGeoCoord } from "../../../utils/haversineKm";
 import { fetchUserById } from "../PatientOverview/api";
 import FullCalendar from "@fullcalendar/react";
@@ -136,9 +136,9 @@ export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
 
       <section className="space-y-4">
         <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold flex items-center gap-2">
-          Questionnaire / About
+          Questionnaire & Equipment
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <InfoSection title="About Owner">
             <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{kitchen.about_you || "—"}</p>
           </InfoSection>
@@ -154,8 +154,50 @@ export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
               </div>
             </div>
           </InfoSection>
-          <InfoSection title="Constraints">
-            <p className="text-sm text-gray-700 dark:text-gray-200">{kitchen.constraints || "—"}</p>
+          <InfoSection title="Utilities & Equipment">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+               <DenseInfoRow label="Water Source" value={kitchen.water_source} />
+               <DenseInfoRow label="Purification" value={kitchen.purification_type} />
+               <DenseInfoRow label="LPG Cylinders" value={kitchen.lpg_cylinders} />
+               <DenseInfoRow label="Staff Count" value={kitchen.no_of_staff} />
+               <DenseInfoRow label="Water Taps" value={kitchen.no_of_water_taps} />
+            </div>
+          </InfoSection>
+          
+          <InfoSection title="Checklist / Facilities">
+             <div className="space-y-2">
+                {[
+                  ["has_pets", "Has Pets"],
+                  ["has_pests", "Has Pests"],
+                  ["has_hobs", "Has Hobs"],
+                  ["has_refrigerator", "Refrigerator"],
+                  ["has_mixer", "Mixer"],
+                  ["has_grinder", "Grinder"],
+                  ["has_blender", "Blender"],
+                ].map(([k, label]) => (
+                  <div key={k} className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500">{label}</span>
+                    {kitchen[k] ? <FiCheck className="text-green-500" /> : <span className="text-gray-300">No</span>}
+                  </div>
+                ))}
+             </div>
+          </InfoSection>
+
+          <InfoSection title="Details">
+             <div className="space-y-1">
+                <DenseInfoRow label="Pet Details" value={kitchen.pet_details} />
+                <DenseInfoRow label="Pest Details" value={kitchen.pest_details} />
+                <DenseInfoRow label="Pest Control" value={kitchen.pest_control_frequency} />
+             </div>
+          </InfoSection>
+
+          <InfoSection title="Other Info">
+             <div className="space-y-1">
+                <DenseInfoRow label="Constraints" value={kitchen.constraints} />
+                <DenseInfoRow label="Available Time" value={kitchen.time_available} />
+                <DenseInfoRow label="Other Equipment" value={kitchen.other_equipment} />
+                <DenseInfoRow label="Video URL" value={kitchen.kitchen_video_url} />
+             </div>
           </InfoSection>
         </div>
       </section>
@@ -1202,6 +1244,124 @@ export function DisplayKitchenPlannedLeaves({ items }: { items: AdminKitchenPlan
           {row.notes && <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">{row.notes}</div>}
         </div>
       ))}
+    </div>
+  );
+}
+
+export function DisplayOrderPaymentSnapshots({ items }: { items: any[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No order payment snapshots found." />;
+  return (
+    <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/5">
+      <table className="w-full text-xs text-left">
+        <thead className="bg-gray-50 dark:bg-gray-800/50 text-[10px] uppercase font-black text-gray-500">
+          <tr>
+            <th className="p-3">Order</th>
+            <th className="p-3">Customer</th>
+            <th className="p-3 text-right">Total</th>
+            <th className="p-3 text-right text-emerald-600">Kitchen</th>
+            <th className="p-3 text-right text-indigo-600">Platform</th>
+            <th className="p-3">Date</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100 dark:divide-white/5 font-medium">
+          {items.map((r) => (
+            <tr key={r.id}>
+              <td className="p-3 font-bold">#{r.order_id}</td>
+              <td className="p-3 truncate max-w-[120px]">{r.customer_display}</td>
+              <td className="p-3 text-right">₹{parseFloat(r.grand_total).toFixed(2)}</td>
+              <td className="p-3 text-right text-emerald-600">₹{parseFloat(r.kitchen_amount).toFixed(2)} ({r.kitchen_percent}%)</td>
+              <td className="p-3 text-right text-indigo-600">₹{parseFloat(r.platform_amount).toFixed(2)} ({r.platform_percent}%)</td>
+              <td className="p-3 whitespace-nowrap text-gray-400">{new Date(r.order_created_at).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function DisplayKitchenExecution({ items }: { items: any[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No meals scheduled for this date." />;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {items.map((m) => (
+        <div key={m.id} className="p-4 rounded-3xl border border-gray-100 dark:border-white/5 bg-white/50 dark:bg-gray-800/20 shadow-sm flex items-center justify-between transition-all hover:bg-white dark:hover:bg-gray-800/40">
+           <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
+                 {m.meal_type_details?.name?.[0]}
+              </div>
+              <div>
+                 <div className="text-sm font-black text-gray-900 dark:text-white uppercase leading-none">{m.user_details?.first_name} {m.user_details?.last_name}</div>
+                 <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{m.food_details?.name}</div>
+              </div>
+           </div>
+           <div className="text-right">
+              <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
+                m.status === 'delivered' ? 'bg-green-100 text-green-600' : 
+                m.status === 'prepared' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
+              }`}>
+                {m.status || 'scheduled'}
+              </span>
+           </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DisplayKitchenPlanPayouts({ items }: { items: any[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No plan payout data found." />;
+  return (
+    <div className="space-y-6">
+      {items.map((group: any) => {
+        const p = group.patient;
+        if (!p) return null;
+        return (
+          <div key={p.id} className="p-6 rounded-[32px] border border-gray-100 dark:border-white/5 bg-white/70 dark:bg-gray-800/30 shadow-sm">
+            <div className="flex items-center justify-between mb-4 border-b dark:border-white/5 pb-3">
+              <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter text-lg">{p.name || "Unknown Patient"}</div>
+              <div className="text-[10px] font-bold text-gray-400 uppercase">Patient ID: #{p.id}</div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 italic">Linked Plan Trackers</div>
+              <div className="grid grid-cols-1 gap-3">
+                {group.trackers.map((t: any) => (
+                  <div key={t.id} className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5 flex items-center justify-between group transition-all hover:border-indigo-200 dark:hover:border-indigo-900">
+                    <div className="flex items-center gap-4">
+                      <div className="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                        <FiClipboard size={18} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight">
+                          {t.plan_title || `Plan Ref #${t.id}`}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-black text-gray-400 uppercase">Amount: ₹{t.total_amount}</span>
+                          <span className="size-1 rounded-full bg-gray-300" />
+                          <span className={`text-[10px] font-black uppercase ${t.status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>{t.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                        {t.payout_type === 'kitchen' ? 'Kitchen Share' : t.payout_type}
+                      </div>
+                      <div className="text-xs font-bold text-gray-500">
+                        {t.period_from ? new Date(t.period_from).toLocaleDateString() : '—'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t dark:border-white/5">
+              <p className="text-[10px] text-gray-500 italic leading-relaxed">This view shows the cumulative plan-based payouts for this patient as linked to this micro kitchen. For line-item audits, use "Partner Payouts & Transfers".</p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

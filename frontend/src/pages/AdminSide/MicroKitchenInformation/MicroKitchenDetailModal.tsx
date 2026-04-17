@@ -13,6 +13,7 @@ import {
   FiPackage,
   FiPieChart,
   FiMapPin,
+  FiClock,
 } from "react-icons/fi";
 import {
   getMicroKitchenDeliveryProfilesNoPagination,
@@ -31,6 +32,8 @@ import {
   getMicroKitchenAllottedPlanPayouts,
   getMicroKitchenPlannedLeavesNoPagination,
   getMicroKitchenDeliveryRatings,
+  getMicroKitchenOrderPaymentSnapshots,
+  getMicroKitchenExecutionList,
   MicroKitchenProfile,
 } from "./api";
 import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
@@ -51,6 +54,9 @@ import {
   DisplayKitchenTickets,
   DisplayKitchenPayouts,
   DisplayKitchenDeliveryRatings,
+  DisplayOrderPaymentSnapshots,
+  DisplayKitchenExecution,
+  DisplayKitchenPlanPayouts,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
@@ -70,7 +76,10 @@ export type KitchenDataView =
   | "allotted_plan_payouts"
   | "delivery_ratings"
   | "foods"
-  | "tickets";
+  | "tickets"
+  | "execution"
+  | "order_payments"
+  | "mk_plan_payouts";
 
 const VIEW_TITLES: Record<KitchenDataView, string> = {
   info: "Kitchen Information & Questionnaire",
@@ -90,6 +99,9 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   delivery_ratings: "Staff Delivery Ratings",
   foods: "Food Available (Menu)",
   tickets: "Kitchen Support Tickets",
+  execution: "Kitchen Daily Execution List",
+  order_payments: "Customer Order Payment Split",
+  mk_plan_payouts: "Plan Payout Trackers (Patient)",
 };
 
 const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
@@ -110,6 +122,9 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "delivery_ratings", description: "Delivery feedback and ratings for orders from this kitchen", icon: <FiStar /> },
   { key: "foods", description: "Menu items currently provided by the kitchen", icon: <FiMenu /> },
   { key: "tickets", description: "Technical and operational support requests", icon: <FiClipboard /> },
+  { key: "execution", description: "Real-time status of today's kitchen operations", icon: <FiClock /> },
+  { key: "order_payments", description: "Per-order freeze snapshot of platform vs kitchen split", icon: <FiDollarSign /> },
+  { key: "mk_plan_payouts", description: "MK side view of patient plan payout trackers", icon: <FiPieChart /> },
 ];
 
 type Props = {
@@ -226,8 +241,21 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             setPayload(await getMicroKitchenDeliverySlabs(id));
             break;
           case "prep":
-            const now = new Date();
-            setPayload(await getMicroKitchenDailyMealsNoPagination(id, now.getMonth() + 1, now.getFullYear()));
+            const nowPrep = new Date();
+            setPayload(await getMicroKitchenDailyMealsNoPagination(id, nowPrep.getMonth() + 1, nowPrep.getFullYear()));
+            break;
+          case "execution":
+            const today = new Date().toISOString().split('T')[0];
+            setPayload(await getMicroKitchenExecutionList(id, today));
+            break;
+          case "order_payments":
+            res = await getMicroKitchenOrderPaymentSnapshots(id, p, 20);
+            setPayload((prev: any) => isLoadMore ? [...(prev || []), ...res.results] : res.results);
+            setHasMore(res.current_page < res.total_pages);
+            break;
+          case "mk_plan_payouts":
+            // Reuse the existing payout view but with its own fetcher if needed, or mapping
+            setPayload(await getMicroKitchenPayoutsNoPagination(id));
             break;
           default:
             break;
@@ -399,6 +427,13 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                       )}
                       {screen === "payouts" && <DisplayKitchenPayouts items={payload} />}
                       {screen === "delivery_ratings" && <DisplayKitchenDeliveryRatings items={payload} />}
+                      {screen === "order_payments" && (
+                        <DisplayOrderPaymentSnapshots 
+                           items={payload} 
+                        />
+                      )}
+                      {screen === "execution" && <DisplayKitchenExecution items={payload} />}
+                      {screen === "mk_plan_payouts" && <DisplayKitchenPlanPayouts items={payload} />}
                     </>
                   )}
                 </>
