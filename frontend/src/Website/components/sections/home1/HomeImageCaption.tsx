@@ -75,6 +75,8 @@ export default function HomeImageCaption() {
             <Image
               src={CENTER_IMAGE_SRC}
               alt={CENTER_IMAGE_ALT}
+              width={891}
+              height={891}
               className="home-image-caption-center-img"
             />
           </div>

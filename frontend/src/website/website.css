@@ -2857,12 +2857,12 @@ html, body {
 }
 
 .home-image-caption-section .home-image-caption-center-card {
-  width: min(100%, 760px);
+  width: min(100%, 640px);
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
   box-shadow: 0 14px 42px rgba(15, 23, 42, 0.1);
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 891 / 891;
   display: grid;
   align-items: stretch;
   justify-items: stretch;
