@@ -2247,18 +2247,26 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='kitchen-delivery-profiles')
     def kitchen_delivery_profiles(self, request):
         """Paginated delivery profiles for supply-chain staff tied to this micro kitchen."""
-        if getattr(request.user, "role", None) != "micro_kitchen":
+        role = getattr(request.user, "role", None)
+        if role not in ["micro_kitchen", "admin"]:
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
-        mk = MicroKitchenProfile.objects.filter(user=request.user).first()
-        if not mk:
-            return Response(
-                {"count": 0, "next": None, "previous": None, "current_page": 1, "total_pages": 0, "results": []}
-            )
-        qs = (
-            DeliveryProfile.objects.filter(user_id__in=self._delivery_person_ids_for_kitchen(mk))
-            .select_related("user", "verified_by")
-            .order_by("user__first_name", "user__last_name", "id")
-        )
+        
+        if role == "admin":
+            # For admin, show all delivery profiles (or could filter by kitchen if param provided)
+            kitchen_id = request.query_params.get("micro_kitchen")
+            if kitchen_id:
+                qs = DeliveryProfile.objects.filter(user_id__in=self._delivery_person_ids_for_kitchen_by_id(kitchen_id))
+            else:
+                qs = DeliveryProfile.objects.all()
+        else:
+            mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+            if not mk:
+                return Response(
+                    {"count": 0, "next": None, "previous": None, "current_page": 1, "total_pages": 0, "results": []}
+                )
+            qs = DeliveryProfile.objects.filter(user_id__in=self._delivery_person_ids_for_kitchen(mk))
+
+        qs = qs.select_related("user", "verified_by").order_by("user__first_name", "user__last_name", "id")
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -2266,10 +2274,18 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
+    def _delivery_person_ids_for_kitchen_by_id(self, mk_id):
+        from .models import DietPlanDeliveryAssignment, DietPlanSlotDeliveryPerson, DeliveryAssignment
+        dp_ids = set(DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
+        dp_ids |= set(DietPlanSlotDeliveryPerson.objects.filter(plan_assignment__micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
+        dp_ids |= set(DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
+        dp_ids.discard(None)
+        return dp_ids
+
     @action(detail=True, methods=['post'], url_path='verify')
     def verify(self, request, pk=None):
         """Micro kitchen: mark delivery profile as verified."""
-        if getattr(request.user, "role", None) != "micro_kitchen":
+        if getattr(request.user, "role", None) not in ["micro_kitchen", "admin"]:
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
         profile = self.get_object()
         profile.is_verified = True

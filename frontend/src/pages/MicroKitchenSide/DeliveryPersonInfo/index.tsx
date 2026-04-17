@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import PageBreadcrumb from "../../../components/common/PageBreadcrumb";
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
@@ -9,7 +9,15 @@ import {
   verifyDeliveryProfile,
   type KitchenDeliveryProfile,
 } from "./api";
-import { CheckCircle2, FileText, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { DeliveryProfileDetailModal } from "./DeliveryProfileDetailModal";
+import {
+  CheckCircle2,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Eye,
+} from "lucide-react";
 
 const mediaHref = (path: string | null | undefined) => {
   if (!path) return "";
@@ -17,7 +25,15 @@ const mediaHref = (path: string | null | undefined) => {
   return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
 };
 
-function ProfileDetail({ row, onVerified }: { row: KitchenDeliveryProfile; onVerified: (p: KitchenDeliveryProfile) => void }) {
+function ProfileDetail({
+  row,
+  onVerified,
+  onViewDetails,
+}: {
+  row: KitchenDeliveryProfile;
+  onVerified: (p: KitchenDeliveryProfile) => void;
+  onViewDetails: (p: KitchenDeliveryProfile) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -60,28 +76,42 @@ function ProfileDetail({ row, onVerified }: { row: KitchenDeliveryProfile; onVer
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800/80 overflow-hidden shadow-sm">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-4 p-4 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-      >
-        <div className="min-w-0">
-          <p className="font-semibold text-gray-900 dark:text-white truncate">{name}</p>
-          <p className="text-xs text-gray-500 truncate">
-            {row.user_details?.mobile || row.user_details?.email || "—"}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {row.is_verified ? (
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-              <CheckCircle2 size={14} /> Verified
-            </span>
-          ) : (
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase">Pending</span>
-          )}
-          {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </div>
-      </button>
+      {/* Card header row */}
+      <div className="flex items-center justify-between gap-4 p-4">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center justify-between gap-4 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors rounded-xl px-2 py-1 -mx-2 -my-1"
+        >
+          <div className="min-w-0">
+            <p className="font-semibold text-gray-900 dark:text-white truncate">{name}</p>
+            <p className="text-xs text-gray-500 truncate">
+              {row.user_details?.mobile || row.user_details?.email || "—"}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {row.is_verified ? (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+                <CheckCircle2 size={14} /> Verified
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase">Pending</span>
+            )}
+            {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </button>
+
+        {/* View Details button */}
+        <button
+          type="button"
+          onClick={() => onViewDetails(row)}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+          title="View full delivery staff details"
+        >
+          <Eye size={14} />
+          Details
+        </button>
+      </div>
 
       {open && (
         <div className="px-4 pb-4 pt-0 space-y-4 border-t border-gray-100 dark:border-white/10">
@@ -194,6 +224,10 @@ export default function DeliveryPersonInfoPage() {
   const [count, setCount] = useState(0);
   const [rows, setRows] = useState<KitchenDeliveryProfile[]>([]);
 
+  // Modal state
+  const [detailProfile, setDetailProfile] = useState<KitchenDeliveryProfile | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -215,6 +249,15 @@ export default function DeliveryPersonInfoPage() {
 
   const patchRow = (updated: KitchenDeliveryProfile) => {
     setRows((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    // also patch the modal profile if it's open for this same row
+    if (detailProfile?.id === updated.id) {
+      setDetailProfile(updated);
+    }
+  };
+
+  const openDetails = (profile: KitchenDeliveryProfile) => {
+    setDetailProfile(profile);
+    setModalOpen(true);
   };
 
   return (
@@ -226,7 +269,7 @@ export default function DeliveryPersonInfoPage() {
       <div className="max-w-4xl space-y-6 pb-16">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Supply-chain staff linked to your kitchen through global or daily assignments. Review documents and verify when
-          satisfied.
+          satisfied. Click <strong>Details</strong> on any profile to see orders, payments, leaves, reviews and issues.
         </p>
 
         {loading ? (
@@ -238,7 +281,12 @@ export default function DeliveryPersonInfoPage() {
         ) : (
           <div className="space-y-4">
             {rows.map((row) => (
-              <ProfileDetail key={row.id} row={row} onVerified={patchRow} />
+              <ProfileDetail
+                key={row.id}
+                row={row}
+                onVerified={patchRow}
+                onViewDetails={openDetails}
+              />
             ))}
           </div>
         )}
@@ -269,6 +317,15 @@ export default function DeliveryPersonInfoPage() {
           </div>
         )}
       </div>
+
+      {/* Delivery Profile Detail Modal */}
+      {detailProfile && (
+        <DeliveryProfileDetailModal
+          profile={detailProfile}
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
