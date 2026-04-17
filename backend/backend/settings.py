@@ -35,7 +35,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "testingmiisky.com",
     "www.testingmiisky.com",
-    "backend.testingmiisky.com"
+    "backend.testingmiisky.com",
+    '18.190.152.118', 'localhost', '127.0.0.1'
 ]
 
 
@@ -129,7 +130,17 @@ CORS_ALLOWED_ORIGINS = [
     "https://backend.testingmiisky.com",
     "http://testingmiisky.com",
     "http://www.testingmiisky.com",
-    "http://backend.testingmiisky.com"
+    "http://backend.testingmiisky.com",
+    "http://18.190.152.118",
+    "http://18.190.152.118:8000",
+    "https://18.190.152.118",
+    "https://18.190.152.118:8000",
+    "https://localhost",
+    "https://localhost:5173",
+    "http://localhost",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:8000",
 ]
 
 
