@@ -54,7 +54,7 @@ export type DataView =
   | "nutritionistMapping"
   | "nutritionistHistory"
   | "kitchenHistory"
-  | "nutritionistProfile"
+  // | "nutritionistProfile"
   // | "reviews"
   | "dietPlans"
   | "meals"
@@ -73,7 +73,7 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   nutritionistMapping: "Nutritionist assignment",
   nutritionistHistory: "Nutritionist change history",
   kitchenHistory: "Kitchen change history",
-  nutritionistProfile: "Nutritionist profile",
+  // nutritionistProfile: "Nutritionist profile",
   // reviews: "Nutritionist reviews",
   dietPlans: "Diet plans",
   meals: "Meals & packaging",
@@ -93,7 +93,7 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "nutritionistMapping", description: "Which nutritionist is currently assigned" },
   { key: "nutritionistHistory", description: "Audit trail of nutritionist reassignments" },
   { key: "kitchenHistory", description: "Audit trail of micro-kitchen reassignments" },
-  { key: "nutritionistProfile", description: "Professional profile of active nutritionist" },
+  // { key: "nutritionistProfile", description: "Professional profile of active nutritionist" },
   // { key: "reviews", description: "Comments on health documents" },
   { key: "dietPlans", description: "Suggested and active diet plans" },
   { key: "meals", description: "Planned meals, foods, packaging" },
@@ -187,23 +187,23 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             setPayload(await fetchKitchenHistoryForPatient(id));
             break;
           }
-          case "nutritionistProfile": {
-            let nid = nutritionistUserId;
-            if (nid == null) {
-              const maps = await fetchNutritionistMappingsForPatient(id);
-              const first = Array.isArray(maps) && maps.length ? (maps[0] as MappingRow) : null;
-              nid = typeof first?.nutritionist === "number" ? first.nutritionist : null;
-              setNutritionistUserId(nid);
-            }
-            if (nid == null) {
-              setPayload([]);
-              setError("No nutritionist linked to this patient. Open “Nutritionist assignment” first.");
-            } else {
-              setNutritionistUserId(nid);
-              setPayload(await fetchNutritionistProfileByUserId(nid));
-            }
-            break;
-          }
+          // case "nutritionistProfile": {
+          //   let nid = nutritionistUserId;
+          //   if (nid == null) {
+          //     const maps = await fetchNutritionistMappingsForPatient(id);
+          //     const first = Array.isArray(maps) && maps.length ? (maps[0] as MappingRow) : null;
+          //     nid = typeof first?.nutritionist === "number" ? first.nutritionist : null;
+          //     setNutritionistUserId(nid);
+          //   }
+          //   if (nid == null) {
+          //     setPayload([]);
+          //     setError("No nutritionist linked to this patient. Open “Nutritionist assignment” first.");
+          //   } else {
+          //     setNutritionistUserId(nid);
+          //     setPayload(await fetchNutritionistProfileByUserId(nid));
+          //   }
+          //   break;
+          // }
           // case "reviews":
           //   setPayload(await fetchNutritionistReviewsForPatient(id));
           //   break;
@@ -387,9 +387,9 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
               {!loading && !error && screen === "kitchenHistory" && Array.isArray(payload) && (
                 <DisplayKitchenHistory items={payload} />
               )}
-              {!loading && !error && screen === "nutritionistProfile" && Array.isArray(payload) && (
+              {/* {!loading && !error && screen === "nutritionistProfile" && Array.isArray(payload) && (
                 <DisplayNutritionistProfile items={payload as Record<string, unknown>[]} />
-              )}
+              )} */}
               {/* {!loading && !error && screen === "reviews" && Array.isArray(payload) && (
                 <DisplayReviews items={payload as ReviewRow[]} />
               )} */}
