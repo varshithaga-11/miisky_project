@@ -323,6 +323,7 @@ const nutritionistNavItems: NavItem[] = [
     name: "Micro Kitchens & Diet Plans",
     subItems: [
       { name: "Micro Kitchens", path: "/nutrition/micro-kitchens" },
+      { name: "Kitchen inspection", path: "/nutrition/micro-kitchen-inspection" },
       { name: "Diet Plans", path: "/nutrition/plans" },
     ],
   },

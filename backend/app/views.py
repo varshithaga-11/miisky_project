@@ -1734,6 +1734,16 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
 
         return qs
 
+    def perform_update(self, serializer):
+        user = self.request.user
+        role = getattr(user, "role", None)
+        if role == "nutritionist":
+            allowed = {"status"}
+            keys = set(serializer.validated_data.keys())
+            if not keys.issubset(allowed):
+                raise PermissionDenied("Nutritionists may only change kitchen approval status (approve or reject).")
+        serializer.save()
+
     @action(detail=False, methods=['get', 'post', 'put', 'patch'], url_path='me')
     def me(self, request):
         instance = MicroKitchenProfile.objects.filter(user=request.user).first()
@@ -1854,6 +1864,14 @@ class MicroKitchenInspectionViewSet(viewsets.ModelViewSet):
         # Micro kitchen users only see their own inspections
         if user.role == 'micro_kitchen':
             return MicroKitchenInspection.objects.filter(micro_kitchen__user=user).order_by("-id")
+
+        # Nutritionists: review inspection history for onboarding / verification (same filter as admin)
+        if getattr(user, "role", None) == "nutritionist":
+            qs = MicroKitchenInspection.objects.all().order_by("-id")
+            micro_kitchen_id = self.request.query_params.get("micro_kitchen")
+            if micro_kitchen_id:
+                qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+            return qs
 
         return MicroKitchenInspection.objects.none()
 
