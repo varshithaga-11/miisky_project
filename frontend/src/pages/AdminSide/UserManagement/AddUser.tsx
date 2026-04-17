@@ -307,6 +307,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
               onChange={(val) => setRole(val)}
               options={[
                 { value: "admin", label: "Admin" },
+                { value: "master", label: "Master" },
                 { value: "nutritionist", label: "Nutritionist/Dietician" },
                 { value: "patient", label: "Patient" },
                 { value: "supply_chain", label: "Supply Chain" },

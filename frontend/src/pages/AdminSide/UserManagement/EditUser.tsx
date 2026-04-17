@@ -304,6 +304,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
               onChange={(val) => handleChange("role", val)}
               options={[
                 { value: "admin", label: "Admin" },
+                { value: "master", label: "Master" },
                 { value: "nutritionist", label: "Nutritionist/Dietician" },
                 { value: "patient", label: "Patient" },
                 { value: "supply_chain", label: "Supply Chain" },
