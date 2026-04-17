@@ -4342,12 +4342,25 @@ class SupplyChainDeliveryLeaveSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "notes",
+            "kitchen_handling_status",
             "created_on",
         ]
         read_only_fields = ["user", "created_on"]
 
     def validate(self, attrs):
         if self.instance and self.partial:
+            # PATCH only `kitchen_handling_status` (micro kitchen) must not run leave rules or
+            # inject start_time/end_time — that would add extra keys and fail permission checks.
+            leave_field_keys = {
+                "leave_type",
+                "start_date",
+                "end_date",
+                "start_time",
+                "end_time",
+                "notes",
+            }
+            if not (set(attrs.keys()) & leave_field_keys):
+                return attrs
             leave_type = attrs["leave_type"] if "leave_type" in attrs else self.instance.leave_type
             start_date = attrs["start_date"] if "start_date" in attrs else self.instance.start_date
             end_date = attrs["end_date"] if "end_date" in attrs else self.instance.end_date
