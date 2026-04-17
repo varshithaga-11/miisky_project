@@ -18,4 +18,9 @@ app.conf.beat_schedule = {
         "task": "app.tasks.complete_expired_diet_plans",
         "schedule": crontab(hour=0, minute=5),
     },
+    # Every Sunday: email each active-plan patient with next week's allotted meals.
+    "send-weekly-food-plan-emails-sunday": {
+        "task": "app.tasks.send_weekly_food_plan_emails",
+        "schedule": crontab(day_of_week="sun", hour=8, minute=0),
+    },
 }
