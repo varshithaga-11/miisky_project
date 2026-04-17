@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, DecimalField, F, Max, Prefetch, Q, Sum, Value
+from django.db.models import Avg, Count, DecimalField, F, Max, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
 from rest_framework import viewsets, status, filters, mixins, generics
@@ -7188,6 +7188,158 @@ class AdminMicroKitchenReviewsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+class AdminMicroKitchenDeliveryRatingsNoPaginationView(APIView):
+    """Admin: delivery feedback (ratings and issues) for orders from this micro-kitchen."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response([])
+
+        # Filter delivery feedback specifically for this kitchen's orders
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            order__micro_kitchen_id=micro_kitchen_id,
+            feedback_type=SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING
+        ).select_related("reported_by", "order", "user_meal").order_by("-created_at")
+        
+        serializer = SupplyChainDeliveryFeedbackSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminSupplyChainHubSummaryView(APIView):
+    """
+    Admin API: Fetches a single JSON object with counts and earnings for the Supply Chain Hub overview.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None:
+            return err
+
+        # Linked Kitchens
+        kitchen_count = MicroKitchenDeliveryTeam.objects.filter(delivery_person=u).count()
+        
+        # Active Patients (Assignments)
+        plan_count = DietPlanDeliveryAssignment.objects.filter(delivery_person=u, is_active=True).count()
+        
+        # Orders Filled
+        orders_qs = Order.objects.filter(delivery_person=u)
+        order_count = orders_qs.count()
+        
+        # Total Earnings (Sum of delivery charges for filled orders)
+        total_earnings = orders_qs.aggregate(Sum('delivery_charge'))['delivery_charge__sum'] or 0.00
+        
+        # Avg Rating
+        ratings_qs = SupplyChainDeliveryFeedback.objects.filter(
+            Q(order__delivery_person=u) | Q(user_meal__deliveries__delivery_person=u),
+            feedback_type="rating", rating__isnull=False
+        ).distinct()
+        avg_rating = ratings_qs.aggregate(Avg('rating'))['rating__avg'] or 0.0
+        
+        # Tickets
+        ticket_count = SupportTicket.objects.filter(assigned_to=u).count()
+
+        return Response({
+            "kitchen_count": kitchen_count,
+            "plan_count": plan_count,
+            "order_count": order_count,
+            "total_earnings": str(total_earnings),
+            "avg_rating": round(avg_rating, 1),
+            "ticket_count": ticket_count,
+        })
+
+
+class AdminSupplyChainKitchenTeamNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        qs = MicroKitchenDeliveryTeam.objects.filter(delivery_person=u).select_related("micro_kitchen").order_by("-assigned_on")[:100]
+        return Response(AdminSupplyChainKitchenTeamListSerializer(qs, many=True).data)
+
+
+class AdminSupplyChainPlanAssignmentsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        qs = DietPlanDeliveryAssignment.objects.filter(delivery_person=u).select_related(
+            "user", "user_diet_plan"
+        ).order_by("-assigned_on")[:200]
+        return Response(AdminSupplyChainPlanDeliveryAssignmentListSerializer(qs, many=True).data)
+
+
+class AdminSupplyChainOrdersNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        qs = Order.objects.filter(delivery_person=u).select_related("micro_kitchen", "user").order_by("-created_at")[:200]
+        return Response(AdminSupplyChainOrderRowSerializer(qs, many=True).data)
+
+
+class AdminSupplyChainPlannedLeavesNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        try:
+            qs = SupplyChainDeliveryLeave.objects.filter(user=u).order_by("-start_date")[:100]
+            return Response(SupplyChainDeliveryLeaveSerializer(qs, many=True).data)
+        except Exception:
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, start_at, end_at, notes, created_on FROM app_supplychaindeliveryleave WHERE user_id = %s ORDER BY start_at DESC LIMIT 100",
+                    [u.id]
+                )
+                rows = cursor.fetchall()
+            return Response([{
+                "id": r[0], "start_date": str(r[1]), "end_date": str(r[2]), "notes": r[3],
+                "created_on": str(r[4]), "leave_type": "Leave", "user": u.id
+            } for r in rows])
+
+
+class AdminSupplyChainDeliveryRatingsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            Q(order__delivery_person=u) | Q(user_meal__deliveries__delivery_person=u)
+        ).select_related(
+            "reported_by", "order", "user_meal"
+        ).distinct().order_by("-created_at")[:200]
+        return Response(SupplyChainDeliveryFeedbackSerializer(qs, many=True).data)
+
+
+class AdminSupplyChainEarningsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        qs = Order.objects.filter(delivery_person=u).order_by("-created_at")[:200]
+        total = qs.aggregate(Sum('delivery_charge'))['delivery_charge__sum'] or 0.00
+        return Response({
+            "results": SupplyChainDeliveryEarningsListSerializer(qs, many=True).data,
+            "total_orders": qs.count(),
+            "total_delivery_earnings": str(total)
+        })
+
+
+class AdminSupplyChainTicketsNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None: return err
+        qs = SupportTicket.objects.filter(created_by=u).select_related("category").order_by("-created_at")[:100]
+        return Response(SupportTicketSerializer(qs, many=True).data)
+
+
+
+
 class AdminMicroKitchenOrdersNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
@@ -8101,11 +8253,109 @@ class AdminSupplyChainPlannedLeavesViewSet(viewsets.ViewSet):
         u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
         if err is not None:
             return err
-        leaves_qs = SupplyChainDeliveryLeave.objects.filter(user_id=u.id).order_by("-start_date")[:80]
-        return Response(AdminSupplyChainPlannedLeaveListSerializer(leaves_qs, many=True).data)
+        leaves_qs = SupplyChainDeliveryLeave.objects.filter(user_id=u.id).order_by("-created_on")[:80]
+        try:
+            # Attempt standard serialization
+            data = AdminSupplyChainPlannedLeaveListSerializer(leaves_qs, many=True).data
+        except Exception:
+            # Deep fallback: Query only columns known to exist in older schemas and manually shape the response
+            # Based on DB hints, fields might be 'start_at' instead of 'start_date', etc.
+            raw_data = list(leaves_qs.values("id", "notes", "created_on"))
+            data = []
+            for item in raw_data:
+                data.append({
+                    "id": item["id"],
+                    "user": u.id,
+                    "user_details": {"id": u.id, "first_name": u.first_name, "last_name": u.last_name},
+                    "leave_type": "full_day", 
+                    "start_date": "N/A", 
+                    "end_date": "N/A",
+                    "start_time": None,
+                    "end_time": None,
+                    "notes": item["notes"],
+                    "created_on": item["created_on"]
+                })
+        
+        return Response(data)
+
 
 
 # ── Support Tickets ───────────────────────────────────────────────────────────
+
+class AdminSupplyChainDeliveryRatingsViewSet(viewsets.ViewSet):
+    """
+    Admin: delivery feedback (ratings + issues) for one supply-chain user.
+    Records come from SupplyChainDeliveryFeedback where the delivery person
+    on the linked order or user_meal matches the requested user.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def list(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None:
+            return err
+
+        feedback_type = (request.query_params.get("feedback_type") or "").strip()
+
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            Q(order__delivery_person=u) | Q(user_meal__deliveries__delivery_person=u, user_meal__deliveries__is_active=True)
+        ).select_related(
+            "reported_by", "order", "user_meal", "resolved_by"
+        ).distinct().order_by("-created_at")[:200]
+
+        if feedback_type in {
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+        }:
+            qs = qs.filter(feedback_type=feedback_type)
+
+        return Response(SupplyChainDeliveryFeedbackSerializer(qs, many=True).data)
+
+
+class AdminSupplyChainEarningsViewSet(viewsets.ViewSet):
+    """Admin: delivery earnings (delivered orders) for one supply-chain user."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def list(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None:
+            return err
+
+        qs = (
+            Order.objects.filter(delivery_person=u, status="delivered")
+            .select_related("micro_kitchen", "user", "payment_snapshot", "supply_chain_delivery_receipt")
+            .order_by("-created_at")[:100]
+        )
+
+        stats = qs.aggregate(
+            total_orders=Count("id"),
+            total_delivery_earnings=Sum("delivery_charge"),
+        )
+        
+        # We use the same serializer as the supply chain user sees
+        data = SupplyChainDeliveryEarningsListSerializer(qs, many=True).data
+        return Response({
+            "results": data,
+            "total_orders": stats["total_orders"],
+            "total_delivery_earnings": str(stats["total_delivery_earnings"] or "0.00"),
+        })
+
+
+class AdminSupplyChainTicketsViewSet(viewsets.ViewSet):
+    """Admin: support tickets created by one supply-chain user."""
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def list(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None:
+            return err
+
+        qs = SupportTicket.objects.filter(created_by=u).select_related("category").order_by("-created_at")[:100]
+        return Response(SupportTicketSerializer(qs, many=True).data)
+
 
 class TicketCategoryViewSet(viewsets.ModelViewSet):
     queryset = TicketCategory.objects.all().order_by("name")
@@ -8172,6 +8422,8 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
             user_type = "nutritionist"
         elif role == "micro_kitchen":
             user_type = "kitchen"
+        elif role == "supply_chain":
+            user_type = "supply_chain"
         elif role == "doctor":
             user_type = "doctor"
         else:

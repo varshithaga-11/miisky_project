@@ -218,6 +218,15 @@ export const getMicroKitchenReviewsNoPagination = async (microKitchenId: number)
   return response.data;
 };
 
+export const getMicroKitchenDeliveryRatings = async (microKitchenId: number) => {
+  const url = createApiUrl(`api/admin-microkitchen-delivery-ratings-nopaginate/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId },
+  });
+  return response.data;
+};
+
 export const getMicroKitchenOrders = async (microKitchenId: number) => {
   const url = createApiUrl(`api/order/`);
   const response = await axios.get(url, {

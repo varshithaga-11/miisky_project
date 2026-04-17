@@ -7,9 +7,15 @@ import {
   fetchAdminSupplyChainOrders,
   fetchAdminSupplyChainPlanAssignments,
   fetchAdminSupplyChainPlannedLeaves,
+  fetchAdminSupplyChainDeliveryRatings,
+  fetchAdminSupplyChainEarnings,
+  fetchAdminSupplyChainTickets,
+  fetchAdminSupplyChainHubSummary,
   getAdminSupplyChainList,
   type AdminSupplyChainOrderRow,
   type KitchenTeamRow,
+  type DeliveryFeedbackRow,
+  type AdminSupplyChainEarningsResp,
 } from "./api";
 import { profileFileUrl } from "../../SupplyChain/DeliveryQuestionare/api";
 import { toast, ToastContainer } from "react-toastify";
@@ -26,6 +32,18 @@ import {
   FiFileText,
   FiCalendar,
   FiChevronRight,
+  FiStar,
+  FiAlertTriangle,
+  FiMessageSquare,
+  FiDollarSign,
+  FiActivity,
+  FiGrid,
+  FiArrowLeft,
+  FiAlertCircle,
+  FiShoppingCart,
+  FiTruck,
+  FiMapPin,
+  FiSettings,
 } from "react-icons/fi";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Select from "../../../components/form/Select";
@@ -41,7 +59,7 @@ type SupplyChainRow = {
   is_active: boolean;
 };
 
-type DossierTab = "kitchens" | "plans" | "orders" | "profile" | "leave";
+type DossierTab = "overview" | "kitchens" | "plans" | "orders" | "earnings" | "profile" | "leave" | "ratings" | "issues" | "tickets";
 
 function PlanAssignmentCard({ row }: { row: Record<string, unknown> }) {
   const patient = row.patient_details as
@@ -184,342 +202,560 @@ function DeliveryProfilePanel({ profile }: { profile: Record<string, unknown> | 
   );
 }
 
+
+function IssuesPanel({ ratings }: { ratings: DeliveryFeedbackRow[] | null }) {
+  const issues = React.useMemo(() => {
+    return (ratings || []).filter((x) => x.feedback_type === "issue");
+  }, [ratings]);
+
+  if (!issues || issues.length === 0) {
+    return (
+      <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
+        No delivery issues reported for this person.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-4">
+      {issues.map((r) => (
+        <div
+          key={r.id}
+          className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col sm:flex-row justify-between gap-4"
+        >
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                {r.issue_type?.replace("_", " ") || "Issue"}
+              </span>
+              <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${r.resolved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                {r.resolved ? "Resolved" : "Active"}
+              </span>
+              <span className="text-[10px] font-bold text-gray-400 italic">
+                {new Date(r.created_at).toLocaleString()}
+              </span>
+            </div>
+            <p className="text-sm text-gray-700 dark:text-gray-200 mt-2 italic leading-relaxed">
+              &quot;{r.description || r.review || "No details provided"}&quot;
+            </p>
+            <div className="mt-4 pt-4 border-t dark:border-white/5 flex flex-wrap gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              <span>Order: <span className="text-blue-500">#{r.order_details?.id || r.order}</span></span>
+              <span>Reported By: {r.reported_by_details ? `${r.reported_by_details.first_name} ${r.reported_by_details.last_name}` : "Patient"}</span>
+            </div>
+          </div>
+          {r.resolved_at && (
+             <div className="sm:text-right text-[10px] text-gray-400">
+               <div className="font-black uppercase tracking-widest text-green-600 mb-1">Cleared At</div>
+               {new Date(r.resolved_at).toLocaleString()}
+             </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EarningsPanel({ earnings }: { earnings: AdminSupplyChainEarningsResp | null }) {
+  if (!earnings || !earnings.results?.length) {
+    return <p className="text-sm text-gray-500 text-center py-8">No delivery earnings recorded yet.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-4 rounded-2xl bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-green-600 dark:text-green-400">Total Delivery Payout</p>
+          <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter italic">₹{earnings.total_delivery_earnings}</p>
+        </div>
+        <div className="text-right text-[10px] font-bold text-gray-400 uppercase">
+          {earnings.total_orders} Orders Delivered
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <Table>
+          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableRow>
+              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Date</TableCell>
+              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Kitchen</TableCell>
+              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Amount</TableCell>
+              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs">Receipt</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            {earnings.results.map((e) => (
+              <TableRow key={e.id} className="hover:bg-gray-50 hover:dark:bg-white/[0.02]">
+                <TableCell className="px-5 py-3 text-theme-sm text-gray-800 dark:text-gray-200">
+                  {new Date(e.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="px-5 py-3 text-theme-sm text-gray-800 dark:text-gray-200">
+                  {e.kitchen_name || "—"}
+                </TableCell>
+                <TableCell className="px-5 py-3 text-theme-sm font-black text-gray-900 dark:text-white">
+                  ₹{e.delivery_earning}
+                </TableCell>
+                <TableCell className="px-5 py-3 text-theme-sm">
+                  {e.receipt ? (
+                    <span className="text-green-600 text-[10px] font-black uppercase">Uploaded</span>
+                  ) : (
+                    <span className="text-gray-400 text-[10px] font-bold uppercase italic">—</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+function TicketsPanel({ tickets }: { tickets: any[] | null }) {
+  if (!tickets || !tickets.length) {
+    return <p className="text-sm text-gray-500 text-center py-8">No support tickets created by this person.</p>;
+  }
+
+  return (
+    <ul className="space-y-3">
+      {tickets.map((t) => (
+        <li key={t.id} className="p-4 rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-gray-800/40">
+          <div className="flex justify-between items-start mb-2">
+            <span className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-gray-500">
+              #{t.id} · {t.category_details?.name || "General"}
+            </span>
+            <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+              t.status === "resolved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+            }`}>
+              {t.status}
+            </span>
+          </div>
+          <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">{t.subject}</p>
+          <p className="text-xs text-gray-500 line-clamp-2">{t.description}</p>
+          <div className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            {new Date(t.created_at).toLocaleDateString()} · PRIORITY: {t.priority}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const MENU_ITEMS: { key: DossierTab; title: string; description: string; icon: any }[] = [
+  { key: "kitchens", title: "Kitchen Assignments", description: "Kitchen teams and active delivery zones", icon: <FiLayers /> },
+  { key: "plans", title: "Patient Allotments", description: "Currently allotted patients and delivery slots", icon: <FiUser /> },
+  { key: "orders", title: "Delivery Orders", description: "Detailed order history and delivery status", icon: <FiShoppingBag /> },
+  { key: "earnings", title: "Payouts & Earnings", description: "Delivery fees, wallet balances, and payouts", icon: <FiDollarSign /> },
+  { key: "ratings", title: "Ratings & Performance", description: "Average staff ratings and feedback from patients", icon: <FiStar /> },
+  { key: "issues", title: "Delivery Issues", description: "Reported delivery exceptions: damaged food, late arrival, address issues", icon: <FiAlertCircle /> },
+  { key: "tickets", title: "Support Tickets", description: "Operational issues and technical support history", icon: <FiMessageSquare /> },
+  { key: "profile", title: "KYC & Profile", description: "Identity verification, license, and vehicle records", icon: <FiFileText /> },
+  { key: "leave", title: "Planned Leave", description: "Time-off records and planned unavailability", icon: <FiCalendar /> },
+];
+
 const SupplyChainDossierModal: React.FC<{
   person: SupplyChainRow | null;
   open: boolean;
-  initialTab: DossierTab;
   onClose: () => void;
-}> = ({ person, open, initialTab, onClose }) => {
-  const [tab, setTab] = useState<DossierTab>(initialTab);
+}> = ({ person, open, onClose }) => {
+  const [screen, setScreen] = useState<"hub" | DossierTab>("hub");
   const [loaded, setLoaded] = useState<Record<DossierTab, boolean>>({
+    overview: false,
     kitchens: false,
     plans: false,
     orders: false,
+    earnings: false,
     profile: false,
     leave: false,
+    ratings: false,
+    issues: false,
+    tickets: false,
   });
+
+  const [summaryStats, setSummaryStats] = useState<{
+    kitchen_count: number;
+    plan_count: number;
+    order_count: number;
+    total_earnings: string;
+    avg_rating: number;
+    ticket_count: number;
+  } | null>(null);
+
   const [kitchenTeam, setKitchenTeam] = useState<KitchenTeamRow[] | null>(null);
   const [plans, setPlans] = useState<unknown[] | null>(null);
   const [orders, setOrders] = useState<AdminSupplyChainOrderRow[] | null>(null);
-  const [deliveryProfile, setDeliveryProfile] = useState<Record<string, unknown> | null | undefined>(
-    undefined
-  );
+  const [earnings, setEarnings] = useState<AdminSupplyChainEarningsResp | null>(null);
+  const [tickets, setTickets] = useState<any[] | null>(null);
+  const [deliveryProfile, setDeliveryProfile] = useState<Record<string, unknown> | null | undefined>(undefined);
   const [plannedLeaves, setPlannedLeaves] = useState<unknown[] | null>(null);
-  const [loadingTab, setLoadingTab] = useState<DossierTab | null>(null);
-  const [loadError, setLoadError] = useState<{ tab: DossierTab; message: string } | null>(null);
+  const [deliveryRatings, setDeliveryRatings] = useState<DeliveryFeedbackRow[] | null>(null);
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSummary = useCallback(async () => {
+    if (!person) return;
+    try {
+      setLoading(true);
+      const data = await fetchAdminSupplyChainHubSummary(person.id);
+      setSummaryStats(data);
+    } catch (e: any) {
+      console.error(e);
+      // Fallback or ignore for summary
+    } finally {
+      setLoading(false);
+    }
+  }, [person]);
 
   useEffect(() => {
-    if (open) setTab(initialTab);
-  }, [open, initialTab]);
+    if (open && person) {
+      setScreen("hub");
+      fetchSummary();
+    }
+  }, [open, person, fetchSummary]);
 
   useEffect(() => {
     if (!open || !person) {
       setLoaded({
+        overview: false,
         kitchens: false,
         plans: false,
         orders: false,
+        earnings: false,
         profile: false,
         leave: false,
+        ratings: false,
+        issues: false,
+        tickets: false,
       });
+      setSummaryStats(null);
       setKitchenTeam(null);
       setPlans(null);
       setOrders(null);
+      setEarnings(null);
+      setTickets(null);
       setDeliveryProfile(undefined);
       setPlannedLeaves(null);
-      setLoadError(null);
-      setLoadingTab(null);
+      setDeliveryRatings(null);
+      setError(null);
     }
   }, [open, person]);
 
-  useEffect(() => {
-    if (!open || !person) return;
-    if (loaded[tab]) return;
+  const loadView = useCallback(async (view: DossierTab) => {
+    if (!person) return;
+    setScreen(view);
+    if (loaded[view]) return;
 
-    let cancelled = false;
-    (async () => {
-      setLoadingTab(tab);
-      setLoadError(null);
-      try {
-        const uid = person.id;
-        if (tab === "kitchens") {
+    setLoading(true);
+    setError(null);
+    try {
+      const uid = person.id;
+      switch (view) {
+        case "kitchens":
           setKitchenTeam(await fetchAdminSupplyChainKitchenTeam(uid));
-        } else if (tab === "plans") {
+          break;
+        case "plans":
           setPlans(await fetchAdminSupplyChainPlanAssignments(uid));
-        } else if (tab === "orders") {
+          break;
+        case "orders":
           setOrders(await fetchAdminSupplyChainOrders(uid));
-        } else if (tab === "profile") {
+          break;
+        case "earnings":
+          setEarnings(await fetchAdminSupplyChainEarnings(uid));
+          break;
+        case "tickets":
+          setTickets(await fetchAdminSupplyChainTickets(uid));
+          break;
+        case "profile":
           setDeliveryProfile(await fetchAdminSupplyChainDeliveryProfile(uid));
-        } else if (tab === "leave") {
+          break;
+        case "leave":
           setPlannedLeaves(await fetchAdminSupplyChainPlannedLeaves(uid));
-        }
-        if (!cancelled) {
-          setLoaded((l) => ({ ...l, [tab]: true }));
-        }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load.";
-        if (!cancelled) {
-          setLoadError({ tab, message: msg });
-          toast.error(msg);
-          setLoaded((l) => ({ ...l, [tab]: true }));
-        }
-      } finally {
-        if (!cancelled) setLoadingTab(null);
+          break;
+        case "ratings":
+        case "issues":
+          setDeliveryRatings(await fetchAdminSupplyChainDeliveryRatings(uid));
+          break;
+        default:
+          break;
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, person, tab, loaded]);
+      setLoaded(prev => ({ ...prev, [view]: true }));
+    } catch (e: any) {
+      setError(e.message || "Failed to load data");
+      toast.error(e.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, [person, loaded]);
+
+  const goHub = () => {
+    setScreen("hub");
+    setError(null);
+  };
+
+  const avgRating = React.useMemo(() => {
+    if (summaryStats) return summaryStats.avg_rating.toFixed(1);
+    if (!deliveryRatings || deliveryRatings.length === 0) return "0.0";
+    const r = deliveryRatings.filter((x) => x.feedback_type === "rating" && x.rating);
+    if (!r.length) return "0.0";
+    return (r.reduce((a, b) => a + (b.rating || 0), 0) / r.length).toFixed(1);
+  }, [deliveryRatings, summaryStats]);
 
   if (!open || !person) return null;
 
   const name = `${person.first_name} ${person.last_name}`.trim();
-  const tabs: { id: DossierTab; label: string; icon: React.ReactNode }[] = [
-    { id: "kitchens", label: "Kitchens", icon: <FiLayers size={14} /> },
-    { id: "plans", label: "Allotted patients", icon: <FiUser size={14} /> },
-    { id: "orders", label: "Orders & pay", icon: <FiShoppingBag size={14} /> },
-    { id: "profile", label: "Questionnaire", icon: <FiFileText size={14} /> },
-    { id: "leave", label: "Planned leave", icon: <FiCalendar size={14} /> },
-  ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-white/10 shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-white/5 flex items-start justify-between gap-4 shrink-0">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
-              Full details — use tabs below
-            </p>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-              {name}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-[2px] overflow-y-auto">
+      <div className="relative w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col rounded-3xl bg-white dark:bg-gray-900 shadow-2xl border border-blue-100 dark:border-gray-800 my-8">
+        
+        <header className="flex-shrink-0 flex items-start justify-between gap-4 border-b border-blue-50/50 dark:border-gray-800 px-6 py-5 bg-gradient-to-r from-blue-50/50 via-white to-indigo-50/30 dark:from-gray-900 dark:to-blue-950/20">
+          <div className="min-w-0">
+            {screen !== "hub" && (
+              <button
+                type="button"
+                onClick={goHub}
+                className="mb-2 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-blue-600 hover:text-blue-800 dark:text-blue-400 transition-colors"
+                aria-label="Back to hub"
+              >
+                <FiArrowLeft className="w-3 h-3" />
+                Back to hub
+              </button>
+            )}
+            <h2 className="text-xl font-black bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent truncate italic tracking-tighter">
+              {screen === "hub" ? "Supply chain hub" : MENU_ITEMS.find(m => m.key === screen)?.title}
             </h2>
-            <p className="text-[10px] text-gray-400 font-semibold mt-1 max-w-lg">
-              Kitchens, allotted patients, orders &amp; payments, delivery questionnaire, and planned leave.
-            </p>
-            <p className="text-xs font-bold text-gray-500 mt-2 flex flex-wrap gap-3">
-              <span className="flex items-center gap-1">
-                <FiMail size={12} /> {person.email}
-              </span>
-              {person.mobile ? (
-                <span className="flex items-center gap-1">
-                  <FiPhone size={12} /> {person.mobile}
-                </span>
-              ) : null}
+            <p className="text-sm text-gray-500 mt-1 truncate font-semibold uppercase tracking-widest text-[10px]">
+              {name} · <span className="text-gray-400 font-mono text-[10px]">USER ID: {person.id}</span>
             </p>
           </div>
           <button
             type="button"
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all"
             onClick={onClose}
-            className="p-3 rounded-2xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
-            aria-label="Close"
           >
-            <FiX size={20} />
+            <FiX className="w-5 h-5 text-gray-400" />
           </button>
-        </div>
+        </header>
 
-        <div className="px-4 pt-3 flex flex-wrap gap-2 border-b border-gray-100 dark:border-white/5 shrink-0">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
-                tab === t.id
-                  ? "bg-amber-600 text-white shadow-lg shadow-amber-600/20"
-                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          {loadingTab === tab ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="size-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs font-black uppercase text-gray-400 tracking-widest italic">
-                Loading…
-              </span>
-            </div>
-          ) : loadError?.tab === tab ? (
-            <p className="text-center text-red-600 dark:text-red-400 text-sm py-12">{loadError.message}</p>
-          ) : (
-            <>
-              {tab === "kitchens" && (
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    Micro kitchens this person is on the delivery team for
+        <div className="flex-1 overflow-y-auto px-6 py-8 bg-gradient-to-b from-blue-50/10 to-white dark:from-gray-900 dark:to-gray-950">
+          {screen === "hub" && (
+            <div className="space-y-10 pb-10">
+              <section>
+                <div className="mb-6">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                    Admin summary views
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500 font-medium">
+                    Open read-only summaries for the supply chain personnel and their delivery performance.
                   </p>
-                  {!kitchenTeam || kitchenTeam.length === 0 ? (
-                    <p className="text-sm text-gray-500">No kitchen team memberships.</p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {kitchenTeam.map((k: KitchenTeamRow) => (
-                        <li
-                          key={k.id}
-                          className="rounded-2xl border border-gray-100 dark:border-white/10 p-4 bg-gray-50/50 dark:bg-white/[0.02]"
-                        >
-                          <div className="font-black text-gray-900 dark:text-white">
-                            {k.micro_kitchen_details?.brand_name ||
-                              k.micro_kitchen_details?.kitchen_code ||
-                              `Kitchen #${k.micro_kitchen_details?.id ?? "?"}`}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Role: {k.role} · Active: {k.is_active ? "Yes" : "No"}
-                            {k.zone_name ? ` · Zone: ${k.zone_name}` : ""}
-                            {k.pincode ? ` · PIN: ${k.pincode}` : ""}
-                          </div>
-                          <div className="text-[10px] text-gray-400 mt-1">
-                            Since {k.assigned_on ? String(k.assigned_on) : "—"}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </div>
-              )}
 
-              {tab === "plans" && (
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    Diet plans where this person delivers (allotted patients)
-                  </p>
-                  {!plans || plans.length === 0 ? (
-                    <p className="text-sm text-gray-500">No plan delivery assignments.</p>
-                  ) : (
-                    <div className="grid gap-3">
-                      {(plans as Record<string, unknown>[]).map((row) => (
-                        <PlanAssignmentCard key={String(row.id)} row={row} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
 
-              {tab === "orders" && (
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    Orders assigned to this delivery person (with payment split snapshot)
-                  </p>
-                  {!orders || orders.length === 0 ? (
-                    <p className="text-sm text-gray-500">No orders assigned yet.</p>
-                  ) : (
-                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-                      <div className="max-w-full overflow-x-auto">
-                        <Table>
-                          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-                            <TableRow>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                #
-                              </TableCell>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                Patient
-                              </TableCell>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                Kitchen
-                              </TableCell>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                Status
-                              </TableCell>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                Final
-                              </TableCell>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                Receipt
-                              </TableCell>
-                              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                Split
-                              </TableCell>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                            {orders.map((o) => (
-                              <TableRow key={o.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                                <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90 font-mono">
-                                  {o.id}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-800 dark:text-white/90">
-                                  {o.patient_label ?? "—"}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 text-start">
-                                  <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium dark:bg-orange-900/30">
-                                    {o.kitchen_brand ?? "—"}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="px-5 py-4 text-start">
-                                  <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium dark:bg-blue-900/30">
-                                    {o.status}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                                  ₹{o.final_amount}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-600 dark:text-gray-400">
-                                  {o.receipt_uploaded ? "Yes" : "—"}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 text-start max-w-[220px]">
-                                  {o.payment_snapshot ? (
-                                    <span className="text-theme-xs leading-tight block text-gray-500 dark:text-gray-400">
-                                      Platform ₹{o.payment_snapshot.platform_amount} / Kitchen ₹
-                                      {o.payment_snapshot.kitchen_amount}
-                                      <br />
-                                      Grand ₹{o.payment_snapshot.grand_total}
-                                    </span>
-                                  ) : (
-                                    "—"
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {MENU_ITEMS.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => loadView(item.key)}
+                      className="group text-left rounded-[32px] border border-gray-100 dark:border-gray-800 p-8 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:border-blue-500 transition-all bg-white dark:bg-gray-900/50 relative overflow-hidden"
+                    >
+                      {/* Watermark Icon */}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity text-blue-600 pointer-events-none">
+                        {React.cloneElement(item.icon as React.ReactElement<any>, { size: 120 })}
                       </div>
+
+                      {/* Small Icon Container */}
+                      <div className="size-9 rounded-full bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform shadow-sm">
+                        {React.cloneElement(item.icon as React.ReactElement<any>, { size: 18 })}
+                      </div>
+
+                      {/* Content */}
+                      <div className="relative z-10">
+                        <div className="font-extrabold text-gray-900 dark:text-white text-xl tracking-tight leading-tight">
+                          {item.title}
+                        </div>
+                        <div className="text-sm text-gray-400 dark:text-gray-500 mt-2 font-medium italic leading-relaxed">
+                          {item.description}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {screen !== "hub" && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {loading && (
+                <div className="py-20 flex flex-col items-center justify-center gap-4">
+                  <div className="size-12 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
+                  <span className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] italic">Gathering records…</span>
+                </div>
+              )}
+
+              {!loading && error && (
+                <div className="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900 px-6 py-4 text-sm text-red-600 dark:text-red-400 font-bold uppercase tracking-widest text-center italic">
+                  Oops! {error}
+                </div>
+              )}
+
+              {!loading && !error && (
+                <>
+                  {screen === "kitchens" && (
+                    <div className="space-y-4">
+                      {!kitchenTeam || kitchenTeam.length === 0 ? (
+                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No kitchen team memberships found.</p>
+                      ) : (
+                        <ul className="grid gap-4">
+                          {kitchenTeam.map((k: KitchenTeamRow) => (
+                            <li key={k.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm hover:shadow-md transition-shadow">
+                              <div className="font-black text-gray-900 dark:text-white text-lg uppercase tracking-tight italic">
+                                {k.micro_kitchen_details?.brand_name || k.micro_kitchen_details?.kitchen_code || `Kitchen #${k.micro_kitchen_details?.id ?? "?"}`}
+                              </div>
+                              <div className="flex flex-wrap gap-4 mt-3">
+                                 <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Role: {k.role}</span>
+                                 <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${k.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'}`}>Status: {k.is_active ? 'Active' : 'Inactive'}</span>
+                                 {k.zone_name && <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Zone: {k.zone_name}</span>}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
 
-              {tab === "profile" && (
-                <div>
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4">
-                    Delivery questionnaire &amp; KYC (same as supply-chain profile form)
-                  </p>
-                  <DeliveryProfilePanel profile={deliveryProfile ?? null} />
-                </div>
-              )}
-
-              {tab === "leave" && (
-                <div className="space-y-3">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    Planned time off
-                  </p>
-                  {!plannedLeaves || plannedLeaves.length === 0 ? (
-                    <p className="text-sm text-gray-500">No leave records.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {(plannedLeaves as Record<string, unknown>[]).map((L) => (
-                        <li
-                          key={String(L.id)}
-                          className="rounded-xl border border-gray-100 dark:border-white/10 p-3 text-sm"
-                        >
-                          <span className="font-bold">{String(L.start_date)} → {String(L.end_date)}</span>
-                          <span className="text-gray-500 text-xs ml-2">
-                            ({String(L.leave_type)})
-                          </span>
-                          {L.notes ? (
-                            <p className="text-xs text-gray-500 mt-1">{String(L.notes)}</p>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
+                  {screen === "plans" && (
+                    <div className="space-y-4">
+                      {!plans || plans.length === 0 ? (
+                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No plan delivery assignments found.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {(plans as Record<string, unknown>[]).map((row) => (
+                            <PlanAssignmentCard key={String(row.id)} row={row} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
-                </div>
+
+                  {screen === "orders" && (
+                    <div className="space-y-4">
+                      {!orders || orders.length === 0 ? (
+                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No orders assigned to this person yet.</p>
+                      ) : (
+                        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+                          <Table>
+                            <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
+                              <TableRow>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Order ID</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient & Kitchen</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Amount</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Status</TableCell>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                              {orders.map((o) => (
+                                <TableRow key={o.id} className="hover:bg-blue-50/20 transition-colors">
+                                  <TableCell className="px-6 py-5 text-theme-sm font-black text-blue-600 italic tracking-tighter">#{o.id}</TableCell>
+                                  <TableCell className="px-6 py-5">
+                                    <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{o.patient_label || "—"}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest italic">{o.kitchen_brand || "—"}</p>
+                                  </TableCell>
+                                  <TableCell className="px-6 py-5 text-theme-sm font-black tracking-tighter">₹{o.final_amount}</TableCell>
+                                  <TableCell className="px-6 py-5">
+                                    <span className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest">
+                                      {o.status}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {screen === "earnings" && <EarningsPanel earnings={earnings} />}
+
+                  {screen === "profile" && <DeliveryProfilePanel profile={deliveryProfile ?? null} />}
+
+                  {screen === "leave" && (
+                    <div className="space-y-4">
+                      {!plannedLeaves || plannedLeaves.length === 0 ? (
+                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No time-off records found.</p>
+                      ) : (
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           {(plannedLeaves as Record<string, unknown>[]).map((L) => (
+                            <li key={String(L.id)} className="rounded-3xl border border-gray-100 dark:border-white/10 p-5 bg-white dark:bg-white/[0.02] shadow-sm">
+                              <div className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">{String(L.leave_type)}</div>
+                              <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic text-lg">{String(L.start_date)} → {String(L.end_date)}</div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
+                  {screen === "ratings" && (
+                    <div className="space-y-4">
+                      {!deliveryRatings || deliveryRatings.length === 0 ? (
+                        <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No feedback records found yet.</p>
+                      ) : (
+                        <div className="space-y-4">
+                           <div className="p-6 rounded-[32px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 flex items-center justify-between">
+                              <div>
+                                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Lifetime Rating</p>
+                                 <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter italic italic mt-1">{avgRating} out of 5</p>
+                              </div>
+                              <FiStar className="size-10 text-amber-500 fill-amber-500 opacity-20" />
+                           </div>
+                           <ul className="space-y-4">
+                            {deliveryRatings.map((fb) => (
+                              <li key={fb.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white shadow-sm">
+                                 <div className="flex justify-between items-center mb-4">
+                                    <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                                      fb.feedback_type === 'rating' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
+                                    }`}>
+                                      {fb.feedback_type}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{new Date(fb.created_at).toLocaleDateString()}</span>
+                                 </div>
+                                 {fb.rating && (
+                                   <div className="flex gap-1 mb-3">
+                                     {Array.from({length: 5}).map((_, i) => (
+                                       <FiStar key={i} size={18} className={i < (fb.rating||0) ? "text-amber-400 fill-amber-400" : "text-gray-200"} />
+                                     ))}
+                                   </div>
+                                 )}
+                                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 italic leading-relaxed">"{fb.review || fb.description || "No comment provided."}"</p>
+                                 {fb.reported_by_details && (
+                                   <div className="mt-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">— {fb.reported_by_details.first_name} {fb.reported_by_details.last_name || ""}</div>
+                                 )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {screen === "tickets" && <TicketsPanel tickets={tickets} />}
+                </>
               )}
-            </>
+            </div>
           )}
         </div>
+
+        <footer className="footer-glow h-20 px-8 flex items-center justify-end border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 shrink-0">
+          <button
+            onClick={onClose}
+            className="px-8 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all hover:bg-gray-100 dark:hover:bg-white/5 active:scale-95 border border-transparent hover:border-gray-200"
+          >
+            Dismiss
+          </button>
+        </footer>
       </div>
     </div>
   );
@@ -535,7 +771,6 @@ const SupplyChainOverViewPage: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<SupplyChainRow | null>(null);
-  const [modalTab, setModalTab] = useState<DossierTab>("kitchens");
 
   const fetchList = useCallback(async (page: number, search: string, lim: number) => {
     setLoading(true);
@@ -558,7 +793,6 @@ const SupplyChainOverViewPage: React.FC = () => {
 
   const openDetails = (person: SupplyChainRow) => {
     setSelected(person);
-    setModalTab("kitchens");
     setModalOpen(true);
   };
 
@@ -751,7 +985,6 @@ const SupplyChainOverViewPage: React.FC = () => {
       <SupplyChainDossierModal
         person={selected}
         open={modalOpen}
-        initialTab={modalTab}
         onClose={() => {
           setModalOpen(false);
           setSelected(null);

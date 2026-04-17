@@ -3914,7 +3914,7 @@ class SupportTicketSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["created_by", "created_at", "updated_at"]
+        read_only_fields = ["created_by", "user_type", "created_at", "updated_at"]
 
 
 class TicketMessageSerializer(serializers.ModelSerializer):

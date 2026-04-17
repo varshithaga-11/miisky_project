@@ -41,6 +41,21 @@ router.register(
     AdminSupplyChainPlannedLeavesViewSet,
     basename='admin-supply-chain-planned-leaves',
 )
+router.register(
+    r'admin-supply-chain-delivery-ratings',
+    AdminSupplyChainDeliveryRatingsViewSet,
+    basename='admin-supply-chain-delivery-ratings',
+)
+router.register(
+    r'admin-supply-chain-earnings',
+    AdminSupplyChainEarningsViewSet,
+    basename='admin-supply-chain-earnings',
+)
+router.register(
+    r'admin-supply-chain-tickets',
+    AdminSupplyChainTicketsViewSet,
+    basename='admin-supply-chain-tickets',
+)
 router.register(r'micro-kitchen-patients', MicroKitchenPatientsViewSet, basename='micro-kitchen-patients')
 router.register(
     r'micro-kitchen-global-delivery-assignments',
@@ -192,7 +207,47 @@ urlpatterns = [
         SupplyChainAssignedOrdersViewSet.as_view({"get": "retrieve"}),
         name="supply-chain-assigned-orders-detail",
     ),
-    path('', include(router.urls)),
+    path(
+        "admin-supply-chain-hub-summary/",
+        views.AdminSupplyChainHubSummaryView.as_view(),
+        name="admin-supply-chain-hub-summary",
+    ),
+    path(
+        "admin-supply-chain-kitchen-team-nopaginate/",
+        views.AdminSupplyChainKitchenTeamNoPaginationView.as_view(),
+        name="admin-supply-chain-kitchen-team-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-plan-assignments-nopaginate/",
+        views.AdminSupplyChainPlanAssignmentsNoPaginationView.as_view(),
+        name="admin-supply-chain-plan-assignments-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-orders-nopaginate/",
+        views.AdminSupplyChainOrdersNoPaginationView.as_view(),
+        name="admin-supply-chain-orders-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-planned-leaves-nopaginate/",
+        views.AdminSupplyChainPlannedLeavesNoPaginationView.as_view(),
+        name="admin-supply-chain-planned-leaves-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-delivery-ratings-nopaginate/",
+        views.AdminSupplyChainDeliveryRatingsNoPaginationView.as_view(),
+        name="admin-supply-chain-delivery-ratings-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-earnings-nopaginate/",
+        views.AdminSupplyChainEarningsNoPaginationView.as_view(),
+        name="admin-supply-chain-earnings-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-tickets-nopaginate/",
+        views.AdminSupplyChainTicketsNoPaginationView.as_view(),
+        name="admin-supply-chain-tickets-nopaginate",
+    ),
+    path("", include(router.urls)),
     path("current-user/", CurrentUserView.as_view(), name="current-user"),
     path("updateusernamepassword/", UserUpdateView.as_view(), name="updateusernamepassword"),
     path('sendotp/', SendOtpView.as_view(),name='sendotp'),
@@ -213,6 +268,11 @@ urlpatterns = [
         "admin-microkitchen-inspections-nopaginate/",
         views.AdminMicroKitchenInspectionsNoPaginationView.as_view(),
         name="admin-microkitchen-inspections-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-delivery-ratings-nopaginate/",
+        views.AdminMicroKitchenDeliveryRatingsNoPaginationView.as_view(),
+        name="admin-microkitchen-delivery-ratings-nopaginate",
     ),
     path(
         "admin-microkitchen-reviews-nopaginate/",

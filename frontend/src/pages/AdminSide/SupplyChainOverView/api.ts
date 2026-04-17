@@ -77,17 +77,28 @@ async function getJson<T>(path: string, userId: number): Promise<T> {
   }
 }
 
-/** GET api/admin-supply-chain-kitchen-team/?user= */
+/** GET api/admin-supply-chain-hub-summary/?user= */
+export const fetchAdminSupplyChainHubSummary = (userId: number) =>
+  getJson<{
+    kitchen_count: number;
+    plan_count: number;
+    order_count: number;
+    total_earnings: string;
+    avg_rating: number;
+    ticket_count: number;
+  }>("api/admin-supply-chain-hub-summary/", userId);
+
+/** GET api/admin-supply-chain-kitchen-team-nopaginate/?user= */
 export const fetchAdminSupplyChainKitchenTeam = (userId: number) =>
-  getJson<KitchenTeamRow[]>("api/admin-supply-chain-kitchen-team/", userId);
+  getJson<KitchenTeamRow[]>("api/admin-supply-chain-kitchen-team-nopaginate/", userId);
 
-/** GET api/admin-supply-chain-plan-assignments/?user= */
+/** GET api/admin-supply-chain-plan-assignments-nopaginate/?user= */
 export const fetchAdminSupplyChainPlanAssignments = (userId: number) =>
-  getJson<unknown[]>("api/admin-supply-chain-plan-assignments/", userId);
+  getJson<unknown[]>("api/admin-supply-chain-plan-assignments-nopaginate/", userId);
 
-/** GET api/admin-supply-chain-orders/?user= */
+/** GET api/admin-supply-chain-orders-nopaginate/?user= */
 export const fetchAdminSupplyChainOrders = (userId: number) =>
-  getJson<AdminSupplyChainOrderRow[]>("api/admin-supply-chain-orders/", userId);
+  getJson<AdminSupplyChainOrderRow[]>("api/admin-supply-chain-orders-nopaginate/", userId);
 
 /** GET api/admin-supply-chain-delivery-profile/?user= */
 export const fetchAdminSupplyChainDeliveryProfile = async (
@@ -100,6 +111,55 @@ export const fetchAdminSupplyChainDeliveryProfile = async (
   return data.delivery_profile ?? null;
 };
 
-/** GET api/admin-supply-chain-planned-leaves/?user= */
+/** GET api/admin-supply-chain-planned-leaves-nopaginate/?user= */
 export const fetchAdminSupplyChainPlannedLeaves = (userId: number) =>
-  getJson<unknown[]>("api/admin-supply-chain-planned-leaves/", userId);
+  getJson<unknown[]>("api/admin-supply-chain-planned-leaves-nopaginate/", userId);
+
+export type DeliveryFeedbackRow = {
+  id: number;
+  feedback_type: "issue" | "rating";
+  rating: number | null;
+  review: string | null;
+  issue_type: string | null;
+  description: string | null;
+  resolved: boolean;
+  resolved_at: string | null;
+  created_at: string;
+  order: number | null;
+  user_meal: number | null;
+  reported_by_details: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username: string;
+  } | null;
+  order_details: {
+    id: number;
+    status: string;
+    order_type: string;
+    delivery_person: number | null;
+  } | null;
+  user_meal_details: {
+    id: number;
+    meal_date: string;
+    status: string;
+  } | null;
+};
+
+/** GET api/admin-supply-chain-delivery-ratings-nopaginate/?user= */
+export const fetchAdminSupplyChainDeliveryRatings = (userId: number) =>
+  getJson<DeliveryFeedbackRow[]>("api/admin-supply-chain-delivery-ratings-nopaginate/", userId);
+
+export type AdminSupplyChainEarningsResp = {
+  results: any[];
+  total_orders: number;
+  total_delivery_earnings: string;
+};
+
+/** GET api/admin-supply-chain-earnings-nopaginate/?user= */
+export const fetchAdminSupplyChainEarnings = (userId: number) =>
+  getJson<AdminSupplyChainEarningsResp>("api/admin-supply-chain-earnings-nopaginate/", userId);
+
+/** GET api/admin-supply-chain-tickets-nopaginate/?user= */
+export const fetchAdminSupplyChainTickets = (userId: number) =>
+  getJson<any[]>("api/admin-supply-chain-tickets-nopaginate/", userId);

@@ -30,6 +30,7 @@ import {
   getMicroKitchenPayoutsNoPagination,
   getMicroKitchenAllottedPlanPayouts,
   getMicroKitchenPlannedLeavesNoPagination,
+  getMicroKitchenDeliveryRatings,
   MicroKitchenProfile,
 } from "./api";
 import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
@@ -49,6 +50,7 @@ import {
   DisplayKitchenPlannedLeaves,
   DisplayKitchenTickets,
   DisplayKitchenPayouts,
+  DisplayKitchenDeliveryRatings,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
@@ -66,6 +68,7 @@ export type KitchenDataView =
   | "delivery_profiles"
   | "payouts"
   | "allotted_plan_payouts"
+  | "delivery_ratings"
   | "foods"
   | "tickets";
 
@@ -84,6 +87,7 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   delivery_profiles: "Delivery Profiles",
   payouts: "Partner Payouts & Transfers",
   allotted_plan_payouts: "Allotted diet plan payouts",
+  delivery_ratings: "Staff Delivery Ratings",
   foods: "Food Available (Menu)",
   tickets: "Kitchen Support Tickets",
 };
@@ -103,6 +107,7 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "delivery_profiles", description: "KYC and vehicle details of linked delivery staff", icon: <FiMapPin /> },
   { key: "payouts", description: "Earnings & patient billing trackers", icon: <FiPackage /> },
   { key: "allotted_plan_payouts", description: "Kitchen share from verified plan payments (allotted patients)", icon: <FiPieChart /> },
+  { key: "delivery_ratings", description: "Delivery feedback and ratings for orders from this kitchen", icon: <FiStar /> },
   { key: "foods", description: "Menu items currently provided by the kitchen", icon: <FiMenu /> },
   { key: "tickets", description: "Technical and operational support requests", icon: <FiClipboard /> },
 ];
@@ -213,6 +218,9 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "payouts":
             setPayload(await getMicroKitchenPayoutsNoPagination(id));
+            break;
+          case "delivery_ratings":
+            setPayload(await getMicroKitchenDeliveryRatings(id));
             break;
           case "delivery":
             setPayload(await getMicroKitchenDeliverySlabs(id));
@@ -390,6 +398,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                         />
                       )}
                       {screen === "payouts" && <DisplayKitchenPayouts items={payload} />}
+                      {screen === "delivery_ratings" && <DisplayKitchenDeliveryRatings items={payload} />}
                     </>
                   )}
                 </>

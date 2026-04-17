@@ -2442,6 +2442,7 @@ class SupportTicket(models.Model):
         ('kitchen', 'Kitchen'),
         ('doctor', 'Doctor'),
         ('non_patient', 'Non Patient'),
+        ('supply_chain', 'Supply Chain'),
     ]
 
     TARGET_USER_TYPE_CHOICES = [
@@ -2449,6 +2450,7 @@ class SupportTicket(models.Model):
         ('nutritionist', 'Account Nutritionist'),
         ('kitchen', 'Account Kitchen'),
         ('doctor', 'Account Doctor'),
+        ('supply_chain', 'Account Supply Chain'),
     ]
 
     created_by = models.ForeignKey(
