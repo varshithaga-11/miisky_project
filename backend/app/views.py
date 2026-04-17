@@ -2830,6 +2830,11 @@ class PatientNutritionMappingSummaryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Unified, paginated view for both mapped and unmapped patients.
     Supports server-side filtering by status, nutritionist, and search.
+
+    Query params:
+    - ``page``: page number (1-based).
+    - ``limit``: page size (default 10, max 500); same as global ``Pagination``.
+    - ``search``, ``mapping_status`` (mapped|unmapped), ``nutritionist_id``, ``allotted_by``.
     """
     permission_classes = [IsAuthenticated]
     serializer_class = PatientNutritionMappingSummarySerializer

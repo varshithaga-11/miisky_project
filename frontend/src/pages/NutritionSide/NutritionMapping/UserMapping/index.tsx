@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../../components/common/PageMeta";
@@ -20,7 +20,9 @@ import ReassignNutrition from "./ReassignNutrition";
 const UserNutritionMappingPage: React.FC = () => {
   const [records, setRecords] = useState<MappingRecord[]>([]);
   const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   // Data for dependencies/dropdowns
   const [unmappedPatients, setUnmappedPatients] = useState<SimpleUser[]>([]);
@@ -50,15 +52,17 @@ const UserNutritionMappingPage: React.FC = () => {
     try {
       const params = {
         page: currentPage,
+        limit: pageSize,
         search: debouncedSearch,
         mapping_status: mappingStatus !== "all" ? mappingStatus : undefined,
         nutritionist_id: selectedNutritionistId !== "all" ? selectedNutritionistId : undefined,
-        allotted_by: allotmentFilter || undefined
+        allotted_by: allotmentFilter || undefined,
       };
-      
+
       const res = await getMappingSummary(params);
       setRecords(res.results);
       setCount(res.count);
+      setTotalPages(res.total_pages ?? Math.max(1, Math.ceil(res.count / pageSize)));
     } catch (err) {
       console.error(err);
       toast.error("Failed to load mapping records");
@@ -87,12 +91,12 @@ const UserNutritionMappingPage: React.FC = () => {
     fetchAuxiliaryData();
   }, []);
 
-  // Fetch summary records when filters or page changes
+  // Fetch summary records when filters, page size, or page changes
   useEffect(() => {
     fetchData();
-  }, [currentPage, debouncedSearch, mappingStatus, selectedNutritionistId, allotmentFilter]);
+  }, [currentPage, pageSize, debouncedSearch, mappingStatus, selectedNutritionistId, allotmentFilter]);
 
-  // Reset page to 1 when filters change
+  // Reset page to 1 when filters change (page size resets page in its select handler)
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, mappingStatus, selectedNutritionistId, allotmentFilter]);
@@ -179,8 +183,31 @@ const UserNutritionMappingPage: React.FC = () => {
 
         <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500 dark:text-gray-400 px-1">
           <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
-            Total Results: {count}
+            Total: {count}
+            {count > 0 && (
+              <span className="text-gray-400 dark:text-gray-500">
+                {" "}
+                · Page {currentPage} of {Math.max(1, totalPages)} · {pageSize} per page
+              </span>
+            )}
           </span>
+          <label className="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
+            <span className="text-gray-600 dark:text-gray-300">Rows per page</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 px-1.5 py-0.5 text-gray-800 dark:text-white"
+            >
+              {[10, 25, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
           {(searchTerm || allotmentFilter || mappingStatus !== "all" || selectedNutritionistId !== "all") && (
             <button 
               onClick={() => { 
@@ -226,7 +253,7 @@ const UserNutritionMappingPage: React.FC = () => {
                   records.map((r, idx) => (
                     <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                       <TableCell className="px-5 py-4 text-xs text-gray-500">
-                        {(currentPage - 1) * 10 + idx + 1}
+                        {(currentPage - 1) * pageSize + idx + 1}
                       </TableCell>
                       <TableCell className="px-5 py-4">
                         <div className="flex flex-col">
@@ -252,30 +279,32 @@ const UserNutritionMappingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Pagination Controls */}
-        {!loading && count > 10 && (
-          <div className="mt-6 flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
+        {/* Pagination */}
+        {!loading && count > 0 && totalPages > 1 && (
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-1">
+            <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm disabled:opacity-50 hover:bg-gray-50 transition-colors dark:text-gray-300"
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 Previous
               </button>
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2">
-                 Page {currentPage} of {Math.ceil(count / 10)}
+                Page {currentPage} of {totalPages}
               </span>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(Math.ceil(count / 10), prev + 1))}
-                disabled={currentPage === Math.ceil(count / 10)}
-                className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm disabled:opacity-50 hover:bg-gray-50 transition-colors dark:text-gray-300"
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 Next
               </button>
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-               Showing {(currentPage - 1) * 10 + 1} - {Math.min(currentPage * 10, count)} of {count}
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, count)} of {count} (limit {pageSize})
             </div>
           </div>
         )}

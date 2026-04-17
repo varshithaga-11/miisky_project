@@ -125,7 +125,8 @@ export type MappingRecord = {
 
 export type MappingSummaryParams = {
   page?: number;
-  page_size?: number;
+  /** Page size; sent as `limit` (matches backend `Pagination.page_size_query_param`). */
+  limit?: number;
   mapping_status?: string;
   nutritionist_id?: string;
   allotted_by?: string;
@@ -136,7 +137,7 @@ export const getMappingSummary = async (params: MappingSummaryParams): Promise<P
   const url = createApiUrl("api/patient-nutrition-mapping-summary/");
   const response = await axios.get<PaginatedResponses<MappingRecord>>(url, {
     headers: await getAuthHeaders(),
-    params
+    params,
   });
   return response.data;
 };
