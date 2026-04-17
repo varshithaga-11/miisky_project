@@ -16,6 +16,7 @@ import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { importFile, downloadTemplate } from "../../services/importService";
 import { Table, TableHeader, TableRow, TableCell, TableBody } from "../ui/table";
+import { getUserRoleFromToken } from "../../utils/auth";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const userRole = getUserRoleFromToken();
+  const isAdmin = userRole === "admin" || userRole === "master";
 
   if (!isOpen) return null;
 
@@ -113,7 +116,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     try {
       const response = await importFile(module, submenu, excelFile!, 'submit');
       if (response.success) {
-        toast.success(`Successfully imported ${response.created || excelData.length} records!`);
+        toast.success(isAdmin ? `Successfully imported ${response.created || excelData.length} records!` : "Sent for approval");
         if (onSuccess) onSuccess();
         closeModal();
       } else {

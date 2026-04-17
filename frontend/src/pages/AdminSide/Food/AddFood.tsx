@@ -4,6 +4,8 @@ import { getMealTypeList, MealType } from "../MealType/mealtypeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import { getUserRoleFromToken } from "../../../utils/auth";
+import { FiInfo } from "react-icons/fi";
 import MultiSelect from "../../../components/form/MultiSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,6 +25,8 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   const [image, setImage] = useState<File | null>(null);
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
+  const userRole = getUserRoleFromToken();
+  const isAdmin = userRole === "admin" || userRole === "master";
   const [mealOptionsLoaded, setMealOptionsLoaded] = useState(false);
   const [cuisineOptionsLoaded, setCuisineOptionsLoaded] = useState(false);
   const fetchingMealsRef = useRef(false);
@@ -114,7 +118,7 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
         food: createdFood.id,
       });
 
-      toast.success("Food item and nutrition details created successfully!");
+      toast.success(isAdmin ? "Food item and nutrition details created successfully!" : "Sent for approval");
       setTimeout(() => {
         onAdd(createdFood);
         onClose();
@@ -158,6 +162,13 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-5xl relative max-h-[95vh] overflow-y-auto mt-5">
         <button onClick={onClose} className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-4xl font-bold">×</button>
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b pb-2">Add Food & Detailed Nutrition</h2>
+
+        {!isAdmin && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-3 text-sm text-amber-700 dark:text-amber-400">
+            <FiInfo className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <p>Please don't repeat same word it may cause problems.</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

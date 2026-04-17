@@ -5,6 +5,8 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getUserRoleFromToken } from "../../../utils/auth";
+import { FiInfo } from "react-icons/fi";
 
 interface AddCuisineTypeProps {
   onClose: () => void;
@@ -14,6 +16,8 @@ interface AddCuisineTypeProps {
 const AddCuisineType: React.FC<AddCuisineTypeProps> = ({ onClose, onAdd }) => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const userRole = getUserRoleFromToken();
+  const isAdmin = userRole === "admin" || userRole === "master";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +29,7 @@ const AddCuisineType: React.FC<AddCuisineTypeProps> = ({ onClose, onAdd }) => {
     setLoading(true);
     try {
       const resp = await createCuisineType({ name: name.trim() });
-      toast.success("Cuisine type created successfully!");
+      toast.success(isAdmin ? "Cuisine type added successfully!" : "Sent for approval");
       setTimeout(() => {
         onAdd(resp);
         onClose();
@@ -42,7 +46,14 @@ const AddCuisineType: React.FC<AddCuisineTypeProps> = ({ onClose, onAdd }) => {
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative">
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Add New Cuisine Type</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Add Cuisine Type</h2>
+        
+        {!isAdmin && (
+          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+            <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <p>Please don't repeat same word it may cause problems.</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

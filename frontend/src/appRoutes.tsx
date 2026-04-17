@@ -395,6 +395,14 @@ export function appRoutes() {
           <Route path="nutrition/availability-calendar" element={<AvailabilityCalendar />} />
           <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
           <Route path="nutrition/nutrition-mapping/user-mapping" element={<NutritionUserMappingPage />} />
+          
+          {/* Nutritionist Food Management */}
+          <Route path="nutrition/meal-type" element={<MealTypeManagementPage />} />
+          <Route path="nutrition/cuisine-type" element={<CuisineTypeManagementPage />} />
+          <Route path="nutrition/food-management" element={<FoodManagementPage />} />
+          <Route path="nutrition/unit" element={<UnitManagementPage />} />
+          <Route path="nutrition/ingredient" element={<IngredientManagementPage />} />
+          <Route path="nutrition/recipe-management" element={<RecipeManagementPage />} />
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/delivery-feedback" element={<MicroKitchenDeliveryFeedbackPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />

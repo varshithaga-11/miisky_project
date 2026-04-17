@@ -54,6 +54,14 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onSuccess }) => {
       '/admin/skin-issue-master': { module: 'questionnaire', submenu: 'skin-issue' },
       '/admin/habit-master': { module: 'questionnaire', submenu: 'habit' },
       '/admin/activity-master': { module: 'questionnaire', submenu: 'activity' },
+      
+      // Nutritionist paths
+      '/nutrition/meal-type': { module: 'food', submenu: 'meal-type' },
+      '/nutrition/cuisine-type': { module: 'food', submenu: 'cuisine-type' },
+      '/nutrition/food-management': { module: 'food', submenu: 'food' },
+      '/nutrition/ingredient': { module: 'food', submenu: 'ingredient' },
+      '/nutrition/unit': { module: 'food', submenu: 'unit' },
+      '/nutrition/recipe-management': { module: 'food', submenu: 'recipe' },
     };
 
     // Find a matching path

@@ -7,7 +7,8 @@ import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from 'react-toastify';
-import { FiPlus, FiTrash2, FiSave, FiList, FiBox } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiSave, FiList, FiBox, FiInfo } from "react-icons/fi";
+import { getUserRoleFromToken } from "../../../utils/auth";
 
 interface AddRecipeModalProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
     ]);
     
     const [loading, setLoading] = useState(false);
+    const userRole = getUserRoleFromToken();
+    const isAdmin = userRole === "admin" || userRole === "master";
     
     const [foodsLoaded, setFoodsLoaded] = useState(false);
     const [ingredientsLoaded, setIngredientsLoaded] = useState(false);
@@ -139,7 +142,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
                     instruction: s.instruction
                 }))
             });
-            toast.success("Recipe saved!");
+            toast.success(isAdmin ? "Recipe saved!" : "Sent for approval");
             setTimeout(() => {
                 onSuccess();
             }, 1000);
@@ -162,6 +165,13 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, onSucc
                         <FiPlus className="text-blue-500" />
                         Create Full Recipe
                     </h2>
+
+                    {!isAdmin && (
+                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-3 text-sm text-amber-700 dark:text-amber-400">
+                            <FiInfo className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                            <p>Please don't repeat same word it may cause problems.</p>
+                        </div>
+                    )}
 
                     <div className="space-y-8">
                         {/* Food Selection */}

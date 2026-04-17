@@ -14,6 +14,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
+import { getUserRoleFromToken } from "../../../utils/auth";
 
 const CuisineTypePage: React.FC = () => {
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
@@ -32,6 +33,8 @@ const CuisineTypePage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
+  const userRole = getUserRoleFromToken();
+  const isAdmin = userRole === "admin" || userRole === "master";
 
   useEffect(() => {
     fetchCuisines();
@@ -165,10 +168,10 @@ const CuisineTypePage: React.FC = () => {
       </div>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-          <FiInfo className="w-4 h-4" />
-          <span>Before approving, please re-check if any data is repeated to avoid issues.</span>
-        </div>
+          <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+            <FiInfo className="w-4 h-4" />
+            <span>{isAdmin ? "Before approving, please re-check if any data is repeated to avoid issues." : "Please don't repeat same word it may cause problems."}</span>
+          </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">
            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
         </div>
@@ -181,7 +184,7 @@ const CuisineTypePage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Name</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Approved</TableCell>
+                {isAdmin && <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Approved</TableCell>}
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-end">Actions</TableCell>
               </TableRow>
             </TableHeader>
@@ -195,38 +198,40 @@ const CuisineTypePage: React.FC = () => {
                       <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                           <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
                           <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{item.name}</TableCell>
-                          <TableCell className="px-5 py-4">
-                              {item.is_approved ? (
-                                <button
-                                  onClick={() => handleApprovalClick(item.id!, true)}
-                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                  title="Click to disapprove"
-                                >
-                                  <FiCheck size={12} /> Approved
-                                </button>
-                              ) : item.is_rejected ? (
-                                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
-                                    <FiX size={12} /> Rejected
-                                  </span>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => handleApprovalClick(item.id!, false)}
-                                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                      title="Click to approve"
-                                    >
-                                      <FiCheck size={12} /> Accept
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectClick(item.id!)}
-                                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-                                      title="Click to reject"
-                                    >
-                                      <FiX size={12} /> Reject
-                                    </button>
-                                  </div>
-                                )}
-                          </TableCell>
+                          {isAdmin && (
+                            <TableCell className="px-5 py-4">
+                                {item.is_approved ? (
+                                  <button
+                                    onClick={() => handleApprovalClick(item.id!, true)}
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                                    title="Click to disapprove"
+                                  >
+                                    <FiCheck size={12} /> Approved
+                                  </button>
+                                ) : item.is_rejected ? (
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                                      <FiX size={12} /> Rejected
+                                    </span>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleApprovalClick(item.id!, false)}
+                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                                        title="Click to approve"
+                                      >
+                                        <FiCheck size={12} /> Accept
+                                      </button>
+                                      <button
+                                        onClick={() => handleRejectClick(item.id!)}
+                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                                        title="Click to reject"
+                                      >
+                                        <FiX size={12} /> Reject
+                                      </button>
+                                    </div>
+                                  )}
+                            </TableCell>
+                          )}
                           <TableCell className="px-5 py-4">
                               <div className="flex justify-end gap-3">
                                   <button 

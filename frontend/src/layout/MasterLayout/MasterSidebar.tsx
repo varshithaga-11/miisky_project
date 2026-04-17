@@ -356,6 +356,18 @@ const nutritionistNavItems: NavItem[] = [
     ],
   },
   {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Food Management",
+    subItems: [
+      { name: "Meal Type", path: "/nutrition/meal-type" },
+      { name: "Cuisine Type", path: "/nutrition/cuisine-type" },
+      { name: "Foods", path: "/nutrition/food-management" },
+      { name: "Units", path: "/nutrition/unit" },
+      { name: "Ingredients", path: "/nutrition/ingredient" },
+      { name: "Recipe Management", path: "/nutrition/recipe-management" },
+    ],
+  },
+  {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",
