@@ -49,6 +49,7 @@ class UserRegister(AbstractUser):
 
     ROLE_CHOICES = [
         ('admin', 'Admin'),
+        ('master', 'Master'),
         ('nutritionist', 'Nutritionist/Dietician'),
         ('patient', 'Patient'),
         ('supply_chain', 'Supply Chain'),

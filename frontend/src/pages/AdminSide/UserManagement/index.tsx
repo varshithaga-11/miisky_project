@@ -55,6 +55,7 @@ const UserManagementPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<
     | "all"
     | "admin"
+    | "master"
     | "nutritionist"
     | "patient"
     | "supply_chain"
@@ -246,6 +247,7 @@ const UserManagementPage: React.FC = () => {
                   options={[
                     { value: "all", label: "All" },
                     { value: "admin", label: "Admin" },
+                    { value: "master", label: "Master" },
                     { value: "nutritionist", label: "Nutritionist/Dietician" },
                     { value: "patient", label: "Patient" },
                     { value: "supply_chain", label: "Supply Chain" },
