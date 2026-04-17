@@ -31,14 +31,14 @@ DEBUG = True
 #     for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 #     if h.strip()
 # ]
-
 ALLOWED_HOSTS = [
+    "18.190.152.118",
+    "localhost",
+    "127.0.0.1",
     "testingmiisky.com",
     "www.testingmiisky.com",
     "backend.testingmiisky.com",
-    '18.190.152.118', 'localhost', '127.0.0.1'
 ]
-
 
 
 AUTH_USER_MODEL = 'app.UserRegister'
