@@ -922,6 +922,227 @@ class SupplyChainOrderDeliveryReceiptUpsertView(APIView):
         return Response(data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
+class MicroKitchenSupplyChainPayoutListCreateView(generics.ListCreateAPIView):
+    """
+    Micro-kitchen portal:
+    - GET paginated payout rows paid/owed to supply-chain team
+    - POST create payout row
+    """
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = MicroKitchenSupplyChainPayoutSerializer
+
+    def _micro_kitchen(self):
+        if getattr(self.request.user, "role", None) != "micro_kitchen":
+            raise PermissionDenied("Only micro kitchen users can access this endpoint.")
+        mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+        if not mk:
+            raise ValidationError("Micro kitchen profile not found.")
+        return mk
+
+    def get_queryset(self):
+        mk = self._micro_kitchen()
+        qs = (
+            MicroKitchenSupplyChainPayout.objects.filter(micro_kitchen=mk)
+            .select_related("delivery_person", "patient", "user_diet_plan__diet_plan", "paid_by")
+            .order_by("-created_at")
+        )
+        patient_id = (self.request.query_params.get("patient_id") or "").strip()
+        if patient_id.isdigit():
+            qs = qs.filter(patient_id=int(patient_id))
+
+        delivery_person_id = (self.request.query_params.get("delivery_person_id") or "").strip()
+        if delivery_person_id.isdigit():
+            qs = qs.filter(delivery_person_id=int(delivery_person_id))
+
+        status_param = (self.request.query_params.get("status") or "").strip().lower()
+        if status_param in ("pending", "paid"):
+            qs = qs.filter(status=status_param)
+
+        period = (self.request.query_params.get("period") or "all").strip()
+        if period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = self.request.query_params.get("start_date")
+            end_date = self.request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except Exception:
+                pass
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if search.isdigit():
+                qs = qs.filter(Q(id=int(search)) | Q(user_diet_plan_id=int(search)))
+            else:
+                qs = qs.filter(
+                    Q(delivery_person__first_name__icontains=search)
+                    | Q(delivery_person__last_name__icontains=search)
+                    | Q(delivery_person__username__icontains=search)
+                    | Q(patient__first_name__icontains=search)
+                    | Q(patient__last_name__icontains=search)
+                    | Q(patient__username__icontains=search)
+                    | Q(user_diet_plan__diet_plan__title__icontains=search)
+                )
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        totals = queryset.aggregate(
+            total_amount=Sum("amount"),
+            paid_amount=Sum("amount", filter=Q(status="paid")),
+            pending_amount=Sum("amount", filter=Q(status="pending")),
+        )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data["total_amount"] = str(totals["total_amount"] or 0)
+            response.data["paid_amount"] = str(totals["paid_amount"] or 0)
+            response.data["pending_amount"] = str(totals["pending_amount"] or 0)
+            return response
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "total_amount": str(totals["total_amount"] or 0),
+                "paid_amount": str(totals["paid_amount"] or 0),
+                "pending_amount": str(totals["pending_amount"] or 0),
+            }
+        )
+
+    def perform_create(self, serializer):
+        mk = self._micro_kitchen()
+        status_value = serializer.validated_data.get("status", "pending")
+        plan = serializer.validated_data.get("user_diet_plan")
+        patient = serializer.validated_data.get("patient")
+        if plan and not patient and getattr(plan, "user", None):
+            patient = plan.user
+
+        extra = {"micro_kitchen": mk, "patient": patient}
+        if status_value == "paid":
+            extra["paid_by"] = self.request.user
+            extra["paid_on"] = timezone.now()
+        serializer.save(**extra)
+
+
+class MicroKitchenSupplyChainPayoutDetailView(generics.RetrieveUpdateAPIView):
+    """Micro kitchen can view/update one payout row created under its account."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = MicroKitchenSupplyChainPayoutSerializer
+
+    def _micro_kitchen(self):
+        if getattr(self.request.user, "role", None) != "micro_kitchen":
+            raise PermissionDenied("Only micro kitchen users can access this endpoint.")
+        mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
+        if not mk:
+            raise ValidationError("Micro kitchen profile not found.")
+        return mk
+
+    def get_queryset(self):
+        mk = self._micro_kitchen()
+        return MicroKitchenSupplyChainPayout.objects.filter(micro_kitchen=mk).select_related(
+            "delivery_person", "patient", "user_diet_plan__diet_plan", "paid_by"
+        )
+
+    def perform_update(self, serializer):
+        status_value = serializer.validated_data.get("status", serializer.instance.status)
+        plan = serializer.validated_data.get("user_diet_plan", serializer.instance.user_diet_plan)
+        patient = serializer.validated_data.get("patient", serializer.instance.patient)
+        if plan and not patient and getattr(plan, "user", None):
+            patient = plan.user
+
+        extra = {"patient": patient}
+        if status_value == "paid":
+            extra["paid_by"] = self.request.user
+            if not serializer.instance.paid_on:
+                extra["paid_on"] = timezone.now()
+        serializer.save(**extra)
+
+
+class SupplyChainPayoutEarningsListView(generics.ListAPIView):
+    """Supply-chain portal: paginated payouts received from micro kitchens."""
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+    serializer_class = MicroKitchenSupplyChainPayoutSerializer
+
+    def get_queryset(self):
+        if getattr(self.request.user, "role", None) != "supply_chain":
+            raise PermissionDenied("Only supply-chain users can access this endpoint.")
+        qs = (
+            MicroKitchenSupplyChainPayout.objects.filter(delivery_person=self.request.user)
+            .select_related("micro_kitchen", "patient", "user_diet_plan__diet_plan", "paid_by")
+            .order_by("-created_at")
+        )
+        patient_id = (self.request.query_params.get("patient_id") or "").strip()
+        if patient_id.isdigit():
+            qs = qs.filter(patient_id=int(patient_id))
+
+        delivery_person_id = (self.request.query_params.get("delivery_person_id") or "").strip()
+        if delivery_person_id.isdigit():
+            qs = qs.filter(delivery_person_id=int(delivery_person_id))
+
+        status_param = (self.request.query_params.get("status") or "").strip().lower()
+        if status_param in ("pending", "paid"):
+            qs = qs.filter(status=status_param)
+
+        period = (self.request.query_params.get("period") or "all").strip()
+        if period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = self.request.query_params.get("start_date")
+            end_date = self.request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, start_date, end_date)
+                qs = qs.filter(created_at__date__range=[s, e])
+            except Exception:
+                pass
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if search.isdigit():
+                qs = qs.filter(Q(id=int(search)) | Q(user_diet_plan_id=int(search)))
+            else:
+                qs = qs.filter(
+                    Q(micro_kitchen__brand_name__icontains=search)
+                    | Q(patient__first_name__icontains=search)
+                    | Q(patient__last_name__icontains=search)
+                    | Q(patient__username__icontains=search)
+                    | Q(user_diet_plan__diet_plan__title__icontains=search)
+                )
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        totals = queryset.aggregate(
+            total_amount=Sum("amount"),
+            paid_amount=Sum("amount", filter=Q(status="paid")),
+            pending_amount=Sum("amount", filter=Q(status="pending")),
+        )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data["total_amount"] = str(totals["total_amount"] or 0)
+            response.data["paid_amount"] = str(totals["paid_amount"] or 0)
+            response.data["pending_amount"] = str(totals["pending_amount"] or 0)
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "total_amount": str(totals["total_amount"] or 0),
+                "paid_amount": str(totals["paid_amount"] or 0),
+                "pending_amount": str(totals["pending_amount"] or 0),
+            }
+        )
+
+
 class OrderCommissionConfigViewSet(viewsets.ModelViewSet):
     """Admin: manage global platform/kitchen commission split for customer orders."""
 

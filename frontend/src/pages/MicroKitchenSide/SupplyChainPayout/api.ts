@@ -23,7 +23,7 @@ export type SupplyChainPayoutRow = {
   updated_at: string;
 };
 
-export type PaginatedSupplyChainPayoutEarnings = {
+export type PaginatedSupplyChainPayouts = {
   count: number;
   next: number | null;
   previous: number | null;
@@ -35,7 +35,18 @@ export type PaginatedSupplyChainPayoutEarnings = {
   pending_amount?: string;
 };
 
-export type SupplyChainEarningsFilters = {
+export type CreateSupplyChainPayoutPayload = {
+  delivery_person: number;
+  user_diet_plan?: number | null;
+  patient?: number | null;
+  amount: string;
+  status?: "pending" | "paid";
+  period_from?: string;
+  period_to?: string;
+  notes?: string;
+};
+
+export type SupplyChainPayoutFilters = {
   status?: string;
   patient_id?: number | "";
   delivery_person_id?: number | "";
@@ -44,12 +55,12 @@ export type SupplyChainEarningsFilters = {
   end_date?: string;
 };
 
-export async function getSupplyChainPayoutEarnings(
+export async function fetchMicroKitchenSupplyChainPayouts(
   page = 1,
   limit = 10,
   search = "",
-  filters: SupplyChainEarningsFilters = {}
-): Promise<PaginatedSupplyChainPayoutEarnings> {
+  filters: SupplyChainPayoutFilters = {}
+): Promise<PaginatedSupplyChainPayouts> {
   const params: Record<string, string | number> = { page, limit };
   if (search.trim()) params.search = search.trim();
   if (filters.status) params.status = filters.status;
@@ -58,10 +69,31 @@ export async function getSupplyChainPayoutEarnings(
   if (filters.period) params.period = filters.period;
   if (filters.start_date) params.start_date = filters.start_date;
   if (filters.end_date) params.end_date = filters.end_date;
-  const url = createApiUrl("api/supply-chain/payout-earnings/");
-  const res = await axios.get<PaginatedSupplyChainPayoutEarnings>(url, {
+  const url = createApiUrl("api/microkitchen/supply-chain-payouts/");
+  const res = await axios.get<PaginatedSupplyChainPayouts>(url, {
     headers: await getAuthHeaders(),
     params,
+  });
+  return res.data;
+}
+
+export async function createMicroKitchenSupplyChainPayout(
+  payload: CreateSupplyChainPayoutPayload
+): Promise<SupplyChainPayoutRow> {
+  const url = createApiUrl("api/microkitchen/supply-chain-payouts/");
+  const res = await axios.post<SupplyChainPayoutRow>(url, payload, {
+    headers: await getAuthHeaders(),
+  });
+  return res.data;
+}
+
+export async function updateMicroKitchenSupplyChainPayout(
+  id: number,
+  payload: Partial<CreateSupplyChainPayoutPayload>
+): Promise<SupplyChainPayoutRow> {
+  const url = createApiUrl(`api/microkitchen/supply-chain-payouts/${id}/`);
+  const res = await axios.patch<SupplyChainPayoutRow>(url, payload, {
+    headers: await getAuthHeaders(),
   });
   return res.data;
 }

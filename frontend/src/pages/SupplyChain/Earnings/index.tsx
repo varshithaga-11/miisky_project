@@ -1,25 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Wallet, Package, ArrowLeft, Receipt, Upload, ExternalLink } from "lucide-react";
-import PageMeta from "../../../components/common/PageMeta";
-import PageBreadcrumb from "../../../components/common/PageBreadcrumb";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
-import Button from "../../../components/ui/button/Button";
+import { ArrowLeft, Wallet } from "lucide-react";
+import { FiSearch } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
+import PageMeta from "../../../components/common/PageMeta";
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import DatePicker2 from "../../../components/form/date-picker2";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import {
-  getSupplyChainDeliveryEarnings,
-  upsertOrderDeliveryReceipt,
-  DeliveryEarningRow,
+  getSupplyChainPayoutEarnings,
+  SupplyChainEarningsFilters,
+  SupplyChainPayoutRow,
 } from "./api";
 
 const fmtMoney = (s: string | undefined | null) => {
   const n = Number(s);
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "₹0.00";
   return `₹${n.toFixed(2)}`;
 };
 
 export default function SupplyChainEarningsPage() {
-  const [rows, setRows] = useState<DeliveryEarningRow[]>([]);
+  const [rows, setRows] = useState<SupplyChainPayoutRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -27,13 +28,42 @@ export default function SupplyChainEarningsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [totalOrders, setTotalOrders] = useState<number | undefined>();
-  const [totalDeliveryEarnings, setTotalDeliveryEarnings] = useState<string | undefined>();
+  const [statusFilter, setStatusFilter] = useState("");
+  const [patientFilter, setPatientFilter] = useState<number | "">("");
+  const [deliveryPersonFilter, setDeliveryPersonFilter] = useState<number | "">("");
+  const [periodFilter, setPeriodFilter] = useState("this_month");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [sortField, setSortField] = useState<"amount" | "created_at" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [totalAmount, setTotalAmount] = useState<string>("0");
+  const [paidAmount, setPaidAmount] = useState<string>("0");
+  const [pendingAmount, setPendingAmount] = useState<string>("0");
+  const periodOptions = [
+    { value: "today", label: "Today" },
+    { value: "this_week", label: "This week" },
+    { value: "last_week", label: "Last week" },
+    { value: "this_month", label: "This month" },
+    { value: "last_month", label: "Last month" },
+    { value: "this_year", label: "This year" },
+    { value: "custom_range", label: "Custom range" },
+  ];
 
-  const [receiptModalOrder, setReceiptModalOrder] = useState<DeliveryEarningRow | null>(null);
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [receiptNotes, setReceiptNotes] = useState("");
-  const [savingReceipt, setSavingReceipt] = useState(false);
+  const uniquePatients = useMemo(() => {
+    const map = new Map<number, string>();
+    rows.forEach((r) => {
+      if (r.patient) map.set(r.patient, r.patient_name || `Patient #${r.patient}`);
+    });
+    return [...map.entries()].map(([id, label]) => ({ id, label }));
+  }, [rows]);
+
+  const uniqueDeliveryPeople = useMemo(() => {
+    const map = new Map<number, string>();
+    rows.forEach((r) => {
+      if (r.delivery_person) map.set(r.delivery_person, r.delivery_person_name || `User #${r.delivery_person}`);
+    });
+    return [...map.entries()].map(([id, label]) => ({ id, label }));
+  }, [rows]);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -51,16 +81,25 @@ export default function SupplyChainEarningsPage() {
     (async () => {
       setLoading(true);
       try {
-        const data = await getSupplyChainDeliveryEarnings(page, pageSize, debouncedSearch);
+        const filters: SupplyChainEarningsFilters = {
+          status: statusFilter || undefined,
+          patient_id: patientFilter,
+          delivery_person_id: deliveryPersonFilter,
+          period: periodFilter,
+          start_date: periodFilter === "custom_range" ? startDate || undefined : undefined,
+          end_date: periodFilter === "custom_range" ? endDate || undefined : undefined,
+        };
+        const data = await getSupplyChainPayoutEarnings(page, pageSize, debouncedSearch, filters);
         if (cancelled) return;
         setRows(data.results ?? []);
         setTotalPages(data.total_pages ?? 1);
         setTotalCount(data.count ?? 0);
-        setTotalOrders(data.total_orders);
-        setTotalDeliveryEarnings(data.total_delivery_earnings);
+        setTotalAmount(data.total_amount || "0");
+        setPaidAmount(data.paid_amount || "0");
+        setPendingAmount(data.pending_amount || "0");
       } catch {
         if (!cancelled) {
-          toast.error("Failed to load delivery earnings");
+          toast.error("Failed to load payout earnings");
           setRows([]);
         }
       } finally {
@@ -70,54 +109,40 @@ export default function SupplyChainEarningsPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, debouncedSearch]);
+  }, [page, pageSize, debouncedSearch, statusFilter, patientFilter, deliveryPersonFilter, periodFilter, startDate, endDate]);
 
-  const openReceiptModal = (row: DeliveryEarningRow) => {
-    setReceiptModalOrder(row);
-    setReceiptNotes(row.receipt?.notes ?? "");
-    setReceiptFile(null);
-  };
-
-  const closeReceiptModal = () => {
-    setReceiptModalOrder(null);
-    setReceiptFile(null);
-    setReceiptNotes("");
-  };
-
-  const submitReceipt = async () => {
-    if (!receiptModalOrder) return;
-    const needFile = !receiptModalOrder.receipt;
-    if (needFile && !receiptFile) {
-      toast.error("Please choose a receipt image");
-      return;
-    }
-    setSavingReceipt(true);
-    try {
-      await upsertOrderDeliveryReceipt(receiptModalOrder.id, receiptNotes, receiptFile);
-      toast.success(receiptModalOrder.receipt ? "Receipt updated" : "Receipt saved");
-      closeReceiptModal();
-      const data = await getSupplyChainDeliveryEarnings(page, pageSize, debouncedSearch);
-      setRows(data.results ?? []);
-      setTotalOrders(data.total_orders);
-      setTotalDeliveryEarnings(data.total_delivery_earnings);
-    } catch {
-      toast.error("Could not save receipt");
-    } finally {
-      setSavingReceipt(false);
+  const handleSort = (field: "amount" | "created_at") => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection(field === "created_at" ? "desc" : "asc");
     }
   };
+
+  const sortedRows = useMemo(() => {
+    if (!sortField) return rows;
+    const sorted = [...rows].sort((a, b) => {
+      if (sortField === "amount") {
+        const av = Number(a.amount || 0);
+        const bv = Number(b.amount || 0);
+        return sortDirection === "asc" ? av - bv : bv - av;
+      }
+      const at = new Date(a.created_at).getTime();
+      const bt = new Date(b.created_at).getTime();
+      return sortDirection === "asc" ? at - bt : bt - at;
+    });
+    return sorted;
+  }, [rows, sortField, sortDirection]);
 
   return (
     <>
-      <PageMeta
-        title="Earnings | Supply chain"
-        description="Delivery charges for separate orders assigned to you"
-      />
+      <PageMeta title="Earnings | Supply chain" description="Payout records from micro kitchen" />
       <PageBreadcrumb pageTitle="Earnings" />
       <ToastContainer position="bottom-right" />
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 px-4 lg:px-8 py-8 max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-wrap items-center gap-4 justify-between">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 px-4 lg:px-8 py-8 max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
           <Link
             to="/supplychain/dashboard"
             className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500"
@@ -125,131 +150,241 @@ export default function SupplyChainEarningsPage() {
             <ArrowLeft className="w-4 h-4" />
             Dashboard
           </Link>
-          <Link
-            to="/supplychain/seperate-orders"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-500 dark:text-slate-400"
-          >
-            <Package className="w-4 h-4" />
-            My separate orders
-          </Link>
         </div>
 
         <header className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
           <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2">
             <Wallet className="w-6 h-6" />
-            <span className="text-xs font-semibold uppercase tracking-wide">Separate order deliveries</span>
+            <span className="text-xs font-semibold uppercase tracking-wide">Micro kitchen payouts</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Delivery earnings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Supply-chain earnings</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            For each <strong>delivered</strong> customer order where you are the assigned delivery person, the{" "}
-            <strong>delivery charge</strong> is the pass-through amount for that trip. Upload a receipt or proof here
-            for your records (optional).
+            This section shows payout records created by micro kitchens for your diet-plan deliveries.
           </p>
         </header>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600">
-              <Receipt className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Delivered orders (filtered)</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalOrders ?? "—"}</p>
-            </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+            <p className="text-sm text-gray-500">Total amount</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{fmtMoney(totalAmount)}</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600">
-              <Wallet className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total delivery charges (sum)</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                {fmtMoney(totalDeliveryEarnings)}
-              </p>
-            </div>
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+            <p className="text-sm text-gray-500">Paid amount</p>
+            <p className="text-3xl font-bold text-emerald-600">{fmtMoney(paidAmount)}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+            <p className="text-sm text-gray-500">Pending amount</p>
+            <p className="text-3xl font-bold text-amber-600">{fmtMoney(pendingAmount)}</p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-          <label className="text-xs font-semibold text-gray-500 uppercase block mb-2">
-            Search order #, customer, or kitchen
-          </label>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search…"
-            className="w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-4 py-2.5 text-sm"
-          />
+        <div className="mb-2 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+            <div className="relative flex-1 max-w-md">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search kitchen, patient, plan, or id..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded-lg border border-gray-300 dark:border-gray-600 px-2 py-1 text-sm bg-white dark:bg-gray-900"
+              >
+                {[10, 25, 50].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <span className="text-sm text-gray-600 dark:text-gray-400">entries</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900"
+            >
+              <option value="">All status</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+            </select>
+            <select
+              value={patientFilter}
+              onChange={(e) => {
+                const v = e.target.value;
+                setPatientFilter(v ? Number(v) : "");
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900"
+            >
+              <option value="">All patients</option>
+              {uniquePatients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={deliveryPersonFilter}
+              onChange={(e) => {
+                const v = e.target.value;
+                setDeliveryPersonFilter(v ? Number(v) : "");
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900"
+            >
+              <option value="">All delivery persons</option>
+              {uniqueDeliveryPeople.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={periodFilter}
+              onChange={(e) => {
+                setPeriodFilter(e.target.value);
+                if (e.target.value !== "custom_range") {
+                  setStartDate("");
+                  setEndDate("");
+                }
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900"
+            >
+              {periodOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {periodFilter === "custom_range" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <DatePicker2
+                  id="supply-earnings-filter-start-date"
+                  value={startDate}
+                  onChange={(d) => {
+                    setStartDate(d);
+                    setPage(1);
+                  }}
+                  maxDate={endDate || undefined}
+                  placeholder="From date"
+                />
+                <DatePicker2
+                  id="supply-earnings-filter-end-date"
+                  value={endDate}
+                  onChange={(d) => {
+                    setEndDate(d);
+                    setPage(1);
+                  }}
+                  minDate={startDate || undefined}
+                  placeholder="To date"
+                />
+              </div>
+            ) : (
+              <div />
+            )}
+          </div>
+
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {totalCount === 0 ? 0 : (page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalCount)} of{" "}
+            {totalCount} entries
+          </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-800/80">
-                  <TableCell isHeader>#</TableCell>
-                  <TableCell isHeader>Order</TableCell>
-                  <TableCell isHeader>Kitchen</TableCell>
-                  <TableCell isHeader>Customer</TableCell>
-                  <TableCell isHeader>Delivery charge</TableCell>
-                  <TableCell isHeader>Order total</TableCell>
-                  <TableCell isHeader>Receipt</TableCell>
-                  <TableCell isHeader>Notes</TableCell>
-                  <TableCell isHeader />
+              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                <TableRow>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Kitchen</TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Patient</TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Plan</TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Period</TableCell>
+                  <TableCell
+                    isHeader
+                    onClick={() => handleSort("amount")}
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
+                    Amount {sortField === "amount" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
+                  <TableCell
+                    isHeader
+                    onClick={() => handleSort("created_at")}
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
+                    Created {sortField === "created_at" ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Paid on</TableCell>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                      Loading…
+                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Loading...
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                      No delivered orders yet. Complete deliveries from{" "}
-                      <Link className="text-indigo-600 underline" to="/supplychain/seperate-orders">
-                        My separate orders
-                      </Link>
-                      .
+                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                      No payout records found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rows.map((r, i) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-gray-500">{(page - 1) * pageSize + i + 1}</TableCell>
-                      <TableCell className="font-mono font-semibold">#{r.id}</TableCell>
-                      <TableCell>{r.kitchen_name ?? "—"}</TableCell>
-                      <TableCell>{r.customer_display || "—"}</TableCell>
-                      <TableCell className="font-semibold text-emerald-700 dark:text-emerald-400">
-                        {fmtMoney(r.delivery_earning)}
+                  sortedRows.map((r, i) => (
+                    <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                      <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {(page - 1) * pageSize + i + 1}
                       </TableCell>
-                      <TableCell>{fmtMoney(r.final_amount)}</TableCell>
-                      <TableCell>
-                        {r.receipt?.receipt_image_url ? (
-                          <a
-                            href={r.receipt.receipt_image_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            View
-                          </a>
-                        ) : (
-                          <span className="text-xs text-gray-400">None</span>
-                        )}
+                      <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90">
+                        {r.micro_kitchen_name || "—"}
                       </TableCell>
-                      <TableCell className="max-w-[180px] truncate text-sm text-gray-600 dark:text-gray-400">
-                        {r.receipt?.notes || "—"}
+                      <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90">
+                        {r.patient_name || "—"}
                       </TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="outline" onClick={() => openReceiptModal(r)}>
-                          <Upload className="w-4 h-4 mr-1" />
-                          {r.receipt ? "Update" : "Add"}
-                        </Button>
+                      <TableCell className="px-5 py-4 text-start text-gray-800 text-theme-sm dark:text-white/90">
+                        {r.plan_name || "—"}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300 whitespace-nowrap">
+                        {r.period_from || "—"} to {r.period_to || "—"}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">
+                        {fmtMoney(r.amount)}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            r.status === "paid"
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30"
+                              : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300 whitespace-nowrap">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-gray-700 text-theme-sm dark:text-gray-300 whitespace-nowrap">
+                        {r.paid_on ? new Date(r.paid_on).toLocaleString() : "—"}
                       </TableCell>
                     </TableRow>
                   ))
@@ -259,96 +394,40 @@ export default function SupplyChainEarningsPage() {
           </div>
         </div>
 
-        {totalCount > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-gray-500">
-              Showing {totalCount === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalCount)} of{" "}
-              {totalCount}
-            </p>
+        {totalPages > 1 && (
+          <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Rows</label>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 px-2 py-1 text-sm"
-              >
-                {[10, 25, 50].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
               <button
-                type="button"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40"
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400"
               >
                 Previous
               </button>
-              <span className="text-sm text-gray-600">
-                Page {page} / {totalPages}
-              </span>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      page === pageNum
+                        ? "bg-blue-600 text-white border border-blue-600"
+                        : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+              </div>
               <button
-                type="button"
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40"
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400"
               >
                 Next
               </button>
             </div>
-          </div>
-        )}
-
-        {receiptModalOrder && (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
-            role="dialog"
-            aria-modal="true"
-            onClick={closeReceiptModal}
-          >
-            <div
-              className="bg-white dark:bg-gray-900 rounded-2xl max-w-lg w-full p-6 shadow-xl border border-gray-200 dark:border-gray-700"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                Receipt — Order #{receiptModalOrder.id}
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Delivery earning for this trip:{" "}
-                <strong className="text-emerald-600">{fmtMoney(receiptModalOrder.delivery_earning)}</strong>
-              </p>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Receipt image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
-                className="w-full text-sm mb-4"
-              />
-              {!receiptModalOrder.receipt && (
-                <p className="text-xs text-amber-600 mb-2">Required on first save.</p>
-              )}
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Notes</label>
-              <textarea
-                value={receiptNotes}
-                onChange={(e) => setReceiptNotes(e.target.value)}
-                rows={3}
-                placeholder="e.g. UPI ref, cash handed to kitchen…"
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm mb-4"
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" type="button" onClick={closeReceiptModal} disabled={savingReceipt}>
-                  Cancel
-                </Button>
-                <Button type="button" onClick={() => void submitReceipt()} disabled={savingReceipt}>
-                  {savingReceipt ? "Saving…" : "Save"}
-                </Button>
-              </div>
-            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</div>
           </div>
         )}
       </div>

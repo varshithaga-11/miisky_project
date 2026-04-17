@@ -3484,6 +3484,70 @@ class SupplyChainOrderDeliveryReceiptReadSerializer(serializers.ModelSerializer)
         return url
 
 
+class MicroKitchenSupplyChainPayoutSerializer(serializers.ModelSerializer):
+    micro_kitchen_name = serializers.CharField(source="micro_kitchen.brand_name", read_only=True)
+    delivery_person_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    plan_name = serializers.SerializerMethodField()
+    paid_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenSupplyChainPayout
+        fields = [
+            "id",
+            "micro_kitchen",
+            "micro_kitchen_name",
+            "delivery_person",
+            "delivery_person_name",
+            "user_diet_plan",
+            "plan_name",
+            "patient",
+            "patient_name",
+            "amount",
+            "status",
+            "period_from",
+            "period_to",
+            "notes",
+            "paid_on",
+            "paid_by",
+            "paid_by_name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["micro_kitchen", "paid_by", "paid_on", "created_at", "updated_at"]
+
+    def _user_label(self, user):
+        if not user:
+            return ""
+        full_name = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip()
+        return full_name or (user.username or "")
+
+    def get_delivery_person_name(self, obj):
+        return self._user_label(obj.delivery_person)
+
+    def get_patient_name(self, obj):
+        return self._user_label(obj.patient)
+
+    def get_plan_name(self, obj):
+        plan = getattr(obj, "user_diet_plan", None)
+        if not plan:
+            return ""
+        dp = getattr(plan, "diet_plan", None)
+        return getattr(dp, "title", None) or f"Plan #{plan.id}"
+
+    def get_paid_by_name(self, obj):
+        return self._user_label(obj.paid_by)
+
+    def validate(self, attrs):
+        plan = attrs.get("user_diet_plan") or getattr(self.instance, "user_diet_plan", None)
+        patient = attrs.get("patient") or getattr(self.instance, "patient", None)
+        if plan and patient and getattr(plan, "user_id", None) and plan.user_id != patient.id:
+            raise serializers.ValidationError(
+                {"patient": "Selected patient does not belong to the selected diet plan."}
+            )
+        return attrs
+
+
 class AdminPatientListSerializer(serializers.ModelSerializer):
     """Summary row for admin patient directory (role=patient users)."""
 

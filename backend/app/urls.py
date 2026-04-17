@@ -433,6 +433,21 @@ urlpatterns = [
         name="supply-chain-order-delivery-receipt",
     ),
     path(
+        "microkitchen/supply-chain-payouts/",
+        views.MicroKitchenSupplyChainPayoutListCreateView.as_view(),
+        name="microkitchen-supply-chain-payouts",
+    ),
+    path(
+        "microkitchen/supply-chain-payouts/<int:pk>/",
+        views.MicroKitchenSupplyChainPayoutDetailView.as_view(),
+        name="microkitchen-supply-chain-payout-detail",
+    ),
+    path(
+        "supply-chain/payout-earnings/",
+        views.SupplyChainPayoutEarningsListView.as_view(),
+        name="supply-chain-payout-earnings",
+    ),
+    path(
         "admin/plan-payout-trackers/",
         views.AdminPayoutTrackersForPayView.as_view(),
         name="admin-plan-payout-trackers",

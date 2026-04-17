@@ -470,6 +470,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/plan-payouts",
   },
   {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Supply chain payouts",
+    path: "/microkitchen/supply-chain-payouts",
+  },
+  {
     icon: <FileText className="w-5 h-5" />,
     name: "Kitchen Reviews",
     path: "/microkitchen/reviews",

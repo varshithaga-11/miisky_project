@@ -3692,6 +3692,79 @@ class SupplyChainDeliveryFeedback(models.Model):
         return f"{self.feedback_type.title()} feedback on {target}"
 
 
+class MicroKitchenSupplyChainPayout(models.Model):
+    """
+    Stores payout amount from micro kitchen to supply-chain delivery person
+    for meal deliveries under a patient diet plan.
+    """
+
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="supply_chain_payouts",
+    )
+    delivery_person = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="kitchen_payout_receipts",
+        help_text="Supply-chain / delivery staff who receives this payout.",
+    )
+    user_diet_plan = models.ForeignKey(
+        UserDietPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="kitchen_supply_payouts",
+        help_text="Patient diet plan for which deliveries were done.",
+    )
+    patient = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="received_kitchen_supply_payouts",
+        help_text="Patient under the selected diet plan.",
+    )
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    period_from = models.DateField(null=True, blank=True)
+    period_to = models.DateField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+
+    paid_on = models.DateTimeField(null=True, blank=True)
+    paid_by = models.ForeignKey(
+        UserRegister,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_kitchen_supply_payouts",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Micro kitchen supply chain payout"
+        verbose_name_plural = "Micro kitchen supply chain payouts"
+
+    def __str__(self):
+        return (
+            f"{self.micro_kitchen} -> {self.delivery_person} "
+            f"| plan {self.user_diet_plan_id} | Rs.{self.amount} [{self.status}]"
+        )
+
+
 class PatientUnavailability(models.Model):
     """
     Patient signals they will be unavailable on certain dates.

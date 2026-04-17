@@ -137,6 +137,7 @@ import PlanPaymentsOverviewPage from "./pages/AdminSide/PlanPaymentsOverview/ind
 import OrderCommissionPage from "./pages/AdminSide/OrderCommission";
 import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
 import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
+import MicroKitchenSupplyChainPayoutPage from "./pages/MicroKitchenSide/SupplyChainPayout/index";
 import MicroKitchenOrderPaymentSnapshotsPage from "./pages/MicroKitchenSide/OrderPaymentSnapshots/index";
 import ReferenceLibraryPage from "./pages/NutritionSide/ReferenceLibrary/index";
 import ListOfFoods from "./pages/NutritionSide/ReferenceLibrary/ListOfFoods";
@@ -404,6 +405,7 @@ export function appRoutes() {
           <Route path="microkitchen/kitchen-execution" element={<KitchenExecutionPage />} />
           <Route path="microkitchen/support-tickets" element={<MicroKitchenSupportTicketPage />} />
           <Route path="microkitchen/plan-payouts" element={<MicroKitchenPlanPayoutsPage />} />
+          <Route path="microkitchen/supply-chain-payouts" element={<MicroKitchenSupplyChainPayoutPage />} />
           <Route path="microkitchen/order-payments" element={<MicroKitchenOrderPaymentSnapshotsPage />} />
           <Route path="microkitchen/notifications" element={<MicroKitchenNotificationsPage />} />
           <Route path="microkitchen/delivery" element={<MicroKitchenDeliveryManagementPage />} />
