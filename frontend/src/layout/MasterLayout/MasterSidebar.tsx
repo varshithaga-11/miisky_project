@@ -457,6 +457,8 @@ const microKitchenNavItems: NavItem[] = [
       { name: "Team members", path: "/microkitchen/delivery/team-members" },
       { name: "Team planned leave", path: "/microkitchen/planned-leave" },
       { name: "Delivery profiles", path: "/microkitchen/delivery/profiles" },
+      {name: "Delivery Reviews",path: "/microkitchen/delivery-feedback"},
+      {name: "Supply chain payouts",path: "/microkitchen/supply-chain-payouts"},
     ],
   },
   {
@@ -470,20 +472,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/plan-payouts",
   },
   {
-    icon: <Wallet className="w-5 h-5" />,
-    name: "Supply chain payouts",
-    path: "/microkitchen/supply-chain-payouts",
-  },
-  {
     icon: <FileText className="w-5 h-5" />,
     name: "Kitchen Reviews",
     path: "/microkitchen/reviews",
   },
-  {
-    icon: <Truck className="w-5 h-5" />,
-    name: "Delivery Reviews",
-    path: "/microkitchen/delivery-feedback",
-  },
+
   {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
