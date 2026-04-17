@@ -37,7 +37,7 @@ const AddFoodIngredient: React.FC<AddFoodIngredientProps> = ({ onClose, onAdd, i
   useEffect(() => {
     getFoodList(1, "all").then(res => setFoods(res.results)).catch(console.error);
     getIngredientList(1, "all").then(res => setIngredients(res.results)).catch(console.error);
-    getUnitList().then(setUnits).catch(console.error);
+    getUnitList(1, "all").then((res) => setUnits(res.results)).catch(console.error);
   }, []);
 
   const addIngredientRow = () => {

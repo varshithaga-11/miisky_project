@@ -78,7 +78,10 @@ export default function DailyReassignmentsPage() {
 
   return (
     <>
-      <PageMeta title="Daily meal reassignment | Micro Kitchen" />
+      <PageMeta
+        title="Daily meal reassignment | Micro Kitchen"
+        description="Reassign a single meal when the usual delivery person is unavailable for a given day."
+      />
       <PageBreadcrumb pageTitle="Daily meal reassignment" />
       <ToastContainer position="top-right" />
 

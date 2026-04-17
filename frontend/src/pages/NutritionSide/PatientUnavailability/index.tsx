@@ -280,11 +280,15 @@ const PatientUnavailabilityPage: React.FC = () => {
                                                   ? row.meal_types_details.map((m) => m.name).join(", ")
                                                   : "—"}
                                         </TableCell>
-                                        <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-gray-400 max-w-xs truncate" title={row.reason ?? ""}>
-                                            {row.reason || "—"}
+                                        <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-gray-400 max-w-xs truncate">
+                                            <span title={row.reason ?? ""} className="block truncate">
+                                                {row.reason || "—"}
+                                            </span>
                                         </TableCell>
-                                        <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-gray-400 max-w-xs truncate" title={row.patient_comments ?? ""}>
-                                            {row.patient_comments || "—"}
+                                        <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-gray-400 max-w-xs truncate">
+                                            <span title={row.patient_comments ?? ""} className="block truncate">
+                                                {row.patient_comments || "—"}
+                                            </span>
                                         </TableCell>
                                         <TableCell className="px-5 py-4 text-start">
                                             <span className={statusBadge(row.status)}>{row.status}</span>
