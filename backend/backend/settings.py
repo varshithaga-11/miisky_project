@@ -26,11 +26,18 @@ SECRET_KEY = 'django-insecure-ot$t5-^hs2djx3&y84@2f42o(ot*su1apsb373*hb_mdvcl3u&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# ALLOWED_HOSTS = [
+#     h.strip()
+#     for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+#     if h.strip()
+# ]
+
 ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-    if h.strip()
+    "testingmiisky.com",
+    "www.testingmiisky.com",
+    "backend.testingmiisky.com"
 ]
+
 
 
 AUTH_USER_MODEL = 'app.UserRegister'
@@ -111,9 +118,21 @@ DATABASES = {
 
 
 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+# ]
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://testingmiisky.com",
+    "https://www.testingmiisky.com",
+    "https://backend.testingmiisky.com",
+    "http://testingmiisky.com",
+    "http://www.testingmiisky.com",
+    "http://backend.testingmiisky.com"
 ]
+
+
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 

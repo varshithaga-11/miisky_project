@@ -23,7 +23,9 @@ export default defineConfig({
   },
   define: {
     // Global API URL variable
-    __API_URL__: '"http://127.0.0.1:8000/"',
+    // __API_URL__: '"http://127.0.0.1:8000/"',
+    __API_URL__: '"https://backend.testingmiisky.com/"',
+    
   },
   build: {
     rollupOptions: {
