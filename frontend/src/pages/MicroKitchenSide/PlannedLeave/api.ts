@@ -39,3 +39,26 @@ export const fetchMicroKitchenTeamLeaves = async (
     currentPage: d?.current_page ?? page,
   };
 };
+
+/** GET .../supply-chain-leave/:id/meal-allotment-check/ — micro kitchen only */
+export type MealAllotmentCheckResponse = {
+  leave_id: number;
+  delivery_user_id: number;
+  start_date: string;
+  end_date: string;
+  leave_type: string;
+  has_meals_allotted: boolean;
+  total_meal_deliveries: number;
+  outstanding_deliveries: number;
+  by_date: { date: string; count: number }[];
+  by_status: Record<string, number>;
+  partial_day_note: string | null;
+};
+
+export const fetchMealAllotmentCheckForLeave = async (
+  leaveId: number
+): Promise<MealAllotmentCheckResponse> => {
+  const url = createApiUrl(`api/supply-chain-leave/${leaveId}/meal-allotment-check/`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+};

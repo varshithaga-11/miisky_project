@@ -9685,6 +9685,21 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
+    @staticmethod
+    def _delivery_person_ids_for_micro_kitchen(mk):
+        dp_ids = set(
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen=mk)
+            .values_list("delivery_person_id", flat=True)
+            .distinct()
+        )
+        dp_ids |= set(
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk)
+            .values_list("delivery_person_id", flat=True)
+            .distinct()
+        )
+        dp_ids.discard(None)
+        return dp_ids
+
     def get_queryset(self):
         u = self.request.user
         role = getattr(u, "role", None)
@@ -9694,17 +9709,7 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return SupplyChainDeliveryLeave.objects.none()
-            dp_ids = set(
-                DeliveryAssignment.objects.filter(user_meal__micro_kitchen=mk)
-                .values_list("delivery_person_id", flat=True)
-                .distinct()
-            )
-            dp_ids |= set(
-                DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk)
-                .values_list("delivery_person_id", flat=True)
-                .distinct()
-            )
-            dp_ids.discard(None)
+            dp_ids = self._delivery_person_ids_for_micro_kitchen(mk)
             qs = SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids).select_related("user")
         else:
             return SupplyChainDeliveryLeave.objects.none()
@@ -9714,6 +9719,64 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
             qs = self._apply_leave_list_filters(qs)
             return qs.order_by("-created_on")
         return qs.order_by("-start_date")
+
+    @action(detail=True, methods=["get"], url_path="meal-allotment-check")
+    def meal_allotment_check(self, request, pk=None):
+        """
+        Micro kitchen only: for this leave row, count meal deliveries assigned to that team member
+        on dates overlapping the leave window, for meals from this kitchen.
+        """
+        leave = self.get_object()
+        user = request.user
+        if getattr(user, "role", None) != "micro_kitchen":
+            raise PermissionDenied("Only micro kitchen accounts can check meal allotments for leave.")
+        mk = MicroKitchenProfile.objects.filter(user=user).first()
+        if not mk:
+            raise PermissionDenied()
+        dp_ids = self._delivery_person_ids_for_micro_kitchen(mk)
+        if not leave.user_id or leave.user_id not in dp_ids:
+            raise PermissionDenied()
+        base = (
+            DeliveryAssignment.objects.filter(
+                delivery_person_id=leave.user_id,
+                user_meal__micro_kitchen_id=mk.id,
+                scheduled_date__gte=leave.start_date,
+                scheduled_date__lte=leave.end_date,
+                is_active=True,
+            )
+            .exclude(user_meal__isnull=True)
+        )
+        total = base.count()
+        outstanding = base.exclude(status__in=["delivered", "failed"]).count()
+        by_date = (
+            base.values("scheduled_date")
+            .annotate(c=Count("id"))
+            .order_by("scheduled_date")
+        )
+        by_status = {}
+        for row in base.values("status").annotate(c=Count("id")):
+            by_status[row["status"]] = row["c"]
+        payload = {
+            "leave_id": leave.id,
+            "delivery_user_id": leave.user_id,
+            "start_date": str(leave.start_date),
+            "end_date": str(leave.end_date),
+            "leave_type": leave.leave_type,
+            "has_meals_allotted": total > 0,
+            "total_meal_deliveries": total,
+            "outstanding_deliveries": outstanding,
+            "by_date": [
+                {"date": str(row["scheduled_date"]), "count": row["c"]} for row in by_date
+            ],
+            "by_status": by_status,
+            "partial_day_note": (
+                "Partial-day leave: counts include all deliveries on those calendar days; "
+                "compare slot times manually if needed."
+                if leave.leave_type == "partial"
+                else None
+            ),
+        }
+        return Response(payload)
 
     def _apply_leave_list_filters(self, qs):
         request = self.request

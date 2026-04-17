@@ -1,14 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
-import { FiLoader, FiSearch, FiCalendar, FiUser, FiPhone } from "react-icons/fi";
+import { FiLoader, FiSearch, FiCalendar, FiUser, FiPhone, FiMoreVertical, FiPackage } from "react-icons/fi";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Label from "../../../components/form/Label";
-import { fetchMicroKitchenTeamLeaves } from "./api";
+import { Modal } from "../../../components/ui/modal";
+import {
+  fetchMicroKitchenTeamLeaves,
+  fetchMealAllotmentCheckForLeave,
+  type MealAllotmentCheckResponse,
+} from "./api";
 import { SupplyChainLeave } from "../../SupplyChain/api";
 import type { OrderDatePeriod } from "../../NonPatient/orderapi";
+
+const LEAVE_MENU_WIDTH_PX = 240;
 
 const PERIOD_OPTIONS: { value: OrderDatePeriod; label: string }[] = [
   { value: "all", label: "All dates" },
@@ -59,6 +67,73 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  /** Fixed-position menu anchored to the ⋮ button (portal avoids table/overflow clipping). */
+  const [menuState, setMenuState] = useState<{ leaveId: number; top: number; left: number } | null>(null);
+  const menuPortalRef = useRef<HTMLDivElement>(null);
+  const [mealCheck, setMealCheck] = useState<{
+    open: boolean;
+    loading: boolean;
+    data: MealAllotmentCheckResponse | null;
+    error: string | null;
+  }>({ open: false, loading: false, data: null, error: null });
+
+  useEffect(() => {
+    if (!menuState) return;
+    const close = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (menuPortalRef.current?.contains(t)) return;
+      if (t.closest("[data-planned-leave-menu-trigger]")) return;
+      setMenuState(null);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [menuState]);
+
+  useEffect(() => {
+    if (!menuState) return;
+    const close = () => setMenuState(null);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [menuState]);
+
+  const openOrToggleMenu = (leaveId: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (menuState?.leaveId === leaveId) {
+      setMenuState(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const w = LEAVE_MENU_WIDTH_PX;
+    const left = Math.max(8, Math.min(rect.right - w, window.innerWidth - w - 8));
+    const menuHeightEst = 52;
+    const gap = 6;
+    const spaceBelow = window.innerHeight - rect.bottom - gap;
+    const placeBelow = spaceBelow >= menuHeightEst || rect.top < menuHeightEst + gap;
+    const top = placeBelow ? rect.bottom + gap : Math.max(gap, rect.top - menuHeightEst - gap);
+    setMenuState({ leaveId, top, left });
+  };
+
+  const runMealAllotmentCheck = async (leaveId: number) => {
+    setMenuState(null);
+    setMealCheck({ open: true, loading: true, data: null, error: null });
+    try {
+      const data = await fetchMealAllotmentCheckForLeave(leaveId);
+      setMealCheck({ open: true, loading: false, data, error: null });
+    } catch (e) {
+      console.error(e);
+      setMealCheck({
+        open: true,
+        loading: false,
+        data: null,
+        error: "Could not load meal allotment check. Try again.",
+      });
+    }
+  };
 
   const load = async () => {
     if (period === "custom_range" && (!customStart || !customEnd)) {
@@ -202,7 +277,7 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-[32px] overflow-hidden border border-gray-100 dark:border-white/5 shadow-xl">
+            <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-xl overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50/50 dark:bg-gray-900/40">
@@ -224,12 +299,15 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
                     <TableCell isHeader className="px-6 py-4">
                       Recorded
                     </TableCell>
+                    <TableCell isHeader className="px-6 py-4 w-[72px] text-right">
+                      <span className="sr-only">Actions</span>
+                    </TableCell>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="px-6 py-16 text-center text-gray-500 font-medium">
+                      <TableCell colSpan={7} className="px-6 py-16 text-center text-gray-500 font-medium">
                         {period === "custom_range" && (!customStart || !customEnd)
                           ? "Choose both dates for a custom range."
                           : "No planned leave entries for this filter."}
@@ -261,11 +339,25 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
                         <TableCell className="px-6 py-4 text-sm font-medium text-gray-800 dark:text-gray-200">
                           {formatLeaveRange(r)}
                         </TableCell>
-                        <TableCell className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-[220px] truncate" title={r.notes || ""}>
-                          {r.notes?.trim() || "—"}
+                        <TableCell className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-[220px] truncate">
+                          <span title={r.notes || ""}>{r.notes?.trim() || "—"}</span>
                         </TableCell>
                         <TableCell className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
                           {formatCreatedOn(r.created_on)}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 text-right">
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              data-planned-leave-menu-trigger
+                              aria-label="More actions"
+                              aria-expanded={menuState?.leaveId === r.id}
+                              onClick={(e) => openOrToggleMenu(r.id, e)}
+                              className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                              <FiMoreVertical size={20} />
+                            </button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -311,6 +403,125 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {typeof document !== "undefined" &&
+        menuState &&
+        createPortal(
+          <div
+            ref={menuPortalRef}
+            role="menu"
+            className="fixed z-[9999] rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 shadow-2xl py-1 ring-1 ring-black/5 dark:ring-white/10"
+            style={{
+              top: menuState.top,
+              left: menuState.left,
+              width: LEAVE_MENU_WIDTH_PX,
+            }}
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => void runMealAllotmentCheck(menuState.leaveId)}
+              className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-2"
+            >
+              <FiPackage className="text-indigo-500 shrink-0" size={16} />
+              Check meals on leave days
+            </button>
+          </div>,
+          document.body
+        )}
+
+      <Modal
+        isOpen={mealCheck.open}
+        onClose={() => setMealCheck({ open: false, loading: false, data: null, error: null })}
+        className="max-w-lg p-0 overflow-hidden"
+      >
+        <div className="p-8">
+          <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">
+            Meal allotments on leave
+          </h3>
+          {mealCheck.loading && (
+            <div className="flex flex-col items-center py-12">
+              <FiLoader className="animate-spin text-indigo-500 mb-3" size={36} />
+              <p className="text-sm text-gray-500 font-medium">Checking deliveries for this kitchen…</p>
+            </div>
+          )}
+          {!mealCheck.loading && mealCheck.error && (
+            <p className="text-red-600 dark:text-red-400 font-medium text-sm">{mealCheck.error}</p>
+          )}
+          {!mealCheck.loading && mealCheck.data && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Leave window:{" "}
+                <span className="font-bold text-gray-900 dark:text-white">
+                  {mealCheck.data.start_date}
+                  {mealCheck.data.end_date !== mealCheck.data.start_date
+                    ? ` → ${mealCheck.data.end_date}`
+                    : ""}
+                </span>
+              </p>
+              {mealCheck.data.partial_day_note && (
+                <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
+                  {mealCheck.data.partial_day_note}
+                </p>
+              )}
+              <div
+                className={`rounded-2xl p-5 border ${
+                  mealCheck.data.has_meals_allotted
+                    ? "border-amber-200 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-900/10"
+                    : "border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-900/10"
+                }`}
+              >
+                <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+                  {mealCheck.data.has_meals_allotted
+                    ? "Meals are allotted to this delivery person on one or more of these days."
+                    : "No meal deliveries assigned to this person for your kitchen in this leave window."}
+                </p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white mb-1">
+                  {mealCheck.data.total_meal_deliveries}{" "}
+                  <span className="text-sm font-bold text-gray-500">total delivery row(s)</span>
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Outstanding (not delivered / failed):{" "}
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {mealCheck.data.outstanding_deliveries}
+                  </span>
+                </p>
+              </div>
+              {mealCheck.data.by_date.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-2">By date</p>
+                  <ul className="max-h-40 overflow-y-auto space-y-1 text-sm">
+                    {mealCheck.data.by_date.map((row) => (
+                      <li
+                        key={row.date}
+                        className="flex justify-between items-center gap-4 py-1 px-2 rounded-lg bg-gray-50 dark:bg-white/5"
+                      >
+                        <span className="font-mono text-gray-800 dark:text-gray-200">{row.date}</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{row.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {Object.keys(mealCheck.data.by_status).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-2">By delivery status</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(mealCheck.data.by_status).map(([k, v]) => (
+                      <span
+                        key={k}
+                        className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-200"
+                      >
+                        {k}: {v}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
