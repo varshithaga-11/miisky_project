@@ -43,9 +43,10 @@ const RecipeManagementPage: React.FC = () => {
     const [selectedCuisineTypeId, setSelectedCuisineTypeId] = useState<number | "">("");
     const [mealTypesLoaded, setMealTypesLoaded] = useState(false);
     const [cuisineTypesLoaded, setCuisineTypesLoaded] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const fetchingMealsRef = useRef(false);
     const fetchingCuisinesRef = useRef(false);
-    const fetchingFoodsRef = useRef(false);
     
     // Modals
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -60,20 +61,28 @@ const RecipeManagementPage: React.FC = () => {
 
     useEffect(() => {
         fetchFoods();
-    }, []);
+    }, [currentPage, pageSize, searchTerm, selectedMealTypeId, selectedCuisineTypeId]);
 
     const fetchFoods = async () => {
-        if (fetchingFoodsRef.current) return;
-        fetchingFoodsRef.current = true;
         setLoading(true);
         try {
-            const foodRes = await getFoodList(1, "all") as { results: Food[] };
+            const foodRes = await getFoodList(
+                currentPage,
+                pageSize,
+                searchTerm || undefined,
+                selectedMealTypeId || undefined,
+                selectedCuisineTypeId || undefined,
+                undefined,
+                undefined,
+                true
+            );
             setFoods(foodRes.results);
+            setTotalItems(foodRes.count);
+            setTotalPages(foodRes.total_pages);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
-            fetchingFoodsRef.current = false;
         }
     };
 
@@ -106,8 +115,7 @@ const RecipeManagementPage: React.FC = () => {
     };
 
     const fetchData = async () => {
-        // Compatibility wrapper for components that expect fetchData
-        await Promise.all([fetchFoods(), fetchMealTypes(), fetchCuisineTypes()]);
+        await fetchFoods();
     };
 
     const handleDelete = (foodId: number) => {
@@ -170,20 +178,6 @@ const RecipeManagementPage: React.FC = () => {
             setRejectionTarget(null);
         }
     };
-
-    const recipeFoods = foods.filter((f: Food) => 
-        (f.ingredients && f.ingredients.length > 0) || (f.steps && f.steps.length > 0)
-    );
-
-    const filteredFoods = recipeFoods.filter((f: Food) => {
-        const matchesSearch = f.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesMeal = !selectedMealTypeId || f.meal_types?.includes(selectedMealTypeId as number);
-        const matchesCuisine = !selectedCuisineTypeId || f.cuisine_types?.includes(selectedCuisineTypeId as number);
-        return matchesSearch && matchesMeal && matchesCuisine;
-    });
-
-    const paginatedFoods = filteredFoods.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-    const totalPages = Math.ceil(filteredFoods.length / pageSize);
 
     return (
         <>
@@ -271,7 +265,7 @@ const RecipeManagementPage: React.FC = () => {
                 
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm text-gray-600 dark:text-gray-400 gap-2">
                     <div>
-                        Showing {filteredFoods.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredFoods.length)} of {filteredFoods.length} entries
+                        Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
                     </div>
                     <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
                         <FiInfo className="w-4 h-4" />
@@ -296,18 +290,18 @@ const RecipeManagementPage: React.FC = () => {
                         <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
+                                    <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">
                                          Loading recipes...
                                     </TableCell>
                                 </TableRow>
-                            ) : paginatedFoods.length === 0 ? (
+                            ) : foods.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
+                                    <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">
                                         No recipes found matching your search.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                paginatedFoods.map((food: Food, i: number) => (
+                                foods.map((food: Food, i: number) => (
                                     <TableRow key={food.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                                         <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                                         <TableCell className="px-5 py-4">
