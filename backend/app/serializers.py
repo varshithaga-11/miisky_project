@@ -1916,6 +1916,19 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def get_reassignment_details(self, obj):
+        reassign = NutritionistReassignment.objects.filter(new_mapping=obj).first()
+        if reassign:
+            prev_n = reassign.previous_nutritionist
+            return {
+                "previous_nutritionist": f"{prev_n.first_name} {prev_n.last_name}".strip() or prev_n.username if prev_n else "System",
+                "new_nutritionist": f"{reassign.new_nutritionist.first_name} {reassign.new_nutritionist.last_name}".strip() or reassign.new_nutritionist.username,
+                "reason": reassign.reason,
+                "notes": reassign.notes,
+                "effective_from": reassign.effective_from.strftime("%Y-%m-%d"),
+            }
+        return None
+
 
 class PatientNutritionMappingSummarySerializer(serializers.ModelSerializer):
     nutritionist_name = serializers.SerializerMethodField()
@@ -1951,19 +1964,6 @@ class PatientNutritionMappingSummarySerializer(serializers.ModelSerializer):
             if m.allotted_by:
                 return f"{m.allotted_by.first_name or ''} {m.allotted_by.last_name or ''}".strip() or m.allotted_by.username
         return "-"
-
-    def get_reassignment_details(self, obj):
-        reassign = NutritionistReassignment.objects.filter(new_mapping=obj).first()
-        if reassign:
-            prev_n = reassign.previous_nutritionist
-            return {
-                "previous_nutritionist": f"{prev_n.first_name} {prev_n.last_name}".strip() or prev_n.username if prev_n else "System",
-                "new_nutritionist": f"{reassign.new_nutritionist.first_name} {reassign.new_nutritionist.last_name}".strip() or reassign.new_nutritionist.username,
-                "reason": reassign.reason,
-                "notes": reassign.notes,
-                "effective_from": reassign.effective_from.strftime("%Y-%m-%d"),
-            }
-        return None
 
 
 class AdminNutritionistListSerializer(serializers.ModelSerializer):

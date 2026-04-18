@@ -2542,6 +2542,61 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                 user.is_patient_mapped = False
                 user.save(update_fields=["is_patient_mapped"])
 
+    @action(detail=False, methods=["get"], url_path="history")
+    def history(self, request):
+        """Nutritionist reassignment audit log for a patient (`user` query param = patient id)."""
+        patient_id = request.query_params.get("user")
+        if not patient_id:
+            return Response(
+                {"detail": "User ID is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            pid = int(patient_id)
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Invalid user ID."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        u = request.user
+        role = getattr(u, "role", None)
+        if role == "admin":
+            pass
+        elif role == "nutritionist":
+            if not UserNutritionistMapping.objects.filter(
+                nutritionist=u, user_id=pid, is_active=True
+            ).exists():
+                return Response(
+                    {"detail": "Not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        elif role in ("patient", "non_patient"):
+            if u.id != pid:
+                return Response(
+                    {"detail": "Not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            return Response(
+                {"detail": "You do not have permission to perform this action."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        qs = (
+            NutritionistReassignment.objects.filter(user_id=pid)
+            .select_related(
+                "user",
+                "previous_nutritionist",
+                "new_nutritionist",
+                "reassigned_by",
+                "active_diet_plan",
+                "new_mapping",
+            )
+            .order_by("-reassigned_on")
+        )
+        return Response(NutritionistReassignmentSerializer(qs, many=True).data)
+
     @action(detail=False, methods=["get"], url_path="my-patients")
     def my_patients(self, request):
         return Response(_build_nutritionist_my_patients_list(request.user))
