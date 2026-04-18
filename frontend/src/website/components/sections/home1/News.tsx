@@ -7,8 +7,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useEffect, useState } from "react";
 import { getBlogPosts } from "../../../../utils/api";
-import type { BlogPost } from '../../../../Website/utils/types';
-import { MOCK_BLOG_POSTS } from '../../../../Website/utils/mockData';
+import type { BlogPost } from "@/website/utils/types";
+import { MOCK_BLOG_POSTS } from "@/website/utils/mockData";
 
 interface NewsProps {
   posts?: BlogPost[];

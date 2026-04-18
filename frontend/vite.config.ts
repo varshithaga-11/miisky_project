@@ -26,7 +26,8 @@ export default defineConfig({
     // __API_URL__: '"http://127.0.0.1:8000/"',
     // __API_URL__: '"https://backend.testingmiisky.com/"',
     // __API_URL__: '"http://18.190.152.118/"',
-    __API_URL__: '"http://18.190.152.118:8000/"',
+    // __API_URL__: '"http://18.190.152.118:8000/"',
+    __API_URL__: '"https://web.miisky.com/"',
   },
   build: {
     rollupOptions: {

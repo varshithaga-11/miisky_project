@@ -7,8 +7,8 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { useEffect, useState } from "react";
 import { getDepartments } from "@/utils/api";
-import type { Department } from "@/Website/utils/types";
-import { MOCK_DEPARTMENTS, DEPARTMENT_SLUGS } from "@/Website/utils/mockData";
+import type { Department } from "@/website/utils/types";
+import { MOCK_DEPARTMENTS, DEPARTMENT_SLUGS } from "@/website/utils/mockData";
 import { getDepartmentIcon } from "@/utils/departmentIcons";
 
 const swiperOptions = {

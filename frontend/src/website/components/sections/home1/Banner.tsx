@@ -6,8 +6,8 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { useEffect, useState } from "react";
 import { getHeroBanners } from "@/utils/api";
-import type { BannerSlide } from "@/Website/utils/mockData";
-import { MOCK_BANNER_SLIDES } from "@/Website/utils/mockData";
+import type { BannerSlide } from "@/website/utils/mockData";
+import { MOCK_BANNER_SLIDES } from "@/website/utils/mockData";
 
 const swiperOptions = {
   modules: [Autoplay, Pagination, Navigation],

@@ -35,13 +35,11 @@ DEBUG = False
 #     if h.strip()
 # ]
 ALLOWED_HOSTS = [
-    "18.190.152.118",
     "localhost",
     "127.0.0.1",
-    "testingmiisky.com",
-    "www.testingmiisky.com",
-    "backend.testingmiisky.com",
-]
+    "15.206.151.207",
+    "api.miisky.com"
+
 
 
 AUTH_USER_MODEL = 'app.UserRegister'
@@ -128,22 +126,20 @@ DATABASES = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://testingmiisky.com",
-    "https://www.testingmiisky.com",
-    "https://backend.testingmiisky.com",
-    "http://testingmiisky.com",
-    "http://www.testingmiisky.com",
-    "http://backend.testingmiisky.com",
-    "http://18.190.152.118",
-    "http://18.190.152.118:8000",
-    "https://18.190.152.118",
-    "https://18.190.152.118:8000",
+
     "https://localhost",
     "https://localhost:5173",
     "http://localhost",
     "http://localhost:5173",
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
+    "http://15.206.151.207",
+    "http://15.206.151.207:8000",
+    "https://15.206.151.207",
+    "https://15.206.151.207:8000",\
+    "https://api.miisky.com",
+    "http://api.miisky.com",
+
 ]
 
 
