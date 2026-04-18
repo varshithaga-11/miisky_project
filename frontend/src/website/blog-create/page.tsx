@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { blogApi } from "../utils/api";
-import { useLayout } from "../context/LayoutContext";
-import Cta from "../components/sections/home2/Cta";
+import { blogApi } from '@website/utils/api';
+import { useLayout } from '@website/context/LayoutContext';
+import Cta from '@website/components/sections/home2/Cta';
 import { FiCheckCircle, FiUpload } from "react-icons/fi";
 
 const BlogCreatePage: React.FC = () => {

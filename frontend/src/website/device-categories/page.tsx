@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getMedicalDeviceCategories } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getMedicalDeviceCategories } from '@/utils/api';
 import { getDeviceCategoryIcon } from "../../utils/deviceCategoryIcons";
 
 export default function DeviceCategoriesPage() {

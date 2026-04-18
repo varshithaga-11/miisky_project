@@ -1,4 +1,4 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 export default function Chooseus() {
   return (
         <section className="chooseus-style-two p_relative pt_100 pb_110">

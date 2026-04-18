@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 // import CountUp from "react-countup";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import About from "../components/sections/home1/About";
 import Working from "../components/sections/home1/Working";
 import Clients from "../components/sections/home3/Clients";
 import Team from "../components/sections/home1/Team";
 import Service from "../components/sections/home1/Service";
-import Cta from "../components/sections/home2/Cta";
+import Cta from '@website/components/sections/home2/Cta';
 
 export default function About_Page() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

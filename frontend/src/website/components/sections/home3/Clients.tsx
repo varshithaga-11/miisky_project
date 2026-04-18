@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
-import { getPartners, getCompanyInfo } from "../../../../utils/api";
+import { getPartners, getCompanyInfo } from '@/utils/api';
 import { Partner } from "../../../utils/types";
 import { MOCK_PARTNERS } from "../../../utils/mockData";
 

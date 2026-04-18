@@ -1,4 +1,4 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
@@ -6,7 +6,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useEffect, useState } from "react";
-import { getBlogPosts } from "../../../../utils/api";
+import { getBlogPosts } from '@/utils/api';
 import type { BlogPost } from "@/website/utils/types";
 import { MOCK_BLOG_POSTS } from "@/website/utils/mockData";
 

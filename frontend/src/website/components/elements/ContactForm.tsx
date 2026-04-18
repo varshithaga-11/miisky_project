@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { contactApi } from "../../utils/api";
+import { contactApi } from '@website/utils/api';
 
 interface FormState {
   name: string;

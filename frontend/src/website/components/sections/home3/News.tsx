@@ -1,7 +1,7 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getBlogPosts } from "../../../../utils/api";
+import { getBlogPosts } from '@/utils/api';
 import { MOCK_BLOG_POSTS } from "@/website/utils/mockData";
 
 export default function News() {

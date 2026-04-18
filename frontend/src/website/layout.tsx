@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { LayoutProvider, useLayout } from "./context/LayoutContext";
+import { LayoutProvider, useLayout } from '@website/context/LayoutContext';
 import Layout from "./components/layout/Layout";
 import "./website.css";
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import MobileMenu from "../MobileMenu";
-import { getDepartments } from "../../../../utils/api";
+import { getDepartments } from '@/utils/api';
 
 // ✅ Define props type
 type Header1Props = {

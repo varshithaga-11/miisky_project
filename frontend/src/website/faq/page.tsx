@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
-import { getFAQs, getFAQCategories } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getFAQs, getFAQCategories } from '@/utils/api';
 
 export default function FAQPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

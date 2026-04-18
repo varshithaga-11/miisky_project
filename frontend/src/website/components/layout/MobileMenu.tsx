@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Image from "../Image";
-import { getDepartments } from "../../../utils/api";
+import Image from '@website/components/Image';
+import { getDepartments } from '@/utils/api';
 
 type MobileMenuProps = {
   isSidebar: boolean;

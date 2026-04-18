@@ -1,5 +1,5 @@
 
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom"
 
 export default function Footer1() {

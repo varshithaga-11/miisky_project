@@ -1,4 +1,4 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 
 /** Edit these for final content. */
 const PLACEHOLDER_IMAGE_SRC = "/images/homeimg/Picture1.png";

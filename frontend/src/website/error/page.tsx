@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import { Link } from "react-router-dom";
 
 export default function ErrorPage() {

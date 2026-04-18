@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import Working from "../components/sections/home2/Working";
 import About from "../components/sections/home2/About";
 import AboutTwo from "../components/sections/home2/About_Two";
@@ -9,7 +9,7 @@ import Chooseus from "../components/sections/home2/Chooseus";
 import Service from "../components/sections/home2/Service";
 import Portfolio from "../components/sections/home2/Portfolio";
 import News from "../components/sections/home1/News";
-import Cta from "../components/sections/home2/Cta";
+import Cta from '@website/components/sections/home2/Cta';
 export default function Home_Two() {
     const { setHeaderStyle } = useLayout();
 

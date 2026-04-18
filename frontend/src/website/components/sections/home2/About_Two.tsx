@@ -1,4 +1,4 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
 import CountUp from "react-countup";
 

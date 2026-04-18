@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getResearchPapers } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getResearchPapers } from '@/utils/api';
 
 export default function InnovationPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

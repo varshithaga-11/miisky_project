@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLayout } from "./context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import About from "./components/sections/home1/About";
 // import About_Two from "./components/sections/home1/About_Two";
 import Banner from "./components/sections/home1/Banner";
@@ -10,7 +10,7 @@ import Service from "./components/sections/home1/Service";
 import Team from "./components/sections/home1/Team";
 import Working from "./components/sections/home1/Working";
 import GoogleMapSection from "./components/sections/home1/GoogleMap";
-import HomeImageCaption from "./components/sections/home1/HomeImageCaption";
+import HomeImageCaption from '@website/components/sections/home1/HomeImageCaption';
 
 export default function HomePage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

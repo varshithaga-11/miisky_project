@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getGalleryItemById, getGalleryCategories } from "../../utils/api";
-import Image from "../components/Image";
-import Cta from "../components/sections/home2/Cta";
+import { useLayout } from '@website/context/LayoutContext';
+import { getGalleryItemById, getGalleryCategories } from '@/utils/api';
+import Image from '@website/components/Image';
+import Cta from '@website/components/sections/home2/Cta';
 
 export default function GalleryDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

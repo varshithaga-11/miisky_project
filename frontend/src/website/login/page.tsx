@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { authApi } from "../utils/api";
+import { authApi } from '@website/utils/api';
 
 export default function LoginPage() {
   const navigate = useNavigate();

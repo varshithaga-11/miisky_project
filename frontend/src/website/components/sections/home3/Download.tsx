@@ -1,4 +1,4 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 export default function Download() {
   return (
         <section className="download-section pt_120">

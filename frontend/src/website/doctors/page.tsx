@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getTeamMembers } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getTeamMembers } from '@/utils/api';
 import { MOCK_DOCTORS } from "../utils/mockData";
-import Cta from "../components/sections/home2/Cta";
+import Cta from '@website/components/sections/home2/Cta';
 
 export default function DoctorsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

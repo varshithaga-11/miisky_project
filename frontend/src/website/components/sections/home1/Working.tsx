@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { getWorkflowSteps } from "@/utils/api";
 
 interface WorkflowStep {

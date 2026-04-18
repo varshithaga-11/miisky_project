@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import Image from "../components/Image";
-import { getMedicalDevices, getMedicalDeviceCategories } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import Image from '@website/components/Image';
+import { getMedicalDevices, getMedicalDeviceCategories } from '@/utils/api';
 
 export default function MedicalDevicesPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

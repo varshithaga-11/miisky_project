@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getPatents } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getPatents } from '@/utils/api';
 
 export default function PatentsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

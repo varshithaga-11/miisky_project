@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { authApi, type RegisterPayload } from "../utils/api";
+import { authApi, type RegisterPayload } from '@website/utils/api';
 
 // Exact ROLE_CHOICES from backend model (key → display label)
 const ROLES: { value: string; label: string }[] = [

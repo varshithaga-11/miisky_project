@@ -1,6 +1,6 @@
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { useState, FormEvent } from "react";
-import { appointmentApi } from "../../../utils/api";
+import { appointmentApi } from '@website/utils/api';
 import { CLINIC_INFO } from "../../../utils/mockData";
 
 interface AppointmentData {

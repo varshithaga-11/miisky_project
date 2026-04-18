@@ -1,13 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getDepartments, createWebsiteInquiry } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getDepartments, createWebsiteInquiry } from '@/utils/api';
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 import { getDepartmentIcon } from "../../utils/departmentIcons";
-import Cta from "../components/sections/home2/Cta";
+import Cta from '@website/components/sections/home2/Cta';
 
 export default function DepartmentsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

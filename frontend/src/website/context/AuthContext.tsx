@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { authApi } from "../utils/api";
+import { authApi } from '@website/utils/api';
 
 interface AuthContextType {
   logout: () => void;

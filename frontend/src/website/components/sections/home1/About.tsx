@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Image from "../../Image";
+import Image from '@website/components/Image';
 import { getAboutSections } from "@/utils/api";
 
 export default function About() {

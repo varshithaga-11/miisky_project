@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import Portfolio from "../components/sections/home1/Portfolio";
 import About from "../components/sections/home3/About";
 import Banner from "../components/sections/home3/Banner";

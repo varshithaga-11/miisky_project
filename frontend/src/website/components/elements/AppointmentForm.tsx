@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { contactApi } from "../../utils/api";
-import Image from "../Image";
+import { contactApi } from '@website/utils/api';
+import Image from '@website/components/Image';
 
 interface AppointmentFormProps {
   departmentName?: string;

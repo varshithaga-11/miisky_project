@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import Cta from "../components/sections/home2/Cta";
-import { getDepartmentById, getDepartments, getCompanyInfo } from "../../utils/api";
-import AppointmentForm from "../components/elements/AppointmentForm";
+import { useLayout } from '@website/context/LayoutContext';
+import Cta from '@website/components/sections/home2/Cta';
+import { getDepartmentById, getDepartments, getCompanyInfo } from '@/utils/api';
+import AppointmentForm from '@website/components/elements/AppointmentForm';
 import { MOCK_DEPARTMENTS } from "../utils/mockData";
 
 export default function DepartmentDetails() {

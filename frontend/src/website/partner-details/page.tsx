@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getPartnerById } from "../../utils/api";
-import Image from "../components/Image";
-import Cta from "../components/sections/home2/Cta";
+import { useLayout } from '@website/context/LayoutContext';
+import { getPartnerById } from '@/utils/api';
+import Image from '@website/components/Image';
+import Cta from '@website/components/sections/home2/Cta';
 
 export default function PartnerDetailsPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import Cta from "../components/sections/home2/Cta";
-import { getGalleryItems } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import Cta from '@website/components/sections/home2/Cta';
+import { getGalleryItems } from '@/utils/api';
 import { MOCK_PORTFOLIO } from "../utils/mockData";
 
 export default function Portfolio_Page() {

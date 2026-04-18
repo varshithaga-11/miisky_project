@@ -1,6 +1,6 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
-import Image from "../../Image";
+import Image from '@website/components/Image';
 
 // Import Swiper styles
 import "swiper/css";

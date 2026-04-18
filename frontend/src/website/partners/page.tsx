@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
-import Image from "../components/Image";
+import { useLayout } from '@website/context/LayoutContext';
+import Image from '@website/components/Image';
 import { X, Calendar, Award, Info } from "lucide-react";
-import { getPartners } from "../../utils/api";
+import { getPartners } from '@/utils/api';
 
 export default function PartnersPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

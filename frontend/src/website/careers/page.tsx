@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { getJobListings } from "../../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { getJobListings } from '@/utils/api';
 
 export default function CareersPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

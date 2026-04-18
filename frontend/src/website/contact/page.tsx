@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import ContactForm from "../components/elements/ContactForm";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
 import { Clock } from "lucide-react";
 import GoogleMapSection from "../components/sections/home1/GoogleMap";

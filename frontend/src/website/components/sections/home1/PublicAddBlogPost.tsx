@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { blogApi } from "../../../utils/api";
+import { blogApi } from '@website/utils/api';
 import { FiX, FiCheckCircle } from "react-icons/fi";
 
 interface Props {

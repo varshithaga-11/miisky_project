@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useLayout } from "../context/LayoutContext";
-import Image from "../components/Image";
+import { useLayout } from '@website/context/LayoutContext';
+import Image from '@website/components/Image';
 import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
-import { getGalleryItems, getGalleryCategories } from "../../utils/api";
+import { getGalleryItems, getGalleryCategories } from '@/utils/api';
 
 export default function GalleryPage() {
     const { setHeaderStyle, setBreadcrumbTitle } = useLayout();

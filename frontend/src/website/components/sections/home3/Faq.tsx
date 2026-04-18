@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Image from "../../Image";
+import Image from '@website/components/Image';
 
 export default function Faq() {
   const [activeIndex, setActiveIndex] = useState<number | null>(0);

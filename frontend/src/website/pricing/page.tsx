@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useLayout } from "../context/LayoutContext";
+import { useLayout } from '@website/context/LayoutContext';
 import { Link } from "react-router-dom";
-import Cta from "../components/sections/home2/Cta";
+import Cta from '@website/components/sections/home2/Cta';
 import { getDietPlans } from "@/utils/api";
 import { FiCheck } from "react-icons/fi";
 

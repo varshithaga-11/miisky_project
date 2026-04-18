@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Image from "../components/Image";
-import { useLayout } from "../context/LayoutContext";
-import Cta from "../components/sections/home2/Cta";
-import { getTeamMemberById } from "../../utils/api";
-import { contactApi } from "../utils/api";
+import Image from '@website/components/Image';
+import { useLayout } from '@website/context/LayoutContext';
+import Cta from '@website/components/sections/home2/Cta';
+import { getTeamMemberById } from '@/utils/api';
+import { contactApi } from '@website/utils/api';
 import { MOCK_DOCTORS } from "../utils/mockData";
 import { toast } from "react-toastify";
 

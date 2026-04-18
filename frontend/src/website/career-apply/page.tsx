@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import { careersApi } from "../utils/api";
+import { useLayout } from '@website/context/LayoutContext';
+import { careersApi } from '@website/utils/api';
 import { FileText, User, Briefcase, Upload, CheckCircle } from "lucide-react";
 
 export default function CareerApplyPage() {

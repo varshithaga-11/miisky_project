@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Image from "../components/Image";
+import Image from '@website/components/Image';
 import { Link } from "react-router-dom";
-import { useLayout } from "../context/LayoutContext";
-import Cta from "../components/sections/home2/Cta";
+import { useLayout } from '@website/context/LayoutContext';
+import Cta from '@website/components/sections/home2/Cta';
 import { FiHeart } from "react-icons/fi";
-import { getBlogPostById, getBlogPosts, createBlogComment, getBlogCategories, getBlogTags, likeBlogPost, unlikeBlogPost } from "../../utils/api";
+import { getBlogPostById, getBlogPosts, createBlogComment, getBlogCategories, getBlogTags, likeBlogPost, unlikeBlogPost } from '@/utils/api';
 import { MOCK_BLOG_POSTS } from "../utils/mockData";
 
 export default function BlogDetails() {
