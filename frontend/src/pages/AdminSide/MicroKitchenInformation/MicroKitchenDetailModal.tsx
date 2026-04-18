@@ -451,12 +451,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                       {screen === "planned_leaves" && <DisplayKitchenPlannedLeaves items={payload?.results} />}
                       {screen === "delivery_profiles" && <DisplayKitchenDeliveryProfiles items={payload?.results} />}
                       {screen === "inspections" && (
-                        <DisplayKitchenInspections 
-                          items={payload?.results} 
-                          onLoadMore={handleLoadMore}
-                          hasMore={payload?.hasMore || false}
-                          loadingMore={loadingMore}
-                        />
+                        <DisplayKitchenInspections items={payload?.results} />
                       )}
                       {screen === "reviews" && (
                         <div className="space-y-4">

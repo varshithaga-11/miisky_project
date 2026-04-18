@@ -421,17 +421,7 @@ export function DisplayKitchenDailyPrep({
   );
 }
 
-export function DisplayKitchenInspections({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}) {
+export function DisplayKitchenInspections({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No inspection history found." />;
   return (
     <div className="space-y-4">
