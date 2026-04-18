@@ -39,7 +39,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "15.206.151.207",
     "api.miisky.com"
-
+]
 
 
 AUTH_USER_MODEL = 'app.UserRegister'
