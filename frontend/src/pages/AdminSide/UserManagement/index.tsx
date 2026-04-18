@@ -59,7 +59,7 @@ const UserManagementPage: React.FC = () => {
     | "nutritionist"
     | "patient"
     | "supply_chain"
-    | "food_buyer"
+    | "doctor"
     | "micro_kitchen"
     | "non_patient"
   >("all");
@@ -251,7 +251,7 @@ const UserManagementPage: React.FC = () => {
                     { value: "nutritionist", label: "Nutritionist/Dietician" },
                     { value: "patient", label: "Patient" },
                     { value: "supply_chain", label: "Supply Chain" },
-                    { value: "food_buyer", label: "Food Buyer" },
+                    { value: "doctor", label: "Doctor" },
                     { value: "micro_kitchen", label: "Micro Kitchen" },
                     { value: "non_patient", label: "Non Patient" },
                   ]}
