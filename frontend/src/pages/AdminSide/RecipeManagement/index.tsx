@@ -351,7 +351,7 @@ const RecipeManagementPage: React.FC = () => {
                                                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
                                                         <FiX size={12} /> Rejected
                                                     </span>
-                                                ) : (
+                                                ) : food.posted_by_role === 'nutritionist' ? (
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             onClick={() => handleApprovalClick(food.id!, false)}
@@ -368,6 +368,8 @@ const RecipeManagementPage: React.FC = () => {
                                                             <FiX size={12} /> Reject
                                                         </button>
                                                     </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs italic">Pending</span>
                                                 )}
                                             </TableCell>
                                         )}

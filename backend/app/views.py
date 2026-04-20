@@ -3469,13 +3469,14 @@ class FoodViewSet(viewsets.ModelViewSet):
             ).all()
         else:
             # Prefetch only approved ingredients and units for the nutritionist/patient view
+            from django.db.models import Q
             queryset = Food.objects.prefetch_related(
                 Prefetch('meal_types', queryset=MealType.objects.filter(is_approved=True)),
                 Prefetch('cuisine_types', queryset=CuisineType.objects.filter(is_approved=True)),
                 Prefetch('foodingredient_set', queryset=FoodIngredient.objects.filter(is_approved=True).select_related('ingredient', 'unit')),
                 'foodstep_set',
                 'nutrition'
-            ).filter(is_approved=True)
+            ).filter(Q(is_approved=True) | Q(posted_by=self.request.user))
         meal_type = self.request.query_params.get('meal_type')
         cuisine_type = self.request.query_params.get('cuisine_type')
         micro_kitchen = self.request.query_params.get('micro_kitchen')
@@ -3507,6 +3508,19 @@ class FoodViewSet(viewsets.ModelViewSet):
         role = getattr(user, 'role', None)
         is_approved = (role in ['admin', 'master'])
         serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+
+    def perform_update(self, serializer):
+        old_approved = serializer.instance.is_approved
+        obj = serializer.save()
+        
+        if obj.is_approved and not old_approved:
+            FoodIngredient.objects.filter(food=obj).update(is_approved=True, is_rejected=False)
+            FoodStep.objects.filter(food=obj).update(is_approved=True, is_rejected=False)
+        
+        if obj.is_rejected:
+            FoodIngredient.objects.filter(food=obj).update(is_rejected=True, is_approved=False)
+            FoodStep.objects.filter(food=obj).update(is_rejected=True, is_approved=False)
+
 
 
 class FoodNutritionViewSet(viewsets.ModelViewSet):
@@ -3953,6 +3967,22 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
             qs = qs.filter(unit_id=unit_id)
         return qs
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        obj = serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        
+        # If created by nutritionist, mark the associated food as pending
+        # This ensures the "recipe" appears for approval in the admin side
+        if not is_approved and obj.food:
+            obj.food.is_approved = False
+            obj.food.is_rejected = False
+            # Ensure the food is also marked as posted by this user if it wasn't already
+            if not obj.food.posted_by:
+                obj.food.posted_by = user
+            obj.food.save()
+
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodingredients(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -3973,11 +4003,30 @@ class FoodStepViewSet(viewsets.ModelViewSet):
     search_fields = ['food__name', 'instruction']
 
     def get_queryset(self):
-        qs = FoodStep.objects.select_related('food').all()
+        role = getattr(self.request.user, "role", None)
+        if role in ("admin", "master"):
+            qs = FoodStep.objects.select_related('food').all()
+        else:
+            qs = FoodStep.objects.select_related('food').filter(is_approved=True)
+            
         food_id = self.request.query_params.get('food')
         if food_id:
             qs = qs.filter(food_id=food_id)
         return qs
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        obj = serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        
+        # If created by nutritionist, mark the associated food as pending
+        if not is_approved and obj.food:
+            obj.food.is_approved = False
+            obj.food.is_rejected = False
+            if not obj.food.posted_by:
+                obj.food.posted_by = user
+            obj.food.save()
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodsteps(self, request):

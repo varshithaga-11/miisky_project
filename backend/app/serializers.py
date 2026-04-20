@@ -508,11 +508,13 @@ class FoodIngredientSerializer(serializers.ModelSerializer):
     ingredient_name_input = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     unit_name_input = serializers.CharField(write_only=True, required=False)
 
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+
     class Meta:
         model = FoodIngredient
         fields = ['id', 'food', 'ingredient', 'ingredient_name',
                   'quantity', 'unit', 'unit_name', 'notes',
-                  'food_name_input', 'ingredient_name_input', 'unit_name_input', 'is_approved', 'is_rejected']
+                  'food_name_input', 'ingredient_name_input', 'unit_name_input', 'is_approved', 'is_rejected', 'posted_by_role']
         validators = []  # Disable default unique_together validator to allow update_or_create
 
     def create(self, validated_data):
@@ -564,9 +566,11 @@ class FoodIngredientSerializer(serializers.ModelSerializer):
 class FoodStepSerializer(serializers.ModelSerializer):
     food_name_input = serializers.CharField(write_only=True, required=False)
 
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+
     class Meta:
         model = FoodStep
-        fields = "__all__"
+        fields = ['id', 'food', 'step_number', 'instruction', 'is_approved', 'is_rejected', 'posted_by_role', 'food_name_input']
         validators = []  # Disable default unique_together validator to allow update_or_create
 
     def create(self, validated_data):

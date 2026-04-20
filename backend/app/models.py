@@ -1027,9 +1027,10 @@ class FoodIngredient(models.Model):
 
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="food_ingredients")
 
     def __str__(self):
-        return f"{self.food.name} - {self.ingredient.name}"
+        return f"{self.food.name} - {self.ingredient.name} ({self.quantity} {self.unit.name})"
     
 
     class Meta:
@@ -1057,6 +1058,10 @@ class FoodStep(models.Model):
 
     instruction = models.TextField()
     # Example: "Mix ragi flour and urad dal batter"
+
+    is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="food_steps")
 
     class Meta:
         ordering = ['step_number']
