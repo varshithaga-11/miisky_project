@@ -35,10 +35,63 @@ export type AllotedPatient = {
   } | null;
 };
 
+export type AllotedPatientsLiteResponse = {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: AllotedPatient[];
+};
+
 export const getMyAllotedPatients = async (): Promise<AllotedPatient[]> => {
   const url = createApiUrl("api/usernutritionistmapping/my-patients/");
   const response = await axios.get<AllotedPatient[]>(url, { headers: await getAuthHeaders() });
   return response.data;
+};
+
+export const getMyAllotedPatientsLite = async (params: {
+  page: number;
+  limit: number;
+  search?: string;
+}): Promise<AllotedPatientsLiteResponse> => {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+  });
+  if (params.search?.trim()) {
+    query.set("search", params.search.trim());
+  }
+  const url = createApiUrl(`api/usernutritionistmapping/my-patients-lite/?${query.toString()}`);
+  const response = await axios.get<AllotedPatientsLiteResponse>(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+type PatientQuestionnairesResponse = {
+  count: number;
+  results: Array<{
+    user: number;
+    [key: string]: any;
+  }>;
+};
+
+export const getMyPatientsQuestionnaires = async (userIds?: number[]) => {
+  const query = new URLSearchParams();
+  if (userIds && userIds.length > 0) {
+    query.set("user_ids", userIds.join(","));
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const url = createApiUrl(`api/usernutritionistmapping/my-patients-questionnaires/${suffix}`);
+  const response = await axios.get<PatientQuestionnairesResponse>(url, { headers: await getAuthHeaders() });
+  return response.data.results || [];
+};
+
+export const getPatientQuestionnaireByUser = async (userId: number) => {
+  const url = createApiUrl(`api/userquestionnaire/?user=${userId}`);
+  const response = await axios.get<any[]>(url, { headers: await getAuthHeaders() });
+  const rows = Array.isArray(response.data) ? response.data : [];
+  const exact = rows.find((row) => Number(row?.user) === Number(userId));
+  return exact || rows[0] || null;
 };
 
 export type MicroKitchenForDistance = {

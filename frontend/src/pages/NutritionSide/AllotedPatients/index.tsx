@@ -6,27 +6,75 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
   AllotedPatient,
-  getMyAllotedPatients,
+  getMyAllotedPatientsLite,
+  getPatientQuestionnaireByUser,
   fetchAllApprovedMicroKitchens,
   MicroKitchenForDistance,
 } from "./api";
 import InputField from "../../../components/form/input/InputField";
 import { UserCircleIcon, GroupIcon } from "../../../icons";
-import { FiMapPin, FiActivity, FiUser, FiHeart, FiInfo, FiNavigation2, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiMapPin, FiActivity, FiUser, FiHeart, FiInfo, FiNavigation2, FiX, FiChevronLeft, FiChevronRight, FiEye } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { haversineKm } from "../../../utils/haversineKm";
 
 const AllottedPatientsPage: React.FC = () => {
   const [patients, setPatients] = useState<AllotedPatient[]>([]);
+  const [questionnaireByUserId, setQuestionnaireByUserId] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(true);
+  const [questionnaireLoadingByUserId, setQuestionnaireLoadingByUserId] = useState<Record<number, boolean>>({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [distanceModalPatient, setDistanceModalPatient] = useState<AllotedPatient | null>(null);
   const [microKitchens, setMicroKitchens] = useState<MicroKitchenForDistance[] | null>(null);
   const [kitchensLoading, setKitchensLoading] = useState(false);
   const [kitchensFetchError, setKitchensFetchError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const patientsPerPage = 5;
+
+  const extractLabel = (item: unknown) => {
+    if (typeof item === "string") return item;
+    if (item && typeof item === "object" && "name" in item) {
+      const name = (item as { name?: unknown }).name;
+      return typeof name === "string" ? name : "";
+    }
+    return "";
+  };
+
+  const getFoodPreferencesView = (foodPreferences: unknown): string[] | Record<string, string[]> | null => {
+    if (!foodPreferences) return null;
+
+    if (Array.isArray(foodPreferences)) {
+      return foodPreferences.filter((value): value is string => typeof value === "string");
+    }
+
+    if (typeof foodPreferences === "string") {
+      const trimmed = foodPreferences.trim();
+      if (!trimmed) return null;
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.filter((value): value is string => typeof value === "string");
+          }
+          if (parsed && typeof parsed === "object") {
+            return parsed as Record<string, string[]>;
+          }
+        } catch {
+          return [trimmed];
+        }
+      }
+      return [trimmed];
+    }
+
+    if (foodPreferences && typeof foodPreferences === "object") {
+      return foodPreferences as Record<string, string[]>;
+    }
+
+    return null;
+  };
 
   const loadMicroKitchens = async () => {
     setKitchensLoading(true);
@@ -85,18 +133,50 @@ const AllottedPatientsPage: React.FC = () => {
       });
   }, [distanceModalPatient, microKitchens]);
 
-  const toggleRow = (id: number) => {
-    setExpandedRows(prev => 
-      prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
-    );
+  const toggleRow = async (userId: number) => {
+    if (expandedRows.includes(userId)) {
+      setExpandedRows((prev) => prev.filter((r) => r !== userId));
+      return;
+    }
+
+    if (!questionnaireByUserId[userId]) {
+      setQuestionnaireLoadingByUserId((prev) => ({ ...prev, [userId]: true }));
+      try {
+        const questionnaire = await getPatientQuestionnaireByUser(userId);
+        setQuestionnaireByUserId((prev) => ({ ...prev, [userId]: questionnaire }));
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load patient questionnaire");
+        setQuestionnaireLoadingByUserId((prev) => ({ ...prev, [userId]: false }));
+        return;
+      } finally {
+        setQuestionnaireLoadingByUserId((prev) => ({ ...prev, [userId]: false }));
+      }
+    }
+
+    setExpandedRows((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
   };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const res = await getMyAllotedPatients();
-        setPatients(res || []);
+        const res = await getMyAllotedPatientsLite({
+          page: currentPage,
+          limit: patientsPerPage,
+          search: debouncedSearchTerm || undefined,
+        });
+        setPatients(res.results || []);
+        setTotalPatients(res.count || 0);
+        setTotalPages(res.total_pages || 1);
+        setExpandedRows([]);
       } catch (err) {
         console.error(err);
         toast.error("Failed to load allotted patients");
@@ -104,26 +184,16 @@ const AllottedPatientsPage: React.FC = () => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [currentPage, patientsPerPage, debouncedSearchTerm]);
 
-  const filteredPatients = useMemo(() => {
-    return patients.filter((p) => {
-      const fullName = `${p.user.first_name || ""} ${p.user.last_name || ""}`.toLowerCase();
-      const username = p.user.username.toLowerCase();
-      const email = p.user.email.toLowerCase();
-      const search = searchTerm.toLowerCase();
-      return (
-        fullName.includes(search) || 
-        username.includes(search) || 
-        email.includes(search)
-      );
-    });
-  }, [patients, searchTerm]);
-
-  const paginatedPatients = useMemo(() => {
-    const startIndex = (currentPage - 1) * patientsPerPage;
-    return filteredPatients.slice(startIndex, startIndex + patientsPerPage);
-  }, [filteredPatients, currentPage, patientsPerPage]);
+  const patientsWithQuestionnaire = useMemo(
+    () =>
+      patients.map((patient) => ({
+        ...patient,
+        questionnaire: questionnaireByUserId[patient.user.id] || null,
+      })),
+    [patients, questionnaireByUserId]
+  );
 
   return (
     <>
@@ -141,7 +211,7 @@ const AllottedPatientsPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Patients</p>
-                <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{patients.length}</h4>
+                <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{totalPatients}</h4>
               </div>
             </div>
           </div>
@@ -160,7 +230,8 @@ const AllottedPatientsPage: React.FC = () => {
             />
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredPatients.length}</span> patient(s)
+            Showing <span className="font-semibold text-gray-900 dark:text-white">{patients.length}</span> of{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">{totalPatients}</span> patient(s)
           </div>
         </div>
 
@@ -187,15 +258,15 @@ const AllottedPatientsPage: React.FC = () => {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredPatients.length === 0 ? (
+                ) : patientsWithQuestionnaire.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="px-5 py-20 text-center text-gray-500 italic">
                       {searchTerm ? "No patients found matching your search." : "No patients have been allotted to you yet."}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedPatients.map((p) => (
-                    <React.Fragment key={p.mapping_id}>
+                  patientsWithQuestionnaire.map((p) => (
+                    <React.Fragment key={p.user.id}>
                       <TableRow className="border-t border-gray-100 dark:border-white/[0.05] hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-colors">
                         <TableCell className="px-5 py-4">
                           <div className="flex items-center gap-3">
@@ -280,10 +351,20 @@ const AllottedPatientsPage: React.FC = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => toggleRow(p.mapping_id)}
-                              className={`p-3 rounded-2xl transition-all shadow-sm flex items-center gap-2 text-xs font-black uppercase tracking-widest ${expandedRows.includes(p.mapping_id) ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                              title={expandedRows.includes(p.user.id) ? "Close details" : "View details"}
+                              onClick={() => void toggleRow(p.user.id)}
+                              disabled={!!questionnaireLoadingByUserId[p.user.id]}
+                              className={`p-3 rounded-2xl transition-all shadow-sm flex items-center justify-center ${
+                                expandedRows.includes(p.user.id)
+                                  ? "bg-gray-900 text-white"
+                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              } disabled:opacity-60 disabled:cursor-not-allowed`}
                             >
-                              {expandedRows.includes(p.mapping_id) ? "Close" : "View Details"}
+                              {questionnaireLoadingByUserId[p.user.id] ? (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                              ) : (
+                                <FiEye className="h-5 w-5" aria-hidden />
+                              )}
                             </button>
                           </div>
                         </TableCell>
@@ -291,7 +372,7 @@ const AllottedPatientsPage: React.FC = () => {
                       
                       {/* Expanded Section */}
                       <AnimatePresence>
-                        {expandedRows.includes(p.mapping_id) && (
+                        {expandedRows.includes(p.user.id) && (
                           <TableRow className="bg-gray-50/30 dark:bg-white/[0.01]">
                             <TableCell colSpan={5} className="p-0">
                                <motion.div 
@@ -377,26 +458,46 @@ const AllottedPatientsPage: React.FC = () => {
 
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Symptoms & Vulnerabilities</span>
                                            <div className="flex flex-wrap gap-2">
-                                              {Array.isArray(p.questionnaire?.symptoms) && p.questionnaire.symptoms.map((s: string) => (
-                                                <span key={s} className="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-xl text-[9px] font-black uppercase">
-                                                   {s.replace('_', ' ')}
-                                                </span>
-                                              ))}
-                                              {Array.isArray(p.questionnaire?.deficiencies) && p.questionnaire.deficiencies.map((d: string) => (
-                                                <span key={d} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 rounded-xl text-[9px] font-black uppercase italic">
-                                                   Def: {d}
-                                                </span>
-                                              ))}
-                                              {Array.isArray(p.questionnaire?.digestive_issues) && p.questionnaire.digestive_issues.map((d: string) => (
-                                                <span key={d} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-[9px] font-black uppercase">
-                                                   {d.replace('_', ' ')}
-                                                </span>
-                                              ))}
-                                              {Array.isArray(p.questionnaire?.skin_issues) && p.questionnaire.skin_issues.map((d: string) => (
-                                                <span key={`skin-${d}`} className="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/10 text-teal-700 dark:text-teal-300 rounded-xl text-[9px] font-black uppercase">
-                                                   Skin: {d.replace('_', ' ')}
-                                                </span>
-                                              ))}
+                                              {Array.isArray(p.questionnaire?.symptoms) &&
+                                                p.questionnaire.symptoms.map((s: unknown, idx: number) => {
+                                                  const label = extractLabel(s);
+                                                  if (!label) return null;
+                                                  return (
+                                                    <span key={`sym-${idx}-${label}`} className="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-xl text-[9px] font-black uppercase">
+                                                       {label.replace('_', ' ')}
+                                                    </span>
+                                                  );
+                                                })}
+                                              {Array.isArray(p.questionnaire?.deficiencies) &&
+                                                p.questionnaire.deficiencies.map((d: unknown, idx: number) => {
+                                                  const label = extractLabel(d);
+                                                  if (!label) return null;
+                                                  return (
+                                                    <span key={`def-${idx}-${label}`} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 rounded-xl text-[9px] font-black uppercase italic">
+                                                       Def: {label}
+                                                    </span>
+                                                  );
+                                                })}
+                                              {Array.isArray(p.questionnaire?.digestive_issues) &&
+                                                p.questionnaire.digestive_issues.map((d: unknown, idx: number) => {
+                                                  const label = extractLabel(d);
+                                                  if (!label) return null;
+                                                  return (
+                                                    <span key={`dig-${idx}-${label}`} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-[9px] font-black uppercase">
+                                                       {label.replace('_', ' ')}
+                                                    </span>
+                                                  );
+                                                })}
+                                              {Array.isArray(p.questionnaire?.skin_issues) &&
+                                                p.questionnaire.skin_issues.map((d: unknown, idx: number) => {
+                                                  const label = extractLabel(d);
+                                                  if (!label) return null;
+                                                  return (
+                                                    <span key={`skin-${idx}-${label}`} className="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/10 text-teal-700 dark:text-teal-300 rounded-xl text-[9px] font-black uppercase">
+                                                       Skin: {label.replace('_', ' ')}
+                                                    </span>
+                                                  );
+                                                })}
                                            </div>
 
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Activities &amp; habits</span>
@@ -480,20 +581,31 @@ const AllottedPatientsPage: React.FC = () => {
                                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Food Intake</span>
                                               <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-gray-100 dark:border-white/5">
                                                  {p.questionnaire?.food_preferences ? (
-                                                   Array.isArray(p.questionnaire.food_preferences) ? (
-                                                      <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{p.questionnaire.food_preferences.join(", ")}</p>
-                                                   ) : (
-                                                      <div className="grid grid-cols-1 gap-2">
-                                                         {Object.entries(p.questionnaire.food_preferences).map(([cat, list]: [string, any]) => (
-                                                            Array.isArray(list) && list.length > 0 && (
+                                                   (() => {
+                                                     const preferences = getFoodPreferencesView(p.questionnaire.food_preferences);
+                                                     if (Array.isArray(preferences)) {
+                                                       return (
+                                                         <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">
+                                                           {preferences.join(", ")}
+                                                         </p>
+                                                       );
+                                                     }
+                                                     if (preferences && typeof preferences === "object") {
+                                                       return (
+                                                         <div className="grid grid-cols-1 gap-2">
+                                                           {Object.entries(preferences).map(([cat, list]) => (
+                                                             Array.isArray(list) && list.length > 0 && (
                                                                <div key={cat} className="flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm">
-                                                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{cat}</span>
-                                                                  <p className="text-[9px] font-black text-indigo-500 uppercase">{list.join(", ")}</p>
+                                                                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{cat}</span>
+                                                                 <p className="text-[9px] font-black text-indigo-500 uppercase">{list.join(", ")}</p>
                                                                </div>
-                                                            )
-                                                         ))}
-                                                      </div>
-                                                   )
+                                                             )
+                                                           ))}
+                                                         </div>
+                                                       );
+                                                     }
+                                                     return <span className="text-xs text-gray-400 italic">No preferences listed</span>;
+                                                   })()
                                                  ) : (
                                                    <span className="text-xs text-gray-400 italic">No preferences listed</span>
                                                  )}
@@ -530,7 +642,7 @@ const AllottedPatientsPage: React.FC = () => {
           </div>
 
           {/* Pagination Controls */}
-          {!loading && filteredPatients.length > patientsPerPage && (
+          {!loading && totalPages > 1 && (
             <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-white/[0.05]">
                 <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -540,11 +652,11 @@ const AllottedPatientsPage: React.FC = () => {
                     <FiChevronLeft size={20} />
                 </button>
                 <span className="text-xs font-bold text-gray-400">
-                    Page {currentPage} of {Math.ceil(filteredPatients.length / patientsPerPage)}
+                    Page {currentPage} of {totalPages}
                 </span>
                 <button
-                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredPatients.length / patientsPerPage), p + 1))}
-                    disabled={currentPage === Math.ceil(filteredPatients.length / patientsPerPage)}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                     className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                     <FiChevronRight size={20} />
