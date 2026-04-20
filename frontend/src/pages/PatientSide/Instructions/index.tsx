@@ -1,8 +1,10 @@
 import React from "react";
 import {
+  LayoutDashboard,
   FileText,
   Upload,
   UserCheck,
+  UserCog,
   Briefcase,
   CheckCircle,
   CalendarRange,
@@ -27,25 +29,32 @@ import {
 const PatientInstructions: React.FC = () => {
   const steps = [
     {
-      title: "1. Intake Questionnaire",
+      title: "1. Dashboard",
+      description:
+        "Use Dashboard for a quick snapshot of your ongoing plan, recent updates, and key actions that need attention before moving into detailed sections.",
+      icon: <LayoutDashboard className="w-6 h-6 text-violet-500" />,
+      menu: "Dashboard",
+    },
+    {
+      title: "2. Intake Questionnaire",
       description: "Start your journey by completing the intake questionnaire. This provides our clinical team with essential information about your health history and goals.",
       icon: <FileText className="w-6 h-6 text-indigo-500" />,
       menu: "Questionnaire"
     },
     {
-      title: "2. Health Reports",
+      title: "3. Health Reports",
       description: "Upload your medical reports and tests. Your assigned nutritionist will review these documents and provide expert clinical comments.",
       icon: <Upload className="w-6 h-6 text-blue-500" />,
       menu: "Health Reports"
     },
     {
-      title: "3. Nutritionist Allotted",
+      title: "4. Nutritionist Allotted",
       description: "Once assigned, you can see all your dietitian's details here. This ensures you have a dedicated clinical professional monitoring your progress.",
       icon: <UserCheck className="w-6 h-6 text-emerald-500" />,
       menu: "Nutritionist Allotted"
     },
     {
-      title: "4. Diet Plans & Micro-Kitchens",
+      title: "5. Diet Plans & Micro-Kitchens",
       description:
         "Explore diet strategies and partner kitchens. Under this menu, open Suggested Plans & Kitchens for plans your nutritionist recommends, and Suggested foods for tailored food ideas. Diet Plans and Micro-Kitchens show broader catalogues you can browse.",
       icon: <Briefcase className="w-6 h-6 text-amber-500" />,
@@ -53,63 +62,70 @@ const PatientInstructions: React.FC = () => {
       subItems: ["Diet Plans", "Micro-Kitchens", "Suggested Plans & Kitchens", "Suggested foods"],
     },
     {
-      title: "5. Meals Allotted",
+      title: "6. Meals Allotted",
       description: "View specific meal assignments detailing exactly what and when you should be eating as part of your clinical diet plan.",
       icon: <CheckCircle className="w-6 h-6 text-green-500" />,
       menu: "Meals Allotted",
     },
     {
-      title: "6. Away / meal skip",
+      title: "7. Away / meal skip",
       description:
         "Tell us when you will be away or need to skip meals so your kitchen and care team can adjust delivery and planning. Add dates and reasons where prompted so allocations stay accurate.",
       icon: <CalendarRange className="w-6 h-6 text-sky-500" />,
       menu: "Away / meal skip",
     },
     {
-      title: "7. Delivery Issues",
+      title: "8. Delivery Issues",
       description:
         "Report late deliveries, wrong items, or packaging problems tied to your meal service. Submit details here so operations can investigate and follow up with you.",
       icon: <Truck className="w-6 h-6 text-orange-600" />,
       menu: "Delivery Issues",
     },
     {
-      title: "8. Consultation",
+      title: "9. Consultation",
       description: "Need professional advice? Request a direct video or audio meeting with your assigned nutritionist for detailed guidance.",
       icon: <Video className="w-6 h-6 text-rose-500" />,
       menu: "Consultation",
     },
     {
-      title: "9. Order Separately (Foods)",
+      title: "10. Order Separately (Foods)",
       description: "Browse specific healthy items available at our partner micro-kitchens. You can purchase these separately from your main diet plan.",
       icon: <Layers className="w-6 h-6 text-cyan-500" />,
       menu: "Foods",
     },
     {
-      title: "10. Cart & Checkout",
+      title: "11. Cart & Checkout",
       description: "Review and manage the items you intend to purchase before completing your order through our secure checkout process.",
       icon: <ShoppingCart className="w-6 h-6 text-orange-500" />,
       menu: "Cart",
     },
     {
-      title: "11. My Bookings",
+      title: "12. My Bookings",
       description: "Track all your separate food orders and bookings outside your main subscription plan and check their status.",
       icon: <Package className="w-6 h-6 text-purple-500" />,
       menu: "My Bookings",
     },
     {
-      title: "12. Payment History",
+      title: "13. Payment History",
       description: "A centralized view of all your transactions, including payments for diet plans, consultations, and individual food orders.",
       icon: <Wallet className="w-6 h-6 text-teal-500" />,
       menu: "Payment History",
     },
     {
-      title: "13. Support Tickets",
+      title: "14. Profile",
+      description:
+        "Manage your personal details and account information here to keep your profile accurate for communication, care coordination, and secure account access.",
+      icon: <UserCog className="w-6 h-6 text-indigo-600" />,
+      menu: "Profile",
+    },
+    {
+      title: "15. Support Tickets",
       description: "Report issues or request help from our Admin, Nutritionists, or Micro-Kitchen teams specifically to resolve any challenges.",
       icon: <HelpCircle className="w-6 h-6 text-slate-500" />,
       menu: "Support Tickets",
     },
     {
-      title: "14. Notifications",
+      title: "16. Notifications",
       description: "Stay updated with real-time alerts regarding kitchen reassignments, nutritionist updates, support ticket status, and clinical milestones.",
       icon: <Bell className="w-6 h-6 text-red-500" />,
       menu: "Notifications",
