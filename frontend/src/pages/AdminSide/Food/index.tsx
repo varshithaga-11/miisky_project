@@ -390,34 +390,35 @@ const FoodManagementPage: React.FC = () => {
                     {isAdmin && (
                       <TableCell className="px-5 py-4">
                         {food.is_approved ? (
-                          <button
-                            onClick={() => handleApprovalClick(food.id!, true)}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                            title="Click to disapprove"
-                          >
-                            <FiCheck size={12} /> Approved
-                          </button>
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                             <FiCheck size={12} /> Approved
+                           </span>
                         ) : food.is_rejected ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
                             <FiX size={12} /> Rejected
                           </span>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleApprovalClick(food.id!, false)}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                              title="Click to approve"
-                            >
-                              <FiCheck size={12} /> Accept
-                            </button>
-                            <button
-                              onClick={() => handleRejectClick(food.id!)}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-                              title="Click to reject"
-                            >
-                              <FiX size={12} /> Reject
-                            </button>
-                          </div>
+                          // Pending Approval
+                          food.posted_by_role === 'nutritionist' ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleApprovalClick(food.id!, false)}
+                                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                                title="Click to approve"
+                              >
+                                <FiCheck size={12} /> Accept
+                              </button>
+                              <button
+                                onClick={() => handleRejectClick(food.id!)}
+                                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                                title="Click to reject"
+                              >
+                                <FiX size={12} /> Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs italic">Pending</span>
+                          )
                         )}
                       </TableCell>
                     )}

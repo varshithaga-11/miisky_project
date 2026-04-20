@@ -3377,6 +3377,12 @@ class MealTypeViewSet(viewsets.ModelViewSet):
     search_fields = ['name']
     permission_classes = [AllowAny]
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+
     def get_queryset(self):
         role = getattr(self.request.user, "role", None)
         if role in ("admin", "master"):
@@ -3411,6 +3417,12 @@ class CuisineTypeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
 
     def get_queryset(self):
         role = getattr(self.request.user, "role", None)
@@ -3491,6 +3503,12 @@ class FoodViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'meal_types__name', 'cuisine_types__name', 'micro_kitchen__brand_name']
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
 
 
 class FoodNutritionViewSet(viewsets.ModelViewSet):
@@ -3850,6 +3868,12 @@ class IngredientViewSet(viewsets.ModelViewSet):
     """
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
@@ -3874,6 +3898,12 @@ class UnitViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UnitSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        is_approved = (role in ['admin', 'master'])
+        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
@@ -4057,7 +4087,7 @@ class UniversalImportView(APIView):
             return Response({"success": False, "message": f"Error parsing file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
         action = request.data.get('action', 'analyse')
-        result = ImportService.import_data(module, submenu, data, action=action)
+        result = ImportService.import_data(module, submenu, data, action=action, user=request.user)
         
         # Always return 200 for analysis so frontend can show the results table
         # For 'submit', we return 200 but results['success'] will be false if it failed

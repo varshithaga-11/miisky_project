@@ -846,6 +846,7 @@ class MealType(models.Model):
 
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="meal_types")
 
     def __str__(self):
         return self.name
@@ -857,6 +858,7 @@ class CuisineType(models.Model):
 
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="cuisine_types")
 
     def __str__(self):
         return self.name
@@ -894,6 +896,7 @@ class Food(models.Model):
 
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="posted_foods")
 
     def __str__(self):
         return self.name
@@ -956,6 +959,7 @@ class Ingredient(models.Model):
 
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="ingredients")
 
     def __str__(self):
         return self.name
@@ -980,6 +984,7 @@ class Unit(models.Model):
 
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
+    posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="units")
 
     def __str__(self):
         return self.name

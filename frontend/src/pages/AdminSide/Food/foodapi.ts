@@ -30,6 +30,7 @@ export interface CuisineType {
   name: string;
   is_approved?: boolean;
   is_rejected?: boolean;
+  posted_by_role?: string;
 }
 
 export interface Food {
@@ -47,6 +48,7 @@ export interface Food {
   price?: number;
   is_approved?: boolean;
   is_rejected?: boolean;
+  posted_by_role?: string;
 }
 
 export interface PaginatedResponses<T> {

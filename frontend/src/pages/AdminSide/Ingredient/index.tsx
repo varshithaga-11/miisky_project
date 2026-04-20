@@ -213,10 +213,10 @@ const IngredientManagementPage: React.FC = () => {
                                   <FiCheck size={12} /> Approved
                                 </button>
                               ) : u.is_rejected ? (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
                                   <FiX size={12} /> Rejected
                                 </span>
-                              ) : (
+                              ) : u.posted_by_role === 'nutritionist' ? (
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => handleApprovalClick(u.id!, false)}
@@ -233,6 +233,8 @@ const IngredientManagementPage: React.FC = () => {
                                   <FiX size={12} /> Reject
                                 </button>
                               </div>
+                              ) : (
+                                <span className="text-gray-400 text-xs italic">Pending</span>
                               )}
                           </TableCell>
                         )}

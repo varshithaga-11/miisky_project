@@ -4,7 +4,7 @@ from .import_validators import get_model_and_serializer
 
 class ImportService:
     @staticmethod
-    def import_data(module, submenu, data, action='analyse'):
+    def import_data(module, submenu, data, action='analyse', user=None):
         Model, Serializer = get_model_and_serializer(module, submenu)
         
         if not Model or not Serializer:
@@ -103,15 +103,26 @@ class ImportService:
             # This ensures imported data starts in 'accept/reject' state as requested
             # excluding packaging and delivery as specified.
             if submenu not in ['packaging', 'delivery'] and module not in ['delivery']:
+                is_approved = False
+                if user and getattr(user, 'role', None) in ['admin', 'master']:
+                    is_approved = True
+
                 try:
                     Model._meta.get_field('is_approved')
-                    mapped_row_data['is_approved'] = False
+                    mapped_row_data['is_approved'] = is_approved
                 except:
                     pass
                     
                 try:
                     Model._meta.get_field('is_rejected')
                     mapped_row_data['is_rejected'] = False
+                except:
+                    pass
+
+            if user:
+                try:
+                    Model._meta.get_field('posted_by')
+                    mapped_row_data['posted_by'] = user.id
                 except:
                     pass
 

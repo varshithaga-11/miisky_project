@@ -389,9 +389,10 @@ class CitySerializer(serializers.ModelSerializer):
 # ── Food System Serializers ────────────────────────────────────────────────────
 
 class MealTypeSerializer(serializers.ModelSerializer):
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
     class Meta:
         model = MealType
-        fields = ["id", "name", "is_approved", "is_rejected"]
+        fields = ["id", "name", "is_approved", "is_rejected", "posted_by_role"]
 
     def validate_name(self, value):
         query = MealType.objects.filter(name__iexact=value.strip())
@@ -417,9 +418,10 @@ class PackagingMaterialSerializer(serializers.ModelSerializer):
 
 
 class CuisineTypeSerializer(serializers.ModelSerializer):
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
     class Meta:
         model = CuisineType
-        fields = ["id", "name", "is_approved", "is_rejected"]
+        fields = ["id", "name", "is_approved", "is_rejected", "posted_by_role"]
 
     def validate_name(self, value):
         query = CuisineType.objects.filter(name__iexact=value.strip())
@@ -468,9 +470,10 @@ class FoodByIdNutritionSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
     class Meta:
         model = Ingredient
-        fields = ["id", "name", "is_approved", "is_rejected"]
+        fields = ["id", "name", "is_approved", "is_rejected", "posted_by_role"]
 
     def validate_name(self, value):
         query = Ingredient.objects.filter(name__iexact=value.strip())
@@ -482,9 +485,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class UnitSerializer(serializers.ModelSerializer):
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
     class Meta:
         model = Unit
-        fields = ["id", "name", "is_approved", "is_rejected"]
+        fields = ["id", "name", "is_approved", "is_rejected", "posted_by_role"]
 
     def validate_name(self, value):
         query = Unit.objects.filter(name__iexact=value.strip())
@@ -658,6 +662,7 @@ class FoodSerializer(serializers.ModelSerializer):
     vitamin_d = serializers.FloatField(write_only=True, required=False, allow_null=True)
     vitamin_b12 = serializers.FloatField(write_only=True, required=False, allow_null=True)
 
+    posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
     class Meta:
         model = Food
         fields = ['id', 'name', 'meal_types', 'meal_type_names', 'cuisine_types', 'cuisine_type_names',
@@ -665,7 +670,8 @@ class FoodSerializer(serializers.ModelSerializer):
                   'meal_type_names_input', 'cuisine_type_names_input',
                   'calories', 'protein', 'carbs', 'fat', 'fiber', 'serving_size',
                   'glycemic_index', 'sugar', 'saturated_fat', 'trans_fat', 'cholesterol',
-                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price', 'is_approved', 'is_rejected']
+                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price', 
+                  'is_approved', 'is_rejected', 'posted_by_role']
 
     def create(self, validated_data):
         meal_names = validated_data.pop('meal_type_names_input', None)
