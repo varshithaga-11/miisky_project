@@ -4,12 +4,15 @@ import {
   FileText, 
   Users, 
   Package, 
+  ClipboardList,
+  Milestone,
   MapPin, 
   Layers, 
   Wallet, 
   Star, 
   UserCog, 
   HelpCircle,
+  Bell,
   LayoutDashboard,
   ChefHat,
   ChevronRight
@@ -24,59 +27,125 @@ import {
 const MicroKitchenInstructions: React.FC = () => {
   const steps = [
     {
-      title: "1. Operational Dashboard",
-      description: "Quickly monitor active orders, daily prep requirements, and your kitchen's overall performance metrics.",
+      title: "1. Dashboard",
+      description:
+        "Use Dashboard to monitor active workload, service status, and critical kitchen updates at a glance.",
       icon: <LayoutDashboard className="w-6 h-6 text-indigo-500" />,
-      menu: "Dashboard"
+      menu: "Dashboard",
     },
     {
-      title: "2. Regulatory Setup",
-      description: "Ensure your kitchen's administrative and clinical foundation. Access the setup 'Questionnaire' and review 'Inspection Reports' to maintain high health standards.",
+      title: "2. Questionnaire",
+      description:
+        "Complete and maintain the kitchen questionnaire flow used for operational and compliance readiness.",
       icon: <FileText className="w-6 h-6 text-blue-500" />,
-      menu: "Questionnaire & Inspection"
+      menu: "Questionnaire",
     },
     {
-      title: "3. Patient Management",
-      description: "View and manage the specific list of clinical patients assigned to your kitchen for diet plan fulfillment.",
+      title: "3. Inspection Report",
+      description:
+        "Review and maintain inspection-report information used to track kitchen standards and audit readiness.",
+      icon: <FileText className="w-6 h-6 text-sky-500" />,
+      menu: "Inspection Report",
+    },
+    {
+      title: "4. Patients",
+      description:
+        "Access assigned patient profiles and coordinate kitchen-side execution for their planned dietary requirements.",
       icon: <Users className="w-6 h-6 text-emerald-500" />,
-      menu: "Patients"
+      menu: "Patients",
     },
     {
-      title: "4. Daily Preparation",
-      description: "Manage clinical meal requirements. Use 'Daily Prep' to see precisely what needs to be cooked for your assigned patients every day.",
+      title: "5. Daily Prep(From Patients)",
+      description:
+        "Track daily prep requirements generated from patient-side planning so kitchen operations remain synchronized.",
       icon: <Truck className="w-6 h-6 text-amber-500" />,
-      menu: "Daily Prep (From Patients)"
+      menu: "Daily Prep(From Patients)",
     },
     {
-      title: "5. Order Fulfillment",
-      description: "Process and manage diverse orders. This includes specific requests from clinical patients and separate orders from non-patient users.",
+      title: "6. Kitchen execution",
+      description:
+        "Use Kitchen execution to track in-kitchen progress and ensure prepared meals align with required execution states.",
+      icon: <ClipboardList className="w-6 h-6 text-lime-600" />,
+      menu: "Kitchen execution",
+    },
+    {
+      title: "7. Manage Orders(From Non Patients and Patients)",
+      description:
+        "Handle combined order operations for both patient and non-patient channels from a single order-management view.",
       icon: <Package className="w-6 h-6 text-rose-500" />,
-      menu: "Manage Orders"
+      menu: "Manage Orders(From Non Patients and Patients)",
     },
     {
-      title: "6. Logistics Management",
-      description: "Configure delivery geographical parameters and manage shipping/delivery charges for your distribution network.",
+      title: "8. Order payments",
+      description:
+        "Review order payment records and payment snapshots related to fulfilled kitchen orders.",
+      icon: <Wallet className="w-6 h-6 text-fuchsia-600" />,
+      menu: "Order payments",
+    },
+    {
+      title: "9. Delivery charges",
+      description:
+        "Configure delivery charges used during checkout and dispatch operations for service areas.",
       icon: <MapPin className="w-6 h-6 text-cyan-500" />,
-      menu: "Delivery charges"
+      menu: "Delivery charges",
     },
     {
-      title: "7. Culinary Database",
-      description: "Maintain your kitchen's food catalog. List and update 'Available Foods' that the Miisky community can purchase directly.",
+      title: "10. Delivery management",
+      description:
+        "Manage assignment, team planning, profiles, and delivery quality workflows from one control section.",
+      icon: <Milestone className="w-6 h-6 text-orange-600" />,
+      menu: "Delivery management",
+      subItems: [
+        "Global assignment",
+        "Team members",
+        "Team planned leave",
+        "Delivery profiles",
+        "Delivery Reviews",
+        "Supply chain payouts",
+      ],
+    },
+    {
+      title: "11. Available Foods",
+      description:
+        "Maintain the kitchen's available food catalog so discoverability and ordering remain current.",
       icon: <Layers className="w-6 h-6 text-orange-500" />,
-      menu: "Available Foods"
+      menu: "Available Foods",
     },
     {
-      title: "8. Payouts & Finance",
-      description: "Track the revenue generated from clinical diet plans and manage documentation for service fee payouts.",
+      title: "12. Diet plan payouts",
+      description:
+        "Track payouts linked to diet-plan execution and review related settlement details.",
       icon: <Wallet className="w-6 h-6 text-teal-500" />,
-      menu: "Diet plan payouts"
+      menu: "Diet plan payouts",
     },
     {
-      title: "9. Feedback & Support",
-      description: "Monitor 'Kitchen Reviews' to improve quality and use 'Support Tickets' to communicate with Miisky admin for any technical needs.",
+      title: "13. Kitchen Reviews",
+      description:
+        "Monitor Kitchen Reviews to assess service quality feedback and improve delivery performance.",
       icon: <Star className="w-6 h-6 text-yellow-500" />,
-      menu: "Reviews & Support"
-    }
+      menu: "Kitchen Reviews",
+    },
+    {
+      title: "14. Profile",
+      description:
+        "Maintain profile and account details used for kitchen identity, communication, and secure access.",
+      icon: <UserCog className="w-6 h-6 text-indigo-600" />,
+      menu: "Profile",
+    },
+    {
+      title: "15. Support Tickets",
+      description:
+        "Create and track support issues with platform teams for operational or technical assistance.",
+      icon: <HelpCircle className="w-6 h-6 text-purple-500" />,
+      menu: "Support Tickets",
+    },
+    {
+      title: "16. Notifications",
+      description:
+        "Monitor real-time updates related to orders, delivery actions, support status, and workflow changes.",
+      icon: <Bell className="w-6 h-6 text-red-500" />,
+      menu: "Notifications",
+    },
   ];
 
   return (
@@ -124,6 +193,18 @@ const MicroKitchenInstructions: React.FC = () => {
                 <ChevronRight className="w-3 h-3" />
                 Linked Menu: {step.menu}
               </div>
+              {step.subItems && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {step.subItems.map((subItem, subIdx) => (
+                    <span
+                      key={subIdx}
+                      className="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-[10px] text-gray-500 dark:text-gray-400 rounded-lg"
+                    >
+                      {subItem}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -1,5 +1,6 @@
 import React from "react";
 import { 
+  LayoutDashboard,
   FileText, 
   Users, 
   Layers, 
@@ -8,6 +9,8 @@ import {
   Video, 
   Wallet,
   BookOpen,
+  CalendarRange,
+  UserCog,
   HelpCircle,
   Bell,
   Download,
@@ -24,53 +27,110 @@ import {
 const NutritionInstructions: React.FC = () => {
   const steps = [
     {
+      title: "Dashboard",
+      description:
+        "Start on Dashboard to review high-level updates, active clinical workflows, and quick navigation to your most used nutrition operations.",
+      icon: <LayoutDashboard className="w-6 h-6 text-violet-500" />,
+      items: ["Dashboard"],
+    },
+    {
+      title: "Questionnaire",
+      description:
+        "Use Questionnaire to review structured intake responses that help guide your clinical decisions and patient-specific recommendations.",
+      icon: <FileText className="w-6 h-6 text-indigo-500" />,
+      items: ["Questionnaire"],
+    },
+    {
       title: "Allotted Patients",
-      description: "Manage your direct list of patients and their clinical history. Use the 'Patient Documents' submenu to view, download, and comment on multiple patient-uploaded medical records simultaneously.",
+      description:
+        "Manage your active caseload and navigate directly to clinical support functions linked to allotted patients.",
       icon: <Users className="w-6 h-6 text-indigo-500" />,
-      items: ["Allotted Patients List", "Patient Documents (Download & Comment)"],
+      items: ["Allotted Patients", "Suggest foods", "Patient Documents"],
       features: [<Download className="w-3 h-3" />, <MessageSquare className="w-3 h-3" />]
     },
     {
-      title: "Kitchens & Plans",
-      description: "Browse the curated lists of Micro-Kitchens and Diet Plans available in the ecosystem to understand the culinary support and strategy options for your patients.",
-      icon: <Briefcase className="w-6 h-6 text-amber-500" />,
-      items: ["Micro Kitchens List", "Available Diet Plans"]
-    },
-    {
-      title: "Suggested & Approved Plans",
-      description: "A dual-action menu for strategy. 'Suggest Plan & Kitchen' allows you to assign specific diets and manage kitchen assignments/reassignments. 'Approved Plans' provides a complete historical log of a patient's plan evolution.",
-      icon: <ClipboardList className="w-6 h-6 text-emerald-500" />,
-      items: ["Suggest Plan & Kitchen", "Kitchen Reassignment", "Approved Plans History"]
+      title: "Nutrition & Patient Mapping",
+      description:
+        "Use Nutrition & Patient Mapping to view and manage nutritionist-patient assignments from one place.",
+      icon: <Users className="w-6 h-6 text-blue-500" />,
+      items: ["Nutrition & Patient Mapping"],
     },
     {
       title: "Meal Optimizer",
-      description: "The core operational tool to allot specific meals to your allotted patients, ensuring their daily intake matches the clinical goals of their approved plan.",
+      description:
+        "Meal Optimizer helps you assign and tune daily meal distributions aligned to approved plans and patient goals.",
       icon: <Layers className="w-6 h-6 text-rose-500" />,
-      items: ["Allot Meals", "Daily Optimization"]
+      items: ["Meal Optimizer"]
+    },
+    {
+      title: "Patient unavailability",
+      description:
+        "Track and manage patient unavailability windows so meal schedules and clinical planning remain accurate.",
+      icon: <CalendarRange className="w-6 h-6 text-sky-500" />,
+      items: ["Patient unavailability"],
+    },
+    {
+      title: "Micro Kitchens & Diet Plans",
+      description:
+        "Review kitchens and plan options that support patient execution across preparation capability and diet strategy.",
+      icon: <Briefcase className="w-6 h-6 text-amber-500" />,
+      items: ["Micro Kitchens", "Kitchen inspection", "Diet Plans"]
+    },
+    {
+      title: "Suggested & Approved Plans",
+      description:
+        "Create recommendations and monitor finalized outcomes through plan suggestion and approval workflows.",
+      icon: <ClipboardList className="w-6 h-6 text-emerald-500" />,
+      items: ["Suggest Plan & Kitchen", "Approved Plans"]
     },
     {
       title: "Engagement Hub",
-      description: "Your communication center. Define your consultation availability slots in the 'Availability Calendar' and manage incoming 'Meeting Requests' from patients seeking guidance.",
+      description:
+        "Handle consultation coordination by managing patient meeting demand and your working schedule visibility.",
       icon: <Video className="w-6 h-6 text-orange-500" />,
-      items: ["Availability Calendar Slots", "Patient Meeting Requests"]
+      items: ["Meeting Requests", "Availability Calendar"]
     },
     {
       title: "Reference Library",
-      description: "A clinical knowledge base where you can verify health normal ranges and access detailed nutritional profiles of various foods to inform your dietary decisions.",
+      description:
+        "Use the reference set for clinical baselines and food-level context while planning recommendations.",
       icon: <BookOpen className="w-6 h-6 text-cyan-500" />,
-      items: ["Health Normal Ranges", "Food Nutrient Info"]
+      items: ["Normal Ranges", "Foods"]
     },
     {
       title: "Finance",
-      description: "Transparent revenue tracking. View the specific portions of patient plan payments credited to you for your professional nutritional services.",
+      description:
+        "Review credited compensation tied to patient plan payout flows in the finance section.",
       icon: <Wallet className="w-6 h-6 text-teal-500" />,
-      items: ["Credited Amounts", "Patient Plan Revenue"]
+      items: ["Finance"]
     },
     {
-      title: "Support Tasks",
-      description: "Stay connected for assistance. Use this portal to chat directly with Micro-Kitchen teams or reach out to the Miisky support team to resolve any technical or operational issues.",
+      title: "Food Management",
+      description:
+        "Maintain nutrition-side master data used for meal planning, recipe design, and ingredient-level operations.",
+      icon: <Briefcase className="w-6 h-6 text-lime-600" />,
+      items: ["Meal Type", "Cuisine Type", "Foods", "Units", "Ingredients", "Recipe Management"],
+    },
+    {
+      title: "Profile",
+      description:
+        "Keep your personal and account-level information updated to support secure and accurate platform usage.",
+      icon: <UserCog className="w-6 h-6 text-indigo-600" />,
+      items: ["Profile"],
+    },
+    {
+      title: "Support Tickets",
+      description:
+        "Use Support Tickets to raise, track, and resolve operational or technical issues with the support workflow.",
       icon: <HelpCircle className="w-6 h-6 text-purple-500" />,
-      items: ["Chat with Micro-Kitchens", "Miisky Support Team"]
+      items: ["Support Tickets"]
+    },
+    {
+      title: "Notifications",
+      description:
+        "Monitor real-time updates related to meetings, support status, planning workflows, and patient-facing changes.",
+      icon: <Bell className="w-6 h-6 text-red-500" />,
+      items: ["Notifications"],
     }
   ];
 
