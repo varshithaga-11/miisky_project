@@ -1,19 +1,21 @@
 import React from "react";
-import { 
-  FileText, 
-  Upload, 
-  UserCheck, 
-  Briefcase, 
-  CheckCircle, 
-  Video, 
-  Layers, 
-  ShoppingCart, 
-  Package, 
-  Wallet, 
-  HelpCircle, 
+import {
+  FileText,
+  Upload,
+  UserCheck,
+  Briefcase,
+  CheckCircle,
+  CalendarRange,
+  Truck,
+  Video,
+  Layers,
+  ShoppingCart,
+  Package,
+  Wallet,
+  HelpCircle,
   Bell,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 
 /**
@@ -44,59 +46,74 @@ const PatientInstructions: React.FC = () => {
     },
     {
       title: "4. Diet Plans & Micro-Kitchens",
-      description: "Explore the global list of dietary strategies and partner kitchens. Use 'Suggested Plans' to see clinical recommendations tailored to your health reports.",
+      description:
+        "Explore diet strategies and partner kitchens. Under this menu, open Suggested Plans & Kitchens for plans your nutritionist recommends, and Suggested foods for tailored food ideas. Diet Plans and Micro-Kitchens show broader catalogues you can browse.",
       icon: <Briefcase className="w-6 h-6 text-amber-500" />,
       menu: "Diet Plans & Micro-Kitchens",
-      subItems: ["Diet Plans", "Micro-Kitchens", "Suggested Plans & Kitchens"]
+      subItems: ["Diet Plans", "Micro-Kitchens", "Suggested Plans & Kitchens", "Suggested foods"],
     },
     {
       title: "5. Meals Allotted",
       description: "View specific meal assignments detailing exactly what and when you should be eating as part of your clinical diet plan.",
       icon: <CheckCircle className="w-6 h-6 text-green-500" />,
-      menu: "Meals Allotted"
+      menu: "Meals Allotted",
     },
     {
-      title: "6. Consultation",
+      title: "6. Away / meal skip",
+      description:
+        "Tell us when you will be away or need to skip meals so your kitchen and care team can adjust delivery and planning. Add dates and reasons where prompted so allocations stay accurate.",
+      icon: <CalendarRange className="w-6 h-6 text-sky-500" />,
+      menu: "Away / meal skip",
+    },
+    {
+      title: "7. Delivery Issues",
+      description:
+        "Report late deliveries, wrong items, or packaging problems tied to your meal service. Submit details here so operations can investigate and follow up with you.",
+      icon: <Truck className="w-6 h-6 text-orange-600" />,
+      menu: "Delivery Issues",
+    },
+    {
+      title: "8. Consultation",
       description: "Need professional advice? Request a direct video or audio meeting with your assigned nutritionist for detailed guidance.",
       icon: <Video className="w-6 h-6 text-rose-500" />,
-      menu: "Consultation"
+      menu: "Consultation",
     },
     {
-      title: "7. Order Separately (Foods)",
+      title: "9. Order Separately (Foods)",
       description: "Browse specific healthy items available at our partner micro-kitchens. You can purchase these separately from your main diet plan.",
       icon: <Layers className="w-6 h-6 text-cyan-500" />,
-      menu: "Foods"
+      menu: "Foods",
     },
     {
-      title: "8. Cart & Checkout",
+      title: "10. Cart & Checkout",
       description: "Review and manage the items you intend to purchase before completing your order through our secure checkout process.",
       icon: <ShoppingCart className="w-6 h-6 text-orange-500" />,
-      menu: "Cart"
+      menu: "Cart",
     },
     {
-      title: "9. My Bookings",
+      title: "11. My Bookings",
       description: "Track all your separate food orders and bookings outside your main subscription plan and check their status.",
       icon: <Package className="w-6 h-6 text-purple-500" />,
-      menu: "My Bookings"
+      menu: "My Bookings",
     },
     {
-      title: "10. Payment History",
+      title: "12. Payment History",
       description: "A centralized view of all your transactions, including payments for diet plans, consultations, and individual food orders.",
       icon: <Wallet className="w-6 h-6 text-teal-500" />,
-      menu: "Payment History"
+      menu: "Payment History",
     },
     {
-      title: "11. Support Tickets",
+      title: "13. Support Tickets",
       description: "Report issues or request help from our Admin, Nutritionists, or Micro-Kitchen teams specifically to resolve any challenges.",
       icon: <HelpCircle className="w-6 h-6 text-slate-500" />,
-      menu: "Support Tickets"
+      menu: "Support Tickets",
     },
     {
-      title: "12. Notifications",
+      title: "14. Notifications",
       description: "Stay updated with real-time alerts regarding kitchen reassignments, nutritionist updates, support ticket status, and clinical milestones.",
       icon: <Bell className="w-6 h-6 text-red-500" />,
-      menu: "Notifications"
-    }
+      menu: "Notifications",
+    },
   ];
 
   return (
