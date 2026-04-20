@@ -4934,6 +4934,8 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         patient_id = self.request.query_params.get('user')
         status_filter = self.request.query_params.get('status')
         payment_status_filter = self.request.query_params.get('payment_status')
+        start_date_filter = self.request.query_params.get('start_date')
+        end_date_filter = self.request.query_params.get('end_date')
 
         if user.role == "admin":
             if patient_id:
@@ -4942,6 +4944,10 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(status=status_filter)
             if payment_status_filter:
                 queryset = queryset.filter(payment_status=payment_status_filter)
+            if start_date_filter:
+                queryset = queryset.filter(start_date__gte=start_date_filter)
+            if end_date_filter:
+                queryset = queryset.filter(end_date__lte=end_date_filter)
             
             diet_plan_id = self.request.query_params.get('diet_plan')
             if diet_plan_id:
@@ -4956,6 +4962,10 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(status=status_filter)
             if payment_status_filter:
                 queryset = queryset.filter(payment_status=payment_status_filter)
+            if start_date_filter:
+                queryset = queryset.filter(start_date__gte=start_date_filter)
+            if end_date_filter:
+                queryset = queryset.filter(end_date__lte=end_date_filter)
             return queryset.order_by('-suggested_on')
 
         if user.role == "nutritionist":
@@ -4977,12 +4987,20 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
+            if start_date_filter:
+                queryset = queryset.filter(start_date__gte=start_date_filter)
+            if end_date_filter:
+                queryset = queryset.filter(end_date__lte=end_date_filter)
             return queryset.order_by('-suggested_on')
 
         if user.role == "patient" or user.role == "non_patient":
             queryset = queryset.filter(user=user)
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
+            if start_date_filter:
+                queryset = queryset.filter(start_date__gte=start_date_filter)
+            if end_date_filter:
+                queryset = queryset.filter(end_date__lte=end_date_filter)
             return queryset.order_by('-suggested_on')
 
         return queryset.none()

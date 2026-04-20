@@ -40,13 +40,26 @@ const PatientPaymentVerificationPage: React.FC = () => {
   const [editModal, setEditModal] = useState<UserDietPlanPayment | null>(null);
   const [startDate, setStartDate] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+  const [kitchenSearch, setKitchenSearch] = useState("");
 
 
   const fetchPlans = async () => {
     setLoading(true);
     try {
       const f = FILTERS.find((x) => x.key === filter);
-      const params = f?.status || f?.payment_status ? { status: f.status, payment_status: f.payment_status } : undefined;
+      const trimmedKitchenSearch = kitchenSearch.trim();
+      const params =
+        f?.status || f?.payment_status || startDateFilter || endDateFilter || trimmedKitchenSearch
+          ? {
+              status: f?.status,
+              payment_status: f?.payment_status,
+              start_date: startDateFilter || undefined,
+              end_date: endDateFilter || undefined,
+              search: trimmedKitchenSearch || undefined,
+            }
+          : undefined;
       const data = await getAllPaymentPlans(params);
       setPlans(data);
     } catch (error) {
@@ -58,7 +71,7 @@ const PatientPaymentVerificationPage: React.FC = () => {
 
   useEffect(() => {
     fetchPlans();
-  }, [filter]);
+  }, [filter, startDateFilter, endDateFilter, kitchenSearch]);
 
   const getMinStartDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -146,7 +159,7 @@ const PatientPaymentVerificationPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50 pb-12">
+    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-gray-50/50 dark:bg-gray-900/50 pb-12">
       <PageMeta
         title="Payment Verification"
         description="Verify patient payment screenshots and activate diet plans"
@@ -154,7 +167,7 @@ const PatientPaymentVerificationPage: React.FC = () => {
       <PageBreadcrumb pageTitle="Patient Payment Verification" />
       <ToastContainer position="bottom-right" />
 
-      <div className="px-4 md:px-8 space-y-6">
+      <div className="max-w-full min-w-0 px-4 md:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
@@ -182,6 +195,52 @@ const PatientPaymentVerificationPage: React.FC = () => {
           ))}
         </div>
 
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <DatePicker2
+              key={`table-filter-start-${startDateFilter || "empty"}`}
+              id="table-filter-start-date"
+              label="Start Date"
+              value={startDateFilter}
+              onChange={(date) => setStartDateFilter(date)}
+              placeholder="Select start date"
+            />
+            <DatePicker2
+              key={`table-filter-end-${endDateFilter || "empty"}`}
+              id="table-filter-end-date"
+              label="End Date"
+              value={endDateFilter}
+              onChange={(date) => setEndDateFilter(date)}
+              placeholder="Select end date"
+            />
+            <div>
+              <label className="mb-2.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Micro Kitchen
+              </label>
+              <input
+                type="text"
+                value={kitchenSearch}
+                onChange={(e) => setKitchenSearch(e.target.value)}
+                placeholder="Search by kitchen name or code"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setStartDateFilter("");
+                  setEndDateFilter("");
+                  setKitchenSearch("");
+                }}
+                disabled={!startDateFilter && !endDateFilter && !kitchenSearch.trim()}
+                className="h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <div>Showing {plans.length} entries</div>
         </div>
@@ -199,9 +258,9 @@ const PatientPaymentVerificationPage: React.FC = () => {
             <p className="text-gray-500 mt-2">No records match the selected filter.</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <div className="max-w-full overflow-x-auto">
-              <Table>
+          <div className="max-w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+            <div className="max-w-full min-w-0 w-full overflow-x-auto pb-2">
+              <Table className="w-max min-w-[1700px] whitespace-nowrap">
                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
@@ -209,6 +268,9 @@ const PatientPaymentVerificationPage: React.FC = () => {
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Nutritionist</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Plan</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Kitchen</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Date</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Total</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Paid</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Payment</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Screenshot</TableCell>
@@ -256,6 +318,27 @@ const PatientPaymentVerificationPage: React.FC = () => {
                               {plan.micro_kitchen_details.cuisine_type || "—"}
                             </p>
                           </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
+                        {plan.approved_on ? (
+                          <span>{new Date(plan.approved_on).toLocaleDateString()}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
+                        {plan.diet_plan_details?.final_amount ? (
+                          <span>₹{plan.diet_plan_details.final_amount}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
+                        {plan.amount_paid ? (
+                          <span>₹{plan.amount_paid}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}

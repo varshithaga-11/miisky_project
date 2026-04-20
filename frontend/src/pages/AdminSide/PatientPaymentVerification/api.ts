@@ -25,6 +25,7 @@ export interface UserDietPlanPayment {
   } | null;
   status: string;
   payment_status: string;
+  amount_paid: string | null;
   payment_screenshot: string | null;
   payment_uploaded_on: string | null;
   is_payment_verified: boolean;
@@ -37,10 +38,16 @@ export interface UserDietPlanPayment {
 export const getAllPaymentPlans = async (params?: {
   status?: string;
   payment_status?: string;
+  start_date?: string;
+  end_date?: string;
+  search?: string;
 }): Promise<UserDietPlanPayment[]> => {
   const search = new URLSearchParams();
   if (params?.status) search.append("status", params.status);
   if (params?.payment_status) search.append("payment_status", params.payment_status);
+  if (params?.start_date) search.append("start_date", params.start_date);
+  if (params?.end_date) search.append("end_date", params.end_date);
+  if (params?.search) search.append("search", params.search);
   const query = search.toString();
   const url = createApiUrl(query ? `api/userdietplan/?${query}` : "api/userdietplan/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
