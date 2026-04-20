@@ -59,12 +59,12 @@ export const markNotificationRead = async (notificationId: number) => {
   return response.data;
 };
 
-/** Header dropdown: first page + server-side unread count */
-export async function fetchNotificationsApi(limit = 8): Promise<{
+/** Header badge / context: same filters as notifications page (this month, unread count from API) */
+export async function fetchNotificationsApi(limit = 10): Promise<{
   items: AppNotification[];
   unreadCount: number;
 }> {
-  const data = await getAllNotifications(1, limit, "all");
+  const data = await getAllNotifications(1, limit, "all", "this_month");
   const items = Array.isArray(data.results) ? data.results : [];
   const unreadCount =
     typeof data.counts?.unread === "number"

@@ -13,6 +13,7 @@ import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage, FiHome, FiUpload, FiClock, FiStopCircle, FiCheck, FiEdit } from "react-icons/fi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { getUserRoleFromToken } from "../../../utils/auth";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -45,6 +46,8 @@ const SuggestedPlansPage: React.FC = () => {
   const [transactionId, setTransactionId] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [statusUpdate, setStatusUpdate] = useState<{ plan: UserDietPlan, status: string } | null>(null);
+
+  const isPatientUser = getUserRoleFromToken() === "patient";
 
   const handleStatusUpdate = (plan: UserDietPlan, newStatus: string) => {
     setStatusUpdate({ plan, status: newStatus });
@@ -335,18 +338,19 @@ const SuggestedPlansPage: React.FC = () => {
                           {udp.diet_plan_details?.title}
                         </h3>
                         <div className="flex items-center gap-2">
-                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
-                             {udp.status.replace("_", " ")}
-                           </span>
-                           {udp.status === "active" && (
-                             <button
-                               onClick={() => setEditingPlanId(editingPlanId === udp.id ? null : udp.id)}
-                               className={`p-1.5 rounded-lg transition-all ${editingPlanId === udp.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-indigo-600'}`}
-                               title="Edit status"
-                             >
-                               <FiEdit size={14} />
-                             </button>
-                           )}
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusBadge(udp.status)}`}>
+                            {udp.status.replace("_", " ")}
+                          </span>
+                          {udp.status === "active" && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingPlanId((prev) => (prev === udp.id ? null : udp.id))}
+                              className={`p-1.5 rounded-lg transition-all ${editingPlanId === udp.id ? "bg-indigo-600 text-white shadow-lg" : "bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-indigo-600"}`}
+                              title="Plan actions"
+                            >
+                              <FiEdit size={14} />
+                            </button>
+                          )}
                         </div>
                       </div>
                       {udp.micro_kitchen_details && (
@@ -364,18 +368,22 @@ const SuggestedPlansPage: React.FC = () => {
                       </p>
 
                       {udp.status === "active" && editingPlanId === udp.id && (
-                        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Update Plan Status</p>
-                          <button
-                            onClick={() => handleStatusUpdate(udp, "stopped")}
-                            disabled={submitting}
-                            className="w-full py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 border border-red-200 dark:border-red-900/30 transition-all uppercase tracking-wider"
-                          >
-                            <FiStopCircle size={14} /> Stop Plan Early
-                          </button>
-                          
+                        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-3">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Plan actions</p>
+                          {!isPatientUser && (
+                            <button
+                              type="button"
+                              onClick={() => handleStatusUpdate(udp, "stopped")}
+                              disabled={submitting}
+                              className="w-full py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 border border-red-200 dark:border-red-900/30 transition-all uppercase tracking-wider"
+                            >
+                              <FiStopCircle size={14} /> Stop Plan Early
+                            </button>
+                          )}
+
                           {isCompletionAllowed(udp.end_date) ? (
                             <button
+                              type="button"
                               onClick={() => handleStatusUpdate(udp, "completed")}
                               disabled={submitting}
                               className="w-full py-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 border border-green-200 dark:border-green-900/30 transition-all uppercase tracking-wider"
@@ -383,13 +391,13 @@ const SuggestedPlansPage: React.FC = () => {
                               <FiCheck size={14} /> Mark as Finished
                             </button>
                           ) : (
-                            <div 
+                            <div
                               className="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 cursor-help"
                               title={`You can mark this plan as completed on or after ${new Date(udp.end_date!).toLocaleDateString()}`}
                             >
-                               <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase flex items-center gap-1.5 leading-tight text-center">
-                                 <FiClock className="shrink-0" /> Unlock {new Date(udp.end_date!).toLocaleDateString()}
-                               </p>
+                              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase flex items-center gap-1.5 leading-tight text-center">
+                                <FiClock className="shrink-0" /> Unlock {new Date(udp.end_date!).toLocaleDateString()}
+                              </p>
                             </div>
                           )}
                         </div>
