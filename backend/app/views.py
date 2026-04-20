@@ -267,7 +267,6 @@ class AdminDashboardCountsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from website.models import Patent
 
         return Response({
             "countries": Country.objects.count(),
@@ -279,7 +278,6 @@ class AdminDashboardCountsView(APIView):
             "nutritionists": UserRegister.objects.filter(role="nutritionist").count(),
             "microKitchens": UserRegister.objects.filter(role="micro_kitchen").count(),
             "allottedPatients": UserRegister.objects.filter(is_patient_mapped=True).count(),
-            "patents": Patent.objects.count(),
             "supportTickets": SupportTicket.objects.count(),
             "healthParameters": HealthParameter.objects.count(),
             "mealTypes":     MealType.objects.count(),
@@ -4073,6 +4071,57 @@ class TemplateDownloadView(APIView):
     def get(self, request, module, submenu):
         from openpyxl import Workbook
         from io import BytesIO
+
+        def resolve_key(mapping, key):
+            """
+            Resolve slug aliases like meal-type/mealtype/meal_type safely.
+            """
+            if not key:
+                return None
+
+            key = key.strip().lower()
+            candidates = [key]
+
+            no_dash = key.replace("-", "")
+            no_underscore = key.replace("_", "")
+            dash_to_underscore = key.replace("-", "_")
+            underscore_to_dash = key.replace("_", "-")
+
+            for candidate in (no_dash, no_underscore, dash_to_underscore, underscore_to_dash):
+                if candidate not in candidates:
+                    candidates.append(candidate)
+
+            alias_map = {
+                "meal-type": "mealtype",
+                "mealtype": "meal-type",
+                "cuisine-type": "cuisinetype",
+                "cuisinetype": "cuisine-type",
+                "health-parameter": "healthparameter",
+                "healthparameter": "health-parameter",
+                "normal-range": "normalrange",
+                "normalrange": "normal-range",
+                "diet-plan": "dietplan",
+                "dietplan": "diet-plan",
+            }
+            alias = alias_map.get(key)
+            if alias and alias not in candidates:
+                candidates.append(alias)
+
+            for candidate in candidates:
+                if candidate in mapping:
+                    return candidate
+
+            return None
+
+        def safe_sheet_title(raw_submenu):
+            # openpyxl rejects []:*?/\ and >31 chars in titles
+            normalized = (raw_submenu or "Template").replace("_", " ").replace("-", " ").title()
+            invalid_chars = ['\\', '/', '*', '?', ':', '[', ']']
+            for char in invalid_chars:
+                normalized = normalized.replace(char, " ")
+            collapsed = " ".join(normalized.split())
+            title = f"{collapsed} Template".strip()
+            return title[:31] if len(title) > 31 else title
         
         # Define headers for each submenu based on available fields
         templates = {
@@ -4159,13 +4208,17 @@ class TemplateDownloadView(APIView):
             }
         }
 
-        module_templates = templates.get(module, {})
-        headers = module_templates.get(submenu, ["name"])
+        module_key = (module or "").strip().lower()
+        submenu_key = (submenu or "").strip().lower()
+
+        module_templates = templates.get(module_key, {})
+        resolved_submenu = resolve_key(module_templates, submenu_key)
+        headers = module_templates.get(resolved_submenu, ["name"])
 
         # Create Excel Workbook
         wb = Workbook()
         ws = wb.active
-        ws.title = f"{submenu.replace('-', ' ').title()} Template"
+        ws.title = safe_sheet_title(resolved_submenu or submenu_key)
         
         # Add Headers
         ws.append(headers)
@@ -4512,8 +4565,9 @@ class TemplateDownloadView(APIView):
                 ["Other", "99"],
             ],
         }
-        if submenu in sample_rows:
-            for row in sample_rows[submenu]:
+        sample_key = resolve_key(sample_rows, submenu_key)
+        if sample_key:
+            for row in sample_rows[sample_key]:
                 ws.append(row)
 
         # Style the header
@@ -4530,7 +4584,7 @@ class TemplateDownloadView(APIView):
             output.read(), 
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        response['Content-Disposition'] = f'attachment; filename="{submenu}_template.xlsx"'
+        response['Content-Disposition'] = f'attachment; filename="{(resolved_submenu or submenu_key or "template")}_template.xlsx"'
         return response
 
 class ProfileViewSet(viewsets.ModelViewSet):
