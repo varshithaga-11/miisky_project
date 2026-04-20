@@ -140,7 +140,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/contact">Contact</Link>
                       </li>
                       <li className="login-li" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
-                        <Link to="/signin" className="theme-btn btn-one" style={{
+                        <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{
                           padding: '8px 25px',
                           fontSize: '14px',
                           borderRadius: '5px',
@@ -261,7 +261,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <Link to="/contact">Contact</Link>
                       </li>
                       <li className="login-li" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
-                        <Link to="/signin" className="theme-btn btn-one" style={{
+                        <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{
                           padding: '8px 25px',
                           fontSize: '14px',
                           borderRadius: '5px',

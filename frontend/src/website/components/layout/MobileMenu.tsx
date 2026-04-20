@@ -146,7 +146,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
 
               {/* Login */}
               <li style={{ padding: '15px 25px 0 25px' }}>
-                <Link to="/signin" className="theme-btn btn-one" style={{ 
+                <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{ 
                   width: '100%', 
                   padding: '10px 0', 
                   borderRadius: '5px',
