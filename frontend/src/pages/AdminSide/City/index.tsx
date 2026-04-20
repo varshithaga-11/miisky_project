@@ -12,7 +12,7 @@ import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import SearchableSelect from "../../../components/form/SearchableSelect";
-import { getCountryList, Country } from "../Country/countryapi";
+import { getCountryList, Country, checkLocationDependency } from "../Country/countryapi";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getUserList, getDeliveryProfileList } from "../UserManagement/api";
@@ -96,28 +96,16 @@ const CityManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    // 1. Check for user dependencies
-    const userRes = await getUserList(1, 1, "", "all", "all", { city: id });
-    if (userRes.count > 0) {
-      toast.error(`Cannot delete city. It is associated with ${userRes.count} users. Please reassign or delete those users first.`);
-      return;
+    try {
+      const res = await checkLocationDependency({ city_id: id });
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
+        return;
+      }
+      setCityToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
     }
-
-    // 2. Check for Micro Kitchens
-    const mkRes = await getMicroKitchenList(1, "", "all", { city: id });
-    if (mkRes.count > 0) {
-      toast.error(`Cannot delete city. It is associated with ${mkRes.count} micro kitchens. Please delete them first.`);
-      return;
-    }
-
-    // 3. Check for Delivery Profiles
-    const dpRes = await getDeliveryProfileList(1, 1, "", { city: id });
-    if (dpRes.count > 0) {
-      toast.error(`Cannot delete city. It is associated with ${dpRes.count} delivery profiles. Please delete them first.`);
-      return;
-    }
-
-    setCityToDelete(id);
   };
 
   const confirmDelete = async () => {

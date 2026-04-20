@@ -41,6 +41,14 @@ ALLOWED_HOSTS = [
     "api.miisky.com"
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.miisky.com",
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+USE_X_FORWARDED_HOST = True   # 👈 ADD THIS
+
 
 AUTH_USER_MODEL = 'app.UserRegister'
 
@@ -136,7 +144,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://15.206.151.207",
     "http://15.206.151.207:8000",
     "https://15.206.151.207",
-    "https://15.206.151.207:8000",\
+    "https://15.206.151.207:8000",
     "https://api.miisky.com",
     "http://api.miisky.com",
 

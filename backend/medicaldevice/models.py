@@ -156,7 +156,7 @@ class DataSourceCategory(models.Model):
     title = models.CharField(max_length=200)
     parent = models.ForeignKey(
         "self",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="children",
@@ -186,7 +186,13 @@ class DataSource(models.Model):
         source_code="ACC_LIS2D", module_ref="LIS2D"
     """
 
-    category = models.ForeignKey(DataSourceCategory, on_delete=models.CASCADE, related_name="sources")
+    category = models.ForeignKey(
+        DataSourceCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sources",
+    )
     source_code = models.CharField(max_length=50, unique=True, db_index=True)
     title = models.CharField(max_length=200)
     wavelength_nm = models.PositiveIntegerField(blank=True, null=True)
@@ -219,7 +225,6 @@ class DeviceMaster(models.Model):
         date_operational=2025-01-15
     """
 
-    device_id = models.CharField(max_length=80, unique=True, db_index=True)
     device_sub_code = models.CharField(max_length=80, blank=True, null=True)
     device_title = models.CharField(max_length=200)
     serial_number = models.CharField(max_length=120, blank=True, null=True, db_index=True)
@@ -237,15 +242,14 @@ class DeviceMaster(models.Model):
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["device_id"]
+        ordering = ["serial_number", "device_title"]
         verbose_name = "Device master"
         verbose_name_plural = "Device masters"
 
     def __str__(self) -> str:
-        return f"{self.device_id} - {self.device_title}"
+        return f"{self.device_sub_code} - {self.device_title}"
 
 
 # -----------------------------------------------------------------------------
@@ -263,15 +267,18 @@ class Algorithm(models.Model):
     """
 
     algorithm_code = models.CharField(max_length=80, unique=True, db_index=True)
-    biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="algorithms")
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="algorithms")
+    biomarker = models.ForeignKey(
+        Biomarker, on_delete=models.SET_NULL, null=True, blank=True, related_name="algorithms"
+    )
+    device = models.ForeignKey(
+        DeviceMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="algorithms"
+    )
     version_code = models.CharField(max_length=40)
     version_date = models.DateField(blank=True, null=True)
     testing_date = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True, help_text="Inactive algorithms stay in DB for audit but are not offered for new flows.")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-version_date", "algorithm_code"]
@@ -291,11 +298,13 @@ class PersonalizedAlgorithm(models.Model):
 
     base_algorithm = models.ForeignKey(
         Algorithm,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="personalized_variants",
     )
     external_patient_key = models.CharField(max_length=80, db_index=True)
-    tuning_params = models.JSONField(default=dict, blank=True)
+    tuning_params = models.CharField(max_length=200, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -311,7 +320,9 @@ class PersonalizedAlgorithm(models.Model):
         verbose_name_plural = "Personalized algorithms"
 
     def __str__(self) -> str:
-        return f"{self.base_algorithm.algorithm_code} -> {self.external_patient_key}"
+        base = self.base_algorithm
+        ac = base.algorithm_code if base else "?"
+        return f"{ac} -> {self.external_patient_key}"
 
 
 # -----------------------------------------------------------------------------
@@ -326,11 +337,17 @@ class BiomarkerMedicalAreaMapping(models.Model):
         normal_min=70, normal_max=99, normal_range_text="70-99 mg/dL"
     """
 
-    biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="medical_area_maps")
-    medical_area = models.ForeignKey(MedicalArea, on_delete=models.CASCADE, related_name="biomarker_maps")
+    biomarker = models.ForeignKey(
+        Biomarker, on_delete=models.SET_NULL, null=True, blank=True, related_name="medical_area_maps"
+    )
+    medical_area = models.ForeignKey(
+        MedicalArea, on_delete=models.SET_NULL, null=True, blank=True, related_name="biomarker_maps"
+    )
     patient_category = models.ForeignKey(
         PatientCategory,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="biomarker_norm_maps",
     )
     normal_min = models.FloatField(blank=True, null=True)
@@ -353,7 +370,14 @@ class BiomarkerMedicalAreaMapping(models.Model):
         verbose_name_plural = "Biomarker-medical area mappings"
 
     def __str__(self) -> str:
-        return f"{self.biomarker.biomarker_code} / {self.medical_area.medical_code} / {self.patient_category.code}"
+        b = self.biomarker
+        m = self.medical_area
+        p = self.patient_category
+        return (
+            f"{b.biomarker_code if b else '?'} / "
+            f"{m.medical_code if m else '?'} / "
+            f"{p.code if p else '?'}"
+        )
 
 
 # -----------------------------------------------------------------------------
@@ -371,10 +395,20 @@ class DeviceBiomarkerParameterMapping(models.Model):
         version_code=1.2.0
     """
 
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="biomarker_parameter_maps")
+    device = models.ForeignKey(
+        DeviceMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="biomarker_parameter_maps",
+    )
     device_description = models.CharField(max_length=300, blank=True, null=True)
-    biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="device_parameter_maps")
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name="device_parameter_maps")
+    biomarker = models.ForeignKey(
+        Biomarker, on_delete=models.SET_NULL, null=True, blank=True, related_name="device_parameter_maps"
+    )
+    algorithm = models.ForeignKey(
+        Algorithm, on_delete=models.SET_NULL, null=True, blank=True, related_name="device_parameter_maps"
+    )
     version_code = models.CharField(max_length=40)
     is_enabled = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -391,7 +425,9 @@ class DeviceBiomarkerParameterMapping(models.Model):
         verbose_name_plural = "Device-biomarker parameter mappings"
 
     def __str__(self) -> str:
-        return f"{self.device.device_id} -> {self.biomarker.biomarker_code}"
+        dev = self.device
+        bio = self.biomarker
+        return f"{dev.device_sub_code if dev else '?'} -> {bio.biomarker_code if bio else '?'}"
 
 
 # -----------------------------------------------------------------------------
@@ -408,9 +444,13 @@ class BiomarkerSourceMapping(models.Model):
     Denormalized titles optional for exports matching legacy column names.
     """
 
-    biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="source_maps")
+    biomarker = models.ForeignKey(
+        Biomarker, on_delete=models.SET_NULL, null=True, blank=True, related_name="source_maps"
+    )
     biomarker_title = models.CharField(max_length=300, blank=True, null=True)
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, related_name="biomarker_maps_primary")
+    source = models.ForeignKey(
+        DataSource, on_delete=models.SET_NULL, null=True, blank=True, related_name="biomarker_maps_primary"
+    )
     source_title = models.CharField(max_length=200, blank=True, null=True)
     multi_source = models.ForeignKey(
         DataSource,
@@ -441,7 +481,9 @@ class BiomarkerSourceMapping(models.Model):
         verbose_name_plural = "Biomarker-source mappings"
 
     def __str__(self) -> str:
-        return f"{self.biomarker.biomarker_code} <- {self.source.source_code}"
+        b = self.biomarker
+        s = self.source
+        return f"{b.biomarker_code if b else '?'} <- {s.source_code if s else '?'}"
 
 
 # -----------------------------------------------------------------------------
@@ -461,18 +503,22 @@ class DevicePatientMapping(models.Model):
         device_wifi_id="SVA-WIFI-01"
     """
 
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="patient_maps")
-    patient_profile = models.ForeignKey(
-        "PatientProfile",
+    device = models.ForeignKey(
+        DeviceMaster,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="device_maps",
+        related_name="patient_maps",
+    )
+    patient = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="svasth_device_patient_mappings",
     )
     device_ble_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
     device_mapping_number = models.CharField(max_length=80, blank=True, null=True)
-    patient_id_external = models.CharField(max_length=80, db_index=True)
-    patient_name = models.CharField(max_length=200, blank=True, null=True)
     mobile_sim_no = models.CharField(max_length=40, blank=True, null=True)
     mobile_imei_no = models.CharField(max_length=40, blank=True, null=True)
     device_wifi_id = models.CharField(max_length=80, blank=True, null=True)
@@ -488,7 +534,8 @@ class DevicePatientMapping(models.Model):
         verbose_name_plural = "Device-patient mappings"
 
     def __str__(self) -> str:
-        return f"{self.device.device_id} -> {self.patient_id_external}"
+        dev = self.device
+        return f"{dev.device_sub_code if dev else '?'} -> patient {self.patient_id}"
 
 
 # -----------------------------------------------------------------------------
@@ -504,9 +551,17 @@ class DeviceAlgorithmFlow(models.Model):
         version_control_no="FW-2.1.0"
     """
 
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="algorithm_flows")
+    device = models.ForeignKey(
+        DeviceMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="algorithm_flows",
+    )
     device_sub_id = models.CharField(max_length=80, blank=True, null=True)
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name="device_flows")
+    algorithm = models.ForeignKey(
+        Algorithm, on_delete=models.SET_NULL, null=True, blank=True, related_name="device_flows"
+    )
     personalised_algorithm = models.ForeignKey(
         PersonalizedAlgorithm,
         on_delete=models.SET_NULL,
@@ -527,7 +582,9 @@ class DeviceAlgorithmFlow(models.Model):
         verbose_name_plural = "Device algorithm flows"
 
     def __str__(self) -> str:
-        return f"{self.device.device_id} -> {self.algorithm.algorithm_code}"
+        dev = self.device
+        alg = self.algorithm
+        return f"{dev.device_sub_code if dev else '?'} -> {alg.algorithm_code if alg else '?'}"
 
 
 # -----------------------------------------------------------------------------
@@ -552,15 +609,20 @@ class BasicDataTransfer(models.Model):
         ("SKIPPED", "Skipped"),
     ]
 
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="raw_transfers")
-    patient_profile = models.ForeignKey(
-        "PatientProfile",
+    device = models.ForeignKey(
+        DeviceMaster,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="raw_transfers",
     )
-    device_sub_id = models.CharField(max_length=80, blank=True, null=True)
+    patient = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="svasth_basic_data_transfers",
+    )
     biomarker = models.ForeignKey(
         Biomarker,
         on_delete=models.SET_NULL,
@@ -580,7 +642,6 @@ class BasicDataTransfer(models.Model):
         max_length=40,
         help_text="Logical channel: UV, visible, IR, PPG, ECG, ACC, GAS, etc.",
     )
-    reading_id = models.CharField(max_length=80, unique=True, db_index=True)
     reading_date = models.DateField()
     reading_time = models.TimeField()
     adc_values = models.JSONField()
@@ -630,9 +691,23 @@ class ProcessedBiomarkerResult(models.Model):
         ("UNKNOWN", "Unknown"),
     ]
 
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="processed_results")
-    biomarker = models.ForeignKey(Biomarker, on_delete=models.CASCADE, related_name="processed_results")
-    patient_id_external = models.CharField(max_length=80, blank=True, null=True, db_index=True)
+    device = models.ForeignKey(
+        DeviceMaster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_results",
+    )
+    biomarker = models.ForeignKey(
+        Biomarker, on_delete=models.SET_NULL, null=True, blank=True, related_name="processed_results"
+    )
+    patient_id_external = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_results",
+    )
     source_raw_reading = models.ForeignKey(
         BasicDataTransfer,
         on_delete=models.SET_NULL,
@@ -652,7 +727,7 @@ class ProcessedBiomarkerResult(models.Model):
     interpretation = models.CharField(max_length=20, choices=INTERPRETATION_CHOICES, default="UNKNOWN")
     recorded_at = models.DateTimeField(db_index=True)
     confidence = models.FloatField(blank=True, null=True, help_text="0.0–1.0 when the model exposes it.")
-    extra = models.JSONField(blank=True, null=True)
+    extra = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -665,7 +740,8 @@ class ProcessedBiomarkerResult(models.Model):
         verbose_name_plural = "Processed biomarker results"
 
     def __str__(self) -> str:
-        return f"{self.biomarker.biomarker_code}={self.value} {self.unit} @ {self.recorded_at}"
+        code = self.biomarker.biomarker_code if self.biomarker else "?"
+        return f"{code}={self.value} {self.unit} @ {self.recorded_at}"
 
 
 # -----------------------------------------------------------------------------
@@ -691,7 +767,6 @@ class KioskMaster(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "svasth_kiosk"
         ordering = ["kiosk_code"]
         verbose_name = "Kiosk master"
         verbose_name_plural = "Kiosk masters"
@@ -700,53 +775,25 @@ class KioskMaster(models.Model):
         return f"{self.kiosk_code} - {self.kiosk_name}"
 
 
-class PatientProfile(models.Model):
-    """
-    Patient registration profile for Svasth operational use.
-    Consolidates legacy: svasthpatientregistration / svasth_registration / RFID tables.
-    """
-
-    patient_external_id = models.CharField(max_length=80, unique=True, db_index=True)
-    vault_no = models.CharField(max_length=80, blank=True, null=True, db_index=True)
-    patient_ref_no = models.CharField(max_length=80, blank=True, null=True)
-    rfid_no = models.CharField(max_length=80, blank=True, null=True, db_index=True)
-    name = models.CharField(max_length=120)
-    mobile = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    age = models.PositiveSmallIntegerField(blank=True, null=True)
-    gender = models.CharField(max_length=20, blank=True, null=True)
-    hospital_name = models.CharField(max_length=120, blank=True, null=True)
-    clinic_name = models.CharField(max_length=120, blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    brief_medical_history = models.TextField(blank=True, null=True)
-    registered_at = models.DateTimeField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "svasth_patient_profile"
-        ordering = ["-created_at"]
-        verbose_name = "Patient profile"
-        verbose_name_plural = "Patient profiles"
-
-    def __str__(self) -> str:
-        return f"{self.patient_external_id} - {self.name}"
-
-
 class DeviceTelemetrySnapshot(models.Model):
     """
     Structured snapshot replacing wide legacy svasth_connect payload rows.
     Keep core vitals explicit and preserve uncommon payload in extra_payload.
     """
 
-    device = models.ForeignKey(DeviceMaster, on_delete=models.CASCADE, related_name="telemetry_snapshots")
-    patient_profile = models.ForeignKey(
-        PatientProfile,
+    device = models.ForeignKey(
+        DeviceMaster,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="telemetry_snapshots",
+    )
+    patient = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="svasth_telemetry_snapshots",
     )
     kiosk = models.ForeignKey(
         KioskMaster,
@@ -755,8 +802,6 @@ class DeviceTelemetrySnapshot(models.Model):
         blank=True,
         related_name="telemetry_snapshots",
     )
-    reading_id = models.CharField(max_length=80, unique=True, db_index=True)
-    reading_at = models.DateTimeField(db_index=True)
 
     temperature_c = models.FloatField(blank=True, null=True)
     heart_rate_bpm = models.FloatField(blank=True, null=True)
@@ -774,22 +819,22 @@ class DeviceTelemetrySnapshot(models.Model):
 
     battery_level = models.CharField(max_length=40, blank=True, null=True)
     signal_status = models.CharField(max_length=40, blank=True, null=True)
-    status_id = models.IntegerField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
     extra_payload = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "svasth_telemetry_snapshot"
-        ordering = ["-reading_at"]
         indexes = [
-            models.Index(fields=["device", "reading_at"]),
-            models.Index(fields=["patient_profile", "reading_at"]),
+            models.Index(fields=["device", "created_at"]),
+            models.Index(fields=["patient", "created_at"]),
         ]
         verbose_name = "Device telemetry snapshot"
         verbose_name_plural = "Device telemetry snapshots"
 
     def __str__(self) -> str:
-        return f"{self.reading_id} - {self.device.device_id}"
+        dev = self.device
+        label = f"{dev.device_sub_code or dev.pk}" if dev else "—"
+        return f"snapshot #{self.pk} – {label}"
 
 
 class ClinicalTrialObservation(models.Model):
@@ -800,12 +845,12 @@ class ClinicalTrialObservation(models.Model):
 
     trial_code = models.CharField(max_length=50, db_index=True)
     participant_name = models.CharField(max_length=120)
-    patient_profile = models.ForeignKey(
-        PatientProfile,
+    patient = models.ForeignKey(
+        "app.UserRegister",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="clinical_trial_observations",
+        related_name="svasth_clinical_trial_observations",
     )
     device = models.ForeignKey(
         DeviceMaster,
@@ -826,14 +871,12 @@ class ClinicalTrialObservation(models.Model):
     spo2_percent = models.FloatField(blank=True, null=True)
     heart_rate_bpm = models.FloatField(blank=True, null=True)
     temperature_c = models.FloatField(blank=True, null=True)
-    adc_values = models.JSONField(blank=True, null=True)
+    adc_values = models.CharField(max_length=200, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    observed_at = models.DateTimeField(db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "svasth_clinical_trial_observation"
-        ordering = ["-observed_at"]
+        ordering = ["-created_at"]
         verbose_name = "Clinical trial observation"
         verbose_name_plural = "Clinical trial observations"
 
@@ -854,26 +897,34 @@ class PatientDocument(models.Model):
         ("OTHER", "Other"),
     ]
 
-    patient_profile = models.ForeignKey(
-        PatientProfile,
-        on_delete=models.CASCADE,
-        related_name="documents",
+    patient = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="svasth_patient_documents",
     )
     document_type = models.CharField(max_length=20, choices=DOC_TYPE_CHOICES, default="OTHER")
     document_title = models.CharField(max_length=200, blank=True, null=True)
-    file_path = models.CharField(max_length=500)
-    uploaded_by = models.CharField(max_length=80, blank=True, null=True)
+    file_path = models.FileField(upload_to='patient_documents/')
+    uploaded_by = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="svasth_patient_documents_uploaded_by",
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        db_table = "svasth_patient_document"
         ordering = ["-uploaded_at"]
         verbose_name = "Patient document"
         verbose_name_plural = "Patient documents"
 
     def __str__(self) -> str:
-        return f"{self.patient_profile.patient_external_id} - {self.document_type}"
+        label = self.patient_id if self.patient_id is not None else self.pk
+        return f"{label} - {self.document_type}"
 
 
 class AlgorithmCalibration(models.Model):
@@ -883,7 +934,9 @@ class AlgorithmCalibration(models.Model):
 
     algorithm = models.ForeignKey(
         Algorithm,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="calibrations",
     )
     std_mean = models.FloatField(blank=True, null=True)
@@ -891,15 +944,22 @@ class AlgorithmCalibration(models.Model):
     coefficient = models.FloatField(blank=True, null=True)
     variables_count = models.IntegerField(blank=True, null=True)
     source_tag = models.CharField(max_length=80, blank=True, null=True)
-    uploaded_by = models.CharField(max_length=80, blank=True, null=True)
+    uploaded_by = models.ForeignKey(
+        "app.UserRegister",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="svasth_algorithm_calibrations",
+    )
     effective_from = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "svasth_algorithm_calibration"
         ordering = ["-created_at"]
         verbose_name = "Algorithm calibration"
         verbose_name_plural = "Algorithm calibrations"
 
     def __str__(self) -> str:
-        return f"{self.algorithm.algorithm_code} - calibration"
+        alg = self.algorithm
+        ac = alg.algorithm_code if alg else "?"
+        return f"{ac} - calibration"

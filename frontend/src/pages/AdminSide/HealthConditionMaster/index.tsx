@@ -16,6 +16,7 @@ import Label from "../../../components/form/Label";
 import ImportButton from "../../../components/common/ImportButton";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkMasterDependency, deleteMasterRecord } from "../shared/questionnaireMasterApi";
 
 const CATEGORY_LABEL: Record<string, string> = {
   chronic: "Chronic",
@@ -61,15 +62,24 @@ const HealthConditionMasterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
-    setIdToDelete(id);
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await checkMasterDependency("health_condition", id);
+      if (res.detail !== "none") {
+        toast.error(`${res.detail} so you cannot delete`);
+        return;
+      }
+      setIdToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
   };
 
   const confirmDelete = async () => {
     if (idToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteHealthConditionMaster(idToDelete);
+      await deleteMasterRecord("health_condition", idToDelete);
       toast.success("Health condition deleted successfully!");
       setIdToDelete(null);
       void fetchRows();

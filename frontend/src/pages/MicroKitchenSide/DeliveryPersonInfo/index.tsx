@@ -12,18 +12,10 @@ import {
 import { DeliveryProfileDetailModal } from "./DeliveryProfileDetailModal";
 import {
   CheckCircle2,
-  FileText,
-  ChevronDown,
-  ChevronUp,
   ShieldCheck,
   Eye,
 } from "lucide-react";
 
-const mediaHref = (path: string | null | undefined) => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
-};
 
 function ProfileDetail({
   row,
@@ -34,7 +26,6 @@ function ProfileDetail({
   onVerified: (p: KitchenDeliveryProfile) => void;
   onViewDetails: (p: KitchenDeliveryProfile) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const name =
@@ -56,162 +47,56 @@ function ProfileDetail({
     }
   };
 
-  const docRow = (label: string, url: string | null | undefined) => (
-    <div className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-gray-100 dark:border-white/10 text-sm">
-      <span className="text-gray-500 dark:text-gray-400">{label}</span>
-      {url ? (
-        <a
-          href={mediaHref(url)}
-          target="_blank"
-          rel="noreferrer"
-          className="text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:underline"
-        >
-          <FileText size={14} /> View
-        </a>
-      ) : (
-        <span className="text-gray-400 text-xs">Not uploaded</span>
-      )}
-    </div>
-  );
-
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800/80 overflow-hidden shadow-sm">
-      {/* Card header row */}
-      <div className="flex items-center justify-between gap-4 p-4">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="flex flex-1 items-center justify-between gap-4 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors rounded-xl px-2 py-1 -mx-2 -my-1"
-        >
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      {/* Card row */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 lg:p-5">
+        <div className="flex flex-1 items-center gap-4 min-w-0">
           <div className="min-w-0">
-            <p className="font-semibold text-gray-900 dark:text-white truncate">{name}</p>
+            <p className="font-semibold text-gray-900 dark:text-white truncate lg:text-base">{name}</p>
             <p className="text-xs text-gray-500 truncate">
               {row.user_details?.mobile || row.user_details?.email || "—"}
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          
+          <div className="flex items-center gap-3 shrink-0 ml-auto mr-4 lg:mr-8">
             {row.is_verified ? (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                <CheckCircle2 size={14} /> Verified
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border border-emerald-100 dark:border-emerald-800/30">
+                <CheckCircle2 size={12} /> Verified
               </span>
             ) : (
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase">Pending</span>
+              <span className="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 uppercase tracking-widest border border-amber-100 dark:border-amber-800/30">
+                Pending
+              </span>
             )}
-            {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-        </button>
+        </div>
 
-        {/* View Details button */}
-        <button
-          type="button"
-          onClick={() => onViewDetails(row)}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
-          title="View full delivery staff details"
-        >
-          <Eye size={14} />
-          Details
-        </button>
-      </div>
-
-      {open && (
-        <div className="px-4 pb-4 pt-0 space-y-4 border-t border-gray-100 dark:border-white/10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm pt-4">
-            <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">Vehicle type</span>
-              <p className="text-gray-900 dark:text-white">{row.vehicle_type || "—"}</p>
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">Other vehicle</span>
-              <p className="text-gray-900 dark:text-white">{row.other_vehicle_name || "—"}</p>
-            </div>
-            <div className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase text-gray-400">Vehicle details</span>
-              <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{row.vehicle_details || "—"}</p>
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">Registration no.</span>
-              <p className="text-gray-900 dark:text-white">{row.register_number || "—"}</p>
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">Licence no.</span>
-              <p className="text-gray-900 dark:text-white">{row.license_number || "—"}</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Documents</h4>
-            <div className="rounded-xl bg-gray-50 dark:bg-white/5 px-3">
-              {docRow("Licence copy", row.license_copy)}
-              {docRow("RC", row.rc_copy)}
-              {docRow("Insurance", row.insurance_copy)}
-              {docRow("PUC", row.puc_image)}
-            </div>
-          </div>
-
-          <div className="space-y-2 text-sm">
-            <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">Aadhaar number</span>
-              <p className="text-gray-900 dark:text-white">{row.aadhar_number || "—"}</p>
-            </div>
-            {docRow("Aadhaar image", row.aadhar_image)}
-            <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">PAN number</span>
-              <p className="text-gray-900 dark:text-white">{row.pan_number || "—"}</p>
-            </div>
-            {docRow("PAN image", row.pan_image)}
-          </div>
-
-          <div>
-            <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Bank</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <p>
-                <span className="text-gray-400 text-xs block">Holder</span>
-                {row.account_holder_name || "—"}
-              </p>
-              <p>
-                <span className="text-gray-400 text-xs block">Bank</span>
-                {row.bank_name || "—"}
-              </p>
-              <p>
-                <span className="text-gray-400 text-xs block">Account</span>
-                {row.bank_account_number || "—"}
-              </p>
-              <p>
-                <span className="text-gray-400 text-xs block">IFSC</span>
-                {row.ifsc_code || "—"}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-bold uppercase text-gray-400">Availability / slots</span>
-            <pre className="mt-1 text-xs bg-gray-50 dark:bg-black/20 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">
-              {row.available_slots || "—"}
-            </pre>
-          </div>
-
-          {row.is_verified && row.verified_on && (
-            <p className="text-xs text-emerald-700 dark:text-emerald-300">
-              Verified on {new Date(row.verified_on).toLocaleString()}
-              {row.verified_by_details && (
-                <> by {row.verified_by_details.first_name} {row.verified_by_details.last_name}</>
-              )}
-            </p>
-          )}
-
+        <div className="flex items-center gap-2">
           {!row.is_verified && (
             <button
               type="button"
               disabled={busy}
               onClick={() => void verify()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-500/10"
             >
-              <ShieldCheck size={18} />
-              {busy ? "Saving…" : "Verify this profile"}
+              <ShieldCheck size={14} />
+              {busy ? "…" : "Verify"}
             </button>
           )}
+
+          {/* View Details button */}
+          <button
+            type="button"
+            onClick={() => onViewDetails(row)}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+            title="View full delivery staff details"
+          >
+            <Eye size={14} />
+            Details
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

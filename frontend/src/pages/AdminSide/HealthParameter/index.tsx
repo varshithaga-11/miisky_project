@@ -13,6 +13,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkMasterDependency, deleteMasterRecord } from "../shared/questionnaireMasterApi";
 
 const HealthParameterManagement: React.FC = () => {
   const [params, setParams] = useState<HealthParameter[]>([]);
@@ -52,20 +53,24 @@ const HealthParameterManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
-    const parameter = params.find(p => p.id === id);
-    if (parameter && parameter.normal_ranges && parameter.normal_ranges.length > 0) {
-      toast.error(`Cannot delete health parameter. It has ${parameter.normal_ranges.length} associated normal ranges. Please delete them first.`);
-      return;
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await checkMasterDependency("health_parameter", id);
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
+        return;
+      }
+      setIdToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
     }
-    setIdToDelete(id);
   };
 
   const confirmDelete = async () => {
     if (idToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteHealthParameter(idToDelete);
+      await deleteMasterRecord("health_parameter", idToDelete);
       toast.success("Health parameter deleted successfully!");
       setIdToDelete(null);
       fetchParams();

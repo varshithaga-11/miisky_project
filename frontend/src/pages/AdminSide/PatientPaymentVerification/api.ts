@@ -66,3 +66,21 @@ export const rejectPayment = async (id: number): Promise<UserDietPlanPayment> =>
   const response = await axios.post(url, {}, { headers: await getAuthHeaders() });
   return response.data;
 };
+
+export const stopPlan = async (id: number): Promise<UserDietPlanPayment> => {
+  const url = createApiUrl(`api/userdietplan/${id}/stop-plan/`);
+  const response = await axios.post(url, {}, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const finishPlan = async (id: number): Promise<UserDietPlanPayment> => {
+  const url = createApiUrl(`api/userdietplan/${id}/finish-plan/`);
+  const response = await axios.post(url, {}, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const updateDietPlan = async (id: number, data: Partial<UserDietPlanPayment>): Promise<UserDietPlanPayment> => {
+  const url = createApiUrl(`api/userdietplan/${id}/`);
+  const response = await axios.patch(url, data, { headers: await getAuthHeaders() });
+  return response.data;
+};

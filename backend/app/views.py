@@ -559,6 +559,13 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             
         return qs
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_active = False
+        instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
     # NOTE: UserRegister currently has no created_by field.
     # We intentionally do not filter by created_by, so list shows all users.
 
@@ -3046,6 +3053,312 @@ class CityViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class AdminLocationDeleteView(APIView):
+    """
+    Unified API for checking and performing deletions of Country, State, and City.
+    Logic: Checks for existing dependencies in Users, Micro Kitchens, and Delivery Profiles.
+    As specifically requested in notepad:
+       - If deleting State: checks if City exists with state filter.
+       - If deleting Country: checks if State exists with country filter.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        country_id = request.query_params.get('country_id')
+        state_id = request.query_params.get('state_id')
+        city_id = request.query_params.get('city_id')
+
+        if not any([country_id, state_id, city_id]):
+            return Response({"detail": "Provide country_id, state_id, or city_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Country Check
+        if country_id:
+            if State.objects.filter(country_id=country_id).exists():
+                return Response({"detail": "associated states"}, status=status.HTTP_200_OK)
+            if UserRegister.objects.filter(country_id=country_id).exists():
+                return Response({"detail": "associated users"}, status=status.HTTP_200_OK)
+            if MicroKitchenProfile.objects.filter(user__country_id=country_id).exists():
+                return Response({"detail": "associated micro kitchens"}, status=status.HTTP_200_OK)
+            if DeliveryProfile.objects.filter(user__country_id=country_id).exists():
+                return Response({"detail": "associated delivery profiles"}, status=status.HTTP_200_OK)
+        
+        # 2. State Check
+        elif state_id:
+            if City.objects.filter(state_id=state_id).exists():
+                return Response({"detail": "associated cities"}, status=status.HTTP_200_OK)
+            if UserRegister.objects.filter(state_id=state_id).exists():
+                return Response({"detail": "associated users"}, status=status.HTTP_200_OK)
+            if MicroKitchenProfile.objects.filter(user__state_id=state_id).exists():
+                return Response({"detail": "associated micro kitchens"}, status=status.HTTP_200_OK)
+            if DeliveryProfile.objects.filter(user__state_id=state_id).exists():
+                return Response({"detail": "associated delivery profiles"}, status=status.HTTP_200_OK)
+
+        # 3. City Check
+        elif city_id:
+            if UserRegister.objects.filter(city_id=city_id).exists():
+                return Response({"detail": "associated users"}, status=status.HTTP_200_OK)
+            if MicroKitchenProfile.objects.filter(user__city_id=city_id).exists():
+                return Response({"detail": "associated micro kitchens"}, status=status.HTTP_200_OK)
+            if DeliveryProfile.objects.filter(user__city_id=city_id).exists():
+                return Response({"detail": "associated delivery profiles"}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "none"}, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        country_id = request.query_params.get('country_id')
+        state_id = request.query_params.get('state_id')
+        city_id = request.query_params.get('city_id')
+
+        # Check dependencies first using the logic in GET
+        check_res = self.get(request)
+        if check_res.data.get("detail") != "none":
+            return Response({"detail": f"Cannot delete. Dependency found: {check_res.data.get('detail')}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if country_id:
+            Country.objects.filter(id=country_id).delete()
+        elif state_id:
+            State.objects.filter(id=state_id).delete()
+        elif city_id:
+            City.objects.filter(id=city_id).delete()
+        else:
+            return Response({"detail": "Provide country_id, state_id, or city_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminQuestionnaireMasterDeleteView(APIView):
+    """
+    Unified API for checking and performing deletions of Questionnaire Masters.
+    Prevents deletion if the master record is linked to any User/Patient records.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        mtype = request.query_params.get('type')
+        mid = request.query_params.get('id')
+
+        if not mtype or not mid:
+            return Response({"detail": "Provide type and id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mapping master type to (LinkedModel, ForeignKeyField)
+        mapping = {
+            "health_condition": (UserHealthCondition, "condition_id"),
+            "symptom": (UserSymptom, "symptom_id"),
+            "autoimmune": (UserAutoimmune, "disease_id"),
+            "deficiency": (UserDeficiency, "deficiency_id"),
+            "digestive_issue": (UserDigestiveIssue, "issue_id"),
+            "skin_issue": (UserSkinIssue, "skin_issue_id"),
+            "habit": (UserHabit, "habit_id"),
+            "activity": (UserPhysicalActivity, "activity_id"),
+            "health_parameter": (NormalRangeForHealthParameter, "health_parameter_id"),
+        }
+
+        if mtype not in mapping:
+            return Response({"detail": f"Invalid type '{mtype}'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        model, fk_field = mapping[mtype]
+        first_record = model.objects.filter(**{fk_field: mid}).first()
+        if first_record:
+            # Safely try to get user information if it exists
+            user = getattr(first_record, 'user', None)
+            if user:
+                uname = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip() or user.username
+                return Response({"detail": f"this {mtype.replace('_', ' ')} is collected by User '{uname}'"}, status=status.HTTP_200_OK)
+            
+            # Specific message for health parameters linking to normal ranges
+            if mtype == "health_parameter":
+                return Response({"detail": "associated normal ranges"}, status=status.HTTP_200_OK)
+
+            return Response({"detail": f"associated {mtype.replace('_', ' ')} records"}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "none"}, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        mtype = request.query_params.get('type')
+        mid = request.query_params.get('id')
+
+        if not mtype or not mid:
+            return Response({"detail": "Provide type and id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        check_res = self.get(request)
+        if check_res.data.get("detail") != "none":
+            return Response({"detail": f"Cannot delete as it has {check_res.data.get('detail')}. Please remove them first."}, status=status.HTTP_400_BAD_REQUEST)
+
+        master_mapping = {
+            "health_condition": HealthConditionMaster,
+            "symptom": SymptomMaster,
+            "autoimmune": AutoimmuneMaster,
+            "deficiency": DeficiencyMaster,
+            "digestive_issue": DigestiveIssueMaster,
+            "skin_issue": SkinIssueMaster,
+            "habit": HabitMaster,
+            "activity": ActivityMaster,
+            "health_parameter": HealthParameter,
+        }
+
+        MasterClass = master_mapping.get(mtype)
+        if not MasterClass:
+            return Response({"detail": "Invalid type."}, status=status.HTTP_400_BAD_REQUEST)
+
+        MasterClass.objects.filter(id=mid).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminFoodManagementDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        mtype = request.query_params.get('type')
+        mid = request.query_params.get('id')
+
+        if not mtype or not mid:
+            return Response({"detail": "Provide type and id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mapping for Food Management
+        mapping = {
+            'meal_type': (MealType, 'food_set', 'MealType'),  # food_set is M2M reverse
+            'cuisine_type': (CuisineType, 'food_set', 'CuisineType'),
+            'ingredient': (Ingredient, 'foodingredient_set', 'Ingredient'),
+            'unit': (Unit, 'foodingredient_set', 'Unit'),
+            'food_group': (FoodGroup, 'foods', 'FoodGroup'), # FoodName.food_group has related_name="foods"
+            'packaging_material': (PackagingMaterial, 'user_meals', 'PackagingMaterial'), # UserMeal.packaging_material has related_name="user_meals"
+            'delivery_slot': (DeliverySlot, None, 'DeliverySlot'),
+            'food': (Food, 'user_meals', 'Food'),
+            'food_name': (FoodName, None, 'FoodName'),
+            'diet_plan': (DietPlans, None, 'DietPlans'),
+        }
+
+        if mtype not in mapping:
+            return Response({"detail": f"Invalid type '{mtype}'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        m_data = mapping[mtype]
+        model = m_data[0]
+        related_name = m_data[1]
+        
+        try:
+            obj = model.objects.get(id=mid)
+        except model.DoesNotExist:
+            return Response({"detail": "Object not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check dependencies via related managers
+        # For M2M like food_set
+        if mtype in ['meal_type', 'cuisine_type']:
+            first_food = getattr(obj, related_name).first()
+            if first_food:
+                return Response({"detail": f"associated foods like '{first_food.name}'"}, status=status.HTTP_200_OK)
+            
+            if mtype == 'meal_type':
+                first_meal = UserMeal.objects.filter(meal_type=obj).select_related('food').first()
+                if first_meal:
+                    rname = first_meal.food.name if first_meal.food else "Unknown Dish"
+                    return Response({"detail": f"associated user meals with recipe '{rname}'"}, status=status.HTTP_200_OK)
+
+        elif mtype in ['ingredient', 'unit']:
+            first_fi = getattr(obj, related_name).select_related('food').first()
+            if first_fi:
+                recipe_name = first_fi.food.name if first_fi.food else "Unknown Recipe"
+                return Response({"detail": f"associated recipes (food ingredients) like '{recipe_name}'"}, status=status.HTTP_200_OK)
+
+        elif mtype == 'food_group':
+            first_food = getattr(obj, related_name).first()
+            if first_food:
+                return Response({"detail": f"associated food names like '{first_food.name}'"}, status=status.HTTP_200_OK)
+        
+        elif mtype == 'food_name':
+            first_rec = PatientFoodRecommendation.objects.filter(food=obj).select_related('patient').first()
+            if first_rec:
+                uname = f"{(first_rec.patient.first_name or '').strip()} {(first_rec.patient.last_name or '').strip()}".strip() or first_rec.patient.username
+                return Response({"detail": f"associated food recommendations for User '{uname}'"}, status=status.HTTP_200_OK)
+            
+            # Check for any nutritional composition profiles
+            profiles = [
+                'proximate', 'minerals', 'sugars', 'amino_acids', 'fatty_acid_profile',
+                'fat_soluble_vitamins', 'water_soluble_vitamins', 'carotenoids', 
+                'polyphenols', 'organic_acids', 'phytochemicals'
+            ]
+            for profile in profiles:
+                try:
+                    if hasattr(obj, profile) and getattr(obj, profile) is not None:
+                        return Response({"detail": f"associated '{profile.replace('_', ' ')}' composition data"}, status=status.HTTP_200_OK)
+                except:
+                    pass
+
+        elif mtype == 'packaging_material':
+            first_meal = getattr(obj, related_name).select_related('food').first()
+            if first_meal:
+                rname = first_meal.food.name if first_meal.food else "Unknown Dish"
+                return Response({"detail": f"associated user meals with recipe '{rname}'"}, status=status.HTTP_200_OK)
+
+        elif mtype == 'food':
+            first_meal = UserMeal.objects.filter(food=obj).first()
+            if first_meal:
+                rname = obj.name # Since I'm deleting the food itself
+                return Response({"detail": f"associated user meals with recipe '{rname}'"}, status=status.HTTP_200_OK)
+
+        elif mtype == 'delivery_slot':
+            # 1. DietPlanSlotDeliveryPerson
+            slot_dp = DietPlanSlotDeliveryPerson.objects.filter(delivery_slot=obj).select_related('delivery_person', 'plan_assignment__micro_kitchen').first()
+            if slot_dp:
+                dp_name = f"{(slot_dp.delivery_person.first_name or '').strip()} {(slot_dp.delivery_person.last_name or '').strip()}".strip() or slot_dp.delivery_person.username
+                mk_name = slot_dp.plan_assignment.micro_kitchen.brand_name if slot_dp.plan_assignment and slot_dp.plan_assignment.micro_kitchen else "Unknown Kitchen"
+                return Response({"detail": f"associated with team member '{dp_name}' in micro kitchen '{mk_name}'"}, status=status.HTTP_200_OK)
+            
+            # 2. DietPlanDeliveryAssignment (default_slot)
+            plan_assign = DietPlanDeliveryAssignment.objects.filter(default_slot=obj).select_related('delivery_person', 'micro_kitchen').first()
+            if plan_assign:
+                dp_name = f"{(plan_assign.delivery_person.first_name or '').strip()} {(plan_assign.delivery_person.last_name or '').strip()}".strip() if plan_assign.delivery_person else "Unknown Member"
+                mk_name = plan_assign.micro_kitchen.brand_name if plan_assign.micro_kitchen else "Unknown Kitchen"
+                return Response({"detail": f"associated with team member '{dp_name}' in micro kitchen '{mk_name}'"}, status=status.HTTP_200_OK)
+
+            # 3. DeliveryAssignment (daily)
+            daily_assign = DeliveryAssignment.objects.filter(delivery_slot=obj).select_related('delivery_person', 'user_meal__micro_kitchen').first()
+            if daily_assign:
+                dp_name = f"{(daily_assign.delivery_person.first_name or '').strip()} {(daily_assign.delivery_person.last_name or '').strip()}".strip() if daily_assign.delivery_person else "Unknown Member"
+                mk_name = daily_assign.user_meal.micro_kitchen.brand_name if daily_assign.user_meal and daily_assign.user_meal.micro_kitchen else "Unknown Kitchen"
+                return Response({"detail": f"associated with team member '{dp_name}' in micro kitchen '{mk_name}'"}, status=status.HTTP_200_OK)
+
+        elif mtype == 'diet_plan':
+            # Check for Patient assignments
+            first_user_plan = UserDietPlan.objects.filter(diet_plan=obj).select_related('user').first()
+            if first_user_plan:
+                user = first_user_plan.user
+                uname = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip() or user.username
+                return Response({"detail": f"associated with patient '{uname}'"}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "none"}, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        mtype = request.query_params.get('type')
+        mid = request.query_params.get('id')
+
+        if not mtype or not mid:
+            return Response({"detail": "Provide type and id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        check_res = self.get(request)
+        if check_res.data.get("detail") != "none":
+            return Response({"detail": f"Cannot delete as it has {check_res.data.get('detail')}. Please remove them first."}, status=status.HTTP_400_BAD_REQUEST)
+
+        mapping = {
+            'meal_type': MealType,
+            'cuisine_type': CuisineType,
+            'ingredient': Ingredient,
+            'unit': Unit,
+            'food_group': FoodGroup,
+            'packaging_material': PackagingMaterial,
+            'delivery_slot': DeliverySlot,
+            'food': Food,
+            'food_name': FoodName,
+            'diet_plan': DietPlans,
+        }
+
+        if mtype not in mapping:
+            return Response({"detail": f"Invalid type '{mtype}'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        model = mapping[mtype]
+        model.objects.filter(id=mid).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 # ── Food System ViewSets ───────────────────────────────────────────────────────
 
 class MealTypeViewSet(viewsets.ModelViewSet):
@@ -4695,6 +5008,26 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         udp.reject_payment()
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='stop-plan')
+    def stop_plan(self, request, pk=None):
+        """Admin or nutritionist stops the plan."""
+        udp = self.get_object()
+        if request.user.role not in ('admin', 'nutritionist'):
+            return Response({"detail": "Only admin or nutritionist can stop the plan."}, status=status.HTTP_403_FORBIDDEN)
+        udp.status = 'stopped'
+        udp.save()
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='finish-plan')
+    def finish_plan(self, request, pk=None):
+        """Admin or nutritionist marks the plan as completed."""
+        udp = self.get_object()
+        if request.user.role not in ('admin', 'nutritionist'):
+            return Response({"detail": "Only admin or nutritionist can finish the plan."}, status=status.HTTP_403_FORBIDDEN)
+        udp.status = 'completed'
+        udp.save()
+        return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='reassign-micro-kitchen')
     def reassign_micro_kitchen(self, request, pk=None):
         """Nutritionist or admin: change kitchen from effective_from; pins past meals to old kitchen, deletes future meals."""
@@ -6323,10 +6656,15 @@ class NutritionistAvailabilityViewSet(viewsets.ModelViewSet):
         
         nutritionist_id = self.request.query_params.get('nutritionist')
         if nutritionist_id:
+            now = timezone.now()
+            today = now.date()
+            current_time = now.time()
+            # Return slots that are after the current date, or today but after the current time
             return self.queryset.filter(
                 nutritionist_id=nutritionist_id, 
-                is_booked=False, 
-                date__gte=timezone.now().date()
+                is_booked=False
+            ).filter(
+                Q(date__gt=today) | Q(date=today, start_time__gte=current_time)
             ).order_by('date', 'start_time')
         
         if role == 'admin' or user.is_staff:
@@ -6340,18 +6678,23 @@ class NutritionistAvailabilityViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['delete'], url_path='clear-past')
     def clear_past_slots(self, request):
         """
-        Delete all unbooked slots of the current nutritionist where date < today.
+        Delete all unbooked slots of the current nutritionist where date < today,
+        or date == today and start_time < now.
         """
         user = request.user
         if getattr(user, 'role', None) != 'nutritionist':
             return Response({"detail": "Only nutritionists can perform this."}, status=status.HTTP_403_FORBIDDEN)
         
-        today = timezone.now().date()
+        now = timezone.now()
+        today = now.date()
+        current_time = now.time()
+
         # Only delete unbooked ones to avoid data inconsistency for meetings
         past_unbooked = NutritionistAvailability.objects.filter(
             nutritionist=user, 
-            date__lt=today, 
             is_booked=False
+        ).filter(
+            Q(date__lt=today) | Q(date=today, start_time__lt=current_time)
         )
         count, _ = past_unbooked.delete()
         
@@ -9736,13 +10079,20 @@ class DietPlanDeliveryAssignmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         u = self.request.user
         role = getattr(u, "role", None)
+        qs = self.queryset
+
+        # Allow filtering by delivery_person if provided
+        dp_id = self.request.query_params.get("delivery_person")
+        if dp_id:
+            qs = qs.filter(delivery_person_id=dp_id)
+
         if role == "admin":
-            return self.queryset.order_by("-assigned_on")
+            return qs.order_by("-assigned_on")
         if role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return DietPlanDeliveryAssignment.objects.none()
-            return self.queryset.filter(micro_kitchen=mk).order_by("-assigned_on")
+            return qs.filter(micro_kitchen=mk).order_by("-assigned_on")
         return DietPlanDeliveryAssignment.objects.none()
 
     def create(self, request, *args, **kwargs):
@@ -10184,15 +10534,28 @@ class KitchenMealDeliveryViewSet(
 
         u = self.request.user
         role = getattr(u, "role", None)
+        qs = self.queryset.filter(is_active=True)
+
+        # Allow filtering by delivery_person if provided
+        dp_id = self.request.query_params.get("delivery_person")
+        if dp_id:
+            qs = qs.filter(delivery_person_id=dp_id)
+
+        # Allow filtering by reassigned status
+        reassigned = self.request.query_params.get("reassigned")
+        if reassigned == "true":
+            qs = qs.filter(reassigned_from__isnull=False)
+
         if role == "supply_chain":
-            qs = self.queryset.filter(delivery_person=u, is_active=True)
+            qs = qs.filter(delivery_person=u)
             qs = _apply_date_filters(qs)
             return qs.order_by("-scheduled_date", "id")
+            
         if role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
             if not mk:
                 return DeliveryAssignment.objects.none()
-            qs = self.queryset.filter(user_meal__micro_kitchen=mk, is_active=True)
+            qs = qs.filter(user_meal__micro_kitchen=mk)
             qs = _apply_date_filters(qs)
             return qs.order_by("-scheduled_date", "id")
         return DeliveryAssignment.objects.none()

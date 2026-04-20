@@ -4,6 +4,8 @@ import svgr from "vite-plugin-svgr";
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Keep root at this frontend directory.
+  root: ".",
   plugins: [
     react(),
     svgr({
@@ -17,8 +19,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': '/src',
-      '@website': '/src/website',
+      "@": "/src",
+      "@website": "/src/website",
     },
   },
   define: {
@@ -27,13 +29,13 @@ export default defineConfig({
     // __API_URL__: '"https://backend.testingmiisky.com/"',
     // __API_URL__: '"http://18.190.152.118/"',
     // __API_URL__: '"http://18.190.152.118:8000/"',
-    __API_URL__: '"https://web.miisky.com/"',
+    __API_URL__: '"https://api.miisky.com/"',
   },
   build: {
     rollupOptions: {
       input: {
-        main: './index.html',
-        website: './website.html',
+        main: "./index.html",
+        website: "./website.html",
       },
     },
   },

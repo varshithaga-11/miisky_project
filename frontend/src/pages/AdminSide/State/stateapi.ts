@@ -86,9 +86,10 @@ export const updateState = async (id: number, data: Partial<State>) => {
 
 // Delete
 export const deleteState = async (id: number) => {
-  const url = createApiUrl(`api/state/${id}/`);
+  const url = createApiUrl("api/adminside/location/delete/");
   const response = await axios.delete(url, {
     headers: await getAuthHeaders(),
+    params: { state_id: id }
   });
   return response.data;
 };

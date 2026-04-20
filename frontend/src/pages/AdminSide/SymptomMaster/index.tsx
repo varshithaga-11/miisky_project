@@ -4,6 +4,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getSymptomMasterList, deleteSymptomMaster, SymptomMaster } from "./api";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkMasterDependency, deleteMasterRecord } from "../shared/questionnaireMasterApi";
 import AddSymptomMaster from "./AddSymptomMaster";
 import EditSymptomMaster from "./EditSymptomMaster";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -48,15 +49,24 @@ const SymptomMasterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
-    setRecordToDelete(id);
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await checkMasterDependency("symptom", id);
+      if (res.detail !== "none") {
+        toast.error(`${res.detail} so you cannot delete`);
+        return;
+      }
+      setRecordToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
   };
 
   const confirmDelete = async () => {
     if (recordToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteSymptomMaster(recordToDelete);
+      await deleteMasterRecord("symptom", recordToDelete);
       toast.success("Symptom deleted successfully!");
       setRecordToDelete(null);
       void fetchRows();

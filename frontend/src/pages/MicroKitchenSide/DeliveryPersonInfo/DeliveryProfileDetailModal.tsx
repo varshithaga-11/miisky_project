@@ -22,6 +22,8 @@ import {
   fetchDeliveryPersonReviews,
   fetchDeliveryPersonIssues,
   fetchDeliveryPersonMealAssignments,
+  fetchDeliveryPersonGlobalAssignments,
+  type DietPlanDeliveryAssignment,
 } from "./api";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -48,18 +50,22 @@ const personName = (row: KitchenDeliveryProfile) => {
 
 type ViewKey =
   | "profile"
+  | "global_assignments"
   | "orders"
   | "payments"
   | "meal_assignments"
+  | "reassignments"
   | "leaves"
   | "reviews"
   | "issues";
 
 const VIEW_TITLES: Record<ViewKey, string> = {
   profile: "Delivery Profile & KYC",
+  global_assignments: "Global Patient Assignments",
   orders: "Orders",
   payments: "Payment of User Meals",
   meal_assignments: "Meal Delivery Assignments",
+  reassignments: "Reassignment History",
   leaves: "Planned Leaves",
   reviews: "Ratings & Reviews",
   issues: "Issues Reported",
@@ -78,6 +84,13 @@ const MENU_ITEMS: {
     description: "Vehicle, documents, bank and availability",
     icon: <FiUser />,
     color: "blue",
+  },
+  {
+    key: "global_assignments",
+    label: "Global Patient Assignments",
+    description: "Regular patients and primary slots mapped to this person",
+    icon: <FiCheckCircle />,
+    color: "emerald",
   },
   {
     key: "orders",
@@ -106,6 +119,13 @@ const MENU_ITEMS: {
     description: "Leave records for this delivery staff member",
     icon: <FiCalendar />,
     color: "amber",
+  },
+  {
+    key: "reassignments",
+    label: "Reassignment History",
+    description: "Detailed logs of reassigned plans and meals with reasons",
+    icon: <FiAlertTriangle />,
+    color: "rose",
   },
   {
     key: "reviews",
@@ -497,47 +517,167 @@ function MealAssignmentsView({ userId }: { userId: number }) {
   return (
     <div className="space-y-3">
       {items.map((a: any) => (
-        <div key={a.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-4 bg-white dark:bg-gray-800/30 shadow-sm">
+        <div key={a.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white dark:bg-gray-800/30 shadow-sm hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900 dark:text-white text-sm">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center flex-wrap gap-2">
+                <span className="font-bold text-gray-900 dark:text-white text-base">
                   {a.user_meal_details?.patient_name || `Meal #${a.user_meal}`}
                 </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${statusColor(a.status)}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${statusColor(a.status)}`}>
                   {a.status?.replace(/_/g, " ")}
                 </span>
-              </div>
-              <div className="text-xs text-gray-500 flex flex-wrap gap-3">
-                {a.user_meal_details?.meal_date && (
-                  <span>📅 Meal date: {fmtDate(a.user_meal_details.meal_date)}</span>
+                {a.reassignment_reason && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border border-rose-100 dark:border-rose-800/20">
+                    Reassigned
+                  </span>
                 )}
-                {a.scheduled_date && (
-                  <span>🚚 Scheduled: {fmtDate(a.scheduled_date)}</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                <div className="flex items-center gap-2 text-gray-500">
+                  <FiCalendar className="shrink-0" /> 
+                  <span>Meal: <strong>{fmtDate(a.user_meal_details.meal_date)}</strong></span>
+                </div>
+                {a.delivery_slot_details && (
+                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold">
+                    <FiClock className="shrink-0" />
+                    <span>Slot: <strong>{a.delivery_slot_details.name}</strong> ({a.delivery_slot_details.start_time || "?"}–{a.delivery_slot_details.end_time || "?"})</span>
+                  </div>
                 )}
                 {a.user_meal_details?.meal_type && (
-                  <span>🍽 {a.user_meal_details.meal_type}</span>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="shrink-0">🍽</span>
+                    <span>Type: <strong>{a.user_meal_details.meal_type}</strong></span>
+                  </div>
                 )}
                 {a.user_meal_details?.food_name && (
-                  <span>🥗 {a.user_meal_details.food_name}</span>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="shrink-0">🥗</span>
+                    <span>Food: <strong>{a.user_meal_details.food_name}</strong></span>
+                  </div>
                 )}
               </div>
-              {a.delivery_slot_details && (
-                <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                  ⏰ {a.delivery_slot_details.name}
-                  {a.delivery_slot_details.start_time && ` (${a.delivery_slot_details.start_time}–${a.delivery_slot_details.end_time || "?"})`}
-                </div>
-              )}
+
               {a.reassignment_reason && (
-                <div className="text-xs text-amber-600 dark:text-amber-400 italic">
-                  ↩ Reassigned: {a.reassignment_reason}
+                <div className="mt-2 p-3 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-xs shadow-sm">
+                  <div className="font-bold text-rose-800 dark:text-rose-300 flex items-center gap-1.5 mb-1 uppercase tracking-wider text-[10px]">
+                    <FiAlertTriangle size={12} /> Reassignment Reason
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-300 italic">"{a.reassignment_reason}"</div>
+                  {a.reassigned_from && (
+                    <div className="mt-1.5 text-[10px] text-gray-400 font-medium">
+                      Previously assigned from: {a.reassigned_from_details?.first_name || "Another user"}
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+            
+            <div className="text-right shrink-0">
+               <span className="text-[10px] font-black text-gray-300 uppercase tabular-nums">ID #{a.id}</span>
             </div>
           </div>
         </div>
       ))}
       <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+    </div>
+  );
+}
+
+// ─── Global Assignments view ──────────────────────────────────────────────────
+function GlobalAssignmentsView({ userId }: { userId: number }) {
+  const [items, setItems] = useState<DietPlanDeliveryAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchDeliveryPersonGlobalAssignments(userId).then((res) => {
+      setItems(res.results);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <div className="py-8 text-center text-gray-400 text-sm">Loading mappings…</div>;
+  if (!items.length) return <EmptyState msg="No global patient mappings found for this delivery person." />;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {items.map((mapping) => (
+          <div key={mapping.id} className="rounded-2xl border border-blue-100 dark:border-blue-900/30 p-5 bg-white dark:bg-gray-800/40 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
+               <FiUser size={48} />
+            </div>
+            
+            <div className="flex items-center gap-3 mb-4">
+               <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <FiUser size={18} />
+               </div>
+               <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white">
+                    {mapping.patient_details?.first_name} {mapping.patient_details?.last_name}
+                  </h4>
+                  <div className="text-xs text-gray-500 font-medium">{mapping.patient_details?.mobile || "No mobile"}</div>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Diet Plan Mapping</div>
+                  <div className="text-sm font-bold text-blue-600 dark:text-blue-400 truncate">
+                    {mapping.user_diet_plan_details?.diet_plan_name || "Custom Plan"}
+                  </div>
+                  <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-2">
+                    <span>{fmtDate(mapping.user_diet_plan_details?.start_date)}</span>
+                    <span>→</span>
+                    <span>{fmtDate(mapping.user_diet_plan_details?.end_date)}</span>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 dark:border-gray-800/50">
+                    <span className="text-gray-500">Primary Slot</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{mapping.default_slot_details?.name || "—"}</span>
+                  </div>
+                  {mapping.delivery_slots_details && mapping.delivery_slots_details.length > 0 && (
+                     <div className="space-y-1 py-1.5">
+                        <span className="text-gray-500 text-[10px] font-black uppercase tracking-wider block">Authorized Slots</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {mapping.delivery_slots_details.map(s => (
+                            <span key={s.id} className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">
+                              {s.name}
+                            </span>
+                          ))}
+                        </div>
+                     </div>
+                  )}
+               </div>
+
+               {mapping.change_logs && mapping.change_logs.length > 0 && (
+                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <h5 className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <FiAlertTriangle size={10} /> Reassignment History
+                    </h5>
+                    <div className="space-y-3">
+                       {mapping.change_logs.slice(0, 3).map((log) => (
+                         <div key={log.id} className="text-xs p-2.5 rounded-xl bg-rose-50/30 dark:bg-rose-950/10 border border-rose-50 dark:border-rose-900/10 italic">
+                            <div className="font-bold not-italic text-rose-700 dark:text-rose-400 text-[10px]">
+                              {fmtDate(log.changed_on)} · Reason: {log.reason}
+                            </div>
+                            <div className="mt-1 text-gray-600 dark:text-gray-300">"{log.notes || "No notes provided"}"</div>
+                         </div>
+                       ))}
+                       {mapping.change_logs.length > 3 && (
+                         <div className="text-[10px] text-gray-400 text-center">+ {mapping.change_logs.length - 3} more history logs</div>
+                       )}
+                    </div>
+                 </div>
+               )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -866,9 +1006,11 @@ export function DeliveryProfileDetailModal({ profile, open, onClose }: Props) {
           {screen !== "hub" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               {screen === "profile" && <ProfileView row={profile} />}
+              {screen === "global_assignments" && userId != null && <GlobalAssignmentsView userId={userId} />}
               {screen === "orders" && userId != null && <OrdersView userId={userId} />}
               {screen === "payments" && userId != null && <PaymentsView userId={userId} />}
               {screen === "meal_assignments" && userId != null && <MealAssignmentsView userId={userId} />}
+              {screen === "reassignments" && userId != null && <ReassignmentsHistoryView userId={userId} />}
               {screen === "leaves" && userId != null && <LeavesView userId={userId} />}
               {screen === "reviews" && userId != null && <ReviewsView userId={userId} />}
               {screen === "issues" && userId != null && <IssuesView userId={userId} />}
@@ -891,6 +1033,104 @@ export function DeliveryProfileDetailModal({ profile, open, onClose }: Props) {
           </button>
         </footer>
       </div>
+    </div>
+  );
+}
+
+// ─── Reassignments History view ───────────────────────────────────────────────
+function ReassignmentsHistoryView({ userId }: { userId: number }) {
+  const [mappings, setMappings] = useState<DietPlanDeliveryAssignment[]>([]);
+  const [meals, setMeals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetchDeliveryPersonGlobalAssignments(userId),
+      fetchDeliveryPersonMealAssignments(userId, 1, 50, true),
+    ])
+      .then(([gRes, mRes]) => {
+        // Filter mappings that have change logs
+        setMappings(gRes.results.filter((m) => m.change_logs && m.change_logs.length > 0));
+        setMeals(mRes.results);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <div className="py-8 text-center text-gray-400 text-sm">Loading history…</div>;
+  if (!mappings.length && !meals.length) return <EmptyState msg="No reassignment logs found for this person." />;
+
+  return (
+    <div className="space-y-8 pb-8">
+      {/* Global reassignments (Plan level) */}
+      {mappings.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+            <FiCheckCircle size={14} /> Global Planning Changes
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            {mappings.map((m) => (
+              <div key={m.id} className="rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/10 dark:bg-rose-900/10 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                   <span className="font-bold text-gray-900 dark:text-white">Plan change: {m.user_diet_plan_details?.diet_plan_name}</span>
+                   <span className="text-[10px] bg-white dark:bg-black/20 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 font-bold uppercase">Mapping audit</span>
+                </div>
+                <div className="space-y-3">
+                  {m.change_logs?.map((log) => (
+                    <div key={log.id} className="text-xs bg-white dark:bg-gray-800/60 p-3 rounded-xl border border-rose-100/50 dark:border-rose-800/20 shadow-sm">
+                       <div className="flex items-center justify-between mb-2">
+                          <span className="font-black text-[10px] text-rose-500 uppercase tracking-widest">{log.reason}</span>
+                          <span className="text-[10px] text-gray-400">{fmtDate(log.changed_on)}</span>
+                       </div>
+                       <p className="text-gray-600 dark:text-gray-300 italic mb-2">"{log.notes || "No notes."}"</p>
+                       <div className="text-[10px] text-gray-400">
+                          Reassigned from: <strong>{log.previous_delivery_person_details?.first_name || "Another"} {log.previous_delivery_person_details?.last_name || "staff"}</strong>
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Daily reassignments (Meal level) */}
+      {meals.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+            <FiAlertTriangle size={14} /> Individual Meal Coverage
+          </h3>
+          <div className="space-y-3">
+            {meals.map((a) => (
+              <div key={a.id} className="rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/10 dark:bg-amber-900/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-900 dark:text-white text-sm">
+                        {a.user_meal_details?.patient_name || `Meal #${a.user_meal}`}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-gray-500 flex items-center gap-2">
+                        <FiCalendar size={10} /> {fmtDate(a.user_meal_details.meal_date)}
+                        <span className="text-gray-300">|</span>
+                        <FiClock size={10} /> {a.delivery_slot_details?.name}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Single shift reassignment</div>
+                  </div>
+                </div>
+                <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-gray-800/50 text-xs border border-amber-50 dark:border-amber-900/30">
+                   <div className="font-bold text-[10px] text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">Reason</div>
+                   <div className="italic text-gray-600 dark:text-gray-300">"{a.reassignment_reason}"</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

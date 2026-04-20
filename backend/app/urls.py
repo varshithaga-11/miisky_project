@@ -143,6 +143,9 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path("delivery-feedback/", views.DeliveryFeedbackView.as_view(), name="delivery-feedback"),
+    path("adminside/location/delete/", views.AdminLocationDeleteView.as_view(), name="location-delete"),
+    path("adminside/questionnaire-master/delete/", views.AdminQuestionnaireMasterDeleteView.as_view(), name="questionnaire-master-delete"),
+    path("adminside/food-management/delete/", views.AdminFoodManagementDeleteView.as_view(), name="food-management-delete"),
     path("microkitchen/delivery-feedback/", views.MicroKitchenDeliveryFeedbackView.as_view(), name="microkitchen-delivery-feedback"),
     path("microkitchen/delivery-feedback-list/", views.MicroKitchenDeliveryFeedbackListView.as_view(), name="microkitchen-delivery-feedback-list"),
     path("supplychain/delivery-feedback-list/", views.SupplyChainDeliveryFeedbackListView.as_view(), name="supplychain-delivery-feedback-list"),
