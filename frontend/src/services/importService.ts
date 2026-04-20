@@ -42,6 +42,15 @@ export const downloadTemplate = async (
   module: string,
   submenu: string
 ): Promise<void> => {
+  const getFilenameFromDisposition = (disposition?: string): string | null => {
+    if (!disposition) return null;
+    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
+
+    const plainMatch = disposition.match(/filename="?([^"]+)"?/i);
+    return plainMatch?.[1] ?? null;
+  };
+
   const requestTemplate = async (submenuSlug: string) => {
     const url = createApiUrl(`api/import/${module}/${submenuSlug}/template/`);
     return axios.get(url, {
@@ -67,13 +76,18 @@ export const downloadTemplate = async (
       }
     }
 
+    const contentType = response.headers?.["content-type"] || response.data?.type || "";
+    const isCsv = String(contentType).toLowerCase().includes("text/csv");
+    const extension = isCsv ? "csv" : "xlsx";
+    const responseFilename = getFilenameFromDisposition(response.headers?.["content-disposition"]);
+
     const blob = new Blob([response.data], { 
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+      type: contentType || "application/octet-stream"
     });
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.setAttribute("download", `${usedSubmenu}_template.xlsx`);
+    link.setAttribute("download", responseFilename || `${usedSubmenu}_template.${extension}`);
     document.body.appendChild(link);
     link.click();
     link.remove();

@@ -4148,8 +4148,8 @@ class TemplateDownloadView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, module, submenu):
-        from openpyxl import Workbook
-        from io import BytesIO
+        from io import BytesIO, StringIO
+        import csv
 
         def resolve_key(mapping, key):
             """
@@ -4294,14 +4294,6 @@ class TemplateDownloadView(APIView):
         resolved_submenu = resolve_key(module_templates, submenu_key)
         headers = module_templates.get(resolved_submenu, ["name"])
 
-        # Create Excel Workbook
-        wb = Workbook()
-        ws = wb.active
-        ws.title = safe_sheet_title(resolved_submenu or submenu_key)
-        
-        # Add Headers
-        ws.append(headers)
-        
         # Add 10 sample rows for each template
         sample_rows = {
             "country": [
@@ -4644,27 +4636,50 @@ class TemplateDownloadView(APIView):
                 ["Other", "99"],
             ],
         }
+        rows_to_add = []
         sample_key = resolve_key(sample_rows, submenu_key)
         if sample_key:
-            for row in sample_rows[sample_key]:
+            rows_to_add = sample_rows[sample_key]
+
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font
+
+            # Create Excel Workbook
+            wb = Workbook()
+            ws = wb.active
+            ws.title = safe_sheet_title(resolved_submenu or submenu_key)
+
+            # Add Headers + sample rows
+            ws.append(headers)
+            for row in rows_to_add:
                 ws.append(row)
 
-        # Style the header
-        from openpyxl.styles import Font
-        for cell in ws[1]:
-            cell.font = Font(bold=True)
+            # Style the header
+            for cell in ws[1]:
+                cell.font = Font(bold=True)
 
-        # Save to BytesIO
-        output = BytesIO()
-        wb.save(output)
-        output.seek(0)
+            # Save to BytesIO
+            output = BytesIO()
+            wb.save(output)
+            output.seek(0)
 
-        response = HttpResponse(
-            output.read(), 
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{(resolved_submenu or submenu_key or "template")}_template.xlsx"'
-        return response
+            response = HttpResponse(
+                output.read(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{(resolved_submenu or submenu_key or "template")}_template.xlsx"'
+            return response
+        except Exception:
+            # Graceful fallback for environments missing Excel dependencies.
+            csv_buffer = StringIO(newline='')
+            writer = csv.writer(csv_buffer)
+            writer.writerow(headers)
+            writer.writerows(rows_to_add)
+
+            response = HttpResponse(csv_buffer.getvalue(), content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{(resolved_submenu or submenu_key or "template")}_template.csv"'
+            return response
 
 class ProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
