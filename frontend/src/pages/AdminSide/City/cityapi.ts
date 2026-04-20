@@ -89,9 +89,10 @@ export const updateCity = async (id: number, data: Partial<City>) => {
 
 // Delete
 export const deleteCity = async (id: number) => {
-  const url = createApiUrl(`api/city/${id}/`);
+  const url = createApiUrl("api/adminside/location/delete/");
   const response = await axios.delete(url, {
     headers: await getAuthHeaders(),
+    params: { city_id: id }
   });
   return response.data;
 };

@@ -87,72 +87,8 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      const headers = await getAuthHeaders();
-
-      // 1. Check for User Diet Plans (for patients)
-      const dietPlansRes = await axios.get(createApiUrl("api/userdietplan/"), {
-        headers, params: { user: id, limit: 1 }
-      });
-      const dietPlanCount = dietPlansRes.data.count || 0;
-      if (dietPlanCount > 0) {
-        toast.error(`Cannot delete user. They have ${dietPlanCount} associated diet plans. Delete the plans first.`);
-        return;
-      }
-
-      // 2. Check for Orders (for patients/non-patients)
-      const ordersRes = await axios.get(createApiUrl("api/order/"), {
-        headers, params: { user: id, limit: 1 }
-      });
-      const orderCount = ordersRes.data.count || 0;
-      if (orderCount > 0) {
-        toast.error(`Cannot delete user. They have ${orderCount} associated orders. Delete the orders first.`);
-        return;
-      }
-
-      // 3. Check for Kitchen Profile (if kitchen role)
-      const kitchenRes = await axios.get(createApiUrl("api/microkitchenprofile/"), {
-        headers, params: { user: id, limit: 1 }
-      });
-      if (kitchenRes.data.count > 0) {
-        toast.error("Cannot delete user. This user has an associated Micro Kitchen profile. Delete the kitchen profile first.");
-        return;
-      }
-
-      // 4. Check for Nutritionist Profile (if nutritionist role)
-      const nutRes = await axios.get(createApiUrl("api/nutritionistprofile/"), {
-        headers, params: { user: id, limit: 1 }
-      });
-      if (nutRes.data.count > 0) {
-        toast.error("Cannot delete user. This user has an associated Nutritionist profile. Delete the profile first.");
-        return;
-      }
-
-      // 5. Check for Support Tickets (Created by)
-      const ticketsCreatedRes = await axios.get(createApiUrl("api/supportticket/"), {
-        headers, params: { created_by: id, limit: 1 }
-      });
-      if (ticketsCreatedRes.data.count > 0) {
-        toast.error("Cannot delete user. They have created support tickets. Delete the tickets first.");
-        return;
-      }
-
-      // 6. Check for Support Tickets (Assigned to)
-      const ticketsAssignedRes = await axios.get(createApiUrl("api/supportticket/"), {
-        headers, params: { assigned_to: id, limit: 1 }
-      });
-      if (ticketsAssignedRes.data.count > 0) {
-        toast.error("Cannot delete user. They have support tickets assigned to them. Reassign or delete those tickets first.");
-        return;
-      }
-
-      // All checks passed — open confirmation modal
-      setIdToDelete(id);
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to check user dependencies.");
-    }
+  const handleDelete = (id: number) => {
+    setIdToDelete(id);
   };
 
   const confirmDelete = async () => {
@@ -160,12 +96,12 @@ const UserManagementPage: React.FC = () => {
     setIsDeleting(true);
     try {
       await deleteUser(idToDelete);
-      toast.success("User deleted successfully.");
+      toast.success("User deactivated successfully.");
       setIdToDelete(null);
       fetchUsers();
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to delete user. They may have other hidden dependencies.");
+      toast.error("Failed to deactivate user.");
     } finally {
       setIsDeleting(false);
     }
@@ -435,9 +371,9 @@ const UserManagementPage: React.FC = () => {
         onClose={() => setIdToDelete(null)}
         onConfirm={confirmDelete}
         isLoading={isDeleting}
-        title="Delete User?"
-        message="Are you sure you want to permanently delete this user? This action cannot be undone."
-        confirmText="Delete User"
+        title="Deactivate User?"
+        message="Are you sure you want to deactivate this user? They will no longer be able to log in, but their historical data will be preserved."
+        confirmText="Yes, Deactivate"
       />
 
       {viewUser && (

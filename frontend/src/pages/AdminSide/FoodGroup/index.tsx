@@ -13,6 +13,7 @@ import EditFoodGroup from "./EditFoodGroup";
 import ImportButton from "../../../components/common/ImportButton";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkFoodDependency, deleteFoodRecord } from "../shared/foodManagementApi";
 
 const FoodGroupManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodGroup[]>([]);
@@ -52,13 +53,11 @@ const FoodGroupManagementPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      // Pre-check for dependencies (Food Names)
-      const foodNamesResponse = await getFoodNameList(1, 1, "", id);
-      if (foodNamesResponse.count > 0) {
-        toast.error(`Cannot delete food group. It has ${foodNamesResponse.count} associated food names. Please delete them first.`);
+      const res = await checkFoodDependency("food_group", id);
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
         return;
       }
-
       setRecordToDelete(id);
     } catch {
       toast.error("An error occurred while checking dependencies.");
@@ -69,7 +68,7 @@ const FoodGroupManagementPage: React.FC = () => {
     if (recordToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteFoodGroup(recordToDelete);
+      await deleteFoodRecord("food_group", recordToDelete);
       toast.success("Food group deleted successfully.");
       setRecordToDelete(null);
       fetchData();

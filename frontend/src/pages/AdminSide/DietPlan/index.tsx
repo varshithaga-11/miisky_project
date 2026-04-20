@@ -14,6 +14,7 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkFoodDependency, deleteFoodRecord } from "../shared/foodManagementApi";
 
 const DietPlanManagement: React.FC = () => {
   const [plans, setPlans] = useState<DietPlan[]>([]);
@@ -56,24 +57,11 @@ const DietPlanManagement: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      // Find the plan in our current list to check feature count
-      const plan = plans.find(p => p.id === id);
-      if (plan && plan.features && plan.features.length > 0) {
-        toast.error(`Cannot delete diet plan. It has ${plan.features.length} associated features. Please delete them first.`);
+      const res = await checkFoodDependency("diet_plan", id);
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete diet plan as it is ${res.detail}. Please remove them first.`);
         return;
       }
-
-      // Check for UserDietPlan dependencies (Purchased plans)
-      const userPlansRes = await API.get("/userdietplan/", {
-        params: { diet_plan: id, limit: 1 }
-      });
-      
-      const userPlansCount = userPlansRes.data.count || 0;
-      if (userPlansCount > 0) {
-        toast.error(`Cannot delete diet plan. It has been purchased/suggested to ${userPlansCount} patients. Please remove those associations first.`);
-        return;
-      }
-
       setIdToDelete(id);
     } catch {
       toast.error("An error occurred while checking dependencies.");
@@ -84,7 +72,7 @@ const DietPlanManagement: React.FC = () => {
     if (idToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteDietPlan(idToDelete);
+      await deleteFoodRecord("diet_plan", idToDelete);
       toast.success("Diet plan deleted successfully!");
       setIdToDelete(null);
       fetchPlans();

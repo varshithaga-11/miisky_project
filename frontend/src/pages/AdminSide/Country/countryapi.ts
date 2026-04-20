@@ -81,11 +81,22 @@ export const updateCountry = async (id: number, data: Partial<Country>) => {
   return response.data;
 };
 
+// Check Location Dependency
+export const checkLocationDependency = async (params: { country_id?: number, state_id?: number, city_id?: number }) => {
+  const url = createApiUrl("api/adminside/location/delete/");
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params
+  });
+  return response.data;
+};
+
 // Delete Country
 export const deleteCountry = async (id: number) => {
-  const url = createApiUrl(`api/country/${id}/`);
+  const url = createApiUrl("api/adminside/location/delete/");
   const response = await axios.delete(url, {
     headers: await getAuthHeaders(),
+    params: { country_id: id }
   });
   return response.data;
 };

@@ -4442,6 +4442,7 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
     delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
     delivery_slot_details = DeliverySlotSerializer(source="delivery_slot", read_only=True)
     user_meal_details = serializers.SerializerMethodField()
+    reassigned_from_details = serializers.SerializerMethodField()
 
     class Meta:
         model = DeliveryAssignment
@@ -4461,6 +4462,8 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
             "delivered_at",
             "delivery_notes",
             "is_active",
+            "reassigned_from",
+            "reassigned_from_details",
             "reassignment_reason",
         ]
         extra_kwargs = {
@@ -4517,6 +4520,16 @@ class KitchenMealDeliverySerializer(serializers.ModelSerializer):
             }
             if mk
             else None,
+        }
+
+    def get_reassigned_from_details(self, obj):
+        u = obj.reassigned_from
+        if not u:
+            return None
+        return {
+            "id": u.id,
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
         }
 
 

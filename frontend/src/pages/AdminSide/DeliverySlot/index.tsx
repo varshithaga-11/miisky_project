@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import Button from "../../../components/ui/button/Button";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkFoodDependency, deleteFoodRecord } from "../shared/foodManagementApi";
 
 const DeliverySlotManagementPage: React.FC = () => {
   const [slots, setSlots] = useState<DeliverySlot[]>([]);
@@ -46,20 +47,29 @@ const DeliverySlotManagementPage: React.FC = () => {
     );
   }, [slots, searchTerm]);
 
-  const handleDelete = (id: number) => {
-    setIdToDelete(id);
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await checkFoodDependency("delivery_slot", id);
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
+        return;
+      }
+      setIdToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
   };
 
   const confirmDelete = async () => {
     if (idToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteDeliverySlot(idToDelete);
+      await deleteFoodRecord("delivery_slot", idToDelete);
       toast.success("Delivery slot deleted successfully!");
       setIdToDelete(null);
       load();
     } catch {
-      toast.error("Failed to delete. It may be in use.");
+      toast.error("Failed to delete delivery slot.");
     } finally {
       setIsDeleting(false);
     }

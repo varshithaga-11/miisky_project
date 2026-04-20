@@ -387,13 +387,15 @@ const RecipeManagementPage: React.FC = () => {
                                                 >
                                                     <FiEdit size={18} />
                                                 </button>
-                                                <button 
-                                                    onClick={() => handleDelete(food.id!)}
-                                                    className="text-red-500 hover:text-red-700 transition-colors"
-                                                    title="Delete Recipe Data"
-                                                >
-                                                    <FiTrash2 size={18} />
-                                                </button>
+                                                {isAdmin && (
+                                                    <button 
+                                                        onClick={() => handleDelete(food.id!)}
+                                                        className="text-red-500 hover:text-red-700 transition-colors"
+                                                        title="Delete Recipe Data"
+                                                    >
+                                                        <FiTrash2 size={18} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

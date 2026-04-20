@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FiTrash2, FiEdit, FiSearch, FiPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getCountryList, deleteCountry, Country } from "./countryapi";
+import { getCountryList, deleteCountry, Country, checkLocationDependency } from "./countryapi";
 import { getStateList } from "../State/stateapi";
 import { getUserList, getDeliveryProfileList } from "../UserManagement/api";
 import { getMicroKitchenList } from "../MicroKitchenInformation/api";
@@ -55,34 +55,11 @@ const CountryManagementPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      // 1. Check for States
-      const statesResponse = await getStateList(1, 1, "", id);
-      if (statesResponse.count > 0) {
-        toast.error(`Cannot delete country. It has ${statesResponse.count} associated states. Please delete them first.`);
+      const res = await checkLocationDependency({ country_id: id });
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
         return;
       }
-
-      // 2. Check for Users
-      const userRes = await getUserList(1, 1, "", "all", "all", { country: id });
-      if (userRes.count > 0) {
-        toast.error(`Cannot delete country. It is associated with ${userRes.count} users. Please reassign or delete those users first.`);
-        return;
-      }
-
-      // 3. Check for Micro Kitchens
-      const mkRes = await getMicroKitchenList(1, "", "all", { country: id });
-      if (mkRes.count > 0) {
-        toast.error(`Cannot delete country. It is associated with ${mkRes.count} micro kitchens. Please delete them first.`);
-        return;
-      }
-
-      // 4. Check for Delivery Profiles
-      const dpRes = await getDeliveryProfileList(1, 1, "", { country: id });
-      if (dpRes.count > 0) {
-        toast.error(`Cannot delete country. It is associated with ${dpRes.count} delivery profiles. Please delete them first.`);
-        return;
-      }
-
       setCountryToDelete(id);
     } catch {
       toast.error("An error occurred while checking dependencies.");

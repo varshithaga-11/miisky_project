@@ -12,6 +12,7 @@ import Label from "../../../components/form/Label";
 import ImportButton from "../../../components/common/ImportButton";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkMasterDependency, deleteMasterRecord } from "../shared/questionnaireMasterApi";
 
 const ActivityMasterPage: React.FC = () => {
   const [rows, setRows] = useState<ActivityMaster[]>([]);
@@ -48,15 +49,24 @@ const ActivityMasterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
-    setRecordToDelete(id);
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await checkMasterDependency("activity", id);
+      if (res.detail !== "none") {
+        toast.error(`${res.detail} so you cannot delete`);
+        return;
+      }
+      setRecordToDelete(id);
+    } catch {
+      toast.error("An error occurred while checking dependencies.");
+    }
   };
 
   const confirmDelete = async () => {
     if (recordToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteActivityMaster(recordToDelete);
+      await deleteMasterRecord("activity", recordToDelete);
       toast.success("Activity deleted successfully!");
       setRecordToDelete(null);
       void fetchRows();

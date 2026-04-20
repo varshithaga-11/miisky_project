@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getAllPaymentPlans, verifyPayment, rejectPayment, UserDietPlanPayment } from "./api";
+import { getAllPaymentPlans, verifyPayment, rejectPayment, stopPlan, finishPlan, updateDietPlan, UserDietPlanPayment } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage, FiEdit, FiPower, FiFlag } from "react-icons/fi";
 
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -35,6 +35,9 @@ const PatientPaymentVerificationPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [verifyModal, setVerifyModal] = useState<UserDietPlanPayment | null>(null);
   const [rejectModal, setRejectModal] = useState<UserDietPlanPayment | null>(null);
+  const [stopModal, setStopModal] = useState<UserDietPlanPayment | null>(null);
+  const [finishModal, setFinishModal] = useState<UserDietPlanPayment | null>(null);
+  const [editModal, setEditModal] = useState<UserDietPlanPayment | null>(null);
   const [startDate, setStartDate] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
 
@@ -91,6 +94,52 @@ const PatientPaymentVerificationPage: React.FC = () => {
       setRejectModal(null);
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Rejection failed");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStop = async () => {
+    if (!stopModal) return;
+    setActionLoading(stopModal.id);
+    try {
+      await stopPlan(stopModal.id);
+      fetchPlans();
+      toast.success("Diet plan stopped.");
+      setStopModal(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Action failed");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleFinish = async () => {
+    if (!finishModal) return;
+    setActionLoading(finishModal.id);
+    try {
+      await finishPlan(finishModal.id);
+      fetchPlans();
+      toast.success("Diet plan marked as finished.");
+      setFinishModal(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Action failed");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editModal) return;
+    setActionLoading(editModal.id);
+    try {
+      await updateDietPlan(editModal.id, { start_date: startDate });
+      fetchPlans();
+      toast.success("Plan updated successfully.");
+      setEditModal(null);
+      setStartDate("");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Update failed");
     } finally {
       setActionLoading(null);
     }
@@ -285,6 +334,40 @@ const PatientPaymentVerificationPage: React.FC = () => {
                               <FiXCircle size={14} />
                             </button>
                           </div>
+                        ) : plan.payment_status === "verified" ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setEditModal(plan);
+                                setStartDate(plan.start_date || "");
+                              }}
+                              disabled={actionLoading !== null}
+                              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+                              title="Edit Plan"
+                            >
+                              <FiEdit size={16} />
+                            </button>
+                            {plan.status !== "stopped" && (
+                              <button
+                                onClick={() => setStopModal(plan)}
+                                disabled={actionLoading !== null}
+                                className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg"
+                                title="Stop Plan"
+                              >
+                                <FiPower size={16} />
+                              </button>
+                            )}
+                            {plan.status !== "completed" && (
+                              <button
+                                onClick={() => setFinishModal(plan)}
+                                disabled={actionLoading !== null}
+                                className="p-2 text-teal-500 hover:bg-teal-50 rounded-lg"
+                                title="Finish Plan"
+                              >
+                                <FiFlag size={16} />
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
                         )}
@@ -361,6 +444,68 @@ const PatientPaymentVerificationPage: React.FC = () => {
         message="Are you sure you want to reject this payment? The patient will be able to re-upload their payment screenshot."
         confirmText="Reject Payment"
       />
+
+      <ConfirmationModal
+        isOpen={stopModal !== null}
+        onClose={() => setStopModal(null)}
+        onConfirm={handleStop}
+        isLoading={actionLoading === stopModal?.id}
+        title="Stop Plan?"
+        message="Are you sure you want to STOP this diet plan? No further meals will be processed."
+        confirmText="Stop Plan"
+      />
+
+      <ConfirmationModal
+        isOpen={finishModal !== null}
+        onClose={() => setFinishModal(null)}
+        onConfirm={handleFinish}
+        isLoading={actionLoading === finishModal?.id}
+        title="Finish Plan?"
+        message="Are you sure you want to mark this plan as FINISHED?"
+        confirmText="Finish Plan"
+      />
+
+      {/* Edit Modal */}
+      {editModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase italic tracking-tighter">
+              Edit Plan Details
+            </h3>
+            <p className="text-gray-500 text-sm mb-6">
+              {editModal.diet_plan_details?.title} – {editModal.user_details?.first_name}
+            </p>
+            <div className="mb-6">
+              <DatePicker2
+                id="edit-start-date"
+                label="Start Date *"
+                value={startDate}
+                onChange={(date) => setStartDate(date)}
+                placeholder="Select date"
+                minDate={getMinStartDate()}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setEditModal(null);
+                  setStartDate("");
+                }}
+                className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={actionLoading !== null || !startDate}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-bold"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

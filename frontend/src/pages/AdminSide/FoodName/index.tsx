@@ -14,6 +14,7 @@ import ImportButton from "../../../components/common/ImportButton";
 import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { checkFoodDependency, deleteFoodRecord } from "../shared/foodManagementApi";
 
 const FoodNameManagementPage: React.FC = () => {
   const [items, setItems] = useState<FoodName[]>([]);
@@ -65,22 +66,11 @@ const FoodNameManagementPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      // Pre-check for nutritional dependencies
-      const detail = await getFoodNameById(id);
-      
-      const dependencyKeys = [
-        "proximate", "water_soluble_vitamins", "fat_soluble_vitamins", 
-        "carotenoids", "minerals", "sugars", "amino_acids", 
-        "organic_acids", "polyphenols", "phytochemicals", "fatty_acid_profile"
-      ];
-
-      const activeDependencies = dependencyKeys.filter(key => detail[key] !== null);
-      
-      if (activeDependencies.length > 0) {
-        toast.error(`Cannot delete food name. It has associated ${activeDependencies.length} nutritional detail records. Please delete them first.`);
+      const res = await checkFoodDependency("food_name", id);
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
         return;
       }
-
       setIdToDelete(id);
     } catch {
       toast.error("Failed to check dependencies.");
@@ -91,7 +81,7 @@ const FoodNameManagementPage: React.FC = () => {
     if (idToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteFoodName(idToDelete);
+      await deleteFoodRecord("food_name", idToDelete);
       toast.success("Food name deleted successfully.");
       setIdToDelete(null);
       fetchData();

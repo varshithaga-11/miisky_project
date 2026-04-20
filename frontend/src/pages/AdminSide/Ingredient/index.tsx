@@ -7,6 +7,7 @@ import { getFoodIngredientList } from "../FoodIngredient/foodingredientapi";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getUserRoleFromToken } from "../../../utils/auth";
+import { checkFoodDependency, deleteFoodRecord } from "../shared/foodManagementApi";
 
 import AddIngredient from "./AddIngredient";
 import EditIngredient from "./EditIngredient";
@@ -78,14 +79,11 @@ const IngredientManagementPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      // Pre-check for dependencies (Food Ingredients)
-      const foodIngRes = await getFoodIngredientList(1, 1, "", undefined, id);
-      
-      if (foodIngRes.count > 0) {
-        toast.error(`Cannot delete ingredient. It is used in ${foodIngRes.count} food items. Please remove it from there first.`);
+      const res = await checkFoodDependency("ingredient", id);
+      if (res.detail !== "none") {
+        toast.error(`Cannot delete as it has ${res.detail}. Please remove them first.`);
         return;
       }
-
       setRecordToDelete(id);
     } catch {
       toast.error("An error occurred while checking dependencies.");
@@ -96,7 +94,7 @@ const IngredientManagementPage: React.FC = () => {
     if (recordToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deleteIngredient(recordToDelete);
+      await deleteFoodRecord("ingredient", recordToDelete);
       toast.success("Ingredient deleted successfully!");
       setRecordToDelete(null);
       fetchIngredients();
@@ -243,9 +241,11 @@ const IngredientManagementPage: React.FC = () => {
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditIngredientId(u.id!); setIsEditModalOpen(true); }}>
                           <FiEdit />
                         </button>
-                        <button className="text-red-600 hover:text-red-800" title="Delete" onClick={() => handleDelete(u.id!)}>
-                          <FiTrash2 />
-                        </button>
+                        {isAdmin && (
+                          <button className="text-red-600 hover:text-red-800" title="Delete" onClick={() => handleDelete(u.id!)}>
+                            <FiTrash2 />
+                          </button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

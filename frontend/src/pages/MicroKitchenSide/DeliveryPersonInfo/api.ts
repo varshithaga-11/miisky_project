@@ -268,12 +268,16 @@ export type PaginatedMealAssignments = {
 export const fetchDeliveryPersonMealAssignments = async (
   userId: number,
   page = 1,
-  limit = 10
+  limit = 10,
+  reassigned?: boolean
 ): Promise<PaginatedMealAssignments> => {
   const url = createApiUrl(`api/mealdeliveryassignment/`);
+  const params: any = { delivery_person: userId, page, limit };
+  if (reassigned) params.reassigned = "true";
+  
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { delivery_person: userId, page, limit },
+    params,
   });
   const d = res.data;
   return {
@@ -281,5 +285,47 @@ export const fetchDeliveryPersonMealAssignments = async (
     current_page: d?.current_page ?? page,
     total_pages: d?.total_pages ?? 1,
     results: Array.isArray(d) ? d : (d?.results ?? []),
+  };
+};
+export type DietPlanDeliveryAssignment = {
+  id: number;
+  user_diet_plan_details?: {
+    id: number;
+    status: string;
+    start_date: string;
+    end_date: string;
+    diet_plan_name?: string | null;
+  } | null;
+  patient_details?: { id: number; first_name: string; last_name: string; mobile?: string | null } | null;
+  default_slot_details?: { id: number; name: string } | null;
+  delivery_slots_details?: { id: number; name: string }[] | null;
+  change_logs?: {
+    id: number;
+    previous_delivery_person_details?: { first_name: string; last_name: string } | null;
+    reason: string;
+    notes?: string | null;
+    changed_on: string;
+  }[] | null;
+  assigned_on: string;
+  is_active: boolean;
+};
+
+export type PaginatedGlobalAssignments = {
+  count: number;
+  results: DietPlanDeliveryAssignment[];
+};
+
+export const fetchDeliveryPersonGlobalAssignments = async (
+  userId: number
+): Promise<PaginatedGlobalAssignments> => {
+  const url = createApiUrl(`api/diet-plan-delivery-assignment/`);
+  const res = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { delivery_person: userId },
+  });
+  const results = Array.isArray(res.data) ? res.data : res.data?.results ?? [];
+  return {
+    count: results.length,
+    results: results,
   };
 };
