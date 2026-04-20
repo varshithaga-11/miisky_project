@@ -1,15 +1,11 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 // https://vite.dev/config/
 export default defineConfig({
-  // Pin root to this folder so aliases work when the dev server is started from a parent directory.
-  root: __dirname,
+  // Keep root at this frontend directory.
+  root: ".",
   plugins: [
     react(),
     svgr({
@@ -23,8 +19,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.join(__dirname, "src"),
-      "@website": path.join(__dirname, "src", "website"),
+      "@": "/src",
+      "@website": "/src/website",
     },
   },
   define: {
