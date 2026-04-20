@@ -1780,7 +1780,10 @@ class UserQuestionnaireViewSet(viewsets.ModelViewSet):
             mapped_ids = UserNutritionistMapping.objects.filter(
                 nutritionist=u, is_active=True
             ).values_list('user_id', flat=True)
-            return qs.filter(user_id__in=mapped_ids)
+            qs = qs.filter(user_id__in=mapped_ids)
+            if patient_id:
+                qs = qs.filter(user_id=patient_id)
+            return qs
         return qs.none()
 
     def list(self, request, *args, **kwargs):
@@ -2409,6 +2412,115 @@ def _build_nutritionist_my_patients_list(nutritionist_user):
     return results
 
 
+def _build_nutritionist_patient_map(nutritionist_user):
+    mapped_qs = UserNutritionistMapping.objects.select_related("user").filter(
+        nutritionist=nutritionist_user, is_active=True
+    )
+    was_original_qs = UserDietPlan.objects.filter(
+        original_nutritionist=nutritionist_user, status="active"
+    ).select_related("user")
+    patient_map = {}
+    for m in mapped_qs:
+        patient_map[m.user.id] = {
+            "user": m.user,
+            "mapping_id": m.id,
+            "assigned_on": m.assigned_on,
+        }
+    for dp in was_original_qs:
+        if dp.user.id not in patient_map:
+            patient_map[dp.user.id] = {
+                "user": dp.user,
+                "mapping_id": None,
+                "assigned_on": dp.created_on,
+            }
+    return patient_map
+
+
+def _build_nutritionist_my_patients_light_rows(nutritionist_user):
+    patient_map = _build_nutritionist_patient_map(nutritionist_user)
+    patient_ids = list(patient_map.keys())
+    if not patient_ids:
+        return []
+
+    latest_reassignments = {}
+    reassignment_qs = NutritionistReassignment.objects.filter(
+        user_id__in=patient_ids, active_diet_plan__status="active"
+    ).select_related("previous_nutritionist", "new_nutritionist").order_by("-reassigned_on")
+    for reassignment in reassignment_qs:
+        if reassignment.user_id in latest_reassignments:
+            continue
+        latest_reassignments[reassignment.user_id] = reassignment
+
+    active_plans = {}
+    active_plan_qs = (
+        UserDietPlan.objects.filter(user_id__in=patient_ids, status="active")
+        .select_related("micro_kitchen", "original_micro_kitchen")
+        .order_by("-created_on")
+    )
+    for plan in active_plan_qs:
+        if plan.user_id in active_plans:
+            continue
+        active_plans[plan.user_id] = plan
+
+    results = []
+    for patient_id, data in patient_map.items():
+        patient = data["user"]
+        reassignment = latest_reassignments.get(patient_id)
+        active_plan = active_plans.get(patient_id)
+
+        reassignment_data = None
+        if reassignment:
+            reassignment_data = {
+                "previous_nutritionist": reassignment.previous_nutritionist.username
+                if reassignment.previous_nutritionist
+                else None,
+                "new_nutritionist": reassignment.new_nutritionist.username
+                if reassignment.new_nutritionist
+                else None,
+                "reason": reassignment.reason,
+                "notes": reassignment.notes,
+                "effective_from": reassignment.effective_from,
+            }
+
+        kitchen_data = None
+        if active_plan:
+            kitchen_data = {
+                "current_kitchen": active_plan.micro_kitchen.brand_name
+                if active_plan.micro_kitchen
+                else None,
+                "original_kitchen": active_plan.original_micro_kitchen.brand_name
+                if active_plan.original_micro_kitchen
+                else None,
+                "effective_from": active_plan.micro_kitchen_effective_from,
+            }
+
+        results.append(
+            {
+                "mapping_id": data["mapping_id"],
+                "assigned_on": data["assigned_on"],
+                "active_kitchen": kitchen_data,
+                "user": {
+                    "id": patient.id,
+                    "username": patient.username,
+                    "first_name": patient.first_name,
+                    "last_name": patient.last_name,
+                    "email": patient.email,
+                    "mobile": patient.mobile,
+                    "address": patient.address,
+                    "city": patient.city.name if patient.city else None,
+                    "zip_code": patient.zip_code,
+                    "state": patient.state.name if patient.state else None,
+                    "country": patient.country.name if patient.country else None,
+                    "is_patient_mapped": getattr(patient, "is_patient_mapped", False),
+                    "latitude": getattr(patient, "latitude", None),
+                    "longitude": getattr(patient, "longitude", None),
+                },
+                "reassignment_details": reassignment_data,
+            }
+        )
+    return results
+
+
 def _build_clinical_review_patient_rows(nutritionist_user):
     """
     Lightweight patient list for clinical-review-dashboard only:
@@ -2605,6 +2717,84 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="my-patients")
     def my_patients(self, request):
         return Response(_build_nutritionist_my_patients_list(request.user))
+
+    @action(detail=False, methods=["get"], url_path="my-patients-lite")
+    def my_patients_lite(self, request):
+        if getattr(request.user, "role", None) != "nutritionist":
+            return Response(
+                {"detail": "Nutritionists only."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        from django.core.paginator import Paginator
+
+        results = _build_nutritionist_my_patients_light_rows(request.user)
+        search = (request.query_params.get("search") or "").strip().lower()
+        if search:
+            filtered = []
+            for row in results:
+                user = row.get("user") or {}
+                full_name = f"{user.get('first_name') or ''} {user.get('last_name') or ''}".strip().lower()
+                username = str(user.get("username") or "").lower()
+                email = str(user.get("email") or "").lower()
+                if search in full_name or search in username or search in email:
+                    filtered.append(row)
+            results = filtered
+
+        results.sort(key=lambda x: str(x.get("assigned_on") or ""), reverse=True)
+
+        try:
+            limit = int(request.query_params.get("limit", 5))
+        except (TypeError, ValueError):
+            limit = 5
+        limit = max(1, min(limit, 100))
+
+        try:
+            page = int(request.query_params.get("page", 1))
+        except (TypeError, ValueError):
+            page = 1
+
+        paginator = Paginator(results, limit)
+        page_obj = paginator.get_page(page)
+        next_page = page_obj.next_page_number() if page_obj.has_next() else None
+        prev_page = page_obj.previous_page_number() if page_obj.has_previous() else None
+
+        return Response(
+            {
+                "count": paginator.count,
+                "next": next_page,
+                "previous": prev_page,
+                "current_page": page_obj.number,
+                "total_pages": paginator.num_pages,
+                "results": list(page_obj.object_list),
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="my-patients-questionnaires")
+    def my_patients_questionnaires(self, request):
+        if getattr(request.user, "role", None) != "nutritionist":
+            return Response(
+                {"detail": "Nutritionists only."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        patient_ids = set(_build_nutritionist_patient_map(request.user).keys())
+        user_ids_param = (request.query_params.get("user_ids") or "").strip()
+        if user_ids_param:
+            requested_ids = set()
+            for raw_id in user_ids_param.split(","):
+                raw_id = raw_id.strip()
+                if not raw_id:
+                    continue
+                try:
+                    requested_ids.add(int(raw_id))
+                except ValueError:
+                    continue
+            patient_ids &= requested_ids
+
+        qs = _questionnaire_prefetch_qs().filter(user_id__in=patient_ids).order_by("user_id")
+        serializer = UserQuestionnaireSerializer(qs, many=True)
+        return Response({"count": len(serializer.data), "results": serializer.data})
 
     @action(detail=False, methods=["get"], url_path="clinical-review-dashboard")
     def clinical_review_dashboard(self, request):
