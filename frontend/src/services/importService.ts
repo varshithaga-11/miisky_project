@@ -42,13 +42,30 @@ export const downloadTemplate = async (
   module: string,
   submenu: string
 ): Promise<void> => {
-  const url = createApiUrl(`api/import/${module}/${submenu}/template/`);
-  
-  try {
-    const response = await axios.get(url, {
+  const requestTemplate = async (submenuSlug: string) => {
+    const url = createApiUrl(`api/import/${module}/${submenuSlug}/template/`);
+    return axios.get(url, {
       headers: await getAuthHeaders(),
       responseType: "blob",
     });
+  };
+
+  try {
+    let usedSubmenu = submenu;
+    let response;
+
+    try {
+      response = await requestTemplate(submenu);
+    } catch (error: any) {
+      // Backward compatibility for deployments expecting no-hyphen submenu keys.
+      if (submenu.includes("-")) {
+        const legacySubmenu = submenu.replace(/-/g, "");
+        response = await requestTemplate(legacySubmenu);
+        usedSubmenu = legacySubmenu;
+      } else {
+        throw error;
+      }
+    }
 
     const blob = new Blob([response.data], { 
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
@@ -56,7 +73,7 @@ export const downloadTemplate = async (
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.setAttribute("download", `${submenu}_template.xlsx`);
+    link.setAttribute("download", `${usedSubmenu}_template.xlsx`);
     document.body.appendChild(link);
     link.click();
     link.remove();
