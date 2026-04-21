@@ -10,6 +10,7 @@ import TextArea from "../../components/form/input/TextArea";
 import { createApiUrl } from "../../access/access";
 import Label from "../../components/form/Label";
 import { MapLocationPicker } from "../../components/common/MapLocationPicker";
+import DatePicker2 from "../../components/form/date-picker2";
 
 const ProfileInformation: React.FC = () => {
     const [profile, setProfile] = useState<any>(null);
@@ -341,12 +342,11 @@ const ProfileInformation: React.FC = () => {
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Date of Birth</Label>
-                                        <InputField
-                                            type="date"
-                                            name="dob"
+                                        <DatePicker2
+                                            id="dob"
+                                            label="Date of Birth"
                                             value={profile.dob || ""}
-                                            onChange={handleChange}
+                                            onChange={(date) => handleFieldChange("dob", date)}
                                         />
                                     </div>
                                     <div className="md:col-span-2 space-y-2">

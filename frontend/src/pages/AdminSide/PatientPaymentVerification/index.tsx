@@ -5,7 +5,7 @@ import { getAllPaymentPlans, verifyPayment, rejectPayment, stopPlan, finishPlan,
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage, FiEdit, FiPower, FiFlag } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage, FiEdit, FiPower, FiFlag, FiCheckSquare } from "react-icons/fi";
 
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -14,6 +14,23 @@ const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
   if (path.startsWith("http")) return path;
   return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
+
+/** True when plan end_date is today or earlier (local calendar), so the plan may be marked completed. */
+const isEndDateOnOrBeforeToday = (endDate: string | null | undefined): boolean => {
+  if (!endDate) return false;
+  const end = endDate.slice(0, 10);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const today = `${y}-${m}-${d}`;
+  return end <= today;
+};
+
+const canMarkPlanCompletedByEndDate = (plan: UserDietPlanPayment): boolean => {
+  if (plan.status === "completed") return false;
+  return isEndDateOnOrBeforeToday(plan.end_date);
 };
 
 type FilterType = "all" | "uploaded" | "verified" | "suggested" | "payment_pending" | "active" | "completed" | "rejected";
@@ -441,14 +458,33 @@ const PatientPaymentVerificationPage: React.FC = () => {
                               </button>
                             )}
                             {plan.status !== "completed" && (
-                              <button
-                                onClick={() => setFinishModal(plan)}
-                                disabled={actionLoading !== null}
-                                className="p-2 text-teal-500 hover:bg-teal-50 rounded-lg"
-                                title="Finish Plan"
-                              >
-                                <FiFlag size={16} />
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setFinishModal(plan)}
+                                  disabled={actionLoading !== null}
+                                  className="p-2 text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/30 rounded-lg"
+                                  title="Finish Plan (any time)"
+                                >
+                                  <FiFlag size={16} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setFinishModal(plan)}
+                                  disabled={actionLoading !== null || !canMarkPlanCompletedByEndDate(plan)}
+                                  className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/40 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                  title={
+                                    !plan.end_date
+                                      ? "Plan end date is not set"
+                                      : !isEndDateOnOrBeforeToday(plan.end_date)
+                                        ? "Mark as completed is available on or after the plan end date"
+                                        : "Mark plan as completed"
+                                  }
+                                >
+                                  <FiCheckSquare size={14} />
+                                  Completed
+                                </button>
+                              </>
                             )}
                           </div>
                         ) : (
