@@ -11195,9 +11195,48 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
 class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
     """Nutritionists suggest foods from the FoodName catalog to allotted patients; patients read their list."""
 
+    class FoodRecommendationPagination(PageNumberPagination):
+        page_size = 10
+        page_size_query_param = "limit"
+        max_page_size = 10
+
     serializer_class = PatientFoodRecommendationSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = None
+    pagination_class = FoodRecommendationPagination
+
+    def _apply_date_filters(self, qs):
+        period = (self.request.query_params.get("period") or "all").strip()
+        if period == "all":
+            return qs
+
+        from .utils.date_utils import get_period_range
+
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
+        try:
+            s, e = get_period_range(period, start_date, end_date)
+            return qs.filter(recommended_on__date__range=[s, e])
+        except Exception as ex:
+            print(f"PatientFoodRecommendationViewSet date filter: {ex}")
+            return qs
+
+    def _apply_search_filters(self, qs):
+        search = (self.request.query_params.get("search") or "").strip()
+        if not search:
+            return qs
+
+        from django.db.models import Q
+
+        return qs.filter(
+            Q(food__name__icontains=search)
+            | Q(food__code__icontains=search)
+            | Q(notes__icontains=search)
+            | Q(comment__icontains=search)
+            | Q(recommended_by__first_name__icontains=search)
+            | Q(recommended_by__last_name__icontains=search)
+            | Q(meal_time__name__icontains=search)
+            | Q(quantity__icontains=search)
+        )
 
     def get_queryset(self):
         user = self.request.user
@@ -11205,6 +11244,8 @@ class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
         qs = PatientFoodRecommendation.objects.select_related(
             "patient", "food", "recommended_by"
         ).order_by("-recommended_on")
+        qs = self._apply_date_filters(qs)
+        qs = self._apply_search_filters(qs)
         if role == "patient":
             return qs.filter(patient=user)
         if role == "nutritionist":

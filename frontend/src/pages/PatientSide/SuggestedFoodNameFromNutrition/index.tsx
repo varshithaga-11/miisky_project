@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
@@ -7,11 +7,13 @@ import {
   fetchMyFoodRecommendationsFromNutrition,
   fetchFoodNameNutritionDetail,
   PatientFoodRecommendation,
+  PatientFoodRecommendationListResponse,
   FoodNameNutritionDetail,
 } from "./api";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { Modal } from "../../../components/ui/modal";
 import Button from "../../../components/ui/button/Button";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 const mealLabel = (m: string | null) => {
   if (!m) return "—";
@@ -67,9 +69,16 @@ function CompositionBlock({ data }: { data: Record<string, unknown> | null | und
 }
 
 const SuggestedFoodNameFromNutritionPage: React.FC = () => {
+  const PAGE_SIZE = 10;
   const [rows, setRows] = useState<PatientFoodRecommendation[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [period, setPeriod] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailFoodId, setDetailFoodId] = useState<number | null>(null);
@@ -78,11 +87,39 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [period, startDate, endDate, searchQuery]);
+
+  useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await fetchMyFoodRecommendationsFromNutrition();
-        setRows(data);
+        const filters: { period?: string; start_date?: string; end_date?: string; search?: string; page: number; limit: number } = {
+          page: currentPage,
+          limit: PAGE_SIZE,
+        };
+        if (period === "custom_range") {
+          if (startDate && endDate) {
+            filters.period = period;
+            filters.start_date = startDate;
+            filters.end_date = endDate;
+          }
+        } else if (period !== "all") {
+          filters.period = period;
+        }
+        if (searchQuery) {
+          filters.search = searchQuery;
+        }
+        const data: PatientFoodRecommendationListResponse = await fetchMyFoodRecommendationsFromNutrition(filters);
+        setRows(data.results);
+        setTotalCount(data.count);
       } catch {
         toast.error("Could not load food suggestions.");
       } finally {
@@ -90,7 +127,7 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
       }
     };
     void load();
-  }, []);
+  }, [period, startDate, endDate, searchQuery, currentPage]);
 
   const openNutritionDetail = useCallback(async (foodId: number, foodLabel: string) => {
     setDetailOpen(true);
@@ -117,21 +154,10 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
     setDetailTitle("");
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = searchInput.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => {
-      const food = r.food_details?.name?.toLowerCase() ?? "";
-      const notes = (r.notes || "").toLowerCase();
-      const comment = (r.comment || "").toLowerCase();
-      const from = r.recommended_by_details
-        ? `${r.recommended_by_details.first_name} ${r.recommended_by_details.last_name}`.toLowerCase()
-        : "";
-      return food.includes(q) || notes.includes(q) || comment.includes(q) || from.includes(q);
-    });
-  }, [rows, searchInput]);
-
-  const totalItems = filtered.length;
+  const totalItems = totalCount;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endItem = totalCount === 0 ? 0 : Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return (
     <>
@@ -160,11 +186,52 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            >
+              <option value="all">All dates</option>
+              <option value="today">Today</option>
+              <option value="this_week">This week</option>
+              <option value="last_week">Last week</option>
+              <option value="this_month">This month</option>
+              <option value="last_month">Last month</option>
+              <option value="this_year">This year</option>
+              <option value="custom_range">Custom range</option>
+            </select>
+            {period === "custom_range" && (
+              <>
+                <DatePicker2
+                  id="suggested-food-start-date"
+                  value={startDate}
+                  onChange={(date) => {
+                    setStartDate(date);
+                    if (endDate && date > endDate) {
+                      setEndDate("");
+                    }
+                  }}
+                  placeholder="Start date"
+                  maxDate={endDate || undefined}
+                  className="w-full sm:w-40"
+                />
+                <DatePicker2
+                  id="suggested-food-end-date"
+                  value={endDate}
+                  onChange={setEndDate}
+                  placeholder="End date"
+                  minDate={startDate || undefined}
+                  className="w-full sm:w-40"
+                />
+              </>
+            )}
+          </div>
         </div>
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <div>
-            Showing {totalItems} {totalItems === 1 ? "entry" : "entries"}
-            {searchInput.trim() && ` (filtered)`}
+            Showing {startItem}-{endItem} of {totalItems} {totalItems === 1 ? "entry" : "entries"}
+            {(searchInput.trim() || period !== "all") && ` (filtered)`}
           </div>
         </div>
       </div>
@@ -234,23 +301,23 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {filtered.length === 0 ? (
+                {rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      {rows.length === 0
-                        ? "No food suggestions yet. When your nutritionist adds recommendations, they will appear here."
-                        : "No entries match your search."}
+                      {searchQuery || period !== "all"
+                        ? "No entries match your filters."
+                        : "No food suggestions yet. When your nutritionist adds recommendations, they will appear here."}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((r, index) => {
+                  rows.map((r, index) => {
                     const foodId = r.food_details?.id ?? r.food;
                     const foodLabel = r.food_details?.name ?? `Food #${r.food}`;
                     const canShowDetail = typeof foodId === "number" && Number.isFinite(foodId);
                     return (
                       <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                         <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {index + 1}
+                          {(currentPage - 1) * PAGE_SIZE + index + 1}
                         </TableCell>
                         <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {foodLabel}
@@ -295,7 +362,7 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
                           </span>
                         </TableCell>
                         <TableCell className="whitespace-nowrap px-5 py-4 text-start text-theme-sm text-gray-600 dark:text-gray-400">
-                          {r.recommended_on ? new Date(r.recommended_on).toLocaleString() : "—"}
+                          {r.recommended_on ? new Date(r.recommended_on).toLocaleDateString() : "—"}
                         </TableCell>
                       </TableRow>
                     );
@@ -304,6 +371,29 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
               </TableBody>
             </Table>
           </div>
+        </div>
+      )}
+      {!loading && totalCount > 0 && (
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage <= 1}
+            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-white"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage >= totalPages}
+            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-white"
+          >
+            Next
+          </button>
         </div>
       )}
 

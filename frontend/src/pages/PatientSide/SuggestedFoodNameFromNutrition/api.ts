@@ -41,10 +41,54 @@ export type FoodNameNutritionDetail = {
   fatty_acid_profile: Record<string, unknown> | null;
 };
 
-export const fetchMyFoodRecommendationsFromNutrition = async (): Promise<PatientFoodRecommendation[]> => {
+export type RecommendationDateFilterParams = {
+  period?: string;
+  start_date?: string;
+  end_date?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type PatientFoodRecommendationListResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PatientFoodRecommendation[];
+};
+
+export const fetchMyFoodRecommendationsFromNutrition = async (
+  filters?: RecommendationDateFilterParams
+): Promise<PatientFoodRecommendationListResponse> => {
   const url = createApiUrl("api/patient-food-recommendation/");
-  const res = await axios.get<PatientFoodRecommendation[]>(url, { headers: await getAuthHeaders() });
-  return Array.isArray(res.data) ? res.data : [];
+  const res = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: filters,
+  });
+  const data = res.data as
+    | PatientFoodRecommendation[]
+    | {
+        count?: number;
+        next?: string | null;
+        previous?: string | null;
+        results?: PatientFoodRecommendation[];
+      };
+
+  if (Array.isArray(data)) {
+    return {
+      count: data.length,
+      next: null,
+      previous: null,
+      results: data,
+    };
+  }
+
+  return {
+    count: data.count ?? 0,
+    next: data.next ?? null,
+    previous: data.previous ?? null,
+    results: Array.isArray(data.results) ? data.results : [],
+  };
 };
 
 /** Lazy-load full nutrition composition for a FoodName (GET /api/foodname/<id>/nutrition-detail/). */
