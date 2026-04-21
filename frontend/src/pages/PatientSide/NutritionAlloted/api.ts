@@ -44,6 +44,15 @@ export type NutritionistRating = {
   };
 };
 
+type PaginatedResponse<T> = {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: T[];
+};
+
 export const getMyNutritionist = async (): Promise<NutritionistWithProfile> => {
   const url = createApiUrl("api/usernutritionistmapping/my-nutritionist/");
   const response = await axios.get<NutritionistWithProfile>(url, { headers: await getAuthHeaders() });
@@ -62,12 +71,37 @@ export const getMyRatings = async (): Promise<NutritionistRating[]> => {
   return response.data;
 };
 
-export const getNutritionistReviews = async (nutritionistId: number): Promise<NutritionistRating[]> => {
+export const getNutritionistReviews = async (
+  nutritionistId: number,
+  page = 1,
+  limit = 5
+): Promise<PaginatedResponse<NutritionistRating>> => {
   const url = createApiUrl("api/nutritionistrating/");
-  const response = await axios.get<NutritionistRating[]>(url, { 
+  const response = await axios.get<PaginatedResponse<NutritionistRating> | NutritionistRating[]>(url, { 
     headers: await getAuthHeaders(),
-    params: { nutritionist: nutritionistId }
+    params: { nutritionist: nutritionistId, page, limit }
   });
-  return response.data;
+  const data = response.data;
+
+  // Backward compatibility if backend returns array.
+  if (Array.isArray(data)) {
+    return {
+      count: data.length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: data,
+    };
+  }
+
+  return {
+    count: data.count ?? 0,
+    next: data.next ?? null,
+    previous: data.previous ?? null,
+    current_page: data.current_page ?? page,
+    total_pages: data.total_pages ?? 1,
+    results: Array.isArray(data.results) ? data.results : [],
+  };
 };
 

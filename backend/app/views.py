@@ -7068,7 +7068,38 @@ class NutritionistRatingViewSet(viewsets.ModelViewSet):
         elif user.role == 'nutritionist':
             return self.queryset.filter(nutritionist=user)
         else:
+            # Patients can request list of reviews for their currently mapped nutritionist
+            # (used by PatientSide/NutritionAlloted "View Reviews" modal).
+            if self.action == 'list':
+                nutritionist_id = self.request.query_params.get('nutritionist')
+                if nutritionist_id:
+                    is_mapped = UserNutritionistMapping.objects.filter(
+                        user=user,
+                        nutritionist_id=nutritionist_id,
+                        is_active=True
+                    ).exists()
+                    if is_mapped:
+                        return self.queryset.filter(nutritionist_id=nutritionist_id)
+
+            # Keep patient CRUD scoped to own reviews.
             return self.queryset.filter(patient=user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        nutritionist_id = request.query_params.get("nutritionist")
+
+        # Patient "View Reviews" modal: enforce paginated response with max 5 reviews per page.
+        if request.user.role == "patient" and nutritionist_id:
+            paginator = Pagination()
+            paginator.page_size = 5
+            paginator.max_page_size = 5
+            page = paginator.paginate_queryset(queryset, request, view=self)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         rating_obj = serializer.save(patient=self.request.user)

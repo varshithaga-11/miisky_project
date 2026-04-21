@@ -18,6 +18,11 @@ const NutritionAllotedPage: React.FC = () => {
   const [reviews, setReviews] = useState<NutritionistRating[]>([]);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
+  const [reviewsTotalCount, setReviewsTotalCount] = useState(0);
+  const [reviewsHasNext, setReviewsHasNext] = useState(false);
+  const [reviewsHasPrevious, setReviewsHasPrevious] = useState(false);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -41,12 +46,17 @@ const NutritionAllotedPage: React.FC = () => {
     }
   };
 
-  const loadNutritionistReviews = async () => {
+  const loadNutritionistReviews = async (page = 1) => {
     if (!data?.nutritionist?.id) return;
     setLoadingReviews(true);
     try {
-      const res = await getNutritionistReviews(data.nutritionist.id);
-      setReviews(res);
+      const res = await getNutritionistReviews(data.nutritionist.id, page, 5);
+      setReviews(res.results);
+      setReviewsPage(res.current_page || page);
+      setReviewsTotalPages(res.total_pages || 1);
+      setReviewsTotalCount(res.count || 0);
+      setReviewsHasNext(Boolean(res.next));
+      setReviewsHasPrevious(Boolean(res.previous));
     } catch (err) {
       console.error(err);
       toast.error("Failed to load reviews");
@@ -125,7 +135,7 @@ const NutritionAllotedPage: React.FC = () => {
                 <button 
                   onClick={() => {
                     setIsReviewsOpen(true);
-                    loadNutritionistReviews();
+                    loadNutritionistReviews(1);
                   }}
                   className="px-4 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 text-[10px] font-black uppercase tracking-wider rounded-lg border border-yellow-200/50 dark:border-yellow-400/20 hover:bg-yellow-100 transition-all"
                 >
@@ -310,6 +320,33 @@ const NutritionAllotedPage: React.FC = () => {
                       )}
                     </div>
                   ))
+                )}
+
+                {!loadingReviews && reviewsTotalCount > 0 && (
+                  <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      Showing {(reviewsPage - 1) * 5 + 1}-{Math.min(reviewsPage * 5, reviewsTotalCount)} of {reviewsTotalCount}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => loadNutritionistReviews(reviewsPage - 1)}
+                        disabled={!reviewsHasPrevious || loadingReviews}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/5"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        Page {reviewsPage} / {reviewsTotalPages}
+                      </span>
+                      <button
+                        onClick={() => loadNutritionistReviews(reviewsPage + 1)}
+                        disabled={!reviewsHasNext || loadingReviews}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/5"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </motion.div>
