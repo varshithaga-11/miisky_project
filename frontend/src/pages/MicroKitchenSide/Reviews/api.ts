@@ -24,6 +24,8 @@ export type MicroKitchenRating = {
 
 export interface MicroKitchenRatingPagination {
   count: number;
+  next: number | null;
+  previous: number | null;
   results: MicroKitchenRating[];
   current_page: number;
   total_pages: number;
@@ -56,10 +58,35 @@ export const getMicroKitchenRatings = async (params?: {
   return response.data;
 };
 
-export const getAllKitchenReviews = async (kitchenId: number): Promise<MicroKitchenRating[]> => {
-    const url = createApiUrl(`api/microkitchenrating/all-reviews/?kitchen_id=${kitchenId}`);
-    const response = await axios.get<MicroKitchenRating[]>(url, {
+export const getAllKitchenReviews = async (
+  kitchenId: number,
+  page = 1,
+  limit = 5
+): Promise<MicroKitchenRatingPagination> => {
+    const url = createApiUrl("api/microkitchenrating/all-reviews/");
+    const response = await axios.get<MicroKitchenRatingPagination | MicroKitchenRating[]>(url, {
         headers: await getAuthHeaders(),
+        params: { kitchen_id: kitchenId, page, limit },
     });
-    return response.data;
+
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return {
+        count: data.length,
+        next: null,
+        previous: null,
+        results: data,
+        current_page: 1,
+        total_pages: 1,
+      };
+    }
+
+    return {
+      count: data.count ?? 0,
+      next: data.next ?? null,
+      previous: data.previous ?? null,
+      results: Array.isArray(data.results) ? data.results : [],
+      current_page: data.current_page ?? page,
+      total_pages: data.total_pages ?? 1,
+    };
 };

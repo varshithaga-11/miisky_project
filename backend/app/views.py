@@ -7164,12 +7164,19 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='all-reviews')
     def all_reviews(self, request):
-        """Get all reviews for a kitchen without pagination."""
+        """Get all reviews for a kitchen with pagination (modal-friendly)."""
         kitchen_id = request.query_params.get('kitchen_id')
         if not kitchen_id:
             return Response({'error': 'kitchen_id is required'}, status=400)
         
         qs = MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).select_related('user').order_by('-created_at')
+        paginator = Pagination()
+        paginator.page_size = 5
+        paginator.max_page_size = 5
+        page = paginator.paginate_queryset(qs, request, view=self)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 

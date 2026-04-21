@@ -17,6 +17,11 @@ const ListOfMicroKitchenPage: React.FC = () => {
     const [selectedKitchen, setSelectedKitchen] = useState<MicroKitchenProfile | null>(null);
     const [reviews, setReviews] = useState<MicroKitchenRating[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
+    const [reviewsPage, setReviewsPage] = useState(1);
+    const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
+    const [reviewsTotalCount, setReviewsTotalCount] = useState(0);
+    const [reviewsHasNext, setReviewsHasNext] = useState(false);
+    const [reviewsHasPrevious, setReviewsHasPrevious] = useState(false);
 
     const fetchKitchens = async (search = "") => {
         setLoading(true);
@@ -38,13 +43,18 @@ const ListOfMicroKitchenPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    const fetchReviews = async (kitchen: MicroKitchenProfile) => {
+    const fetchReviews = async (kitchen: MicroKitchenProfile, page = 1) => {
         setSelectedKitchen(kitchen);
         setShowReviewsModal(true);
         setLoadingReviews(true);
         try {
-            const data = await getAllKitchenReviews(kitchen.id);
-            setReviews(data);
+            const data = await getAllKitchenReviews(kitchen.id, page, 5);
+            setReviews(data.results);
+            setReviewsPage(data.current_page || page);
+            setReviewsTotalPages(data.total_pages || 1);
+            setReviewsTotalCount(data.count || 0);
+            setReviewsHasNext(Boolean(data.next));
+            setReviewsHasPrevious(Boolean(data.previous));
         } catch (error) {
             toast.error("Failed to load reviews");
         } finally {
@@ -177,7 +187,7 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                                 </div>
                                             </div>
                                             <button 
-                                                onClick={() => fetchReviews(kitchen)}
+                                                onClick={() => fetchReviews(kitchen, 1)}
                                                 className="w-full py-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm text-[10px] font-black uppercase text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
                                             >
                                                 <FiStar size={14} /> User Reviews
@@ -278,6 +288,31 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                                 </div>
                                             </div>
                                         ))}
+
+                                        <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                Showing {(reviewsPage - 1) * 5 + 1}-{Math.min(reviewsPage * 5, reviewsTotalCount)} of {reviewsTotalCount}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => selectedKitchen && fetchReviews(selectedKitchen, reviewsPage - 1)}
+                                                    disabled={!reviewsHasPrevious || loadingReviews}
+                                                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/5"
+                                                >
+                                                    Previous
+                                                </button>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                    Page {reviewsPage} / {reviewsTotalPages}
+                                                </span>
+                                                <button
+                                                    onClick={() => selectedKitchen && fetchReviews(selectedKitchen, reviewsPage + 1)}
+                                                    disabled={!reviewsHasNext || loadingReviews}
+                                                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/5"
+                                                >
+                                                    Next
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
