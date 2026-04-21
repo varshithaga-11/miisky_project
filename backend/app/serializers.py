@@ -2639,6 +2639,57 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
         return None
 
 
+class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
+    diet_plan_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
+    micro_kitchen_details = serializers.SerializerMethodField()
+    original_micro_kitchen_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            'id', 'status',
+            'suggested_on', 'nutritionist_notes',
+            'start_date', 'end_date',
+            'transaction_id', 'payment_screenshot', 'payment_uploaded_on',
+            'micro_kitchen_effective_from',
+            'diet_plan_details', 'nutritionist_details',
+            'micro_kitchen_details', 'original_micro_kitchen_details',
+        ]
+
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                'code': obj.diet_plan.code,
+                'title': obj.diet_plan.title,
+                'final_amount': str(obj.diet_plan.final_amount),
+                'no_of_days': obj.diet_plan.no_of_days,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+            }
+        return None
+
+    def get_micro_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'brand_name': obj.micro_kitchen.brand_name,
+            }
+        return None
+
+    def get_original_micro_kitchen_details(self, obj):
+        if obj.original_micro_kitchen:
+            return {
+                'brand_name': obj.original_micro_kitchen.brand_name,
+            }
+        return None
+
+
 class UserMealSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     meal_type_details = serializers.SerializerMethodField()

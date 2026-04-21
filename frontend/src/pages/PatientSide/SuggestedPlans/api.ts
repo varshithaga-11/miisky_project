@@ -54,8 +54,43 @@ export interface UserDietPlan {
   updated_on: string;
 }
 
+export interface SuggestedPlansLite {
+  id: number;
+  status: string;
+  suggested_on: string;
+  nutritionist_notes: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  transaction_id: string | null;
+  payment_screenshot?: string | null;
+  payment_uploaded_on?: string | null;
+  micro_kitchen_effective_from?: string | null;
+  diet_plan_details: {
+    code: string;
+    title: string;
+    final_amount: string;
+    no_of_days: number | null;
+  } | null;
+  nutritionist_details: {
+    first_name: string;
+    last_name: string;
+  } | null;
+  micro_kitchen_details?: {
+    brand_name: string;
+  } | null;
+  original_micro_kitchen_details?: {
+    brand_name: string;
+  } | null;
+}
+
 export const getMySuggestedPlans = async (): Promise<UserDietPlan[]> => {
   const url = createApiUrl("api/userdietplan/all-user-plans/");
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const getMySuggestedPlansLite = async (): Promise<SuggestedPlansLite[]> => {
+  const url = createApiUrl("api/userdietplan/suggested-plans-lite/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   return response.data;
 };

@@ -5104,6 +5104,13 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='suggested-plans-lite', pagination_class=None)
+    def suggested_plans_lite(self, request):
+        """Lightweight response for patient Suggested Plans page."""
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = SuggestedPlansLiteSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=["get"], url_path="kitchen-history")
     def kitchen_history(self, request):
         patient_id = request.query_params.get('user')

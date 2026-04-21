@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
-  getMySuggestedPlans,
+  getMySuggestedPlansLite,
   approvePlan,
   rejectPlan,
   uploadPaymentScreenshot,
   updatePlanStatus,
-  UserDietPlan,
+  SuggestedPlansLite,
 } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
@@ -34,22 +34,22 @@ const ScreenshotPreview: React.FC<{ file: File }> = ({ file }) => {
 };
 
 const SuggestedPlansPage: React.FC = () => {
-  const [plans, setPlans] = useState<UserDietPlan[]>([]);
+  const [plans, setPlans] = useState<SuggestedPlansLite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [approveModal, setApproveModal] = useState<UserDietPlan | null>(null);
-  const [rejectModal, setRejectModal] = useState<UserDietPlan | null>(null);
-  const [paymentModal, setPaymentModal] = useState<UserDietPlan | null>(null);
+  const [approveModal, setApproveModal] = useState<SuggestedPlansLite | null>(null);
+  const [rejectModal, setRejectModal] = useState<SuggestedPlansLite | null>(null);
+  const [paymentModal, setPaymentModal] = useState<SuggestedPlansLite | null>(null);
   const [rejectFeedback, setRejectFeedback] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [amountPaid, setAmountPaid] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
-  const [statusUpdate, setStatusUpdate] = useState<{ plan: UserDietPlan, status: string } | null>(null);
+  const [statusUpdate, setStatusUpdate] = useState<{ plan: SuggestedPlansLite, status: string } | null>(null);
 
   const isPatientUser = getUserRoleFromToken() === "patient";
 
-  const handleStatusUpdate = (plan: UserDietPlan, newStatus: string) => {
+  const handleStatusUpdate = (plan: SuggestedPlansLite, newStatus: string) => {
     setStatusUpdate({ plan, status: newStatus });
   };
 
@@ -85,7 +85,7 @@ const SuggestedPlansPage: React.FC = () => {
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const data = await getMySuggestedPlans();
+      const data = await getMySuggestedPlansLite();
       setPlans(data);
     } catch (err) {
       toast.error("Failed to load suggested plans");
@@ -144,7 +144,7 @@ const SuggestedPlansPage: React.FC = () => {
         resolvedAmount,
         transactionId
       );
-      setPlans((prev: UserDietPlan[]) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setPaymentModal(null);
       setScreenshotFile(null);
       setAmountPaid("");
