@@ -3,7 +3,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getMyNutritionist, NutritionistWithProfile, submitRating, getMyRatings, NutritionistRating, getNutritionistReviews } from "./api";
+import { getMyNutritionist, NutritionistWithProfile, submitRating, updateRating, getMyRatings, NutritionistRating, getNutritionistReviews } from "./api";
 import { FiStar, FiUser, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -78,11 +78,18 @@ const NutritionAllotedPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await submitRating({
-        nutritionist: data.nutritionist.id,
-        rating,
-        review
-      });
+      if (myExistingRating?.id) {
+        await updateRating(myExistingRating.id, {
+          rating,
+          review,
+        });
+      } else {
+        await submitRating({
+          nutritionist: data.nutritionist.id,
+          rating,
+          review
+        });
+      }
       toast.success("Thank you for your feedback!");
       fetchDetails();
     } catch (err) {

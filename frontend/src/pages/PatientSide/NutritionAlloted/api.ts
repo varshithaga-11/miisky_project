@@ -65,6 +65,17 @@ export const submitRating = async (data: NutritionistRating): Promise<Nutritioni
   return response.data;
 };
 
+export const updateRating = async (
+  ratingId: number,
+  data: Partial<NutritionistRating>
+): Promise<NutritionistRating> => {
+  const url = createApiUrl(`api/nutritionistrating/${ratingId}/`);
+  const response = await axios.patch<NutritionistRating>(url, data, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
 export const getMyRatings = async (): Promise<NutritionistRating[]> => {
   const url = createApiUrl("api/nutritionistrating/");
   const response = await axios.get<NutritionistRating[]>(url, { headers: await getAuthHeaders() });
