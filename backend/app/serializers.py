@@ -403,6 +403,12 @@ class MealTypeSerializer(serializers.ModelSerializer):
         return value
 
 
+class MealTypePatientLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MealType
+        fields = ["id", "name"]
+
+
 class PackagingMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = PackagingMaterial
@@ -2639,6 +2645,37 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
         return None
 
 
+class UserDietPlanNewRequestLiteSerializer(serializers.ModelSerializer):
+    diet_plan_details = serializers.SerializerMethodField()
+    micro_kitchen_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            "id",
+            "status",
+            "start_date",
+            "end_date",
+            "diet_plan_details",
+            "micro_kitchen_details",
+        ]
+
+    def get_diet_plan_details(self, obj):
+        if not obj.diet_plan:
+            return None
+        return {
+            "title": obj.diet_plan.title,
+            "code": obj.diet_plan.code,
+        }
+
+    def get_micro_kitchen_details(self, obj):
+        if not obj.micro_kitchen:
+            return None
+        return {
+            "brand_name": obj.micro_kitchen.brand_name,
+        }
+
+
 class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
     diet_plan_details = serializers.SerializerMethodField()
     nutritionist_details = serializers.SerializerMethodField()
@@ -2898,6 +2935,43 @@ class PatientUnavailabilitySerializer(serializers.ModelSerializer):
             if ids:
                 qs = qs.filter(meal_type_id__in=ids)
         return qs.count()
+
+
+class PatientUnavailabilityCreateLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientUnavailability
+        fields = [
+            "id",
+            "user_diet_plan",
+            "from_date",
+            "to_date",
+            "scope",
+            "meal_types",
+            "reason",
+            "patient_comments",
+            "status",
+        ]
+        read_only_fields = ["id", "status"]
+
+
+class PatientUnavailabilityPastRequestLiteSerializer(serializers.ModelSerializer):
+    meal_types_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PatientUnavailability
+        fields = [
+            "id",
+            "from_date",
+            "to_date",
+            "scope",
+            "meal_types_details",
+            "status",
+            "reason",
+            "patient_comments",
+        ]
+
+    def get_meal_types_details(self, obj):
+        return [{"id": m.id, "name": m.name} for m in obj.meal_types.all().order_by("id")]
 
 
 class UnavailabilityImpactRowSerializer(serializers.Serializer):

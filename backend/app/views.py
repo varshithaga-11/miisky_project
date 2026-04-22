@@ -30,6 +30,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 from .questionnaire_sync import sync_user_questionnaire_relations
+from website.pagination import WebsitePagination
 
 class Pagination(PageNumberPagination):
     page_query_param = "page"
@@ -3583,6 +3584,12 @@ class MealTypeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='all-patient-lite', pagination_class=None)
+    def get_all_mealtypes_patient_lite(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = MealTypePatientLiteSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class PackagingMaterialViewSet(viewsets.ModelViewSet):
     queryset = PackagingMaterial.objects.all()
@@ -5102,6 +5109,12 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         """Fetches all diet plans for the logged-in user without pagination."""
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='all-user-plans-new-request-lite', pagination_class=None)
+    def all_user_plans_new_request_lite(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = UserDietPlanNewRequestLiteSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='suggested-plans-lite', pagination_class=None)
@@ -6792,6 +6805,42 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
 
         raise PermissionDenied("Only patient, nutritionist, or admin can create requests.")
 
+    @action(detail=False, methods=["post"], url_path="create-lite")
+    def create_lite(self, request):
+        serializer = PatientUnavailabilitySerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        lite_response = PatientUnavailabilityCreateLiteSerializer(
+            serializer.instance,
+            context=self.get_serializer_context(),
+        )
+        return Response(lite_response.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["get"], url_path="past-requests-lite")
+    def past_requests_lite(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = WebsitePagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = PatientUnavailabilityPastRequestLiteSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def _cancel_request(self, request, req_obj):
+        role = getattr(request.user, "role", None)
+        is_owner = req_obj.user_id == request.user.id
+        if role not in ("nutritionist", "admin") and not is_owner:
+            raise PermissionDenied("Only owner/nutritionist/admin can cancel.")
+
+        req_obj.status = PatientUnavailability.STATUS_CANCELLED
+        req_obj.reviewed_by = request.user
+        req_obj.reviewed_on = timezone.now()
+        req_obj.review_notes = request.data.get("review_notes")
+        req_obj.save(update_fields=["status", "reviewed_by", "reviewed_on", "review_notes"])
+        return req_obj
+
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         req_obj = self.get_object()
@@ -6868,19 +6917,27 @@ class PatientUnavailabilityViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
         req_obj = self.get_object()
-        role = getattr(request.user, "role", None)
-        is_owner = req_obj.user_id == request.user.id
-        if role not in ("nutritionist", "admin") and not is_owner:
+        try:
+            req_obj = self._cancel_request(request, req_obj)
+        except PermissionDenied:
             return Response(
                 {"detail": "Only owner/nutritionist/admin can cancel."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        req_obj.status = PatientUnavailability.STATUS_CANCELLED
-        req_obj.reviewed_by = request.user
-        req_obj.reviewed_on = timezone.now()
-        req_obj.review_notes = request.data.get("review_notes")
-        req_obj.save(update_fields=["status", "reviewed_by", "reviewed_on", "review_notes"])
         return Response(self.get_serializer(req_obj).data)
+
+    @action(detail=True, methods=["post"], url_path="cancel-lite")
+    def cancel_lite(self, request, pk=None):
+        req_obj = self.get_object()
+        try:
+            req_obj = self._cancel_request(request, req_obj)
+        except PermissionDenied:
+            return Response(
+                {"detail": "Only owner/nutritionist/admin can cancel."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = PatientUnavailabilityPastRequestLiteSerializer(req_obj)
+        return Response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="impact", pagination_class=None)
     def impact(self, request, pk=None):
