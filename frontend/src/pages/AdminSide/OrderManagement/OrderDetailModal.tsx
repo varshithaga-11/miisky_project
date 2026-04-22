@@ -10,6 +10,10 @@ interface OrderDetailModalProps {
 
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, order }) => {
   if (!order) return null;
+  const resolvedOrderId = order.order_id || `ORD-${String(order.id).padStart(5, "0")}`;
+  const deliveryPersonName = order.delivery_person_details
+    ? `${order.delivery_person_details.first_name} ${order.delivery_person_details.last_name}`.trim()
+    : "";
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -30,7 +34,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, or
         <div className="p-6 pr-16 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-slate-50/50 dark:bg-gray-800/50">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              Order Details <span className="text-brand-600 dark:text-brand-400 font-mono text-lg">#{order.id}</span>
+              Order Details <span className="text-brand-600 dark:text-brand-400 font-mono text-lg">{resolvedOrderId}</span>
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Placed on {new Date(order.created_at).toLocaleString()}
@@ -65,23 +69,23 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, or
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
                 <p className="font-bold text-gray-900 dark:text-white uppercase">{order.kitchen_details?.brand_name || "N/A"}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">Providing Kitchen</p>
-                
-                {order.delivery_person_details && (
-                  <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Partner</h4>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center text-brand-600">
-                        <FiTruck className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                          {order.delivery_person_details.first_name} {order.delivery_person_details.last_name}
-                        </p>
-                        <p className="text-[11px] text-gray-500">{order.delivery_person_details.mobile}</p>
-                      </div>
+
+                <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Partner</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center text-brand-600">
+                      <FiTruck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                        {deliveryPersonName || (order.delivery_person ? `Delivery User #${order.delivery_person}` : "Not assigned")}
+                      </p>
+                      <p className="text-[11px] text-gray-500">
+                        {order.delivery_person_details?.mobile || "No contact available"}
+                      </p>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>

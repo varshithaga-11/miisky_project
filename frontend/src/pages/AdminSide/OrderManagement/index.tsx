@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiSearch, FiEye, FiDownload } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -51,6 +51,8 @@ const OrderManagementPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedKitchen, setSelectedKitchen] = useState("");
   const [kitchens, setKitchens] = useState<{ id: number; brand_name: string }[]>([]);
+  const [kitchensLoaded, setKitchensLoaded] = useState(false);
+  const [kitchensLoading, setKitchensLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
@@ -73,17 +75,19 @@ const OrderManagementPage: React.FC = () => {
     return { period };
   }, [period, customStart, customEnd]);
 
-  useEffect(() => {
-    const fetchKitchens = async () => {
-      try {
-        const res = await getMicroKitchens();
-        setKitchens(res.results || []);
-      } catch (err) {
-        console.error("Failed to load kitchens", err);
-      }
-    };
-    fetchKitchens();
-  }, []);
+  const loadKitchensOnDemand = useCallback(async () => {
+    if (kitchensLoaded || kitchensLoading) return;
+    setKitchensLoading(true);
+    try {
+      const res = await getMicroKitchens();
+      setKitchens(res.results || []);
+      setKitchensLoaded(true);
+    } catch (err) {
+      console.error("Failed to load kitchens", err);
+    } finally {
+      setKitchensLoading(false);
+    }
+  }, [kitchensLoaded, kitchensLoading]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,11 +140,17 @@ const OrderManagementPage: React.FC = () => {
     }
   };
 
-  const handleViewDetails = async (id: number) => {
+  const handleViewDetails = async (row: OrderRow) => {
     setModalLoading(true);
     try {
-      const data = await getOrderById(id);
-      setSelectedOrder(data);
+      const match = (row.order_id || "").match(/\d+/g);
+      const numericFromOrderId = match ? Number(match.join("")) : NaN;
+      const lookupId = Number.isFinite(numericFromOrderId) && numericFromOrderId > 0 ? numericFromOrderId : row.id;
+      const data = await getOrderById(lookupId);
+      setSelectedOrder({
+        ...data,
+        order_id: row.order_id || data?.order_id,
+      });
       setIsModalOpen(true);
     } catch (err) {
       console.error("Failed to fetch order details", err);
@@ -225,6 +235,9 @@ const OrderManagementPage: React.FC = () => {
                     label: k.brand_name || `Kitchen #${k.id}`,
                   })),
                 ]}
+                onFocus={() => {
+                  void loadKitchensOnDemand();
+                }}
                 className="w-full"
               />
             </div>
@@ -412,7 +425,7 @@ const OrderManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                       <button
                         type="button"
-                        onClick={() => handleViewDetails(r.id)}
+                        onClick={() => handleViewDetails(r)}
                         disabled={modalLoading}
                         className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium disabled:opacity-50"
                       >
