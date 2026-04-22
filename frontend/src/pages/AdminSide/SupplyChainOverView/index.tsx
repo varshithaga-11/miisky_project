@@ -320,25 +320,74 @@ function DeliveryProfilePanel({ profile }: { profile: Record<string, unknown> | 
   );
 }
 
+type FeedbackTargetType = "all" | "order" | "user_meal";
+type FeedbackOrderType = "all" | "patient" | "non_patient";
+
+function FeedbackScopeFilters({
+  targetType,
+  orderType,
+  onTargetTypeChange,
+  onOrderTypeChange,
+}: {
+  targetType: FeedbackTargetType;
+  orderType: FeedbackOrderType;
+  onTargetTypeChange: (value: FeedbackTargetType) => void;
+  onOrderTypeChange: (value: FeedbackOrderType) => void;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row gap-3">
+      <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-white/[0.03] p-2 rounded-2xl">
+        {[
+          ["all", "All"],
+          ["order", "Orders"],
+          ["user_meal", "UserMeals"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onTargetTypeChange(value as FeedbackTargetType)}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              targetType === value
+                ? "bg-indigo-500 text-white"
+                : "text-gray-500 hover:bg-white dark:hover:bg-white/[0.06]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {targetType === "order" && (
+        <select
+          value={orderType}
+          onChange={(e) => onOrderTypeChange(e.target.value as FeedbackOrderType)}
+          className="px-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+        >
+          <option value="all">All Orders</option>
+          <option value="patient">Patient Orders</option>
+          <option value="non_patient">Non-patient Orders</option>
+        </select>
+      )}
+    </div>
+  );
+}
+
 
 function IssuesPanel({ 
   ratings, 
   loadingMore, 
   hasMore,
-  startDate,
-  endDate,
-  onFilterChange,
-  activePeriod,
-  onPeriodChange
+  targetType,
+  orderType,
+  onTargetTypeChange,
+  onOrderTypeChange,
 }: { 
   ratings: DeliveryFeedbackRow[]; 
   loadingMore: boolean; 
   hasMore: boolean;
-  startDate: string;
-  endDate: string;
-  onFilterChange: (s: string, e: string, p: string) => void;
-  activePeriod: string;
-  onPeriodChange: (p: string) => void;
+  targetType: FeedbackTargetType;
+  orderType: FeedbackOrderType;
+  onTargetTypeChange: (value: FeedbackTargetType) => void;
+  onOrderTypeChange: (value: FeedbackOrderType) => void;
 }) {
   const issues = React.useMemo(() => {
     return (ratings || []).filter((x: DeliveryFeedbackRow) => x.feedback_type === "issue");
@@ -346,12 +395,11 @@ function IssuesPanel({
 
   return (
     <div className="space-y-4">
-      <FilterBar 
-        startDate={startDate} 
-        endDate={endDate} 
-        onFilterChange={onFilterChange} 
-        activePeriod={activePeriod}
-        onPeriodChange={onPeriodChange}
+      <FeedbackScopeFilters
+        targetType={targetType}
+        orderType={orderType}
+        onTargetTypeChange={onTargetTypeChange}
+        onOrderTypeChange={onOrderTypeChange}
       />
       {(!issues || issues.length === 0) ? (
         <div className="space-y-4">
@@ -407,21 +455,19 @@ function RatingsPanel({
   loadingMore, 
   hasMore,
   avgRating,
-  startDate,
-  endDate,
-  onFilterChange,
-  activePeriod,
-  onPeriodChange
+  targetType,
+  orderType,
+  onTargetTypeChange,
+  onOrderTypeChange,
 }: { 
   ratings: DeliveryFeedbackRow[]; 
   loadingMore: boolean; 
   hasMore: boolean;
   avgRating: string;
-  startDate: string;
-  endDate: string;
-  onFilterChange: (s: string, e: string, p: string) => void;
-  activePeriod: string;
-  onPeriodChange: (p: string) => void;
+  targetType: FeedbackTargetType;
+  orderType: FeedbackOrderType;
+  onTargetTypeChange: (value: FeedbackTargetType) => void;
+  onOrderTypeChange: (value: FeedbackOrderType) => void;
 }) {
   const reviews = React.useMemo(() => {
     return (ratings || []).filter((x) => x.feedback_type === "rating");
@@ -429,12 +475,11 @@ function RatingsPanel({
 
   return (
     <div className="space-y-4">
-      <FilterBar 
-        startDate={startDate} 
-        endDate={endDate} 
-        onFilterChange={onFilterChange} 
-        activePeriod={activePeriod}
-        onPeriodChange={onPeriodChange}
+      <FeedbackScopeFilters
+        targetType={targetType}
+        orderType={orderType}
+        onTargetTypeChange={onTargetTypeChange}
+        onOrderTypeChange={onOrderTypeChange}
       />
       {(!reviews || reviews.length === 0) ? (
         <div className="space-y-4">
@@ -663,6 +708,15 @@ function TicketsPanel({
   loadingMore: boolean;
   hasMore: boolean;
 }) {
+  const personLabel = (user: any, fallbackRole?: string) => {
+    if (!user) {
+      return { name: "—", role: fallbackRole || "—" };
+    }
+    const name = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "—";
+    const role = user.role || fallbackRole || "—";
+    return { name, role };
+  };
+
   if (!tickets || (tickets.length === 0 && !loadingMore)) {
     return (
       <div className="space-y-4">
@@ -677,6 +731,10 @@ function TicketsPanel({
   return (
     <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {tickets.map((t: any) => (
+        (() => {
+          const fromUser = personLabel(t.created_by_details, t.user_type);
+          const toUser = personLabel(t.assigned_to_details, t.target_user_type);
+          return (
         <li
           key={t.id}
           className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col justify-between"
@@ -693,12 +751,26 @@ function TicketsPanel({
               {t.status}
             </span>
           </div>
-          <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">{t.subject}</p>
+          <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">{t.subject || t.title}</p>
           <p className="text-xs text-gray-500 line-clamp-2">{t.description}</p>
+          <div className="mt-3 rounded-2xl bg-gray-50/70 dark:bg-white/[0.03] border border-gray-100 dark:border-white/10 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-widest">
+              <span className="font-black text-gray-400">From</span>
+              <span className="font-bold text-gray-700 dark:text-gray-200 normal-case">{fromUser.name}</span>
+              <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 font-black">{fromUser.role}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-widest">
+              <span className="font-black text-gray-400">To</span>
+              <span className="font-bold text-gray-700 dark:text-gray-200 normal-case">{toUser.name}</span>
+              <span className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 font-black">{toUser.role}</span>
+            </div>
+          </div>
           <div className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             {new Date(t.created_at).toLocaleDateString()} · PRIORITY: {t.priority}
           </div>
         </li>
+          );
+        })()
       ))}
       <Sentinel loading={loadingMore} hasMore={hasMore} />
     </ul>
@@ -728,6 +800,7 @@ const SupplyChainDossierModal: React.FC<{
   open: boolean;
   onClose: () => void;
 }> = ({ person, open, onClose }) => {
+  const scrollBodyRef = React.useRef<HTMLDivElement | null>(null);
   const [screen, setScreen] = useState<"hub" | DossierTab>("hub");
   const [loaded, setLoaded] = useState<Record<DossierTab, boolean>>({
     overview: false,
@@ -784,7 +857,8 @@ const SupplyChainDossierModal: React.FC<{
 
   const [fbStartDate, setFbStartDate] = useState("");
   const [fbEndDate, setFbEndDate] = useState("");
-  const [fbPeriod, setFbPeriod] = useState("");
+  const [fbTargetType, setFbTargetType] = useState<FeedbackTargetType>("all");
+  const [fbOrderType, setFbOrderType] = useState<FeedbackOrderType>("all");
 
   const fetchSummary = useCallback(async () => {
     if (!person) return;
@@ -844,7 +918,8 @@ const SupplyChainDossierModal: React.FC<{
       setEarnPeriod("");
       setFbStartDate("");
       setFbEndDate("");
-      setFbPeriod("");
+      setFbTargetType("all");
+      setFbOrderType("all");
       setError(null);
       setLoadingMore(false);
     }
@@ -853,7 +928,7 @@ const SupplyChainDossierModal: React.FC<{
   const loadView = useCallback(async (view: DossierTab) => {
     if (!person) return;
     setScreen(view);
-    if (loaded[view]) return;
+    if (loaded[view] && view !== "ratings" && view !== "issues") return;
 
     setLoading(true);
     setError(null);
@@ -906,7 +981,16 @@ const SupplyChainDossierModal: React.FC<{
         }
         case "ratings":
         case "issues": {
-          const res = await fetchAdminSupplyChainDeliveryRatings(uid, 1);
+          const res = await fetchAdminSupplyChainDeliveryRatings(
+            uid,
+            1,
+            10,
+            fbStartDate,
+            fbEndDate,
+            fbTargetType,
+            fbTargetType === "order" ? fbOrderType : "all",
+            view === "ratings" ? "rating" : "issue"
+          );
           setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
           break;
         }
@@ -919,7 +1003,7 @@ const SupplyChainDossierModal: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, [person, loaded]);
+  }, [person, loaded, fbStartDate, fbEndDate, fbTargetType, fbOrderType]);
 
   const loadMore = useCallback(async () => {
     if (!person || loading || loadingMore || screen === "hub" || screen === "profile") return;
@@ -981,7 +1065,16 @@ const SupplyChainDossierModal: React.FC<{
         case "ratings":
         case "issues": {
           if (!deliveryRatings.hasMore) break;
-          const res = await fetchAdminSupplyChainDeliveryRatings(uid, deliveryRatings.page + 1, 10, fbStartDate, fbEndDate);
+          const res = await fetchAdminSupplyChainDeliveryRatings(
+            uid,
+            deliveryRatings.page + 1,
+            10,
+            fbStartDate,
+            fbEndDate,
+            fbTargetType,
+            fbTargetType === "order" ? fbOrderType : "all",
+            tab === "ratings" ? "rating" : "issue"
+          );
           setDeliveryRatings((prev: PagState<DeliveryFeedbackRow>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
           break;
         }
@@ -991,19 +1084,21 @@ const SupplyChainDossierModal: React.FC<{
     } finally {
       setLoadingMore(false);
     }
-  }, [person, screen, loading, loadingMore, kitchenTeam, plans, dailyWork, orders, earnings, tickets, plannedLeaves, deliveryRatings]);
+  }, [person, screen, loading, loadingMore, kitchenTeam, plans, dailyWork, orders, earnings, tickets, plannedLeaves, deliveryRatings, fbStartDate, fbEndDate, fbTargetType, fbOrderType]);
 
   useEffect(() => {
     if (screen === "hub" || screen === "profile" || loading) return;
+    const root = scrollBodyRef.current;
+    if (!root) return;
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           loadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, root }
     );
-    const sen = document.getElementById("scroll-sentinel");
+    const sen = root.querySelector("#scroll-sentinel");
     if (sen) obs.observe(sen);
     return () => obs.disconnect();
   }, [screen, loadMore, loading]);
@@ -1059,7 +1154,11 @@ const SupplyChainDossierModal: React.FC<{
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-8 bg-gradient-to-b from-blue-50/10 to-white dark:from-gray-900 dark:to-gray-950">
+        <div
+          id="dossier-scroll-container"
+          ref={scrollBodyRef}
+          className="flex-1 overflow-y-auto px-6 py-8 bg-gradient-to-b from-blue-50/10 to-white dark:from-gray-900 dark:to-gray-950"
+        >
           {screen === "hub" && (
             <div className="space-y-10 pb-10">
               <section>
@@ -1339,18 +1438,45 @@ const SupplyChainDossierModal: React.FC<{
                       loadingMore={loadingMore}
                       hasMore={deliveryRatings.hasMore}
                       avgRating={avgRating}
-                      startDate={fbStartDate}
-                      endDate={fbEndDate}
-                      activePeriod={fbPeriod}
-                      onPeriodChange={setFbPeriod}
-                      onFilterChange={(s, e) => {
-                        setFbStartDate(s);
-                        setFbEndDate(e);
+                      targetType={fbTargetType}
+                      orderType={fbOrderType}
+                      onTargetTypeChange={(target) => {
+                        setFbTargetType(target);
+                        if (target !== "order") setFbOrderType("all");
                         const uid = person.id;
                         (async () => {
                            setLoading(true);
                            try {
-                             const res = await fetchAdminSupplyChainDeliveryRatings(uid, 1, 10, s, e);
+                             const res = await fetchAdminSupplyChainDeliveryRatings(
+                               uid,
+                               1,
+                               10,
+                               fbStartDate,
+                               fbEndDate,
+                               target,
+                               target === "order" ? fbOrderType : "all",
+                               "rating"
+                             );
+                             setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
+                           } finally { setLoading(false); }
+                        })();
+                      }}
+                      onOrderTypeChange={(orderType) => {
+                        setFbOrderType(orderType);
+                        const uid = person.id;
+                        (async () => {
+                           setLoading(true);
+                           try {
+                             const res = await fetchAdminSupplyChainDeliveryRatings(
+                               uid,
+                               1,
+                               10,
+                               fbStartDate,
+                               fbEndDate,
+                               fbTargetType,
+                               fbTargetType === "order" ? orderType : "all",
+                               "rating"
+                             );
                              setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
                            } finally { setLoading(false); }
                         })();
@@ -1363,18 +1489,45 @@ const SupplyChainDossierModal: React.FC<{
                       ratings={deliveryRatings.results} 
                       loadingMore={loadingMore} 
                       hasMore={deliveryRatings.hasMore} 
-                      startDate={fbStartDate}
-                      endDate={fbEndDate}
-                      activePeriod={fbPeriod}
-                      onPeriodChange={setFbPeriod}
-                      onFilterChange={(s, e) => {
-                        setFbStartDate(s);
-                        setFbEndDate(e);
+                      targetType={fbTargetType}
+                      orderType={fbOrderType}
+                      onTargetTypeChange={(target) => {
+                        setFbTargetType(target);
+                        if (target !== "order") setFbOrderType("all");
                         const uid = person.id;
                         (async () => {
                            setLoading(true);
                            try {
-                             const res = await fetchAdminSupplyChainDeliveryRatings(uid, 1, 10, s, e);
+                             const res = await fetchAdminSupplyChainDeliveryRatings(
+                               uid,
+                               1,
+                               10,
+                               fbStartDate,
+                               fbEndDate,
+                               target,
+                               target === "order" ? fbOrderType : "all",
+                               "issue"
+                             );
+                             setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
+                           } finally { setLoading(false); }
+                        })();
+                      }}
+                      onOrderTypeChange={(orderType) => {
+                        setFbOrderType(orderType);
+                        const uid = person.id;
+                        (async () => {
+                           setLoading(true);
+                           try {
+                             const res = await fetchAdminSupplyChainDeliveryRatings(
+                               uid,
+                               1,
+                               10,
+                               fbStartDate,
+                               fbEndDate,
+                               fbTargetType,
+                               fbTargetType === "order" ? orderType : "all",
+                               "issue"
+                             );
                              setDeliveryRatings({ results: res.results, page: 1, hasMore: !!res.next });
                            } finally { setLoading(false); }
                         })();

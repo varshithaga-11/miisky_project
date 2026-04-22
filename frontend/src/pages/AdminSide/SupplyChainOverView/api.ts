@@ -181,8 +181,23 @@ export type DeliveryFeedbackRow = {
 };
 
 /** GET api/admin-supply-chain-delivery-ratings-nopaginate/?user= */
-export const fetchAdminSupplyChainDeliveryRatings = (userId: number, page = 1, limit = 10, startDate = "", endDate = "") =>
-  getPaginatedJson<DeliveryFeedbackRow>("api/admin-supply-chain-delivery-ratings-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate });
+export const fetchAdminSupplyChainDeliveryRatings = (
+  userId: number,
+  page = 1,
+  limit = 10,
+  startDate = "",
+  endDate = "",
+  targetType: "all" | "order" | "user_meal" = "all",
+  orderType: "all" | "patient" | "non_patient" = "all",
+  feedbackType: "all" | "rating" | "issue" = "all"
+) =>
+  getPaginatedJson<DeliveryFeedbackRow>("api/admin-supply-chain-delivery-ratings-nopaginate/", userId, page, limit, {
+    start_date: startDate,
+    end_date: endDate,
+    target_type: targetType,
+    order_type: orderType,
+    feedback_type: feedbackType,
+  });
 
 export type AdminSupplyChainEarningsPaginatedResp = PaginatedResponse<any> & {
   total_orders: number;
