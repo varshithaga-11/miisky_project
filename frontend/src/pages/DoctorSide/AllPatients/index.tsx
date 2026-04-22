@@ -61,13 +61,70 @@ function QuestionnaireView({ data }: { data: any }) {
     </div>
   );
 
-  const InfoItem = ({ label, value, subValue }: { label: string; value: any; subValue?: string }) => (
+  const normalizeValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === "") return "—";
+    if (value === true) return "Yes";
+    if (value === false) return "No";
+    if (typeof value === "number") return Number.isFinite(value) ? String(value) : "—";
+    if (typeof value === "string") return value.trim() || "—";
+    if (Array.isArray(value)) {
+      if (value.length === 0) return "None reported";
+      const labels = value
+        .map((item) => {
+          if (item === null || item === undefined) return "";
+          if (typeof item === "string" || typeof item === "number") return String(item);
+          if (typeof item === "object") {
+            const obj = item as Record<string, unknown>;
+            const base =
+              (typeof obj.name === "string" && obj.name.trim()) ||
+              (typeof obj.label === "string" && obj.label.trim()) ||
+              (typeof obj.value === "string" && obj.value.trim()) ||
+              (typeof obj.title === "string" && obj.title.trim()) ||
+              "";
+            const extras = [
+              typeof obj.frequency === "string" && obj.frequency.trim()
+                ? `frequency: ${obj.frequency.trim()}`
+                : "",
+              typeof obj.since_when === "string" && obj.since_when.trim()
+                ? `since: ${obj.since_when.trim()}`
+                : "",
+              typeof obj.duration_minutes === "number" ? `duration: ${obj.duration_minutes} mins` : "",
+              typeof obj.comments === "string" && obj.comments.trim()
+                ? `comments: ${obj.comments.trim()}`
+                : "",
+              typeof obj.other_text === "string" && obj.other_text.trim() ? obj.other_text.trim() : "",
+            ].filter(Boolean);
+            if (base && extras.length > 0) return `${base} (${extras.join(", ")})`;
+            if (base) return base;
+            const compact = Object.entries(obj)
+              .filter(([, v]) => v !== null && v !== undefined && v !== "")
+              .slice(0, 3)
+              .map(([k, v]) => `${k}: ${String(v)}`)
+              .join(", ");
+            return compact;
+          }
+          return "";
+        })
+        .filter(Boolean);
+      return labels.length > 0 ? labels.join(", ") : "None reported";
+    }
+    if (typeof value === "object") {
+      const compact = Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => v !== null && v !== undefined && v !== "")
+        .map(([k, v]) => `${k}: ${String(v)}`)
+        .join(", ");
+      return compact || "—";
+    }
+    return String(value);
+  };
+
+  const InfoItem = ({ label, value, subValue }: { label: string; value: unknown; subValue?: string }) => (
     <div className="space-y-1">
       <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase">
         {label}
       </div>
       <div className="text-sm font-semibold text-gray-900 dark:text-white">
-        {value === true ? "Yes" : value === false ? "No" : value || "—"}
+        {normalizeValue(value)}
       </div>
       {subValue && <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">{subValue}</div>}
     </div>
@@ -150,6 +207,60 @@ function QuestionnaireView({ data }: { data: any }) {
     return "None reported";
   })();
 
+  const shownKeys = new Set([
+    "id",
+    "user",
+    "age",
+    "height_cm",
+    "weight_kg",
+    "work_type",
+    "physical_activities",
+    "habits",
+    "sleep_quality",
+    "stress_level",
+    "diet_pattern",
+    "food_source",
+    "meals_per_day",
+    "meal_slots",
+    "skips_meals",
+    "snacks_between_meals",
+    "falls_sick_frequency",
+    "fruits_per_day",
+    "vegetables_per_day",
+    "non_veg_frequency",
+    "consumes_egg",
+    "consumes_dairy",
+    "health_conditions",
+    "symptoms",
+    "deficiencies",
+    "digestive_issues",
+    "skin_issues",
+    "autoimmune_diseases",
+    "food_allergy",
+    "food_allergy_details",
+    "food_preferences",
+    "surgery_history",
+    "surgery_details",
+    "medicine_allergy",
+    "medicine_allergy_details",
+    "consulted_doctor",
+    "consultant_doctor_name",
+    "consultant_doctor_specialty",
+    "consultant_doctor_phone",
+    "other_health_concerns",
+    "menstrual_pattern",
+    "on_medication",
+    "additional_notes",
+    "any_other_comments",
+    "any_notes_for_care_team",
+    "created_on",
+    "updated_on",
+  ]);
+
+  const additionalEntries = Object.entries(data as Record<string, unknown>).filter(
+    ([key]) => !shownKeys.has(key)
+  );
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -178,8 +289,12 @@ function QuestionnaireView({ data }: { data: any }) {
               <InfoItem label="Pattern" value={data.diet_pattern?.replace("_", " ")} />
               <InfoItem label="Source" value={data.food_source} />
               <InfoItem label="Meals / Day" value={data.meals_per_day} />
+              <InfoItem label="Meal Slots" value={data.meal_slots} />
               <InfoItem label="Skips Meals" value={data.skips_meals} />
               <InfoItem label="Snacks" value={data.snacks_between_meals} />
+              <InfoItem label="Non-veg Frequency" value={data.non_veg_frequency} />
+              <InfoItem label="Consumes Egg" value={data.consumes_egg} />
+              <InfoItem label="Consumes Dairy" value={data.consumes_dairy} />
               <InfoItem label="Sick freq." value={data.falls_sick_frequency} />
               <div className="col-span-full grid grid-cols-2 gap-6 pt-2 border-t border-gray-100 dark:border-white/5 mt-2">
                 <InfoItem label="Fruits / Day" value={data.fruits_per_day} />
@@ -260,14 +375,49 @@ function QuestionnaireView({ data }: { data: any }) {
                   </div>
                   <BadgeList items={data.skin_issues} />
                 </div>
+                <div className="space-y-3 col-span-2">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Autoimmune Diseases
+                  </div>
+                  <BadgeList items={data.autoimmune_diseases} />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {renderSection(
+        "Clinical History & Consultation",
+        <FiFileText className="w-4 h-4" />,
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <InfoItem label="Surgery History" value={data.surgery_history} />
+          <InfoItem label="Surgery Details" value={data.surgery_details} />
+          <InfoItem label="Medicine Allergy" value={data.medicine_allergy} />
+          <InfoItem label="Medicine Allergy Details" value={data.medicine_allergy_details} />
+          <InfoItem label="Consulted Doctor" value={data.consulted_doctor} />
+          <InfoItem label="Doctor Name" value={data.consultant_doctor_name} />
+          <InfoItem label="Doctor Specialty" value={data.consultant_doctor_specialty} />
+          <InfoItem label="Doctor Phone" value={data.consultant_doctor_phone} />
+          <InfoItem label="Other Health Concerns" value={data.other_health_concerns} />
+          <InfoItem label="Menstrual Pattern" value={data.menstrual_pattern} />
+          <InfoItem label="On Medication" value={data.on_medication} />
+        </div>
+      )}
+
+      {additionalEntries.length > 0 &&
+        renderSection(
+          "Other Questionnaire Fields",
+          <FiClipboard className="w-4 h-4" />,
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {additionalEntries.map(([key, value]) => (
+              <InfoItem key={key} label={key.replace(/_/g, " ")} value={value} />
+            ))}
+          </div>
+        )}
+
       {/* Footer Details */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4">
         <div className="p-4 rounded-2xl bg-orange-50/40 dark:bg-orange-500/5 border border-orange-100 dark:border-orange-500/10">
           <div className="text-[10px] font-bold text-orange-800 dark:text-orange-400 uppercase tracking-wider mb-2">
             Food Allergies
@@ -291,6 +441,22 @@ function QuestionnaireView({ data }: { data: any }) {
           <p className="text-sm text-gray-700 dark:text-gray-300 italic">
             {data.additional_notes || "No extra notes"}
           </p>
+        </div>
+        <div className="p-4 rounded-2xl bg-cyan-50/50 dark:bg-cyan-500/5 border border-cyan-100 dark:border-cyan-500/10">
+          <div className="text-[10px] font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wider mb-2">
+            Team Notes & Timeline
+          </div>
+          <div className="space-y-2 text-sm">
+            <p className="text-cyan-900 dark:text-cyan-100 font-medium">
+              {data.any_notes_for_care_team || data.any_other_comments || "No care team notes"}
+            </p>
+            <p className="text-xs text-cyan-700/80 dark:text-cyan-200/80">
+              Created: {data.created_on ? String(data.created_on).replace("T", " ").slice(0, 19) : "—"}
+            </p>
+            <p className="text-xs text-cyan-700/80 dark:text-cyan-200/80">
+              Updated: {data.updated_on ? String(data.updated_on).replace("T", " ").slice(0, 19) : "—"}
+            </p>
+          </div>
         </div>
       </div>
     </div>
