@@ -157,21 +157,31 @@ function formatJsonish(val: unknown): ReactNode {
   if (Array.isArray(val)) {
     if (val.length === 0) return "—";
     return (
-      <ul className="list-disc list-inside space-y-1">
+      <ul className="list-disc list-outside ml-4 space-y-2 mt-1">
         {val.map((x, i) => (
-          <li key={i}>{String(x)}</li>
+          <li key={i} className="text-gray-800 dark:text-gray-200">
+            {formatJsonish(x)}
+          </li>
         ))}
       </ul>
     );
   }
   if (typeof val === "object") {
     const o = val as Record<string, unknown>;
+    
+    // If it's a known named entity (e.g. from health conditions, symptoms, etc.), just return its name.
+    if ("name" in o) {
+      return String(o.name);
+    }
+
     return (
-      <div className="space-y-1 text-xs">
+      <div className="space-y-2 text-xs mt-1 p-3 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30">
         {Object.entries(o).map(([k, v]) => (
-          <div key={k}>
-            <span className="text-gray-500">{humanizeKey(k)}: </span>
-            <span>{typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
+          <div key={k} className="flex flex-col sm:flex-row sm:gap-2 sm:items-baseline">
+            <span className="text-gray-500 font-medium sm:min-w-[130px]">{humanizeKey(k)}:</span>
+            <span className="text-gray-900 dark:text-gray-100 flex-1 break-words">
+              {formatJsonish(v)}
+            </span>
           </div>
         ))}
       </div>
