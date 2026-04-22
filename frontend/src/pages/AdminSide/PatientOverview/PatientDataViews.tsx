@@ -240,6 +240,7 @@ export type HealthReportRow = {
   report_file?: string | null;
   report_type?: string | null;
   uploaded_on?: string | null;
+  reviews?: { id: number; comments: string; created_on: string; nutritionist_name: string; }[];
   user_details?: { first_name?: string; last_name?: string; email?: string };
 };
 
@@ -256,12 +257,25 @@ export function DisplayHealthReports({ items }: { items: HealthReportRow[] }) {
           <div className="text-xs text-gray-500 mt-1">
             Type: {rep.report_type || "—"} · Uploaded: {rep.uploaded_on || "—"}
           </div>
+          {rep.reviews && rep.reviews.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="text-[10px] uppercase font-bold text-gray-400 mb-1 leading-none tracking-wide">Doctor / Nutritionist Notes</div>
+              {rep.reviews.map((rev) => (
+                <div key={rev.id} className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border-l-2 border-indigo-400 dark:border-indigo-500 shadow-sm">
+                  <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">
+                    {rev.nutritionist_name || "Nutritionist"} · {rev.created_on ? new Date(rev.created_on).toLocaleDateString() : ""}
+                  </div>
+                  <div className="whitespace-pre-wrap">{rev.comments}</div>
+                </div>
+              ))}
+            </div>
+          )}
           {rep.report_file && (
             <a
               href={resolveMediaUrl(rep.report_file)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block mt-3 text-sm text-blue-600 hover:underline"
+              className="inline-block mt-3 text-sm text-blue-600 hover:underline font-medium"
             >
               Open file
             </a>
