@@ -384,6 +384,11 @@ urlpatterns = [
     ),
     # Admin patient panels (no pagination for modal display)
     path(
+        "admin-patient-dietplans-nopaginate/",
+        views.AdminPatientDietPlansNoPaginationView.as_view(),
+        name="admin-patient-dietplans-nopaginate",
+    ),
+    path(
         "admin-patient-meetings-nopaginate/",
         views.AdminPatientMeetingsNoPaginationView.as_view(),
         name="admin-patient-meetings-nopaginate",

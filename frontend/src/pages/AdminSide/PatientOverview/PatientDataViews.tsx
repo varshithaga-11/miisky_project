@@ -476,6 +476,14 @@ export type DietPlanRow = Record<string, unknown> & {
   micro_kitchen_details?: { brand_name?: string };
   original_micro_kitchen_details?: { brand_name?: string };
   micro_kitchen_effective_from?: string | null;
+  kitchen_reassignments?: {
+    from: string;
+    to: string;
+    reason: string;
+    date: string;
+    effective_from: string;
+    by: string;
+  }[];
   start_date?: string | null;
   end_date?: string | null;
   payment_status?: string;
@@ -536,6 +544,28 @@ export function DisplayDietPlans({ items }: { items: DietPlanRow[] }) {
               {p.start_date || "—"} → {p.end_date || "—"}
               {p.diet_plan_details?.no_of_days != null ? ` (${p.diet_plan_details.no_of_days} day(s))` : ""}
             </div>
+            
+            {p.kitchen_reassignments && p.kitchen_reassignments.length > 0 && (
+              <div className="mt-2 border-l-2 border-amber-300 dark:border-amber-700 pl-3 pt-1 pb-1">
+                <span className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-500 mb-1 block tracking-wider">Kitchen Reassignments</span>
+                <ul className="space-y-2">
+                  {p.kitchen_reassignments.map((rea, rIdx) => (
+                    <li key={rIdx} className="text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 p-2 rounded-md border border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="line-through text-gray-500">{rea.from}</span>
+                        <span className="text-amber-500 font-bold">→</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{rea.to}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 mt-1 text-[10px] text-gray-500">
+                        <div><span className="font-medium">Effective:</span> {rea.effective_from || "N/A"}</div>
+                        <div><span className="font-medium">By:</span> {rea.by} on {new Date(rea.date).toLocaleDateString()}</div>
+                        <div className="col-span-2 mt-0.5"><span className="font-medium">Reason:</span> {rea.reason || "—"}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="mt-5 pt-4 border-t border-amber-200/60 dark:border-amber-900/40">

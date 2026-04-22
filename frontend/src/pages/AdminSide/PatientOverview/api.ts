@@ -174,12 +174,20 @@ export const fetchNutritionistReviewsForPatient = async (patientUserId: number):
   return unwrapResults(data);
 };
 
-/** UserDietPlan model */
+/** UserDietPlan model (Paginated via ModelViewSet) */
 export const fetchUserDietPlansForPatient = async (patientUserId: number): Promise<unknown[]> => {
   const data = await getJson<unknown>("api/userdietplan/", {
     user: patientUserId,
     limit: 30,
     page: 1,
+  });
+  return unwrapResults(data);
+};
+
+/** Diet Plans model - Admin specific unpaginated with reassignment logs */
+export const fetchPatientDietPlansNoPaginate = async (patientUserId: number): Promise<unknown[]> => {
+  const data = await getJson<unknown>("api/admin-patient-dietplans-nopaginate/", {
+    user: patientUserId,
   });
   return unwrapResults(data);
 };

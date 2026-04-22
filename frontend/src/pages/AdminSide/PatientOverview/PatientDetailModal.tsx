@@ -17,6 +17,7 @@ import {
   fetchSupportTicketsForPatient,
   fetchNutritionistRatingsForPatient,
   fetchKitchenRatingsForPatient,
+  fetchPatientDietPlansNoPaginate,
   PatientUserRow,
 } from "./api";
 import { fetchOrdersForUserAdmin } from "../shared/adminOrderApi";
@@ -208,7 +209,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
           //   setPayload(await fetchNutritionistReviewsForPatient(id));
           //   break;
           case "dietPlans":
-            setPayload(await fetchUserDietPlansForPatient(id));
+            setPayload(await fetchPatientDietPlansNoPaginate(id));
             break;
           case "meals":
             setPayload(await fetchUserMealsForPatient(id, mealMonth, mealYear));

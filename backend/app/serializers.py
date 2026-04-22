@@ -2779,6 +2779,70 @@ class ApprovedPlansLiteSerializer(serializers.ModelSerializer):
         }
 
 
+class AdminPatientDietPlansLiteSerializer(serializers.ModelSerializer):
+    diet_plan_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
+    micro_kitchen_details = serializers.SerializerMethodField()
+    original_micro_kitchen_details = serializers.SerializerMethodField()
+    verified_by_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            'id', 'status', 'diet_plan_details', 'nutritionist_details',
+            'micro_kitchen_details', 'original_micro_kitchen_details',
+            'micro_kitchen_effective_from', 'start_date', 'end_date',
+            'payment_status', 'amount_paid', 'transaction_id',
+            'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
+            'verified_by', 'verified_by_details', 'verified_on'
+        ]
+        read_only_fields = ['payment_uploaded_on', 'verified_on', 'verified_by_details']
+
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                'title': obj.diet_plan.title,
+                'code': obj.diet_plan.code,
+                'no_of_days': obj.diet_plan.no_of_days,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                'first_name': obj.nutritionist.first_name,
+                'last_name': obj.nutritionist.last_name,
+                'email': obj.nutritionist.email,
+            }
+        return None
+
+    def get_micro_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'brand_name': obj.micro_kitchen.brand_name,
+            }
+        return None
+
+    def get_original_micro_kitchen_details(self, obj):
+        if obj.original_micro_kitchen:
+            return {
+                'brand_name': obj.original_micro_kitchen.brand_name,
+            }
+        return None
+
+    def get_verified_by_details(self, obj):
+        if obj.verified_by:
+            u = obj.verified_by
+            return {
+                'id': u.id,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'email': u.email,
+                'username': u.username,
+            }
+        return None
+
+
 class UserMealSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     meal_type_details = serializers.SerializerMethodField()
