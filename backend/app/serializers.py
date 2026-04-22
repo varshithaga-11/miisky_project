@@ -2734,6 +2734,51 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
         return None
 
 
+class ApprovedPlansLiteSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+    diet_plan_details = serializers.SerializerMethodField()
+    micro_kitchen_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            'id',
+            'user_details',
+            'diet_plan_details',
+            'micro_kitchen_details',
+            'start_date',
+            'status',
+            'created_on',
+            'payment_status',
+            'nutritionist_notes',
+        ]
+
+    def get_user_details(self, obj):
+        if not obj.user:
+            return None
+        return {
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+            'email': obj.user.email,
+        }
+
+    def get_diet_plan_details(self, obj):
+        if not obj.diet_plan:
+            return None
+        return {
+            'title': obj.diet_plan.title,
+            'no_of_days': obj.diet_plan.no_of_days,
+        }
+
+    def get_micro_kitchen_details(self, obj):
+        if not obj.micro_kitchen:
+            return None
+        return {
+            'brand_name': obj.micro_kitchen.brand_name,
+            'cuisine_type': obj.micro_kitchen.cuisine_type,
+        }
+
+
 class UserMealSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
     meal_type_details = serializers.SerializerMethodField()

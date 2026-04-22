@@ -103,9 +103,6 @@ const SuggestPlanToPatientsPage: React.FC = () => {
       try {
         const patientsData = await getMyPatients();
         setPatients(patientsData);
-        if (patientsData.length > 0 && !selectedPatient) {
-          setSelectedPatient(patientsData[0]);
-        }
       } catch (err) {
         toast.error("Failed to load patients");
       } finally {
@@ -113,7 +110,7 @@ const SuggestPlanToPatientsPage: React.FC = () => {
       }
     };
     load();
-  }, []); // Only patients on mount. Plans/Kitchens are lazy-loaded.
+  }, []); // Only patient list on mount. Patient details load after manual selection.
 
   useEffect(() => {
     if (selectedPatient) {

@@ -5369,6 +5369,17 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         serializer = SuggestedPlansLiteSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='approved-plans-lite')
+    def approved_plans_lite(self, request):
+        """Lightweight paginated response for nutritionist approved-plans dashboard."""
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = ApprovedPlansLiteSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = ApprovedPlansLiteSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=["get"], url_path="kitchen-history")
     def kitchen_history(self, request):
         patient_id = request.query_params.get('user')

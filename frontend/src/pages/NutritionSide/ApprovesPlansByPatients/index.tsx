@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getApprovedPlansForNutritionist, PaginatedUserDietPlan } from "./api";
-import type { UserDietPlan } from "../SuggestPlanToPatients/api";
+import type { ApprovedPlanLite } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { 
     FiCheckCircle, FiUser, FiPackage, FiActivity, 
@@ -11,7 +11,7 @@ import {
 } from "react-icons/fi";
 
 const ApprovesPlansByPatientsPage: React.FC = () => {
-    const [plans, setPlans] = useState<UserDietPlan[]>([]);
+    const [plans, setPlans] = useState<ApprovedPlanLite[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>("all"); // Default to show all statuses
     const [expandedRows, setExpandedRows] = useState<number[]>([]);
