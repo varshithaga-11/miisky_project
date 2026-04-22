@@ -23,15 +23,48 @@ export type PatientFoodRecommendation = {
   recommended_on?: string;
 };
 
+export type PatientFoodRecommendationPage = {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: PatientFoodRecommendation[];
+};
+
 export { getMealTypeList };
 export type { MealType };
 
 export const fetchFoodRecommendationsForPatient = async (
-  patientUserId: number
-): Promise<PatientFoodRecommendation[]> => {
-  const url = createApiUrl(`api/patient-food-recommendation/?patient=${patientUserId}`);
-  const res = await axios.get<PatientFoodRecommendation[]>(url, { headers: await getAuthHeaders() });
-  return Array.isArray(res.data) ? res.data : [];
+  patientUserId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PatientFoodRecommendationPage> => {
+  const url = createApiUrl(
+    `api/patient-food-recommendation/?patient=${patientUserId}&page=${page}&limit=${limit}`
+  );
+  const res = await axios.get<PatientFoodRecommendationPage | PatientFoodRecommendation[]>(url, {
+    headers: await getAuthHeaders(),
+  });
+  if (Array.isArray(res.data)) {
+    const list = res.data;
+    return {
+      count: list.length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: list,
+    };
+  }
+  return {
+    count: res.data.count ?? 0,
+    next: res.data.next ?? null,
+    previous: res.data.previous ?? null,
+    current_page: res.data.current_page ?? page,
+    total_pages: res.data.total_pages ?? 1,
+    results: Array.isArray(res.data.results) ? res.data.results : [],
+  };
 };
 
 export const createFoodRecommendation = async (payload: {

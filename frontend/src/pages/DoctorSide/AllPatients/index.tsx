@@ -166,13 +166,28 @@ function QuestionnaireView({ data }: { data: any }) {
 
   const joinNames = (arr: unknown) =>
     Array.isArray(arr)
-      ? (arr as { name?: string; other_text?: string | null }[])
+      ? (
+          arr as {
+            name?: string;
+            other_text?: string | null;
+            frequency?: string | null;
+            since_when?: string | null;
+            duration_minutes?: number | null;
+            comments?: string | null;
+          }[]
+        )
           .map((x) => {
             const base = x?.name || "";
-            const o = x?.other_text?.trim();
-            if (!base && !o) return "";
-            if (o) return `${base} (${o})`;
-            return base;
+            const extras = [
+              x?.frequency?.trim() ? `frequency: ${x.frequency.trim()}` : "",
+              x?.since_when?.trim() ? `since: ${x.since_when.trim()}` : "",
+              x?.duration_minutes != null ? `duration: ${x.duration_minutes} mins` : "",
+              x?.other_text?.trim() || "",
+              x?.comments?.trim() ? `notes: ${x.comments.trim()}` : "",
+            ].filter(Boolean);
+            if (!base && extras.length === 0) return "";
+            if (base && extras.length > 0) return `${base} (${extras.join(", ")})`;
+            return base || extras.join(", ");
           })
           .filter(Boolean)
           .join(", ") || "—"
@@ -328,6 +343,11 @@ function QuestionnaireView({ data }: { data: any }) {
                             <div className="text-[10px] text-red-700/60 dark:text-red-400/50 uppercase tracking-wider font-semibold">
                               {c.category}
                             </div>
+                            {c.comments ? (
+                              <div className="mt-1 text-[11px] text-red-700 dark:text-red-300/90 font-medium normal-case">
+                                Notes: {c.comments}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                         {c.since_when && (

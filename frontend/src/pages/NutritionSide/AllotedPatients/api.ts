@@ -94,29 +94,33 @@ export const getPatientQuestionnaireByUser = async (userId: number) => {
   return exact || rows[0] || null;
 };
 
-export type MicroKitchenForDistance = {
+export type PatientKitchenDistanceRow = {
   id: number;
   brand_name: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  city: string | null;
+  distance_km: number | null;
 };
 
-type MicroKitchenListPage = {
-  results: MicroKitchenForDistance[];
-  next: number | null;
+type PatientKitchenDistanceResponse = {
+  patient_id: number;
+  patient_name: string;
+  patient_latitude: number | null;
+  patient_longitude: number | null;
+  count: number;
+  results: PatientKitchenDistanceRow[];
 };
 
-export const fetchAllApprovedMicroKitchens = async (): Promise<MicroKitchenForDistance[]> => {
-  const all: MicroKitchenForDistance[] = [];
-  let page = 1;
-  for (;;) {
-    const url = createApiUrl(`api/microkitchenprofile/?status=approved&page=${page}&limit=10`);
-    const response = await axios.get<MicroKitchenListPage>(url, { headers: await getAuthHeaders() });
-    const { results, next } = response.data;
-    all.push(...(results || []));
-    if (!next) break;
-    page = next;
-  }
-  return all;
+export const fetchPatientKitchenDistances = async (
+  patientUserId: number
+): Promise<PatientKitchenDistanceRow[]> => {
+  const url = createApiUrl(
+    `api/usernutritionistmapping/patient-kitchen-distances/?patient_id=${patientUserId}`
+  );
+  const response = await axios.get<PatientKitchenDistanceResponse>(url, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data.results || [];
 };
 

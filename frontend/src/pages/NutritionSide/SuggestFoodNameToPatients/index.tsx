@@ -26,6 +26,7 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
   const [selectedPatientId, setSelectedPatientId] = useState<number | undefined>(undefined);
   const [rows, setRows] = useState<PatientFoodRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rowsLoading, setRowsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [foodOptions, setFoodOptions] = useState<Option<number>[]>([]);
   const [selectedFoodId, setSelectedFoodId] = useState<number | undefined>(undefined);
@@ -37,6 +38,10 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
   const [comment, setComment] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
 
   const selectedPatient = useMemo(
@@ -80,9 +85,6 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
       try {
         const data = await getMyPatients();
         setPatients(data);
-        if (data.length && selectedPatientId === undefined) {
-          setSelectedPatientId(data[0].user.id);
-        }
       } catch {
         toast.error("Failed to load allotted patients.");
       } finally {
@@ -97,18 +99,32 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
   useEffect(() => {
     if (!selectedPatientId) {
       setRows([]);
+      setTotalItems(0);
+      setTotalPages(1);
       return;
     }
     const loadRows = async () => {
+      setRowsLoading(true);
       try {
-        const data = await fetchFoodRecommendationsForPatient(selectedPatientId);
-        setRows(data);
+        const data = await fetchFoodRecommendationsForPatient(
+          selectedPatientId,
+          currentPage,
+          rowsPerPage
+        );
+        setRows(data.results || []);
+        setTotalItems(data.count || 0);
+        setTotalPages(data.total_pages || 1);
       } catch {
         toast.error("Failed to load recommendations.");
+        setRows([]);
+        setTotalItems(0);
+        setTotalPages(1);
+      } finally {
+        setRowsLoading(false);
       }
     };
     void loadRows();
-  }, [selectedPatientId]);
+  }, [selectedPatientId, currentPage, rowsPerPage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +142,11 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
         notes: notes.trim() || null,
         comment: comment.trim() || null,
       });
-      setRows((prev) => [created, ...prev]);
+      setCurrentPage(1);
+      const data = await fetchFoodRecommendationsForPatient(selectedPatientId!, 1, rowsPerPage);
+      setRows(data.results || []);
+      setTotalItems(data.count || 0);
+      setTotalPages(data.total_pages || 1);
       setSelectedFoodId(undefined);
       setQuantity("");
       setSelectedMealTypeId(undefined);
@@ -157,7 +177,16 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
     setIsDeleting(true);
     try {
       await deleteFoodRecommendation(itemToDelete);
-      setRows((prev) => prev.filter((r) => r.id !== itemToDelete));
+      const targetPage = currentPage > 1 && rows.length === 1 ? currentPage - 1 : currentPage;
+      const data = await fetchFoodRecommendationsForPatient(
+        selectedPatientId!,
+        targetPage,
+        rowsPerPage
+      );
+      setCurrentPage(targetPage);
+      setRows(data.results || []);
+      setTotalItems(data.count || 0);
+      setTotalPages(data.total_pages || 1);
       toast.success("Removed.");
     } catch {
       toast.error("Could not remove.");
@@ -193,9 +222,13 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Patient</label>
                 <select
                   value={selectedPatientId ?? ""}
-                  onChange={(e) => setSelectedPatientId(Number(e.target.value) || undefined)}
+                  onChange={(e) => {
+                    setSelectedPatientId(Number(e.target.value) || undefined);
+                    setCurrentPage(1);
+                  }}
                   className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                 >
+                  <option value="">Select a patient</option>
                   {patients.map((p) => (
                     <option key={p.user.id} value={p.user.id}>
                       {`${p.user.first_name || ""} ${p.user.last_name || ""}`.trim() || p.user.email}
@@ -271,11 +304,28 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
       {selectedPatient && (
         <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
           <div className="border-b border-gray-100 px-4 py-3 dark:border-white/10">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Suggestions for{" "}
-              {`${selectedPatient.user.first_name || ""} ${selectedPatient.user.last_name || ""}`.trim() ||
-                selectedPatient.user.email}
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Suggestions for{" "}
+                {`${selectedPatient.user.first_name || ""} ${selectedPatient.user.last_name || ""}`.trim() ||
+                  selectedPatient.user.email}
+              </h2>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-300">Show</label>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value) || 10);
+                    setCurrentPage(1);
+                  }}
+                  className="h-8 rounded-lg border border-gray-300 bg-white px-2 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
           </div>
           <Table className="text-sm">
             <TableHeader>
@@ -301,7 +351,13 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 ? (
+              {rowsLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                    Loading suggestions...
+                  </TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
                     No food suggestions yet for this patient.
@@ -337,6 +393,35 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
               )}
             </TableBody>
           </Table>
+          {!rowsLoading && totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-white/10">
+              <p className="text-xs text-gray-500">
+                Showing {(currentPage - 1) * rowsPerPage + 1}-
+                {Math.min(currentPage * rowsPerPage, totalItems)} of {totalItems}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-xs text-gray-600 dark:text-gray-300">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
