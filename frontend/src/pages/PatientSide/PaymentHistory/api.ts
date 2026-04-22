@@ -13,6 +13,43 @@ export interface Transaction {
   originalData?: any;
 }
 
+interface MealOrderHistoryCard {
+  id: number;
+  created_at: string;
+  status: string;
+  order_type: string;
+  total_amount: number | string;
+  final_amount: number | string;
+  kitchen_details?: {
+    id: number;
+    brand_name: string;
+  } | null;
+}
+
+interface MealOrderHistoryDetailItem {
+  id: number;
+  quantity: number;
+  subtotal: number | string;
+  food_details?: {
+    id: number;
+    name: string;
+  } | null;
+}
+
+interface MealOrderHistoryDetail {
+  id: number;
+  created_at: string;
+  status: string;
+  order_type: string;
+  total_amount: number | string;
+  final_amount: number | string;
+  kitchen_details?: {
+    id: number;
+    brand_name: string;
+  } | null;
+  items?: MealOrderHistoryDetailItem[];
+}
+
 export interface PaymentPagination {
     count: number;
     results: Transaction[];
@@ -20,6 +57,11 @@ export interface PaymentPagination {
     total_pages: number;
     total_orders?: number;
     total_amount?: number;
+}
+
+export interface KitchenOption {
+  id: number;
+  brand_name: string | null;
 }
 
 /** 
@@ -70,7 +112,7 @@ export const getOrderHistory = async (params?: {
     limit?: number;
 }): Promise<PaymentPagination> => {
     try {
-      let url = createApiUrl("api/order/");
+      let url = createApiUrl("api/order/payment-history-cards/");
       const query = new URLSearchParams();
       if (params?.search) query.append("search", params.search);
       if (params?.period) query.append("period", params.period);
@@ -82,14 +124,23 @@ export const getOrderHistory = async (params?: {
       
       if (query.toString()) url += `?${query.toString()}`;
   
-      const response = await axios.get<PaymentPagination>(url, { 
+      const response = await axios.get<{
+        count?: number;
+        next?: number | null;
+        previous?: number | null;
+        current_page?: number;
+        total_pages?: number;
+        total_orders?: number;
+        total_amount?: number;
+        results?: MealOrderHistoryCard[];
+      }>(url, {
         headers: await getAuthHeaders() 
       });
   
       const results = response.data.results || [];
   
       const orderTransactions: Transaction[] = results.map((o: any) => ({
-          id: `order-${o.id}`,
+          id: o.id,
           date: o.created_at,
           amount: o.final_amount || o.total_amount,
           status: o.status === 'delivered' ? 'Paid' : o.status === 'cancelled' ? 'Cancelled' : 'Pending',
@@ -107,4 +158,20 @@ export const getOrderHistory = async (params?: {
       console.error("Error fetching order history:", error);
       throw error;
     }
+};
+
+export const getOrderHistoryDetail = async (orderId: number): Promise<MealOrderHistoryDetail> => {
+  const url = createApiUrl(`api/order/${orderId}/payment-history-detail/`);
+  const response = await axios.get<MealOrderHistoryDetail>(url, {
+    headers: await getAuthHeaders(),
+  });
+  return response.data;
+};
+
+export const getApprovedKitchenOptions = async (): Promise<KitchenOption[]> => {
+  const url = createApiUrl("api/microkitchenprofile/list_minimal/?status=approved");
+  const response = await axios.get<KitchenOption[]>(url, {
+    headers: await getAuthHeaders(),
+  });
+  return Array.isArray(response.data) ? response.data : [];
 };

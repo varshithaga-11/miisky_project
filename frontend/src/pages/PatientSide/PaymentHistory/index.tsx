@@ -8,8 +8,14 @@ import {
     FiShoppingBag, FiMapPin, FiTruck, FiX 
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { getDietPlanHistory, getOrderHistory, Transaction } from "./api";
-import { getApprovedMicroKitchens, MicroKitchenProfile } from "../../PatientSide/ListOfMicroKitchen/api";
+import {
+    getApprovedKitchenOptions,
+    getDietPlanHistory,
+    getOrderHistory,
+    getOrderHistoryDetail,
+    KitchenOption,
+    Transaction,
+} from "./api";
 import { useDebounce } from "../../../hooks/useDebounce";
 import Select from "../../../components/form/Select";
 import Button from "../../../components/ui/button/Button";
@@ -19,10 +25,11 @@ const PatientPaymentHistoryPage: React.FC = () => {
     const [viewType, setViewType] = useState<"diet_plans" | "meal_orders">("diet_plans");
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<Transaction | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
 
     // Data State
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
+    const [kitchens, setKitchens] = useState<KitchenOption[]>([]);
     const [stats, setStats] = useState({ total_records: 0, total_amount: 0 });
 
     // Filter states (mostly for Meal Orders)
@@ -48,8 +55,8 @@ const PatientPaymentHistoryPage: React.FC = () => {
         if (kitchensLoaded || fetchingKitchensRef.current) return;
         fetchingKitchensRef.current = true;
         try {
-            const data = await getApprovedMicroKitchens();
-            setKitchens(data.results || []);
+            const data = await getApprovedKitchenOptions();
+            setKitchens(data);
             setKitchensLoaded(true);
         } catch (e) { 
             console.error(e); 
@@ -142,6 +149,33 @@ const PatientPaymentHistoryPage: React.FC = () => {
         if (lowerStatus.includes('verified') || lowerStatus === 'paid' || lowerStatus === 'delivered') return <FiCheckCircle className="size-4" />;
         if (lowerStatus.includes('pending')) return <FiClock className="size-4" />;
         return <FiAlertCircle className="size-4" />;
+    };
+
+    const handleViewDetails = async (tx: Transaction) => {
+        setSelectedItem(tx);
+        if (tx.type !== "Meal Order") return;
+
+        const orderId = Number(tx.id);
+        if (!Number.isFinite(orderId)) return;
+
+        setDetailLoading(true);
+        try {
+            const detail = await getOrderHistoryDetail(orderId);
+            setSelectedItem((prev) => {
+                if (!prev || Number(prev.id) !== orderId) return prev;
+                return {
+                    ...prev,
+                    date: detail.created_at || prev.date,
+                    amount: detail.final_amount || detail.total_amount || prev.amount,
+                    originalData: detail,
+                };
+            });
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to load order details");
+        } finally {
+            setDetailLoading(false);
+        }
     };
 
     return (
@@ -318,7 +352,7 @@ const PatientPaymentHistoryPage: React.FC = () => {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <button 
-                                                    onClick={() => setSelectedItem(tx)}
+                                                    onClick={() => void handleViewDetails(tx)}
                                                     className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-700/50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-all flex items-center justify-center shadow-inner"
                                                     title="View Full Details"
                                                 >
@@ -417,7 +451,9 @@ const PatientPaymentHistoryPage: React.FC = () => {
                                 <div className="space-y-4 mb-10">
                                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 border-b border-gray-100 dark:border-white/5 pb-2">Breakdown</h3>
                                     <div className="bg-gray-50 dark:bg-gray-900/30 rounded-3xl p-6 space-y-4">
-                                        {selectedItem.type === "Meal Order" ? (
+                                        {selectedItem.type === "Meal Order" && detailLoading ? (
+                                            <div className="text-sm font-bold text-gray-500 dark:text-gray-300">Loading order details…</div>
+                                        ) : selectedItem.type === "Meal Order" ? (
                                             selectedItem.originalData?.items?.map((it: any) => (
                                                 <div key={it.id} className="flex justify-between items-center text-sm font-bold">
                                                     <span className="text-gray-500">{it.quantity}x {it.food_details?.name}</span>

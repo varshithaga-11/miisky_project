@@ -3225,6 +3225,72 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return None
 
 
+class OrderPaymentHistoryItemSerializer(serializers.ModelSerializer):
+    food_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'quantity', 'subtotal', 'food_details']
+
+    def get_food_details(self, obj):
+        if obj.food:
+            return {
+                'id': obj.food.id,
+                'name': obj.food.name,
+            }
+        return None
+
+
+class OrderPaymentHistoryCardSerializer(serializers.ModelSerializer):
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'created_at',
+            'status',
+            'order_type',
+            'total_amount',
+            'final_amount',
+            'kitchen_details',
+        ]
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+            }
+        return None
+
+
+class OrderPaymentHistoryDetailSerializer(serializers.ModelSerializer):
+    items = OrderPaymentHistoryItemSerializer(many=True, read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'created_at',
+            'status',
+            'order_type',
+            'total_amount',
+            'final_amount',
+            'kitchen_details',
+            'items',
+        ]
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            return {
+                'id': obj.micro_kitchen.id,
+                'brand_name': obj.micro_kitchen.brand_name,
+            }
+        return None
+
+
 class DeliveryChargeSlabSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryChargeSlab

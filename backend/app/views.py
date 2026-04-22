@@ -7912,6 +7912,32 @@ class OrderViewSet(viewsets.ModelViewSet):
             'total_amount': stats['total_amount'] or 0
         })
 
+    @action(detail=False, methods=['get'], url_path='payment-history-cards')
+    def payment_history_cards(self, request):
+        """Patient/consumer card list for payment history meal orders."""
+        queryset = self.filter_queryset(self.get_queryset())
+        from django.db.models import Sum, Count
+
+        stats = queryset.aggregate(
+            total_orders=Count('id'),
+            total_amount=Sum('final_amount')
+        )
+
+        paginator = WebsitePagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = OrderPaymentHistoryCardSerializer(page, many=True)
+        response = paginator.get_paginated_response(serializer.data)
+        response.data['total_orders'] = stats['total_orders'] or 0
+        response.data['total_amount'] = stats['total_amount'] or 0
+        return response
+
+    @action(detail=True, methods=['get'], url_path='payment-history-detail')
+    def payment_history_detail(self, request, pk=None):
+        """Meal-order modal detail payload for payment history."""
+        order = self.get_object()
+        serializer = OrderPaymentHistoryDetailSerializer(order)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path='payment-stats')
     def payment_stats(self, request):
         """Calculate summary stats (total count, total amount) for the filtered orders."""
