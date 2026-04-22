@@ -52,8 +52,10 @@ export type RecommendationDateFilterParams = {
 
 export type PatientFoodRecommendationListResponse = {
   count: number;
-  next: string | null;
-  previous: string | null;
+  next: number | null;
+  previous: number | null;
+  current_page?: number;
+  total_pages?: number;
   results: PatientFoodRecommendation[];
 };
 
@@ -69,8 +71,10 @@ export const fetchMyFoodRecommendationsFromNutrition = async (
     | PatientFoodRecommendation[]
     | {
         count?: number;
-        next?: string | null;
-        previous?: string | null;
+        next?: number | null;
+        previous?: number | null;
+        current_page?: number;
+        total_pages?: number;
         results?: PatientFoodRecommendation[];
       };
 
@@ -85,8 +89,10 @@ export const fetchMyFoodRecommendationsFromNutrition = async (
 
   return {
     count: data.count ?? 0,
-    next: data.next ?? null,
-    previous: data.previous ?? null,
+    next: typeof data.next === "number" ? data.next : null,
+    previous: typeof data.previous === "number" ? data.previous : null,
+    current_page: typeof data.current_page === "number" ? data.current_page : undefined,
+    total_pages: typeof data.total_pages === "number" ? data.total_pages : undefined,
     results: Array.isArray(data.results) ? data.results : [],
   };
 };

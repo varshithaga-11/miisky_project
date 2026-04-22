@@ -7154,7 +7154,7 @@ class NutritionistRatingViewSet(viewsets.ModelViewSet):
 
         # Patient "View Reviews" modal: enforce paginated response with max 5 reviews per page.
         if request.user.role == "patient" and nutritionist_id:
-            paginator = Pagination()
+            paginator = WebsitePagination()
             paginator.page_size = 5
             paginator.max_page_size = 5
             page = paginator.paginate_queryset(queryset, request, view=self)
@@ -7234,7 +7234,7 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
             return Response({'error': 'kitchen_id is required'}, status=400)
         
         qs = MicroKitchenRating.objects.filter(micro_kitchen_id=kitchen_id).select_related('user').order_by('-created_at')
-        paginator = Pagination()
+        paginator = WebsitePagination()
         paginator.page_size = 5
         paginator.max_page_size = 5
         page = paginator.paginate_queryset(qs, request, view=self)
@@ -11252,14 +11252,9 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
 class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
     """Nutritionists suggest foods from the FoodName catalog to allotted patients; patients read their list."""
 
-    class FoodRecommendationPagination(PageNumberPagination):
-        page_size = 10
-        page_size_query_param = "limit"
-        max_page_size = 10
-
     serializer_class = PatientFoodRecommendationSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = FoodRecommendationPagination
+    pagination_class = WebsitePagination
 
     def _apply_date_filters(self, qs):
         period = (self.request.query_params.get("period") or "all").strip()
