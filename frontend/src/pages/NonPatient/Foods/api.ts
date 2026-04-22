@@ -23,17 +23,50 @@ export interface MicroKitchenFoodItem {
   is_available: boolean;
 }
 
+export interface PaginatedMicroKitchenFoodResponse {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  current_page: number;
+  total_pages: number;
+  results: MicroKitchenFoodItem[];
+}
+
 export const getAvailableMicroKitchenFoods = async (
   microKitchenId?: string | number,
-  search?: string
-): Promise<MicroKitchenFoodItem[]> => {
+  search?: string,
+  page = 1,
+  limit = 20
+): Promise<PaginatedMicroKitchenFoodResponse> => {
   const params = new URLSearchParams();
   if (microKitchenId) params.append("micro_kitchen", String(microKitchenId));
   if (search) params.append("search", search);
+  params.append("page", String(page));
+  params.append("limit", String(limit));
   const query = params.toString();
   const url = createApiUrl(query ? `api/microkitchenfood/available/?${query}` : "api/microkitchenfood/available/");
-  const response = await axios.get<MicroKitchenFoodItem[]>(url, {
+  const response = await axios.get<PaginatedMicroKitchenFoodResponse | MicroKitchenFoodItem[]>(url, {
     headers: await getAuthHeaders(),
   });
-  return Array.isArray(response.data) ? response.data : [];
+  const data = response.data;
+
+  if (Array.isArray(data)) {
+    return {
+      count: data.length,
+      next: null,
+      previous: null,
+      current_page: 1,
+      total_pages: 1,
+      results: data,
+    };
+  }
+
+  return {
+    count: data.count ?? 0,
+    next: typeof data.next === "number" ? data.next : null,
+    previous: typeof data.previous === "number" ? data.previous : null,
+    current_page: data.current_page ?? page,
+    total_pages: data.total_pages ?? 1,
+    results: Array.isArray(data.results) ? data.results : [],
+  };
 };

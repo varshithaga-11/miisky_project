@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "react-router";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
@@ -11,7 +11,13 @@ import { FiSearch, FiLayers, FiMapPin, FiShoppingCart, FiCheckCircle, FiAlertCir
 import { motion, AnimatePresence } from "framer-motion";
 
 const NonPatientFoodsPage: React.FC = () => {
+    const PAGE_SIZE = 20;
     const [foods, setFoods] = useState<MicroKitchenFoodItem[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [hasNext, setHasNext] = useState(false);
+    const [hasPrevious, setHasPrevious] = useState(false);
     const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -69,16 +75,23 @@ const NonPatientFoodsPage: React.FC = () => {
 
     const hasLocation = userProfile?.latitude && userProfile?.longitude;
 
-    const fetchFoods = async () => {
+    const fetchFoods = async (page = 1) => {
         if (fetchingFoodsRef.current) return;
         fetchingFoodsRef.current = true;
         setLoading(true);
         try {
             const data = await getAvailableMicroKitchenFoods(
                 selectedKitchen === "all" ? undefined : selectedKitchen,
-                search || undefined
+                search || undefined,
+                page,
+                PAGE_SIZE
             );
-            setFoods(data);
+            setFoods(data.results);
+            setCurrentPage(data.current_page ?? page);
+            setTotalPages(data.total_pages ?? 1);
+            setTotalCount(data.count ?? 0);
+            setHasNext(Boolean(data.next));
+            setHasPrevious(Boolean(data.previous));
         } catch (error) {
             console.error(error);
             toast.error("Failed to load foods");
@@ -89,17 +102,43 @@ const NonPatientFoodsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchFoods();
+        fetchFoods(1);
         // Base profile load to allow distance sorting
         fetchProfile();
     }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchFoods();
+            fetchFoods(1);
         }, 300);
         return () => clearTimeout(timer);
     }, [search, selectedKitchen]);
+
+    const sortedFoods = useMemo(
+        () =>
+            [...foods].sort((a, b) => {
+                if (!userProfile?.latitude || !userProfile?.longitude) return 0;
+                const ka = kitchens.find((k) => k.id === a.micro_kitchen);
+                const kb = kitchens.find((k) => k.id === b.micro_kitchen);
+                if (!ka || !kb || ka.latitude === null || kb.latitude === null || ka.longitude === null || kb.longitude === null) {
+                    return 0;
+                }
+                const da = calculateDistance(
+                    Number(userProfile.latitude),
+                    Number(userProfile.longitude),
+                    Number(ka.latitude),
+                    Number(ka.longitude)
+                );
+                const db = calculateDistance(
+                    Number(userProfile.latitude),
+                    Number(userProfile.longitude),
+                    Number(kb.latitude),
+                    Number(kb.longitude)
+                );
+                return da - db;
+            }),
+        [foods, kitchens, userProfile]
+    );
 
     const getImageUrl = (path: string | undefined | null) => {
         if (!path) return "";
@@ -235,18 +274,9 @@ const NonPatientFoodsPage: React.FC = () => {
                         <p className="text-gray-400 mt-1 font-medium">Try adjusting your filters or search to discover available items.</p>
                     </div>
                 ) : (
+                    <>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                        {foods
-                          .sort((a, b) => {
-                            if (!userProfile?.latitude || !userProfile?.longitude) return 0;
-                            const ka = kitchens.find(k => k.id === a.micro_kitchen);
-                            const kb = kitchens.find(k => k.id === b.micro_kitchen);
-                            if (!ka || !kb || ka.latitude === null || kb.latitude === null || ka.longitude === null || kb.longitude === null) return 0;
-                            const da = calculateDistance(Number(userProfile.latitude), Number(userProfile.longitude), Number(ka.latitude), Number(ka.longitude));
-                            const db = calculateDistance(Number(userProfile.latitude), Number(userProfile.longitude), Number(kb.latitude), Number(kb.longitude));
-                            return da - db;
-                          })
-                          .map((item, idx) => (
+                        {sortedFoods.map((item, idx) => (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -316,6 +346,35 @@ const NonPatientFoodsPage: React.FC = () => {
                             </motion.div>
                         ))}
                     </div>
+                    {totalCount > 0 && (
+                        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-gray-800">
+                            <p className="text-gray-600 dark:text-gray-300">
+                                Showing {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => void fetchFoods(currentPage - 1)}
+                                    disabled={!hasPrevious || loading}
+                                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    Page {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => void fetchFoods(currentPage + 1)}
+                                    disabled={!hasNext || loading}
+                                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    </>
                 )}
             </div>
         </div>

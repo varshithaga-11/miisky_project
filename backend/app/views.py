@@ -2103,8 +2103,10 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
                 Q(micro_kitchen__brand_name__icontains=search)
             )
         qs = qs.order_by('micro_kitchen__brand_name', 'food__name')
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        paginator = WebsitePagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        serializer = self.get_serializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def get_queryset(self):
         user = self.request.user
