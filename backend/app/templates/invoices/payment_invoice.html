@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Payment Invoice</title>
+  </head>
+  <body>
+    <div class="invoice-shell">
+      <header class="invoice-header">
+        <div class="brand-block">
+          {% if logo_uri %}
+          <img src="{{ logo_uri }}" alt="Miisky logo" class="brand-logo" />
+          {% endif %}
+          <div class="brand-text">
+            <h1>{{ company_name }}</h1>
+            <p>{{ company_line }}</p>
+          </div>
+        </div>
+        <div class="invoice-meta">
+          <h2>INVOICE</h2>
+          <p><span>Invoice No:</span> {{ invoice_number }}</p>
+          <p><span>Date:</span> {{ invoice_date }}</p>
+        </div>
+      </header>
+
+      <section class="party-grid">
+        <div class="card">
+          <h3>Billed To</h3>
+          <p class="primary">{{ patient_name }}</p>
+          <p>{{ patient_email }}</p>
+        </div>
+        <div class="card">
+          <h3>Handled By</h3>
+          <p class="primary">{{ nutritionist_name }}</p>
+          <p>Payment verified on {{ verified_on }}</p>
+        </div>
+      </section>
+
+      <section class="line-items">
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Plan Code</th>
+              <th>Duration</th>
+              <th>Plan Start</th>
+              <th>Plan End</th>
+              <th class="right">Amount (INR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ plan_title }}</td>
+              <td>{{ plan_code }}</td>
+              <td>{{ plan_days }} days</td>
+              <td>{{ plan_start_date }}</td>
+              <td>{{ plan_end_date }}</td>
+              <td class="right">{{ amount_paid }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="summary-row">
+        <div class="transaction-card">
+          <p><span>Transaction ID:</span> {{ transaction_id }}</p>
+        </div>
+        <div class="total-card">
+          <p>Total Paid</p>
+          <h3>INR {{ amount_paid }}</h3>
+        </div>
+      </section>
+
+      <footer class="invoice-footer">
+        <p>This is a system-generated invoice for record purposes.</p>
+      </footer>
+    </div>
+  </body>
+</html>

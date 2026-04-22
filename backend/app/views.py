@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, get_object_or_404
+from django.template.loader import render_to_string
 from django.db.models import Avg, Count, DecimalField, Exists, F, Max, OuterRef, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
@@ -18,6 +19,8 @@ from django.contrib.auth.hashers import make_password
 import os
 import random
 import math
+import re
+from pathlib import Path
 from decimal import Decimal
 from rest_framework import status
 
@@ -31,6 +34,13 @@ from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 from .questionnaire_sync import sync_user_questionnaire_relations
 from website.pagination import WebsitePagination
+
+try:
+    from weasyprint import CSS, HTML
+except Exception:
+    CSS = None
+    HTML = None
+
 
 class Pagination(PageNumberPagination):
     page_query_param = "page"
@@ -90,6 +100,94 @@ def _notification_user_display(user):
 def _notification_patient_id_token(patient_id: int) -> str:
     """Embedded in health-upload bodies so clients can scope per-patient without DB metadata."""
     return f"__miisky_patient_id={patient_id}__"
+
+
+def _pdf_escape_text(value: str) -> str:
+    """Escape text so it is safe inside a basic PDF text object."""
+    return (
+        value.replace("\\", "\\\\")
+        .replace("(", "\\(")
+        .replace(")", "\\)")
+        .replace("\r", " ")
+        .replace("\n", " ")
+    )
+
+
+def _build_simple_pdf(title: str, lines: list[str]) -> bytes:
+    """Create a minimal single-page PDF without external dependencies."""
+    safe_title = _pdf_escape_text(title)
+    capped_lines = lines[:38]
+    if len(lines) > 38:
+        capped_lines[-1] = "..."
+
+    content_parts = [
+        "BT",
+        "/F1 14 Tf",
+        "50 800 Td",
+        f"({safe_title}) Tj",
+        "0 -24 Td",
+        "/F1 10 Tf",
+    ]
+    for raw_line in capped_lines:
+        content_parts.append(f"({_pdf_escape_text(str(raw_line))}) Tj")
+        content_parts.append("0 -16 Td")
+    content_parts.append("ET")
+    content_stream = "\n".join(content_parts).encode("latin-1", errors="replace")
+
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+            b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>"
+        ),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        (
+            b"<< /Length "
+            + str(len(content_stream)).encode("ascii")
+            + b" >>\nstream\n"
+            + content_stream
+            + b"\nendstream"
+        ),
+    ]
+
+    pdf_bytes = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+    offsets = [0]
+    for index, obj in enumerate(objects, start=1):
+        offsets.append(len(pdf_bytes))
+        pdf_bytes += f"{index} 0 obj\n".encode("ascii") + obj + b"\nendobj\n"
+
+    xref_start = len(pdf_bytes)
+    pdf_bytes += f"xref\n0 {len(objects) + 1}\n".encode("ascii")
+    pdf_bytes += b"0000000000 65535 f \n"
+    for offset in offsets[1:]:
+        pdf_bytes += f"{offset:010d} 00000 n \n".encode("ascii")
+    pdf_bytes += (
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+        f"startxref\n{xref_start}\n%%EOF"
+    ).encode("ascii")
+    return pdf_bytes
+
+
+def _safe_filename_component(value: str, fallback: str) -> str:
+    normalized = re.sub(r"[^A-Za-z0-9]+", "_", (value or "").strip())
+    normalized = re.sub(r"_+", "_", normalized).strip("_")
+    return normalized or fallback
+
+
+def _resolve_invoice_logo_uri() -> str | None:
+    repo_root = Path(settings.BASE_DIR).parent
+    candidates = [
+        Path(settings.BASE_DIR) / "app" / "static" / "invoices" / "miisky-logo.png",
+        repo_root / "frontend" / "public" / "miisky-logo.png",
+        repo_root / "frontend" / "public" / "images" / "logo" / "logo-dark.svg",
+        repo_root / "frontend" / "public" / "images" / "logo" / "logo.svg",
+        Path(settings.BASE_DIR) / "media" / "company_logo.png",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve().as_uri()
+    return None
 
 
 # Create your views here.
@@ -5385,6 +5483,91 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Only admin can reject payment."}, status=status.HTTP_403_FORBIDDEN)
         udp.reject_payment()
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='download-invoice')
+    def download_invoice(self, request, pk=None):
+        """Admin downloads PDF invoice for verified plan payment."""
+        udp = self.get_object()
+        if request.user.role != 'admin':
+            return Response({"detail": "Only admin can download invoices."}, status=status.HTTP_403_FORBIDDEN)
+        if udp.payment_status != 'verified':
+            return Response({"detail": "Invoice can only be downloaded for verified payments."}, status=status.HTTP_400_BAD_REQUEST)
+
+        patient_name = _notification_user_display(udp.user)
+        nutritionist_name = _notification_user_display(udp.nutritionist)
+        plan_title = udp.diet_plan.title if udp.diet_plan else "-"
+        plan_code = udp.diet_plan.code if udp.diet_plan else "-"
+        plan_days = str(udp.diet_plan.no_of_days) if udp.diet_plan and udp.diet_plan.no_of_days is not None else "-"
+        verified_on = timezone.localtime(udp.verified_on).strftime("%Y-%m-%d %H:%M") if udp.verified_on else "-"
+        invoice_date = timezone.localdate().strftime("%Y-%m-%d")
+        invoice_number = f"INV-UDP-{udp.pk:06d}"
+
+        amount_paid = udp.amount_paid
+        if amount_paid is None and udp.diet_plan:
+            amount_paid = udp.diet_plan.final_amount
+        amount_value = Decimal(str(amount_paid)) if amount_paid is not None else Decimal("0")
+        amount_text = f"{amount_value:,.2f}"
+        patient_email = getattr(udp.user, 'email', '-') or '-'
+        logo_uri = _resolve_invoice_logo_uri()
+
+        context = {
+            "company_name": "Miisky",
+            "company_line": "Health and nutrition services",
+            "invoice_number": invoice_number,
+            "invoice_date": invoice_date,
+            "patient_name": patient_name,
+            "patient_email": patient_email,
+            "nutritionist_name": nutritionist_name,
+            "plan_title": plan_title,
+            "plan_code": plan_code,
+            "plan_days": plan_days,
+            "plan_start_date": udp.start_date or "-",
+            "plan_end_date": udp.end_date or "-",
+            "transaction_id": udp.transaction_id or "-",
+            "verified_on": verified_on,
+            "amount_paid": amount_text,
+            "logo_uri": logo_uri,
+        }
+
+        pdf_content = None
+        if HTML is not None and CSS is not None:
+            try:
+                html_string = render_to_string("invoices/payment_invoice.html", context)
+                css_path = Path(settings.BASE_DIR) / "app" / "templates" / "invoices" / "payment_invoice.css"
+                stylesheets = [CSS(filename=str(css_path))] if css_path.exists() else []
+                pdf_content = HTML(string=html_string, base_url=str(Path(settings.BASE_DIR).parent)).write_pdf(
+                    stylesheets=stylesheets
+                )
+            except Exception:
+                pdf_content = None
+
+        if pdf_content is None:
+            fallback_lines = [
+                f"Invoice Number: {invoice_number}",
+                f"Issue Date: {invoice_date}",
+                "",
+                f"Patient: {patient_name}",
+                f"Patient Email: {patient_email}",
+                f"Nutritionist: {nutritionist_name}",
+                f"Plan: {plan_title}",
+                f"Plan Code: {plan_code}",
+                f"Plan Duration (days): {plan_days}",
+                f"Plan Start Date: {udp.start_date or '-'}",
+                f"Plan End Date: {udp.end_date or '-'}",
+                "",
+                f"Transaction ID: {udp.transaction_id or '-'}",
+                f"Amount Paid: INR {amount_text}",
+                f"Payment Verified On: {verified_on}",
+                "",
+                "Generated by Miisky Admin Panel",
+            ]
+            pdf_content = _build_simple_pdf("Payment Invoice", fallback_lines)
+
+        response = HttpResponse(pdf_content, content_type="application/pdf")
+        patient_filename = _safe_filename_component(patient_name, f"patient_{udp.pk}")
+        plan_filename = _safe_filename_component(plan_title, f"plan_{udp.pk}")
+        response["Content-Disposition"] = f'attachment; filename="{patient_filename}_{plan_filename}.pdf"'
+        return response
 
     @action(detail=True, methods=['post'], url_path='stop-plan')
     def stop_plan(self, request, pk=None):

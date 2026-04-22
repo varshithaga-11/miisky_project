@@ -91,3 +91,50 @@ export const updateDietPlan = async (id: number, data: Partial<UserDietPlanPayme
   const response = await axios.patch(url, data, { headers: await getAuthHeaders() });
   return response.data;
 };
+
+const parseFilenameFromDisposition = (contentDisposition?: string | null): string | null => {
+  if (!contentDisposition) return null;
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1].trim());
+
+  const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  if (filenameMatch?.[1]) return filenameMatch[1].trim();
+  return null;
+};
+
+const sanitizeFilenamePart = (value?: string | null, fallback = "value"): string => {
+  const cleaned = (value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return cleaned || fallback;
+};
+
+export const buildInvoiceFilename = (patientName?: string | null, planName?: string | null): string => {
+  const patientPart = sanitizeFilenamePart(patientName, "patient");
+  const planPart = sanitizeFilenamePart(planName, "plan");
+  return `${patientPart}_${planPart}.pdf`;
+};
+
+export const downloadInvoice = async (id: number, preferredFilename?: string): Promise<void> => {
+  const url = createApiUrl(`api/userdietplan/${id}/download-invoice/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    responseType: "blob",
+  });
+
+  const blob = new Blob([response.data], { type: "application/pdf" });
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+
+  const contentDisposition = response.headers?.["content-disposition"] as string | undefined;
+  const fallbackName = preferredFilename || `invoice-${id}.pdf`;
+  link.download = parseFilenameFromDisposition(contentDisposition) || fallbackName;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+};

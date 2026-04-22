@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getAllPaymentPlans, verifyPayment, rejectPayment, stopPlan, finishPlan, updateDietPlan, UserDietPlanPayment } from "./api";
+import { getAllPaymentPlans, verifyPayment, rejectPayment, stopPlan, finishPlan, updateDietPlan, downloadInvoice, buildInvoiceFilename, UserDietPlanPayment } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage, FiEdit, FiPower, FiFlag, FiCheckSquare } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage, FiEdit, FiPower, FiFlag, FiCheckSquare, FiDownload } from "react-icons/fi";
 
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -50,6 +50,7 @@ const PatientPaymentVerificationPage: React.FC = () => {
   const [plans, setPlans] = useState<UserDietPlanPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState<number | null>(null);
   const [verifyModal, setVerifyModal] = useState<UserDietPlanPayment | null>(null);
   const [rejectModal, setRejectModal] = useState<UserDietPlanPayment | null>(null);
   const [stopModal, setStopModal] = useState<UserDietPlanPayment | null>(null);
@@ -172,6 +173,20 @@ const PatientPaymentVerificationPage: React.FC = () => {
       toast.error(err?.response?.data?.detail || "Update failed");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleDownloadInvoice = async (plan: UserDietPlanPayment) => {
+    setInvoiceLoading(plan.id);
+    const patientName = `${plan.user_details?.first_name || ""} ${plan.user_details?.last_name || ""}`.trim();
+    const planName = plan.diet_plan_details?.title || "";
+    const preferredFilename = buildInvoiceFilename(patientName, planName);
+    try {
+      await downloadInvoice(plan.id, preferredFilename);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Invoice download failed");
+    } finally {
+      setInvoiceLoading(null);
     }
   };
 
@@ -436,6 +451,16 @@ const PatientPaymentVerificationPage: React.FC = () => {
                           </div>
                         ) : plan.payment_status === "verified" ? (
                           <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadInvoice(plan)}
+                              disabled={actionLoading !== null || invoiceLoading === plan.id}
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Download invoice PDF"
+                            >
+                              <FiDownload size={14} />
+                              {invoiceLoading === plan.id ? "Downloading..." : "Invoice"}
+                            </button>
                             <button
                               onClick={() => {
                                 setEditModal(plan);
