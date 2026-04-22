@@ -1948,6 +1948,7 @@ class UserNutritionistMappingSerializer(serializers.ModelSerializer):
 
 class PatientNutritionMappingSummarySerializer(serializers.ModelSerializer):
     nutritionist_name = serializers.SerializerMethodField()
+    nutritionist_id = serializers.SerializerMethodField()
     allotted_by_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
     is_mapped = serializers.BooleanField(source='is_patient_mapped', read_only=True)
@@ -1957,7 +1958,7 @@ class PatientNutritionMappingSummarySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'first_name', 'last_name',
             'email', 'mobile', 'created_by_name',
-            'nutritionist_name', 'allotted_by_name', 'is_mapped'
+            'nutritionist_id', 'nutritionist_name', 'allotted_by_name', 'is_mapped'
         ]
 
     def get_created_by_name(self, obj):
@@ -1972,6 +1973,12 @@ class PatientNutritionMappingSummarySerializer(serializers.ModelSerializer):
             m = mappings[0]
             return f"{m.nutritionist.first_name or ''} {m.nutritionist.last_name or ''}".strip() or m.nutritionist.username
         return "Not Assigned"
+
+    def get_nutritionist_id(self, obj):
+        mappings = getattr(obj, '_active_mappings', [])
+        if mappings:
+            return mappings[0].nutritionist_id
+        return None
 
     def get_allotted_by_name(self, obj):
         mappings = getattr(obj, '_active_mappings', [])

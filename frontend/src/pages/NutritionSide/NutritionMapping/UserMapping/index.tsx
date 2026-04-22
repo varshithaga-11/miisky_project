@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../../components/common/PageMeta";
@@ -7,9 +7,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
   getAllNutritionists,
-  getMappingSummary,
-  getUnmappedPatients,
-  getGroupedMappings,
+  getPatientMappingList,
   MappingRecord,
   SimpleUser,
 } from "./api";
@@ -24,10 +22,8 @@ const UserNutritionMappingPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
-  // Data for dependencies/dropdowns
-  const [unmappedPatients, setUnmappedPatients] = useState<SimpleUser[]>([]);
   const [nutritionists, setNutritionists] = useState<SimpleUser[]>([]);
-  const [mappings, setMappings] = useState<any[]>([]); // For reassign modal
+  const [nutritionistsLoaded, setNutritionistsLoaded] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,13 +35,29 @@ const UserNutritionMappingPage: React.FC = () => {
   const [mappingStatus, setMappingStatus] = useState<"all" | "mapped" | "unmapped">("all");
   const [selectedNutritionistId, setSelectedNutritionistId] = useState<string>("all");
 
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState<{
+    search: string;
+    allottedBy: string;
+    mapped: "all" | "mapped" | "unmapped";
+    nutritionistId: string;
+  }>({
+    search: "",
+    allottedBy: "",
+    mapped: "all",
+    nutritionistId: "all",
+  });
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  const loadNutritionists = useCallback(async () => {
+    if (nutritionistsLoaded) return;
+    try {
+      const nutsRes = await getAllNutritionists();
+      setNutritionists(nutsRes);
+      setNutritionistsLoaded(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load nutritionists");
+    }
+  }, [nutritionistsLoaded]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -53,13 +65,19 @@ const UserNutritionMappingPage: React.FC = () => {
       const params = {
         page: currentPage,
         limit: pageSize,
-        search: debouncedSearch,
-        mapping_status: mappingStatus !== "all" ? mappingStatus : undefined,
-        nutritionist_id: selectedNutritionistId !== "all" ? selectedNutritionistId : undefined,
-        allotted_by: allotmentFilter || undefined,
+        search: appliedFilters.search || undefined,
+        mapped:
+          appliedFilters.mapped === "all"
+            ? undefined
+            : appliedFilters.mapped === "mapped",
+        nutrition_id:
+          appliedFilters.nutritionistId !== "all"
+            ? Number(appliedFilters.nutritionistId)
+            : undefined,
+        allotted_by: appliedFilters.allottedBy || undefined,
       };
 
-      const res = await getMappingSummary(params);
+      const res = await getPatientMappingList(params);
       setRecords(res.results);
       setCount(res.count);
       setTotalPages(res.total_pages ?? Math.max(1, Math.ceil(res.count / pageSize)));
@@ -71,35 +89,21 @@ const UserNutritionMappingPage: React.FC = () => {
     }
   };
 
-  // Fetch initial data (nutritionists for filter, unmapped for assign modal, all mappings for reassign modal)
-  const fetchAuxiliaryData = async () => {
-     try {
-       const [nutsRes, unmappedRes, groupedRes] = await Promise.all([
-         getAllNutritionists(),
-         getUnmappedPatients(),
-         getGroupedMappings(),
-       ]);
-       setNutritionists(nutsRes);
-       setUnmappedPatients(unmappedRes);
-       setMappings(groupedRes);
-     } catch (err) {
-       console.error(err);
-     }
-  };
-
-  useEffect(() => {
-    fetchAuxiliaryData();
-  }, []);
-
-  // Fetch summary records when filters, page size, or page changes
+  // Fetch summary records when applied filters, page size, or page changes
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, debouncedSearch, mappingStatus, selectedNutritionistId, allotmentFilter]);
+  }, [currentPage, pageSize, appliedFilters]);
 
-  // Reset page to 1 when filters change (page size resets page in its select handler)
-  useEffect(() => {
+  const applyFilters = async () => {
+    await loadNutritionists();
     setCurrentPage(1);
-  }, [debouncedSearch, mappingStatus, selectedNutritionistId, allotmentFilter]);
+    setAppliedFilters({
+      search: searchTerm.trim(),
+      allottedBy: allotmentFilter.trim(),
+      mapped: mappingStatus,
+      nutritionistId: selectedNutritionistId,
+    });
+  };
 
   const handleAssignSuccess = () => {
     setIsModalOpen(false);
@@ -144,6 +148,14 @@ const UserNutritionMappingPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full xl:w-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 xl:flex-none inline-flex items-center justify-center gap-2"
+              onClick={() => void applyFilters()}
+            >
+              Filter
+            </Button>
             <Button size="sm" variant="outline" className="flex-1 xl:flex-none inline-flex items-center justify-center gap-2" onClick={() => setIsReassignOpen(true)}>
               <FiRefreshCw className="w-4 h-4" />
               Reassign
@@ -159,7 +171,15 @@ const UserNutritionMappingPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
           <select
             value={mappingStatus}
-            onChange={(e) => setMappingStatus(e.target.value as any)}
+            onChange={(e) => {
+              const value = e.target.value as "all" | "mapped" | "unmapped";
+              setMappingStatus(value);
+              setCurrentPage(1);
+              setAppliedFilters((prev) => ({
+                ...prev,
+                mapped: value,
+              }));
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
           >
             <option value="all">All Mapping Status</option>
@@ -169,7 +189,16 @@ const UserNutritionMappingPage: React.FC = () => {
 
           <select
             value={selectedNutritionistId}
-            onChange={(e) => setSelectedNutritionistId(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedNutritionistId(value);
+              setCurrentPage(1);
+              setAppliedFilters((prev) => ({
+                ...prev,
+                nutritionistId: value,
+              }));
+            }}
+            onFocus={() => void loadNutritionists()}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
           >
             <option value="all">Select Specific Nutritionist...</option>
@@ -215,6 +244,13 @@ const UserNutritionMappingPage: React.FC = () => {
                 setAllotmentFilter(""); 
                 setMappingStatus("all");
                 setSelectedNutritionistId("all");
+                setCurrentPage(1);
+                setAppliedFilters({
+                  search: "",
+                  allottedBy: "",
+                  mapped: "all",
+                  nutritionistId: "all",
+                });
               }}
               className="text-blue-600 hover:underline ml-2 text-xs"
             >
@@ -314,7 +350,6 @@ const UserNutritionMappingPage: React.FC = () => {
         <ReassignNutrition
           onClose={() => setIsReassignOpen(false)}
           onSuccess={handleReassignSuccess}
-          allotments={mappings}
         />
       )}
 
@@ -322,7 +357,6 @@ const UserNutritionMappingPage: React.FC = () => {
         <AssignNutritionistModal
           onClose={() => setIsModalOpen(false)}
           onAssign={handleAssignSuccess}
-          unmappedPatients={unmappedPatients}
         />
       )}
     </>

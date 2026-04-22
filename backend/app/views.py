@@ -2819,6 +2819,71 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
     def my_patients(self, request):
         return Response(_build_nutritionist_my_patients_list(request.user))
 
+    @action(detail=False, methods=["get"], url_path="patient-mapping-list")
+    def patient_mapping_list(self, request):
+        role = getattr(request.user, "role", None)
+        if role not in ("admin", "doctor", "nutritionist"):
+            return Response(
+                {"detail": "Forbidden."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = UserRegister.objects.filter(role="patient").select_related("created_by")
+
+        search = (
+            request.query_params.get("search")
+            or request.query_params.get("serach")
+            or ""
+        ).strip()
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(mobile__icontains=search)
+            )
+
+        mapped = (request.query_params.get("mapped") or "").strip().lower()
+        if mapped in ("true", "1", "yes"):
+            queryset = queryset.filter(is_patient_mapped=True)
+        elif mapped in ("false", "0", "no"):
+            queryset = queryset.filter(is_patient_mapped=False)
+
+        nutrition_id = (request.query_params.get("nutrition_id") or "").strip()
+        if nutrition_id:
+            queryset = queryset.filter(
+                nutrition_mappings__nutritionist_id=nutrition_id,
+                nutrition_mappings__is_active=True,
+            )
+
+        allotted_by = (request.query_params.get("allotted_by") or "").strip()
+        if allotted_by:
+            queryset = queryset.filter(
+                (
+                    Q(nutrition_mappings__allotted_by__username__icontains=allotted_by)
+                    | Q(nutrition_mappings__allotted_by__first_name__icontains=allotted_by)
+                    | Q(nutrition_mappings__allotted_by__last_name__icontains=allotted_by)
+                ),
+                nutrition_mappings__is_active=True,
+            )
+
+        active_mappings = UserNutritionistMapping.objects.filter(is_active=True).select_related(
+            "nutritionist", "allotted_by"
+        )
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                "nutrition_mappings",
+                queryset=active_mappings,
+                to_attr="_active_mappings",
+            )
+        ).distinct().order_by("username")
+
+        paginator = Pagination()
+        page_obj = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = PatientNutritionMappingSummarySerializer(page_obj, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
     @action(detail=False, methods=["get"], url_path="my-patients-lite")
     def my_patients_lite(self, request):
         if getattr(request.user, "role", None) != "nutritionist":

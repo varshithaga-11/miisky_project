@@ -118,6 +118,7 @@ export type MappingRecord = {
   email: string;
   mobile: string;
   created_by_name: string | null;
+  nutritionist_id: number | null;
   nutritionist_name: string;
   allotted_by_name: string;
   is_mapped: boolean;
@@ -138,6 +139,34 @@ export const getMappingSummary = async (params: MappingSummaryParams): Promise<P
   const response = await axios.get<PaginatedResponses<MappingRecord>>(url, {
     headers: await getAuthHeaders(),
     params,
+  });
+  return response.data;
+};
+
+export type PatientMappingListParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  mapped?: boolean;
+  nutrition_id?: number;
+  allotted_by?: string;
+};
+
+export const getPatientMappingList = async (
+  params: PatientMappingListParams
+): Promise<PaginatedResponses<MappingRecord>> => {
+  const queryParams = {
+    page: params.page,
+    limit: params.limit,
+    search: params.search || undefined,
+    mapped: params.mapped === undefined ? undefined : String(params.mapped),
+    nutrition_id: params.nutrition_id,
+    allotted_by: params.allotted_by || undefined,
+  };
+  const url = createApiUrl("api/usernutritionistmapping/patient-mapping-list/");
+  const response = await axios.get<PaginatedResponses<MappingRecord>>(url, {
+    headers: await getAuthHeaders(),
+    params: queryParams,
   });
   return response.data;
 };

@@ -4,39 +4,62 @@ import Button from "../../../../components/ui/button/Button";
 import SearchableSelect from "../../../../components/form/SearchableSelect";
 import Label from "../../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
-import { createUserNutritionMapping, getAllNutritionists, SimpleUser, UserNutritionMapping } from "./api";
+import {
+  createUserNutritionMapping,
+  getAllNutritionists,
+  getPatientMappingList,
+  SimpleUser,
+  UserNutritionMapping,
+} from "./api";
 
 interface Props {
   onClose: () => void;
   onAssign: (mapping: UserNutritionMapping) => void;
-  unmappedPatients: SimpleUser[];
 }
 
 const AssignNutritionistModal: React.FC<Props> = ({
   onClose,
   onAssign,
-  unmappedPatients,
 }) => {
   const [loading, setLoading] = useState(false);
   const [fetchingNuts, setFetchingNuts] = useState(false);
+  const [fetchingPatients, setFetchingPatients] = useState(false);
   const [nutritionists, setNutritionists] = useState<SimpleUser[]>([]);
+  const [unmappedPatients, setUnmappedPatients] = useState<SimpleUser[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<number | undefined>(undefined);
   const [selectedNutritionistId, setSelectedNutritionistId] = useState<number | undefined>(undefined);
 
   React.useEffect(() => {
-    const fetchNuts = async () => {
+    const fetchData = async () => {
       setFetchingNuts(true);
+      setFetchingPatients(true);
       try {
-        const data = await getAllNutritionists();
-        setNutritionists(data);
+        const [nuts, patients] = await Promise.all([
+          getAllNutritionists(),
+          getPatientMappingList({ mapped: false, page: 1, limit: 10 }),
+        ]);
+        setNutritionists(nuts);
+        setUnmappedPatients(
+          (patients.results || []).map((row) => ({
+            id: row.id,
+            username: row.username,
+            first_name: row.first_name,
+            last_name: row.last_name,
+            email: row.email,
+            mobile: row.mobile,
+            role: "patient",
+            is_patient_mapped: row.is_mapped,
+          }))
+        );
       } catch (err) {
         console.error(err);
-        toast.error("Failed to load nutritionists");
+        toast.error("Failed to load assign data");
       } finally {
         setFetchingNuts(false);
+        setFetchingPatients(false);
       }
     };
-    fetchNuts();
+    fetchData();
   }, []);
 
 
@@ -92,9 +115,11 @@ const AssignNutritionistModal: React.FC<Props> = ({
                 value: n.id,
                 label: `${n.first_name || ""} ${n.last_name || ""} (${n.username})`,
               }))}
-              placeholder={fetchingNuts ? "Loading nutritionists..." : "Select Nutritionist"}
+              placeholder={
+                fetchingNuts || fetchingPatients ? "Loading nutritionists..." : "Select Nutritionist"
+              }
               className="w-full"
-              disabled={fetchingNuts}
+              disabled={fetchingNuts || fetchingPatients}
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">

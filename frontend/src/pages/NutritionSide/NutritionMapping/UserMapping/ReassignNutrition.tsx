@@ -8,6 +8,8 @@ import {
   REASSIGN_REASONS,
   reassignNutritionist,
   getAllNutritionists,
+  getPatientMappingList,
+  MappingRecord,
   SimpleUser,
 } from "./api";
 import DatePicker2 from "../../../../components/form/date-picker2";
@@ -15,7 +17,6 @@ import DatePicker2 from "../../../../components/form/date-picker2";
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
-  allotments: { nutritionist: SimpleUser; patients: SimpleUser[] }[];
 }
 
 const labelForUser = (u: SimpleUser) =>
@@ -26,27 +27,34 @@ const labelForUser = (u: SimpleUser) =>
 const ReassignNutrition: React.FC<Props> = ({
   onClose,
   onSuccess,
-  allotments,
 }) => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fetchingNuts, setFetchingNuts] = useState(false);
+  const [fetchingPatients, setFetchingPatients] = useState(false);
   const [nutritionists, setNutritionists] = useState<SimpleUser[]>([]);
+  const [mappedPatients, setMappedPatients] = useState<MappingRecord[]>([]);
 
   React.useEffect(() => {
-    const fetchNuts = async () => {
+    const fetchData = async () => {
       setFetchingNuts(true);
+      setFetchingPatients(true);
       try {
-        const data = await getAllNutritionists();
+        const [data, mapped] = await Promise.all([
+          getAllNutritionists(),
+          getPatientMappingList({ mapped: true, page: 1, limit: 10 }),
+        ]);
         setNutritionists(data);
+        setMappedPatients(mapped.results || []);
       } catch (err) {
         console.error(err);
-        toast.error("Failed to load nutritionists");
+        toast.error("Failed to load reassign data");
       } finally {
         setFetchingNuts(false);
+        setFetchingPatients(false);
       }
     };
-    fetchNuts();
+    fetchData();
   }, []);
 
 
@@ -60,36 +68,35 @@ const ReassignNutrition: React.FC<Props> = ({
 
   const usersById = useMemo(() => {
     const m: Record<number, SimpleUser> = {};
-    allotments.forEach((allot) => {
-      m[allot.nutritionist.id] = allot.nutritionist;
-      allot.patients.forEach((p) => {
-        m[p.id] = p;
-      });
-    });
-    // Also include nutritionists from the full list
     nutritionists.forEach((n) => {
       m[n.id] = n;
     });
     return m;
-  }, [allotments, nutritionists]);
+  }, [nutritionists]);
 
   const patientToNutritionistIdMap = useMemo(() => {
     const m: Record<number, number> = {};
-    allotments.forEach((allot) => {
-      allot.patients.forEach((p) => {
-        m[p.id] = allot.nutritionist.id;
-      });
+    mappedPatients.forEach((p) => {
+      if (p.nutritionist_id) {
+        m[p.id] = p.nutritionist_id;
+      }
     });
     return m;
-  }, [allotments]);
+  }, [mappedPatients]);
 
   const mappedPatientOptions = useMemo(() => {
-    const patients: SimpleUser[] = [];
-    allotments.forEach((allot) => {
-      patients.push(...allot.patients);
-    });
+    const patients: SimpleUser[] = mappedPatients.map((p) => ({
+      id: p.id,
+      username: p.username,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      email: p.email,
+      mobile: p.mobile,
+      role: "patient",
+      is_patient_mapped: p.is_mapped,
+    }));
     return patients.sort((a, b) => labelForUser(a).localeCompare(labelForUser(b)));
-  }, [allotments]);
+  }, [mappedPatients]);
 
   const currentNutritionistId = patientId ? patientToNutritionistIdMap[patientId] : undefined;
   const currentNutritionist = currentNutritionistId ? usersById[currentNutritionistId] : undefined;
@@ -213,9 +220,11 @@ const ReassignNutrition: React.FC<Props> = ({
                     value: n.id,
                     label: labelForUser(n),
                   }))}
-                  placeholder={fetchingNuts ? "Loading nutritionists..." : "Select nutritionist"}
+                  placeholder={
+                    fetchingNuts || fetchingPatients ? "Loading nutritionists..." : "Select nutritionist"
+                  }
                   className="w-full"
-                  disabled={fetchingNuts}
+                  disabled={fetchingNuts || fetchingPatients}
                 />
               </div>
             </>
