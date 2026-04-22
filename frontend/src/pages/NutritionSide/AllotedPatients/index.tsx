@@ -8,14 +8,13 @@ import {
   AllotedPatient,
   getMyAllotedPatientsLite,
   getPatientQuestionnaireByUser,
-  fetchAllApprovedMicroKitchens,
-  MicroKitchenForDistance,
+  fetchPatientKitchenDistances,
+  PatientKitchenDistanceRow,
 } from "./api";
 import InputField from "../../../components/form/input/InputField";
 import { UserCircleIcon, GroupIcon } from "../../../icons";
 import { FiMapPin, FiActivity, FiUser, FiHeart, FiInfo, FiNavigation2, FiX, FiChevronLeft, FiChevronRight, FiEye } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { haversineKm } from "../../../utils/haversineKm";
 
 const AllottedPatientsPage: React.FC = () => {
   const [patients, setPatients] = useState<AllotedPatient[]>([]);
@@ -26,7 +25,7 @@ const AllottedPatientsPage: React.FC = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [distanceModalPatient, setDistanceModalPatient] = useState<AllotedPatient | null>(null);
-  const [microKitchens, setMicroKitchens] = useState<MicroKitchenForDistance[] | null>(null);
+  const [distanceRows, setDistanceRows] = useState<PatientKitchenDistanceRow[] | null>(null);
   const [kitchensLoading, setKitchensLoading] = useState(false);
   const [kitchensFetchError, setKitchensFetchError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -76,17 +75,31 @@ const AllottedPatientsPage: React.FC = () => {
     return null;
   };
 
-  const loadMicroKitchens = async () => {
+  const getConditionDetails = (item: unknown) => {
+    if (!item || typeof item !== "object") return "";
+    const condition = item as {
+      since_when?: string | null;
+      comments?: string | null;
+      category?: string | null;
+    };
+    const parts: string[] = [];
+    if (condition.category) parts.push(condition.category);
+    if (condition.since_when) parts.push(`since ${condition.since_when}`);
+    if (condition.comments) parts.push(condition.comments);
+    return parts.join(" | ");
+  };
+
+  const loadPatientKitchenDistances = async (patientUserId: number) => {
     setKitchensLoading(true);
     setKitchensFetchError(false);
     try {
-      const list = await fetchAllApprovedMicroKitchens();
-      setMicroKitchens(list);
+      const rows = await fetchPatientKitchenDistances(patientUserId);
+      setDistanceRows(rows);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to load micro kitchens");
+      toast.error("Failed to load distances");
       setKitchensFetchError(true);
-      setMicroKitchens(null);
+      setDistanceRows(null);
     } finally {
       setKitchensLoading(false);
     }
@@ -94,44 +107,11 @@ const AllottedPatientsPage: React.FC = () => {
 
   const openDistanceModal = async (p: AllotedPatient) => {
     setDistanceModalPatient(p);
-    if (microKitchens !== null) return;
-    await loadMicroKitchens();
+    setDistanceRows(null);
+    await loadPatientKitchenDistances(p.user.id);
   };
 
   const closeDistanceModal = () => setDistanceModalPatient(null);
-
-  const distanceRows = useMemo(() => {
-    if (!distanceModalPatient || microKitchens === null) return [];
-    const plat = distanceModalPatient.user.latitude;
-    const plng = distanceModalPatient.user.longitude;
-    const patientOk =
-      plat != null &&
-      plng != null &&
-      !Number.isNaN(Number(plat)) &&
-      !Number.isNaN(Number(plng));
-
-    return microKitchens
-      .map((k) => {
-        const klat = k.latitude;
-        const klng = k.longitude;
-        const kitchenOk =
-          klat != null &&
-          klng != null &&
-          !Number.isNaN(Number(klat)) &&
-          !Number.isNaN(Number(klng));
-        let km: number | null = null;
-        if (patientOk && kitchenOk) {
-          km = haversineKm(Number(plat), Number(plng), Number(klat), Number(klng));
-        }
-        return { kitchen: k, km };
-      })
-      .sort((a, b) => {
-        if (a.km === null && b.km === null) return (a.kitchen.brand_name || "").localeCompare(b.kitchen.brand_name || "");
-        if (a.km === null) return 1;
-        if (b.km === null) return -1;
-        return a.km - b.km;
-      });
-  }, [distanceModalPatient, microKitchens]);
 
   const toggleRow = async (userId: number) => {
     if (expandedRows.includes(userId)) {
@@ -445,15 +425,24 @@ const AllottedPatientsPage: React.FC = () => {
                                         <div className="space-y-4">
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Medical Conditions & Risks</span>
                                            <div className="flex flex-wrap gap-2">
-                                              {Array.isArray(p.questionnaire?.health_conditions) && p.questionnaire.health_conditions.length > 0 &&
-                                                p.questionnaire.health_conditions.map((h: unknown) => {
+                                              {Array.isArray(p.questionnaire?.health_conditions) &&
+                                                p.questionnaire.health_conditions
+                                                  .filter((h: unknown) => !(h && typeof h === "object") || Boolean((h as { has_condition?: boolean }).has_condition))
+                                                  .map((h: unknown) => {
                                                    const label = typeof h === "string" ? h : String((h as { name?: string }).name || "");
+                                                   const details = getConditionDetails(h);
+                                                   if (!label) return null;
                                                    return (
                                                    <span key={label} className="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-xl text-[9px] font-black uppercase border border-rose-100/50 dark:border-rose-900/20">
                                                       {label.replace('_', ' ')}
+                                                      {details ? ` (${details})` : ""}
                                                    </span>
                                                 );})
                                               }
+                                              {(!Array.isArray(p.questionnaire?.health_conditions) ||
+                                                p.questionnaire.health_conditions.filter((h: unknown) => !(h && typeof h === "object") || Boolean((h as { has_condition?: boolean }).has_condition)).length === 0) && (
+                                                <span className="text-[10px] italic text-gray-400">No active conditions reported</span>
+                                              )}
                                            </div>
 
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Symptoms & Vulnerabilities</span>
@@ -498,40 +487,78 @@ const AllottedPatientsPage: React.FC = () => {
                                                     </span>
                                                   );
                                                 })}
+                                              {Array.isArray(p.questionnaire?.autoimmune_diseases) &&
+                                                p.questionnaire.autoimmune_diseases.map((d: unknown, idx: number) => {
+                                                  const label = extractLabel(d);
+                                                  if (!label) return null;
+                                                  return (
+                                                    <span key={`auto-${idx}-${label}`} className="px-3 py-1.5 bg-fuchsia-50 dark:bg-fuchsia-900/10 text-fuchsia-700 dark:text-fuchsia-300 rounded-xl text-[9px] font-black uppercase">
+                                                       Auto: {label.replace('_', ' ')}
+                                                    </span>
+                                                  );
+                                                })}
                                            </div>
 
                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pt-4">Activities &amp; habits</span>
                                            <div className="flex flex-wrap gap-2">
                                               {Array.isArray(p.questionnaire?.physical_activities) &&
                                                 p.questionnaire.physical_activities.map(
-                                                  (a: { name?: string; other_text?: string | null }, i: number) => {
+                                                  (
+                                                    a: {
+                                                      name?: string;
+                                                      other_text?: string | null;
+                                                      frequency?: string | null;
+                                                      duration_minutes?: number | null;
+                                                      comments?: string | null;
+                                                    },
+                                                    i: number
+                                                  ) => {
                                                     if (!a?.name) return null;
-                                                    const extra = a.other_text?.trim();
+                                                    const extras = [
+                                                      a.frequency ? `freq: ${a.frequency}` : "",
+                                                      a.duration_minutes != null ? `${a.duration_minutes} mins` : "",
+                                                      a.other_text?.trim() || "",
+                                                      a.comments?.trim() || "",
+                                                    ].filter(Boolean);
                                                     return (
                                                       <span
                                                         key={`pa-${i}-${a.name}`}
                                                         className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase"
-                                                        title={extra || undefined}
+                                                        title={extras.join(" | ") || undefined}
                                                       >
                                                         {a.name}
-                                                        {extra ? `: ${extra}` : ""}
+                                                        {extras.length > 0 ? `: ${extras.join(", ")}` : ""}
                                                       </span>
                                                     );
                                                   }
                                                 )}
                                               {Array.isArray(p.questionnaire?.habits) &&
                                                 p.questionnaire.habits.map(
-                                                  (h: { name?: string; other_text?: string | null }, i: number) => {
+                                                  (
+                                                    h: {
+                                                      name?: string;
+                                                      other_text?: string | null;
+                                                      frequency?: string | null;
+                                                      since_when?: string | null;
+                                                      comments?: string | null;
+                                                    },
+                                                    i: number
+                                                  ) => {
                                                     if (!h?.name) return null;
-                                                    const extra = h.other_text?.trim();
+                                                    const extras = [
+                                                      h.frequency ? `freq: ${h.frequency}` : "",
+                                                      h.since_when ? `since: ${h.since_when}` : "",
+                                                      h.other_text?.trim() || "",
+                                                      h.comments?.trim() || "",
+                                                    ].filter(Boolean);
                                                     return (
                                                       <span
                                                         key={`hab-${i}-${h.name}`}
                                                         className="px-3 py-1.5 bg-gray-800 text-white rounded-xl text-[9px] font-black uppercase"
-                                                        title={extra || undefined}
+                                                        title={extras.join(" | ") || undefined}
                                                       >
                                                         Habit: {h.name}
-                                                        {extra ? `: ${extra}` : ""}
+                                                        {extras.length > 0 ? `: ${extras.join(", ")}` : ""}
                                                       </span>
                                                     );
                                                   }
@@ -730,7 +757,11 @@ const AllottedPatientsPage: React.FC = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-300">Could not load micro kitchens.</p>
                     <button
                       type="button"
-                      onClick={() => loadMicroKitchens()}
+                      onClick={() => {
+                        if (distanceModalPatient) {
+                          void loadPatientKitchenDistances(distanceModalPatient.user.id);
+                        }
+                      }}
                       className="rounded-xl bg-brand-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-brand-600"
                     >
                       Retry
@@ -747,28 +778,28 @@ const AllottedPatientsPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {distanceRows.length === 0 ? (
+                        {!distanceRows || distanceRows.length === 0 ? (
                           <tr>
                             <td colSpan={3} className="px-4 py-10 text-center text-gray-500 italic">
                               No approved micro kitchens found.
                             </td>
                           </tr>
                         ) : (
-                          distanceRows.map(({ kitchen, km }) => (
+                          distanceRows.map((row) => (
                             <tr
-                              key={kitchen.id}
+                              key={row.id}
                               className="border-b border-gray-50 last:border-0 dark:border-white/[0.04]"
                             >
                               <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
-                                {kitchen.brand_name || `Kitchen #${kitchen.id}`}
+                                {row.brand_name || `Kitchen #${row.id}`}
                               </td>
                               <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                {kitchen.latitude != null && kitchen.longitude != null
-                                  ? `${Number(kitchen.latitude).toFixed(5)}, ${Number(kitchen.longitude).toFixed(5)}`
+                                {row.latitude != null && row.longitude != null
+                                  ? `${Number(row.latitude).toFixed(5)}, ${Number(row.longitude).toFixed(5)}`
                                   : "—"}
                               </td>
                               <td className="px-4 py-3 text-end font-black text-indigo-600 dark:text-indigo-400">
-                                {km !== null ? `${km.toFixed(2)} km` : "—"}
+                                {row.distance_km !== null ? `${row.distance_km.toFixed(2)} km` : "—"}
                               </td>
                             </tr>
                           ))

@@ -35,7 +35,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
     const [searchInput, setSearchInput] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [page, setPage] = useState(1);
-    /** When set, load detail for this patient; when null, server uses first patient on the current page. */
+    /** Explicitly selected patient; null means "no patient selected". */
     const [explicitPatientId, setExplicitPatientId] = useState<number | null>(null);
 
     const [dashboard, setDashboard] = useState<ClinicalReviewDashboardResponse | null>(null);
@@ -78,9 +78,8 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
     }, [loadDashboard]);
 
     const patients = dashboard?.results ?? [];
-    /** While a fetch is in flight after a click, keep highlighting / header aligned with intent. */
-    const effectiveUserId =
-        explicitPatientId ?? dashboard?.selected_user_id ?? null;
+    /** Patient must be explicitly selected by user; do not default to first patient. */
+    const effectiveUserId = explicitPatientId;
     const selectedPatient: ClinicalReviewPatientRow | null =
         effectiveUserId != null
             ? patients.find((m) => m.user.id === effectiveUserId) ?? null

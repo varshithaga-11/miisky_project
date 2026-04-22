@@ -2773,6 +2773,86 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
             }
         )
 
+    @action(detail=False, methods=["get"], url_path="patient-kitchen-distances")
+    def patient_kitchen_distances(self, request):
+        role = getattr(request.user, "role", None)
+        if role not in ("nutritionist", "admin"):
+            return Response(
+                {"detail": "Nutritionists or admins only."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        patient_id_raw = (
+            request.query_params.get("patient_id")
+            or request.query_params.get("user")
+            or ""
+        )
+        try:
+            patient_id = int(patient_id_raw)
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Valid patient_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if role == "nutritionist":
+            allowed_patient_ids = set(_build_nutritionist_patient_map(request.user).keys())
+            if patient_id not in allowed_patient_ids:
+                return Response(
+                    {"detail": "Not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        patient = UserRegister.objects.filter(id=patient_id).first()
+        if not patient:
+            return Response(
+                {"detail": "Patient not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        p_lat = getattr(patient, "latitude", None)
+        p_lng = getattr(patient, "longitude", None)
+        kitchens = (
+            MicroKitchenProfile.objects.select_related("user", "user__city")
+            .filter(status="approved")
+            .order_by("brand_name", "id")
+        )
+
+        rows = []
+        for kitchen in kitchens:
+            k_lat = getattr(kitchen.user, "latitude", None) if kitchen.user else None
+            k_lng = getattr(kitchen.user, "longitude", None) if kitchen.user else None
+            dist_km = _haversine_km(p_lat, p_lng, k_lat, k_lng)
+            rows.append(
+                {
+                    "id": kitchen.id,
+                    "brand_name": kitchen.brand_name or (kitchen.user.username if kitchen.user else None),
+                    "latitude": k_lat,
+                    "longitude": k_lng,
+                    "city": kitchen.user.city.name if kitchen.user and kitchen.user.city else None,
+                    "distance_km": round(dist_km, 2) if dist_km is not None else None,
+                }
+            )
+
+        rows.sort(
+            key=lambda x: (
+                x["distance_km"] is None,
+                x["distance_km"] if x["distance_km"] is not None else float("inf"),
+                (x["brand_name"] or "").lower(),
+            )
+        )
+
+        return Response(
+            {
+                "patient_id": patient.id,
+                "patient_name": f"{patient.first_name or ''} {patient.last_name or ''}".strip() or patient.username,
+                "patient_latitude": p_lat,
+                "patient_longitude": p_lng,
+                "count": len(rows),
+                "results": rows,
+            }
+        )
+
     @action(detail=False, methods=["get"], url_path="my-patients-questionnaires")
     def my_patients_questionnaires(self, request):
         if getattr(request.user, "role", None) != "nutritionist":

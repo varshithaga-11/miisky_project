@@ -936,7 +936,7 @@ const MasterSidebar: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex-1 min-h-0 flex flex-col overflow-y-auto duration-300 ease-linear">
         <nav className="mb-6">
           <h2
             className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
