@@ -9,4 +9,7 @@ declare module 'swiper/css/free-mode';
 declare module 'swiper/css/grid';
 declare module 'swiper/css/autoplay';
 declare module 'swiper/css/bundle';
+
+declare const __API_URL__: string;
+
 export {};

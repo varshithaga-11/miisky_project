@@ -43,6 +43,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://api.miisky.com",
+    "https://web.miisky.com",
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -73,6 +74,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'backend.middleware.PrivateNetworkAccessMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -147,7 +149,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://15.206.151.207:8000",
     "https://api.miisky.com",
     "http://api.miisky.com",
-
+    "https://web.miisky.com",
 ]
 
 
