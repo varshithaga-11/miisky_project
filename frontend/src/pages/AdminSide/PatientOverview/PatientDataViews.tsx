@@ -1409,7 +1409,7 @@ export function DisplaySupportTickets({ items }: { items: any[] }) {
            initial={{ opacity: 0, y: 10 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: idx * 0.05 }}
-           className="group bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-4 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all"
+           className="group bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-4 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all shadow-sm hover:shadow-md"
         >
            <div className="flex items-start justify-between gap-4 mb-3">
               <div className="flex-1 min-w-0">
@@ -1430,11 +1430,31 @@ export function DisplaySupportTickets({ items }: { items: any[] }) {
            
            <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">{t.description}</p>
            
-           <div className="flex items-center justify-between">
+           <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
                  <FiMessageSquare size={12} className="text-indigo-400" /> {t.category_details?.name || 'General Support'}
               </div>
               <p className="text-[10px] text-gray-400 font-medium">Updated: {new Date(t.updated_at || t.created_at).toLocaleDateString()}</p>
+           </div>
+
+           <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                    <FiUser size={14} />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
+                       {t.assigned_to_details ? `${t.assigned_to_details.first_name || ''} ${t.assigned_to_details.last_name || ''}`.trim() || t.assigned_to_details.username : 'Unassigned'}
+                    </p>
+                    <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest leading-none">
+                       {t.assigned_to_details ? t.assigned_to_details.role : 'Waiting for Assignment'}
+                    </p>
+                 </div>
+              </div>
+              <div className="text-right">
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">Sent To</p>
+                 <p className="text-[10px] font-black text-gray-600 dark:text-gray-300 uppercase leading-none">{t.target_user_type || 'Admin'}</p>
+              </div>
            </div>
         </motion.div>
       ))}
