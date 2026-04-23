@@ -74,6 +74,7 @@ const adminNavItems: NavItem[] = [
       { name: "Skin issues", path: "/admin/skin-issue-master" },
       { name: "Lifestyle habits", path: "/admin/habit-master" },
       { name: "Physical activities", path: "/admin/activity-master" },
+      { name: "Patient Questions", path: "/admin/patient-all-questionarie" },
     ],
   },
   {
@@ -127,7 +128,6 @@ const adminNavItems: NavItem[] = [
     name: "Overview Information",
     subItems: [
       { name: "Patients Overview", path: "/admin/patients-overview" },
-      { name: "Patient Questions", path: "/admin/patient-all-questionarie" },
       { name: "Non-Patient Users", path: "/admin/non-patient-information" },
       { name: "Micro Kitchens", path: "/admin/micro-kitchen-information" },
       { name: "Nutritionists", path: "/admin/nutrition-information" },
@@ -314,7 +314,7 @@ const nutritionistNavItems: NavItem[] = [
   {
     icon: <Users className="w-5 h-5" />,
     name: "Nutrition & Patient Mapping",
-     path: "/nutrition/nutrition-mapping/user-mapping" ,
+    path: "/nutrition/nutrition-mapping/user-mapping",
   },
   {
     icon: <Layers className="w-5 h-5" />,
@@ -483,8 +483,8 @@ const microKitchenNavItems: NavItem[] = [
       { name: "Team members", path: "/microkitchen/delivery/team-members" },
       { name: "Team planned leave", path: "/microkitchen/planned-leave" },
       { name: "Delivery profiles", path: "/microkitchen/delivery/profiles" },
-      {name: "Delivery Reviews",path: "/microkitchen/delivery-feedback"},
-      {name: "Supply chain payouts",path: "/microkitchen/supply-chain-payouts"},
+      { name: "Delivery Reviews", path: "/microkitchen/delivery-feedback" },
+      { name: "Supply chain payouts", path: "/microkitchen/supply-chain-payouts" },
     ],
   },
   {
