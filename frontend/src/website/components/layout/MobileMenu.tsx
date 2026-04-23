@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Image from '@website/components/Image';
 import { getDepartments } from '@/utils/api';
+import { MOCK_DEPARTMENTS } from "@/website/utils/mockData";
 
 type MobileMenuProps = {
   isSidebar: boolean;
@@ -30,7 +31,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for mobile menu:", err);
-        setDepartments([]);
+        setDepartments(MOCK_DEPARTMENTS);
       }
     };
     fetchDepartmentsData();

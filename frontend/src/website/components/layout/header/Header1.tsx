@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import Image from '@website/components/Image';
 import MobileMenu from "../MobileMenu";
 import { getDepartments } from '@/utils/api';
+import { MOCK_DEPARTMENTS } from "@/website/utils/mockData";
 
 // ✅ Define props type
 type Header1Props = {
@@ -32,7 +33,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for header:", err);
-        setDepartments([]);
+        setDepartments(MOCK_DEPARTMENTS);
       }
     };
     fetchDepartmentsData();
