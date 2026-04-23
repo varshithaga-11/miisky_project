@@ -1,11 +1,13 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const getBaseURL = () => {
-  if (typeof __API_URL__ !== 'undefined' && __API_URL__) {
-    const base = __API_URL__.replace(/\/$/, '');
-    return base.endsWith('/api') ? base : `${base}/api`;
-  }
-  return 'http://127.0.0.1:8000/api';
+  // Use the global __API_URL__ if injected by Vite, 
+  // otherwise default to the production API
+  const base = (typeof __API_URL__ !== 'undefined' && __API_URL__)
+    ? __API_URL__.replace(/\/$/, '')
+    : 'https://api.miisky.com';
+
+  return base.endsWith('/api') ? base : `${base}/api`;
 };
 
 const API: AxiosInstance = axios.create({
@@ -16,27 +18,10 @@ const API: AxiosInstance = axios.create({
   },
 });
 
-// Add request interceptor to include auth token if available
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // Add response interceptor for error handling
 API.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login if needed
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
-    }
     return Promise.reject(error);
   }
 );
