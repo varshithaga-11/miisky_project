@@ -9897,15 +9897,22 @@ class AdminNutritionistMeetingsPaginatedView(generics.ListAPIView):
             nutritionist_id=nutritionist_id
         ).select_related("patient", "user_diet_plan").order_by("-created_on")
 
-class AdminNutritionistReviewsNoPaginationView(APIView):
+class AdminNutritionistReviewsPaginatedView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
         nutritionist_id = request.query_params.get("nutritionist")
         if not nutritionist_id:
-            return Response([])
+            return Response({"count": 0, "next": None, "previous": None, "results": []})
         
         qs = NutritionistRating.objects.filter(nutritionist_id=nutritionist_id).select_related('patient').order_by('-created_at')
+        
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            serializer = NutritionistRatingSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = NutritionistRatingSerializer(qs, many=True)
         return Response(serializer.data)
 

@@ -8,7 +8,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { InfoRow, InfoSection, EmptyState } from "../PatientOverview/PatientDataViews";
 import { createApiUrl } from "../../../access/access";
-import { getNutritionistMealsWithMonth, getNutritionistMeetingsPaginated, getNutritionistTicketsPaginated } from "./api";
+import { getNutritionistMealsWithMonth, getNutritionistMeetingsPaginated, getNutritionistTicketsPaginated, getNutritionistReviewsPaginated } from "./api";
 
 const getMediaUrl = (path: string | undefined | null) => {
     if (!path) return "";
@@ -560,8 +560,56 @@ export function DisplayNutritionistMeetings({ nutritionistId }: { nutritionistId
     );
 }
 
-export function DisplayNutritionistReviews({ items }: { items: any[] }) {
-    if (!items || items.length === 0) return <EmptyState message="No reviews yet for this nutritionist." />;
+export function DisplayNutritionistReviews({ nutritionistId }: { nutritionistId: number }) {
+    const [items, setItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadMore = useCallback(async (pageNum: number) => {
+        if (loading || (!hasMore && pageNum > 1)) return;
+        setLoading(true);
+        try {
+            const data = await getNutritionistReviewsPaginated(nutritionistId, pageNum);
+            const results = data.results || [];
+            setItems(prev => pageNum === 1 ? results : [...prev, ...results]);
+            setHasMore(!!data.next);
+            setError(null);
+        } catch (e: any) {
+            setError("Failed to load reviews");
+        } finally {
+            setLoading(false);
+        }
+    }, [nutritionistId, loading, hasMore]);
+
+    useEffect(() => {
+        loadMore(1);
+    }, [nutritionistId]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading) {
+                    setPage(p => {
+                        const next = p + 1;
+                        loadMore(next);
+                        return next;
+                    });
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const sentinel = document.querySelector("#scroll-sentinel");
+        if (sentinel) observer.observe(sentinel);
+
+        return () => observer.disconnect();
+    }, [loadMore, hasMore, loading]);
+
+    if (error && items.length === 0) return <div className="p-8 text-center text-red-500 font-bold uppercase italic tracking-widest">{error}</div>;
+    if (!loading && items.length === 0) return <EmptyState message="No reviews yet for this nutritionist." />;
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -592,6 +640,7 @@ export function DisplayNutritionistReviews({ items }: { items: any[] }) {
                     </div>
                 ))}
             </div>
+            <Sentinel loading={loading} hasMore={hasMore} />
         </div>
     );
 }
