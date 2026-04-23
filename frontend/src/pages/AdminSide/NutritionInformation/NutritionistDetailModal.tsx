@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-    FiXCircle, FiUser, FiUsers, FiFileText, FiCalendar, FiVideo, FiLoader, FiBriefcase, FiStar, FiClipboard, FiPackage, FiPieChart
+    FiXCircle, FiUser, FiUsers, FiFileText, FiCalendar, FiVideo, FiLoader, FiBriefcase, FiStar, FiClipboard, FiPackage, FiPieChart, FiClock
 } from "react-icons/fi";
 import {
     getAdminNutritionistDetails,
@@ -11,7 +11,8 @@ import {
     getNutritionistReviewsNoPaginate,
     getNutritionistTicketsNoPaginate,
     getNutritionistPayoutsNoPaginate,
-    getNutritionAllottedPlanPayouts
+    getNutritionAllottedPlanPayouts,
+    getNutritionistAvailabilityNoPaginate
 } from "./api";
 import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
 import {
@@ -22,7 +23,8 @@ import {
     DisplayNutritionistMeetings,
     DisplayNutritionistReviews,
     DisplayNutritionistTickets,
-    DisplayNutritionistPayouts
+    DisplayNutritionistPayouts,
+    DisplayNutritionistAvailability
 } from "./NutritionistDataViews";
 
 interface NutritionistDetailModalProps {
@@ -31,7 +33,7 @@ interface NutritionistDetailModalProps {
     onClose: () => void;
 }
 
-type TabKey = "profile" | "patients" | "plans" | "meals" | "meetings" | "reviews" | "tickets" | "payouts" | "allotted_plan_payouts";
+type TabKey = "profile" | "patients" | "plans" | "meals" | "meetings" | "reviews" | "tickets" | "payouts" | "allotted_plan_payouts" | "availability";
 
 const TABS: { key: TabKey; label: string; icon: any; description: string }[] = [
     { key: "profile", label: "Profile", icon: <FiUser />, description: "Education, exp & specialty" },
@@ -39,6 +41,7 @@ const TABS: { key: TabKey; label: string; icon: any; description: string }[] = [
     { key: "plans", label: "Diet Plans", icon: <FiFileText />, description: "Suggested & active plans" },
     { key: "meals", label: "Meal Sets", icon: <FiCalendar />, description: "Daily prep for clients" },
     { key: "meetings", label: "Meetings", icon: <FiVideo />, description: "Consultation history" },
+    { key: "availability", label: "Availability", icon: <FiClock />, description: "Consultation time slots" },
     { key: "reviews", label: "Reviews", icon: <FiStar />, description: "Feedback from patients" },
     { key: "tickets", label: "Tickets", icon: <FiClipboard />, description: "Support & tech issues" },
     { key: "payouts", label: "Payouts", icon: <FiPackage />, description: "Earnings & patient billing" },
@@ -103,6 +106,9 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                     break;
                 case "payouts":
                     setPayload(await getNutritionistPayoutsNoPaginate(nutritionistId));
+                    break;
+                case "availability":
+                    setPayload(await getNutritionistAvailabilityNoPaginate(nutritionistId));
                     break;
             }
         } catch (e: any) {
@@ -221,6 +227,7 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                                     {screen === "reviews" && <DisplayNutritionistReviews items={payload} />}
                                     {screen === "tickets" && <DisplayNutritionistTickets items={payload} />}
                                     {screen === "payouts" && <DisplayNutritionistPayouts items={payload} />}
+                                    {screen === "availability" && <DisplayNutritionistAvailability items={payload} />}
                                 </>
                             )}
                         </div>
