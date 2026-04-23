@@ -190,6 +190,11 @@ const patientNavItems: NavItem[] = [
     path: "/patient/dashboard",
   },
   {
+    icon: <Activity className="w-5 h-5" />,
+    name: "My Journey",
+    path: "/patient/workflow",
+  },
+  {
     icon: <BookOpen className="w-5 h-5" />,
     name: "Patient Guide",
     path: "/patient/instructions",

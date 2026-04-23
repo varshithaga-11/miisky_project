@@ -8,7 +8,7 @@ import {
     getNutritionistDietPlansNoPaginate,
     getNutritionistMealsWithMonth,
     getNutritionistMeetingsNoPaginate,
-    getNutritionistReviewsNoPaginate,
+    getNutritionistReviewsPaginated,
     getNutritionistTicketsPaginated,
     getNutritionistPayoutsNoPaginate,
     getNutritionAllottedPlanPayouts,
@@ -99,7 +99,7 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                     setPayload({ initialized: true });
                     break;
                 case "reviews":
-                    setPayload(await getNutritionistReviewsNoPaginate(nutritionistId));
+                    setPayload({ initialized: true });
                     break;
                 case "tickets":
                     setPayload({ initialized: true });
@@ -224,7 +224,7 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                                     {screen === "plans" && <DisplayNutritionistDietPlans items={payload} />}
                                     {screen === "meals" && <DisplayNutritionistMeals items={payload} nutritionistId={nutritionistId} />}
                                     {screen === "meetings" && <DisplayNutritionistMeetings nutritionistId={nutritionistId} />}
-                                    {screen === "reviews" && <DisplayNutritionistReviews items={payload} />}
+                                    {screen === "reviews" && <DisplayNutritionistReviews nutritionistId={nutritionistId} />}
                                     {screen === "tickets" && <DisplayNutritionistTickets nutritionistId={nutritionistId} />}
                                     {screen === "payouts" && <DisplayNutritionistPayouts items={payload} />}
                                     {screen === "availability" && <DisplayNutritionistAvailability items={payload} />}

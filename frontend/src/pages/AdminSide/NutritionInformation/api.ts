@@ -92,8 +92,8 @@ export const getNutritionistMeetingsPaginated = async (nutritionistId: number, p
     return response.data;
 };
 
-export const getNutritionistReviewsNoPaginate = async (nutritionistId: number): Promise<any[]> => {
-    const url = createApiUrl(`api/admin-nutritionist-reviews-nopaginate/?nutritionist=${nutritionistId}`);
+export const getNutritionistReviewsPaginated = async (nutritionistId: number, page: number = 1, limit: number = 10): Promise<any> => {
+    const url = createApiUrl(`api/admin-nutritionist-reviews-paginated/?nutritionist=${nutritionistId}&page=${page}&limit=${limit}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
