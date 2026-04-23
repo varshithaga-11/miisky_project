@@ -50,15 +50,15 @@ export const fetchKitchenRatingsForUser = async (userId: number): Promise<unknow
   return res.data;
 };
 
-/** Order payments for any user (No Pagination) */
-export const fetchOrderPaymentsForUser = async (userId: number): Promise<unknown[]> => {
-  const url = createApiUrl("api/admin-order-payments-nopaginate/");
+/** Order payments for non-patient users (Paginated Summary) */
+export const fetchOrderPaymentsForUser = async (userId: number, page = 1): Promise<{ results: any[], count: number, next: string | null }> => {
+  const url = createApiUrl("api/admin/non-patient-order-payments-summary/");
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { user: userId },
+    params: { user: userId, page },
   });
-  // Transform to match PaymentEntry shape if needed, or return as is
-  return (res.data as any[]).map((o: any) => ({
+  
+  const transformed = (res.data.results as any[]).map((o: any) => ({
     id: o.id,
     date: o.created_at,
     amount: o.final_amount || o.total_amount || 0,
@@ -68,6 +68,12 @@ export const fetchOrderPaymentsForUser = async (userId: number): Promise<unknown
     details: o.kitchen_details?.brand_name || "Food Order",
     originalData: o,
   }));
+
+  return {
+    results: transformed,
+    count: res.data.count,
+    next: res.data.next,
+  };
 };
 
 /** Health questionnaires for any user (No Pagination) */

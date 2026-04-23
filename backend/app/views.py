@@ -12309,3 +12309,14 @@ class AdminPatientOrderPaymentsDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Order.objects.select_related('micro_kitchen').prefetch_related('items__food')
+
+class AdminNonPatientOrderPaymentsSummaryView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderPaymentHistoryCardSerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user_id = self.request.query_params.get('user')
+        if not user_id:
+            return Order.objects.none()
+        return Order.objects.filter(user_id=user_id).select_related('micro_kitchen').order_by('-created_at')

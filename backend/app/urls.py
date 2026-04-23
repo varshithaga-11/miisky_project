@@ -467,6 +467,7 @@ urlpatterns = [
     path("admin/patient-orders-details/<int:pk>/", views.AdminOrdersDetailView.as_view(), name="admin-patient-orders-details"),
     path("admin/patient-order-payments-summary/", views.AdminPatientOrderPaymentsSummaryView.as_view(), name="admin-patient-order-payments-summary"),
     path("admin/patient-order-payments-details/<int:pk>/", views.AdminPatientOrderPaymentsDetailView.as_view(), name="admin-patient-order-payments-details"),
+    path("admin/non-patient-order-payments-summary/", views.AdminNonPatientOrderPaymentsSummaryView.as_view(), name="admin-non-patient-order-payments-summary"),
     path("admin/all-orders/", views.AdminAllOrdersView.as_view(), name="admin-all-orders"),
     path("admin/kitchen-payouts/", views.AdminKitchenPayoutsView.as_view(), name="admin-kitchen-payouts"),
     path(

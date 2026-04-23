@@ -28,6 +28,12 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination for order payments
+  const [payments, setPayments] = useState<any[]>([]);
+  const [paymentPage, setPaymentPage] = useState(1);
+  const [hasMorePayments, setHasMorePayments] = useState(true);
+  const [loadingMorePayments, setLoadingMorePayments] = useState(false);
+
   const uid = user.id;
 
   useEffect(() => {
@@ -36,6 +42,9 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     setPayload(null);
     setError(null);
     setLoading(false);
+    setPayments([]);
+    setPaymentPage(1);
+    setHasMorePayments(true);
   }, [open, uid]);
 
   const goHub = () => {
@@ -71,7 +80,11 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
             setPayload(await fetchKitchenRatingsForUser(uid));
             break;
           case "orderPayments":
-            setPayload(await fetchOrderPaymentsForUser(uid));
+            const pRes = await fetchOrderPaymentsForUser(uid, 1);
+            setPayments(pRes.results);
+            setPaymentPage(1);
+            setHasMorePayments(!!pRes.next);
+            setPayload(pRes.results);
             break;
         }
       } catch (e: unknown) {
@@ -88,6 +101,41 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     },
     [uid]
   );
+
+  const loadMorePayments = useCallback(async () => {
+    if (loadingMorePayments || !hasMorePayments || uid == null) return;
+    setLoadingMorePayments(true);
+    try {
+      const nextPage = paymentPage + 1;
+      const res = await fetchOrderPaymentsForUser(uid, nextPage);
+      setPayments((prev) => [...prev, ...res.results]);
+      setPaymentPage(nextPage);
+      setHasMorePayments(!!res.next);
+    } catch (e) {
+      console.error("Failed to load more payments", e);
+    } finally {
+      setLoadingMorePayments(false);
+    }
+  }, [loadingMorePayments, hasMorePayments, uid, paymentPage]);
+
+  // Observer for infinite scroll
+  useEffect(() => {
+    if (screen !== "orderPayments" || !hasMorePayments || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMorePayments();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const sentinel = document.getElementById("np-payment-sentinel");
+    if (sentinel) observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [screen, hasMorePayments, loading, loadMorePayments]);
 
   if (!open || uid == null) return null;
 
@@ -188,8 +236,22 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
                   {screen === "kitchenRatings" && Array.isArray(payload) && (
                     <DisplayKitchenRatings ratings={payload} />
                   )}
-                  {screen === "orderPayments" && Array.isArray(payload) && (
-                    <DisplayPaymentHistory items={payload} />
+                  {screen === "orderPayments" && (
+                    <div className="space-y-6">
+                      <DisplayPaymentHistory items={payments} />
+                      <div id="np-payment-sentinel" className="h-20 flex items-center justify-center">
+                        {loadingMorePayments && (
+                          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
+                            Loading more transactions...
+                          </div>
+                        )}
+                        {!hasMorePayments && payments.length > 0 && (
+                          <div className="text-[10px] text-gray-400 font-bold uppercase">
+                            End of history
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
