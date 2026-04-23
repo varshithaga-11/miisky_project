@@ -45,7 +45,7 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
         setLoadingReviews(true);
         try {
             const data = await getAllKitchenReviews(kitchen.id);
-            setReviews(data);
+            setReviews(data.results || []);
         } catch (error) {
             toast.error("Failed to load reviews");
         } finally {

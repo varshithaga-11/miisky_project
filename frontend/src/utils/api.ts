@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 
 // Create axios instance with base configuration
 const API: AxiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: (typeof __API_URL__ !== 'undefined' ? __API_URL__ : 'http://127.0.0.1:8000/api').replace(/\/$/, '') + '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

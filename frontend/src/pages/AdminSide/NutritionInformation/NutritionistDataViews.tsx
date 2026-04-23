@@ -748,3 +748,44 @@ export function DisplayNutritionistPayouts({ items }: { items: any[] }) {
         </div>
     );
 }
+
+export function DisplayNutritionistAvailability({ items }: { items: any[] }) {
+    if (!items || items.length === 0) return <EmptyState message="No availability slots configured." />;
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-900/50 p-8 rounded-[44px] border border-gray-100 dark:border-white/5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="absolute top-0 right-0 size-64 bg-emerald-500/5 blur-[120px] rounded-full -mr-32 -mt-32"></div>
+
+                <FullCalendar
+                    plugins={[dayGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    headerToolbar={{
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,dayGridWeek'
+                    }}
+                    events={items.map((slot) => ({
+                        id: String(slot.id),
+                        title: `${slot.start_time} - ${slot.end_time} ${slot.is_booked ? '(BOOKED)' : '(AVAILABLE)'}`,
+                        start: `${slot.date}T${slot.start_time}`,
+                        end: `${slot.date}T${slot.end_time}`,
+                        backgroundColor: slot.is_booked ? '#ef4444' : '#10b981',
+                        borderColor: 'transparent',
+                        extendedProps: { slot }
+                    }))}
+                    eventContent={(arg) => (
+                        <div
+                            title={`Time: ${arg.event.extendedProps.slot.start_time} - ${arg.event.extendedProps.slot.end_time}\nStatus: ${arg.event.extendedProps.slot.is_booked ? 'Booked' : 'Available'}`}
+                            className="px-2 py-1 rounded-lg text-[9px] font-black uppercase overflow-hidden truncate transition-all hover:scale-105 hover:shadow-lg cursor-pointer flex items-center gap-1.5"
+                        >
+                            <div className={`size-1.5 rounded-full shrink-0 ${arg.event.extendedProps.slot.is_booked ? 'bg-white' : 'bg-white/80'}`}></div>
+                            {arg.event.title}
+                        </div>
+                    )}
+                    height="auto"
+                />
+            </div>
+        </div>
+    );
+}

@@ -115,6 +115,12 @@ export const getNutritionistPayoutsNoPaginate = async (nutritionistId: number): 
     return response.data;
 };
 
+export const getNutritionistAvailabilityNoPaginate = async (nutritionistId: number): Promise<any[]> => {
+    const url = createApiUrl(`api/admin-nutritionist-availability-nopaginate/?nutritionist=${nutritionistId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
 /** Admin hub: allotted patients only, diet-plan payout lines for this nutritionist (user id). */
 export async function getNutritionAllottedPlanPayouts(
     nutritionUserId: number,

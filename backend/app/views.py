@@ -9921,6 +9921,21 @@ class AdminNutritionistTicketsNoPaginationView(APIView):
         serializer = SupportTicketSerializer(qs, many=True)
         return Response(serializer.data)
 
+class AdminNutritionistAvailabilityNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        qs = NutritionistAvailability.objects.filter(
+            nutritionist_id=nutritionist_id
+        ).order_by('date', 'start_time')
+        
+        serializer = NutritionistAvailabilitySerializer(qs, many=True)
+        return Response(serializer.data)
+
 
 class AdminNutritionistPayoutsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
