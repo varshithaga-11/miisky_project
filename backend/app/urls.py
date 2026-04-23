@@ -63,6 +63,11 @@ router.register(
     basename='micro-kitchen-global-delivery-assignments',
 )
 router.register(r'userquestionnaire', UserQuestionnaireViewSet, basename='userquestionnaire')
+router.register(
+    r'admin-questionnaire-questions',
+    AdminQuestionnaireQuestionListViewSet,
+    basename='admin-questionnaire-questions',
+)
 router.register(r'health-condition-master', HealthConditionMasterViewSet, basename='health-condition-master')
 router.register(r'symptom-master', SymptomMasterViewSet, basename='symptom-master')
 router.register(r'autoimmune-master', AutoimmuneMasterViewSet, basename='autoimmune-master')

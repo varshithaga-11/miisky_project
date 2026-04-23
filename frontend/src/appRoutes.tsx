@@ -106,6 +106,7 @@ import DoctorOverViewPage from "./pages/AdminSide/DoctorOverView/index";
 import SupplyChainOverViewPage from "./pages/AdminSide/SupplyChainOverView/index";
 import PatientPaymentVerificationPage from "./pages/AdminSide/PatientPaymentVerification/index";
 import PatientOverviewPage from "./pages/AdminSide/PatientOverview/index";
+import PatientAllQuestionariePage from "./pages/AdminSide/PatientAllQuestionarie/index";
 import DoctorAllPatientsPage from "./pages/DoctorSide/AllPatients/index";
 import DoctorSupportTicketPage from "./pages/DoctorSide/SupportTicket/index";
 import NonPatientInformationPage from "./pages/AdminSide/NonPatientInformation/index";
@@ -338,6 +339,7 @@ export function appRoutes() {
           <Route path="admin/user-nutrition-mapping" element={<UserNutritionMappingPage />} />
           <Route path="admin/patient-payment-verification" element={<PatientPaymentVerificationPage />} />
           <Route path="admin/patients-overview" element={<PatientOverviewPage />} />
+          <Route path="admin/patient-all-questionarie" element={<PatientAllQuestionariePage />} />
           <Route path="doctor/all-patients" element={<DoctorAllPatientsPage />} />
           <Route path="doctor/support-tickets" element={<DoctorSupportTicketPage />} />
           <Route path="doctor/notifications" element={<DoctorNotificationsPage />} />

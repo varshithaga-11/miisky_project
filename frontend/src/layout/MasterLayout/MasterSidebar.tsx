@@ -127,6 +127,7 @@ const adminNavItems: NavItem[] = [
     name: "Overview Information",
     subItems: [
       { name: "Patients Overview", path: "/admin/patients-overview" },
+      { name: "Patient Questions", path: "/admin/patient-all-questionarie" },
       { name: "Non-Patient Users", path: "/admin/non-patient-information" },
       { name: "Micro Kitchens", path: "/admin/micro-kitchen-information" },
       { name: "Nutritionists", path: "/admin/nutrition-information" },

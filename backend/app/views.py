@@ -22,10 +22,12 @@ import math
 import re
 from pathlib import Path
 from decimal import Decimal
+from io import BytesIO
 from rest_framework import status
 
 from .models import *
 from .serializers import *
+from docx import Document
 
 import os
 from rest_framework.decorators import action
@@ -1844,6 +1846,336 @@ _QUESTIONNAIRE_REL_KEYS = frozenset(
         'physical_activities',
     )
 )
+
+
+class AdminQuestionnaireQuestionListViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _choice_labels(self, field_name: str) -> list[str]:
+        field = UserQuestionnaire._meta.get_field(field_name)
+        return [str(label) for _, label in getattr(field, "choices", [])]
+
+    def _master_names(self, model_cls) -> list[str]:
+        qs = model_cls.objects.all()
+        try:
+            qs = qs.order_by("sort_order", "name")
+        except Exception:
+            qs = qs.order_by("name")
+        return [str(name).strip() for name in qs.values_list("name", flat=True) if str(name).strip()]
+
+    def _template_payload(self) -> dict:
+        health_issues = self._master_names(HealthConditionMaster)
+        autoimmune = self._master_names(AutoimmuneMaster)
+        symptoms = self._master_names(SymptomMaster)
+        skin_issues = self._master_names(SkinIssueMaster)
+        deficiencies = self._master_names(DeficiencyMaster)
+        habits = self._master_names(HabitMaster)
+        activities = self._master_names(ActivityMaster)
+        digestive_issues = self._master_names(DigestiveIssueMaster)
+
+        return {
+            "title": "QUESTIONNAIRE",
+            "generated_on": timezone.now().strftime("%Y-%m-%d %H:%M"),
+            "personal_details": {
+                "work_type": self._choice_labels("work_type"),
+                "gender": ["Male", "Female", "Other"],
+            },
+            "health": {
+                "health_issues": health_issues,
+                "autoimmune": autoimmune,
+                "symptoms": symptoms,
+                "skin_issues": skin_issues,
+                "deficiencies": deficiencies,
+                "digestive_issues": digestive_issues,
+            },
+            "food_habit": {
+                "diet_pattern": self._choice_labels("diet_pattern"),
+                "non_veg_frequency": self._choice_labels("non_veg_frequency"),
+                "meal_slots": self._choice_labels("meal_slots"),
+                "food_source": self._choice_labels("food_source"),
+            },
+            "other_habit": {
+                "physical_activities": activities,
+                "other_habits": habits,
+            },
+        }
+
+    def _checkbox_list_html(self, items: list[str]) -> str:
+        return "".join(f"<li>&#9633; {self._esc(item)}</li>" for item in items)
+
+    def _esc(self, value: str) -> str:
+        return (
+            str(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        )
+
+    def _build_pdf(self) -> bytes:
+        payload = self._template_payload()
+        heading = payload["title"]
+        generated_on = payload["generated_on"]
+        p = payload["personal_details"]
+        h = payload["health"]
+        f = payload["food_habit"]
+        o = payload["other_habit"]
+
+        health_rows = "".join(
+            f"""
+            <tr>
+              <td>{idx}. {self._esc(name)}</td>
+              <td style="text-align:center;">&#9711;</td>
+              <td style="text-align:center;">&#9711;</td>
+              <td>__________</td>
+              <td>_____________________</td>
+            </tr>
+            """
+            for idx, name in enumerate(h["health_issues"], start=1)
+        )
+
+        html = f"""
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        font-size: 11px;
+                        color: #222;
+                        line-height: 1.4;
+                        margin: 24px;
+                    }}
+                    h1 {{ font-size: 20px; margin-bottom: 6px; }}
+                    h2 {{ margin: 18px 0 8px; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }}
+                    h3 {{ margin: 10px 0 6px; font-size: 12px; }}
+                    p.meta {{ color: #666; margin-top: 0; }}
+                    ul {{ margin: 4px 0 8px 18px; padding: 0; }}
+                    li {{ margin-bottom: 3px; }}
+                    .line {{ display:block; margin: 4px 0; }}
+                    table {{ border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 10px; }}
+                    th, td {{ border: 1px solid #cfcfcf; padding: 5px; vertical-align: top; }}
+                    th {{ background: #f5f5f5; text-align: left; }}
+                    .yn span {{ margin-right: 18px; }}
+                </style>
+            </head>
+            <body>
+                <h1>{heading}</h1>
+                <p class="meta">Generated on: {generated_on}</p>
+                
+                <h2>PERSONAL DETAILS</h2>
+                <span class="line">Name - ____________________________</span>
+                <span class="line">Age - ______________________________</span>
+                <span class="line">Gender - {' / '.join(p['gender'])}</span>
+                <span class="line">Height - ___________________________</span>
+                <span class="line">Weight - ___________________________</span>
+                <span class="line">Types of work - {' / '.join(p['work_type'])}</span>
+
+                <h2>HEALTH ISSUES</h2>
+                <div class="yn"><span>Any Health Issues - &#9711; Yes</span><span>&#9711; No</span></div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Condition</th>
+                            <th style="text-align:center;">Yes</th>
+                            <th style="text-align:center;">No</th>
+                            <th>Since when</th>
+                            <th>Comments</th>
+                        </tr>
+                    </thead>
+                    <tbody>{health_rows}</tbody>
+                </table>
+
+                <h3>Any auto immune Diseases (multiple choice)</h3>
+                <ul>{self._checkbox_list_html(h['autoimmune'])}</ul>
+                <h3>Symptoms any other (multiple choice)</h3>
+                <ul>{self._checkbox_list_html(h['symptoms'])}</ul>
+                <h3>Any skin issue (multiple choice)</h3>
+                <ul>{self._checkbox_list_html(h['skin_issues'])}</ul>
+                <h3>Any vitamin or Mineral deficiency (multiple choice)</h3>
+                <ul>{self._checkbox_list_html(h['deficiencies'])}</ul>
+                <h3>Digestive issues (multiple choice)</h3>
+                <ul>{self._checkbox_list_html(h['digestive_issues'])}</ul>
+                <span class="line">Any Allergy from medicine - &#9711; Yes  &#9711; No</span>
+                <span class="line">Please mention the name: ____________________________</span>
+                <span class="line">Have you consulted a doctor? &#9711; Yes  &#9711; No</span>
+                <span class="line">Consultant Doctor name: ____________________________</span>
+                <span class="line">Specialty: ____________________  Phone number: ____________________</span>
+                <span class="line">Other health concerns: ______________________________________________</span>
+                <span class="line">For female patient: Menstrual problem - &#9633; Heavy bleeding  &#9633; Very less bleeding  &#9633; None</span>
+
+                <h2>FOOD HABIT</h2>
+                <span class="line">Diet patterns - {' / '.join(f['diet_pattern'])}</span>
+                <h3>Frequency of Non-Veg Intake</h3>
+                <ul>{self._checkbox_list_html(f['non_veg_frequency'])}</ul>
+                <span class="line">Do you consume Egg - &#9711; Yes  &#9711; No</span>
+                <span class="line">Do you consume milk - &#9711; Yes  &#9711; No</span>
+                <span class="line">Any food Allergy - &#9711; Yes  &#9711; No</span>
+                <span class="line">Please mention the name: ____________________________</span>
+                <h3>Number of meals in one day</h3>
+                <ul>{self._checkbox_list_html(f['meal_slots'])}</ul>
+                <span class="line">Do you consume Snack in between Meals - &#9711; Yes  &#9711; No</span>
+                <span class="line">Do you skip meals - &#9711; Yes  &#9711; No</span>
+                <h3>From where do you consume food</h3>
+                <ul>{self._checkbox_list_html(f['food_source'])}</ul>
+                <span class="line">Have you taken consultation from a dietician previously? &#9711; Yes  &#9711; No</span>
+                <span class="line">Dietician Name: ____________________  Location: ____________________  Phone: ____________________</span>
+
+                <h2>OTHER HABIT</h2>
+                <span class="line">Do you indulge in any physical activity? &#9711; Yes  &#9711; No</span>
+                <h3>Physical activity options</h3>
+                <ul>{self._checkbox_list_html(o['physical_activities'])}</ul>
+                <span class="line">Others (please specify): ____________________________</span>
+                <h3>Any other habits</h3>
+                <ul>{self._checkbox_list_html(o['other_habits'])}</ul>
+                <span class="line">Others (please specify): ____________________________</span>
+                <span class="line">Please share your thoughts on what can help us improve your health:</span>
+                <span class="line">____________________________________________________________________</span>
+                <span class="line">____________________________________________________________________</span>
+            </body>
+        </html>
+        """
+        if HTML:
+            try:
+                return HTML(string=html, base_url=str(Path(settings.BASE_DIR).parent)).write_pdf()
+            except Exception:
+                pass
+
+        fallback_lines = [
+            f"Generated on: {generated_on}",
+            "",
+            "QUESTIONNAIRE TEMPLATE",
+            "PERSONAL DETAILS: Name, Age, Gender, Height, Weight, Work Type",
+            "HEALTH ISSUES: Conditions table with Yes/No, Since when, Comments",
+            "AUTOIMMUNE / SYMPTOMS / SKIN / DEFICIENCIES / DIGESTIVE: Multiple choice sections",
+            "FOOD HABIT: Diet pattern, non-veg frequency, meal slots, food source",
+            "OTHER HABIT: Physical activities, other habits, final comments",
+            "",
+            "Please use DOCX download for full template structure if needed.",
+        ]
+        return _build_simple_pdf(heading, fallback_lines)
+
+    def _build_docx(self) -> bytes:
+        payload = self._template_payload()
+        p = payload["personal_details"]
+        h = payload["health"]
+        f = payload["food_habit"]
+        o = payload["other_habit"]
+
+        document = Document()
+        document.add_heading(payload["title"], level=1)
+        document.add_paragraph(f"Generated on: {payload['generated_on']}")
+
+        document.add_heading("PERSONAL DETAILS", level=2)
+        document.add_paragraph("Name - ____________________________")
+        document.add_paragraph("Age - ____________________________")
+        document.add_paragraph(f"Gender - {' / '.join(p['gender'])}")
+        document.add_paragraph("Height - ____________________________")
+        document.add_paragraph("Weight - ____________________________")
+        document.add_paragraph(f"Types of work - {' / '.join(p['work_type'])}")
+
+        document.add_heading("HEALTH ISSUES", level=2)
+        document.add_paragraph("Any Health Issues - □ Yes  □ No")
+        table = document.add_table(rows=1, cols=5)
+        hdr = table.rows[0].cells
+        hdr[0].text = "Condition"
+        hdr[1].text = "Yes"
+        hdr[2].text = "No"
+        hdr[3].text = "Since when"
+        hdr[4].text = "Comments"
+        for name in h["health_issues"]:
+            row = table.add_row().cells
+            row[0].text = name
+            row[1].text = "○"
+            row[2].text = "○"
+            row[3].text = "__________"
+            row[4].text = "_________________"
+
+        def add_checkbox_list(title: str, items: list[str]):
+            document.add_heading(title, level=3)
+            for item in items:
+                document.add_paragraph(f"□ {item}")
+
+        add_checkbox_list("Any auto immune Diseases", h["autoimmune"])
+        add_checkbox_list("Symptoms any other", h["symptoms"])
+        add_checkbox_list("Any skin issue", h["skin_issues"])
+        add_checkbox_list("Any vitamin or Mineral deficiency", h["deficiencies"])
+        add_checkbox_list("Digestive issues", h["digestive_issues"])
+
+        document.add_paragraph("Any Allergy from medicine – □ Yes / □ No")
+        document.add_paragraph("Please mention the name: ____________________________")
+        document.add_paragraph("Have you consulted a doctor? □ Yes / □ No")
+        document.add_paragraph("Consultant Doctor name: ____________________________")
+        document.add_paragraph("Specialty: ____________________  Phone number: ____________________")
+        document.add_paragraph("Other health concerns: _____________________________________________")
+        document.add_paragraph("For Female Patient only - Menstrual problem: □ Heavy bleeding  □ Very less bleeding  □ None")
+
+        document.add_heading("FOOD HABIT", level=2)
+        document.add_paragraph(f"Diet patterns - {' / '.join(f['diet_pattern'])}")
+        add_checkbox_list("Frequency of Non-Veg Intake", f["non_veg_frequency"])
+        document.add_paragraph("Do you consume Egg - □ Yes / □ No")
+        document.add_paragraph("Do you consume milk - □ Yes / □ No")
+        document.add_paragraph("Any food Allergy - □ Yes / □ No")
+        document.add_paragraph("Please mention the name: ____________________________")
+        add_checkbox_list("Number of meals in one day", f["meal_slots"])
+        document.add_paragraph("Do you consume Snack in between Meals - □ Yes / □ No")
+        document.add_paragraph("Do you skip meals – □ Yes / □ No")
+        add_checkbox_list("From where do you consume food", f["food_source"])
+        document.add_paragraph("Have you taken consultation from a dietician previously? □ Yes / □ No")
+        document.add_paragraph("Dietician Name: ____________________  Location: ____________________  Phone number: ____________________")
+
+        document.add_heading("OTHER HABIT", level=2)
+        document.add_paragraph("Do you indulge in any physical activity? □ Yes / □ No")
+        add_checkbox_list("Physical activity options", o["physical_activities"])
+        document.add_paragraph("Others (please specify): ____________________________")
+        add_checkbox_list("Do you have any other habits", o["other_habits"])
+        document.add_paragraph("Others (please specify): ____________________________")
+        document.add_paragraph("Please share your thoughts on what can help us improve your health")
+        document.add_paragraph("____________________________________________________________________")
+        document.add_paragraph("____________________________________________________________________")
+
+        buffer = BytesIO()
+        document.save(buffer)
+        return buffer.getvalue()
+
+    def list(self, request):
+        payload = self._template_payload()
+        return Response(
+            {
+                "title": payload["title"],
+                "total_questions": (
+                    len(payload["health"]["health_issues"])
+                    + len(payload["health"]["autoimmune"])
+                    + len(payload["health"]["symptoms"])
+                    + len(payload["health"]["skin_issues"])
+                    + len(payload["health"]["deficiencies"])
+                    + len(payload["health"]["digestive_issues"])
+                    + len(payload["other_habit"]["physical_activities"])
+                    + len(payload["other_habit"]["other_habits"])
+                ),
+                "sections": payload,
+                "generated_on": timezone.now().isoformat(),
+            }
+        )
+
+    @action(detail=False, methods=["get"], url_path="download")
+    def download(self, request):
+        requested_format = str(request.query_params.get("format", "pdf")).strip().lower()
+        if requested_format not in {"pdf", "docx"}:
+            return Response({"detail": "format must be either 'pdf' or 'docx'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if requested_format == "docx":
+            content = self._build_docx()
+            response = HttpResponse(
+                content,
+                content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+            response["Content-Disposition"] = 'attachment; filename="patient_questionnaire_questions.docx"'
+            return response
+
+        content = self._build_pdf()
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="patient_questionnaire_questions.pdf"'
+        return response
 
 
 def _questionnaire_prefetch_qs():
