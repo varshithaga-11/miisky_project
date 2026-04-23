@@ -288,6 +288,11 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/dashboard",
   },
   {
+    icon: <Activity className="w-5 h-5" />,
+    name: "My Workflow",
+    path: "/nutrition/workflow",
+  },
+  {
     icon: <BookOpen className="w-5 h-5" />,
     name: "Nutrition Guide",
     path: "/nutrition/instructions",
@@ -418,6 +423,11 @@ const microKitchenNavItems: NavItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
     name: "Dashboard",
     path: "/microkitchen/dashboard",
+  },
+  {
+    icon: <Activity className="w-5 h-5" />,
+    name: "My Workflow",
+    path: "/microkitchen/workflow",
   },
   {
     icon: <BookOpen className="w-5 h-5" />,

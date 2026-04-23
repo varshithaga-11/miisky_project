@@ -158,6 +158,8 @@ import SupplyChainTeamMemberForMKPage from "./pages/MicroKitchenSide/SupplyChain
 import NutritionPatientUnavailabilityPage from "./pages/NutritionSide/PatientUnavailability/index";
 import PatientUnavailabilityRequestPage from "./pages/PatientSide/PatientUnavailability/index";
 import KitchenExecutionPage from "./pages/MicroKitchenSide/KitchenExecution/index";
+import NutritionWorkFlowPage from "./pages/NutritionSide/WorkFlow/index";
+import MicroKitchenWorkFlowPage from "./pages/MicroKitchenSide/WorkFlow/index";
 import NutritionUserMappingPage from "./pages/NutritionSide/NutritionMapping/UserMapping";
 import PatientWorkFlowPage from "./pages/PatientSide/WorkFlow/index";
 
@@ -400,6 +402,7 @@ export function appRoutes() {
           <Route path="nutrition/plan-payouts" element={<NutritionPlanPayoutsPage />} />
           <Route path="nutrition/availability-calendar" element={<AvailabilityCalendar />} />
           <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
+          <Route path="nutrition/workflow" element={<NutritionWorkFlowPage />} />
           <Route path="nutrition/nutrition-mapping/user-mapping" element={<NutritionUserMappingPage />} />
           
           {/* Nutritionist Food Management */}
@@ -412,6 +415,7 @@ export function appRoutes() {
           <Route path="microkitchen/reviews" element={<ReviewsPage />} />
           <Route path="microkitchen/delivery-feedback" element={<MicroKitchenDeliveryFeedbackPage />} />
           <Route path="microkitchen/available-foods" element={<AvailableFoodsPage />} />
+          <Route path="microkitchen/workflow" element={<MicroKitchenWorkFlowPage />} />
           <Route path="microkitchen/questionnaire" element={<MicroKitchenQuestionarePage />} />
           <Route path="microkitchen/inspection-report" element={<InspectionReportPage />} />
           <Route path="microkitchen/patients" element={<MicroKitchenPatientsPage />} />
