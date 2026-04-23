@@ -56,6 +56,18 @@ export type AdminSupplyChainOrderRow = {
   receipt_uploaded: boolean;
 };
 
+export type AdminSupplyChainOrderPaginatedRow = {
+  id: number;
+  order_id: string;
+  patient_name: string;
+  kitchen_name: string | null;
+  order_type: string;
+  status: string;
+  final_amount: string;
+  delivery_charge: string;
+  created_at: string;
+};
+
 function apiErrorDetail(err: unknown): string | null {
   if (isAxiosError(err)) {
     const d = err.response?.data as { detail?: unknown } | undefined;
@@ -129,6 +141,35 @@ export const fetchAdminSupplyChainPlanAssignments = (userId: number, page = 1, l
 /** GET api/admin-supply-chain-orders-nopaginate/?user= */
 export const fetchAdminSupplyChainOrders = (userId: number, page = 1, limit = 10, startDate = "", endDate = "", status = "", period = "") =>
   getPaginatedJson<AdminSupplyChainOrderRow>("api/admin-supply-chain-orders-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate, status, period });
+
+/** GET api/admin-supply-chain-orders-paginated/ */
+export const fetchAdminSupplyChainOrdersPaginated = (
+  userId: number,
+  page = 1,
+  limit = 10,
+  startDate = "",
+  endDate = "",
+  status = ""
+) =>
+  getPaginatedJson<AdminSupplyChainOrderPaginatedRow>(
+    "api/admin-supply-chain-orders-paginated/",
+    userId,
+    page,
+    limit,
+    { start_date: startDate, end_date: endDate, status }
+  );
+
+/** GET api/admin-supply-chain-orders-paginated/:id/ */
+export const fetchAdminSupplyChainOrderDetail = async (orderId: number) => {
+  const url = createApiUrl(`api/admin-supply-chain-orders-paginated/${orderId}/`);
+  try {
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+  } catch (err) {
+    const detail = apiErrorDetail(err);
+    throw new Error(detail || "Request failed.");
+  }
+};
 
 /** GET api/admin-supply-chain-daily-work-nopaginate/?user= */
 export const fetchAdminSupplyChainDailyWork = (userId: number, page = 1, limit = 10, startDate = "", endDate = "", period = "") =>

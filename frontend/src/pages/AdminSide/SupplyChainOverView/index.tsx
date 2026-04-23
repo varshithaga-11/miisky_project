@@ -6,6 +6,8 @@ import {
   fetchAdminSupplyChainKitchenTeam,
   fetchAdminSupplyChainPlanAssignments,
   fetchAdminSupplyChainOrders,
+  fetchAdminSupplyChainOrdersPaginated,
+  fetchAdminSupplyChainOrderDetail,
   fetchAdminSupplyChainDailyWork,
   fetchAdminSupplyChainDeliveryProfile,
   fetchAdminSupplyChainPlannedLeaves,
@@ -16,6 +18,7 @@ import {
   AdminSupplyChainEarningsPaginatedResp,
   getAdminSupplyChainList,
   type AdminSupplyChainOrderRow,
+  type AdminSupplyChainOrderPaginatedRow,
   type KitchenTeamRow,
   type DeliveryFeedbackRow,
 } from "./api";
@@ -729,51 +732,53 @@ function TicketsPanel({
   }
 
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {tickets.map((t: any) => (
-        (() => {
-          const fromUser = personLabel(t.created_by_details, t.user_type);
-          const toUser = personLabel(t.assigned_to_details, t.target_user_type);
-          return (
-        <li
-          key={t.id}
-          className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex justify-between items-start mb-3 gap-2">
-            <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest">
-              #{t.id}
-            </span>
-            <span
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                t.status === "resolved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-              }`}
-            >
-              {t.status}
-            </span>
-          </div>
-          <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">{t.subject || t.title}</p>
-          <p className="text-xs text-gray-500 line-clamp-2">{t.description}</p>
-          <div className="mt-3 rounded-2xl bg-gray-50/70 dark:bg-white/[0.03] border border-gray-100 dark:border-white/10 p-3 space-y-2">
-            <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-widest">
-              <span className="font-black text-gray-400">From</span>
-              <span className="font-bold text-gray-700 dark:text-gray-200 normal-case">{fromUser.name}</span>
-              <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 font-black">{fromUser.role}</span>
+    <div className="space-y-4">
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {tickets.map((t: any) => (
+          (() => {
+            const fromUser = personLabel(t.created_by_details, t.user_type);
+            const toUser = personLabel(t.assigned_to_details, t.target_user_type);
+            return (
+          <li
+            key={t.id}
+            className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col justify-between"
+          >
+            <div className="flex justify-between items-start mb-3 gap-2">
+              <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest">
+                #{t.id}
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                  t.status === "resolved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                {t.status}
+              </span>
             </div>
-            <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-widest">
-              <span className="font-black text-gray-400">To</span>
-              <span className="font-bold text-gray-700 dark:text-gray-200 normal-case">{toUser.name}</span>
-              <span className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 font-black">{toUser.role}</span>
+            <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">{t.subject || t.title}</p>
+            <p className="text-xs text-gray-500 line-clamp-2">{t.description}</p>
+            <div className="mt-3 rounded-2xl bg-gray-50/70 dark:bg-white/[0.03] border border-gray-100 dark:border-white/10 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-widest">
+                <span className="font-black text-gray-400">From</span>
+                <span className="font-bold text-gray-700 dark:text-gray-200 normal-case">{fromUser.name}</span>
+                <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 font-black">{fromUser.role}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-widest">
+                <span className="font-black text-gray-400">To</span>
+                <span className="font-bold text-gray-700 dark:text-gray-200 normal-case">{toUser.name}</span>
+                <span className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 font-black">{toUser.role}</span>
+              </div>
             </div>
-          </div>
-          <div className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            {new Date(t.created_at).toLocaleDateString()} · PRIORITY: {t.priority}
-          </div>
-        </li>
-          );
-        })()
-      ))}
+            <div className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              {new Date(t.created_at).toLocaleDateString()} · PRIORITY: {t.priority}
+            </div>
+          </li>
+            );
+          })()
+        ))}
+      </ul>
       <Sentinel loading={loadingMore} hasMore={hasMore} />
-    </ul>
+    </div>
   );
 }
 
@@ -794,6 +799,206 @@ const MENU_ITEMS: { key: DossierTab; title: string; description: string; icon: a
   { key: "profile", title: "KYC & Profile", description: "Identity verification, license, and vehicle records", icon: <FiFileText /> },
   { key: "leave", title: "Planned Leave", description: "Time-off records and planned unavailability", icon: <FiCalendar /> },
 ];
+
+const AdminOrderDetailView: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  order: any;
+  loading: boolean;
+}> = ({ open, onClose, order, loading }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-3xl bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Order Summary</h3>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  order?.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {order?.status}
+                </span>
+              </div>
+              <p className="text-sm font-bold text-blue-600 italic">
+                #{order?.id ? String(order.id).padStart(5, '0') : '—'} • {order?.order_type?.replace("_", " ")}
+              </p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                Placed on: {order?.created_at ? new Date(order.created_at).toLocaleString() : '—'}
+              </p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-colors">
+              <FiX className="text-2xl text-gray-400" />
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="py-32 text-center">
+               <div className="size-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+               <p className="text-gray-400 italic font-bold uppercase tracking-widest animate-pulse text-xs">Fetching full dossier...</p>
+            </div>
+          ) : !order ? (
+            <div className="py-20 text-center text-red-400 italic font-bold">Dossier unavailable or error occurred.</div>
+          ) : (
+            <div className="space-y-8">
+              {/* People Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/10 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><FiUser size={80} /></div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-blue-500" /> Patient Information
+                  </p>
+                  <p className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-1">
+                    {order.user_details?.first_name} {order.user_details?.last_name}
+                  </p>
+                  <p className="text-sm font-bold text-gray-500 flex items-center gap-1.5">
+                    <FiPhone className="text-blue-500" /> {order.user_details?.mobile || "No Contact"}
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/10 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><FiGrid size={80} /></div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-amber-500" /> Kitchen Details
+                  </p>
+                  <p className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-1">
+                    {order.kitchen_details?.brand_name || "Unknown Kitchen"}
+                  </p>
+                  <p className="text-xs font-bold text-gray-500 italic">
+                    Assigned Delivery ID: #{order.delivery_person || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Delivery Section */}
+              <div className="p-6 rounded-[2rem] bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/10">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <FiMapPin className="text-red-500" /> Delivery Logistics
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 size-2 rounded-full bg-red-500 shrink-0 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                    <div>
+                       <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">
+                         {order.delivery_address || "No address provided"}
+                       </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="px-4 py-2 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm">
+                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Distance</p>
+                       <p className="text-sm font-black text-gray-900 dark:text-white">{order.delivery_distance_km || "0"} KM</p>
+                    </div>
+                    {order.delivery_slab_details && (
+                      <div className="px-4 py-2 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm">
+                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Pricing Slab</p>
+                         <p className="text-sm font-black text-gray-900 dark:text-white">{order.delivery_slab_details.min_km}-{order.delivery_slab_details.max_km} KM</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Section */}
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <FiShoppingBag className="text-green-500" /> Ordered Items
+                </p>
+                <div className="space-y-3">
+                  {order.items?.map((item: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center p-4 bg-white dark:bg-white/[0.02] rounded-3xl border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="size-14 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden border border-gray-200 dark:border-white/10">
+                          {item.food_details?.image ? (
+                             <img src={item.food_details.image} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                             <div className="w-full h-full flex items-center justify-center text-gray-300"><FiActivity /></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                            {item.food_details?.name || "Unknown Item"}
+                          </p>
+                          <p className="text-xs font-bold text-gray-400 italic">
+                             ₹{item.price} x {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-lg font-black text-gray-900 dark:text-white italic tracking-tighter">
+                        ₹{item.subtotal || item.price}
+                      </p>
+                    </div>
+                  ))}
+                  {(!order.items || order.items.length === 0) && (
+                    <p className="text-center text-gray-400 text-xs italic py-8 bg-gray-50/50 rounded-3xl border border-dashed">No item details available in dossier.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Ratings Section */}
+              {order.ratings && order.ratings.length > 0 && (
+                <div className="p-6 rounded-[2rem] bg-amber-50/30 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-900/20">
+                  <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <FiStar className="fill-amber-400 text-amber-400" /> Patient Feedback
+                  </p>
+                  {order.ratings.map((r: any, idx: number) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <FiStar key={i} size={14} className={i < r.rating ? "fill-amber-400 text-amber-400" : "text-gray-300"} />
+                        ))}
+                        <span className="text-xs font-black text-amber-600 dark:text-amber-400 ml-2">{r.rating}/5</span>
+                      </div>
+                      {r.review && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 italic bg-white/50 dark:bg-black/20 p-4 rounded-2xl border border-amber-100/20">
+                           "{r.review}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Financials Section */}
+              <div className="p-8 rounded-[2.5rem] bg-blue-600 text-white shadow-2xl shadow-blue-600/30 relative overflow-hidden">
+                <div className="absolute -bottom-10 -right-10 size-40 bg-white/5 rounded-full blur-3xl" />
+                <div className="absolute -top-10 -left-10 size-40 bg-blue-400/10 rounded-full blur-3xl" />
+                
+                <div className="relative space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase tracking-widest opacity-80">Food Subtotal</span>
+                    <span className="font-bold">₹{order.total_amount}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest opacity-80">Delivery Fees</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-lg font-bold">Standard</span>
+                    </div>
+                    <span className="font-bold">₹{order.delivery_charge}</span>
+                  </div>
+                  <div className="h-px bg-white/10" />
+                  <div className="flex justify-between items-center pt-2">
+                    <div>
+                       <span className="text-sm font-black uppercase tracking-widest block leading-none">Grand Total</span>
+                       <span className="text-[10px] font-bold opacity-60 italic">Inclusive of all taxes & charges</span>
+                    </div>
+                    <span className="text-4xl font-black italic tracking-tighter drop-shadow-lg">₹{order.final_amount}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SupplyChainDossierModal: React.FC<{
   person: SupplyChainRow | null;
@@ -832,7 +1037,10 @@ const SupplyChainDossierModal: React.FC<{
   const [kitchenTeam, setKitchenTeam] = useState<PagState<KitchenTeamRow>>(initialPag);
   const [plans, setPlans] = useState<PagState<any>>(initialPag);
   const [dailyWork, setDailyWork] = useState<PagState<any>>(initialPag);
-  const [orders, setOrders] = useState<PagState<AdminSupplyChainOrderRow>>(initialPag);
+  const [orders, setOrders] = useState<PagState<AdminSupplyChainOrderPaginatedRow>>(initialPag);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [orderDetail, setOrderDetail] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [earnings, setEarnings] = useState<PagState<any> & { total_orders: number; total_delivery_earnings: string }>({
     ...initialPag,
     total_orders: 0,
@@ -951,7 +1159,7 @@ const SupplyChainDossierModal: React.FC<{
           break;
         }
         case "orders": {
-          const res = await fetchAdminSupplyChainOrders(uid, 1, 10, ordStartDate, ordEndDate, ordStatus, ordPeriod);
+          const res = await fetchAdminSupplyChainOrdersPaginated(uid, 1, 10, ordStartDate, ordEndDate, ordStatus);
           setOrders({ results: res.results, page: 1, hasMore: !!res.next });
           break;
         }
@@ -1033,8 +1241,8 @@ const SupplyChainDossierModal: React.FC<{
         }
         case "orders": {
           if (!orders.hasMore) break;
-          const res = await fetchAdminSupplyChainOrders(uid, orders.page + 1, 10, ordStartDate, ordEndDate, ordStatus, ordPeriod);
-          setOrders((prev: PagState<AdminSupplyChainOrderRow>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
+          const res = await fetchAdminSupplyChainOrdersPaginated(uid, orders.page + 1, 10, ordStartDate, ordEndDate, ordStatus);
+          setOrders((prev: PagState<AdminSupplyChainOrderPaginatedRow>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
           break;
         }
         case "earnings": {
@@ -1228,21 +1436,23 @@ const SupplyChainDossierModal: React.FC<{
                       {kitchenTeam.results.length === 0 && !loadingMore ? (
                         <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No kitchen team memberships found.</p>
                       ) : (
-                        <ul className="grid gap-4">
-                          {kitchenTeam.results.map((k: KitchenTeamRow) => (
-                            <li key={k.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm hover:shadow-md transition-shadow">
-                              <div className="font-black text-gray-900 dark:text-white text-lg uppercase tracking-tight italic">
-                                {k.micro_kitchen_details?.brand_name || k.micro_kitchen_details?.kitchen_code || `Kitchen #${k.micro_kitchen_details?.id ?? "?"}`}
-                              </div>
-                              <div className="flex flex-wrap gap-4 mt-3">
-                                 <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Role: {k.role}</span>
-                                 <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${k.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'}`}>Status: {k.is_active ? 'Active' : 'Inactive'}</span>
-                                 {k.zone_name && <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Zone: {k.zone_name}</span>}
-                              </div>
-                            </li>
-                          ))}
+                        <div className="space-y-4">
+                          <ul className="grid gap-4">
+                            {kitchenTeam.results.map((k: KitchenTeamRow) => (
+                              <li key={k.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm hover:shadow-md transition-shadow">
+                                <div className="font-black text-gray-900 dark:text-white text-lg uppercase tracking-tight italic">
+                                  {k.micro_kitchen_details?.brand_name || k.micro_kitchen_details?.kitchen_code || `Kitchen #${k.micro_kitchen_details?.id ?? "?"}`}
+                                </div>
+                                <div className="flex flex-wrap gap-4 mt-3">
+                                   <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Role: {k.role}</span>
+                                   <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${k.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'}`}>Status: {k.is_active ? 'Active' : 'Inactive'}</span>
+                                   {k.zone_name && <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Zone: {k.zone_name}</span>}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
                           <Sentinel loading={loadingMore} hasMore={kitchenTeam.hasMore} />
-                        </ul>
+                        </div>
                       )}
                     </div>
                   )}
@@ -1306,7 +1516,7 @@ const SupplyChainDossierModal: React.FC<{
                           (async () => {
                              setLoading(true);
                              try {
-                               const res = await fetchAdminSupplyChainOrders(uid, 1, 10, s, e, ordStatus, p);
+                               const res = await fetchAdminSupplyChainOrdersPaginated(uid, 1, 10, s, e, ordStatus);
                                setOrders({ results: res.results, page: 1, hasMore: !!res.next });
                              } finally { setLoading(false); }
                           })();
@@ -1322,7 +1532,7 @@ const SupplyChainDossierModal: React.FC<{
                                 (async () => {
                                    setLoading(true);
                                    try {
-                                     const res = await fetchAdminSupplyChainOrders(uid, 1, 10, ordStartDate, ordEndDate, val, ordPeriod);
+                                     const res = await fetchAdminSupplyChainOrdersPaginated(uid, 1, 10, ordStartDate, ordEndDate, val);
                                      setOrders({ results: res.results, page: 1, hasMore: !!res.next });
                                    } finally { setLoading(false); }
                                 })();
@@ -1349,19 +1559,25 @@ const SupplyChainDossierModal: React.FC<{
                               <TableRow>
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Order</TableCell>
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Amount</TableCell>
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Status</TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]"></TableCell>
                               </TableRow>
                             </TableHeader>
                             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                              {orders.results.map((o: AdminSupplyChainOrderRow) => (
+                              {orders.results.map((o: AdminSupplyChainOrderPaginatedRow) => (
                                 <TableRow key={o.id} className="hover:bg-blue-50/20 transition-colors">
                                   <TableCell className="px-6 py-5">
-                                     <p className="text-theme-sm font-black text-blue-600 italic tracking-tighter">#{o.id}</p>
+                                     <p className="text-theme-sm font-black text-blue-600 italic tracking-tighter">{o.order_id}</p>
                                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{o.created_at?.split("T")[0]}</p>
                                   </TableCell>
                                   <TableCell className="px-6 py-5">
-                                    <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{o.patient_label || "—"}</p>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest italic">{o.kitchen_brand || "—"}</p>
+                                    <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{o.patient_name || "—"}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest italic">{o.kitchen_name || "—"}</p>
+                                  </TableCell>
+                                  <TableCell className="px-6 py-5">
+                                    <p className="font-black text-gray-900 dark:text-white text-sm">₹{o.final_amount}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest">Delivery: ₹{o.delivery_charge}</p>
                                   </TableCell>
                                   <TableCell className="px-6 py-5">
                                     <span
@@ -1371,6 +1587,26 @@ const SupplyChainDossierModal: React.FC<{
                                     >
                                       {o.status}
                                     </span>
+                                  </TableCell>
+                                  <TableCell className="px-6 py-5">
+                                    <button 
+                                      onClick={() => {
+                                        setSelectedOrderId(o.id);
+                                        (async () => {
+                                          setLoadingDetail(true);
+                                          try {
+                                            const detail = await fetchAdminSupplyChainOrderDetail(o.id);
+                                            setOrderDetail(detail);
+                                          } finally { setLoadingDetail(false); }
+                                        })();
+                                      }}
+                                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+                                    >
+                                      <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      </svg>
+                                    </button>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -1419,15 +1655,47 @@ const SupplyChainDossierModal: React.FC<{
                       {plannedLeaves.results.length === 0 && !loadingMore ? (
                         <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">No time-off records found.</p>
                       ) : (
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           {(plannedLeaves.results as Record<string, unknown>[]).map((L) => (
-                            <li key={String(L.id)} className="rounded-3xl border border-gray-100 dark:border-white/10 p-5 bg-white dark:bg-white/[0.02] shadow-sm">
-                              <div className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">{String(L.leave_type)}</div>
-                              <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic text-lg">{String(L.start_date)} → {String(L.end_date)}</div>
-                            </li>
-                          ))}
+                        <div className="space-y-4">
+                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {(plannedLeaves.results as Record<string, any>[]).map((L) => (
+                              <li key={L.id} className="rounded-3xl border border-gray-100 dark:border-white/10 p-6 bg-white dark:bg-white/[0.02] shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                                <div>
+                                  <div className="flex justify-between items-start mb-2">
+                                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                                      {L.leave_type?.replace("_", " ")}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-400 italic">
+                                      ID: #{L.id}
+                                    </span>
+                                  </div>
+                                  <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic text-xl mb-1">
+                                    {L.start_date} → {L.end_date}
+                                  </div>
+                                  {(L.start_time || L.end_time) && (
+                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                      {L.start_time || "—"} - {L.end_time || "—"}
+                                    </div>
+                                  )}
+                                  {L.notes && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 italic line-clamp-2 mt-2 bg-gray-50 dark:bg-white/5 p-3 rounded-xl">
+                                      "{L.notes}"
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                                    <FiClock className="size-3" />
+                                    <span>Applied: {L.created_on ? new Date(L.created_on).toLocaleString() : "—"}</span>
+                                  </div>
+                                  <div className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${L.kitchen_handling_status === 'complete' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                                    {L.kitchen_handling_status || "pending"}
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
                           <Sentinel loading={loadingMore} hasMore={plannedLeaves.hasMore} />
-                        </ul>
+                        </div>
                       )}
                     </div>
                   )}
@@ -1550,6 +1818,15 @@ const SupplyChainDossierModal: React.FC<{
             Dismiss
           </button>
         </footer>
+        <AdminOrderDetailView 
+          open={!!selectedOrderId} 
+          onClose={() => {
+            setSelectedOrderId(null);
+            setOrderDetail(null);
+          }}
+          order={orderDetail}
+          loading={loadingDetail}
+        />
       </div>
     </div>
   );

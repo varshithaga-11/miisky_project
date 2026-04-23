@@ -10322,6 +10322,40 @@ class AdminSupplyChainOrdersViewSet(viewsets.ViewSet):
         return Response(AdminSupplyChainOrderListSerializer(orders_qs, many=True).data)
 
 
+class AdminSupplyChainOrdersPaginatedViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin: paginated orders list and detailed retrieve view.
+    Used for the scrollable list in admin supply chain overview.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+    queryset = Order.objects.all().select_related("user", "micro_kitchen").order_by("-created_at")
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return AdminSupplyChainOrderPaginatedDetailSerializer
+        return AdminSupplyChainOrderPaginatedListSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user_id = self.request.query_params.get("user")
+        if user_id:
+            qs = qs.filter(delivery_person_id=user_id)
+        
+        status_param = self.request.query_params.get("status")
+        if status_param:
+            qs = qs.filter(status=status_param)
+            
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
+        if start_date:
+            qs = qs.filter(created_at__date__gte=start_date)
+        if end_date:
+            qs = qs.filter(created_at__date__lte=end_date)
+            
+        return qs
+
+
 class AdminSupplyChainDeliveryProfileViewSet(viewsets.ViewSet):
     """Admin: delivery questionnaire / KYC profile for one supply-chain user."""
 

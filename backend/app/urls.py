@@ -56,6 +56,11 @@ router.register(
     AdminSupplyChainTicketsViewSet,
     basename='admin-supply-chain-tickets',
 )
+router.register(
+    r'admin-supply-chain-orders-paginated',
+    AdminSupplyChainOrdersPaginatedViewSet,
+    basename='admin-supply-chain-orders-paginated',
+)
 router.register(r'micro-kitchen-patients', MicroKitchenPatientsViewSet, basename='micro-kitchen-patients')
 router.register(
     r'micro-kitchen-global-delivery-assignments',

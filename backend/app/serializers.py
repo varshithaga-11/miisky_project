@@ -3632,6 +3632,42 @@ class AdminSupplyChainOrderListSerializer(AdminSupplyChainOrderRowSerializer):
         pass
 
 
+
+class AdminSupplyChainOrderPaginatedListSerializer(serializers.ModelSerializer):
+    """Minimal fields for paginated admin supply-chain order list."""
+    patient_name = serializers.SerializerMethodField()
+    kitchen_name = serializers.CharField(source="micro_kitchen.brand_name", read_only=True, allow_null=True)
+    order_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "order_id",
+            "patient_name",
+            "kitchen_name",
+            "order_type",
+            "status",
+            "final_amount",
+            "delivery_charge",
+            "created_at",
+        ]
+
+    def get_order_id(self, obj):
+        return f"ORD-{obj.id:05d}"
+
+    def get_patient_name(self, obj):
+        u = obj.user
+        if not u:
+            return "Unknown Guest"
+        name = f"{u.first_name or ''} {u.last_name or ''}".strip()
+        return name or u.username
+
+class AdminSupplyChainOrderPaginatedDetailSerializer(OrderSerializer):
+    """Full detail for a single supply-chain order."""
+    pass
+
+
 class OrderCommissionConfigSerializer(serializers.ModelSerializer):
     """Admin CRUD for global order commission split (platform + kitchen = 100%)."""
 
