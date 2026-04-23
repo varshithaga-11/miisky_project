@@ -34,6 +34,12 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
   const [hasMorePayments, setHasMorePayments] = useState(true);
   const [loadingMorePayments, setLoadingMorePayments] = useState(false);
 
+  // Pagination for food orders
+  const [orders, setOrders] = useState<any[]>([]);
+  const [orderPage, setOrderPage] = useState(1);
+  const [hasMoreOrders, setHasMoreOrders] = useState(true);
+  const [loadingMoreOrders, setLoadingMoreOrders] = useState(false);
+
   const uid = user.id;
 
   useEffect(() => {
@@ -45,6 +51,9 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     setPayments([]);
     setPaymentPage(1);
     setHasMorePayments(true);
+    setOrders([]);
+    setOrderPage(1);
+    setHasMoreOrders(true);
   }, [open, uid]);
 
   const goHub = () => {
@@ -70,8 +79,11 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
             setPayload(await fetchQuestionnairesForUser(uid));
             break;
           case "orders":
-            const res = await fetchOrdersForUserAdmin(uid);
-            setPayload(res.results);
+            const oRes = await fetchOrdersForUserAdmin(uid, 1);
+            setOrders(oRes.results);
+            setOrderPage(1);
+            setHasMoreOrders(!!oRes.next);
+            setPayload(oRes.results);
             break;
           case "tickets":
             setPayload(await fetchSupportTicketsForUser(uid));
@@ -118,24 +130,60 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     }
   }, [loadingMorePayments, hasMorePayments, uid, paymentPage]);
 
+  const loadMoreOrders = useCallback(async () => {
+    if (loadingMoreOrders || !hasMoreOrders || uid == null) return;
+    setLoadingMoreOrders(true);
+    try {
+      const nextPage = orderPage + 1;
+      const res = await fetchOrdersForUserAdmin(uid, nextPage);
+      setOrders((prev) => [...prev, ...res.results]);
+      setOrderPage(nextPage);
+      setHasMoreOrders(!!res.next);
+    } catch (e) {
+      console.error("Failed to load more orders", e);
+    } finally {
+      setLoadingMoreOrders(false);
+    }
+  }, [loadingMoreOrders, hasMoreOrders, uid, orderPage]);
+
   // Observer for infinite scroll
   useEffect(() => {
-    if (screen !== "orderPayments" || !hasMorePayments || loading) return;
+    if (screen === "orderPayments") {
+      if (!hasMorePayments || loading) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMorePayments();
-        }
-      },
-      { threshold: 0.1 }
-    );
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadMorePayments();
+          }
+        },
+        { threshold: 0.1 }
+      );
 
-    const sentinel = document.getElementById("np-payment-sentinel");
-    if (sentinel) observer.observe(sentinel);
+      const sentinel = document.getElementById("np-payment-sentinel");
+      if (sentinel) observer.observe(sentinel);
 
-    return () => observer.disconnect();
-  }, [screen, hasMorePayments, loading, loadMorePayments]);
+      return () => observer.disconnect();
+    }
+
+    if (screen === "orders") {
+      if (!hasMoreOrders || loading) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadMoreOrders();
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      const sentinel = document.getElementById("np-order-sentinel");
+      if (sentinel) observer.observe(sentinel);
+
+      return () => observer.disconnect();
+    }
+  }, [screen, hasMorePayments, hasMoreOrders, loading, loadMorePayments, loadMoreOrders]);
 
   if (!open || uid == null) return null;
 
@@ -227,8 +275,22 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
                   {screen === "questionnaire" && Array.isArray(payload) && (
                     <DisplayQuestionnaire rows={payload as Record<string, unknown>[]} />
                   )}
-                  {screen === "orders" && Array.isArray(payload) && (
-                    <AdminOrderList items={payload} hideCustomer />
+                  {screen === "orders" && (
+                    <div className="space-y-6">
+                      <AdminOrderList items={orders} hideCustomer />
+                      <div id="np-order-sentinel" className="h-20 flex items-center justify-center">
+                        {loadingMoreOrders && (
+                          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
+                            Loading more orders...
+                          </div>
+                        )}
+                        {!hasMoreOrders && orders.length > 0 && (
+                          <div className="text-[10px] text-gray-400 font-bold uppercase">
+                            End of history
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                   {screen === "tickets" && Array.isArray(payload) && (
                     <DisplaySupportTickets items={payload} />
