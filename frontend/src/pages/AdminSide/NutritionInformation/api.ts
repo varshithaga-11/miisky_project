@@ -98,8 +98,8 @@ export const getNutritionistReviewsNoPaginate = async (nutritionistId: number): 
     return response.data;
 };
 
-export const getNutritionistTicketsNoPaginate = async (userId: number): Promise<any[]> => {
-    const url = createApiUrl(`api/admin-nutritionist-tickets-nopaginate/?user=${userId}`);
+export const getNutritionistTicketsPaginated = async (userId: number, page: number = 1, limit: number = 10): Promise<any> => {
+    const url = createApiUrl(`api/admin-nutritionist-tickets-paginated/?user=${userId}&page=${page}&limit=${limit}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
