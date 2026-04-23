@@ -9909,15 +9909,24 @@ class AdminNutritionistReviewsNoPaginationView(APIView):
         serializer = NutritionistRatingSerializer(qs, many=True)
         return Response(serializer.data)
 
-class AdminNutritionistTicketsNoPaginationView(APIView):
+class AdminNutritionistTicketsPaginatedView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
         user_id = request.query_params.get("user")
         if not user_id:
-            return Response([])
+            return Response({"count": 0, "next": None, "previous": None, "results": []})
+
+        qs = SupportTicket.objects.filter(
+            Q(created_by_id=user_id) | Q(assigned_to_id=user_id)
+        ).select_related('category', 'assigned_to', 'created_by').order_by('-id')
         
-        qs = SupportTicket.objects.filter(created_by_id=user_id).select_related('category', 'assigned_to').order_by('-id')
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            serializer = SupportTicketSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = SupportTicketSerializer(qs, many=True)
         return Response(serializer.data)
 

@@ -8,7 +8,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { InfoRow, InfoSection, EmptyState } from "../PatientOverview/PatientDataViews";
 import { createApiUrl } from "../../../access/access";
-import { getNutritionistMealsWithMonth, getNutritionistMeetingsPaginated } from "./api";
+import { getNutritionistMealsWithMonth, getNutritionistMeetingsPaginated, getNutritionistTicketsPaginated } from "./api";
 
 const getMediaUrl = (path: string | undefined | null) => {
     if (!path) return "";
@@ -596,8 +596,56 @@ export function DisplayNutritionistReviews({ items }: { items: any[] }) {
     );
 }
 
-export function DisplayNutritionistTickets({ items }: { items: any[] }) {
-    if (!items || items.length === 0) return <EmptyState message="No support requests found." />;
+export function DisplayNutritionistTickets({ nutritionistId }: { nutritionistId: number }) {
+    const [items, setItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadMore = useCallback(async (pageNum: number) => {
+        if (loading || (!hasMore && pageNum > 1)) return;
+        setLoading(true);
+        try {
+            const data = await getNutritionistTicketsPaginated(nutritionistId, pageNum);
+            const results = data.results || [];
+            setItems(prev => pageNum === 1 ? results : [...prev, ...results]);
+            setHasMore(!!data.next);
+            setError(null);
+        } catch (e: any) {
+            setError("Failed to load tickets");
+        } finally {
+            setLoading(false);
+        }
+    }, [nutritionistId, loading, hasMore]);
+
+    useEffect(() => {
+        loadMore(1);
+    }, [nutritionistId]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading) {
+                    setPage(p => {
+                        const next = p + 1;
+                        loadMore(next);
+                        return next;
+                    });
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const sentinel = document.querySelector("#scroll-sentinel");
+        if (sentinel) observer.observe(sentinel);
+
+        return () => observer.disconnect();
+    }, [loadMore, hasMore, loading]);
+
+    if (error && items.length === 0) return <div className="p-8 text-center text-red-500 font-bold uppercase italic tracking-widest">{error}</div>;
+    if (!loading && items.length === 0) return <EmptyState message="No support requests found." />;
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
@@ -634,6 +682,38 @@ export function DisplayNutritionistTickets({ items }: { items: any[] }) {
                             </div>
                         </div>
 
+                        {/* From/To Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <div className="p-5 rounded-3xl bg-blue-50/30 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-900/20">
+                                <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2 italic">FROM (CREATOR)</div>
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-blue-600 shadow-sm font-black uppercase italic border border-blue-100 dark:border-blue-900/30">
+                                        {t.created_by_details?.first_name?.[0] || 'U'}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{t.created_by_details?.first_name} {t.created_by_details?.last_name}</div>
+                                        <div className="text-[9px] font-bold text-blue-500/70 uppercase tracking-tighter italic">{t.created_by_details?.role?.replace('_', ' ')}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-5 rounded-3xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/20">
+                                <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-2 italic">TO (ASSIGNED TO)</div>
+                                {t.assigned_to_details ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-10 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-indigo-600 shadow-sm font-black uppercase italic border border-indigo-100 dark:border-indigo-900/30">
+                                            {t.assigned_to_details?.first_name?.[0] || 'A'}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{t.assigned_to_details?.first_name} {t.assigned_to_details?.last_name}</div>
+                                            <div className="text-[9px] font-bold text-indigo-500/70 uppercase tracking-tighter italic">{t.assigned_to_details?.role?.replace('_', ' ')}</div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center h-10 italic text-[10px] text-gray-400 font-bold uppercase tracking-widest">Unassigned</div>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="relative mb-8">
                             <div className="text-base text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50/50 dark:bg-white/[0.01] p-8 rounded-[32px] border border-gray-100/50 dark:border-white/5 shadow-inner">
                                 {t.description || "No problem dossier provided."}
@@ -649,18 +729,13 @@ export function DisplayNutritionistTickets({ items }: { items: any[] }) {
                                 <div className="p-8 rounded-[32px] bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-6 opacity-5 text-indigo-600 text-5xl font-black italic">SOLVED</div>
                                     <p className="text-lg text-gray-700 dark:text-gray-200 italic font-bold tracking-tight relative z-10 leading-snug">&quot; {t.admin_response} &quot;</p>
-                                    {t.assigned_to_details && (
-                                        <div className="mt-4 flex items-center gap-2">
-                                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">OWNED BY:</span>
-                                            <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase px-2 py-0.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-indigo-100/50">{t.assigned_to_details.first_name} {t.assigned_to_details.last_name}</span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
                     </div>
                 ))}
             </div>
+            <Sentinel loading={loading} hasMore={hasMore} />
         </div>
     );
 }
