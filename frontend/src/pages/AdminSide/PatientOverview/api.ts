@@ -253,8 +253,8 @@ export const fetchOrderPaymentsForUserAdmin = async (
   page: number = 1,
   limit: number = 10,
   filters?: { search?: string; start_date?: string; end_date?: string }
-): Promise<{ count: number; results: unknown[]; next: string | null }> => {
-  const url = createApiUrl("api/order/");
+): Promise<{ count: number; results: any[]; next: string | null }> => {
+  const url = createApiUrl("api/admin/patient-order-payments-summary/");
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
     params: {
@@ -273,9 +273,19 @@ export const fetchOrderPaymentsForUserAdmin = async (
     type: "Meal Order",
     reference: `#${o.id}`,
     details: o.kitchen_details?.brand_name || "Food Order",
-    originalData: o,
+    // We no longer send the full order object in originalData for the summary list
+    originalData: { id: o.id }, 
   }));
   return { ...data, results };
+};
+
+/** Fetch detailed order payment info (full payload) */
+export const fetchOrderPaymentDetailsAdmin = async (orderId: number): Promise<any> => {
+  const url = createApiUrl(`api/admin/patient-order-payments-details/${orderId}/`);
+  const res = await axios.get(url, {
+    headers: await getAuthHeaders(),
+  });
+  return res.data;
 };
 
 /** Meeting requests for patient (No Pagination) */

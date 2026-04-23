@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import { resolveMediaUrl } from "./api";
+import { useMemo, useState, useEffect } from "react";
+import { resolveMediaUrl, fetchOrderPaymentDetailsAdmin } from "./api";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiClock, FiCheckCircle, FiAlertCircle, FiTag, FiCalendar, 
@@ -1132,7 +1132,29 @@ export function DisplayPaymentHistory({ items }: { items: PaymentEntry[] }) {
 }
 
 function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClose: () => void }) {
-  const d = entry.originalData || {};
+  const [details, setDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (entry.type.includes("Order")) {
+      fetchOrderPaymentDetailsAdmin(Number(entry.id))
+        .then((data) => {
+          setDetails(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch order details", err);
+          setLoading(false);
+        });
+    } else {
+      // For Diet Plan payments, we might already have originalData or it's simple enough
+      setDetails(entry.originalData || {});
+      setLoading(false);
+    }
+  }, [entry]);
+
+  const d = details || {};
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
       <motion.div
@@ -1144,101 +1166,173 @@ function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClo
         <div className="p-8 space-y-8">
           <div className="flex justify-between items-start">
             <div>
-               <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 ${
-                 entry.type.includes("Plan") ? "bg-indigo-50 text-indigo-500" : "bg-emerald-50 text-emerald-500"
-               }`}>
-                 {entry.type}
-               </div>
-               <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Transaction Log</h2>
+              <div
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 ${
+                  entry.type.includes("Plan") ? "bg-indigo-50 text-indigo-500" : "bg-emerald-50 text-emerald-500"
+                }`}
+              >
+                {entry.type}
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                Transaction Log
+              </h2>
             </div>
-            <button onClick={onClose} className="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-rose-500 transition-all">
+            <button
+              onClick={onClose}
+              className="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-rose-500 transition-all"
+            >
               <FiX size={20} />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-8">
-            <div>
-               <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiCalendar size={18} /></div>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Date</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{new Date(entry.date).toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiShield size={18} /></div>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Status</p>
-                      <p className="text-sm font-bold text-indigo-500 uppercase">{entry.status}</p>
-                    </div>
-                  </div>
-               </div>
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center space-y-4">
+              <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">
+                Fetching Detailed Audit...
+              </p>
             </div>
-            <div>
-               <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiTag size={18} /></div>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Reference</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[140px]">{entry.reference}</p>
-                    </div>
-                  </div>
-                  {entry.type.includes("Plan") && (
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"><FiActivity size={18} /></div>
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                        <FiCalendar size={18} />
+                      </div>
                       <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase">Validity</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">{d.diet_plan_details?.no_of_days ?? '—'} Days</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Date</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">
+                          {new Date(entry.date).toLocaleString()}
+                        </p>
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                        <FiShield size={18} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Status</p>
+                        <p className="text-sm font-bold text-indigo-500 uppercase">{entry.status}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                        <FiTag size={18} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Reference</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[140px]">
+                          {entry.reference}
+                        </p>
+                      </div>
+                    </div>
+                    {entry.type.includes("Plan") && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                          <FiActivity size={18} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase">Validity</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                            {d.diet_plan_details?.no_of_days ?? "—"} Days
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                    Financial Summary
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+                </div>
+
+                <div className="rounded-[25px] bg-slate-50 dark:bg-white/[0.02] p-6 space-y-3">
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-gray-400 uppercase text-[10px] font-black">Description</span>
+                    <span className="text-gray-900 dark:text-white">{entry.details}</span>
+                  </div>
+                  {entry.type.includes("Order") && d.order_type && (
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-gray-400 uppercase text-[10px] font-black">Order Type</span>
+                      <span className="text-gray-900 dark:text-white uppercase">{d.order_type}</span>
+                    </div>
                   )}
-               </div>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-             <div className="flex items-center gap-2">
-                <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
-                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Financial Summary</span>
-                <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
-             </div>
-             
-             <div className="rounded-[25px] bg-slate-50 dark:bg-white/[0.02] p-6 space-y-3">
-                <div className="flex justify-between text-sm font-medium">
-                  <span className="text-gray-400 uppercase text-[10px] font-black">Description</span>
-                  <span className="text-gray-900 dark:text-white">{entry.details}</span>
-                </div>
-                {entry.type.includes("Order") && d.order_type && (
-                   <div className="flex justify-between text-sm font-medium">
-                    <span className="text-gray-400 uppercase text-[10px] font-black">Order Type</span>
-                    <span className="text-gray-900 dark:text-white uppercase">{d.order_type}</span>
-                  </div>
-                )}
-                <div className="flex justify-between pt-4 border-t border-gray-200/50 dark:border-white/5">
-                  <span className="text-gray-500 font-bold uppercase text-xs">Total Amount</span>
-                  <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">₹{Number(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                </div>
-             </div>
-          </div>
+                  {/* Show items if it's an order */}
+                  {entry.type.includes("Order") && d.items && d.items.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-white/5 space-y-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+                        Line Items
+                      </span>
+                      {d.items.map((item: any) => (
+                        <div key={item.id} className="flex justify-between text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {item.food_details?.name} x {item.quantity}
+                          </span>
+                          <span className="text-gray-900 dark:text-white font-bold">
+                            ₹{Number(item.subtotal).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-          {entry.screenshot && (
-            <div className="space-y-3">
-               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Proof</span>
-               <a href={resolveMediaUrl(entry.screenshot)} target="_blank" rel="noreferrer" className="block relative group overflow-hidden rounded-2xl border-4 border-gray-50 dark:border-gray-800 shadow-lg">
-                  <img src={resolveMediaUrl(entry.screenshot)} alt="Proof" className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-indigo-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                     <FiExternalLink className="text-white text-2xl" />
+                  <div className="flex justify-between pt-4 border-t border-gray-200/50 dark:border-white/5">
+                    <span className="text-gray-500 font-bold uppercase text-xs">Total Amount</span>
+                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                      ₹{Number(entry.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
-               </a>
-            </div>
+                </div>
+              </div>
+
+              {entry.screenshot && (
+                <div className="space-y-3">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Proof</span>
+                  <a
+                    href={resolveMediaUrl(entry.screenshot)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block relative group overflow-hidden rounded-2xl border-4 border-gray-50 dark:border-gray-800 shadow-lg"
+                  >
+                    <img
+                      src={resolveMediaUrl(entry.screenshot)}
+                      alt="Proof"
+                      className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-indigo-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <FiExternalLink className="text-white text-2xl" />
+                    </div>
+                  </a>
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex gap-4">
-             <button onClick={onClose} className="flex-1 py-4 rounded-2xl border-2 border-gray-100 dark:border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-colors">Dismiss</button>
-             {entry.type.includes("Order") && (
-               <button className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20">Print Receipt</button>
-             )}
+            <button
+              onClick={onClose}
+              className="flex-1 py-4 rounded-2xl border-2 border-gray-100 dark:border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-colors"
+            >
+              Dismiss
+            </button>
+            {entry.type.includes("Order") && !loading && (
+              <button className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20">
+                Print Receipt
+              </button>
+            )}
           </div>
         </div>
       </motion.div>

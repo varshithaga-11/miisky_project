@@ -12291,3 +12291,21 @@ class AdminOrdersDetailView(generics.RetrieveAPIView):
         return Order.objects.select_related(
             'user', 'micro_kitchen', 'micro_kitchen__user', 'delivery_slab', 'delivery_person'
         ).prefetch_related('items__food', 'ratings')
+
+class AdminPatientOrderPaymentsSummaryView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderPaymentHistoryCardSerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user_id = self.request.query_params.get('user')
+        if not user_id:
+            return Order.objects.none()
+        return Order.objects.filter(user_id=user_id).select_related('micro_kitchen').order_by('-created_at')
+
+class AdminPatientOrderPaymentsDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderPaymentHistoryDetailSerializer
+
+    def get_queryset(self):
+        return Order.objects.select_related('micro_kitchen').prefetch_related('items__food')
