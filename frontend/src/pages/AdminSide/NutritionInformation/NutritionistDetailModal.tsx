@@ -93,7 +93,7 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                     setPayload(await getNutritionistMealsWithMonth(nutritionistId, now.getMonth() + 1, now.getFullYear()));
                     break;
                 case "meetings":
-                    setPayload(await getNutritionistMeetingsNoPaginate(nutritionistId));
+                    setPayload({ initialized: true });
                     break;
                 case "reviews":
                     setPayload(await getNutritionistReviewsNoPaginate(nutritionistId));
@@ -217,7 +217,7 @@ export const NutritionistDetailModal: React.FC<NutritionistDetailModalProps> = (
                                     {screen === "patients" && <DisplayNutritionistPatients items={payload} />}
                                     {screen === "plans" && <DisplayNutritionistDietPlans items={payload} />}
                                     {screen === "meals" && <DisplayNutritionistMeals items={payload} nutritionistId={nutritionistId} />}
-                                    {screen === "meetings" && <DisplayNutritionistMeetings items={payload} />}
+                                    {screen === "meetings" && <DisplayNutritionistMeetings nutritionistId={nutritionistId} />}
                                     {screen === "reviews" && <DisplayNutritionistReviews items={payload} />}
                                     {screen === "tickets" && <DisplayNutritionistTickets items={payload} />}
                                     {screen === "payouts" && <DisplayNutritionistPayouts items={payload} />}

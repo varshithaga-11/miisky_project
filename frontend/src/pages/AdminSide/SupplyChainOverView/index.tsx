@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import {
-  fetchAdminSupplyChainHubSummary,
   fetchAdminSupplyChainKitchenTeam,
   fetchAdminSupplyChainPlanAssignments,
   fetchAdminSupplyChainOrders,
@@ -1097,16 +1096,6 @@ const SupplyChainDossierModal: React.FC<{
     issues: false,
     tickets: false,
   });
-
-  const [summaryStats, setSummaryStats] = useState<{
-    kitchen_count: number;
-    plan_count: number;
-    order_count: number;
-    total_earnings: string;
-    avg_rating: number;
-    ticket_count: number;
-  } | null>(null);
-
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1141,26 +1130,11 @@ const SupplyChainDossierModal: React.FC<{
   const [fbTargetType, setFbTargetType] = useState<FeedbackTargetType>("all");
   const [fbOrderType, setFbOrderType] = useState<FeedbackOrderType>("all");
 
-  const fetchSummary = useCallback(async () => {
-    if (!person) return;
-    try {
-      setLoading(true);
-      const data = await fetchAdminSupplyChainHubSummary(person.id);
-      setSummaryStats(data);
-    } catch (e: any) {
-      console.error(e);
-      // Fallback or ignore for summary
-    } finally {
-      setLoading(false);
-    }
-  }, [person]);
-
   useEffect(() => {
     if (open && person) {
       setScreen("hub");
-      fetchSummary();
     }
-  }, [open, person, fetchSummary]);
+  }, [open, person]);
 
   useEffect(() => {
     if (!open || !person) {
@@ -1177,7 +1151,6 @@ const SupplyChainDossierModal: React.FC<{
         issues: false,
         tickets: false,
       });
-      setSummaryStats(null);
       setKitchenTeam(initialPag);
       setPlans(initialPag);
       setOrders(initialPag);
@@ -1388,13 +1361,12 @@ const SupplyChainDossierModal: React.FC<{
   };
 
   const avgRating = React.useMemo(() => {
-    if (summaryStats) return summaryStats.avg_rating.toFixed(1);
     const results = deliveryRatings.results;
     if (!results || results.length === 0) return "0.0";
     const r = results.filter((x: DeliveryFeedbackRow) => x.feedback_type === "rating" && x.rating);
     if (!r.length) return "0.0";
     return (r.reduce((a: number, b: DeliveryFeedbackRow) => a + (b.rating || 0), 0) / r.length).toFixed(1);
-  }, [deliveryRatings, summaryStats]);
+  }, [deliveryRatings]);
 
   if (!open || !person) return null;
 

@@ -9814,6 +9814,35 @@ class AdminNutritionistDietPlansNoPaginationView(APIView):
             
         return Response(data)
 
+class AdminNutritionistDietPlansOptimizedNoPaginationView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        nutritionist_id = request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return Response([])
+
+        qs = UserDietPlan.objects.filter(nutritionist_id=nutritionist_id).select_related(
+            "user", "diet_plan", "micro_kitchen"
+        ).order_by("-suggested_on")
+        
+        data = AdminNutritionistDietPlanListSerializer(qs, many=True).data
+        # Inject reassignment context if any
+        for plan_data in data:
+            plan_id = plan_data['id']
+            # Kitchen reassignments for this plan
+            kreas = MicroKitchenReassignment.objects.filter(user_diet_plan_id=plan_id).select_related('previous_kitchen', 'new_kitchen', 'reassigned_by').order_by('-reassigned_on')
+            plan_data['kitchen_reassignments'] = [{
+                "from": kr.previous_kitchen.brand_name if kr.previous_kitchen else "None",
+                "to": kr.new_kitchen.brand_name if kr.new_kitchen else "None",
+                "reason": kr.reason,
+                "date": kr.reassigned_on,
+                "effective_from": kr.effective_from,
+                "by": kr.reassigned_by.username if kr.reassigned_by else "Admin"
+            } for kr in kreas]
+            
+        return Response(data)
+
 
 class AdminNutritionistMealsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
@@ -9853,6 +9882,20 @@ class AdminNutritionistMeetingsNoPaginationView(APIView):
         ).select_related("patient", "user_diet_plan").order_by("-created_on")
         serializer = MeetingRequestSerializer(qs, many=True)
         return Response(serializer.data)
+
+class AdminNutritionistMeetingsPaginatedView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    serializer_class = MeetingRequestSerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        nutritionist_id = self.request.query_params.get("nutritionist")
+        if not nutritionist_id:
+            return MeetingRequest.objects.none()
+
+        return MeetingRequest.objects.filter(
+            nutritionist_id=nutritionist_id
+        ).select_related("patient", "user_diet_plan").order_by("-created_on")
 
 class AdminNutritionistReviewsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]

@@ -63,7 +63,13 @@ export const getNutritionistPatientsNoPaginate = async (nutritionistId: number):
 };
 
 export const getNutritionistDietPlansNoPaginate = async (nutritionistId: number): Promise<any[]> => {
-    const url = createApiUrl(`api/admin-nutritionist-dietplans-nopaginate/?nutritionist=${nutritionistId}`);
+    const url = createApiUrl(`api/admin-nutritionist-dietplans-optimized-nopaginate/?nutritionist=${nutritionistId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getNutritionistDietPlansOptimizedNoPaginate = async (nutritionistId: number): Promise<any[]> => {
+    const url = createApiUrl(`api/admin-nutritionist-dietplans-optimized-nopaginate/?nutritionist=${nutritionistId}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
@@ -76,6 +82,12 @@ export const getNutritionistMealsNoPaginate = async (nutritionistId: number): Pr
 
 export const getNutritionistMeetingsNoPaginate = async (nutritionistId: number): Promise<any[]> => {
     const url = createApiUrl(`api/admin-nutritionist-meetings-nopaginate/?nutritionist=${nutritionistId}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
+export const getNutritionistMeetingsPaginated = async (nutritionistId: number, page: number = 1, limit: number = 10): Promise<any> => {
+    const url = createApiUrl(`api/admin-nutritionist-meetings-paginated/?nutritionist=${nutritionistId}&page=${page}&limit=${limit}`);
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };

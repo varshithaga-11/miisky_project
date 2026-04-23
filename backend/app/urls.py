@@ -374,6 +374,11 @@ urlpatterns = [
         name="admin-nutritionist-dietplans-nopaginate",
     ),
     path(
+        "admin-nutritionist-dietplans-optimized-nopaginate/",
+        views.AdminNutritionistDietPlansOptimizedNoPaginationView.as_view(),
+        name="admin-nutritionist-dietplans-optimized-nopaginate",
+    ),
+    path(
         "admin-nutritionist-meals-nopaginate/",
         views.AdminNutritionistMealsNoPaginationView.as_view(),
         name="admin-nutritionist-meals-nopaginate",
@@ -382,6 +387,11 @@ urlpatterns = [
         "admin-nutritionist-meetings-nopaginate/",
         views.AdminNutritionistMeetingsNoPaginationView.as_view(),
         name="admin-nutritionist-meetings-nopaginate",
+    ),
+    path(
+        "admin-nutritionist-meetings-paginated/",
+        views.AdminNutritionistMeetingsPaginatedView.as_view(),
+        name="admin-nutritionist-meetings-paginated",
     ),
     path(
         "admin-nutritionist-reviews-nopaginate/",
