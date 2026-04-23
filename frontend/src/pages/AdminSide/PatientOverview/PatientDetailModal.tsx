@@ -124,6 +124,9 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
   const [orderPage, setOrderPage] = useState(1);
   const [hasMoreOrders, setHasMoreOrders] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [orderPaymentPage, setOrderPaymentPage] = useState(1);
+  const [hasMoreOrderPayments, setHasMoreOrderPayments] = useState(true);
+  const [loadingOrderPayments, setLoadingOrderPayments] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
@@ -229,6 +232,8 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             const data = await fetchOrderPaymentsForUserAdmin(id, 1, 20);
             setPayload(data.results);
             setTotalItems(data.count);
+            setOrderPaymentPage(1);
+            setHasMoreOrderPayments(!!data.next);
             break;
           }
           case "meetings": {
@@ -287,6 +292,22 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     }
   }, [patient.id, orderPage, hasMoreOrders, loadingOrders, screen]);
 
+  const loadMoreOrderPayments = useCallback(async () => {
+    if (loadingOrderPayments || !hasMoreOrderPayments || screen !== "orderPayments") return;
+    setLoadingOrderPayments(true);
+    try {
+      const nextPage = orderPaymentPage + 1;
+      const data = await fetchOrderPaymentsForUserAdmin(patient.id, nextPage, 20);
+      setPayload((prev: any) => [...(Array.isArray(prev) ? prev : []), ...data.results]);
+      setOrderPaymentPage(nextPage);
+      setHasMoreOrderPayments(!!data.next);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingOrderPayments(false);
+    }
+  }, [patient.id, orderPaymentPage, hasMoreOrderPayments, loadingOrderPayments, screen]);
+
   useEffect(() => {
     if (screen !== "orders" || !hasMoreOrders) return;
     const obs = new IntersectionObserver(
@@ -301,6 +322,21 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     if (sen) obs.observe(sen);
     return () => obs.disconnect();
   }, [screen, hasMoreOrders, loadMoreOrders]);
+
+  useEffect(() => {
+    if (screen !== "orderPayments" || !hasMoreOrderPayments) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreOrderPayments();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const sen = document.getElementById("order-payment-scroll-sentinel");
+    if (sen) obs.observe(sen);
+    return () => obs.disconnect();
+  }, [screen, hasMoreOrderPayments, loadMoreOrderPayments]);
 
   if (!open) return null;
 
@@ -428,6 +464,14 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                     <div className="h-px flex-1 bg-gray-100 dark:bg-white/5 mx-4" />
                   </div>
                   <DisplayPaymentHistory items={payload as PaymentEntry[]} />
+                  {screen === "orderPayments" && (
+                    <div id="order-payment-scroll-sentinel" className="h-20 flex items-center justify-center">
+                      {loadingOrderPayments && <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">Loading more payments...</div>}
+                      {!hasMoreOrderPayments && payload.length > 0 && (
+                        <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               {!loading && !error && screen === "meetings" && Array.isArray(payload) && (
