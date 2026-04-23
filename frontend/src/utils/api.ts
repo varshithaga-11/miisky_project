@@ -1,9 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-// Create axios instance with base configuration
+const getBaseURL = () => {
+  if (typeof __API_URL__ !== 'undefined' && __API_URL__) {
+    const base = __API_URL__.replace(/\/$/, '');
+    return base.endsWith('/api') ? base : `${base}/api`;
+  }
+  return 'http://127.0.0.1:8000/api';
+};
+
 const API: AxiosInstance = axios.create({
-  baseURL: (typeof __API_URL__ !== 'undefined' ? __API_URL__ : 'http://127.0.0.1:8000/api').replace(/\/$/, '') + '/api',
-  timeout: 10000,
+  baseURL: getBaseURL(),
+  timeout: 20000, // Increased to 20s
   headers: {
     'Content-Type': 'application/json',
   },

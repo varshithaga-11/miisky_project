@@ -99,7 +99,7 @@ const refreshAccessToken = async (refresh_token: string | null): Promise<string>
 
   const refreshUrl = createApiUrl('api/token/refresh/');
   console.log("Requesting token refresh from:", refreshUrl);
-  
+
   const response = await fetch(refreshUrl, {
     method: 'POST',
     headers: {
@@ -118,12 +118,12 @@ const refreshAccessToken = async (refresh_token: string | null): Promise<string>
   }
 
   const accessToken = data.access;
-  
+
   if (!accessToken) {
     console.error("Refresh API returned 200 but no access token was found in body:", data);
     throw new Error('No access token received in response');
   }
-  
+
   return accessToken;
 };
 
