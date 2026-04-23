@@ -16,27 +16,10 @@ const API: AxiosInstance = axios.create({
   },
 });
 
-// Add request interceptor to include auth token if available
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // Add response interceptor for error handling
 API.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login if needed
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
-    }
     return Promise.reject(error);
   }
 );

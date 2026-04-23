@@ -91,19 +91,13 @@ async function request<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { body, public: isPublic, ...rest } = options;
+  const { body, ...rest } = options;
 
   const isFormData = body instanceof FormData;
   const headers: HeadersInit = {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(rest.headers as Record<string, string>),
   };
-
-  // Attach JWT access token when available
-  const accessToken = tokenStorage.getAccess();
-  if (!isPublic && accessToken) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${accessToken}`;
-  }
 
   const url = `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
 
@@ -112,27 +106,6 @@ async function request<T>(
     headers,
     body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) as any : undefined,
   });
-
-  // ── Handle token expiry (401) ──
-  if (response.status === 401 && !isPublic) {
-    const refreshed = await tryRefreshToken();
-    if (refreshed) {
-      // Retry the original request once with the new token
-      (headers as Record<string, string>)["Authorization"] =
-        `Bearer ${tokenStorage.getAccess()}`;
-      const retryResponse = await fetch(url, {
-        ...rest,
-        headers,
-        body: body !== undefined ? JSON.stringify(body) : undefined,
-      });
-      if (!retryResponse.ok) throw await buildError(retryResponse);
-      return retryResponse.json() as Promise<T>;
-    } else {
-      tokenStorage.clear();
-      if (typeof window !== "undefined") window.location.href = "/login";
-      throw new Error("Session expired. Please log in again.");
-    }
-  }
 
   if (!response.ok) throw await buildError(response);
 
