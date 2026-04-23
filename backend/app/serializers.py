@@ -3497,6 +3497,38 @@ class MicroKitchenOrderListSerializer(serializers.ModelSerializer):
         return " ".join(p for p in parts if p).strip() or ""
 
 
+class OrderSummarySerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'status', 'order_type', 'created_at', 
+            'user_details', 'kitchen_details'
+        ]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            u = obj.user
+            return {
+                'id': u.id,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'mobile': u.mobile,
+            }
+        return None
+
+    def get_kitchen_details(self, obj):
+        if obj.micro_kitchen:
+            mk = obj.micro_kitchen
+            return {
+                'id': mk.id,
+                'brand_name': mk.brand_name,
+            }
+        return None
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = serializers.SerializerMethodField(read_only=True)

@@ -12101,3 +12101,36 @@ class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
             instance.delete()
             return
         raise PermissionDenied()
+
+class AdminOrdersSummaryView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSummarySerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        base = Order.objects.select_related(
+            'user', 'micro_kitchen', 'micro_kitchen__user'
+        ).order_by('-created_at')
+
+        if user.role == 'admin':
+            qs = base
+            micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+            if micro_kitchen_id:
+                qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+            order_user_id = self.request.query_params.get('user')
+            if order_user_id:
+                qs = qs.filter(user_id=order_user_id)
+            return qs
+        elif user.role == 'micro_kitchen':
+            return base.filter(micro_kitchen__user=user)
+        return base.none()
+
+class AdminOrdersDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.select_related(
+            'user', 'micro_kitchen', 'micro_kitchen__user', 'delivery_slab', 'delivery_person'
+        ).prefetch_related('items__food', 'ratings')

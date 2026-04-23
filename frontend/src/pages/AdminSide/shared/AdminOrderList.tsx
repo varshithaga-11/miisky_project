@@ -1,6 +1,7 @@
 import { FiChevronDown, FiChevronUp, FiEye, FiPackage, FiUser } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EmptyState } from "../PatientOverview/PatientDataViews";
+import { fetchOrderDetailsAdmin } from "./adminOrderApi";
 
 function money(v: unknown): string {
   if (v === null || v === undefined || v === "") return "—";
@@ -46,6 +47,24 @@ export type AdminOrderListProps = {
 
 export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderListProps) {
   const [openId, setOpenId] = useState<number | null>(null);
+  const [orderDetails, setOrderDetails] = useState<Record<number, OrderRow>>({});
+  const [loadingDetails, setLoadingDetails] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    if (openId !== null && !orderDetails[openId] && !loadingDetails[openId]) {
+      setLoadingDetails((prev) => ({ ...prev, [openId]: true }));
+      fetchOrderDetailsAdmin(openId)
+        .then((data) => {
+          setOrderDetails((prev) => ({ ...prev, [openId]: data }));
+        })
+        .catch((err) => {
+          console.error("Failed to fetch order details", err);
+        })
+        .finally(() => {
+          setLoadingDetails((prev) => ({ ...prev, [openId]: false }));
+        });
+    }
+  }, [openId, orderDetails, loadingDetails]);
 
   if (!items?.length) {
     return <EmptyState message="No orders found." />;
@@ -55,9 +74,12 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderL
 
   return (
     <div className="space-y-4">
-      {list.map((o) => {
-        const id = o.id ?? 0;
+      {list.map((summary) => {
+        const id = summary.id ?? 0;
         const expanded = openId === id;
+        const o = orderDetails[id] ? { ...summary, ...orderDetails[id] } : summary;
+        const isLoading = loadingDetails[id];
+
         const ud = o.user_details;
         const kd = o.kitchen_details;
         const subtotal = Number(o.total_amount);
@@ -119,61 +141,70 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderL
                 ) : (
                   <FiChevronDown className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
                 )}
+                
               </div>
             </button>
 
             {expanded && (
               <div className="px-4 pb-4 pt-0 border-t border-gray-100 dark:border-white/[0.06] space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-3">
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Delivery address</span>
-                    <p className="text-gray-700 dark:text-gray-200 text-xs leading-relaxed">
-                      {o.delivery_address?.trim() || "—"}
-                    </p>
+                {isLoading ? (
+                  <div className="py-4 text-center text-xs text-indigo-500 font-bold uppercase animate-pulse">
+                    Loading details...
                   </div>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between gap-2">
-                      <span className="text-gray-500">Straight-line distance</span>
-                      <span className="font-mono font-semibold text-gray-800 dark:text-gray-100">
-                        {fmtKm(o.delivery_distance_km)}
-                      </span>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-3">
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Delivery address</span>
+                        <p className="text-gray-700 dark:text-gray-200 text-xs leading-relaxed">
+                          {o.delivery_address?.trim() || "—"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between gap-2">
+                          <span className="text-gray-500">Straight-line distance</span>
+                          <span className="font-mono font-semibold text-gray-800 dark:text-gray-100">
+                            {fmtKm(o.delivery_distance_km)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-gray-500">Food subtotal</span>
+                          <span className="font-semibold">{money(o.total_amount)}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-gray-500">Delivery charge</span>
+                          <span className="font-semibold">{money(o.delivery_charge)}</span>
+                        </div>
+                        {o.delivery_slab_details && (
+                          <div className="text-[10px] text-gray-400 pt-1">
+                            Slab applied: {o.delivery_slab_details.min_km}–{o.delivery_slab_details.max_km} km @{" "}
+                            {money(o.delivery_slab_details.charge)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex justify-between gap-2">
-                      <span className="text-gray-500">Food subtotal</span>
-                      <span className="font-semibold">{money(o.total_amount)}</span>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <span className="text-gray-500">Delivery charge</span>
-                      <span className="font-semibold">{money(o.delivery_charge)}</span>
-                    </div>
-                    {o.delivery_slab_details && (
-                      <div className="text-[10px] text-gray-400 pt-1">
-                        Slab applied: {o.delivery_slab_details.min_km}–{o.delivery_slab_details.max_km} km @{" "}
-                        {money(o.delivery_slab_details.charge)}
+
+                    {o.items && o.items.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase mb-2">
+                          <FiPackage /> Line items
+                        </div>
+                        <ul className="rounded-xl bg-gray-50 dark:bg-gray-900/50 divide-y divide-gray-100 dark:divide-white/[0.06]">
+                          {o.items.map((it) => (
+                            <li
+                              key={it.id ?? `${it.food_details?.name}-${it.quantity}`}
+                              className="px-3 py-2 flex justify-between gap-2 text-xs"
+                            >
+                              <span className="text-gray-800 dark:text-gray-100 font-medium">
+                                {it.food_details?.name ?? "Item"} × {it.quantity ?? 0}
+                              </span>
+                              <span className="text-gray-600 dark:text-gray-300 shrink-0">{money(it.subtotal)}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                  </div>
-                </div>
-
-                {o.items && o.items.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase mb-2">
-                      <FiPackage /> Line items
-                    </div>
-                    <ul className="rounded-xl bg-gray-50 dark:bg-gray-900/50 divide-y divide-gray-100 dark:divide-white/[0.06]">
-                      {o.items.map((it) => (
-                        <li
-                          key={it.id ?? `${it.food_details?.name}-${it.quantity}`}
-                          className="px-3 py-2 flex justify-between gap-2 text-xs"
-                        >
-                          <span className="text-gray-800 dark:text-gray-100 font-medium">
-                            {it.food_details?.name ?? "Item"} × {it.quantity ?? 0}
-                          </span>
-                          <span className="text-gray-600 dark:text-gray-300 shrink-0">{money(it.subtotal)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  </>
                 )}
               </div>
             )}
