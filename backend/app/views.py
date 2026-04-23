@@ -9366,6 +9366,68 @@ class AdminSupplyChainDailyWorkNoPaginationView(APIView):
         return Response(KitchenMealDeliverySerializer(qs, many=True).data)
 
 
+class AdminSupplyChainDailyWorkCalendarView(APIView):
+    """Admin: calendar view for daily work assignments (non-paginated, month-based)."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None:
+            return err
+
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
+
+        qs = DeliveryAssignment.objects.filter(delivery_person=u, is_active=True)
+        if month and year:
+            qs = qs.filter(scheduled_date__month=month, scheduled_date__year=year)
+
+        qs = qs.select_related(
+            "user_meal",
+            "user_meal__user",
+            "user_meal__micro_kitchen",
+            "user_meal__meal_type",
+            "user_meal__food",
+            "delivery_slot",
+        ).order_by("scheduled_date", "scheduled_time")
+
+        return Response(KitchenMealDeliverySerializer(qs, many=True).data)
+
+
+class AdminSupplyChainDailyWorkCalendarGroupedView(APIView):
+    """Admin: calendar view for daily work assignments grouped by date (optimized for frontend)."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        u, err = _admin_resolve_supply_chain_user(request.query_params.get("user"))
+        if err is not None:
+            return err
+
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
+
+        qs = DeliveryAssignment.objects.filter(delivery_person=u, is_active=True)
+        if month and year:
+            qs = qs.filter(scheduled_date__month=month, scheduled_date__year=year)
+
+        qs = qs.select_related(
+            "user_meal",
+            "user_meal__user",
+            "user_meal__micro_kitchen",
+            "user_meal__meal_type",
+            "user_meal__food",
+            "delivery_slot",
+        ).order_by("scheduled_date", "scheduled_time")
+
+        from collections import defaultdict
+        grouped_data = defaultdict(list)
+        for item in qs:
+            date_key = item.scheduled_date.strftime("%Y-%m-%d")
+            grouped_data[date_key].append(KitchenMealDeliverySerializer(item).data)
+
+        return Response(dict(grouped_data))
+
+
 
 
 class AdminMicroKitchenOrdersNoPaginationView(generics.ListAPIView):

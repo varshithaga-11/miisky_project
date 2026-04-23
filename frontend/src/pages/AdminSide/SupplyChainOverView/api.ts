@@ -175,6 +175,22 @@ export const fetchAdminSupplyChainOrderDetail = async (orderId: number) => {
 export const fetchAdminSupplyChainDailyWork = (userId: number, page = 1, limit = 10, startDate = "", endDate = "", period = "") =>
   getPaginatedJson<any>("api/admin-supply-chain-daily-work-nopaginate/", userId, page, limit, { start_date: startDate, end_date: endDate, period });
 
+/** GET api/admin-supply-chain-daily-work-calendar/?user=&month=&year= */
+export const fetchAdminSupplyChainDailyWorkCalendar = async (userId: number, month: number, year: number) => {
+  let paramStr = `user=${userId}&month=${month}&year=${year}`;
+  const url = createApiUrl(`api/admin-supply-chain-daily-work-calendar/?${paramStr}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+/** GET api/admin-supply-chain-daily-work-calendar-grouped/?user=&month=&year= */
+export const fetchAdminSupplyChainDailyWorkCalendarGrouped = async (userId: number, month: number, year: number) => {
+  let paramStr = `user=${userId}&month=${month}&year=${year}`;
+  const url = createApiUrl(`api/admin-supply-chain-daily-work-calendar-grouped/?${paramStr}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
 /** GET api/admin-supply-chain-delivery-profile/?user= */
 export const fetchAdminSupplyChainDeliveryProfile = async (
   userId: number

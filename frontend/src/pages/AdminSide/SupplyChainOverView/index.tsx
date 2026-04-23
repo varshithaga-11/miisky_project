@@ -9,6 +9,7 @@ import {
   fetchAdminSupplyChainOrdersPaginated,
   fetchAdminSupplyChainOrderDetail,
   fetchAdminSupplyChainDailyWork,
+  fetchAdminSupplyChainDailyWorkCalendarGrouped,
   fetchAdminSupplyChainDeliveryProfile,
   fetchAdminSupplyChainPlannedLeaves,
   fetchAdminSupplyChainDeliveryRatings,
@@ -609,95 +610,171 @@ function EarningsPanel({
   );
 }
 
+const DailyWorkCalendar: React.FC<{
+  userId: number;
+}> = ({ userId }) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [data, setData] = useState<Record<string, any[]>>({});
+  const [loading, setLoading] = useState(false);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+
+  const month = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchAdminSupplyChainDailyWorkCalendarGrouped(userId, month, year);
+      setData(res);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load calendar data");
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, month, year]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
+
+  const prevMonth = () => setCurrentDate(new Date(year, month - 2, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month, 1));
+
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const padding = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+
+  const getDayData = (day: number) => {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return data[dateStr] || [];
+  };
+
+  const monthName = currentDate.toLocaleString('default', { month: 'long' });
+
+  return (
+    <div className="bg-white dark:bg-white/[0.02] rounded-[2.5rem] border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden">
+      <div className="p-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white dark:from-gray-800/50 dark:to-gray-900/50">
+        <div>
+          <h4 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{monthName} {year}</h4>
+          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mt-1 italic">Meal delivery schedule dossier</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={prevMonth} className="p-3 hover:bg-white dark:hover:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 transition-all active:scale-90 shadow-sm group">
+            <FiChevronLeft className="text-gray-400 group-hover:text-blue-600 transition-colors" size={20} />
+          </button>
+          <button onClick={nextMonth} className="p-3 hover:bg-white dark:hover:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 transition-all active:scale-90 shadow-sm group">
+            <FiChevronRight className="text-gray-400 group-hover:text-blue-600 transition-colors" size={20} />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {loading ? (
+          <div className="py-40 text-center">
+            <div className="inline-block w-8 h-8 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4" />
+            <p className="text-sm font-black text-gray-400 uppercase tracking-widest italic animate-pulse">Synchronizing assignments...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-px bg-gray-200/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="bg-gray-50/80 dark:bg-gray-900/80 py-4 text-center text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-100 dark:border-white/5">{day}</div>
+            ))}
+            {padding.map(p => (
+              <div key={`pad-${p}`} className="bg-white/40 dark:bg-gray-900/10 min-h-[140px]" />
+            ))}
+            {days.map(day => {
+              const dayEvents = getDayData(day);
+              const isToday = new Date().toDateString() === new Date(year, month - 1, day).toDateString();
+              const hasEvents = dayEvents.length > 0;
+
+              return (
+                <div 
+                  key={day} 
+                  onMouseEnter={() => setHoveredDay(day)}
+                  onMouseLeave={() => setHoveredDay(null)}
+                  className={`bg-white dark:bg-gray-900/40 min-h-[140px] p-3 transition-all relative group cursor-default ${isToday ? 'bg-blue-50/20 dark:bg-blue-900/10' : ''} ${hasEvents ? 'hover:bg-blue-50/40 dark:hover:bg-blue-900/20' : ''}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className={`text-xs font-black transition-colors ${isToday ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/40 px-2.5 py-1 rounded-xl' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                      {day}
+                    </span>
+                    {hasEvents && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse" />
+                    )}
+                  </div>
+
+                  <div className="mt-3 space-y-1.5">
+                    {dayEvents.slice(0, 2).map((ev, idx) => (
+                      <div key={idx} className="px-2 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 group-hover:border-blue-200/50 transition-colors">
+                         <p className="text-[9px] font-black text-gray-700 dark:text-gray-200 truncate uppercase tracking-tighter leading-none">
+                           {ev.user_meal_details?.meal_type}
+                         </p>
+                         <p className="text-[7px] text-blue-500 font-bold mt-1 uppercase tracking-widest">
+                           {ev.scheduled_time}
+                         </p>
+                      </div>
+                    ))}
+                    {dayEvents.length > 2 && (
+                      <div className="text-[8px] font-black text-blue-600/60 uppercase tracking-widest pl-1 mt-1">
+                        + {dayEvents.length - 2} assignments
+                      </div>
+                    )}
+                  </div>
+
+                  {/* HOVER DETAILS CARD */}
+                  {hoveredDay === day && hasEvents && (
+                    <div className={`absolute ${(firstDayOfMonth + day - 1) % 7 > 3 ? 'right-full mr-2' : 'left-full ml-2'} top-0 z-[70] w-72 bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl border border-blue-100 dark:border-gray-800 p-5 animate-in fade-in zoom-in slide-in-from-left-2 duration-200 pointer-events-none`}>
+                       <div className="mb-4 pb-3 border-b border-gray-100 dark:border-white/5">
+                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 italic">Dossier Details</p>
+                          <h5 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter">{day} {monthName} {year}</h5>
+                       </div>
+                       <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                          {dayEvents.map((ev, idx) => (
+                            <div key={idx} className="relative pl-4 border-l-2 border-blue-500/30 py-1">
+                               <div className="flex justify-between items-start mb-1">
+                                  <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight">{ev.user_meal_details?.meal_type}</p>
+                                  <span className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md ${ev.status === 'delivered' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                                    {ev.status}
+                                  </span>
+                               </div>
+                               <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">{ev.scheduled_time}</p>
+                               <div className="space-y-0.5 mt-2">
+                                  <p className="text-[9px] font-bold text-gray-700 dark:text-gray-300">
+                                    <span className="text-gray-400">PATIENT:</span> {ev.user_meal_details?.patient_name}
+                                  </p>
+                                  <p className="text-[8px] font-medium text-gray-500 truncate italic">
+                                    {ev.user_meal_details?.user_details?.address || "No address provided"}
+                                  </p>
+                                  <p className="text-[9px] font-bold text-blue-600 mt-1 uppercase tracking-widest">
+                                    <span className="text-gray-400">KITCHEN:</span> {ev.user_meal_details?.kitchen_brand}
+                                  </p>
+                               </div>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 function DailyWorkPanel({
-  dailyWork,
-  loadingMore,
-  hasMore,
-  startDate,
-  endDate,
-  onFilterChange,
-  activePeriod,
-  onPeriodChange,
+  personId,
 }: {
-  dailyWork: any[];
-  loadingMore: boolean;
-  hasMore: boolean;
-  startDate: string;
-  endDate: string;
-  onFilterChange: (start: string, end: string, period: string) => void;
-  activePeriod: string;
-  onPeriodChange: (p: string) => void;
+  personId: number;
 }) {
   return (
-    <div className="space-y-4">
-      <FilterBar 
-        startDate={startDate} 
-        endDate={endDate} 
-        onFilterChange={onFilterChange} 
-        activePeriod={activePeriod}
-        onPeriodChange={onPeriodChange}
-      />
-
-      {!dailyWork || (dailyWork.length === 0 && !loadingMore) ? (
-        <div className="space-y-4">
-          <p className="text-sm font-bold text-gray-400 p-12 text-center uppercase tracking-widest italic bg-gray-50/50 rounded-3xl border border-dashed">
-            No daily meal assignments found for this period.
-          </p>
-          <Sentinel loading={loadingMore} hasMore={hasMore} />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] shadow-sm">
-            <Table>
-              <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
-                <TableRow>
-                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Meal & Time</TableCell>
-                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient & Kitchen</TableCell>
-                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Date</TableCell>
-                  <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Status</TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {dailyWork.map((d: any) => (
-                  <TableRow key={d.id} className="hover:bg-blue-50/20 transition-colors">
-                    <TableCell className="px-6 py-5">
-                      <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">
-                        {d.user_meal_details?.meal_type || "Meal"}
-                      </p>
-                      <p className="text-[10px] text-blue-600 font-black uppercase mt-0.5 tracking-widest italic tracking-tighter">
-                        {d.scheduled_time || "Scheduled"}
-                      </p>
-                    </TableCell>
-                    <TableCell className="px-6 py-5">
-                      <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">
-                        {d.user_meal_details?.patient_name || "—"}
-                      </p>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 tracking-widest italic">
-                        {d.user_meal_details?.kitchen_brand || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell className="px-6 py-5">
-                      <p className="text-xs font-bold text-gray-600 dark:text-gray-400 tabular-nums">
-                        {d.scheduled_date}
-                      </p>
-                    </TableCell>
-                    <TableCell className="px-6 py-5">
-                      <span
-                        className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                          d.status === "delivered" ? "bg-green-50 text-green-600" : d.status === "picked_up" ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"
-                        }`}
-                      >
-                        {d.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Sentinel loading={loadingMore} hasMore={hasMore} />
-          </div>
-        </div>
-      )}
+    <div className="space-y-6">
+      <DailyWorkCalendar userId={personId} />
     </div>
   );
 }
@@ -1036,7 +1113,6 @@ const SupplyChainDossierModal: React.FC<{
 
   const [kitchenTeam, setKitchenTeam] = useState<PagState<KitchenTeamRow>>(initialPag);
   const [plans, setPlans] = useState<PagState<any>>(initialPag);
-  const [dailyWork, setDailyWork] = useState<PagState<any>>(initialPag);
   const [orders, setOrders] = useState<PagState<AdminSupplyChainOrderPaginatedRow>>(initialPag);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [orderDetail, setOrderDetail] = useState<any>(null);
@@ -1050,9 +1126,6 @@ const SupplyChainDossierModal: React.FC<{
   const [deliveryProfile, setDeliveryProfile] = useState<Record<string, unknown> | null | undefined>(undefined);
   const [plannedLeaves, setPlannedLeaves] = useState<PagState<any>>(initialPag);
   const [deliveryRatings, setDeliveryRatings] = useState<PagState<DeliveryFeedbackRow>>(initialPag);
-  const [dwStartDate, setDwStartDate] = useState("");
-  const [dwEndDate, setDwEndDate] = useState("");
-  const [dwPeriod, setDwPeriod] = useState("");
 
   const [ordStartDate, setOrdStartDate] = useState("");
   const [ordEndDate, setOrdEndDate] = useState("");
@@ -1107,16 +1180,12 @@ const SupplyChainDossierModal: React.FC<{
       setSummaryStats(null);
       setKitchenTeam(initialPag);
       setPlans(initialPag);
-      setDailyWork(initialPag);
       setOrders(initialPag);
       setEarnings({ ...initialPag, total_orders: 0, total_delivery_earnings: "0" });
       setTickets(initialPag);
       setDeliveryProfile(undefined);
       setPlannedLeaves(initialPag);
       setDeliveryRatings(initialPag);
-      setDwStartDate("");
-      setDwEndDate("");
-      setDwPeriod("");
       setOrdStartDate("");
       setOrdEndDate("");
       setOrdStatus("");
@@ -1154,8 +1223,7 @@ const SupplyChainDossierModal: React.FC<{
           break;
         }
         case "daily-work": {
-          const res = await fetchAdminSupplyChainDailyWork(uid, 1, 10, dwStartDate, dwEndDate, dwPeriod);
-          setDailyWork({ results: res.results, page: 1, hasMore: !!res.next });
+          // Handled by component internally
           break;
         }
         case "orders": {
@@ -1234,9 +1302,6 @@ const SupplyChainDossierModal: React.FC<{
           break;
         }
         case "daily-work": {
-          if (!dailyWork.hasMore) break;
-          const res = await fetchAdminSupplyChainDailyWork(uid, dailyWork.page + 1, 10, dwStartDate, dwEndDate, dwPeriod);
-          setDailyWork((prev: PagState<any>) => ({ results: [...prev.results, ...res.results], page: prev.page + 1, hasMore: !!res.next }));
           break;
         }
         case "orders": {
@@ -1292,7 +1357,13 @@ const SupplyChainDossierModal: React.FC<{
     } finally {
       setLoadingMore(false);
     }
-  }, [person, screen, loading, loadingMore, kitchenTeam, plans, dailyWork, orders, earnings, tickets, plannedLeaves, deliveryRatings, fbStartDate, fbEndDate, fbTargetType, fbOrderType]);
+  }, [
+    person, screen, loading, loadingMore, 
+    kitchenTeam, plans, orders, earnings, tickets, plannedLeaves, deliveryRatings, 
+    fbStartDate, fbEndDate, fbTargetType, fbOrderType,
+    ordStartDate, ordEndDate, ordStatus,
+    earnStartDate, earnEndDate
+  ]);
 
   useEffect(() => {
     if (screen === "hub" || screen === "profile" || loading) return;
@@ -1474,31 +1545,9 @@ const SupplyChainDossierModal: React.FC<{
                     </div>
                   )}
 
-                  {screen === "daily-work" && (
+                  {screen === "daily-work" && person && (
                     <DailyWorkPanel 
-                      dailyWork={dailyWork.results} 
-                      loadingMore={loadingMore} 
-                      hasMore={dailyWork.hasMore} 
-                      startDate={dwStartDate}
-                      endDate={dwEndDate}
-                      activePeriod={dwPeriod}
-                      onPeriodChange={setDwPeriod}
-                      onFilterChange={(s, e, p) => {
-                        setDwStartDate(s);
-                        setDwEndDate(e);
-                        // Force reload
-                        const uid = person.id;
-                        (async () => {
-                           setLoading(true);
-                           try {
-                             const res = await fetchAdminSupplyChainDailyWork(uid, 1, 10, s, e, p);
-                             setDailyWork({ results: res.results, page: 1, hasMore: !!res.next });
-                             setLoaded(prev => ({ ...prev, "daily-work": true }));
-                           } finally {
-                             setLoading(false);
-                           }
-                        })();
-                      }}
+                      personId={person.id}
                     />
                   )}
 

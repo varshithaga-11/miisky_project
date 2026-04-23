@@ -253,6 +253,17 @@ urlpatterns = [
     path(
         "admin-supply-chain-daily-work-nopaginate/",
         views.AdminSupplyChainDailyWorkNoPaginationView.as_view(),
+        name="admin-supply-chain-daily-work-nopaginate",
+    ),
+    path(
+        "admin-supply-chain-daily-work-calendar/",
+        views.AdminSupplyChainDailyWorkCalendarView.as_view(),
+        name="admin-supply-chain-daily-work-calendar",
+    ),
+    path(
+        "admin-supply-chain-daily-work-calendar-grouped/",
+        views.AdminSupplyChainDailyWorkCalendarGroupedView.as_view(),
+        name="admin-supply-chain-daily-work-calendar-grouped",
     ),
     path(
         "admin-supply-chain-planned-leaves-nopaginate/",
