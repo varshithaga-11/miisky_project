@@ -159,6 +159,8 @@ import NutritionPatientUnavailabilityPage from "./pages/NutritionSide/PatientUna
 import PatientUnavailabilityRequestPage from "./pages/PatientSide/PatientUnavailability/index";
 import KitchenExecutionPage from "./pages/MicroKitchenSide/KitchenExecution/index";
 import NutritionUserMappingPage from "./pages/NutritionSide/NutritionMapping/UserMapping";
+import PatientWorkFlowPage from "./pages/PatientSide/WorkFlow/index";
+
 
 
 // Master Side Pages
@@ -379,6 +381,8 @@ export function appRoutes() {
           <Route path="patient/instructions" element={<PatientInstructionsPage />} />
           <Route path="patient/suggested-foods" element={<SuggestedFoodNameFromNutritionPage />} />
           <Route path="patient/unavailability" element={<PatientUnavailabilityRequestPage />} />
+          <Route path="patient/workflow" element={<PatientWorkFlowPage />} />
+
           <Route path="nutrition/questionnaire" element={<NutritionQuestionarePage />} />
           <Route path="nutrition/allotted-patients" element={<AllotedPatientsPage />} />
           <Route path="nutrition/set-meals" element={<SetDailyMealsPage />} />
