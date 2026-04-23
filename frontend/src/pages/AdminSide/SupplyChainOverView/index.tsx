@@ -1582,7 +1582,7 @@ const SupplyChainDossierModal: React.FC<{
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Patient</TableCell>
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Amount</TableCell>
                                 <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Status</TableCell>
-                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]"></TableCell>
+                                <TableCell isHeader className="px-6 py-4 font-black text-gray-500 uppercase tracking-widest text-[10px]">Actions</TableCell>
                               </TableRow>
                             </TableHeader>
                             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">

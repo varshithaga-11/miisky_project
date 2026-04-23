@@ -151,8 +151,12 @@ export const getOrderHistory = async (params?: {
       }));
   
       return {
-          ...response.data,
-          results: orderTransactions
+          results: orderTransactions,
+          count: response.data.count || 0,
+          current_page: response.data.current_page || 1,
+          total_pages: response.data.total_pages || 1,
+          total_orders: response.data.total_orders,
+          total_amount: response.data.total_amount,
       };
     } catch (error) {
       console.error("Error fetching order history:", error);
