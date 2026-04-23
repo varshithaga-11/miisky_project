@@ -79,7 +79,7 @@ export async function downloadAdminQuestionnaireQuestions(format: "pdf" | "docx"
   const url = createApiUrl("api/admin-questionnaire-questions/download/");
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { format },
+    params: { file_format: format },
     responseType: "blob",
   });
 

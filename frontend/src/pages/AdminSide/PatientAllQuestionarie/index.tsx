@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
@@ -11,7 +12,6 @@ import {
   fetchHealthConditionMasters,
   fetchSkinIssueMasters,
   fetchSymptomMasters,
-  downloadAdminQuestionnaireQuestions,
 } from "./api";
 
 type HealthIssueRow = {
@@ -149,6 +149,13 @@ function toggleItem(list: string[], item: string): string[] {
   return [...list, item];
 }
 
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export default function PatientAllQuestionariePage() {
   const [title] = useState("QUESTIONNAIRE");
   const [loading, setLoading] = useState(true);
@@ -276,9 +283,176 @@ export default function PatientAllQuestionariePage() {
   }, [healthRows.length, autoimmuneOptions.length, symptomOptions.length, skinOptions.length, deficiencyOptions.length, habitOptions.length, activityOptions.length]);
 
   const handleDownload = async (format: "pdf" | "docx") => {
+    const mark = (ok: boolean) => (ok ? "✓" : " ");
+    const yn = (value: YesNo) => (value === "" ? "-" : value.toUpperCase());
+    const getMarked = (all: string[], selected: string[]) =>
+      all.map((item) => `[${mark(selected.includes(item))}] ${item}`);
+
+    const healthRowsForDownload = anyHealthIssues === "yes" ? healthRows : [];
+
+    const html = `
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; color: #222; padding: 20px; }
+          h1 { font-size: 20px; margin: 0 0 10px; }
+          h2 { font-size: 14px; margin: 16px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+          p { margin: 4px 0; }
+          ul { margin: 4px 0 8px 16px; padding: 0; }
+          table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
+          th, td { border: 1px solid #ccc; padding: 6px; vertical-align: top; text-align: left; }
+          th { background: #f7f7f7; }
+        </style>
+      </head>
+      <body>
+        <h1>${esc(title)}</h1>
+        <h2>PERSONAL DETAILS</h2>
+        <p>Name: ${esc(name || "-")}</p>
+        <p>Age: ${esc(age || "-")}</p>
+        <p>Gender: ${esc(gender || "-")}</p>
+        <p>Height: ${esc(height || "-")}</p>
+        <p>Weight: ${esc(weight || "-")}</p>
+        <p>Types of work: ${esc(workType || "-")}</p>
+
+        <h2>HEALTH ISSUES</h2>
+        <p>Any Health Issues: ${esc(yn(anyHealthIssues))}</p>
+        ${
+          healthRowsForDownload.length
+            ? `<table>
+                <thead>
+                  <tr><th>Condition</th><th>Yes</th><th>No</th><th>Since when</th><th>Comments</th></tr>
+                </thead>
+                <tbody>
+                  ${healthRowsForDownload
+                    .map(
+                      (row, idx) =>
+                        `<tr>
+                          <td>${idx + 1}. ${esc(row.name)}</td>
+                          <td>${row.value === "yes" ? "✓" : ""}</td>
+                          <td>${row.value === "no" ? "✓" : ""}</td>
+                          <td>${esc(row.sinceWhen || "-")}</td>
+                          <td>${esc(row.comments || "-")}</td>
+                        </tr>`
+                    )
+                    .join("")}
+                </tbody>
+              </table>`
+            : "<p>Health condition table hidden (Any Health Issues = No).</p>"
+        }
+        <p>Any auto immune Diseases:</p>
+        <ul>${getMarked(autoimmuneOptions, autoimmuneSelected).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p>Symptoms any other:</p>
+        <ul>${getMarked(symptomOptions, symptomSelected).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p>Any skin issue:</p>
+        <ul>${getMarked(skinOptions, skinSelected).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p>Any vitamin or Mineral deficiency:</p>
+        <ul>${getMarked(deficiencyOptions, deficiencySelected).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p>Do you have any history of surgery?: ${esc(yn(surgeryHistory))}</p>
+        ${surgeryHistory === "yes" ? `<p>Please specify the type of surgery: ${esc(surgeryDetails || "-")}</p>` : ""}
+        <p>Any Allergy from medicine: ${esc(yn(medicineAllergy))}</p>
+        ${medicineAllergy === "yes" ? `<p>Please mention the name: ${esc(medicineAllergyName || "-")}</p>` : ""}
+        <p>Have you consulted a doctor?: ${esc(yn(consultedDoctor))}</p>
+        ${
+          consultedDoctor === "yes"
+            ? `<p>Consultant Doctor name: ${esc(doctorName || "-")}</p>
+               <p>Specialty: ${esc(doctorSpecialty || "-")}</p>
+               <p>Phone number: ${esc(doctorPhone || "-")}</p>`
+            : ""
+        }
+        <p>Other health concerns: ${esc(otherHealthConcerns || "-")}</p>
+        ${
+          gender === "female"
+            ? `<p>Any menstrual problem: ${esc(menstrualPattern || "-")}</p>`
+            : ""
+        }
+
+        <h2>FOOD HABIT</h2>
+        <p>Diet patterns: ${esc(dietPattern || "-")}</p>
+        ${
+          dietPattern === "non_veg"
+            ? `<p>Frequency of Non-Veg Intake: ${esc(nonVegFrequency || "-")}</p>`
+            : ""
+        }
+        <p>Do you consume Egg: ${esc(yn(consumeEgg))}</p>
+        <p>Do you consume milk: ${esc(yn(consumeMilk))}</p>
+        <p>Any food Allergy: ${esc(yn(foodAllergy))}</p>
+        ${foodAllergy === "yes" ? `<p>Please mention the name: ${esc(foodAllergyName || "-")}</p>` : ""}
+        <p>Number of meals in one day:</p>
+        <ul>${getMarked(["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], mealSlotsSelected)
+          .map((x) => `<li>${esc(x)}</li>`)
+          .join("")}</ul>
+        <p>Do you consume Snack in between Meals: ${esc(yn(snacksBetweenMeals))}</p>
+        <p>Do you skip meals: ${esc(yn(skipMeals))}</p>
+        <p>From where do you consume food:</p>
+        <ul>${getMarked(["Home", "Canteen", "Hotel", "Home supplies"], foodSource)
+          .map((x) => `<li>${esc(x)}</li>`)
+          .join("")}</ul>
+        <p>Have you taken any consultation from a dietician previously?: ${esc(yn(dieticianConsulted))}</p>
+        ${
+          dieticianConsulted === "yes"
+            ? `<p>Dietician Name: ${esc(dieticianName || "-")}</p>
+               <p>Location: ${esc(dieticianLocation || "-")}</p>
+               <p>Phone number: ${esc(dieticianPhone || "-")}</p>`
+            : ""
+        }
+
+        <h2>OTHER HABIT</h2>
+        <p>Do you indulge in any physical activity?: ${esc(yn(physicalActivity))}</p>
+        ${
+          physicalActivity === "yes"
+            ? `<p>If yes, please choose from the list below:</p>
+               <ul>${getMarked(activityOptions, activitySelected).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+               <p>Others (activity): ${esc(activityOtherText || "-")}</p>`
+            : "<p>Physical activity table hidden (No selected).</p>"
+        }
+        <p>Do you have any other habits:</p>
+        <ul>${getMarked(habitOptions, habitSelected).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p>Others (habit): ${esc(habitOtherText || "-")}</p>
+        <p>Please share your thoughts on what can help us improve your health:</p>
+        <p>${esc(improvementThoughts || "-")}</p>
+      </body>
+      </html>
+    `;
+
     try {
       setDownloadingFormat(format);
-      await downloadAdminQuestionnaireQuestions(format);
+      if (format === "docx") {
+        const blob = new Blob([html], {
+          type: "application/msword;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        // HTML-as-Word should use .doc so layout renders correctly.
+        a.download = "patient_questionnaire_preview.doc";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-10000px";
+      container.style.top = "0";
+      container.style.width = "800px";
+      container.innerHTML = html;
+      document.body.appendChild(container);
+
+      await new Promise<void>((resolve) => {
+        pdf.html(container, {
+          x: 20,
+          y: 20,
+          autoPaging: "text",
+          html2canvas: { scale: 0.7 },
+          callback: () => resolve(),
+        });
+      });
+      document.body.removeChild(container);
+      pdf.save("patient_questionnaire_preview.pdf");
     } catch (err) {
       console.error(err);
       setError(`Failed to download ${format.toUpperCase()} file.`);

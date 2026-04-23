@@ -58,6 +58,15 @@ export type UserQuestionnaire = {
     string | number | MasterNameRow | { id: number; other_text?: string; duration_minutes?: number }
   >;
   surgery_history?: boolean | null;
+  surgery_details?: string | null;
+  medicine_allergy?: boolean | null;
+  medicine_allergy_details?: string | null;
+  consulted_doctor?: boolean | null;
+  consultant_doctor_name?: string | null;
+  consultant_doctor_specialty?: string | null;
+  consultant_doctor_phone?: string | null;
+  other_health_concerns?: string | null;
+  menstrual_pattern?: "heavy" | "very_less" | "none" | null;
   on_medication?: boolean | null;
   sleep_quality?: "fresh" | "not_fresh" | null;
   stress_level?: "low" | "medium" | "high" | null;

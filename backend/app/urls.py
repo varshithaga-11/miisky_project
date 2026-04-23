@@ -147,6 +147,16 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 
 urlpatterns = [
+    path(
+        "admin-questionnaire-questions/",
+        AdminQuestionnaireQuestionListViewSet.as_view({"get": "list"}),
+        name="admin-questionnaire-questions-list",
+    ),
+    path(
+        "admin-questionnaire-questions/download/",
+        AdminQuestionnaireQuestionListViewSet.as_view({"get": "download"}),
+        name="admin-questionnaire-questions-download",
+    ),
     path("delivery-feedback/", views.DeliveryFeedbackView.as_view(), name="delivery-feedback"),
     path("adminside/location/delete/", views.AdminLocationDeleteView.as_view(), name="location-delete"),
     path("adminside/questionnaire-master/delete/", views.AdminQuestionnaireMasterDeleteView.as_view(), name="questionnaire-master-delete"),

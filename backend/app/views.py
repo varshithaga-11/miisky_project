@@ -1887,6 +1887,7 @@ class AdminQuestionnaireQuestionListViewSet(viewsets.ViewSet):
                 "skin_issues": skin_issues,
                 "deficiencies": deficiencies,
                 "digestive_issues": digestive_issues,
+                "menstrual_pattern": self._choice_labels("menstrual_pattern"),
             },
             "food_habit": {
                 "diet_pattern": self._choice_labels("diet_pattern"),
@@ -2001,7 +2002,8 @@ class AdminQuestionnaireQuestionListViewSet(viewsets.ViewSet):
                 <span class="line">Consultant Doctor name: ____________________________</span>
                 <span class="line">Specialty: ____________________  Phone number: ____________________</span>
                 <span class="line">Other health concerns: ______________________________________________</span>
-                <span class="line">For female patient: Menstrual problem - &#9633; Heavy bleeding  &#9633; Very less bleeding  &#9633; None</span>
+                <h3>For female patient only - Any menstrual problem</h3>
+                <ul>{self._checkbox_list_html(h['menstrual_pattern'])}</ul>
 
                 <h2>FOOD HABIT</h2>
                 <span class="line">Diet patterns - {' / '.join(f['diet_pattern'])}</span>
@@ -2107,7 +2109,7 @@ class AdminQuestionnaireQuestionListViewSet(viewsets.ViewSet):
         document.add_paragraph("Consultant Doctor name: ____________________________")
         document.add_paragraph("Specialty: ____________________  Phone number: ____________________")
         document.add_paragraph("Other health concerns: _____________________________________________")
-        document.add_paragraph("For Female Patient only - Menstrual problem: □ Heavy bleeding  □ Very less bleeding  □ None")
+        add_checkbox_list("For Female Patient only - Any menstrual problem", h["menstrual_pattern"])
 
         document.add_heading("FOOD HABIT", level=2)
         document.add_paragraph(f"Diet patterns - {' / '.join(f['diet_pattern'])}")
@@ -2149,6 +2151,7 @@ class AdminQuestionnaireQuestionListViewSet(viewsets.ViewSet):
                     + len(payload["health"]["skin_issues"])
                     + len(payload["health"]["deficiencies"])
                     + len(payload["health"]["digestive_issues"])
+                    + len(payload["health"]["menstrual_pattern"])
                     + len(payload["other_habit"]["physical_activities"])
                     + len(payload["other_habit"]["other_habits"])
                 ),
@@ -2159,9 +2162,9 @@ class AdminQuestionnaireQuestionListViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], url_path="download")
     def download(self, request):
-        requested_format = str(request.query_params.get("format", "pdf")).strip().lower()
+        requested_format = str(request.query_params.get("file_format", "pdf")).strip().lower()
         if requested_format not in {"pdf", "docx"}:
-            return Response({"detail": "format must be either 'pdf' or 'docx'."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "file_format must be either 'pdf' or 'docx'."}, status=status.HTTP_400_BAD_REQUEST)
 
         if requested_format == "docx":
             content = self._build_docx()
