@@ -31,8 +31,9 @@ export default function HomePage() {
             <Team/>
             <Portfolio/>
             <News/>
-            <GoogleMapSection/>
             <HomeImageCaption/>
+            <GoogleMapSection/>
+            
         </div>
     );
 }
