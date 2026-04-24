@@ -167,8 +167,8 @@ function EmptyState({ msg }: { msg: string }) {
   );
 }
 
-// ─── LoadMore button ──────────────────────────────────────────────────────────
-function LoadMoreBtn({
+// ─── InfiniteScrollTrigger ───────────────────────────────────────────────────
+function InfiniteScrollTrigger({
   hasMore,
   loading,
   onLoad,
@@ -177,17 +177,36 @@ function LoadMoreBtn({
   loading: boolean;
   onLoad: () => void;
 }) {
+  const [observerTarget, setObserverTarget] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!observerTarget || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoad();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerTarget);
+    return () => observer.disconnect();
+  }, [observerTarget, hasMore, loading, onLoad]);
+
   if (!hasMore) return null;
+
   return (
-    <div className="flex justify-center pt-4">
-      <button
-        type="button"
-        disabled={loading}
-        onClick={onLoad}
-        className="px-8 py-2.5 rounded-2xl bg-indigo-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all"
-      >
-        {loading ? "Loading…" : "Load More"}
-      </button>
+    <div ref={setObserverTarget} className="flex justify-center py-6">
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs font-bold text-indigo-500 uppercase tracking-widest animate-pulse">
+           <div className="size-1.5 rounded-full bg-indigo-500 animate-bounce" />
+           Loading more…
+        </div>
+      ) : (
+        <div className="h-4" /> // Invisible trigger
+      )}
     </div>
   );
 }
@@ -409,7 +428,7 @@ function OrdersView({ profileId }: { profileId: number }) {
           )}
         </div>
       ))}
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -481,7 +500,7 @@ function PaymentsView({ profileId }: { profileId: number }) {
           </tbody>
         </table>
       </div>
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -581,7 +600,7 @@ function MealAssignmentsView({ profileId }: { profileId: number }) {
           </div>
         </div>
       ))}
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -650,7 +669,7 @@ function ReassignmentsHistoryView({ profileId }: { profileId: number }) {
           </div>
         ))}
       </div>
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -743,7 +762,7 @@ function GlobalAssignmentsView({ profileId }: { profileId: number }) {
           </div>
         ))}
       </div>
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -816,7 +835,7 @@ function LeavesView({ profileId }: { profileId: number }) {
           </div>
         </div>
       ))}
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -886,7 +905,7 @@ function ReviewsView({ profileId }: { profileId: number }) {
           )}
         </div>
       ))}
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
@@ -956,7 +975,7 @@ function IssuesView({ profileId }: { profileId: number }) {
           )}
         </div>
       ))}
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }

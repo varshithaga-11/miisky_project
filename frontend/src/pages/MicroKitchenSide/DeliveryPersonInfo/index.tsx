@@ -16,6 +16,49 @@ import {
   Eye,
 } from "lucide-react";
 
+// ─── InfiniteScrollTrigger ───────────────────────────────────────────────────
+function InfiniteScrollTrigger({
+  hasMore,
+  loading,
+  onLoad,
+}: {
+  hasMore: boolean;
+  loading: boolean;
+  onLoad: () => void;
+}) {
+  const [observerTarget, setObserverTarget] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!observerTarget || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoad();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerTarget);
+    return () => observer.disconnect();
+  }, [observerTarget, hasMore, loading, onLoad]);
+
+  if (!hasMore) return null;
+
+  return (
+    <div ref={setObserverTarget} className="flex justify-center py-6">
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs font-bold text-indigo-500 uppercase tracking-widest animate-pulse">
+           <div className="size-1.5 rounded-full bg-indigo-500 animate-bounce" />
+           Loading more…
+        </div>
+      ) : (
+        <div className="h-4" /> 
+      )}
+    </div>
+  );
+}
 
 function ProfileDetail({
   row,
@@ -117,9 +160,10 @@ function ProfileDetail({
 
 export default function DeliveryPersonInfoPage() {
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [count, setCount] = useState(0);
   const [rows, setRows] = useState<KitchenDeliveryProfile[]>([]);
 
@@ -127,24 +171,37 @@ export default function DeliveryPersonInfoPage() {
   const [detailProfile, setDetailProfile] = useState<KitchenDeliveryProfile | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (p: number, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const res = await fetchKitchenDeliveryProfiles(page, limit);
-      setRows(res.results || []);
-      setTotalPages(res.total_pages || 1);
+      const res = await fetchKitchenDeliveryProfiles(p, limit);
+      if (append) {
+        setRows(prev => [...prev, ...(res.results || [])]);
+      } else {
+        setRows(res.results || []);
+      }
+      setHasMore(res.current_page < res.total_pages);
       setCount(res.count ?? 0);
+      setPage(p);
     } catch (e) {
       console.error(e);
       toast.error("Failed to load delivery profiles");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [page, limit]);
+  }, [limit]);
 
   useEffect(() => {
-    void load();
+    void load(1);
   }, [load]);
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      void load(page + 1, true);
+    }
+  };
 
   const patchRow = (updated: KitchenDeliveryProfile) => {
     setRows((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
@@ -190,31 +247,7 @@ export default function DeliveryPersonInfoPage() {
           </div>
         )}
 
-        {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-white/10">
-            <p className="text-xs text-gray-500">
-              Page {page} of {totalPages} · {count} total
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-sm disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-sm disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
       </div>
 
       {/* Delivery Profile Detail Modal */}
