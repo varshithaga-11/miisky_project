@@ -42,7 +42,9 @@ import {
   getMicroKitchenDeliveryRatings,
   getMicroKitchenOrderPaymentSnapshots,
   getMicroKitchenExecutionList,
+  getMicroKitchenDetail,
   MicroKitchenProfile,
+  MicroKitchenProfileSummary,
 } from "./api";
 import { AdminAllottedPlanPayoutsPanel } from "../shared/AdminAllottedPlanPayoutsPanel";
 import {
@@ -136,7 +138,7 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
 ];
 
 type Props = {
-  kitchen: MicroKitchenProfile;
+  kitchen: MicroKitchenProfileSummary;
   open: boolean;
   onClose: () => void;
 };
@@ -224,7 +226,8 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
         let res: any;
         switch (view) {
           case "info":
-            setPayload({ results: kitchen, page: 1, hasMore: false });
+            res = await getMicroKitchenDetail(id);
+            setPayload({ results: res, page: 1, hasMore: false });
             break;
           case "patients":
             res = await getMicroKitchenPatients(id, p);

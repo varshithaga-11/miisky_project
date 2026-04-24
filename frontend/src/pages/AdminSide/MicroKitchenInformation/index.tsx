@@ -5,11 +5,13 @@ import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
 import {
     getMicroKitchenList,
+    getMicroKitchenDetail,
     updateMicroKitchenStatus,
     deleteMicroKitchen,
     saveMicroKitchenInspection,
     getMicroKitchenInspectionsNoPagination,
     MicroKitchenProfile,
+    MicroKitchenProfileSummary,
     MicroKitchenInspection
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
@@ -56,13 +58,13 @@ const InspectionMediaPreview: React.FC<{ file: File | null; onRemove?: () => voi
 
 
 const MicroKitchenInformationPage: React.FC = () => {
-    const [profiles, setProfiles] = useState<MicroKitchenProfile[]>([]);
+    const [profiles, setProfiles] = useState<MicroKitchenProfileSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [activeTab, setActiveTab] = useState<TabStatus>("all");
-    const [viewingProfile, setViewingProfile] = useState<MicroKitchenProfile | null>(null);
+    const [viewingProfileSummary, setViewingProfileSummary] = useState<MicroKitchenProfileSummary | null>(null);
     const [isInspecting, setIsInspecting] = useState<MicroKitchenProfile | null>(null);
     const [previousInspections, setPreviousInspections] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
@@ -118,8 +120,8 @@ const MicroKitchenInformationPage: React.FC = () => {
         fetchData(currentPage, searchTerm, activeTab);
     }, [currentPage, searchTerm, activeTab, fetchData]);
 
-    const openViewingProfile = (p: MicroKitchenProfile) => {
-        setViewingProfile(p);
+    const openViewingProfile = (p: MicroKitchenProfileSummary) => {
+        setViewingProfileSummary(p);
     };
 
     // Reset page on tab change
@@ -304,15 +306,19 @@ const MicroKitchenInformationPage: React.FC = () => {
                                                 </button>
                                                 <button
                                                     onClick={async () => {
-                                                        setIsInspecting(p);
-                                                        setInspectionData(prev => ({ ...prev, mc_code: p.kitchen_code || "" }));
-                                                        setLoadingHistory(true);
+                                                        setLoading(true);
                                                         try {
+                                                            const fullProfile = await getMicroKitchenDetail(p.id);
+                                                            setIsInspecting(fullProfile);
+                                                            setInspectionData(prev => ({ ...prev, mc_code: p.kitchen_code || "" }));
+                                                            setLoadingHistory(true);
                                                             const history = await getMicroKitchenInspectionsNoPagination(p.id);
                                                             setPreviousInspections(history);
                                                         } catch (err) {
-                                                            console.error("Failed to load inspection history", err);
+                                                            console.error("Failed to setup inspection", err);
+                                                            toast.error("Failed to load kitchen details for inspection");
                                                         } finally {
+                                                            setLoading(false);
                                                             setLoadingHistory(false);
                                                         }
                                                     }}
@@ -380,11 +386,11 @@ const MicroKitchenInformationPage: React.FC = () => {
             </div>
 
             {/* Detail Modal */}
-            {viewingProfile && (
+            {viewingProfileSummary && (
                 <MicroKitchenDetailModal
-                    kitchen={viewingProfile}
-                    open={!!viewingProfile}
-                    onClose={() => setViewingProfile(null)}
+                    kitchen={viewingProfileSummary}
+                    open={!!viewingProfileSummary}
+                    onClose={() => setViewingProfileSummary(null)}
                 />
             )}
 

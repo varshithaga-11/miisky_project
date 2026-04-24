@@ -1734,6 +1734,28 @@ class MicroKitchenProfileSerializer(serializers.ModelSerializer):
         return None
 
 
+class MicroKitchenProfileListSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicroKitchenProfile
+        fields = [
+            'id', 'user', 'brand_name', 'kitchen_code',
+            'status', 'no_of_staff', 'lpg_cylinders',
+            'user_details',
+        ]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                "id": obj.user.id,
+                "first_name": obj.user.first_name,
+                "last_name": obj.user.last_name,
+                "email": obj.user.email,
+            }
+        return None
+
+
 class MicroKitchenInspectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MicroKitchenInspection

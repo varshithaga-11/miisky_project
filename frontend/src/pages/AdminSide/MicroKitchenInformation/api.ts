@@ -9,11 +9,16 @@ export type MicroKitchenProfile = {
   is_verified: boolean;
   user: number;
   user_details: {
+    id: number;
     username: string;
     first_name: string;
     last_name: string;
     email: string;
     mobile: string;
+    address: string;
+    city: string | null;
+    state: string | null;
+    country: string | null;
   } | null;
   // Other fields from the model
   fssai_no: string | null;
@@ -54,6 +59,22 @@ export type MicroKitchenProfile = {
   latitude: number | null;
   longitude: number | null;
   status: 'draft' | 'approved' | 'rejected';
+};
+
+export type MicroKitchenProfileSummary = {
+  id: number;
+  user: number;
+  brand_name: string | null;
+  kitchen_code: string | null;
+  status: 'draft' | 'approved' | 'rejected';
+  no_of_staff: number | null;
+  lpg_cylinders: number | null;
+  user_details: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  } | null;
 };
 
 export type MicroKitchenInspection = {
@@ -99,7 +120,7 @@ export type MicroKitchenListResponse = {
   count: number;
   next: number | null;
   previous: number | null;
-  results: MicroKitchenProfile[];
+  results: MicroKitchenProfileSummary[];
   total_pages: number;
 };
 
@@ -120,6 +141,12 @@ export const getMicroKitchenList = async (
     headers: await getAuthHeaders(),
     params
   });
+  return response.data;
+};
+
+export const getMicroKitchenDetail = async (id: number): Promise<MicroKitchenProfile> => {
+  const url = createApiUrl(`api/microkitchenprofile/${id}/`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
   return response.data;
 };
 

@@ -2427,6 +2427,11 @@ class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['brand_name', 'kitchen_code', 'user__username', 'user__email']
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return MicroKitchenProfileListSerializer
+        return MicroKitchenProfileSerializer
+
     @action(detail=False, methods=['get'], url_path='list_minimal', pagination_class=None)
     def list_minimal(self, request):
         qs = self.filter_queryset(self.get_queryset()).values('id', 'brand_name', 'cuisine_type')
