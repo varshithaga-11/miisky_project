@@ -391,9 +391,23 @@ const AllottedPatientsPage: React.FC = () => {
                                               <span className="text-gray-400 font-bold uppercase">Food Source</span>
                                               <span className="text-gray-900 dark:text-white font-black capitalize">{p.questionnaire?.food_source || 'N/A'}</span>
                                            </div>
-                                           <div className="flex justify-between items-center text-[10px]">
+                                           <div className="flex justify-between items-center text-[10px] border-b border-gray-50 dark:border-white/5 pb-3">
                                               <span className="text-gray-400 font-bold uppercase">Sick Freq.</span>
                                               <span className="text-gray-900 dark:text-white font-black capitalize">{p.questionnaire?.falls_sick_frequency || 'N/A'}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] border-b border-gray-50 dark:border-white/5 pb-3">
+                                              <span className="text-gray-400 font-bold uppercase">On Medication</span>
+                                              <span className="text-gray-900 dark:text-white font-black capitalize">
+                                                 {p.questionnaire?.on_medication === true ? 'Yes' : p.questionnaire?.on_medication === false ? 'No' : 'N/A'}
+                                              </span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] border-b border-gray-50 dark:border-white/5 pb-3">
+                                              <span className="text-gray-400 font-bold uppercase">Menstrual Pattern</span>
+                                              <span className="text-gray-900 dark:text-white font-black capitalize">{p.questionnaire?.menstrual_pattern?.replace('_', ' ') || 'N/A'}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px]">
+                                              <span className="text-gray-400 font-bold uppercase">Fruits / Veg</span>
+                                              <span className="text-gray-900 dark:text-white font-black">{p.questionnaire?.fruits_per_day || '0'} / {p.questionnaire?.vegetables_per_day || '0'} daily</span>
                                            </div>
                                         </div>
                                         
@@ -639,18 +653,43 @@ const AllottedPatientsPage: React.FC = () => {
                                               </div>
                                            </div>
                                            
-                                           {p.questionnaire?.food_allergy && (
+                                                                                       <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/20">
+                                               <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Dietary Details</span>
+                                               <div className="grid grid-cols-2 gap-2 text-[9px] font-bold">
+                                                  <div className="text-gray-500 uppercase">Egg: <span className="text-emerald-600">{p.questionnaire?.consumes_egg ? 'Yes' : 'No'}</span></div>
+                                                  <div className="text-gray-500 uppercase">Dairy: <span className="text-emerald-600">{p.questionnaire?.consumes_dairy ? 'Yes' : 'No'}</span></div>
+                                               </div>
+                                            </div>
+
+                                            {p.questionnaire?.food_allergy && (
+
                                               <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/20">
                                                  <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest block mb-1">⚠️ ALLERGIES</span>
                                                  <p className="text-[10px] font-bold text-rose-500 italic">{p.questionnaire?.food_allergy_details || "Present - Details not specified"}</p>
                                               </div>
                                            )}
                                            
-                                           <div className="pt-6 border-t border-gray-100 dark:border-white/5">
-                                              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-2 underline decoration-indigo-200 decoration-4 underline-offset-4">Clinician Notes</span>
-                                              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed italic">
-                                                 {p.questionnaire?.additional_notes || "No additional notes provided."}
-                                              </p>
+                                           <div className="pt-6 border-t border-gray-100 dark:border-white/5 space-y-4">
+                                              <div>
+                                                 <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-2 underline decoration-indigo-200 decoration-4 underline-offset-4">Clinician Notes</span>
+                                                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed italic">
+                                                    {p.questionnaire?.additional_notes || "No additional notes provided."}
+                                                 </p>
+                                              </div>
+                                              
+                                              {p.questionnaire?.any_other_comments && (
+                                                 <div>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Other Comments</span>
+                                                    <p className="text-xs text-gray-600 dark:text-gray-300 italic">{p.questionnaire.any_other_comments}</p>
+                                                 </div>
+                                              )}
+                                              
+                                              {p.questionnaire?.any_notes_for_care_team && (
+                                                 <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/20">
+                                                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest block mb-1">Notes for Care Team</span>
+                                                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">{p.questionnaire.any_notes_for_care_team}</p>
+                                                 </div>
+                                              )}
                                            </div>
                                         </div>
                                      </div>
