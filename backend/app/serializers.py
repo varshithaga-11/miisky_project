@@ -788,10 +788,11 @@ class FoodSerializer(serializers.ModelSerializer):
 
 class SetDailyMealsFoodListSerializer(serializers.ModelSerializer):
     """Minimal food row for Set Daily Meals picker — id and name only (no nutrition, ingredients, steps)."""
+    meal_type_details = MealTypePatientLiteSerializer(source='meal_types', many=True, read_only=True)
 
     class Meta:
         model = Food
-        fields = ["id", "name"]
+        fields = ["id", "name", "meal_types", "meal_type_details"]
 
 
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
@@ -2932,6 +2933,10 @@ class UserMealSerializer(serializers.ModelSerializer):
                 'id': obj.food.id,
                 'name': obj.food.name,
                 'image': obj.food.image.url if obj.food.image else None,
+                'meal_types': list(obj.food.meal_types.values_list('id', flat=True)),
+                'meal_type_details': [
+                    {'id': mt.id, 'name': mt.name} for mt in obj.food.meal_types.all()
+                ]
             }
         return None
 

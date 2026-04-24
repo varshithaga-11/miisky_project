@@ -471,7 +471,12 @@ const SetDailyMealsPage: React.FC = () => {
     };
 
     const handleDragStart = (e: React.DragEvent, food: Food) => {
-        e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ id: food.id, name: food.name }));
+        e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ 
+            id: food.id, 
+            name: food.name, 
+            meal_types: food.meal_types,
+            meal_type_details: food.meal_type_details
+        }));
         e.dataTransfer.effectAllowed = "copy";
         (e.target as HTMLElement).style.opacity = "0.5";
     };
@@ -501,17 +506,18 @@ const SetDailyMealsPage: React.FC = () => {
         const raw = e.dataTransfer.getData(DRAG_TYPE);
         if (!raw || !selectedPatient || !activePlan) return;
         try {
-            const { id } = JSON.parse(raw);
+            const { id, meal_types, meal_type_details } = JSON.parse(raw);
             if (!id) return;
-
             const newEntry: Partial<UserMeal> = {
                 user: selectedPatient.user.id,
                 user_diet_plan: activePlan.id,
                 meal_date: dateStr,
-                meal_type: selectedMealTypeId || mealTypes[0]?.id,
+                meal_type: selectedMealTypeId || (meal_types && meal_types.length > 0 ? meal_types[0] : (mealTypes[0]?.id || undefined)),
                 food: id,
                 quantity: 1,
                 packaging_material: selectedPackagingMaterialId || null,
+                available_meal_types: meal_types || [],
+                available_meal_type_details: meal_type_details || [],
             };
             setDailyEntries(prev => [...prev, newEntry]);
             setShowSaveButton(true);
@@ -553,7 +559,13 @@ const SetDailyMealsPage: React.FC = () => {
             return;
         }
 
-        const isValid = entriesToSave.every(e => e.meal_type && e.food && e.quantity);
+        const isValid = entriesToSave.every((e, idx) => {
+            const ok = !!(e.meal_type && e.food && e.quantity);
+            if (!ok) {
+                console.warn(`Validation failed for entry at index ${idx}:`, e);
+            }
+            return ok;
+        });
         if (!isValid) {
             toast.error("Please fill all fields for each slot");
             return;
@@ -1198,9 +1210,28 @@ const SetDailyMealsPage: React.FC = () => {
                                                                             <div className="flex flex-wrap gap-4 items-end">
                                                                                 <div className="flex-1 min-w-[120px]">
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meal Type</label>
-                                                                                    <div className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold">
-                                                                                        {mealTypeName}
-                                                                                    </div>
+                                                                                    <select
+                                                                                        value={entry.meal_type || ""}
+                                                                                        disabled={isReadOnly}
+                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
+                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold outline-none disabled:opacity-50"
+                                                                                    >
+                                                                                        {((entry.available_meal_type_details && entry.available_meal_type_details.length > 0) || 
+                                                                                         (entry.food_details?.meal_type_details && entry.food_details.meal_type_details.length > 0)) ? (
+                                                                                            (entry.available_meal_type_details || entry.food_details?.meal_type_details || []).map(mt => (
+                                                                                                <option key={mt.id} value={mt.id}>{mt.name}</option>
+                                                                                            ))
+                                                                                        ) : entry.available_meal_types && entry.available_meal_types.length > 0 ? (
+                                                                                            entry.available_meal_types.map(mtid => {
+                                                                                                const mt = mealTypes.find(m => m.id === mtid);
+                                                                                                return <option key={mtid} value={mtid}>{mt?.name || `Type ${mtid}`}</option>;
+                                                                                            })
+                                                                                        ) : (
+                                                                                            mealTypes.map(mt => (
+                                                                                                <option key={mt.id} value={mt.id}>{mt.name}</option>
+                                                                                            ))
+                                                                                        )}
+                                                                                    </select>
                                                                                 </div>
                                                                                 <div className="flex-1 min-w-[140px]">
                                                                                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Food</label>

@@ -36,6 +36,7 @@ export interface Food {
   name: string;
   meal_types: number[];
   meal_type_names?: string[];
+  meal_type_details?: { id: number; name: string }[];
   cuisine_types?: number[];
   cuisine_type_names?: string[];
   description?: string;

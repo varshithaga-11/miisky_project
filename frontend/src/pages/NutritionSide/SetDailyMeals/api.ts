@@ -54,6 +54,8 @@ export interface UserMeal {
     packaging_material_details?: { id: number; name: string } | null;
     micro_kitchen?: number | null;
     micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
+    available_meal_types?: number[];
+    available_meal_type_details?: { id: number; name: string }[];
 }
 
 export interface FoodNutritionById {
