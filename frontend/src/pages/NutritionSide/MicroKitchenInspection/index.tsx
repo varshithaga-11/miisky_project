@@ -11,7 +11,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getMicroKitchenList, type MicroKitchenProfile } from "../../AdminSide/MicroKitchenInformation/api";
+import { getMicroKitchenList, type MicroKitchenProfile, type MicroKitchenProfileSummary } from "../../AdminSide/MicroKitchenInformation/api";
 import {
   getMicroKitchenById,
   getMicroKitchenInspectionsForKitchen,
@@ -24,14 +24,14 @@ import Button from "../../../components/ui/button/Button";
 type TabStatus = "draft" | "rejected" | "all";
 
 const MicroKitchenInspectionPage: React.FC = () => {
-  const [profiles, setProfiles] = useState<MicroKitchenProfile[]>([]);
+  const [profiles, setProfiles] = useState<MicroKitchenProfileSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [activeTab, setActiveTab] = useState<TabStatus>("draft");
 
-  const [inspectKitchen, setInspectKitchen] = useState<MicroKitchenProfile | null>(null);
+  const [inspectKitchen, setInspectKitchen] = useState<MicroKitchenProfile | MicroKitchenProfileSummary | null>(null);
   const [detailKitchen, setDetailKitchen] = useState<MicroKitchenProfile | null>(null);
   const [inspectionItems, setInspectionItems] = useState<any[]>([]);
   const [loadingInspect, setLoadingInspect] = useState(false);
@@ -65,7 +65,7 @@ const MicroKitchenInspectionPage: React.FC = () => {
     setCurrentPage(1);
   }, [activeTab]);
 
-  const openInspect = async (p: MicroKitchenProfile) => {
+  const openInspect = async (p: MicroKitchenProfileSummary) => {
     setInspectKitchen(p);
     setLoadingInspect(true);
     setDetailKitchen(null);
@@ -89,7 +89,7 @@ const MicroKitchenInspectionPage: React.FC = () => {
   const applyStatus = async (id: number, status: "approved" | "rejected") => {
     try {
       const updated = await updateMicroKitchenStatus(id, status);
-      setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
+      setProfiles((prev) => prev.map((x) => (x.id === id ? (updated as unknown as MicroKitchenProfileSummary) : x)));
       if (detailKitchen?.id === id) setDetailKitchen(updated);
       if (inspectKitchen?.id === id) setInspectKitchen(updated);
       toast.success(status === "approved" ? "Kitchen verified and approved." : "Kitchen rejected.");
@@ -128,8 +128,8 @@ const MicroKitchenInspectionPage: React.FC = () => {
   };
 
   /** Approve: pending or previously rejected. Reject: pending or currently approved (revoke). */
-  const showApprove = (p: MicroKitchenProfile) => p.status !== "approved";
-  const showReject = (p: MicroKitchenProfile) => p.status !== "rejected";
+  const showApprove = (p: MicroKitchenProfile | MicroKitchenProfileSummary) => p.status !== "approved";
+  const showReject = (p: MicroKitchenProfile | MicroKitchenProfileSummary) => p.status !== "rejected";
 
   return (
     <>
