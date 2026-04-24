@@ -475,6 +475,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/delivery-charges",
   },
   {
+    icon: <Users className="w-5 h-5" />,
+    name: "Team Management",
+    path: "/microkitchen/user-management",
+  },
+  {
     icon: <Milestone className="w-5 h-5" />,
     name: "Delivery management",
     subItems: [
@@ -526,6 +531,7 @@ const supplyChainNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/supplychain/dashboard",
   },
+
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Delivery Questionnaire",
