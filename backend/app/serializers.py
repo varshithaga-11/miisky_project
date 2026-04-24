@@ -5296,3 +5296,107 @@ class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Selected user must be a patient.")
         return value
 
+
+class DeliveryPersonOrderSerializer(serializers.ModelSerializer):
+    customer_display = serializers.SerializerMethodField()
+    micro_kitchen_brand = serializers.CharField(source='micro_kitchen.brand_name', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'status', 'order_type', 'created_at', 'grand_total', 
+            'delivery_charge', 'customer_display', 'micro_kitchen_brand'
+        ]
+
+    def get_customer_display(self, obj):
+        u = obj.user
+        if u:
+            return f"{u.first_name} {u.last_name}".strip() or u.username
+        return "Unknown"
+
+class DeliveryPersonPaymentSerializer(serializers.ModelSerializer):
+    customer_display = serializers.SerializerMethodField()
+    order_created_at = serializers.DateTimeField(source='order.created_at', read_only=True)
+    order_status = serializers.CharField(source='order.status', read_only=True)
+    order_type = serializers.CharField(source='order.order_type', read_only=True)
+
+    class Meta:
+        model = OrderPaymentSnapshot
+        fields = [
+            'id', 'order_id', 'order_status', 'order_type', 'order_created_at',
+            'customer_display', 'food_subtotal', 'delivery_charge', 'grand_total',
+            'kitchen_amount', 'created_at'
+        ]
+
+    def get_customer_display(self, obj):
+        order = obj.order
+        if not order: return "N/A"
+        u = order.user
+        if u:
+            return f"{u.first_name} {u.last_name}".strip() or u.username
+        return "Unknown"
+
+class DeliveryPersonMealAssignmentSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source='user_meal.user.first_name', read_only=True)
+    meal_date = serializers.DateField(source='user_meal.meal_date', read_only=True)
+    meal_type = serializers.CharField(source='user_meal.meal_type.name', read_only=True)
+    food_name = serializers.CharField(source='user_meal.food.name', read_only=True)
+    slot_name = serializers.CharField(source='delivery_slot.name', read_only=True)
+    slot_start = serializers.TimeField(source='delivery_slot.start_time', read_only=True)
+    slot_end = serializers.TimeField(source='delivery_slot.end_time', read_only=True)
+
+    class Meta:
+        model = DeliveryAssignment
+        fields = [
+            'id', 'user_meal', 'status', 'patient_name', 'meal_date', 
+            'meal_type', 'food_name', 'slot_name', 'slot_start', 'slot_end',
+            'reassignment_reason'
+        ]
+
+class DeliveryPersonLeaveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupplyChainDeliveryLeave
+        fields = ['id', 'leave_type', 'start_date', 'end_date', 'start_time', 'end_time', 'notes', 'kitchen_handling_status']
+
+class DeliveryPersonFeedbackSerializer(serializers.ModelSerializer):
+    reported_by_name = serializers.SerializerMethodField()
+    order_id = serializers.IntegerField(source='order.id', read_only=True)
+    user_meal_id = serializers.IntegerField(source='user_meal.id', read_only=True)
+
+    class Meta:
+        model = SupplyChainDeliveryFeedback
+        fields = [
+            'id', 'feedback_type', 'rating', 'review', 'issue_type', 
+            'description', 'created_at', 'reported_by_name', 
+            'order_id', 'user_meal_id'
+        ]
+
+    def get_reported_by_name(self, obj):
+        u = obj.reported_by
+        if u:
+            return f"{u.first_name} {u.last_name}".strip() or u.username
+        return "Customer"
+
+class DeliveryPersonGlobalAssignmentSerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    diet_plan_name = serializers.CharField(source='user_diet_plan.diet_plan.name', read_only=True)
+    start_date = serializers.DateField(source='user_diet_plan.start_date', read_only=True)
+    end_date = serializers.DateField(source='user_diet_plan.end_date', read_only=True)
+    default_slot_name = serializers.CharField(source='default_slot.name', read_only=True)
+    delivery_slots_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DietPlanDeliveryAssignment
+        fields = [
+            'id', 'patient_name', 'diet_plan_name', 'start_date', 
+            'end_date', 'default_slot_name', 'delivery_slots_details'
+        ]
+
+    def get_patient_name(self, obj):
+        p = obj.user # In DietPlanDeliveryAssignment, 'user' is the patient
+        if p:
+            return f"{p.first_name} {p.last_name}".strip() or p.username
+        return "Patient"
+
+    def get_delivery_slots_details(self, obj):
+        return [{"id": s.id, "name": s.name} for s in obj.delivery_slots.all()]

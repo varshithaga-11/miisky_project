@@ -329,8 +329,9 @@ function ProfileView({ row }: { row: KitchenDeliveryProfile }) {
 }
 
 // ─── Orders view ──────────────────────────────────────────────────────────────
-function OrdersView({ userId }: { userId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+// ─── Orders view ──────────────────────────────────────────────────────────────
+function OrdersView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -338,18 +339,18 @@ function OrdersView({ userId }: { userId: number }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonOrders(userId, 1, 10).then((res) => {
+    fetchDeliveryPersonOrders(profileId, 1, 10).then((res) => {
       setItems(res.results);
       setHasMore(res.current_page < res.total_pages);
       setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    fetchDeliveryPersonOrders(userId, nextPage, 10).then((res) => {
+    fetchDeliveryPersonOrders(profileId, nextPage, 10).then((res) => {
       setItems(prev => [...prev, ...res.results]);
       setHasMore(res.current_page < res.total_pages);
       setPage(nextPage);
@@ -367,7 +368,7 @@ function OrdersView({ userId }: { userId: number }) {
 
   return (
     <div className="space-y-3">
-      {items.map((o: any) => (
+      {items.map((o) => (
         <div key={o.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
             <div>
@@ -391,6 +392,9 @@ function OrdersView({ userId }: { userId: number }) {
               {o.delivery_charge && (
                 <div className="text-xs text-gray-400">Delivery: ₹{parseFloat(o.delivery_charge).toFixed(2)}</div>
               )}
+              {o.micro_kitchen_brand && (
+                 <div className="text-[10px] text-gray-400 font-bold uppercase mt-1">{o.micro_kitchen_brand}</div>
+              )}
             </div>
           </div>
           {o.customer_display && (
@@ -406,8 +410,9 @@ function OrdersView({ userId }: { userId: number }) {
 }
 
 // ─── Payments view ────────────────────────────────────────────────────────────
-function PaymentsView({ userId }: { userId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+// ─── Payments view ────────────────────────────────────────────────────────────
+function PaymentsView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -415,18 +420,18 @@ function PaymentsView({ userId }: { userId: number }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonPayments(userId, 1, 10).then((res) => {
+    fetchDeliveryPersonPayments(profileId, 1, 10).then((res) => {
       setItems(res.results);
       setHasMore(res.current_page < res.total_pages);
       setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    fetchDeliveryPersonPayments(userId, nextPage, 10).then((res) => {
+    fetchDeliveryPersonPayments(profileId, nextPage, 10).then((res) => {
       setItems(prev => [...prev, ...res.results]);
       setHasMore(res.current_page < res.total_pages);
       setPage(nextPage);
@@ -453,7 +458,7 @@ function PaymentsView({ userId }: { userId: number }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {items.map((p: any) => (
+            {items.map((p) => (
               <tr key={p.id} className="bg-white dark:bg-gray-900/30 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
                 <td className="px-4 py-3 font-mono text-gray-700 dark:text-gray-300">#{p.order_id}</td>
                 <td className="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-[180px] truncate">{p.customer_display || "—"}</td>
@@ -463,9 +468,9 @@ function PaymentsView({ userId }: { userId: number }) {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{fmtDate(p.order_created_at)}</td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">₹{parseFloat(p.grand_total || 0).toFixed(2)}</td>
-                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">₹{parseFloat(p.delivery_charge || 0).toFixed(2)}</td>
-                <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">₹{parseFloat(p.kitchen_amount || 0).toFixed(2)}</td>
+                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">₹{parseFloat(p.grand_total || "0").toFixed(2)}</td>
+                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">₹{parseFloat(p.delivery_charge || "0").toFixed(2)}</td>
+                <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">₹{parseFloat(p.kitchen_amount || "0").toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -477,8 +482,9 @@ function PaymentsView({ userId }: { userId: number }) {
 }
 
 // ─── Meal Assignments view ────────────────────────────────────────────────────
-function MealAssignmentsView({ userId }: { userId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+// ─── Meal Assignments view ────────────────────────────────────────────────────
+function MealAssignmentsView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonMealAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -486,18 +492,18 @@ function MealAssignmentsView({ userId }: { userId: number }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonMealAssignments(userId, 1, 15).then((res) => {
+    fetchDeliveryPersonMealAssignments(profileId, 1, 15).then((res) => {
       setItems(res.results);
       setHasMore(res.current_page < res.total_pages);
       setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    fetchDeliveryPersonMealAssignments(userId, nextPage, 15).then((res) => {
+    fetchDeliveryPersonMealAssignments(profileId, nextPage, 15).then((res) => {
       setItems(prev => [...prev, ...res.results]);
       setHasMore(res.current_page < res.total_pages);
       setPage(nextPage);
@@ -516,45 +522,40 @@ function MealAssignmentsView({ userId }: { userId: number }) {
 
   return (
     <div className="space-y-3">
-      {items.map((a: any) => (
+      {items.map((a) => (
         <div key={a.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white dark:bg-gray-800/30 shadow-sm hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2 flex-1">
               <div className="flex items-center flex-wrap gap-2">
                 <span className="font-bold text-gray-900 dark:text-white text-base">
-                  {a.user_meal_details?.patient_name || `Meal #${a.user_meal}`}
+                  {a.patient_name || `Meal #${a.user_meal}`}
                 </span>
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${statusColor(a.status)}`}>
                   {a.status?.replace(/_/g, " ")}
                 </span>
-                {a.reassignment_reason && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border border-rose-100 dark:border-rose-800/20">
-                    Reassigned
-                  </span>
-                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-xs">
                 <div className="flex items-center gap-2 text-gray-500">
                   <FiCalendar className="shrink-0" /> 
-                  <span>Meal: <strong>{fmtDate(a.user_meal_details.meal_date)}</strong></span>
+                  <span>Meal: <strong>{fmtDate(a.meal_date)}</strong></span>
                 </div>
-                {a.delivery_slot_details && (
+                {a.slot_name && (
                   <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold">
                     <FiClock className="shrink-0" />
-                    <span>Slot: <strong>{a.delivery_slot_details.name}</strong> ({a.delivery_slot_details.start_time || "?"}–{a.delivery_slot_details.end_time || "?"})</span>
+                    <span>Slot: <strong>{a.slot_name}</strong> ({a.slot_start || "?"}–{a.slot_end || "?"})</span>
                   </div>
                 )}
-                {a.user_meal_details?.meal_type && (
+                {a.meal_type && (
                   <div className="flex items-center gap-2 text-gray-500">
                     <span className="shrink-0">🍽</span>
-                    <span>Type: <strong>{a.user_meal_details.meal_type}</strong></span>
+                    <span>Type: <strong>{a.meal_type}</strong></span>
                   </div>
                 )}
-                {a.user_meal_details?.food_name && (
+                {a.food_name && (
                   <div className="flex items-center gap-2 text-gray-500">
                     <span className="shrink-0">🥗</span>
-                    <span>Food: <strong>{a.user_meal_details.food_name}</strong></span>
+                    <span>Food: <strong>{a.food_name}</strong></span>
                   </div>
                 )}
               </div>
@@ -565,11 +566,6 @@ function MealAssignmentsView({ userId }: { userId: number }) {
                     <FiAlertTriangle size={12} /> Reassignment Reason
                   </div>
                   <div className="text-gray-600 dark:text-gray-300 italic">"{a.reassignment_reason}"</div>
-                  {a.reassigned_from && (
-                    <div className="mt-1.5 text-[10px] text-gray-400 font-medium">
-                      Previously assigned from: {a.reassigned_from_details?.first_name || "Another user"}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -586,17 +582,34 @@ function MealAssignmentsView({ userId }: { userId: number }) {
 }
 
 // ─── Global Assignments view ──────────────────────────────────────────────────
-function GlobalAssignmentsView({ userId }: { userId: number }) {
+// ─── Global Assignments view ──────────────────────────────────────────────────
+function GlobalAssignmentsView({ profileId }: { profileId: number }) {
   const [items, setItems] = useState<DietPlanDeliveryAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonGlobalAssignments(userId).then((res) => {
+    fetchDeliveryPersonGlobalAssignments(profileId, 1, 10).then((res) => {
       setItems(res.results);
+      setHasMore(res.current_page < res.total_pages);
+      setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    fetchDeliveryPersonGlobalAssignments(profileId, nextPage, 10).then((res) => {
+      setItems(prev => [...prev, ...res.results]);
+      setHasMore(res.current_page < res.total_pages);
+      setPage(nextPage);
+      setLoadingMore(false);
+    }).catch(() => setLoadingMore(false));
+  };
 
   if (loading) return <div className="py-8 text-center text-gray-400 text-sm">Loading mappings…</div>;
   if (!items.length) return <EmptyState msg="No global patient mappings found for this delivery person." />;
@@ -616,9 +629,8 @@ function GlobalAssignmentsView({ userId }: { userId: number }) {
                </div>
                <div>
                   <h4 className="font-bold text-gray-900 dark:text-white">
-                    {mapping.patient_details?.first_name} {mapping.patient_details?.last_name}
+                    {mapping.patient_name}
                   </h4>
-                  <div className="text-xs text-gray-500 font-medium">{mapping.patient_details?.mobile || "No mobile"}</div>
                </div>
             </div>
 
@@ -626,19 +638,19 @@ function GlobalAssignmentsView({ userId }: { userId: number }) {
                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
                   <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Diet Plan Mapping</div>
                   <div className="text-sm font-bold text-blue-600 dark:text-blue-400 truncate">
-                    {mapping.user_diet_plan_details?.diet_plan_name || "Custom Plan"}
+                    {mapping.diet_plan_name || "Custom Plan"}
                   </div>
                   <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-2">
-                    <span>{fmtDate(mapping.user_diet_plan_details?.start_date)}</span>
+                    <span>{fmtDate(mapping.start_date)}</span>
                     <span>→</span>
-                    <span>{fmtDate(mapping.user_diet_plan_details?.end_date)}</span>
+                    <span>{fmtDate(mapping.end_date)}</span>
                   </div>
                </div>
 
                <div className="grid grid-cols-1 gap-2">
                   <div className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 dark:border-gray-800/50">
                     <span className="text-gray-500">Primary Slot</span>
-                    <span className="font-bold text-gray-900 dark:text-white">{mapping.default_slot_details?.name || "—"}</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{mapping.default_slot_name || "—"}</span>
                   </div>
                   {mapping.delivery_slots_details && mapping.delivery_slots_details.length > 0 && (
                      <div className="space-y-1 py-1.5">
@@ -653,38 +665,19 @@ function GlobalAssignmentsView({ userId }: { userId: number }) {
                      </div>
                   )}
                </div>
-
-               {mapping.change_logs && mapping.change_logs.length > 0 && (
-                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <h5 className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <FiAlertTriangle size={10} /> Reassignment History
-                    </h5>
-                    <div className="space-y-3">
-                       {mapping.change_logs.slice(0, 3).map((log) => (
-                         <div key={log.id} className="text-xs p-2.5 rounded-xl bg-rose-50/30 dark:bg-rose-950/10 border border-rose-50 dark:border-rose-900/10 italic">
-                            <div className="font-bold not-italic text-rose-700 dark:text-rose-400 text-[10px]">
-                              {fmtDate(log.changed_on)} · Reason: {log.reason}
-                            </div>
-                            <div className="mt-1 text-gray-600 dark:text-gray-300">"{log.notes || "No notes provided"}"</div>
-                         </div>
-                       ))}
-                       {mapping.change_logs.length > 3 && (
-                         <div className="text-[10px] text-gray-400 text-center">+ {mapping.change_logs.length - 3} more history logs</div>
-                       )}
-                    </div>
-                 </div>
-               )}
             </div>
           </div>
         ))}
       </div>
+      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }
 
 // ─── Leaves view ──────────────────────────────────────────────────────────────
-function LeavesView({ userId }: { userId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+// ─── Leaves view ──────────────────────────────────────────────────────────────
+function LeavesView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonLeave[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -692,18 +685,18 @@ function LeavesView({ userId }: { userId: number }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonLeaves(userId, 1, 10).then((res) => {
+    fetchDeliveryPersonLeaves(profileId, 1, 10).then((res) => {
       setItems(res.results);
       setHasMore(res.current_page < res.total_pages);
       setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    fetchDeliveryPersonLeaves(userId, nextPage, 10).then((res) => {
+    fetchDeliveryPersonLeaves(profileId, nextPage, 10).then((res) => {
       setItems(prev => [...prev, ...res.results]);
       setHasMore(res.current_page < res.total_pages);
       setPage(nextPage);
@@ -721,7 +714,7 @@ function LeavesView({ userId }: { userId: number }) {
 
   return (
     <div className="space-y-3">
-      {items.map((lv: any) => (
+      {items.map((lv) => (
         <div key={lv.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white dark:bg-gray-800/30 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1.5">
@@ -755,8 +748,9 @@ function LeavesView({ userId }: { userId: number }) {
 }
 
 // ─── Reviews view ─────────────────────────────────────────────────────────────
-function ReviewsView({ userId }: { userId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+// ─── Reviews view ─────────────────────────────────────────────────────────────
+function ReviewsView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -764,18 +758,18 @@ function ReviewsView({ userId }: { userId: number }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonReviews(userId, 1, 10).then((res) => {
+    fetchDeliveryPersonReviews(profileId, 1, 10).then((res) => {
       setItems(res.results);
       setHasMore(res.current_page < res.total_pages);
       setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    fetchDeliveryPersonReviews(userId, nextPage, 10).then((res) => {
+    fetchDeliveryPersonReviews(profileId, nextPage, 10).then((res) => {
       setItems(prev => [...prev, ...res.results]);
       setHasMore(res.current_page < res.total_pages);
       setPage(nextPage);
@@ -790,12 +784,12 @@ function ReviewsView({ userId }: { userId: number }) {
 
   return (
     <div className="space-y-3">
-      {items.map((r: any) => (
+      {items.map((r) => (
         <div key={r.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white dark:bg-gray-800/30 shadow-sm">
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
               <div className="font-semibold text-gray-900 dark:text-white text-sm">
-                {[r.reported_by_details?.first_name, r.reported_by_details?.last_name].filter(Boolean).join(" ") || "Customer"}
+                {r.reported_by_name || "Customer"}
               </div>
               <div className="text-xs text-gray-400 mt-0.5">{fmtDate(r.created_at)}</div>
             </div>
@@ -810,10 +804,10 @@ function ReviewsView({ userId }: { userId: number }) {
               "{r.review}"
             </p>
           )}
-          {(r.order_details || r.user_meal_details) && (
+          {(r.order_id || r.user_meal_id) && (
             <div className="mt-3 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-              {r.order_details ? `Order #${r.order_details.id} · ${r.order_details.order_type?.replace(/_/g, " ")}` : ""}
-              {r.user_meal_details ? `Meal #${r.user_meal_details.id} · ${fmtDate(r.user_meal_details.meal_date)}` : ""}
+              {r.order_id ? `Order #${r.order_id}` : ""}
+              {r.user_meal_id ? `Meal Assignment #${r.user_meal_id}` : ""}
             </div>
           )}
         </div>
@@ -824,8 +818,9 @@ function ReviewsView({ userId }: { userId: number }) {
 }
 
 // ─── Issues view ──────────────────────────────────────────────────────────────
-function IssuesView({ userId }: { userId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+// ─── Issues view ──────────────────────────────────────────────────────────────
+function IssuesView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -833,18 +828,18 @@ function IssuesView({ userId }: { userId: number }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchDeliveryPersonIssues(userId, 1, 10).then((res) => {
+    fetchDeliveryPersonIssues(profileId, 1, 10).then((res) => {
       setItems(res.results);
       setHasMore(res.current_page < res.total_pages);
       setPage(1);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [userId]);
+  }, [profileId]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    fetchDeliveryPersonIssues(userId, nextPage, 10).then((res) => {
+    fetchDeliveryPersonIssues(profileId, nextPage, 10).then((res) => {
       setItems(prev => [...prev, ...res.results]);
       setHasMore(res.current_page < res.total_pages);
       setPage(nextPage);
@@ -857,7 +852,7 @@ function IssuesView({ userId }: { userId: number }) {
 
   return (
     <div className="space-y-3">
-      {items.map((issue: any) => (
+      {items.map((issue) => (
         <div key={issue.id} className="rounded-2xl border border-rose-100 dark:border-rose-900/30 p-5 bg-rose-50/30 dark:bg-rose-900/10 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
             <div className="space-y-1">
@@ -868,7 +863,7 @@ function IssuesView({ userId }: { userId: number }) {
                 </span>
               </div>
               <div className="text-xs text-gray-500">
-                By: {[issue.reported_by_details?.first_name, issue.reported_by_details?.last_name].filter(Boolean).join(" ") || "Customer"}
+                By: {issue.reported_by_name || "Customer"}
                 &nbsp;· {fmtDate(issue.created_at)}
               </div>
             </div>
@@ -879,10 +874,10 @@ function IssuesView({ userId }: { userId: number }) {
               "{issue.description}"
             </p>
           )}
-          {(issue.order_details || issue.user_meal_details) && (
+          {(issue.order_id || issue.user_meal_id) && (
             <div className="mt-3 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-              {issue.order_details ? `Order #${issue.order_details.id} · ${issue.order_details.order_type?.replace(/_/g, " ")}` : ""}
-              {issue.user_meal_details ? `Meal ${fmtDate(issue.user_meal_details.meal_date)}` : ""}
+              {issue.order_id ? `Order #${issue.order_id}` : ""}
+              {issue.user_meal_id ? `Meal Assignment #${issue.user_meal_id}` : ""}
             </div>
           )}
         </div>
@@ -1006,19 +1001,14 @@ export function DeliveryProfileDetailModal({ profile, open, onClose }: Props) {
           {screen !== "hub" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               {screen === "profile" && <ProfileView row={profile} />}
-              {screen === "global_assignments" && userId != null && <GlobalAssignmentsView userId={userId} />}
-              {screen === "orders" && userId != null && <OrdersView userId={userId} />}
-              {screen === "payments" && userId != null && <PaymentsView userId={userId} />}
-              {screen === "meal_assignments" && userId != null && <MealAssignmentsView userId={userId} />}
-              {screen === "reassignments" && userId != null && <ReassignmentsHistoryView userId={userId} />}
-              {screen === "leaves" && userId != null && <LeavesView userId={userId} />}
-              {screen === "reviews" && userId != null && <ReviewsView userId={userId} />}
-              {screen === "issues" && userId != null && <IssuesView userId={userId} />}
-              {userId == null && (
-                <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 p-6 text-sm text-amber-700 dark:text-amber-300">
-                  No linked user account found for this profile. Data sections require a linked user.
-                </div>
-              )}
+              {screen === "global_assignments" && <GlobalAssignmentsView profileId={profile.id} />}
+              {screen === "orders" && <OrdersView profileId={profile.id} />}
+              {screen === "payments" && <PaymentsView profileId={profile.id} />}
+              {screen === "meal_assignments" && <MealAssignmentsView profileId={profile.id} />}
+              {screen === "reassignments" && <ReassignmentsHistoryView profileId={profile.id} />}
+              {screen === "leaves" && <LeavesView profileId={profile.id} />}
+              {screen === "reviews" && <ReviewsView profileId={profile.id} />}
+              {screen === "issues" && <IssuesView profileId={profile.id} />}
             </div>
           )}
         </div>
@@ -1038,99 +1028,71 @@ export function DeliveryProfileDetailModal({ profile, open, onClose }: Props) {
 }
 
 // ─── Reassignments History view ───────────────────────────────────────────────
-function ReassignmentsHistoryView({ userId }: { userId: number }) {
-  const [mappings, setMappings] = useState<DietPlanDeliveryAssignment[]>([]);
-  const [meals, setMeals] = useState<any[]>([]);
+// ─── Reassignments History view ───────────────────────────────────────────────
+function ReassignmentsHistoryView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonMealAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      fetchDeliveryPersonGlobalAssignments(userId),
-      fetchDeliveryPersonMealAssignments(userId, 1, 50, true),
-    ])
-      .then(([gRes, mRes]) => {
-        // Filter mappings that have change logs
-        setMappings(gRes.results.filter((m) => m.change_logs && m.change_logs.length > 0));
-        setMeals(mRes.results);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [userId]);
+    fetchDeliveryPersonMealAssignments(profileId, 1, 15, true).then((res) => {
+      setItems(res.results);
+      setHasMore(res.current_page < res.total_pages);
+      setPage(1);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [profileId]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    fetchDeliveryPersonMealAssignments(profileId, nextPage, 15, true).then((res) => {
+      setItems(prev => [...prev, ...res.results]);
+      setHasMore(res.current_page < res.total_pages);
+      setPage(nextPage);
+      setLoadingMore(false);
+    }).catch(() => setLoadingMore(false));
+  };
 
   if (loading) return <div className="py-8 text-center text-gray-400 text-sm">Loading history…</div>;
-  if (!mappings.length && !meals.length) return <EmptyState msg="No reassignment logs found for this person." />;
+  if (!items.length) return <EmptyState msg="No reassignment logs found for this person." />;
 
   return (
-    <div className="space-y-8 pb-8">
-      {/* Global reassignments (Plan level) */}
-      {mappings.length > 0 && (
-        <section className="space-y-4">
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-            <FiCheckCircle size={14} /> Global Planning Changes
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
-            {mappings.map((m) => (
-              <div key={m.id} className="rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/10 dark:bg-rose-900/10 p-5">
-                <div className="flex items-center gap-2 mb-3">
-                   <span className="font-bold text-gray-900 dark:text-white">Plan change: {m.user_diet_plan_details?.diet_plan_name}</span>
-                   <span className="text-[10px] bg-white dark:bg-black/20 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 font-bold uppercase">Mapping audit</span>
+    <div className="space-y-4 pb-8">
+      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+        <FiAlertTriangle size={14} /> Individual Meal Coverage History
+      </h3>
+      <div className="space-y-3">
+        {items.map((a) => (
+          <div key={a.id} className="rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/10 dark:bg-amber-900/10 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900 dark:text-white text-sm">
+                    {a.patient_name || `Meal #${a.user_meal}`}
+                  </span>
                 </div>
-                <div className="space-y-3">
-                  {m.change_logs?.map((log) => (
-                    <div key={log.id} className="text-xs bg-white dark:bg-gray-800/60 p-3 rounded-xl border border-rose-100/50 dark:border-rose-800/20 shadow-sm">
-                       <div className="flex items-center justify-between mb-2">
-                          <span className="font-black text-[10px] text-rose-500 uppercase tracking-widest">{log.reason}</span>
-                          <span className="text-[10px] text-gray-400">{fmtDate(log.changed_on)}</span>
-                       </div>
-                       <p className="text-gray-600 dark:text-gray-300 italic mb-2">"{log.notes || "No notes."}"</p>
-                       <div className="text-[10px] text-gray-400">
-                          Reassigned from: <strong>{log.previous_delivery_person_details?.first_name || "Another"} {log.previous_delivery_person_details?.last_name || "staff"}</strong>
-                       </div>
-                    </div>
-                  ))}
+                <div className="text-[10px] text-gray-500 flex items-center gap-2">
+                    <FiCalendar size={10} /> {fmtDate(a.meal_date)}
+                    <span className="text-gray-300">|</span>
+                    <FiClock size={10} /> {a.slot_name}
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Daily reassignments (Meal level) */}
-      {meals.length > 0 && (
-        <section className="space-y-4">
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-            <FiAlertTriangle size={14} /> Individual Meal Coverage
-          </h3>
-          <div className="space-y-3">
-            {meals.map((a) => (
-              <div key={a.id} className="rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/10 dark:bg-amber-900/10 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900 dark:text-white text-sm">
-                        {a.user_meal_details?.patient_name || `Meal #${a.user_meal}`}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-gray-500 flex items-center gap-2">
-                        <FiCalendar size={10} /> {fmtDate(a.user_meal_details.meal_date)}
-                        <span className="text-gray-300">|</span>
-                        <FiClock size={10} /> {a.delivery_slot_details?.name}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Single shift reassignment</div>
-                  </div>
-                </div>
-                <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-gray-800/50 text-xs border border-amber-50 dark:border-amber-900/30">
-                   <div className="font-bold text-[10px] text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">Reason</div>
-                   <div className="italic text-gray-600 dark:text-gray-300">"{a.reassignment_reason}"</div>
-                </div>
+              <div className="text-right">
+                <div className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Single shift reassignment</div>
               </div>
-            ))}
+            </div>
+            <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-gray-800/50 text-xs border border-amber-50 dark:border-amber-900/30">
+               <div className="font-bold text-[10px] text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">Reason</div>
+               <div className="italic text-gray-600 dark:text-gray-300">"{a.reassignment_reason}"</div>
+            </div>
           </div>
-        </section>
-      )}
+        ))}
+      </div>
+      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
     </div>
   );
 }

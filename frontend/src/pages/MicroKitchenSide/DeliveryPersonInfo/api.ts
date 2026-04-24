@@ -70,9 +70,8 @@ export type DeliveryPersonOrder = {
   created_at: string;
   grand_total?: string | null;
   delivery_charge?: string | null;
-  delivery_person?: number | null;
   customer_display?: string | null;
-  micro_kitchen_details?: { brand_name?: string } | null;
+  micro_kitchen_brand?: string | null;
 };
 
 export type PaginatedDeliveryPersonOrders = {
@@ -83,22 +82,16 @@ export type PaginatedDeliveryPersonOrders = {
 };
 
 export const fetchDeliveryPersonOrders = async (
-  userId: number,
+  profileId: number,
   page = 1,
   limit = 10
 ): Promise<PaginatedDeliveryPersonOrders> => {
-  const url = createApiUrl(`api/order/`);
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/orders/`);
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { delivery_person: userId, page, limit },
+    params: { page, limit },
   });
-  const d = res.data;
-  return {
-    count: d?.count ?? 0,
-    current_page: d?.current_page ?? page,
-    total_pages: d?.total_pages ?? 1,
-    results: Array.isArray(d) ? d : (d?.results ?? []),
-  };
+  return res.data;
 };
 
 export type DeliveryPersonPayment = {
@@ -111,9 +104,6 @@ export type DeliveryPersonPayment = {
   food_subtotal: string;
   delivery_charge: string;
   grand_total: string;
-  platform_percent: string;
-  kitchen_percent: string;
-  platform_amount: string;
   kitchen_amount: string;
   created_at: string;
 };
@@ -126,28 +116,20 @@ export type PaginatedDeliveryPersonPayments = {
 };
 
 export const fetchDeliveryPersonPayments = async (
-  userId: number,
+  profileId: number,
   page = 1,
   limit = 10
 ): Promise<PaginatedDeliveryPersonPayments> => {
-  const url = createApiUrl(`api/microkitchen/order-payment-snapshots/`);
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/payments/`);
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { delivery_person: userId, page, limit },
+    params: { page, limit },
   });
-  const d = res.data;
-  return {
-    count: d?.count ?? 0,
-    current_page: d?.current_page ?? page,
-    total_pages: d?.total_pages ?? 1,
-    results: Array.isArray(d) ? d : (d?.results ?? []),
-  };
+  return res.data;
 };
 
 export type DeliveryPersonLeave = {
   id: number;
-  user: number;
-  user_details?: { id: number; first_name: string; last_name: string; username?: string } | null;
   leave_type: string;
   start_date: string;
   end_date: string;
@@ -165,22 +147,16 @@ export type PaginatedDeliveryPersonLeaves = {
 };
 
 export const fetchDeliveryPersonLeaves = async (
-  userId: number,
+  profileId: number,
   page = 1,
   limit = 10
 ): Promise<PaginatedDeliveryPersonLeaves> => {
-  const url = createApiUrl(`api/supply-chain-leave/`);
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/leaves/`);
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { user: userId, page, limit },
+    params: { page, limit },
   });
-  const d = res.data;
-  return {
-    count: d?.count ?? 0,
-    current_page: d?.current_page ?? page,
-    total_pages: d?.total_pages ?? 1,
-    results: Array.isArray(d) ? d : (d?.results ?? []),
-  };
+  return res.data;
 };
 
 export type DeliveryPersonReview = {
@@ -191,9 +167,9 @@ export type DeliveryPersonReview = {
   issue_type?: string | null;
   description?: string | null;
   created_at: string;
-  reported_by_details?: { id: number; first_name: string; last_name: string } | null;
-  order_details?: { id: number; status: string; order_type: string } | null;
-  user_meal_details?: { id: number; meal_date: string; status: string } | null;
+  reported_by_name?: string | null;
+  order_id?: number | null;
+  user_meal_id?: number | null;
 };
 
 export type PaginatedDeliveryPersonReviews = {
@@ -204,58 +180,43 @@ export type PaginatedDeliveryPersonReviews = {
 };
 
 export const fetchDeliveryPersonReviews = async (
-  userId: number,
+  profileId: number,
   page = 1,
   limit = 10
 ): Promise<PaginatedDeliveryPersonReviews> => {
-  const url = createApiUrl(`api/microkitchen/delivery-feedback-list/`);
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/reviews/`);
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { delivery_person: userId, feedback_type: "rating", page, limit },
+    params: { page, limit },
   });
-  const d = res.data;
-  return {
-    count: d?.count ?? 0,
-    current_page: d?.current_page ?? page,
-    total_pages: d?.total_pages ?? 1,
-    results: Array.isArray(d) ? d : (d?.results ?? []),
-  };
+  return res.data;
 };
 
 export const fetchDeliveryPersonIssues = async (
-  userId: number,
+  profileId: number,
   page = 1,
   limit = 10
 ): Promise<PaginatedDeliveryPersonReviews> => {
-  const url = createApiUrl(`api/microkitchen/delivery-feedback-list/`);
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/issues/`);
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { delivery_person: userId, feedback_type: "issue", page, limit },
+    params: { page, limit },
   });
-  const d = res.data;
-  return {
-    count: d?.count ?? 0,
-    current_page: d?.current_page ?? page,
-    total_pages: d?.total_pages ?? 1,
-    results: Array.isArray(d) ? d : (d?.results ?? []),
-  };
+  return res.data;
 };
 
 export type DeliveryPersonMealAssignment = {
   id: number;
   user_meal: number;
   status: string;
-  scheduled_date: string;
+  meal_date: string;
+  meal_type: string;
+  patient_name: string;
+  food_name: string;
+  slot_name: string;
+  slot_start: string;
+  slot_end: string;
   reassignment_reason?: string | null;
-  user_meal_details?: {
-    id: number;
-    meal_date: string;
-    meal_type?: string | null;
-    patient_name: string;
-    food_name?: string | null;
-  } | null;
-  delivery_slot?: number | null;
-  delivery_slot_details?: { id: number; name: string; start_time?: string | null; end_time?: string | null } | null;
 };
 
 export type PaginatedMealAssignments = {
@@ -266,66 +227,48 @@ export type PaginatedMealAssignments = {
 };
 
 export const fetchDeliveryPersonMealAssignments = async (
-  userId: number,
+  profileId: number,
   page = 1,
   limit = 10,
   reassigned?: boolean
 ): Promise<PaginatedMealAssignments> => {
-  const url = createApiUrl(`api/mealdeliveryassignment/`);
-  const params: any = { delivery_person: userId, page, limit };
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/meal_assignments/`);
+  const params: any = { page, limit };
   if (reassigned) params.reassigned = "true";
   
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
     params,
   });
-  const d = res.data;
-  return {
-    count: d?.count ?? 0,
-    current_page: d?.current_page ?? page,
-    total_pages: d?.total_pages ?? 1,
-    results: Array.isArray(d) ? d : (d?.results ?? []),
-  };
+  return res.data;
 };
+
 export type DietPlanDeliveryAssignment = {
   id: number;
-  user_diet_plan_details?: {
-    id: number;
-    status: string;
-    start_date: string;
-    end_date: string;
-    diet_plan_name?: string | null;
-  } | null;
-  patient_details?: { id: number; first_name: string; last_name: string; mobile?: string | null } | null;
-  default_slot_details?: { id: number; name: string } | null;
+  patient_name: string;
+  diet_plan_name: string;
+  start_date: string;
+  end_date: string;
+  default_slot_name: string;
   delivery_slots_details?: { id: number; name: string }[] | null;
-  change_logs?: {
-    id: number;
-    previous_delivery_person_details?: { first_name: string; last_name: string } | null;
-    reason: string;
-    notes?: string | null;
-    changed_on: string;
-  }[] | null;
-  assigned_on: string;
-  is_active: boolean;
 };
 
 export type PaginatedGlobalAssignments = {
   count: number;
+  current_page: number;
+  total_pages: number;
   results: DietPlanDeliveryAssignment[];
 };
 
 export const fetchDeliveryPersonGlobalAssignments = async (
-  userId: number
+  profileId: number,
+  page = 1,
+  limit = 10
 ): Promise<PaginatedGlobalAssignments> => {
-  const url = createApiUrl(`api/diet-plan-delivery-assignment/`);
+  const url = createApiUrl(`api/deliveryprofile/${profileId}/global_assignments/`);
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { delivery_person: userId },
+    params: { page, limit },
   });
-  const results = Array.isArray(res.data) ? res.data : res.data?.results ?? [];
-  return {
-    count: results.length,
-    results: results,
-  };
+  return res.data;
 };

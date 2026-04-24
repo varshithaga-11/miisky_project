@@ -2807,6 +2807,123 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'])
+    def orders(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = Order.objects.filter(delivery_person=user).select_related("user", "micro_kitchen").order_by("-created_at")
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonOrderSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonOrderSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def payments(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = OrderPaymentSnapshot.objects.filter(order__delivery_person=user).select_related("order", "order__user").order_by("-created_at")
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonPaymentSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonPaymentSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def meal_assignments(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = DeliveryAssignment.objects.filter(delivery_person=user).select_related(
+            "user_meal", "user_meal__user", "user_meal__meal_type", "user_meal__food", "delivery_slot"
+        ).order_by("-scheduled_date", "-id")
+
+        if request.query_params.get("reassigned") == "true":
+            qs = qs.filter(reassignment_reason__isnull=False).exclude(reassignment_reason="")
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonMealAssignmentSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonMealAssignmentSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def leaves(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = SupplyChainDeliveryLeave.objects.filter(user=user).order_by("-start_date")
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonLeaveSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonLeaveSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def reviews(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            feedback_type=SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING,
+            order__delivery_person=user
+        ).select_related("reported_by", "order", "user_meal").order_by("-created_at")
+        
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonFeedbackSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonFeedbackSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def issues(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            feedback_type=SupplyChainDeliveryFeedback.FEEDBACK_TYPE_ISSUE,
+            order__delivery_person=user
+        ).select_related("reported_by", "order", "user_meal").order_by("-created_at")
+        
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonFeedbackSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonFeedbackSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def global_assignments(self, request, pk=None):
+        instance = self.get_object()
+        user = instance.user
+        if not user: return Response({"results": []})
+        
+        qs = DietPlanDeliveryAssignment.objects.filter(delivery_person=user).select_related(
+            "user", "user_diet_plan", "user_diet_plan__diet_plan", "default_slot"
+        ).prefetch_related("delivery_slots").order_by("-id")
+        
+        # Usually global assignments are few, but we can paginate if needed.
+        # User requested pagination "if there is lot of date".
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = DeliveryPersonGlobalAssignmentSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = DeliveryPersonGlobalAssignmentSerializer(qs, many=True)
+        return Response(serializer.data)
+
     def _delivery_person_ids_for_kitchen_by_id(self, mk_id):
         from .models import DietPlanDeliveryAssignment, DietPlanSlotDeliveryPerson, DeliveryAssignment
         dp_ids = set(DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
