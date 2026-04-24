@@ -9,6 +9,7 @@ import {
     getKitchenPatients,
     getKitchenMeals,
     getKitchenMealsMonthly,
+    getKitchenMealsCalendar,
     assignMealDelivery,
     bulkAssignDelivery,
 } from "./api";
@@ -19,7 +20,7 @@ import { fetchPlanDeliveryAssignments, fetchSupplyChainUsers } from "../Delivery
 import type { PlanDeliveryAssignment, SupplyChainUser } from "../DeliveryManagement/api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle, FiStar, FiLoader } from "react-icons/fi";
+import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle, FiStar, FiLoader, FiMapPin } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-icons/gi";
 
@@ -107,6 +108,8 @@ const MealsBasedOnDailyPage: React.FC = () => {
     const lastFetchedMonthRef = useRef<string | null>(null);
 
     const [planAssignments, setPlanAssignments] = useState<PlanDeliveryAssignment[]>([]);
+    const [hoveredEvent, setHoveredEvent] = useState<DailyMeal | null>(null);
+    const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
     const [supplyUsers, setSupplyUsers] = useState<SupplyChainUser[]>([]);
     const [assignContextLoading, setAssignContextLoading] = useState(false);
 
@@ -152,6 +155,19 @@ const MealsBasedOnDailyPage: React.FC = () => {
             toast.error("Could not load delivery assignment options");
         } finally {
             setAssignContextLoading(false);
+        }
+    };
+
+    const fetchCalendarMeals = async (m: number, y: number) => {
+        setCalendarLoading(true);
+        try {
+            const data = await getKitchenMealsCalendar(y, m, selectedPatient);
+            setCalendarMeals(data);
+        } catch (error) {
+            console.error("Calendar fetch failed:", error);
+            toast.error("Failed to load production calendar");
+        } finally {
+            setCalendarLoading(false);
         }
     };
 
@@ -475,6 +491,172 @@ const MealsBasedOnDailyPage: React.FC = () => {
                             </div>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* Calendar View Modal */}
+            <AnimatePresence>
+                {showCalendar && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-xl flex items-center justify-center p-4 lg:p-12"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 30 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 30 }}
+                            className="bg-white dark:bg-gray-900 w-full h-full rounded-[50px] overflow-hidden flex flex-col shadow-2xl border border-white/10"
+                        >
+                            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white">
+                                        <FiCalendar size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">Production Calendar</h2>
+                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Monthly Schedule View</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowCalendar(false)}
+                                    className="px-6 py-3 bg-gray-50 dark:bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-rose-500 hover:text-white transition-all border border-transparent hover:border-rose-500/20"
+                                >
+                                    Close View
+                                </button>
+                            </div>
+
+                            <div className="flex-1 p-8 overflow-y-auto no-scrollbar relative">
+                                {calendarLoading && (
+                                    <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm flex flex-col items-center justify-center">
+                                        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] animate-pulse">Syncing Production Data...</p>
+                                    </div>
+                                )}
+                                
+                                <FullCalendar
+                                    plugins={[dayGridPlugin, interactionPlugin]}
+                                    initialView="dayGridMonth"
+                                    headerToolbar={{
+                                        left: 'prev,next today',
+                                        center: 'title',
+                                        right: 'dayGridMonth'
+                                    }}
+                                    datesSet={(dateInfo) => {
+                                        const centerDate = new Date(dateInfo.view.currentStart);
+                                        centerDate.setDate(centerDate.getDate() + 15);
+                                        const m = centerDate.getMonth() + 1;
+                                        const y = centerDate.getFullYear();
+                                        
+                                        const key = `${y}-${m}`;
+                                        if (key !== lastFetchedMonthRef.current) {
+                                            lastFetchedMonthRef.current = key;
+                                            fetchCalendarMeals(m, y);
+                                        }
+                                    }}
+                                    events={calendarMeals.map(m => ({
+                                        id: String(m.id),
+                                        title: `${m.meal_type_details.name}: ${m.food_details.name}`,
+                                        start: m.meal_date,
+                                        backgroundColor: m.delivery_person_details ? '#4f46e5' : '#f43f5e',
+                                        borderColor: 'transparent',
+                                        extendedProps: { 
+                                            meal: m,
+                                            partner: formatDeliveryPersonName(m) || 'Unassigned',
+                                            consumer: `${m.user_details.first_name} ${m.user_details.last_name}`
+                                        }
+                                    }))}
+                                    eventContent={(eventInfo) => (
+                                        <div className="p-1 px-2 flex flex-col gap-0.5 overflow-hidden transition-transform group-hover:scale-105">
+                                            <div className="text-[9px] font-black uppercase leading-none truncate">{eventInfo.event.title}</div>
+                                            <div className="text-[8px] font-medium opacity-80 truncate italic">👤 {eventInfo.event.extendedProps.consumer}</div>
+                                            <div className="text-[8px] font-bold opacity-90 truncate">🚚 {eventInfo.event.extendedProps.partner}</div>
+                                        </div>
+                                    )}
+                                    eventMouseEnter={(info) => {
+                                        const rect = info.el.getBoundingClientRect();
+                                        setHoverPosition({ x: rect.left + rect.width / 2, y: rect.top });
+                                        setHoveredEvent(info.event.extendedProps.meal);
+                                    }}
+                                    eventMouseLeave={() => setHoveredEvent(null)}
+                                />
+
+                                <AnimatePresence>
+                                    {hoveredEvent && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: -10, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            style={{
+                                                position: 'fixed',
+                                                left: hoverPosition.x,
+                                                top: hoverPosition.y,
+                                                transform: 'translateX(-50%) translateY(-100%)',
+                                                zIndex: 1000,
+                                                pointerEvents: 'none'
+                                            }}
+                                            className="w-64 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-white/10 p-5 overflow-hidden"
+                                        >
+                                            <div className="flex gap-4 mb-4">
+                                                <div className="size-14 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+                                                    {hoveredEvent.food_details.image ? (
+                                                        <img src={getMediaUrl(hoveredEvent.food_details.image)} className="w-full h-full object-cover" alt="" />
+                                                    ) : <GiBowlOfRice size={20} className="m-4 text-gray-200" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">{hoveredEvent.meal_type_details.name}</p>
+                                                    <h4 className="text-xs font-black text-gray-900 dark:text-white uppercase truncate italic">{hoveredEvent.food_details.name}</h4>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5">{hoveredEvent.quantity} Unit(s)</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3 pt-3 border-t border-gray-50 dark:border-white/5">
+                                                <div className="flex items-center gap-2">
+                                                    <FiUser size={12} className="text-gray-400" />
+                                                    <p className="text-[10px] font-bold text-gray-600 dark:text-gray-300 truncate">
+                                                        {hoveredEvent.user_details.first_name} {hoveredEvent.user_details.last_name}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <FiTruck size={12} className={hoveredEvent.delivery_person_details ? "text-emerald-500" : "text-rose-500"} />
+                                                    <p className="text-[10px] font-black uppercase tracking-tighter italic text-gray-900 dark:text-white">
+                                                        {hoveredEvent.delivery_person_details ? formatDeliveryPersonName(hoveredEvent) : 'Unassigned'}
+                                                    </p>
+                                                </div>
+                                                {hoveredEvent.user_details.address && (
+                                                    <div className="flex items-start gap-2">
+                                                        <FiMapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                                        <p className="text-[8px] font-medium text-gray-500 leading-tight">
+                                                            {hoveredEvent.user_details.address}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="absolute top-0 right-0 p-2">
+                                                <div className={`size-1.5 rounded-full ${hoveredEvent.is_consumed ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                                <style>{`
+                                    .fc-theme-standard .fc-scrollgrid { border: none !important; }
+                                    .fc .fc-toolbar-title { font-weight: 900; text-transform: uppercase; letter-spacing: -0.05em; font-size: 1.5rem; color: #111827; }
+                                    .fc .fc-button-primary { background: transparent !important; border: 1px solid #e5e7eb !important; color: #6b7280 !important; border-radius: 12px !important; text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 10px 16px !important; }
+                                    .fc .fc-button-primary:hover { background: #f3f4f6 !important; }
+                                    .fc .fc-button-active { background: #4f46e5 !important; border-color: #4f46e5 !important; color: white !important; }
+                                    .fc-daygrid-event { border-radius: 10px !important; margin: 1px 2px !important; padding: 2px !important; border: none !important; }
+                                    .fc-col-header-cell-cushion { font-weight: 900 !important; text-transform: uppercase !important; font-size: 10px !important; letter-spacing: 0.1em !important; color: #9ca3af !important; padding: 15px !important; }
+                                    .dark .fc .fc-button-primary { border-color: rgba(255,255,255,0.05) !important; color: #9ca3af !important; }
+                                    .dark .fc .fc-toolbar-title { color: white; }
+                                    .dark .fc-daygrid-day { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
+                                    .fc-day-today { background: #f5f3ff !important; }
+                                    .dark .fc-day-today { background: rgba(79, 70, 229, 0.05) !important; }
+                                `}</style>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

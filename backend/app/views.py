@@ -7159,6 +7159,50 @@ class UserMealViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='calendar-prep-view', pagination_class=None)
+    def calendar_prep_view(self, request):
+        """
+        Specialized calendar view for Micro Kitchens.
+        Params: year, month. Optional: user (patient id).
+        Returns all scheduled meals with expanded food and delivery partner details.
+        """
+        user = request.user
+        year = request.query_params.get('year')
+        month = request.query_params.get('month')
+        
+        if not year or not month:
+            return Response(
+                {"detail": "year and month are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            y, m = int(year), int(month)
+        except (ValueError, TypeError):
+            return Response({"detail": "Invalid year or month"}, status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = UserMeal.objects.filter(
+            micro_kitchen__user=user,
+            meal_date__year=y,
+            meal_date__month=m
+        ).select_related(
+            'user', 'meal_type', 'food', 'packaging_material'
+        ).prefetch_related(
+            Prefetch(
+                'deliveries',
+                queryset=DeliveryAssignment.objects.filter(is_active=True).select_related(
+                    'delivery_person', 'delivery_slot'
+                ),
+            )
+        ).exclude(status=UserMeal.STATUS_SKIPPED).order_by('meal_date', 'meal_type__id')
+
+        patient_id = request.query_params.get('user')
+        if patient_id and patient_id != 'all':
+            queryset = queryset.filter(user_id=patient_id)
+
+        serializer = UserMealSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path='timeline', pagination_class=None)
     def timeline_meals(self, request):
         """Fetch all meals for a date range (defaults to today to end of month)."""

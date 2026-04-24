@@ -119,6 +119,18 @@ export const getKitchenMealsMonthly = async (
     return Array.isArray(data) ? data : data?.results ?? [];
 };
 
+export const getKitchenMealsCalendar = async (
+    year: number,
+    month: number,
+    user?: string
+): Promise<DailyMeal[]> => {
+    const params = new URLSearchParams({ year: String(year), month: String(month) });
+    if (user && user !== "all") params.append("user", user);
+    const url = createApiUrl(`api/usermeal/calendar-prep-view/?${params.toString()}`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};
+
 export const assignMealDelivery = async (
     mealId: number,
     body: {
