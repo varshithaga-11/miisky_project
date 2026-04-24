@@ -48,222 +48,287 @@ const yn = (v: YesNo) => (v === "" ? "-" : v.toUpperCase());
 export function generatePDF(d: QuestionnaireData) {
   const pdf = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
-  const margin = 40;
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 50;
   const usable = pageW - margin * 2;
-  let y = 40;
+  let y = 60;
+
+  const brandColor: [number, number, number] = [79, 70, 229]; // Indigo-600
+  const secondaryColor: [number, number, number] = [100, 116, 139]; // Slate-500
+  const textColor: [number, number, number] = [30, 41, 59]; // Slate-800
+
+  const addHeader = () => {
+    pdf.setFillColor(...brandColor);
+    pdf.rect(0, 0, pageW, 40, "F");
+    
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("MIISKY", margin, 25);
+    
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("Patient Assessment Report", pageW - margin, 25, { align: "right" });
+  };
+
+  const addFooter = (pageNum: number) => {
+    pdf.setFontSize(8);
+    pdf.setFont("helvetica", "italic");
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(`Generated on ${new Date().toLocaleDateString()}  |  Page ${pageNum}`, pageW / 2, pageH - 25, { align: "center" });
+  };
 
   const checkPage = (need: number) => {
-    if (y + need > pdf.internal.pageSize.getHeight() - 40) {
+    if (y + need > pageH - 60) {
+      addFooter(pdf.internal.pages.length - 1);
       pdf.addPage();
-      y = 40;
+      addHeader();
+      y = 60;
     }
   };
 
   const heading = (text: string) => {
-    checkPage(40);
-    y += 14;
-    pdf.setFontSize(14);
+    checkPage(60);
+    y += 10;
+    pdf.setFontSize(12);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(33, 33, 33);
-    pdf.text(text, margin, y);
-    y += 4;
-    pdf.setDrawColor(200);
-    pdf.line(margin, y, pageW - margin, y);
-    y += 12;
+    pdf.setTextColor(...brandColor);
+    pdf.text(text.toUpperCase(), margin, y);
+    
+    y += 6;
+    pdf.setDrawColor(...brandColor);
+    pdf.setLineWidth(1.5);
+    pdf.line(margin, y, margin + 40, y);
+    
+    pdf.setDrawColor(226, 232, 240); // Slate-200
+    pdf.setLineWidth(0.5);
+    pdf.line(margin + 40, y, pageW - margin, y);
+    y += 20;
   };
 
   const field = (label: string, value: string) => {
-    checkPage(20);
-    pdf.setFontSize(10);
+    checkPage(24);
+    pdf.setFontSize(9);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(80);
-    pdf.text(label + ":", margin, y);
-    const labelW = pdf.getTextWidth(label + ": ");
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(label, margin, y);
+    
+    const labelW = 120; // Fixed label width for alignment
     pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(33);
+    pdf.setTextColor(...textColor);
+    
     const lines = pdf.splitTextToSize(value || "-", usable - labelW);
     pdf.text(lines, margin + labelW, y);
-    y += lines.length * 14;
+    y += Math.max(1, lines.length) * 14 + 4;
   };
 
   const hint = (text: string) => {
-    checkPage(16);
-    pdf.setFontSize(9);
+    checkPage(20);
+    pdf.setFontSize(8);
     pdf.setFont("helvetica", "italic");
-    pdf.setTextColor(120);
-    pdf.text(text, margin + 10, y);
-    y += 14;
+    pdf.setTextColor(...secondaryColor);
+    pdf.text("• " + text, margin + 10, y);
+    y += 12;
   };
 
-  /** Draw a small checkbox square; if checked, draw a tick inside it. Returns the width consumed. */
   const drawCheckbox = (x: number, cy: number, checked: boolean): number => {
-    const boxSize = 8;
-    const boxY = cy - boxSize + 1;
-    pdf.setDrawColor(80);
-    pdf.setLineWidth(0.6);
+    const boxSize = 10;
+    const boxY = cy - boxSize + 2;
+    pdf.setDrawColor(203, 213, 225); // Slate-300
+    pdf.setLineWidth(0.8);
     pdf.rect(x, boxY, boxSize, boxSize);
     if (checked) {
-      pdf.setDrawColor(0, 128, 0);
-      pdf.setLineWidth(1.2);
-      // draw a tick: short stroke then long stroke
-      pdf.line(x + 1.5, boxY + boxSize * 0.55, x + boxSize * 0.38, boxY + boxSize - 1.5);
-      pdf.line(x + boxSize * 0.38, boxY + boxSize - 1.5, x + boxSize - 1.5, boxY + 1.5);
+      pdf.setDrawColor(...brandColor);
+      pdf.setLineWidth(1.5);
+      pdf.line(x + 2, boxY + 5, x + 4, boxY + boxSize - 2);
+      pdf.line(x + 4, boxY + boxSize - 2, x + boxSize - 2, boxY + 2);
     }
-    return boxSize + 4;
+    return boxSize + 6;
   };
 
   const radioField = (label: string, options: string[], selected: string) => {
-    checkPage(20);
-    pdf.setFontSize(10);
+    checkPage(40);
+    pdf.setFontSize(9);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(80);
-    pdf.text(label + ":", margin, y);
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(label, margin, y);
+    
     y += 14;
     pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(33);
+    pdf.setTextColor(...textColor);
     let xPos = margin + 10;
     for (const opt of options) {
       const isSelected = opt.toLowerCase() === selected.toLowerCase();
-      const optW = pdf.getTextWidth(opt) + 24;
+      const optW = pdf.getTextWidth(opt) + 25;
       if (xPos + optW > pageW - margin) {
-        y += 14;
+        y += 18;
         xPos = margin + 10;
-        checkPage(14);
+        checkPage(18);
       }
       const cbW = drawCheckbox(xPos, y, isSelected);
       pdf.text(opt, xPos + cbW, y);
-      xPos += cbW + pdf.getTextWidth(opt) + 14;
+      xPos += cbW + pdf.getTextWidth(opt) + 20;
     }
-    y += 16;
+    y += 20;
+  };
+
+  const checklist = (title: string, options: string[], selected: string[]) => {
+    checkPage(40);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(title, margin, y);
+    y += 14;
+    
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(...textColor);
+    let xPos = margin + 10;
+    for (const opt of options) {
+      const checked = selected.includes(opt);
+      const optW = pdf.getTextWidth(opt) + 25;
+      
+      if (xPos + optW > pageW - margin) {
+        y += 18;
+        xPos = margin + 10;
+        checkPage(18);
+      }
+      
+      const cbW = drawCheckbox(xPos, y, checked);
+      pdf.text(opt, xPos + cbW, y);
+      xPos += cbW + pdf.getTextWidth(opt) + 20;
+    }
+    y += 20;
   };
 
   const yesNoField = (label: string, value: YesNo) => {
     radioField(label, ["Yes", "No"], value === "yes" ? "Yes" : value === "no" ? "No" : "");
   };
 
-  const checklist = (title: string, options: string[], selected: string[]) => {
-    checkPage(20);
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(80);
-    pdf.text(title + ":", margin, y);
-    y += 14;
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(33);
-    for (const opt of options) {
-      checkPage(14);
-      const checked = selected.includes(opt);
-      const cbW = drawCheckbox(margin + 10, y, checked);
-      pdf.text(opt, margin + 10 + cbW, y);
-      y += 14;
-    }
-    y += 4;
-  };
-
+  // Initial Header
+  addHeader();
+  
   // Title
-  pdf.setFontSize(18);
+  y += 30;
+  pdf.setFontSize(22);
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(33);
+  pdf.setTextColor(...textColor);
   pdf.text(d.title, margin, y);
-  y += 10;
-  pdf.setFontSize(8);
-  pdf.setFont("helvetica", "normal");
-  pdf.setTextColor(130);
-  pdf.text("Generated: " + new Date().toLocaleDateString(), margin, y + 10);
-  y += 24;
+  y += 25;
 
   // ── Personal Details
-  heading("PERSONAL DETAILS");
+  heading("Personal Details");
   field("Name", d.name);
   field("Age", d.age);
   radioField("Gender", ["Male", "Female", "Other"], d.gender);
   field("Height", d.height);
   field("Weight", d.weight);
-  radioField("Types of work", ["Sedentary", "Moderate", "Heavy"], d.workType);
+  radioField("Work Type", ["Sedentary", "Moderate", "Heavy"], d.workType);
 
   // ── Health Issues
-  heading("HEALTH ISSUES");
+  heading("Health Issues");
   yesNoField("Any Health Issues", d.anyHealthIssues);
-  hint("If yes, please fill the health conditions table below:");
+  if (d.anyHealthIssues === "yes") {
+    hint("Refer to the clinical conditions table below");
+  }
 
   if (d.healthRows.length) {
-    checkPage(60);
+    checkPage(100);
     autoTable(pdf, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["#", "Condition", "Yes", "No", "Since when", "Comments"]],
+      head: [["#", "Condition", "Yes", "No", "Since", "Comments"]],
       body: d.healthRows.map((r, i) => [
         String(i + 1), r.name,
-        r.value === "yes" ? "Yes" : "", r.value === "no" ? "Yes" : "",
+        r.value === "yes" ? "✓" : "", r.value === "no" ? "✓" : "",
         r.sinceWhen || "-", r.comments || "-",
       ]),
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [230, 230, 230], textColor: [33, 33, 33], fontStyle: "bold" },
+      styles: { fontSize: 8, cellPadding: 6, font: "helvetica" },
+      headStyles: { fillColor: brandColor, textColor: 255, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] }, // Slate-50
+      columnStyles: {
+        0: { cellWidth: 20 },
+        2: { cellWidth: 30, halign: "center" },
+        3: { cellWidth: 30, halign: "center" },
+      }
     });
-    y = (pdf as any).lastAutoTable.finalY + 12;
+    y = (pdf as any).lastAutoTable.finalY + 20;
   }
 
-  checklist("Any auto immune Diseases", d.autoimmuneOptions, d.autoimmuneSelected);
+  checklist("Autoimmune Diseases", d.autoimmuneOptions, d.autoimmuneSelected);
   checklist("Symptoms", d.symptomOptions, d.symptomSelected);
-  checklist("Any skin issue", d.skinOptions, d.skinSelected);
-  checklist("Any vitamin or Mineral deficiency", d.deficiencyOptions, d.deficiencySelected);
+  checklist("Skin Issues", d.skinOptions, d.skinSelected);
+  checklist("Vitamin/Mineral Deficiencies", d.deficiencyOptions, d.deficiencySelected);
 
-  yesNoField("History of surgery", d.surgeryHistory);
-  hint("If yes, please specify the type of surgery below:");
-  field("Type of surgery", d.surgeryDetails);
-  yesNoField("Allergy from medicine", d.medicineAllergy);
-  hint("If yes, please mention the medicine name below:");
-  field("Medicine name", d.medicineAllergyName);
-  yesNoField("Consulted a doctor", d.consultedDoctor);
-  hint("If yes, please fill the doctor details below:");
-  field("Doctor name", d.doctorName);
-  field("Specialty", d.doctorSpecialty);
-  field("Phone number", d.doctorPhone);
-  field("Other health concerns", d.otherHealthConcerns);
+  heading("Clinical History");
+  yesNoField("History of Surgery", d.surgeryHistory);
+  if (d.surgeryHistory === "yes") field("Surgery Details", d.surgeryDetails);
+  
+  yesNoField("Medicine Allergy", d.medicineAllergy);
+  if (d.medicineAllergy === "yes") field("Medicine Name", d.medicineAllergyName);
+  
   yesNoField("On Medication", d.onMedication);
+  yesNoField("Consulted Doctor", d.consultedDoctor);
+  if (d.consultedDoctor === "yes") {
+    field("Doctor Name", d.doctorName);
+    field("Specialty", d.doctorSpecialty);
+    field("Phone", d.doctorPhone);
+  }
+  field("Other Health Concerns", d.otherHealthConcerns);
 
   // ── Food Habit
-  heading("FOOD HABIT");
-  radioField("Diet patterns", ["Veg", "Non Veg"], d.dietPattern === "non_veg" ? "Non Veg" : d.dietPattern === "veg" ? "Veg" : "");
-  hint("If Non Veg, please select the frequency below:");
-  radioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency);
-  yesNoField("Consume Egg", d.consumeEgg);
-  yesNoField("Consume milk", d.consumeMilk);
+  heading("Food Habits");
+  radioField("Diet Pattern", ["Veg", "Non Veg"], d.dietPattern === "non_veg" ? "Non Veg" : d.dietPattern === "veg" ? "Veg" : "");
+  radioField("Non-Veg Frequency", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally"], d.nonVegFrequency);
+  
+  const dietGridY = y;
+  field("Consume Egg", yn(d.consumeEgg));
+  field("Consume Milk", yn(d.consumeMilk));
   yesNoField("Food Allergy", d.foodAllergy);
-  hint("If yes, please mention the food allergy name below:");
-  field("Food allergy name", d.foodAllergyName);
-  field("Fruits per day", d.fruitsPerDay);
-  field("Vegetables per day", d.vegetablesPerDay);
-  checklist("Meals in one day", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], d.mealSlotsSelected);
-  field("Meals per day (count)", d.mealsPerDay);
-  yesNoField("Snack between Meals", d.snacksBetweenMeals);
-  yesNoField("Skip meals", d.skipMeals);
-  checklist("Food source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource);
-  yesNoField("Consulted dietician", d.dieticianConsulted);
-  hint("If yes, please fill the dietician details below:");
-  field("Dietician Name", d.dieticianName);
-  field("Location", d.dieticianLocation);
-  field("Phone number", d.dieticianPhone);
+  if (d.foodAllergy === "yes") field("Allergy Details", d.foodAllergyName);
+  
+  field("Fruits/Day", d.fruitsPerDay);
+  field("Veggies/Day", d.vegetablesPerDay);
+  field("Meals Count", d.mealsPerDay);
+  checklist("Meal Slots", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner"], d.mealSlotsSelected);
+  
+  yesNoField("Snack Between Meals", d.snacksBetweenMeals);
+  yesNoField("Skip Meals", d.skipMeals);
+  checklist("Food Source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource);
+  
+  yesNoField("Consulted Dietician", d.dieticianConsulted);
+  if (d.dieticianConsulted === "yes") {
+    field("Dietician Name", d.dieticianName);
+    field("Location", d.dieticianLocation);
+    field("Phone", d.dieticianPhone);
+  }
 
   // ── Other Habit
-  heading("OTHER HABIT");
-  yesNoField("Physical activity", d.physicalActivity);
-  hint("If yes, please choose from the activities list below:");
-  checklist("Activities", d.activityOptions, d.activitySelected);
-  field("Others (activity)", d.activityOtherText);
-  checklist("Other habits", d.habitOptions, d.habitSelected);
-  field("Others (habit)", d.habitOtherText);
-  field("Improvement thoughts", d.improvementThoughts);
-  radioField("Sleep quality", ["Fresh", "Not Fresh"], d.sleepQuality);
-  radioField("Stress level", ["Low", "Medium", "High"], d.stressLevel);
-  radioField("Falls sick frequency", ["Once", "Twice", "Frequent"], d.fallsSickFrequency);
+  heading("Lifestyle & Habits");
+  yesNoField("Physical Activity", d.physicalActivity);
+  if (d.physicalActivity === "yes") {
+    checklist("Activities", d.activityOptions, d.activitySelected);
+    field("Activity Others", d.activityOtherText);
+  }
+  
+  checklist("General Habits", d.habitOptions, d.habitSelected);
+  field("Habit Others", d.habitOtherText);
+  field("Improvement Goals", d.improvementThoughts);
+  
+  radioField("Sleep Quality", ["Fresh", "Not Fresh"], d.sleepQuality);
+  radioField("Stress Level", ["Low", "Medium", "High"], d.stressLevel);
+  radioField("Sick Frequency", ["Once", "Twice", "Frequent"], d.fallsSickFrequency);
   radioField("Menstrual Pattern", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern);
-  field("Food preferences", d.foodPreferences);
-  field("Additional notes", d.additionalNotes);
-  field("Any other comments", d.anyOtherComments);
-  field("Any notes for care team", d.anyNotesForCareTeam);
+  
+  heading("Additional Information");
+  field("Food Preferences", d.foodPreferences);
+  field("Additional Notes", d.additionalNotes);
+  field("Other Comments", d.anyOtherComments);
+  field("Care Team Notes", d.anyNotesForCareTeam);
 
-  pdf.save("patient_questionnaire_preview.pdf");
+  // Final Footer
+  addFooter(pdf.internal.pages.length - 1);
+
+  pdf.save(`${d.name.replace(/\s+/g, "_")}_Questionnaire.pdf`);
 }
 
 // ─── DOCX ────────────────────────────────────────────────────────────────────
@@ -367,7 +432,7 @@ export async function generateDOCX(d: QuestionnaireData) {
   }));
   children.push(new Paragraph({
     spacing: { after: 200 },
-    children: [new TextRun({ text: "Generated: " + new Date().toLocaleDateString(), size: 16, color: "888888", italics: true })],
+    // children: [new TextRun({ text: "Generated: " + new Date().toLocaleDateString(), size: 16, color: "888888", italics: true })],
   }));
 
   // Personal Details
