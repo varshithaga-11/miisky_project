@@ -15,10 +15,12 @@ import {
     getSetDailyMealsFoods,
     getSetDailyMealsPatientDetail,
     getSetDailyMealsPlanMeals,
+    getSetDailyMealsPlanMealsByRange,
     getSetDailyMealsCalendarMonth,
     getPackagingMaterialList,
     getFoodByIdNutrition,
 } from "./api";
+import DatePicker3 from "../../../components/form/date-picker3";
 import type {
     MappedPatientResponse,
     UserDietPlan,
@@ -47,6 +49,7 @@ const SetDailyMealsPage: React.FC = () => {
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
     const [isRangeMode, setIsRangeMode] = useState(false);
+    const [isParticularRange, setIsParticularRange] = useState(false);
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -295,12 +298,34 @@ const SetDailyMealsPage: React.FC = () => {
                         setRangeMealsLoading(false);
                     }
                 })();
+            } else if (isParticularRange) {
+                if (startDate && endDate) {
+                    setDayPatientUnavailabilities([]);
+                    setRangeMealsLoading(true);
+                    (async () => {
+                        try {
+                            const res = await getSetDailyMealsPlanMealsByRange({
+                                user_id: selectedPatient.user.id,
+                                plan_id: activePlan.id,
+                                start_date: startDate,
+                                end_date: endDate,
+                            });
+                            setRangeMealsAccum(res.meals);
+                            setRangeHasMore(false);
+                            setRangePatientUnavailabilities(res.patient_unavailabilities ?? []);
+                        } catch {
+                            toast.error("Failed to load particular range meals");
+                        } finally {
+                            setRangeMealsLoading(false);
+                        }
+                    })();
+                }
             } else if (selectedDate) {
                 setRangePatientUnavailabilities([]);
                 fetchDailyMeals(selectedPatient.user.id, selectedDate);
             }
         }
-    }, [selectedPatient, activePlan, selectedDate, isRangeMode, startDate, endDate]);
+    }, [selectedPatient, activePlan, selectedDate, isRangeMode, isParticularRange, startDate, endDate]);
 
     const fetchDailyMeals = async (pid: number, date: string) => {
         try {
@@ -422,9 +447,11 @@ const SetDailyMealsPage: React.FC = () => {
         ? []
         : isRangeMode
           ? fullRangeDates.slice(0, Math.min(rangeDayCount, fullRangeDates.length))
-          : selectedDate
-            ? [selectedDate]
-            : [];
+          : isParticularRange
+            ? fullRangeDates
+            : selectedDate
+              ? [selectedDate]
+              : [];
 
     const filteredFoods = foods;
 
@@ -902,13 +929,17 @@ const SetDailyMealsPage: React.FC = () => {
                                         </div>
                                         <div className="flex p-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
                                             <button
-                                                onClick={() => setIsRangeMode(false)}
-                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${!isRangeMode ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                                                onClick={() => { setIsRangeMode(false); setIsParticularRange(false); }}
+                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${!isRangeMode && !isParticularRange ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                                             >Day</button>
                                             <button
-                                                onClick={() => setIsRangeMode(true)}
+                                                onClick={() => { setIsRangeMode(true); setIsParticularRange(false); }}
                                                 className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${isRangeMode ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                                             >Range</button>
+                                            <button
+                                                onClick={() => { setIsParticularRange(true); setIsRangeMode(false); }}
+                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${isParticularRange ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                                            >Particular Range</button>
                                         </div>
                                         {isRangeMode ? (
                                             <div className="flex items-center gap-2">
@@ -936,6 +967,33 @@ const SetDailyMealsPage: React.FC = () => {
                                                         if (startDate && v < startDate) setStartDate(v);
                                                     }}
                                                     className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs font-bold outline-none"
+                                                />
+                                            </div>
+                                        ) : isParticularRange ? (
+                                            <div className="flex items-center gap-2">
+                                                <DatePicker3
+                                                    id="particular-start-picker"
+                                                    mode="single"
+                                                    value={startDate}
+                                                    minDate={planMinDate > todayStr ? planMinDate : todayStr}
+                                                    maxDate={planMaxDate}
+                                                    onChange={(d) => {
+                                                        setStartDate(d);
+                                                        if (endDate && d > endDate) setEndDate(d);
+                                                    }}
+                                                    placeholder="From"
+                                                    className="w-40"
+                                                />
+                                                <span className="text-gray-400">→</span>
+                                                <DatePicker3
+                                                    id="particular-end-picker"
+                                                    mode="single"
+                                                    value={endDate}
+                                                    minDate={startDate || (planMinDate > todayStr ? planMinDate : todayStr)}
+                                                    maxDate={planMaxDate}
+                                                    onChange={(d) => setEndDate(d)}
+                                                    placeholder="To"
+                                                    className="w-40"
                                                 />
                                             </div>
                                         ) : (

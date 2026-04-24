@@ -22,7 +22,6 @@ import {
   Bell,
   BookOpen,
   Wallet,
-  Calendar,
   Mail,
   Search,
   X,
@@ -365,20 +364,20 @@ const nutritionistNavItems: NavItem[] = [
       { name: "Normal Ranges", path: "/nutrition/reference/ranges" }
     ],
   },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Food Management",
-    subItems: [
-      { name: "Meal Type", path: "/nutrition/meal-type" },
-      { name: "Cuisine Type", path: "/nutrition/cuisine-type" },
-      { name: "Packaging Material", path: "/nutrition/packaging-material" },
-      { name: "Delivery slots", path: "/nutrition/delivery-slot" },
-      { name: "Foods", path: "/nutrition/food-management" },
-      { name: "Units", path: "/nutrition/unit" },
-      { name: "Ingredients", path: "/nutrition/ingredient" },
-      { name: "Recipe Management", path: "/nutrition/recipe-management" },
-    ],
-  },
+  // {
+  //   icon: <Briefcase className="w-5 h-5" />,
+  //   name: "Food Management",
+  //   subItems: [
+  //     { name: "Meal Type", path: "/nutrition/meal-type" },
+  //     { name: "Cuisine Type", path: "/nutrition/cuisine-type" },
+  //     { name: "Packaging Material", path: "/nutrition/packaging-material" },
+  //     { name: "Delivery slots", path: "/nutrition/delivery-slot" },
+  //     { name: "Foods", path: "/nutrition/food-management" },
+  //     { name: "Units", path: "/nutrition/unit" },
+  //     { name: "Ingredients", path: "/nutrition/ingredient" },
+  //     { name: "Recipe Management", path: "/nutrition/recipe-management" },
+  //   ],
+  // },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Blog Management",
@@ -649,16 +648,16 @@ const masterNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/master/dashboard",
   },
-  {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Blog Management",
-    subItems: [
-      { name: "Blog Categories", path: "/master/blogcategory" },
-      { name: "Blog Comments", path: "/master/blogcomment" },
-      { name: "Blog Posts", path: "/master/blogpost" },
-      { name: "Blog Tags", path: "/master/blogtag" },
-    ],
-  },
+  // {
+  //   icon: <FileText className="w-5 h-5" />,
+  //   name: "Blog Management",
+  //   subItems: [
+  //     { name: "Blog Categories", path: "/master/blogcategory" },
+  //     { name: "Blog Comments", path: "/master/blogcomment" },
+  //     { name: "Blog Posts", path: "/master/blogpost" },
+  //     { name: "Blog Tags", path: "/master/blogtag" },
+  //   ],
+  // },
   {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Company Management",
