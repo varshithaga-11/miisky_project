@@ -29,7 +29,6 @@ import {
   getMicroKitchenOrdersNoPagination,
   getMicroKitchenFoodsPaginated,
   getMicroKitchenAvailableFoodsNoPagination,
-  getMicroKitchenDailyMeals,
   getMicroKitchenDailyMealsNoPagination,
   getMicroKitchenDeliverySlabs,
   getMicroKitchenGlobalAssignmentsNoPagination,
@@ -303,12 +302,15 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "prep":
             const nowPrep = new Date();
-            res = await getMicroKitchenDailyMeals(id, p, 20, per, sd, ed, nowPrep.getMonth() + 1, nowPrep.getFullYear());
-            setPayload((prev: any) => ({
-              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
-              page: res.current_page,
-              hasMore: res.current_page < res.total_pages
-            }));
+            res = await getMicroKitchenDailyMealsNoPagination(
+              id,
+              per,
+              sd,
+              ed,
+              nowPrep.getMonth() + 1,
+              nowPrep.getFullYear()
+            );
+            setPayload({ results: res, page: 1, hasMore: false });
             break;
           case "execution":
             const td = new Date().toISOString().split('T')[0];
@@ -353,7 +355,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     let sd, ed, per;
     if (screen === 'orders') { sd = ordStartDate; ed = ordEndDate; per = ordPeriod; }
     else if (screen === 'reviews') { sd = revStartDate; ed = revEndDate; per = revPeriod; }
-    else if (screen === 'prep') { sd = prepStartDate; ed = prepEndDate; per = prepPeriod; }
+    else if (screen === 'prep') { return; }
     else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
     else if (screen === 'payouts' || screen === 'mk_plan_payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
     
@@ -372,8 +374,8 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   const handlePrepMonthChange = async (m: number, y: number) => {
     setLoading(true);
     try {
-      const res = await getMicroKitchenDailyMeals(kitchen.id, 1, 20, undefined, undefined, undefined, m, y);
-      setPayload({ results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+      const res = await getMicroKitchenDailyMealsNoPagination(kitchen.id, undefined, undefined, undefined, m, y);
+      setPayload({ results: res, page: 1, hasMore: false });
     } catch (e: any) {
       setError(e.message);
     } finally {

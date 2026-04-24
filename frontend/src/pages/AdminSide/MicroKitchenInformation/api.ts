@@ -354,11 +354,25 @@ export const getMicroKitchenDailyMeals = async (
   return response.data;
 };
 
-export const getMicroKitchenDailyMealsNoPagination = async (microKitchenId: number) => {
+export const getMicroKitchenDailyMealsNoPagination = async (
+  microKitchenId: number,
+  period?: string,
+  startDate?: string,
+  endDate?: string,
+  month?: number,
+  year?: number
+) => {
   const url = createApiUrl(`api/admin-microkitchen-meals-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId },
+    params: {
+      micro_kitchen: microKitchenId,
+      month,
+      year,
+      start_date: startDate,
+      end_date: endDate,
+      period,
+    },
   });
   return response.data ?? [];
 };

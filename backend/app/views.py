@@ -9521,7 +9521,7 @@ class AdminMicroKitchenPayoutsNoPaginationView(generics.ListAPIView):
 
 class AdminMicroKitchenMealsNoPaginationView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
-    pagination_class = Pagination
+    pagination_class = None
     serializer_class = UserMealSerializer
 
     def get_queryset(self):
