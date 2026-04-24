@@ -4,7 +4,7 @@ Celery tasks for Miisky app.
 from celery import shared_task
 from django.core.mail import send_mail
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from .models import Notification, UserDietPlan, UserMeal, UserRegister
 
@@ -141,6 +141,89 @@ def _next_week_date_range(base_date):
     return week_start, week_end
 
 
+def _weekly_food_html_message(patient_name, plan_name, week_start, week_end, meals):
+    """
+    Generates a professional HTML table for the weekly food plan.
+    """
+    # Group meals by date
+    grouped_meals = {}
+    for meal in meals:
+        date_str = str(meal.meal_date)
+        if date_str not in grouped_meals:
+            grouped_meals[date_str] = []
+        grouped_meals[date_str].append(meal)
+
+    html = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #2563eb; margin-bottom: 5px;">Weekly Food Plan</h2>
+            <p style="color: #666; font-size: 14px;">{week_start} to {week_end}</p>
+        </div>
+        
+        <p>Hello <strong>{patient_name}</strong>,</p>
+        <p>Your nutrition plan "<strong>{plan_name}</strong>" has been updated for the upcoming week. Here is your scheduled menu:</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #2563eb; color: white;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #1e40af;">Meal Type</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #1e40af;">Food</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #1e40af;">Qty</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
+
+    if not meals:
+        html += """
+                <tr>
+                    <td colspan="3" style="padding: 20px; text-align: center; color: #999; font-style: italic;">
+                        No meals are currently allotted for this week.
+                    </td>
+                </tr>
+        """
+    else:
+        sorted_dates = sorted(grouped_meals.keys())
+        for date_str in sorted_dates:
+            # Format date for display
+            try:
+                display_date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%A, %b %d")
+            except:
+                display_date = date_str
+                
+            html += f"""
+                <tr style="background-color: #f8fafc;">
+                    <td colspan="3" style="padding: 8px 12px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; font-size: 13px;">
+                        {display_date}
+                    </td>
+                </tr>
+            """
+            for meal in grouped_meals[date_str]:
+                meal_type = meal.meal_type.name if getattr(meal, "meal_type", None) else "Meal"
+                food_name = meal.food.name if getattr(meal, "food", None) else "To be updated"
+                qty = meal.quantity if meal.quantity not in (None, "") else "-"
+                
+                html += f"""
+                <tr>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #475569;">{meal_type}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 500;">{food_name}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #475569;">{qty}</td>
+                </tr>
+                """
+
+    html += """
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #94a3b8; text-align: center;">
+            <p>This is an automated message from the Miisky Nutrition Team.</p>
+            <p>If you have any questions, please contact your assigned nutritionist.</p>
+        </div>
+    </div>
+    """
+    return html
+
+
 def _weekly_food_email_message(patient_name, plan_name, week_start, week_end, meals):
     lines = [
         f"Hello {patient_name},",
@@ -224,6 +307,13 @@ def run_send_weekly_food_plan_emails():
             week_end=week_end,
             meals=meals,
         )
+        html_message = _weekly_food_html_message(
+            patient_name=patient_name,
+            plan_name=plan_name,
+            week_start=week_start,
+            week_end=week_end,
+            meals=meals,
+        )
 
         try:
             send_mail(
@@ -232,6 +322,7 @@ def run_send_weekly_food_plan_emails():
                 from_email=None,
                 recipient_list=[patient.email],
                 fail_silently=False,
+                html_message=html_message,
             )
             emailed += 1
         except Exception:
@@ -253,3 +344,40 @@ def send_weekly_food_plan_emails():
     Intended to run every Sunday via Celery Beat.
     """
     return run_send_weekly_food_plan_emails()
+
+
+@shared_task
+def send_user_credentials_email(user_id, raw_password):
+    """
+    Sends account credentials (username/password) to a newly registered user.
+    """
+    try:
+        user = UserRegister.objects.get(id=user_id)
+        if not user.email:
+            return f"User {user_id} has no email."
+
+        full_name = _full_name(user)
+        subject = "Your Miisky Account Credentials"
+        message = (
+            f"Hello {full_name},\n\n"
+            f"Your account has been successfully created on the Miisky platform.\n\n"
+            f"Here are your login credentials:\n"
+            f"Username: {user.username}\n"
+            f"Password: {raw_password}\n\n"
+            f"Please log in at your earliest convenience and consider changing your password for enhanced security.\n\n"
+            f"Regards,\n"
+            f"Miisky Team"
+        )
+
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        return f"Credentials email sent to {user.email}"
+    except UserRegister.DoesNotExist:
+        return f"User {user_id} does not exist."
+    except Exception as e:
+        return f"Failed to send email: {str(e)}"
