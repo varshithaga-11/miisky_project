@@ -25,7 +25,7 @@ const AddMealType: React.FC<AddMealTypeProps> = ({ onClose, onAdd }) => {
     try {
       const newType: MealType = { name };
       const createdType = await createMealType(newType);
-      toast.success(isAdmin ? "Meal Type created successfully!" : "Sent for approval");
+      toast.success("Meal Type created successfully!");
       setTimeout(() => {
         onAdd(createdType);
         onClose();

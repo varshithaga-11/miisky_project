@@ -102,22 +102,7 @@ class ImportService:
             # Force pending status for new imports if the model supports approval workflow
             # This ensures imported data starts in 'accept/reject' state as requested
             # excluding packaging and delivery as specified.
-            if submenu not in ['packaging', 'delivery'] and module not in ['delivery']:
-                is_approved = False
-                if user and getattr(user, 'role', None) in ['admin', 'master']:
-                    is_approved = True
-
-                try:
-                    Model._meta.get_field('is_approved')
-                    mapped_row_data['is_approved'] = is_approved
-                except:
-                    pass
-                    
-                try:
-                    Model._meta.get_field('is_rejected')
-                    mapped_row_data['is_rejected'] = False
-                except:
-                    pass
+            pass
 
             if user:
                 try:
@@ -295,9 +280,7 @@ class ImportService:
                             food_obj = Food.objects.get(name=str(food_name).strip())
                             
                             # Mark food as pending re-approval when recipe is updated/imported
-                            food_obj.is_approved = False
-                            food_obj.is_rejected = False
-                            food_obj.save()
+                            pass
                             
                             # Process Ingredients 1-3
                             for i in range(1, 4):
@@ -316,8 +299,6 @@ class ImportService:
                                             "quantity": float(clean_row.get(f'quantity{i}', 0) or 0),
                                             "unit": unit_obj,
                                             "notes": clean_row.get(f'notes{i}', ''),
-                                            "is_approved": False,
-                                            "is_rejected": False
                                         }
                                     )
                             

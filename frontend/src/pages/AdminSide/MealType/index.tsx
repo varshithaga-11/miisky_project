@@ -27,9 +27,6 @@ const MealTypeManagementPage: React.FC = () => {
   const [sortField, setSortField] = useState<keyof MealType | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
-  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
-  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
 
   // Search, sort, pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,48 +79,6 @@ const MealTypeManagementPage: React.FC = () => {
       toast.error("Failed to delete meal type.");
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleApprovalClick = (id: number, currentStatus: boolean) => {
-    setApprovalTarget({ id, currentStatus });
-  };
-
-  const confirmApproval = async () => {
-    if (!approvalTarget) return;
-    const { id, currentStatus } = approvalTarget;
-    if (!currentStatus) {
-      // toast.info("Please don't repeat the words — it may cause some issues.");
-    }
-    setIsApprovingLoading(true);
-    try {
-      await patchMealType(id, { is_approved: !currentStatus });
-      toast.success(`Meal type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
-      fetchMealTypes();
-    } catch {
-      toast.error("Failed to update approval status.");
-    } finally {
-      setIsApprovingLoading(false);
-      setApprovalTarget(null);
-    }
-  };
-
-  const handleRejectClick = (id: number) => {
-    setRejectionTarget(id);
-  };
-
-  const confirmRejection = async () => {
-    if (rejectionTarget === null) return;
-    setIsApprovingLoading(true);
-    try {
-      await patchMealType(rejectionTarget, { is_rejected: true, is_approved: false });
-      toast.success("Meal type rejected successfully.");
-      fetchMealTypes();
-    } catch {
-      toast.error("Failed to reject meal type.");
-    } finally {
-      setIsApprovingLoading(false);
-      setRejectionTarget(null);
     }
   };
 
@@ -211,10 +166,6 @@ const MealTypeManagementPage: React.FC = () => {
           <div>
             Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
-          <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-            <FiInfo className="w-4 h-4" />
-            <span>{isAdmin ? "Before approving, please re-check if any data is repeated to avoid issues." : "Please don't repeat same word it may cause problems."}</span>
-          </div>
         </div>
       </div>
 
@@ -229,7 +180,6 @@ const MealTypeManagementPage: React.FC = () => {
                     Meal Type Name {sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
-                {isAdmin && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>}
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -240,49 +190,13 @@ const MealTypeManagementPage: React.FC = () => {
                  </TableRow>
               ) : sortedMealTypes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No meal types found</TableCell>
+                   <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No meal types found</TableCell>
                 </TableRow>
               ) : (
                 sortedMealTypes.map((mealType: MealType, index: number) => (
                   <TableRow key={mealType.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{mealType.name}</TableCell>
-                    {isAdmin && (
-                      <TableCell className="px-5 py-4">
-                        {mealType.is_approved ? (
-                          <button
-                            onClick={() => handleApprovalClick(mealType.id!, true)}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                            title="Click to disapprove"
-                          >
-                            <FiCheck size={12} /> Approved
-                          </button>
-                        ) : mealType.is_rejected ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                            <FiX size={12} /> Rejected
-                          </span>
-                        ) : mealType.posted_by_role === 'nutritionist' ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleApprovalClick(mealType.id!, false)}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                              title="Click to approve"
-                            >
-                              <FiCheck size={12} /> Accept
-                            </button>
-                            <button
-                              onClick={() => handleRejectClick(mealType.id!)}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-                              title="Click to reject"
-                            >
-                              <FiX size={12} /> Reject
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs italic">Pending</span>
-                        )}
-                      </TableCell>
-                    )}
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditMealTypeId(mealType.id!); setIsEditModalOpen(true); }}>
@@ -356,17 +270,6 @@ const MealTypeManagementPage: React.FC = () => {
       )}
 
       <ConfirmationModal
-        isOpen={rejectionTarget !== null}
-        onClose={() => setRejectionTarget(null)}
-        onConfirm={confirmRejection}
-        title="Reject Meal Type"
-        message="Are you sure you want to reject this meal type?"
-        confirmText="Yes, Reject"
-        cancelText="No"
-        variant="danger"
-      />
-
-      <ConfirmationModal
         isOpen={recordToDelete !== null}
         onClose={() => setRecordToDelete(null)}
         onConfirm={confirmDelete}
@@ -374,20 +277,6 @@ const MealTypeManagementPage: React.FC = () => {
         title="Delete Meal Type?"
         message="Are you sure you want to remove this meal type? This action is permanent."
         confirmText="Delete Meal Type"
-      />
-
-      <ConfirmationModal
-        isOpen={approvalTarget !== null}
-        onClose={() => setApprovalTarget(null)}
-        onConfirm={confirmApproval}
-        isLoading={isApprovingLoading}
-        title={approvalTarget?.currentStatus ? "Disapprove Meal Type?" : "Approve Meal Type?"}
-        message={
-          approvalTarget?.currentStatus
-            ? "Are you sure you want to disapprove this meal type? It will no longer be visible to other users."
-            : "Are you sure you want to approve this meal type? Please ensure there are no duplicate entries before approving."
-        }
-        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );

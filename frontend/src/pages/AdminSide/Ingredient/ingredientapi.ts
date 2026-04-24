@@ -4,8 +4,6 @@ import axios from "axios";
 export interface Ingredient {
   id?: number;
   name: string;
-  is_approved?: boolean;
-  is_rejected?: boolean;
   posted_by_role?: string;
 }
 

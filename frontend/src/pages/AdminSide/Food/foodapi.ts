@@ -28,8 +28,6 @@ export interface FoodNutrition {
 export interface CuisineType {
   id: number;
   name: string;
-  is_approved?: boolean;
-  is_rejected?: boolean;
   posted_by_role?: string;
 }
 
@@ -46,8 +44,6 @@ export interface Food {
   ingredients?: any[];
   steps?: any[];
   price?: number;
-  is_approved?: boolean;
-  is_rejected?: boolean;
   posted_by_role?: string;
 }
 

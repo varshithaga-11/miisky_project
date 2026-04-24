@@ -18,7 +18,7 @@ const AddUnit: React.FC<{ onClose: () => void; onAdd: () => void }> = ({ onClose
     setLoading(true);
     try {
       await createUnit({ name });
-      toast.success(isAdmin ? "Unit created!" : "Sent for approval");
+      toast.success("Unit created!");
       setTimeout(onAdd, 1000);
     } catch (err: any) {
       toast.error(err.response?.data?.name?.[0] || err.response?.data?.detail || err.message || "Failed to create unit.");

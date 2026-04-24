@@ -118,7 +118,7 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
         food: createdFood.id,
       });
 
-      toast.success(isAdmin ? "Food item and nutrition details created successfully!" : "Sent for approval");
+      toast.success("Food item and nutrition details created successfully!");
       setTimeout(() => {
         onAdd(createdFood);
         onClose();

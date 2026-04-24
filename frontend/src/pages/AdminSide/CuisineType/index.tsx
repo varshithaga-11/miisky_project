@@ -25,9 +25,6 @@ const CuisineTypePage: React.FC = () => {
   const [editId, setEditId] = useState<number | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
-  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
-  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   
@@ -52,29 +49,6 @@ const CuisineTypePage: React.FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApprovalClick = (id: number, currentStatus: boolean) => {
-    setApprovalTarget({ id, currentStatus });
-  };
-
-  const confirmApproval = async () => {
-    if (!approvalTarget) return;
-    const { id, currentStatus } = approvalTarget;
-    if (!currentStatus) {
-      // toast.info("Please don't repeat the words — it may cause some issues.");
-    }
-    setIsApprovingLoading(true);
-    try {
-      await patchCuisineType(id, { is_approved: !currentStatus });
-      toast.success(`Cuisine type ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
-      fetchCuisines();
-    } catch {
-      toast.error("Failed to update approval status.");
-    } finally {
-      setIsApprovingLoading(false);
-      setApprovalTarget(null);
     }
   };
 
@@ -103,25 +77,6 @@ const CuisineTypePage: React.FC = () => {
       toast.error("Failed to delete cuisine type");
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleRejectClick = (id: number) => {
-    setRejectionTarget(id);
-  };
-
-  const confirmRejection = async () => {
-    if (rejectionTarget === null) return;
-    setIsApprovingLoading(true);
-    try {
-      await patchCuisineType(rejectionTarget, { is_rejected: true, is_approved: false });
-      toast.success("Cuisine type rejected successfully.");
-      fetchCuisines();
-    } catch {
-      toast.error("Failed to reject cuisine type.");
-    } finally {
-      setIsApprovingLoading(false);
-      setRejectionTarget(null);
     }
   };
 
@@ -167,10 +122,6 @@ const CuisineTypePage: React.FC = () => {
       </div>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-            <FiInfo className="w-4 h-4" />
-            <span>{isAdmin ? "Before approving, please re-check if any data is repeated to avoid issues." : "Please don't repeat same word it may cause problems."}</span>
-          </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">
            Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
         </div>
@@ -183,56 +134,19 @@ const CuisineTypePage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Name</TableCell>
-                {isAdmin && <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Approved</TableCell>}
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-end">Actions</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
-                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">Loading...</TableCell></TableRow>
+                 <TableRow><TableCell colSpan={3} className="text-center py-10 text-gray-400 italic">Loading...</TableCell></TableRow>
               ) : cuisines.length === 0 ? (
-                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
+                 <TableRow><TableCell colSpan={3} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
               ) : (
                   cuisines.map((item: CuisineType, idx: number) => (
                       <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                           <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
                           <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{item.name}</TableCell>
-                          {isAdmin && (
-                            <TableCell className="px-5 py-4">
-                                {item.is_approved ? (
-                                  <button
-                                    onClick={() => handleApprovalClick(item.id!, true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                    title="Click to disapprove"
-                                  >
-                                    <FiCheck size={12} /> Approved
-                                  </button>
-                                ) : item.is_rejected ? (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                                      <FiX size={12} /> Rejected
-                                    </span>
-                                  ) : item.posted_by_role === 'nutritionist' ? (
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        onClick={() => handleApprovalClick(item.id!, false)}
-                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                        title="Click to approve"
-                                      >
-                                        <FiCheck size={12} /> Accept
-                                      </button>
-                                      <button
-                                        onClick={() => handleRejectClick(item.id!)}
-                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-                                        title="Click to reject"
-                                      >
-                                        <FiX size={12} /> Reject
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-400 text-xs italic">Pending</span>
-                                  )}
-                            </TableCell>
-                          )}
                           <TableCell className="px-5 py-4">
                               <div className="flex justify-end gap-3">
                                   <button 
@@ -307,17 +221,6 @@ const CuisineTypePage: React.FC = () => {
       {isEditModalOpen && editId && <EditCuisineType cuisineId={editId} onClose={() => setIsEditModalOpen(false)} onUpdated={() => fetchCuisines()} />}
 
       <ConfirmationModal
-        isOpen={rejectionTarget !== null}
-        onClose={() => setRejectionTarget(null)}
-        onConfirm={confirmRejection}
-        title="Reject Cuisine Type"
-        message="Are you sure you want to reject this cuisine type?"
-        confirmText="Yes, Reject"
-        cancelText="No"
-        variant="danger"
-      />
-
-      <ConfirmationModal
         isOpen={recordToDelete !== null}
         onClose={() => setRecordToDelete(null)}
         onConfirm={confirmDelete}
@@ -325,20 +228,6 @@ const CuisineTypePage: React.FC = () => {
         title="Delete Cuisine Type?"
         message="Are you sure you want to remove this cuisine type? This action is permanent."
         confirmText="Delete Cuisine"
-      />
-
-      <ConfirmationModal
-        isOpen={approvalTarget !== null}
-        onClose={() => setApprovalTarget(null)}
-        onConfirm={confirmApproval}
-        isLoading={isApprovingLoading}
-        title={approvalTarget?.currentStatus ? "Disapprove Cuisine Type?" : "Approve Cuisine Type?"}
-        message={
-          approvalTarget?.currentStatus
-            ? "Are you sure you want to disapprove this cuisine type? It will no longer be visible to other users."
-            : "Are you sure you want to approve this cuisine type? Please ensure there are no duplicate entries before approving."
-        }
-        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );

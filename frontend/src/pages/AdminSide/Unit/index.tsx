@@ -26,9 +26,6 @@ const UnitManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
-  const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
-  const [isApprovingLoading, setIsApprovingLoading] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const userRole = getUserRoleFromToken();
@@ -51,29 +48,6 @@ const UnitManagementPage: React.FC = () => {
       console.error("Failed to load units.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApprovalClick = (id: number, currentStatus: boolean) => {
-    setApprovalTarget({ id, currentStatus });
-  };
-
-  const confirmApproval = async () => {
-    if (!approvalTarget) return;
-    const { id, currentStatus } = approvalTarget;
-    if (!currentStatus) {
-      // toast.info("Please don't repeat the words — it may cause some issues.");
-    }
-    setIsApprovingLoading(true);
-    try {
-      await patchUnit(id, { is_approved: !currentStatus });
-      toast.success(`Unit ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
-      fetchUnits();
-    } catch {
-      toast.error("Failed to update approval status.");
-    } finally {
-      setIsApprovingLoading(false);
-      setApprovalTarget(null);
     }
   };
 
@@ -104,27 +78,6 @@ const UnitManagementPage: React.FC = () => {
       setIsDeleting(false);
     }
   };
-
-  const handleRejectClick = (id: number) => {
-    setRejectionTarget(id);
-  };
-
-  const confirmRejection = async () => {
-    if (rejectionTarget === null) return;
-    setIsApprovingLoading(true);
-    try {
-      await patchUnit(rejectionTarget, { is_rejected: true, is_approved: false });
-      toast.success("Unit rejected successfully.");
-      fetchUnits();
-    } catch {
-      toast.error("Failed to reject unit.");
-    } finally {
-      setIsApprovingLoading(false);
-      setRejectionTarget(null);
-    }
-  };
-
-
 
   return (
     <>
@@ -169,10 +122,6 @@ const UnitManagementPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm text-gray-600 dark:text-gray-400 gap-2">
-          <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-            <FiInfo className="w-4 h-4" />
-            <span>{isAdmin ? "Before approving, please re-check if any data is repeated to avoid issues." : "Please don't repeat same word it may cause problems."}</span>
-          </div>
           <div>
             Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
           </div>
@@ -186,7 +135,6 @@ const UnitManagementPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Unit Name</TableCell>
-                {isAdmin && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>}
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -204,42 +152,6 @@ const UnitManagementPage: React.FC = () => {
                   <TableRow key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{u.name}</TableCell>
-                        {isAdmin && (
-                          <TableCell className="px-5 py-4">
-                              {u.is_approved ? (
-                                <button
-                                  onClick={() => handleApprovalClick(u.id!, true)}
-                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                  title="Click to disapprove"
-                                >
-                                  <FiCheck size={12} /> Approved
-                                </button>
-                              ) : u.is_rejected ? (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                                  <FiX size={12} /> Rejected
-                                </span>
-                              ) : u.posted_by_role === 'nutritionist' ? (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleApprovalClick(u.id!, false)}
-                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                  title="Click to approve"
-                                >
-                                  <FiCheck size={12} /> Accept
-                                </button>
-                                <button
-                                  onClick={() => handleRejectClick(u.id!)}
-                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-                                  title="Click to reject"
-                                >
-                                  <FiX size={12} /> Reject
-                                </button>
-                              </div>
-                              ) : (
-                                <span className="text-gray-400 text-xs italic">Pending</span>
-                              )}
-                          </TableCell>
-                        )}
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditUnitId(u.id!); setIsEditModalOpen(true); }}>
@@ -308,17 +220,6 @@ const UnitManagementPage: React.FC = () => {
       )}
 
       <ConfirmationModal
-        isOpen={rejectionTarget !== null}
-        onClose={() => setRejectionTarget(null)}
-        onConfirm={confirmRejection}
-        title="Reject Unit"
-        message="Are you sure you want to reject this unit?"
-        confirmText="Yes, Reject"
-        cancelText="No"
-        variant="danger"
-      />
-
-      <ConfirmationModal
         isOpen={recordToDelete !== null}
         onClose={() => setRecordToDelete(null)}
         onConfirm={confirmDelete}
@@ -326,20 +227,6 @@ const UnitManagementPage: React.FC = () => {
         title="Delete Unit?"
         message="Are you sure you want to remove this measurement unit? This will affect all ingredients using it."
         confirmText="Delete Unit"
-      />
-
-      <ConfirmationModal
-        isOpen={approvalTarget !== null}
-        onClose={() => setApprovalTarget(null)}
-        onConfirm={confirmApproval}
-        isLoading={isApprovingLoading}
-        title={approvalTarget?.currentStatus ? "Disapprove Unit?" : "Approve Unit?"}
-        message={
-          approvalTarget?.currentStatus
-            ? "Are you sure you want to disapprove this unit? It will no longer be available for selection."
-            : "Are you sure you want to approve this unit? Please ensure there are no duplicate entries before approving."
-        }
-        confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
       />
     </>
   );
