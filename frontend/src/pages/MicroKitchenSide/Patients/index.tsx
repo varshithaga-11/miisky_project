@@ -91,6 +91,7 @@ interface PatientAllotted {
     approved_on: string;
     micro_kitchen_effective_from?: string | null;
     distance_km?: number | null;
+    nutritionist_notes?: string | null;
 }
 
 const PATIENT_LIST_PAGE_SIZE = 5;
@@ -484,6 +485,137 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Extended Medical Insights */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Medical Conditions & Symptoms */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6 shadow-sm">
+                                        <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-4">
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-rose-500">In-Depth Medical Profile</h3>
+                                            <FiActivity className="text-rose-500" />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            {/* Confirmed Health Conditions */}
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Diagnosed Conditions</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedPatient.patient_questionnaire?.health_conditions?.filter((c: any) => c.has_condition).length > 0 ? (
+                                                        selectedPatient.patient_questionnaire.health_conditions.filter((c: any) => c.has_condition).map((c: any) => (
+                                                            <div key={c.id} className="px-4 py-2 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800/30 rounded-2xl">
+                                                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-tighter italic">{c.name}</p>
+                                                                {c.comments && <p className="text-[9px] font-bold text-gray-500 mt-0.5">{c.comments}</p>}
+                                                            </div>
+                                                        ))
+                                                    ) : <span className="text-[10px] text-gray-400 font-bold italic uppercase">No primary conditions logged</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Symptoms & Autoimmune */}
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Active Symptoms</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {selectedPatient.patient_questionnaire?.symptoms?.length > 0 ? (
+                                                            selectedPatient.patient_questionnaire.symptoms.map((s: any) => (
+                                                                <span key={s.id} className="text-[9px] font-bold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-lg uppercase border border-gray-100 dark:border-white/5">{s.name}</span>
+                                                            ))
+                                                        ) : <span className="text-[10px] text-gray-400 italic font-medium">None reported</span>}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Autoimmune History</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {selectedPatient.patient_questionnaire?.autoimmune_diseases?.length > 0 ? (
+                                                            selectedPatient.patient_questionnaire.autoimmune_diseases.map((s: any) => (
+                                                                <span key={s.id} className="text-[9px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/10 px-2 py-1 rounded-lg uppercase border border-amber-100 dark:border-amber-800/30">{s.name}</span>
+                                                            ))
+                                                        ) : <span className="text-[10px] text-gray-400 italic font-medium">None reported</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Digestive & Skin Issues */}
+                                            <div className="grid grid-cols-2 gap-6 pt-2">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Digestive Sensitivity</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {selectedPatient.patient_questionnaire?.digestive_issues?.length > 0 ? (
+                                                            selectedPatient.patient_questionnaire.digestive_issues.map((s: any) => (
+                                                                <span key={s.id} className="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 px-2 py-1 rounded-lg uppercase border border-emerald-100 dark:border-emerald-800/30">{s.name}</span>
+                                                            ))
+                                                        ) : <span className="text-[10px] text-gray-400 italic font-medium">Clear</span>}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Skin Observations</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {selectedPatient.patient_questionnaire?.skin_issues?.length > 0 ? (
+                                                            selectedPatient.patient_questionnaire.skin_issues.map((s: any) => (
+                                                                <span key={s.id} className="text-[9px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 px-2 py-1 rounded-lg uppercase border border-indigo-100 dark:border-indigo-800/30">{s.name}</span>
+                                                            ))
+                                                        ) : <span className="text-[10px] text-gray-400 italic font-medium">Normal</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Lifestyle & Wellness */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6 shadow-sm">
+                                        <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-4">
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500">Lifestyle Dynamics</h3>
+                                            <FiLayers className="text-indigo-500" />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            {/* Habits */}
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Habits & Routine</p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {selectedPatient.patient_questionnaire?.habits?.length > 0 ? (
+                                                        selectedPatient.patient_questionnaire.habits.map((h: any) => (
+                                                            <div key={h.id} className="p-3 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-transparent hover:border-indigo-500/20 transition-all">
+                                                                <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">{h.name}</p>
+                                                                <p className="text-[9px] font-bold text-indigo-500 mt-1 uppercase">{h.frequency || 'Regular'}</p>
+                                                            </div>
+                                                        ))
+                                                    ) : <span className="text-[10px] text-gray-400 italic">No specific habits logged</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Physical Activities */}
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Physical Activity Engine</p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {selectedPatient.patient_questionnaire?.physical_activities?.length > 0 ? (
+                                                        selectedPatient.patient_questionnaire.physical_activities.map((a: any) => (
+                                                            <div key={a.id} className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100/30">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                                                    <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">{a.name}</p>
+                                                                </div>
+                                                                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase">{a.frequency || 'Intermittent'} {a.duration_minutes ? `• ${a.duration_minutes}m` : ''}</p>
+                                                            </div>
+                                                        ))
+                                                    ) : <span className="text-[10px] text-gray-400 italic">Sedentary / No logged activities</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Mental Wellness */}
+                                            <div className="grid grid-cols-2 gap-6 pt-2">
+                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-transparent">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Stress Level</p>
+                                                    <p className="text-xs font-black text-indigo-500 uppercase italic tracking-tighter">{selectedPatient.patient_questionnaire?.stress_level || 'Balanced'}</p>
+                                                </div>
+                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-transparent">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Sleep Quality</p>
+                                                    <p className="text-xs font-black text-indigo-500 uppercase italic tracking-tighter">{selectedPatient.patient_questionnaire?.sleep_quality || 'Consistent'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Health & Condition Awareness Mapping */}
                                 <div className="bg-white dark:bg-gray-800 rounded-[40px] p-10 border border-gray-100 dark:border-white/5 shadow-inner">
                                     <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-50 dark:border-white/5">
@@ -524,6 +656,23 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Nutritionist Insights Section */}
+                                {selectedPatient.nutritionist_notes && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 shadow-sm">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="size-8 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">
+                                                <FiInfo size={16} />
+                                            </div>
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Nutritionist Clinical Notes</h3>
+                                        </div>
+                                        <div className="p-6 bg-gray-50 dark:bg-white/[0.02] rounded-3xl border border-dashed border-gray-200 dark:border-white/10">
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 italic leading-relaxed">
+                                                "{selectedPatient.nutritionist_notes}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
                     </div>
