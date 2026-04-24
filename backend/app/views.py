@@ -6882,6 +6882,18 @@ class UserMealViewSet(viewsets.ModelViewSet):
         if start_date and end_date:
             queryset = queryset.filter(meal_date__range=[start_date, end_date])
 
+        period = self.request.query_params.get('period')
+        if period:
+            today = timezone.localtime(timezone.now()).date()
+            if period == 'today':
+                queryset = queryset.filter(meal_date=today)
+            elif period == 'tomorrow':
+                queryset = queryset.filter(meal_date=today + timedelta(days=1))
+            elif period == 'yesterday':
+                queryset = queryset.filter(meal_date=today - timedelta(days=1))
+            elif period == 'week':
+                queryset = queryset.filter(meal_date__range=[today, today + timedelta(days=6)])
+
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')
         if month and year:

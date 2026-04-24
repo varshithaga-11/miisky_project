@@ -43,11 +43,11 @@ export default function SignInForm() {
         if (role === 'master') {
           targetPath = "/master/master-dashboard";
         } else if (role === 'patient') {
-          targetPath = "/patient/dashboard";
+          targetPath = "/patient/workflow";
         } else if (role === 'nutritionist') {
-          targetPath = "/nutrition/dashboard";
+          targetPath = "/nutrition/workflow";
         } else if (role === 'micro_kitchen') {
-          targetPath = "/microkitchen/dashboard";
+          targetPath = "/microkitchen/workflow";
         } else if (role === 'non_patient') {
           targetPath = "/non-patient/dashboard";
         } else if (role === 'doctor') {
@@ -81,8 +81,8 @@ export default function SignInForm() {
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
-            <a 
-              href="/" 
+            <a
+              href="/"
               className="inline-flex items-center text-sm font-medium text-brand-500 hover:text-brand-600 mb-3"
             >
               ← Go to Website
