@@ -4812,11 +4812,6 @@ class UserDietPlanDeliverySummarySerializer(serializers.ModelSerializer):
 
 class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
     # Explicit field so validation does not require it on create (set in view for micro_kitchen users).
-    micro_kitchen = serializers.PrimaryKeyRelatedField(
-        queryset=MicroKitchenProfile.objects.all(),
-        required=False,
-        allow_null=True,
-    )
     delivery_person_details = UserSummarySerializer(source="delivery_person", read_only=True)
 
     class Meta:
@@ -4833,6 +4828,10 @@ class MicroKitchenDeliveryTeamSerializer(serializers.ModelSerializer):
             "assigned_on",
         ]
         read_only_fields = ["id", "assigned_on"]
+        extra_kwargs = {
+            "micro_kitchen": {"required": False, "allow_null": True}
+        }
+        validators = [] # Removed to allow micro_kitchen to be set in perform_create
 
     def validate_delivery_person(self, value):
         if getattr(value, "role", None) != "supply_chain":

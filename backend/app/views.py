@@ -11254,18 +11254,30 @@ class MicroKitchenDeliveryTeamViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         role = getattr(self.request.user, "role", None)
+        delivery_person = serializer.validated_data.get("delivery_person")
+        
         if role == "admin":
-            if serializer.validated_data.get("micro_kitchen") is None:
-                raise ValidationError({"micro_kitchen": ["This field is required."]})
+            mk_id = serializer.validated_data.get("micro_kitchen")
+            if mk_id is None:
+                raise ValidationError({"micro_kitchen": ["This field is required for admins."]})
+            
+            # Manual uniqueness check
+            if MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk_id, delivery_person=delivery_person).exists():
+                raise ValidationError({"delivery_person": ["This person is already in this kitchen's team."]})
+            
             serializer.save()
-            return
-        if role == "micro_kitchen":
+        elif role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=self.request.user).first()
             if not mk:
-                raise PermissionDenied("No micro kitchen profile found for this account.")
+                raise ValidationError({"detail": "No MicroKitchenProfile found for your account."})
+            
+            # Manual uniqueness check
+            if MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk, delivery_person=delivery_person).exists():
+                raise ValidationError({"delivery_person": ["This person is already in your team."]})
+                
             serializer.save(micro_kitchen=mk)
-            return
-        raise PermissionDenied("Forbidden.")
+        else:
+            raise PermissionDenied("You do not have permission to create team members.")
 
     def perform_update(self, serializer):
         obj = self.get_object()

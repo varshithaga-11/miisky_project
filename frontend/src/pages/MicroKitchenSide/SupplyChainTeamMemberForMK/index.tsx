@@ -17,7 +17,6 @@ import {
   patchMicroKitchenDeliveryTeamMember,
   SupplyChainUser,
 } from "../DeliveryManagement/api";
-import { getMyMicroKitchenProfile } from "../MicroKitchenQuestionare/api";
 
 const ROLE_OPTIONS: Array<{ value: "primary" | "backup" | "temporary"; label: string }> = [
   { value: "primary", label: "Primary" },
@@ -41,9 +40,6 @@ export default function SupplyChainTeamMemberForMKPage() {
   const [newRole, setNewRole] = useState<"primary" | "backup" | "temporary">("primary");
   const [newZone, setNewZone] = useState("");
   const [newPincode, setNewPincode] = useState("");
-  /** Resolved from profile or existing team row — sent on POST so the API always receives micro_kitchen. */
-  const [myMicroKitchenId, setMyMicroKitchenId] = useState<number | null>(null);
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<MicroKitchenTeamMember | null>(null);
 
@@ -73,22 +69,23 @@ export default function SupplyChainTeamMemberForMKPage() {
   const load = async () => {
     try {
       setLoading(true);
-      const [team, supply, profile] = await Promise.all([
-        fetchMicroKitchenDeliveryTeam(),
-        fetchSupplyChainUsers({ allSupplyChainUsers: true }),
-        getMyMicroKitchenProfile().catch(() => null),
-      ]);
+      const team = await fetchMicroKitchenDeliveryTeam();
       setRows(team);
-      setUsers(supply);
-      const fromProfile = profile?.id != null ? Number(profile.id) : NaN;
-      const fromTeam = team[0]?.micro_kitchen != null ? Number(team[0].micro_kitchen) : NaN;
-      const mk = Number.isFinite(fromProfile) ? fromProfile : Number.isFinite(fromTeam) ? fromTeam : null;
-      setMyMicroKitchenId(mk);
     } catch (e) {
       console.error(e);
       toast.error("Could not load team members.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSupplyChainPool = async () => {
+    if (users.length > 0) return;
+    try {
+      const supply = await fetchSupplyChainUsers({ allSupplyChainUsers: true });
+      setUsers(supply);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -104,10 +101,8 @@ export default function SupplyChainTeamMemberForMKPage() {
     }
     try {
       setSaving(true);
-      const mkId = myMicroKitchenId ?? rows[0]?.micro_kitchen ?? undefined;
       await createMicroKitchenDeliveryTeamMember({
         delivery_person: personId,
-        ...(mkId != null && Number.isFinite(Number(mkId)) ? { micro_kitchen: Number(mkId) } : {}),
         role: newRole,
         is_active: true,
         zone_name: newZone.trim() || null,
@@ -204,9 +199,9 @@ export default function SupplyChainTeamMemberForMKPage() {
                 <SearchableSelect<number>
                   options={personOptions}
                   value={selectedPersonId}
+                  onFocus={loadSupplyChainPool}
                   onChange={(v) => setSelectedPersonId(v)}
-                  placeholder={selectableUsers.length === 0 ? "No users available to add" : "Search by name, email, or phone"}
-                  disabled={selectableUsers.length === 0}
+                  placeholder="Search by name, email, or phone"
                   required
                 />
               </div>
