@@ -66,6 +66,8 @@ class UserManagementSerializer(serializers.ModelSerializer):
     city_name = serializers.SerializerMethodField(read_only=True)
     state_name = serializers.SerializerMethodField(read_only=True)
     country_name = serializers.SerializerMethodField(read_only=True)
+    created_by_name = serializers.SerializerMethodField(read_only=True)
+    created_by_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserRegister
@@ -95,11 +97,14 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'joined_date',
             'is_active',
             'created_on',
+            'created_by',
+            'created_by_name',
+            'created_by_role',
             'is_patient_mapped',
             'password',
             'password_confirm',
         ]
-        read_only_fields = ['created_on', 'city_name', 'state_name', 'country_name']
+        read_only_fields = ['created_on', 'city_name', 'state_name', 'country_name', 'created_by_name', 'created_by_role']
 
     def get_city_name(self, obj):
         return obj.city.name if obj.city else None
@@ -109,6 +114,15 @@ class UserManagementSerializer(serializers.ModelSerializer):
 
     def get_country_name(self, obj):
         return obj.country.name if obj.country else None
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            name = f"{obj.created_by.first_name or ''} {obj.created_by.last_name or ''}".strip()
+            return name or obj.created_by.username
+        return "System"
+
+    def get_created_by_role(self, obj):
+        return obj.created_by.role if obj.created_by else None
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -390,9 +404,16 @@ class CitySerializer(serializers.ModelSerializer):
 
 class MealTypeSerializer(serializers.ModelSerializer):
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
+
     class Meta:
         model = MealType
-        fields = ["id", "name", "posted_by_role"]
+        fields = ["id", "name", "posted_by_role", "posted_by_name"]
 
     def validate_name(self, value):
         query = MealType.objects.filter(name__iexact=value.strip())
@@ -425,9 +446,16 @@ class PackagingMaterialSerializer(serializers.ModelSerializer):
 
 class CuisineTypeSerializer(serializers.ModelSerializer):
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
+
     class Meta:
         model = CuisineType
-        fields = ["id", "name", "posted_by_role"]
+        fields = ["id", "name", "posted_by_role", "posted_by_name"]
 
     def validate_name(self, value):
         query = CuisineType.objects.filter(name__iexact=value.strip())
@@ -477,9 +505,16 @@ class FoodByIdNutritionSerializer(serializers.ModelSerializer):
 
 class IngredientSerializer(serializers.ModelSerializer):
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
+
     class Meta:
         model = Ingredient
-        fields = ["id", "name", "posted_by_role"]
+        fields = ["id", "name", "posted_by_role", "posted_by_name"]
 
     def validate_name(self, value):
         query = Ingredient.objects.filter(name__iexact=value.strip())
@@ -492,9 +527,16 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class UnitSerializer(serializers.ModelSerializer):
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
+
     class Meta:
         model = Unit
-        fields = ["id", "name", "posted_by_role"]
+        fields = ["id", "name", "posted_by_role", "posted_by_name"]
 
     def validate_name(self, value):
         query = Unit.objects.filter(name__iexact=value.strip())
@@ -515,12 +557,18 @@ class FoodIngredientSerializer(serializers.ModelSerializer):
     unit_name_input = serializers.CharField(write_only=True, required=False)
 
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
 
     class Meta:
         model = FoodIngredient
         fields = ['id', 'food', 'ingredient', 'ingredient_name',
                   'quantity', 'unit', 'unit_name', 'notes',
-                  'food_name_input', 'ingredient_name_input', 'unit_name_input', 'posted_by_role']
+                  'food_name_input', 'ingredient_name_input', 'unit_name_input', 'posted_by_role', 'posted_by_name']
         validators = []  # Disable default unique_together validator to allow update_or_create
 
     def create(self, validated_data):
@@ -573,10 +621,16 @@ class FoodStepSerializer(serializers.ModelSerializer):
     food_name_input = serializers.CharField(write_only=True, required=False)
 
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
 
     class Meta:
         model = FoodStep
-        fields = ['id', 'food', 'step_number', 'instruction', 'posted_by_role', 'food_name_input']
+        fields = ['id', 'food', 'step_number', 'instruction', 'posted_by_role', 'posted_by_name', 'food_name_input']
         validators = []  # Disable default unique_together validator to allow update_or_create
 
     def create(self, validated_data):
@@ -673,6 +727,13 @@ class FoodSerializer(serializers.ModelSerializer):
     vitamin_b12 = serializers.FloatField(write_only=True, required=False, allow_null=True)
 
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
+    posted_by_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_posted_by_name(self, obj):
+        if obj.posted_by:
+            return f"{obj.posted_by.first_name} {obj.posted_by.last_name}".strip() or obj.posted_by.username
+        return None
+
     class Meta:
         model = Food
         fields = ['id', 'name', 'meal_types', 'meal_type_names', 'cuisine_types', 'cuisine_type_names',
@@ -681,7 +742,7 @@ class FoodSerializer(serializers.ModelSerializer):
                   'calories', 'protein', 'carbs', 'fat', 'fiber', 'serving_size',
                   'glycemic_index', 'sugar', 'saturated_fat', 'trans_fat', 'cholesterol',
                   'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price', 
-                  'posted_by_role']
+                  'posted_by_role', 'posted_by_name']
 
     def create(self, validated_data):
         meal_names = validated_data.pop('meal_type_names_input', None)

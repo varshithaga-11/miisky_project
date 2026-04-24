@@ -29,6 +29,7 @@ export interface CuisineType {
   id: number;
   name: string;
   posted_by_role?: string;
+  posted_by_name?: string;
 }
 
 export interface Food {
@@ -46,6 +47,7 @@ export interface Food {
   steps?: any[];
   price?: number;
   posted_by_role?: string;
+  posted_by_name?: string;
 }
 
 export interface PaginatedResponses<T> {

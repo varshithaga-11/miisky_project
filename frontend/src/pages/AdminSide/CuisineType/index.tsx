@@ -134,19 +134,26 @@ const CuisineTypePage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-start">Posted By</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-xs font-medium text-gray-500 uppercase dark:text-gray-400 text-end">Actions</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
-                 <TableRow><TableCell colSpan={3} className="text-center py-10 text-gray-400 italic">Loading...</TableCell></TableRow>
+                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">Loading...</TableCell></TableRow>
               ) : cuisines.length === 0 ? (
-                 <TableRow><TableCell colSpan={3} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
+                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-gray-400 italic">No records found</TableCell></TableRow>
               ) : (
                   cuisines.map((item: CuisineType, idx: number) => (
                       <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                           <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{(currentPage - 1) * pageSize + idx + 1}</TableCell>
                           <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{item.name}</TableCell>
+                          <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                              <div className="flex flex-col">
+                                  <span className="font-bold text-gray-900 dark:text-white">{item.posted_by_name || 'System'}</span>
+                                  <span className="text-[10px] uppercase tracking-widest opacity-60 font-black text-blue-600">{item.posted_by_role || 'N/A'}</span>
+                              </div>
+                          </TableCell>
                           <TableCell className="px-5 py-4">
                               <div className="flex justify-end gap-3">
                                   <button 

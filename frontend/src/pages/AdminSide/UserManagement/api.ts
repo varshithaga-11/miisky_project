@@ -9,6 +9,8 @@ export interface UserRegister {
   role: string;                // e.g., 'admin', 'master', 'user', etc.
   is_active?: boolean;
   created_by?: number;         // user ID of creator, optional for creation
+  created_by_name?: string;
+  created_by_role?: string;
   mobile?: string | null;
   whatsapp?: string | null;
   dob?: string | null; // YYYY-MM-DD

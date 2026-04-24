@@ -11,6 +11,7 @@ export interface FoodIngredient {
   unit_name?: string;
   notes?: string;
   posted_by_role?: string;
+  posted_by_name?: string;
 }
 
 export interface PaginatedResponses<T> {

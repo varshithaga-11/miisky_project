@@ -282,17 +282,20 @@ const FoodManagementPage: React.FC = () => {
                     Price (₹) {sortField === 'price' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                   </div>
                 </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
+                  Posted By
+                </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">Loading foods...</TableCell>
+                  <TableCell colSpan={8} className="px-5 py-8 text-center text-gray-400 italic">Loading foods...</TableCell>
                 </TableRow>
               ) : sortedFoods.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">No food items found</TableCell>
+                  <TableCell colSpan={8} className="px-5 py-8 text-center text-gray-400 italic">No food items found</TableCell>
                 </TableRow>
               ) : (
                 sortedFoods.map((food: Food, index: number) => (
@@ -336,6 +339,12 @@ const FoodManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">
                       {food.price ? `₹${food.price}` : <span className="text-gray-400 font-normal italic">N/A</span>}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 dark:text-white">{food.posted_by_name || 'System'}</span>
+                        <span className="text-[10px] uppercase tracking-widest opacity-60 font-black text-blue-600">{food.posted_by_role || 'N/A'}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                        <div className="flex items-center gap-3 text-lg">

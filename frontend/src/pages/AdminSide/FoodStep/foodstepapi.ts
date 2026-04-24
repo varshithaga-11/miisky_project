@@ -6,6 +6,8 @@ export interface FoodStep {
   food: number;
   step_number: number;
   instruction: string;
+  posted_by_role?: string;
+  posted_by_name?: string;
 }
 
 export interface PaginatedResponses<T> {

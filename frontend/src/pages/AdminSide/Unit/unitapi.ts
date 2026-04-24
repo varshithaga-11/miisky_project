@@ -5,6 +5,7 @@ export interface Unit {
   id?: number;
   name: string;
   posted_by_role?: string;
+  posted_by_name?: string;
 }
 
 // Create

@@ -152,17 +152,18 @@ const FoodStepManagementPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Food Name</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Step No.</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Instruction</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Posted By</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && steps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">Loading steps...</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">Loading steps...</TableCell>
                 </TableRow>
               ) : steps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">No steps found.</TableCell>
+                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">No steps found.</TableCell>
                 </TableRow>
               ) : (
                 steps.map((step, i) => (
@@ -176,6 +177,12 @@ const FoodStepManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-5 py-4 max-w-md">
                       <div className="line-clamp-2 text-gray-600 dark:text-gray-400">{step.instruction}</div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 dark:text-white">{step.posted_by_name || 'System'}</span>
+                        <span className="text-[10px] uppercase tracking-widest opacity-60 font-black text-blue-600">{step.posted_by_role || 'N/A'}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
