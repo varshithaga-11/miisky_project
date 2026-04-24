@@ -25,6 +25,7 @@ export interface QuestionnaireData {
   consumeEgg: YesNo; consumeMilk: YesNo;
   foodAllergy: YesNo; foodAllergyName: string;
   mealSlotsSelected: string[]; snacksBetweenMeals: YesNo; skipMeals: YesNo;
+  mealsPerDay: string;
   foodSource: string[];
   dieticianConsulted: YesNo; dieticianName: string; dieticianLocation: string; dieticianPhone: string;
   physicalActivity: YesNo;
@@ -33,6 +34,11 @@ export interface QuestionnaireData {
   habitOptions: string[]; habitSelected: string[];
   habitOtherText: string;
   improvementThoughts: string;
+  fruitsPerDay: string; vegetablesPerDay: string;
+  onMedication: YesNo;
+  sleepQuality: string; stressLevel: string; fallsSickFrequency: string;
+  foodPreferences: string; additionalNotes: string;
+  anyOtherComments: string; anyNotesForCareTeam: string;
 }
 
 const yn = (v: YesNo) => (v === "" ? "-" : v.toUpperCase());
@@ -214,7 +220,7 @@ export function generatePDF(d: QuestionnaireData) {
   field("Specialty", d.doctorSpecialty);
   field("Phone number", d.doctorPhone);
   field("Other health concerns", d.otherHealthConcerns);
-  if (d.gender === "female") radioField("Menstrual problem", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern);
+  yesNoField("On Medication", d.onMedication);
 
   // ── Food Habit
   heading("FOOD HABIT");
@@ -226,7 +232,10 @@ export function generatePDF(d: QuestionnaireData) {
   yesNoField("Food Allergy", d.foodAllergy);
   hint("If yes, please mention the food allergy name below:");
   field("Food allergy name", d.foodAllergyName);
+  field("Fruits per day", d.fruitsPerDay);
+  field("Vegetables per day", d.vegetablesPerDay);
   checklist("Meals in one day", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], d.mealSlotsSelected);
+  field("Meals per day (count)", d.mealsPerDay);
   yesNoField("Snack between Meals", d.snacksBetweenMeals);
   yesNoField("Skip meals", d.skipMeals);
   checklist("Food source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource);
@@ -245,6 +254,14 @@ export function generatePDF(d: QuestionnaireData) {
   checklist("Other habits", d.habitOptions, d.habitSelected);
   field("Others (habit)", d.habitOtherText);
   field("Improvement thoughts", d.improvementThoughts);
+  radioField("Sleep quality", ["Fresh", "Not Fresh"], d.sleepQuality);
+  radioField("Stress level", ["Low", "Medium", "High"], d.stressLevel);
+  radioField("Falls sick frequency", ["Once", "Twice", "Frequent"], d.fallsSickFrequency);
+  radioField("Menstrual Pattern", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern);
+  field("Food preferences", d.foodPreferences);
+  field("Additional notes", d.additionalNotes);
+  field("Any other comments", d.anyOtherComments);
+  field("Any notes for care team", d.anyNotesForCareTeam);
 
   pdf.save("patient_questionnaire_preview.pdf");
 }
@@ -385,7 +402,7 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(docField("Specialty", d.doctorSpecialty));
   children.push(docField("Phone number", d.doctorPhone));
   children.push(docField("Other health concerns", d.otherHealthConcerns));
-  if (d.gender === "female") children.push(docRadioField("Menstrual problem", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern));
+  children.push(docYesNoField("On Medication", d.onMedication));
 
   // Food Habit
   children.push(docHeading("FOOD HABIT"));
@@ -397,7 +414,10 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(docYesNoField("Food Allergy", d.foodAllergy));
   children.push(docHint("If yes, please mention the food allergy name below:"));
   children.push(docField("Food allergy name", d.foodAllergyName));
+  children.push(docField("Fruits per day", d.fruitsPerDay));
+  children.push(docField("Vegetables per day", d.vegetablesPerDay));
   children.push(...docChecklist("Meals in one day", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], d.mealSlotsSelected));
+  children.push(docField("Meals per day (count)", d.mealsPerDay));
   children.push(docYesNoField("Snack between Meals", d.snacksBetweenMeals));
   children.push(docYesNoField("Skip meals", d.skipMeals));
   children.push(...docChecklist("Food source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource));
@@ -416,6 +436,14 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(...docChecklist("Other habits", d.habitOptions, d.habitSelected));
   children.push(docField("Others (habit)", d.habitOtherText));
   children.push(docField("Improvement thoughts", d.improvementThoughts));
+  children.push(docRadioField("Sleep quality", ["Fresh", "Not Fresh"], d.sleepQuality));
+  children.push(docRadioField("Stress level", ["Low", "Medium", "High"], d.stressLevel));
+  children.push(docRadioField("Falls sick frequency", ["Once", "Twice", "Frequent"], d.fallsSickFrequency));
+  children.push(docRadioField("Menstrual Pattern", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern));
+  children.push(docField("Food preferences", d.foodPreferences));
+  children.push(docField("Additional notes", d.additionalNotes));
+  children.push(docField("Any other comments", d.anyOtherComments));
+  children.push(docField("Any notes for care team", d.anyNotesForCareTeam));
 
   const doc = new Document({
     sections: [{ children }],
