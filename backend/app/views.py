@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.db.models import Avg, Count, DecimalField, Exists, F, Max, OuterRef, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db import transaction
+from django.core.mail import send_mail
 from rest_framework import viewsets, status, filters, mixins, generics
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -35,7 +36,6 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 from .questionnaire_sync import sync_user_questionnaire_relations
-from .tasks import send_user_credentials_email
 from website.pagination import WebsitePagination
 
 try:
@@ -608,6 +608,49 @@ class NonPatientDashboardCountsView(APIView):
         })
 
 
+def _full_name(user):
+    if not user:
+        return "Unknown"
+    name = f"{(user.first_name or '').strip()} {(user.last_name or '').strip()}".strip()
+    return name or (getattr(user, "username", None) or "Unknown")
+
+
+def send_user_credentials_email(user_id, raw_password):
+    """
+    Sends account credentials (username/password) to a newly registered user.
+    """
+    try:
+        user = UserRegister.objects.get(id=user_id)
+        if not user.email:
+            return f"User {user_id} has no email."
+
+        full_name = _full_name(user)
+        subject = "Your Miisky Account Credentials"
+        message = (
+            f"Hello {full_name},\n\n"
+            f"Your account has been successfully created on the Miisky platform.\n\n"
+            f"Here are your login credentials:\n"
+            f"Username: {user.username}\n"
+            f"Password: {raw_password}\n\n"
+            f"Please log in at your earliest convenience and consider changing your password for enhanced security.\n\n"
+            f"Regards,\n"
+            f"Miisky Team"
+        )
+
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        return f"Credentials email sent to {user.email}"
+    except UserRegister.DoesNotExist:
+        return f"User {user_id} does not exist."
+    except Exception as e:
+        return f"Failed to send email: {str(e)}"
+
+
 class ProfileView(viewsets.ModelViewSet):
     # permission_classes = [IsAuthenticated]
     queryset = UserRegister.objects.all()
@@ -670,7 +713,8 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         user = serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
         raw_password = serializer.validated_data.get('password')
         if raw_password and user.email:
-            send_user_credentials_email.delay(user.id, raw_password)
+            # Called synchronously to avoid Redis environment issues
+            send_user_credentials_email(user.id, raw_password)
 
 
 class AdminAllOrdersView(APIView):
