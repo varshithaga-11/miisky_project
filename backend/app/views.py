@@ -35,6 +35,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 from .questionnaire_sync import sync_user_questionnaire_relations
+from .tasks import send_user_credentials_email
 from website.pagination import WebsitePagination
 
 try:
@@ -666,7 +667,10 @@ class UserManagementViewSet(viewsets.ModelViewSet):
 
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+        user = serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+        raw_password = serializer.validated_data.get('password')
+        if raw_password and user.email:
+            send_user_credentials_email.delay(user.id, raw_password)
 
 
 class AdminAllOrdersView(APIView):
