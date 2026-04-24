@@ -18,10 +18,12 @@ export const fetchMicroKitchenTeamLeaves = async (
   period: OrderDatePeriod | string = "this_month",
   kitchenHandlingStatus: KitchenHandlingStatus | "all" = "all",
   customRangeStart?: string,
-  customRangeEnd?: string
+  customRangeEnd?: string,
+  deliveryPersonId?: number | string
 ): Promise<PaginatedTeamLeaves> => {
   let url = createApiUrl(`api/supply-chain-leave/?page=${page}&limit=${limit}`);
   if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (deliveryPersonId) url += `&delivery_person=${encodeURIComponent(deliveryPersonId)}`;
   if (kitchenHandlingStatus && kitchenHandlingStatus !== "all") {
     url += `&kitchen_handling_status=${encodeURIComponent(kitchenHandlingStatus)}`;
   }

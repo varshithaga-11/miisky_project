@@ -12203,6 +12203,11 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
             allowed = {"not_started", "in_progress", "complete"}
             if handling_status in allowed:
                 qs = qs.filter(kitchen_handling_status=handling_status)
+
+        delivery_person = request.query_params.get("delivery_person")
+        if delivery_person:
+            qs = qs.filter(user_id=delivery_person)
+
         search = (request.query_params.get("search") or "").strip()
         if search:
             q = (

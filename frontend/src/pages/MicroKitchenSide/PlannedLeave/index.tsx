@@ -13,6 +13,8 @@ import {
   FiPackage,
   FiTruck,
 } from "react-icons/fi";
+import SearchableSelect from "../../../components/form/SearchableSelect";
+
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Label from "../../../components/form/Label";
@@ -27,8 +29,10 @@ import {
 } from "./api";
 import {
   fetchMicroKitchenDeliveryTeam,
+  fetchSupplyChainUsers,
   reassignMealDelivery,
   type MicroKitchenTeamMember,
+  type SupplyChainUser,
 } from "../DeliveryManagement/api";
 import { SupplyChainLeave } from "../../SupplyChain/api";
 import type { OrderDatePeriod } from "../../NonPatient/orderapi";
@@ -99,6 +103,8 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [deliveryPersonId, setDeliveryPersonId] = useState<number | "all">("all");
+  const [supplyChainUsers, setSupplyChainUsers] = useState<SupplyChainUser[]>([]);
 
   /** Fixed-position menu anchored to the ⋮ button (portal avoids table/overflow clipping). */
   const [menuState, setMenuState] = useState<{ leaveId: number; top: number; left: number } | null>(null);
@@ -110,6 +116,24 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
     error: string | null;
     teamMembers: MicroKitchenTeamMember[] | null;
   }>({ open: false, loading: false, data: null, error: null, teamMembers: null });
+
+  const loadSupplyChainPool = async () => {
+    if (supplyChainUsers.length > 0) return;
+    try {
+      const data = await fetchSupplyChainUsers({ allSupplyChainUsers: true });
+      setSupplyChainUsers(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deliveryPersonOptions = useMemo(() => {
+    const opts = supplyChainUsers.map((u) => ({
+      value: u.id,
+      label: `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email || `#${u.id}`,
+    }));
+    return [{ value: "all" as const, label: "All members" }, ...opts];
+  }, [supplyChainUsers]);
 
   const [reassignPick, setReassignPick] = useState<Record<number, string>>({});
   const [reassignBusyId, setReassignBusyId] = useState<number | null>(null);
@@ -242,7 +266,8 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
         period,
         kitchenHandlingFilter,
         period === "custom_range" ? customStart : undefined,
-        period === "custom_range" ? customEnd : undefined
+        period === "custom_range" ? customEnd : undefined,
+        deliveryPersonId === "all" ? undefined : deliveryPersonId
       );
       setRows(data.results || []);
       setTotalItems(data.count || 0);
@@ -260,7 +285,7 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
       void load();
     }, search ? 400 : 0);
     return () => clearTimeout(t);
-  }, [currentPage, pageSize, search, period, kitchenHandlingFilter, customStart, customEnd]);
+  }, [currentPage, pageSize, search, period, kitchenHandlingFilter, customStart, customEnd, deliveryPersonId]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -353,6 +378,21 @@ const MicroKitchenPlannedLeavePage: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="w-full sm:w-60">
+            <Label className="text-[10px] font-black text-gray-400 uppercase block mb-1">
+              Delivery person
+            </Label>
+            <SearchableSelect<number | "all">
+              options={deliveryPersonOptions}
+              value={deliveryPersonId}
+              onFocus={loadSupplyChainPool}
+              onChange={(v) => {
+                setDeliveryPersonId(v);
+                setCurrentPage(1);
+              }}
+              placeholder="Filter by person"
+            />
           </div>
           {period === "custom_range" && (
             <>
