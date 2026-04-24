@@ -26,112 +26,6 @@ type YesNo = "yes" | "no" | "";
 type WorkType = "sedentary" | "moderate" | "heavy" | "";
 type DietPattern = "veg" | "non_veg" | "";
 
-const DEFAULT_HEALTH_ISSUES = [
-  "Pre- Diabetic",
-  "Diabetes Type I",
-  "Diabetes type II",
-  "Juvenile Diabetes",
-  "Hypertension",
-  "Cardiac Issues",
-  "CKD",
-  "Anemia",
-  "Thyroid",
-  "Migraine",
-  "PCOD & PCOS",
-  "Triglycerides",
-  "Cholesterol",
-  "Cancer",
-  "Gout",
-  "Osteoporosis",
-  "Obesity",
-  "Urine Infection",
-  "Glucoma",
-  "Malaria",
-  "Dengue",
-  "Chicken Pox",
-  "Herpes",
-  "Gall stone",
-  "Fatty liver",
-  "Liver Cirrhosis",
-  "Kidney stone",
-  "IBS",
-  "Gastritis",
-];
-
-const DEFAULT_AUTOIMMUNE = [
-  "Rheumatoid Arthritis",
-  "Celiac disease",
-  "Pernicious Anemia",
-  "Vitiligo",
-  "Addison's disease",
-  "Ulcerative Colitis",
-  "Crohn's disease",
-  "Guillain- Barre Syndrome",
-  "Kawasaki disease",
-  "Psoriasis",
-  "Alopecia Areata",
-  "Fibromyalgia",
-  "None",
-];
-
-const DEFAULT_SYMPTOMS = [
-  "Fatigue/ Tiredness",
-  "Sudden weight loss",
-  "Sudden weight Gain",
-  "Muscle pain",
-  "Joint pain",
-  "Hair loss",
-  "Bloating",
-  "Diarrhoea",
-  "Constipation",
-  "Numbness or tingling in Hand/feet",
-  "Difficulty Concentrating",
-  "Palpitations",
-  "Blurry vision",
-  "Mouth ulcers",
-  "None",
-];
-
-const DEFAULT_SKIN_ISSUES = ["Allergy", "Acne prone", "Eczema", "Dandruff", "Dryness", "Itchiness", "None"];
-const DEFAULT_DEFICIENCIES = [
-  "Vitamin A",
-  "Vitamin B1",
-  "Vitamin B9",
-  "Vitamin B12",
-  "Vitamin C",
-  "Vitamin D3",
-  "Vitamin K",
-  "Calcium",
-  "Magnesium",
-  "Zinc",
-  "Iron",
-  "Potassium",
-  "Sodium",
-  "None",
-];
-const DEFAULT_HABITS = [
-  "Smoking",
-  "Alcohol consumption",
-  "Tobacco / Pan masala",
-  "Excess tea/coffee intake",
-  "Skipping meals",
-  "Intake of excess junk food",
-  "Others",
-  "None",
-];
-const DEFAULT_ACTIVITIES = [
-  "Walking",
-  "Jogging / Running",
-  "Gym / Strength Training",
-  "Yoga",
-  "Cycling",
-  "Swimming",
-  "Aerobics / Zumba",
-  "Sports (e.g., badminton, football, cricket)",
-  "Home workout",
-  "Others",
-];
-
 function mergeOptions(primary: string[], secondary: string[]): string[] {
   const merged = [...primary];
   for (const item of secondary) {
@@ -162,13 +56,13 @@ export default function PatientAllQuestionariePage() {
   const [error, setError] = useState<string | null>(null);
   const [downloadingFormat, setDownloadingFormat] = useState<"pdf" | "docx" | null>(null);
 
-  const [healthRows, setHealthRows] = useState<HealthIssueRow[]>(DEFAULT_HEALTH_ISSUES.map((name) => ({ name, value: "", sinceWhen: "", comments: "" })));
-  const [autoimmuneOptions, setAutoimmuneOptions] = useState<string[]>(DEFAULT_AUTOIMMUNE);
-  const [symptomOptions, setSymptomOptions] = useState<string[]>(DEFAULT_SYMPTOMS);
-  const [skinOptions, setSkinOptions] = useState<string[]>(DEFAULT_SKIN_ISSUES);
-  const [deficiencyOptions, setDeficiencyOptions] = useState<string[]>(DEFAULT_DEFICIENCIES);
-  const [habitOptions, setHabitOptions] = useState<string[]>(DEFAULT_HABITS);
-  const [activityOptions, setActivityOptions] = useState<string[]>(DEFAULT_ACTIVITIES);
+  const [healthRows, setHealthRows] = useState<HealthIssueRow[]>([]);
+  const [autoimmuneOptions, setAutoimmuneOptions] = useState<string[]>([]);
+  const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
+  const [skinOptions, setSkinOptions] = useState<string[]>([]);
+  const [deficiencyOptions, setDeficiencyOptions] = useState<string[]>([]);
+  const [habitOptions, setHabitOptions] = useState<string[]>([]);
+  const [activityOptions, setActivityOptions] = useState<string[]>([]);
 
   const [autoimmuneSelected, setAutoimmuneSelected] = useState<string[]>([]);
   const [symptomSelected, setSymptomSelected] = useState<string[]>([]);
@@ -261,17 +155,14 @@ export default function PatientAllQuestionariePage() {
           fetchActivityMasters(),
         ]);
 
-        const healthNames = mergeOptions(
-          DEFAULT_HEALTH_ISSUES,
-          healthConditions.map((item) => item.name)
-        );
+        const healthNames = mergeOptions([], healthConditions.map((item) => item.name));
         setHealthRows(healthNames.map((name) => ({ name, value: "", sinceWhen: "", comments: "" })));
-        setAutoimmuneOptions(mergeOptions(DEFAULT_AUTOIMMUNE, autoimmune.map((item) => item.name)));
-        setSymptomOptions(mergeOptions(DEFAULT_SYMPTOMS, symptoms.map((item) => item.name)));
-        setSkinOptions(mergeOptions(DEFAULT_SKIN_ISSUES, skinIssues.map((item) => item.name)));
-        setDeficiencyOptions(mergeOptions(DEFAULT_DEFICIENCIES, deficiencies.map((item) => item.name)));
-        setHabitOptions(mergeOptions(DEFAULT_HABITS, habits.map((item) => item.name)));
-        setActivityOptions(mergeOptions(DEFAULT_ACTIVITIES, activities.map((item) => item.name)));
+        setAutoimmuneOptions(mergeOptions([], autoimmune.map((item) => item.name)));
+        setSymptomOptions(mergeOptions([], symptoms.map((item) => item.name)));
+        setSkinOptions(mergeOptions([], skinIssues.map((item) => item.name)));
+        setDeficiencyOptions(mergeOptions([], deficiencies.map((item) => item.name)));
+        setHabitOptions(mergeOptions([], habits.map((item) => item.name)));
+        setActivityOptions(mergeOptions([], activities.map((item) => item.name)));
       } catch (err) {
         console.error(err);
         setError("Failed to load questionnaire questions.");
