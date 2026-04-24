@@ -20,7 +20,7 @@ const KitchenExecutionPage: React.FC = () => {
     // Filters
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [period, setPeriod] = useState("all");
+    const [period, setPeriod] = useState("today");
 
     const load = useCallback(async (p = 1, isLoadMore = false, sd = startDate, ed = endDate, per = period) => {
         if (isLoadMore) setLoadingMore(true);
@@ -116,14 +116,16 @@ const KitchenExecutionPage: React.FC = () => {
                                 <tr className="border-b border-gray-50 dark:border-white/5 text-left">
                                     <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Patient / Consumer</th>
                                     <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Meal Type</th>
+                                    <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Meal Date</th>
                                     <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Food Identification</th>
+                                    <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Assigned Person</th>
                                     <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Live Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 dark:divide-white/5">
                                 {loading && page === 1 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-8 py-32 text-center">
+                                        <td colSpan={6} className="px-8 py-32 text-center">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="size-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Synchronizing records...</p>
@@ -132,7 +134,7 @@ const KitchenExecutionPage: React.FC = () => {
                                     </tr>
                                 ) : rows.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-8 py-32 text-center">
+                                        <td colSpan={6} className="px-8 py-32 text-center">
                                             <div className="size-20 bg-gray-50 dark:bg-gray-900 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-200">
                                                 <FiInfo size={40} />
                                             </div>
@@ -163,8 +165,24 @@ const KitchenExecutionPage: React.FC = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6">
+                                                    <p className="text-[10px] font-bold text-gray-700 dark:text-white/80">{m.meal_date || "—"}</p>
+                                                </td>
+                                                <td className="px-8 py-6">
                                                     <p className="font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">{m.food_details?.name ?? "—"}</p>
                                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2">{m.quantity} Unit(s) Assigned</p>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="size-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600">
+                                                            <FiUser size={14} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
+                                                                {m.delivery_person_details ? `${m.delivery_person_details.first_name} ${m.delivery_person_details.last_name}`.trim() : "Not Assigned"}
+                                                            </p>
+                                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">ID: #{m.delivery_person_details?.id || "N/A"}</p>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-8 py-6">
                                                     <div className={`flex items-center gap-2 w-fit px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest italic shadow-sm border ${

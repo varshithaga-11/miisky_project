@@ -203,8 +203,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
     }, [hasMore, loading, loadingMore, currentPage, fetchDailyPrep]);
 
     useEffect(() => {
-        fetchPatients();
-        fetchAssignContext();
+        // Dropdown data (patients, supply users) now fetched on-demand via onFocus
     }, []);
 
     const handleAssignFromGlobal = async (meal: DailyMeal, personId: number, slotId: number | null) => {
@@ -294,6 +293,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                 <Select
                                     value={selectedPatient}
                                     onChange={setSelectedPatient}
+                                    onFocus={fetchPatients}
                                     options={[
                                         { value: "all", label: "Consolidated Patients" },
                                         ...patients.map(p => ({
@@ -304,21 +304,22 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                     className="!rounded-2xl italic font-bold"
                                 />
                             </div>
-                            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 p-1 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
-                                <select
+                            <div className="flex-1 min-w-[200px]">
+                                <Select
                                     value={bulkPersonId}
-                                    onChange={(e) => setBulkPersonId(e.target.value)}
-                                    className="px-4 py-2 bg-transparent text-sm font-bold border-none focus:ring-0 min-w-[200px]"
-                                >
-                                    <option value="">Bulk Partner Assign</option>
-                                    {supplyUsers.map(u => (
-                                        <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
-                                    ))}
-                                </select>
-                                <Button size="sm" onClick={handleBulkAssign} disabled={bulkSaving} className="!rounded-xl !py-2 !px-4 text-[9px] font-black uppercase italic">
-                                    {bulkSaving ? 'Syncing...' : 'Bulk Execute'}
-                                </Button>
+                                    onChange={setBulkPersonId}
+                                    onFocus={fetchAssignContext}
+                                    placeholder="Bulk Partner Assign"
+                                    options={supplyUsers.map(u => ({
+                                        value: String(u.id),
+                                        label: `${u.first_name} ${u.last_name}`
+                                    }))}
+                                    className="!rounded-2xl italic font-bold"
+                                />
                             </div>
+                            <Button size="sm" onClick={handleBulkAssign} disabled={bulkSaving} className="!rounded-xl !py-2 !px-4 text-[9px] font-black uppercase italic">
+                                {bulkSaving ? 'Syncing...' : 'Bulk Execute'}
+                            </Button>
                         </div>
 
                         <FilterBar 
