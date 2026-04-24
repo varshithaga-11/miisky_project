@@ -379,6 +379,16 @@ const nutritionistNavItems: NavItem[] = [
     ],
   },
   {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Blog Management",
+    subItems: [
+      { name: "Blog Categories", path: "/nutrition/blogcategory" },
+      { name: "Blog Comments", path: "/nutrition/blogcomment" },
+      { name: "Blog Posts", path: "/nutrition/blogpost" },
+      { name: "Blog Tags", path: "/nutrition/blogtag" },
+    ],
+  },
+  {
     icon: <UserCog className="w-5 h-5" />,
     name: "Profile",
     path: "/profile-info",

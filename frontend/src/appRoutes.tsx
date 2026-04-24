@@ -405,6 +405,10 @@ export function appRoutes() {
           <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
           <Route path="nutrition/workflow" element={<NutritionWorkFlowPage />} />
           <Route path="nutrition/nutrition-mapping/user-mapping" element={<NutritionUserMappingPage />} />
+          <Route path="nutrition/blogcategory" element={<BlogCategoryPage />} />
+          <Route path="nutrition/blogtag" element={<BlogTagPage />} />
+          <Route path="nutrition/blogpost" element={<BlogPostPage />} />
+          <Route path="nutrition/blogcomment" element={<BlogCommentPage />} />
 
           {/* Nutritionist Food Management */}
           <Route path="nutrition/meal-type" element={<MealTypeManagementPage />} />
