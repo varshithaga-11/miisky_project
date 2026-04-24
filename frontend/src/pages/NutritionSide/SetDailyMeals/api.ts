@@ -50,10 +50,18 @@ export interface UserMeal {
     is_consumed?: boolean;
     meal_type_details?: { id: number; name: string };
     cuisine_type_details?: { id: number; name: string };
-    food_details?: { id: number; name: string; image?: string };
+    food_details?: { 
+        id: number; 
+        name: string; 
+        image?: string;
+        meal_types?: number[];
+        meal_type_details?: { id: number; name: string }[];
+    };
     packaging_material_details?: { id: number; name: string } | null;
     micro_kitchen?: number | null;
     micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
+    available_meal_types?: number[];
+    available_meal_type_details?: { id: number; name: string }[];
 }
 
 export interface FoodNutritionById {

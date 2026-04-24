@@ -466,16 +466,30 @@ function QuestionnaireView({ data }: { data: any }) {
           <div className="text-[10px] font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wider mb-2">
             Team Notes & Timeline
           </div>
-          <div className="space-y-2 text-sm">
-            <p className="text-cyan-900 dark:text-cyan-100 font-medium">
-              {data.any_notes_for_care_team || data.any_other_comments || "No care team notes"}
-            </p>
-            <p className="text-xs text-cyan-700/80 dark:text-cyan-200/80">
-              Created: {data.created_on ? String(data.created_on).replace("T", " ").slice(0, 19) : "—"}
-            </p>
-            <p className="text-xs text-cyan-700/80 dark:text-cyan-200/80">
-              Updated: {data.updated_on ? String(data.updated_on).replace("T", " ").slice(0, 19) : "—"}
-            </p>
+          <div className="space-y-3 text-sm">
+            {data.any_notes_for_care_team && (
+              <div>
+                <span className="text-[9px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-tighter block mb-1">Notes for Care Team</span>
+                <p className="text-cyan-900 dark:text-cyan-100 font-medium">{data.any_notes_for_care_team}</p>
+              </div>
+            )}
+            {data.any_other_comments && (
+              <div>
+                <span className="text-[9px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-tighter block mb-1">Other Comments</span>
+                <p className="text-cyan-900 dark:text-cyan-100 font-medium">{data.any_other_comments}</p>
+              </div>
+            )}
+            {!data.any_notes_for_care_team && !data.any_other_comments && (
+              <p className="text-cyan-900 dark:text-cyan-100 font-medium italic">No team notes provided.</p>
+            )}
+            <div className="pt-2 mt-2 border-t border-cyan-100 dark:border-cyan-500/20 space-y-1">
+              <p className="text-[10px] text-cyan-700/80 dark:text-cyan-200/80">
+                Created: {data.created_on ? String(data.created_on).replace("T", " ").slice(0, 19) : "—"}
+              </p>
+              <p className="text-[10px] text-cyan-700/80 dark:text-cyan-200/80">
+                Updated: {data.updated_on ? String(data.updated_on).replace("T", " ").slice(0, 19) : "—"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

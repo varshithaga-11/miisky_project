@@ -224,6 +224,18 @@ export default function PatientAllQuestionariePage() {
   const [habitOtherText, setHabitOtherText] = useState("");
   const [improvementThoughts, setImprovementThoughts] = useState("");
 
+  const [mealsPerDay, setMealsPerDay] = useState("");
+  const [fruitsPerDay, setFruitsPerDay] = useState("");
+  const [vegetablesPerDay, setVegetablesPerDay] = useState("");
+  const [onMedication, setOnMedication] = useState<YesNo>("");
+  const [sleepQuality, setSleepQuality] = useState("");
+  const [stressLevel, setStressLevel] = useState("");
+  const [fallsSickFrequency, setFallsSickFrequency] = useState("");
+  const [foodPreferences, setFoodPreferences] = useState("");
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [anyOtherComments, setAnyOtherComments] = useState("");
+  const [anyNotesForCareTeam, setAnyNotesForCareTeam] = useState("");
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -306,6 +318,17 @@ export default function PatientAllQuestionariePage() {
       habitOptions, habitSelected,
       habitOtherText,
       improvementThoughts,
+      mealsPerDay,
+      fruitsPerDay,
+      vegetablesPerDay,
+      onMedication,
+      sleepQuality,
+      stressLevel,
+      fallsSickFrequency,
+      foodPreferences,
+      additionalNotes,
+      anyOtherComments,
+      anyNotesForCareTeam,
     };
 
     try {
@@ -513,16 +536,13 @@ export default function PatientAllQuestionariePage() {
                   <textarea value={otherHealthConcerns} onChange={(e) => setOtherHealthConcerns(e.target.value)} rows={3} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 </label>
 
-                {gender === "female" ? (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Any menstrual problem</p>
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <label><input type="radio" checked={menstrualPattern === "heavy"} onChange={() => setMenstrualPattern("heavy")} /> Heavy bleeding</label>
-                      <label><input type="radio" checked={menstrualPattern === "very_less"} onChange={() => setMenstrualPattern("very_less")} /> Very less bleeding</label>
-                      <label><input type="radio" checked={menstrualPattern === "none"} onChange={() => setMenstrualPattern("none")} /> None</label>
-                    </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Are you currently on any medication?</p>
+                  <div className="flex gap-5 text-sm">
+                    <label><input type="radio" checked={onMedication === "yes"} onChange={() => setOnMedication("yes")} /> Yes</label>
+                    <label><input type="radio" checked={onMedication === "no"} onChange={() => setOnMedication("no")} /> No</label>
                   </div>
-                ) : null}
+                </div>
               </section>
 
               <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 space-y-4">
@@ -570,9 +590,15 @@ export default function PatientAllQuestionariePage() {
                   <input value={foodAllergyName} onChange={(e) => setFoodAllergyName(e.target.value)} placeholder="Please mention the name" className="w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 ) : null}
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="text-sm">Fruits intake per day <input type="number" value={fruitsPerDay} onChange={(e) => setFruitsPerDay(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
+                  <label className="text-sm">Vegetables intake per day <input type="number" value={vegetablesPerDay} onChange={(e) => setVegetablesPerDay(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
+                </div>
+
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Number of meals in one day</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <input type="number" value={mealsPerDay} onChange={(e) => setMealsPerDay(e.target.value)} placeholder="Total count of meals" className="w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mt-2">
                     {["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"].map((slot) => (
                       <label key={slot}><input type="checkbox" checked={mealSlotsSelected.includes(slot)} onChange={() => setMealSlotsSelected((prev) => toggleItem(prev, slot))} /> {slot}</label>
                     ))}
@@ -662,11 +688,68 @@ export default function PatientAllQuestionariePage() {
                 <label className="text-sm block">
                   Please share your thoughts on what can help us improve your health
                   <textarea
-                    rows={5}
+                    rows={3}
                     value={improvementThoughts}
                     onChange={(e) => setImprovementThoughts(e.target.value)}
                     className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700"
                   />
+                </label>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Sleep quality</p>
+                    <div className="flex gap-5 text-sm">
+                      <label><input type="radio" checked={sleepQuality === "Fresh"} onChange={() => setSleepQuality("Fresh")} /> Fresh</label>
+                      <label><input type="radio" checked={sleepQuality === "Not Fresh"} onChange={() => setSleepQuality("Not Fresh")} /> Not Fresh</label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Stress level</p>
+                    <div className="flex gap-5 text-sm">
+                      <label><input type="radio" checked={stressLevel === "Low"} onChange={() => setStressLevel("Low")} /> Low</label>
+                      <label><input type="radio" checked={stressLevel === "Medium"} onChange={() => setStressLevel("Medium")} /> Medium</label>
+                      <label><input type="radio" checked={stressLevel === "High"} onChange={() => setStressLevel("High")} /> High</label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Falls sick frequency</p>
+                    <div className="flex gap-5 text-sm">
+                      <label><input type="radio" checked={fallsSickFrequency === "Once"} onChange={() => setFallsSickFrequency("Once")} /> Once</label>
+                      <label><input type="radio" checked={fallsSickFrequency === "Twice"} onChange={() => setFallsSickFrequency("Twice")} /> Twice</label>
+                      <label><input type="radio" checked={fallsSickFrequency === "Frequent"} onChange={() => setFallsSickFrequency("Frequent")} /> Frequent</label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Menstrual Pattern</p>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <label><input type="radio" checked={menstrualPattern === "heavy"} onChange={() => setMenstrualPattern("heavy")} /> Heavy bleeding</label>
+                      <label><input type="radio" checked={menstrualPattern === "very_less"} onChange={() => setMenstrualPattern("very_less")} /> Very less bleeding</label>
+                      <label><input type="radio" checked={menstrualPattern === "none"} onChange={() => setMenstrualPattern("none")} /> None</label>
+                    </div>
+                  </div>
+                </div>
+
+                <label className="text-sm block">
+                  Food Preferences
+                  <textarea rows={2} value={foodPreferences} onChange={(e) => setFoodPreferences(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                </label>
+
+                <label className="text-sm block">
+                  Additional Notes
+                  <textarea rows={2} value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                </label>
+
+                <label className="text-sm block">
+                  Any Other Comments
+                  <textarea rows={2} value={anyOtherComments} onChange={(e) => setAnyOtherComments(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                </label>
+
+                <label className="text-sm block">
+                  Any Notes for Care Team
+                  <textarea rows={2} value={anyNotesForCareTeam} onChange={(e) => setAnyNotesForCareTeam(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 </label>
               </section>
             </>

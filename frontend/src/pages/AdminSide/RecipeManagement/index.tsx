@@ -58,9 +58,6 @@ const RecipeManagementPage: React.FC = () => {
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [idToDelete, setIdToDelete] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [approvalTarget, setApprovalTarget] = useState<{ id: number; currentStatus: boolean } | null>(null);
-    const [rejectionTarget, setRejectionTarget] = useState<number | null>(null);
-    const [isApprovingLoading, setIsApprovingLoading] = useState(false);
 
     useEffect(() => {
         fetchFoods();
@@ -137,48 +134,6 @@ const RecipeManagementPage: React.FC = () => {
             toast.error("Failed to delete recipe data.");
         } finally {
             setIsDeleting(false);
-        }
-    };
-
-    const handleApprovalClick = (id: number, currentStatus: boolean) => {
-        setApprovalTarget({ id, currentStatus });
-    };
-
-    const confirmApproval = async () => {
-        if (!approvalTarget) return;
-        const { id, currentStatus } = approvalTarget;
-        if (!currentStatus) {
-            // toast.info("Please don't repeat the words — it may cause some issues.");
-        }
-        setIsApprovingLoading(true);
-        try {
-            await patchFood(id, { is_approved: !currentStatus });
-            toast.success(`Recipe ${!currentStatus ? 'approved' : 'disapproved'} successfully.`);
-            fetchData();
-        } catch {
-            toast.error("Failed to update approval status.");
-        } finally {
-            setIsApprovingLoading(false);
-            setApprovalTarget(null);
-        }
-    };
-
-    const handleRejectClick = (id: number) => {
-        setRejectionTarget(id);
-    };
-
-    const confirmRejection = async () => {
-        if (rejectionTarget === null) return;
-        setIsApprovingLoading(true);
-        try {
-            await patchFood(rejectionTarget, { is_rejected: true, is_approved: false });
-            toast.success("Recipe rejected successfully.");
-            fetchData();
-        } catch {
-            toast.error("Failed to reject recipe.");
-        } finally {
-            setIsApprovingLoading(false);
-            setRejectionTarget(null);
         }
     };
 
@@ -270,10 +225,6 @@ const RecipeManagementPage: React.FC = () => {
                     <div>
                         Showing {totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
                     </div>
-                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-                        <FiInfo className="w-4 h-4" />
-                        <span>{isAdmin ? "Before approving, please re-check if any data is repeated to avoid issues." : "Please don't repeat same word it may cause problems."}</span>
-                    </div>
                 </div>
             </div>
 
@@ -286,20 +237,19 @@ const RecipeManagementPage: React.FC = () => {
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Image</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Food Name</TableCell>
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Meal Types</TableCell>
-                                {isAdmin && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Approved</TableCell>}
                                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Actions</TableCell>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">
+                                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
                                          Loading recipes...
                                     </TableCell>
                                 </TableRow>
                             ) : foods.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">
+                                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 italic">
                                         No recipes found matching your search.
                                     </TableCell>
                                 </TableRow>
@@ -337,42 +287,6 @@ const RecipeManagementPage: React.FC = () => {
                                                 )}
                                             </div>
                                         </TableCell>
-                                        {isAdmin && (
-                                            <TableCell className="px-5 py-4">
-                                                {food.is_approved ? (
-                                                    <button
-                                                        onClick={() => handleApprovalClick(food.id!, true)}
-                                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                                        title="Click to disapprove"
-                                                    >
-                                                        <FiCheck size={12} /> Approved
-                                                    </button>
-                                                ) : food.is_rejected ? (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400">
-                                                        <FiX size={12} /> Rejected
-                                                    </span>
-                                                ) : food.posted_by_role === 'nutritionist' ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => handleApprovalClick(food.id!, false)}
-                                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
-                                                            title="Click to approve"
-                                                        >
-                                                            <FiCheck size={12} /> Accept
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectClick(food.id!)}
-                                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-                                                            title="Click to reject"
-                                                        >
-                                                            <FiX size={12} /> Reject
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400 text-xs italic">Pending</span>
-                                                )}
-                                            </TableCell>
-                                        )}
                                         <TableCell className="px-5 py-4">
                                             <div className="flex items-center gap-3">
                                                 <button 
@@ -389,15 +303,13 @@ const RecipeManagementPage: React.FC = () => {
                                                 >
                                                     <FiEdit size={18} />
                                                 </button>
-                                                {isAdmin && (
-                                                    <button 
-                                                        onClick={() => handleDelete(food.id!)}
-                                                        className="text-red-500 hover:text-red-700 transition-colors"
-                                                        title="Delete Recipe Data"
-                                                    >
-                                                        <FiTrash2 size={18} />
-                                                    </button>
-                                                )}
+                                                <button 
+                                                    onClick={() => handleDelete(food.id!)}
+                                                    className="text-red-500 hover:text-red-700 transition-colors"
+                                                    title="Delete Recipe Data"
+                                                >
+                                                    <FiTrash2 size={18} />
+                                                </button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -474,17 +386,6 @@ const RecipeManagementPage: React.FC = () => {
             )}
 
             <ConfirmationModal
-                isOpen={rejectionTarget !== null}
-                onClose={() => setRejectionTarget(null)}
-                onConfirm={confirmRejection}
-                title="Reject Recipe"
-                message="Are you sure you want to reject this recipe?"
-                confirmText="Yes, Reject"
-                cancelText="No"
-                variant="danger"
-            />
-
-            <ConfirmationModal
                 isOpen={idToDelete !== null}
                 onClose={() => setIdToDelete(null)}
                 onConfirm={confirmDelete}
@@ -492,20 +393,6 @@ const RecipeManagementPage: React.FC = () => {
                 title="Delete Recipe Data?"
                 message="Are you sure you want to delete all ingredients and steps for this recipe? This action only clears the recipe details, not the food item itself."
                 confirmText="Clear Recipe"
-            />
-
-            <ConfirmationModal
-                isOpen={approvalTarget !== null}
-                onClose={() => setApprovalTarget(null)}
-                onConfirm={confirmApproval}
-                isLoading={isApprovingLoading}
-                title={approvalTarget?.currentStatus ? "Disapprove Recipe?" : "Approve Recipe?"}
-                message={
-                    approvalTarget?.currentStatus
-                        ? "Are you sure you want to disapprove this recipe? It will no longer be visible to other users."
-                        : "Are you sure you want to approve this recipe? Please ensure there are no duplicate entries before approving."
-                }
-                confirmText={approvalTarget?.currentStatus ? "Yes, Disapprove" : "Yes, Approve"}
             />
         </>
     );

@@ -29,7 +29,7 @@ const AddCuisineType: React.FC<AddCuisineTypeProps> = ({ onClose, onAdd }) => {
     setLoading(true);
     try {
       const resp = await createCuisineType({ name: name.trim() });
-      toast.success(isAdmin ? "Cuisine type added successfully!" : "Sent for approval");
+      toast.success("Cuisine type added successfully!");
       setTimeout(() => {
         onAdd(resp);
         onClose();

@@ -844,8 +844,6 @@ class MealType(models.Model):
     name = models.CharField(max_length=100)
     # Example: Breakfast, Lunch, Dinner, Snacks
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="meal_types")
 
     def __str__(self):
@@ -856,8 +854,6 @@ class CuisineType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     # Example: North Indian, South Indian, Chinese, Italian
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="cuisine_types")
 
     def __str__(self):
@@ -894,8 +890,6 @@ class Food(models.Model):
 
     price = models.IntegerField(null=True, blank=True)
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="posted_foods")
 
     def __str__(self):
@@ -957,8 +951,6 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=150)
     # Example: Rice, Urad Dal, Ragi Flour, Salt, Water
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="ingredients")
 
     def __str__(self):
@@ -982,8 +974,6 @@ class Unit(models.Model):
     name = models.CharField(max_length=50)
     # Example: Gram, Kilogram, Cup, Tablespoon, Teaspoon, Piece
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="units")
 
     def __str__(self):
@@ -1025,8 +1015,6 @@ class FoodIngredient(models.Model):
     notes = models.CharField(max_length=200, blank=True, null=True)
     # Example: roasted, chopped, grated
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="food_ingredients")
 
     def __str__(self):
@@ -1059,8 +1047,6 @@ class FoodStep(models.Model):
     instruction = models.TextField()
     # Example: "Mix ragi flour and urad dal batter"
 
-    is_approved = models.BooleanField(default=False)
-    is_rejected = models.BooleanField(default=False)
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="food_steps")
 
     class Meta:

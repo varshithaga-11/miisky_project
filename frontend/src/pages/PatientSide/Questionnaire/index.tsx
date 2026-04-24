@@ -1006,6 +1006,20 @@ export default function PatientQuestionnairePage() {
                     className="w-full"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="menstrual_pattern">Menstrual Pattern (if female)</Label>
+                  <Select
+                    value={data.menstrual_pattern || ""}
+                    onChange={(val) => setField("menstrual_pattern", val || null)}
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "heavy", label: "Heavy bleeding" },
+                      { value: "very_less", label: "Very less bleeding" },
+                      { value: "none", label: "None" },
+                    ]}
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               <div>

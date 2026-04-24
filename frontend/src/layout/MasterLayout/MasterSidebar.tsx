@@ -22,7 +22,6 @@ import {
   Bell,
   BookOpen,
   Wallet,
-  Calendar,
   Mail,
   Search,
   X,
@@ -362,20 +361,31 @@ const nutritionistNavItems: NavItem[] = [
     icon: <BookOpen className="w-5 h-5" />,
     name: "Reference Library",
     subItems: [
-      { name: "Normal Ranges", path: "/nutrition/reference/ranges" },
-      { name: "Foods", path: "/nutrition/food" },
+      { name: "Normal Ranges", path: "/nutrition/reference/ranges" }
     ],
   },
+  // {
+  //   icon: <Briefcase className="w-5 h-5" />,
+  //   name: "Food Management",
+  //   subItems: [
+  //     { name: "Meal Type", path: "/nutrition/meal-type" },
+  //     { name: "Cuisine Type", path: "/nutrition/cuisine-type" },
+  //     { name: "Packaging Material", path: "/nutrition/packaging-material" },
+  //     { name: "Delivery slots", path: "/nutrition/delivery-slot" },
+  //     { name: "Foods", path: "/nutrition/food-management" },
+  //     { name: "Units", path: "/nutrition/unit" },
+  //     { name: "Ingredients", path: "/nutrition/ingredient" },
+  //     { name: "Recipe Management", path: "/nutrition/recipe-management" },
+  //   ],
+  // },
   {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Food Management",
+    icon: <FileText className="w-5 h-5" />,
+    name: "Blog Management",
     subItems: [
-      { name: "Meal Type", path: "/nutrition/meal-type" },
-      { name: "Cuisine Type", path: "/nutrition/cuisine-type" },
-      { name: "Foods", path: "/nutrition/food-management" },
-      { name: "Units", path: "/nutrition/unit" },
-      { name: "Ingredients", path: "/nutrition/ingredient" },
-      { name: "Recipe Management", path: "/nutrition/recipe-management" },
+      { name: "Blog Categories", path: "/nutrition/blogcategory" },
+      { name: "Blog Comments", path: "/nutrition/blogcomment" },
+      { name: "Blog Posts", path: "/nutrition/blogpost" },
+      { name: "Blog Tags", path: "/nutrition/blogtag" },
     ],
   },
   {
@@ -475,6 +485,11 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/delivery-charges",
   },
   {
+    icon: <Users className="w-5 h-5" />,
+    name: "Team Management",
+    path: "/microkitchen/user-management",
+  },
+  {
     icon: <Milestone className="w-5 h-5" />,
     name: "Delivery management",
     subItems: [
@@ -526,6 +541,7 @@ const supplyChainNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/supplychain/dashboard",
   },
+
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Delivery Questionnaire",
@@ -632,16 +648,16 @@ const masterNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/master/dashboard",
   },
-  {
-    icon: <FileText className="w-5 h-5" />,
-    name: "Blog Management",
-    subItems: [
-      { name: "Blog Categories", path: "/master/blogcategory" },
-      { name: "Blog Comments", path: "/master/blogcomment" },
-      { name: "Blog Posts", path: "/master/blogpost" },
-      { name: "Blog Tags", path: "/master/blogtag" },
-    ],
-  },
+  // {
+  //   icon: <FileText className="w-5 h-5" />,
+  //   name: "Blog Management",
+  //   subItems: [
+  //     { name: "Blog Categories", path: "/master/blogcategory" },
+  //     { name: "Blog Comments", path: "/master/blogcomment" },
+  //     { name: "Blog Posts", path: "/master/blogpost" },
+  //     { name: "Blog Tags", path: "/master/blogtag" },
+  //   ],
+  // },
   {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Company Management",

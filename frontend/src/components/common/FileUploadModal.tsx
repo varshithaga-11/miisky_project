@@ -116,7 +116,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     try {
       const response = await importFile(module, submenu, excelFile!, 'submit');
       if (response.success) {
-        toast.success(isAdmin ? `Successfully imported ${response.created || excelData.length} records!` : "Sent for approval");
+        toast.success(`Successfully imported ${response.created || excelData.length} records!`);
         if (onSuccess) onSuccess();
         closeModal();
       } else {

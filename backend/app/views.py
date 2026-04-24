@@ -2517,14 +2517,14 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
         micro_kitchen_id = request.query_params.get('micro_kitchen')
         if not micro_kitchen_id:
             return Response({'error': 'micro_kitchen required'}, status=400)
-        qs = self.queryset.filter(micro_kitchen_id=micro_kitchen_id, is_available=True, food__is_approved=True)
+        qs = self.queryset.filter(micro_kitchen_id=micro_kitchen_id, is_available=True)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='available', permission_classes=[AllowAny])
     def available(self, request):
         """Public: list all available MicroKitchenFood (is_available=True). Optional: micro_kitchen, search."""
-        qs = self.queryset.filter(is_available=True, food__is_approved=True)
+        qs = self.queryset.filter(is_available=True)
         micro_kitchen_id = request.query_params.get('micro_kitchen')
         search = request.query_params.get('search', '').strip()
         if micro_kitchen_id:
@@ -2554,7 +2554,7 @@ class MicroKitchenFoodViewSet(viewsets.ModelViewSet):
         if not profile:
             # If standard user (patient/nutritionist) accessing list, only show approved foods
             if user.role in ('patient', 'nutritionist'):
-                return qs.filter(food__is_approved=True)
+                return qs
             return self.queryset.none()
         # Micro-kitchen users only see their own menu
         return self.queryset.filter(micro_kitchen=profile)
@@ -4148,15 +4148,10 @@ class MealTypeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        serializer.save(posted_by=user)
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            return MealType.objects.all()
-        return MealType.objects.filter(is_approved=True)
+        return MealType.objects.all()
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_mealtypes(self, request):
@@ -4195,15 +4190,10 @@ class CuisineTypeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        serializer.save(posted_by=user)
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            return CuisineType.objects.all()
-        return CuisineType.objects.filter(is_approved=True)
+        return CuisineType.objects.all()
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_cuisinetypes(self, request):
@@ -4234,26 +4224,14 @@ class FoodViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            queryset = Food.objects.prefetch_related(
-                'meal_types',
-                'cuisine_types',
-                'foodingredient_set__ingredient',
-                'foodingredient_set__unit',
-                'foodstep_set',
-                'nutrition'
-            ).all()
-        else:
-            # Prefetch only approved ingredients and units for the nutritionist/patient view
-            from django.db.models import Q
-            queryset = Food.objects.prefetch_related(
-                Prefetch('meal_types', queryset=MealType.objects.filter(is_approved=True)),
-                Prefetch('cuisine_types', queryset=CuisineType.objects.filter(is_approved=True)),
-                Prefetch('foodingredient_set', queryset=FoodIngredient.objects.filter(is_approved=True).select_related('ingredient', 'unit')),
-                'foodstep_set',
-                'nutrition'
-            ).filter(Q(is_approved=True) | Q(posted_by=self.request.user))
+        queryset = Food.objects.prefetch_related(
+            'meal_types',
+            'cuisine_types',
+            'foodingredient_set__ingredient',
+            'foodingredient_set__unit',
+            'foodstep_set',
+            'nutrition'
+        ).all()
         meal_type = self.request.query_params.get('meal_type')
         cuisine_type = self.request.query_params.get('cuisine_type')
         micro_kitchen = self.request.query_params.get('micro_kitchen')
@@ -4282,21 +4260,10 @@ class FoodViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        serializer.save(posted_by=user)
 
     def perform_update(self, serializer):
-        old_approved = serializer.instance.is_approved
-        obj = serializer.save()
-        
-        if obj.is_approved and not old_approved:
-            FoodIngredient.objects.filter(food=obj).update(is_approved=True, is_rejected=False)
-            FoodStep.objects.filter(food=obj).update(is_approved=True, is_rejected=False)
-        
-        if obj.is_rejected:
-            FoodIngredient.objects.filter(food=obj).update(is_rejected=True, is_approved=False)
-            FoodStep.objects.filter(food=obj).update(is_rejected=True, is_approved=False)
+        serializer.save()
 
 
 
@@ -4317,10 +4284,7 @@ class FoodByIdViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, pk=None):
-        role = getattr(request.user, "role", None)
         qs = FoodNutrition.objects.select_related("food").filter(food_id=pk)
-        if role not in ("admin", "master"):
-            qs = qs.filter(food__is_approved=True)
         nutrition = qs.first()
         if not nutrition:
             return Response({"detail": "Food nutrition not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -4660,18 +4624,13 @@ class IngredientViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        serializer.save(posted_by=user)
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            return Ingredient.objects.all()
-        return Ingredient.objects.filter(is_approved=True)
+        return Ingredient.objects.all()
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_ingredients(self, request):
@@ -4690,18 +4649,13 @@ class UnitViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
+        serializer.save(posted_by=user)
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            return Unit.objects.all()
-        return Unit.objects.filter(is_approved=True)
+        return Unit.objects.all()
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_units(self, request):
@@ -4723,15 +4677,9 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
     search_fields = ['food__name', 'ingredient__name']
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            qs = FoodIngredient.objects.select_related(
-                'food', 'ingredient', 'unit'
-            ).all()
-        else:
-            qs = FoodIngredient.objects.select_related(
-                'food', 'ingredient', 'unit'
-            ).filter(is_approved=True)
+        qs = FoodIngredient.objects.select_related(
+            'food', 'ingredient', 'unit'
+        ).all()
         food_id = self.request.query_params.get('food')
         ingredient_id = self.request.query_params.get('ingredient')
         unit_id = self.request.query_params.get('unit')
@@ -4746,19 +4694,7 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        obj = serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
-        
-        # If created by nutritionist, mark the associated food as pending
-        # This ensures the "recipe" appears for approval in the admin side
-        if not is_approved and obj.food:
-            obj.food.is_approved = False
-            obj.food.is_rejected = False
-            # Ensure the food is also marked as posted by this user if it wasn't already
-            if not obj.food.posted_by:
-                obj.food.posted_by = user
-            obj.food.save()
+        serializer.save(posted_by=user)
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodingredients(self, request):
@@ -4780,11 +4716,7 @@ class FoodStepViewSet(viewsets.ModelViewSet):
     search_fields = ['food__name', 'instruction']
 
     def get_queryset(self):
-        role = getattr(self.request.user, "role", None)
-        if role in ("admin", "master"):
-            qs = FoodStep.objects.select_related('food').all()
-        else:
-            qs = FoodStep.objects.select_related('food').filter(is_approved=True)
+        qs = FoodStep.objects.select_related('food').all()
             
         food_id = self.request.query_params.get('food')
         if food_id:
@@ -4793,17 +4725,7 @@ class FoodStepViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        role = getattr(user, 'role', None)
-        is_approved = (role in ['admin', 'master'])
-        obj = serializer.save(posted_by=user, is_approved=is_approved, is_rejected=False)
-        
-        # If created by nutritionist, mark the associated food as pending
-        if not is_approved and obj.food:
-            obj.food.is_approved = False
-            obj.food.is_rejected = False
-            if not obj.food.posted_by:
-                obj.food.posted_by = user
-            obj.food.save()
+        serializer.save(posted_by=user)
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foodsteps(self, request):
@@ -6347,13 +6269,13 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
         cuisine_id = request.query_params.get("cuisine_id")
         meal_type_id = request.query_params.get("meal_type_id")
 
-        mt_qs = MealType.objects.filter(is_approved=True).order_by("name")
+        mt_qs = MealType.objects.all().order_by("name")
         if cuisine_id:
-            mt_qs = mt_qs.filter(food__cuisine_types__id=cuisine_id, food__is_approved=True).distinct()
+            mt_qs = mt_qs.filter(food__cuisine_types__id=cuisine_id).distinct()
 
-        cu_qs = CuisineType.objects.filter(is_approved=True).order_by("name")
+        cu_qs = CuisineType.objects.all().order_by("name")
         if meal_type_id:
-            cu_qs = cu_qs.filter(food__meal_types__id=meal_type_id, food__is_approved=True).distinct()
+            cu_qs = cu_qs.filter(food__meal_types__id=meal_type_id).distinct()
 
         mt_count = mt_qs.count()
         cu_count = cu_qs.count()
@@ -6856,7 +6778,7 @@ class SetDailyMealsViewSet(viewsets.ViewSet):
         meal_type = request.query_params.get("meal_type")
         cuisine_type = request.query_params.get("cuisine_type")
 
-        qs = Food.objects.filter(is_approved=True).order_by("name")
+        qs = Food.objects.all().order_by("name")
         if meal_type:
             qs = qs.filter(meal_types=meal_type)
         if cuisine_type:

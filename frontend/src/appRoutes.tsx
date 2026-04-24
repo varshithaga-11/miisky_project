@@ -121,6 +121,7 @@ import PatientNotificationsPage from "./pages/PatientSide/Notification/index";
 import MicroKitchenNotificationsPage from "./pages/MicroKitchenSide/Notification/index";
 import DoctorNotificationsPage from "./pages/DoctorSide/Notification/index";
 import SupplyChainNotificationsPage from "./pages/SupplyChain/Notification/index";
+import SupplyChainUserManagementPage from "./pages/MicroKitchenSide/UserManagement/index";
 import NutritionSupportTicketPage from "./pages/NutritionSide/SupportTicket";
 import MicroKitchenSupportTicketPage from "./pages/MicroKitchenSide/SupportTicket";
 import NonPatientSupportTicketPage from "./pages/NonPatient/SupportTicket";
@@ -404,10 +405,16 @@ export function appRoutes() {
           <Route path="nutrition/instructions" element={<NutritionInstructionsPage />} />
           <Route path="nutrition/workflow" element={<NutritionWorkFlowPage />} />
           <Route path="nutrition/nutrition-mapping/user-mapping" element={<NutritionUserMappingPage />} />
-          
+          <Route path="nutrition/blogcategory" element={<BlogCategoryPage />} />
+          <Route path="nutrition/blogtag" element={<BlogTagPage />} />
+          <Route path="nutrition/blogpost" element={<BlogPostPage />} />
+          <Route path="nutrition/blogcomment" element={<BlogCommentPage />} />
+
           {/* Nutritionist Food Management */}
           <Route path="nutrition/meal-type" element={<MealTypeManagementPage />} />
           <Route path="nutrition/cuisine-type" element={<CuisineTypeManagementPage />} />
+          <Route path="nutrition/packaging-material" element={<PackagingMaterialManagementPage />} />
+          <Route path="nutrition/delivery-slot" element={<DeliverySlotManagementPage />} />
           <Route path="nutrition/food-management" element={<FoodManagementPage />} />
           <Route path="nutrition/unit" element={<UnitManagementPage />} />
           <Route path="nutrition/ingredient" element={<IngredientManagementPage />} />
@@ -432,6 +439,7 @@ export function appRoutes() {
           <Route path="microkitchen/delivery/team-members" element={<SupplyChainTeamMemberForMKPage />} />
           <Route path="microkitchen/delivery/profiles" element={<MicroKitchenDeliveryPersonInfoPage />} />
           <Route path="microkitchen/planned-leave" element={<MicroKitchenPlannedLeavePage />} />
+          <Route path="microkitchen/user-management" element={<SupplyChainUserManagementPage />} />
           <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
           <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
