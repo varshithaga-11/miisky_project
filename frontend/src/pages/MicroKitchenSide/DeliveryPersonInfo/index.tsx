@@ -60,6 +60,20 @@ function ProfileDetail({
           </div>
           
           <div className="flex items-center gap-3 shrink-0 ml-auto mr-4 lg:mr-8">
+            {row.kitchen_team_info && (
+              <div className="flex flex-col items-end gap-1 mr-2">
+                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                  row.kitchen_team_info.role === 'primary' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-gray-50 text-gray-500 dark:bg-gray-900/20 dark:text-gray-400'
+                }`}>
+                  {row.kitchen_team_info.role}
+                </span>
+                {(row.kitchen_team_info.zone_name || row.kitchen_team_info.pincode) && (
+                  <span className="text-[9px] text-gray-400 font-bold uppercase truncate max-w-[80px]">
+                    {row.kitchen_team_info.zone_name || row.kitchen_team_info.pincode}
+                  </span>
+                )}
+              </div>
+            )}
             {row.is_verified ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border border-emerald-100 dark:border-emerald-800/30">
                 <CheckCircle2 size={12} /> Verified

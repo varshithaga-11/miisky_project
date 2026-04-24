@@ -2682,7 +2682,7 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
 
     def _delivery_person_ids_for_kitchen(self, mk):
         """
-        Supply-chain users who appear in global / daily delivery for this kitchen.
+        Supply-chain users who appear in global / daily delivery OR belong to the kitchen team.
         """
         dp_ids = set(
             DietPlanDeliveryAssignment.objects.filter(micro_kitchen=mk).values_list(
@@ -2696,6 +2696,11 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
         )
         dp_ids |= set(
             DeliveryAssignment.objects.filter(user_meal__micro_kitchen=mk).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk, is_active=True).values_list(
                 "delivery_person_id", flat=True
             )
         )
@@ -2788,7 +2793,11 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
             # For admin, show all delivery profiles (or could filter by kitchen if param provided)
             kitchen_id = request.query_params.get("micro_kitchen")
             if kitchen_id:
-                qs = DeliveryProfile.objects.filter(user_id__in=self._delivery_person_ids_for_kitchen_by_id(kitchen_id))
+                dp_ids = self._delivery_person_ids_for_kitchen_by_id(kitchen_id)
+                from .models import DeliveryProfile
+                for uid in dp_ids:
+                    DeliveryProfile.objects.get_or_create(user_id=uid)
+                qs = DeliveryProfile.objects.filter(user_id__in=dp_ids)
             else:
                 qs = DeliveryProfile.objects.all()
         else:
@@ -2797,7 +2806,14 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
                 return Response(
                     {"count": 0, "next": None, "previous": None, "current_page": 1, "total_pages": 0, "results": []}
                 )
-            qs = DeliveryProfile.objects.filter(user_id__in=self._delivery_person_ids_for_kitchen(mk))
+            dp_ids = self._delivery_person_ids_for_kitchen(mk)
+            
+            # Ensure DeliveryProfile exists for everyone in the kitchen's delivery ecosystem
+            from .models import DeliveryProfile
+            for uid in dp_ids:
+                DeliveryProfile.objects.get_or_create(user_id=uid)
+                
+            qs = DeliveryProfile.objects.filter(user_id__in=dp_ids)
 
         qs = qs.select_related("user", "verified_by").order_by("user__first_name", "user__last_name", "id")
         page = self.paginate_queryset(qs)
@@ -2925,10 +2941,11 @@ class DeliveryProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def _delivery_person_ids_for_kitchen_by_id(self, mk_id):
-        from .models import DietPlanDeliveryAssignment, DietPlanSlotDeliveryPerson, DeliveryAssignment
+        from .models import DietPlanDeliveryAssignment, DietPlanSlotDeliveryPerson, DeliveryAssignment, MicroKitchenDeliveryTeam
         dp_ids = set(DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
         dp_ids |= set(DietPlanSlotDeliveryPerson.objects.filter(plan_assignment__micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
         dp_ids |= set(DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=mk_id).values_list("delivery_person_id", flat=True))
+        dp_ids |= set(MicroKitchenDeliveryTeam.objects.filter(micro_kitchen_id=mk_id, is_active=True).values_list("delivery_person_id", flat=True))
         dp_ids.discard(None)
         return dp_ids
 
@@ -11392,6 +11409,10 @@ class MicroKitchenDeliveryTeamViewSet(viewsets.ModelViewSet):
             if MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk, delivery_person=delivery_person).exists():
                 raise ValidationError({"delivery_person": ["This person is already in your team."]})
                 
+            # Ensure DeliveryProfile exists for the person being added
+            from .models import DeliveryProfile
+            DeliveryProfile.objects.get_or_create(user=delivery_person)
+            
             serializer.save(micro_kitchen=mk)
         else:
             raise PermissionDenied("You do not have permission to create team members.")

@@ -34,6 +34,13 @@ export type KitchenDeliveryProfile = {
   account_holder_name?: string | null;
   bank_name?: string | null;
   available_slots?: string | null;
+  kitchen_team_info?: {
+    role: string;
+    zone_name: string | null;
+    pincode: string | null;
+    is_active: boolean;
+    assigned_on: string;
+  } | null;
 };
 
 export type PaginatedKitchenProfiles = {

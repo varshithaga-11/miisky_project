@@ -1904,6 +1904,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
 class DeliveryProfileSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     verified_by_details = serializers.SerializerMethodField(read_only=True)
+    kitchen_team_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DeliveryProfile
@@ -1933,6 +1934,7 @@ class DeliveryProfileSerializer(serializers.ModelSerializer):
             "available_slots",
             "user_details",
             "verified_by_details",
+            "kitchen_team_info",
         ]
         read_only_fields = ("is_verified", "verified_by", "verified_on", "user")
 
@@ -1958,6 +1960,29 @@ class DeliveryProfileSerializer(serializers.ModelSerializer):
             "first_name": v.first_name or "",
             "last_name": v.last_name or "",
         }
+
+    def get_kitchen_team_info(self, obj):
+        request = self.context.get("request")
+        if not request: return None
+        
+        from .models import MicroKitchenProfile, MicroKitchenDeliveryTeam
+        mk = None
+        if getattr(request.user, "role", None) == "micro_kitchen":
+            mk = MicroKitchenProfile.objects.filter(user=request.user).first()
+        elif "micro_kitchen_id" in request.query_params:
+            mk = MicroKitchenProfile.objects.filter(id=request.query_params["micro_kitchen_id"]).first()
+            
+        if mk and obj.user_id:
+            team = MicroKitchenDeliveryTeam.objects.filter(micro_kitchen=mk, delivery_person_id=obj.user_id).first()
+            if team:
+                return {
+                    "role": team.role,
+                    "zone_name": team.zone_name,
+                    "pincode": team.pincode,
+                    "is_active": team.is_active,
+                    "assigned_on": team.assigned_on,
+                }
+        return None
 
 
 class AdminSupplyChainDeliveryProfileReadSerializer(DeliveryProfileSerializer):
@@ -5300,6 +5325,7 @@ class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
 class DeliveryPersonOrderSerializer(serializers.ModelSerializer):
     customer_display = serializers.SerializerMethodField()
     micro_kitchen_brand = serializers.CharField(source='micro_kitchen.brand_name', read_only=True)
+    grand_total = serializers.DecimalField(source='final_amount', max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Order
