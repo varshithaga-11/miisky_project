@@ -7,7 +7,7 @@ import { getFoodStepList } from "../FoodStep/foodstepapi";
 import { updateFullRecipe } from "./recipeapi";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { toast, ToastContainer } from 'react-toastify';
 import { FiPlus, FiTrash2, FiSave, FiList, FiEdit2 } from "react-icons/fi";
 
@@ -210,19 +210,21 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
                                         {ingredientRows.map((row, idx) => (
                                             <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl relative border border-gray-100 dark:border-gray-700">
                                                 <div className="grid grid-cols-1 gap-3">
-                                                    <Select
+                                                    <SearchableSelect<string>
                                                         value={row.ingredient}
                                                         onFocus={fetchIngredients}
                                                         onChange={v => handleIngChange(idx, "ingredient", v)}
-                                                        options={[{ value: "", label: "Ingredient" }, ...ingredients.map(i => ({ value: String(i.id), label: i.name }))]}
+                                                        options={ingredients.map(i => ({ value: String(i.id), label: i.name }))}
+                                                        placeholder="Select Ingredient"
                                                     />
                                                     <div className="flex gap-2">
                                                         <Input placeholder="Qty" type="number" value={row.quantity} onChange={e => handleIngChange(idx, "quantity", e.target.value)} />
-                                                        <Select
+                                                        <SearchableSelect<string>
                                                             value={row.unit}
                                                             onFocus={fetchUnits}
                                                             onChange={v => handleIngChange(idx, "unit", v)}
-                                                            options={[{ value: "", label: "Unit" }, ...units.map(u => ({ value: String(u.id), label: u.name }))]}
+                                                            options={units.map(u => ({ value: String(u.id), label: u.name }))}
+                                                            placeholder="Unit"
                                                         />
                                                     </div>
                                                     <Input placeholder="Notes" value={row.notes} onChange={e => handleIngChange(idx, "notes", e.target.value)} />
