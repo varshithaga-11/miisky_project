@@ -202,11 +202,9 @@ const MealTypeManagementPage: React.FC = () => {
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditMealTypeId(mealType.id!); setIsEditModalOpen(true); }}>
                           <FiEdit />
                         </button>
-                        {isAdmin && (
                           <button className="text-red-600 hover:text-red-800" title="Delete" onClick={() => handleDelete(mealType.id!)}>
                             <FiTrash2 />
                           </button>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>

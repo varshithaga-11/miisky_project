@@ -362,8 +362,7 @@ const nutritionistNavItems: NavItem[] = [
     icon: <BookOpen className="w-5 h-5" />,
     name: "Reference Library",
     subItems: [
-      { name: "Normal Ranges", path: "/nutrition/reference/ranges" },
-      { name: "Foods", path: "/nutrition/food" },
+      { name: "Normal Ranges", path: "/nutrition/reference/ranges" }
     ],
   },
   {
@@ -372,6 +371,8 @@ const nutritionistNavItems: NavItem[] = [
     subItems: [
       { name: "Meal Type", path: "/nutrition/meal-type" },
       { name: "Cuisine Type", path: "/nutrition/cuisine-type" },
+      { name: "Packaging Material", path: "/nutrition/packaging-material" },
+      { name: "Delivery slots", path: "/nutrition/delivery-slot" },
       { name: "Foods", path: "/nutrition/food-management" },
       { name: "Units", path: "/nutrition/unit" },
       { name: "Ingredients", path: "/nutrition/ingredient" },

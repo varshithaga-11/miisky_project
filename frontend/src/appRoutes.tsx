@@ -413,6 +413,8 @@ export function appRoutes() {
           {/* Nutritionist Food Management */}
           <Route path="nutrition/meal-type" element={<MealTypeManagementPage />} />
           <Route path="nutrition/cuisine-type" element={<CuisineTypeManagementPage />} />
+          <Route path="nutrition/packaging-material" element={<PackagingMaterialManagementPage />} />
+          <Route path="nutrition/delivery-slot" element={<DeliverySlotManagementPage />} />
           <Route path="nutrition/food-management" element={<FoodManagementPage />} />
           <Route path="nutrition/unit" element={<UnitManagementPage />} />
           <Route path="nutrition/ingredient" element={<IngredientManagementPage />} />

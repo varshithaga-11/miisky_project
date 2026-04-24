@@ -156,7 +156,6 @@ const CuisineTypePage: React.FC = () => {
                                   >
                                       <FiEdit />
                                   </button>
-                                  {isAdmin && (
                                     <button 
                                         className="text-red-600 hover:text-red-800 transition-colors" 
                                         onClick={() => handleDelete(item.id!)}
@@ -164,7 +163,6 @@ const CuisineTypePage: React.FC = () => {
                                     >
                                         <FiTrash2 />
                                     </button>
-                                  )}
                               </div>
                           </TableCell>
                       </TableRow>
