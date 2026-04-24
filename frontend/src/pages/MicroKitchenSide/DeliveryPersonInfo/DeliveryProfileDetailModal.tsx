@@ -24,6 +24,11 @@ import {
   fetchDeliveryPersonMealAssignments,
   fetchDeliveryPersonGlobalAssignments,
   type DietPlanDeliveryAssignment,
+  type DeliveryPersonOrder,
+  type DeliveryPersonPayment,
+  type DeliveryPersonLeave,
+  type DeliveryPersonReview,
+  type DeliveryPersonMealAssignment,
 } from "./api";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -581,6 +586,75 @@ function MealAssignmentsView({ profileId }: { profileId: number }) {
   );
 }
 
+// ─── Reassignments History view ───────────────────────────────────────────────
+function ReassignmentsHistoryView({ profileId }: { profileId: number }) {
+  const [items, setItems] = useState<DeliveryPersonMealAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchDeliveryPersonMealAssignments(profileId, 1, 15, true).then((res) => {
+      setItems(res.results);
+      setHasMore(res.current_page < res.total_pages);
+      setPage(1);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [profileId]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    fetchDeliveryPersonMealAssignments(profileId, nextPage, 15, true).then((res) => {
+      setItems(prev => [...prev, ...res.results]);
+      setHasMore(res.current_page < res.total_pages);
+      setPage(nextPage);
+      setLoadingMore(false);
+    }).catch(() => setLoadingMore(false));
+  };
+
+  if (loading) return <div className="py-8 text-center text-gray-400 text-sm">Loading history…</div>;
+  if (!items.length) return <EmptyState msg="No reassignment logs found for this person." />;
+
+  return (
+    <div className="space-y-4 pb-8">
+      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+        <FiAlertTriangle size={14} /> Individual Meal Coverage History
+      </h3>
+      <div className="space-y-3">
+        {items.map((a) => (
+          <div key={a.id} className="rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/10 dark:bg-amber-900/10 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900 dark:text-white text-sm">
+                    {a.patient_name || `Meal #${a.user_meal}`}
+                  </span>
+                </div>
+                <div className="text-[10px] text-gray-500 flex items-center gap-2">
+                    <FiCalendar size={10} /> {fmtDate(a.meal_date)}
+                    <span className="text-gray-300">|</span>
+                    <FiClock size={10} /> {a.slot_name}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Single shift reassignment</div>
+              </div>
+            </div>
+            <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-gray-800/50 text-xs border border-amber-50 dark:border-amber-900/30">
+               <div className="font-bold text-[10px] text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">Reason</div>
+               <div className="italic text-gray-600 dark:text-gray-300">"{a.reassignment_reason}"</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
+    </div>
+  );
+}
+
 // ─── Global Assignments view ──────────────────────────────────────────────────
 // ─── Global Assignments view ──────────────────────────────────────────────────
 function GlobalAssignmentsView({ profileId }: { profileId: number }) {
@@ -1027,72 +1101,4 @@ export function DeliveryProfileDetailModal({ profile, open, onClose }: Props) {
   );
 }
 
-// ─── Reassignments History view ───────────────────────────────────────────────
-// ─── Reassignments History view ───────────────────────────────────────────────
-function ReassignmentsHistoryView({ profileId }: { profileId: number }) {
-  const [items, setItems] = useState<DeliveryPersonMealAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchDeliveryPersonMealAssignments(profileId, 1, 15, true).then((res) => {
-      setItems(res.results);
-      setHasMore(res.current_page < res.total_pages);
-      setPage(1);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, [profileId]);
-
-  const loadMore = () => {
-    const nextPage = page + 1;
-    setLoadingMore(true);
-    fetchDeliveryPersonMealAssignments(profileId, nextPage, 15, true).then((res) => {
-      setItems(prev => [...prev, ...res.results]);
-      setHasMore(res.current_page < res.total_pages);
-      setPage(nextPage);
-      setLoadingMore(false);
-    }).catch(() => setLoadingMore(false));
-  };
-
-  if (loading) return <div className="py-8 text-center text-gray-400 text-sm">Loading history…</div>;
-  if (!items.length) return <EmptyState msg="No reassignment logs found for this person." />;
-
-  return (
-    <div className="space-y-4 pb-8">
-      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-        <FiAlertTriangle size={14} /> Individual Meal Coverage History
-      </h3>
-      <div className="space-y-3">
-        {items.map((a) => (
-          <div key={a.id} className="rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/10 dark:bg-amber-900/10 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-900 dark:text-white text-sm">
-                    {a.patient_name || `Meal #${a.user_meal}`}
-                  </span>
-                </div>
-                <div className="text-[10px] text-gray-500 flex items-center gap-2">
-                    <FiCalendar size={10} /> {fmtDate(a.meal_date)}
-                    <span className="text-gray-300">|</span>
-                    <FiClock size={10} /> {a.slot_name}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Single shift reassignment</div>
-              </div>
-            </div>
-            <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-gray-800/50 text-xs border border-amber-50 dark:border-amber-900/30">
-               <div className="font-bold text-[10px] text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">Reason</div>
-               <div className="italic text-gray-600 dark:text-gray-300">"{a.reassignment_reason}"</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <LoadMoreBtn hasMore={hasMore} loading={loadingMore} onLoad={loadMore} />
-    </div>
-  );
-}
