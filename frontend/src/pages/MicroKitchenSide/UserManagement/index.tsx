@@ -208,6 +208,7 @@ const UserManagementPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">First Name</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Last Name</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Active</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Created By</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
@@ -215,13 +216,13 @@ const UserManagementPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">
+                  <TableCell colSpan={8} className="px-5 py-8 text-center text-gray-400 italic">
                     Loading users...
                   </TableCell>
                 </TableRow>
               ) : sortedDefinitions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">
+                  <TableCell colSpan={8} className="px-5 py-8 text-center text-gray-400 italic">
                     No supply chain users found.
                   </TableCell>
                 </TableRow>
@@ -240,6 +241,12 @@ const UserManagementPage: React.FC = () => {
                         readOnly
                         className="w-4 h-4 accent-green-600 rounded"
                       />
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 dark:text-white">{user.created_by_name || 'System'}</span>
+                        <span className="text-[10px] uppercase tracking-widest opacity-60 font-black text-blue-600">{user.created_by_role || 'N/A'}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">

@@ -135,23 +135,30 @@ const UnitManagementPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Unit Name</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Posted By</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">Loading units...</TableCell>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 italic">Loading units...</TableCell>
                 </TableRow>
               ) : units.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-400 italic">No units found</TableCell>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 italic">No units found</TableCell>
                 </TableRow>
               ) : (
                 units.map((u: Unit, i: number) => (
                   <TableRow key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{u.name}</TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 dark:text-white">{u.posted_by_name || 'System'}</span>
+                        <span className="text-[10px] uppercase tracking-widest opacity-60 font-black text-blue-600">{u.posted_by_role || 'N/A'}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <button className="text-blue-600 hover:text-blue-800" title="Edit" onClick={() => { setEditUnitId(u.id!); setIsEditModalOpen(true); }}>

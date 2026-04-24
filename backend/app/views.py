@@ -665,8 +665,8 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-    # NOTE: UserRegister currently has no created_by field.
-    # We intentionally do not filter by created_by, so list shows all users.
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
 
 
 class AdminAllOrdersView(APIView):

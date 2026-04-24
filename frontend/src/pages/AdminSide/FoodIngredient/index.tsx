@@ -152,17 +152,18 @@ const FoodIngredientManagementPage: React.FC = () => {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Ingredient</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Quantity</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Unit</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Posted By</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Action</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">Loading recipe ingredients...</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">Loading recipe ingredients...</TableCell>
                 </TableRow>
               ) : foodIngredients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-400 italic">No recipe ingredients found.</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-400 italic">No recipe ingredients found.</TableCell>
                 </TableRow>
               ) : (
                 foodIngredients.map((fi: FoodIngredient, i: number) => (
@@ -175,6 +176,12 @@ const FoodIngredientManagementPage: React.FC = () => {
                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400">
                         {fi.unit_name || "N/A"}
                        </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 dark:text-white">{fi.posted_by_name || 'System'}</span>
+                        <span className="text-[10px] uppercase tracking-widest opacity-60 font-black text-blue-600">{fi.posted_by_role || 'N/A'}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <div className="flex items-center gap-3">

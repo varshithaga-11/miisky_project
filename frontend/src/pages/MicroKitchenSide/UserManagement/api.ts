@@ -10,6 +10,8 @@ export interface UserRegister {
   role: string;
   is_active?: boolean;
   created_by?: number;
+  created_by_name?: string;
+  created_by_role?: string;
   mobile?: string | null;
   whatsapp?: string | null;
   dob?: string | null;

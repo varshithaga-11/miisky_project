@@ -5,6 +5,7 @@ export interface MealType {
   id?: number;
   name: string;
   posted_by_role?: string;
+  posted_by_name?: string;
 }
 
 export interface PaginatedResponses<T> {

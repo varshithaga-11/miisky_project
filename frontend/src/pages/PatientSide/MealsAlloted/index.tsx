@@ -16,9 +16,17 @@ import interactionPlugin from "@fullcalendar/interaction";
 const MealsAllotedPage: React.FC = () => {
     const [allMeals, setAllMeals] = useState<UserMeal[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+    const [viewMode, setViewMode] = useState<"list" | "calendar" | "weekly">("list");
     const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
     const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+    
+    const [weeklyStartDate, setWeeklyStartDate] = useState(() => {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const start = new Date(d.setDate(diff));
+        return start.toISOString().split('T')[0];
+    });
     
     // Hover State for Calendar
     const [hoveredEvent, setHoveredEvent] = useState<UserMeal | null>(null);
@@ -34,7 +42,7 @@ const MealsAllotedPage: React.FC = () => {
 
     useEffect(() => {
         fetchMeals();
-    }, [viewMode, calendarMonth, calendarYear]);
+    }, [viewMode, calendarMonth, calendarYear, weeklyStartDate]);
 
     const fetchMeals = async () => {
         setLoading(true);
@@ -42,8 +50,14 @@ const MealsAllotedPage: React.FC = () => {
             let meals: UserMeal[] = [];
             if (viewMode === "list") {
                 meals = await getTimelineMeals();
-            } else {
+            } else if (viewMode === "calendar") {
                 meals = await getMonthlyMeals(calendarMonth, calendarYear);
+            } else {
+                // Weekly view
+                const end = new Date(weeklyStartDate);
+                end.setDate(end.getDate() + 6);
+                const endDateStr = end.toISOString().split('T')[0];
+                meals = await getTimelineMeals(weeklyStartDate, endDateStr);
             }
             
             const sorted = [...meals].sort((a, b) => {
@@ -144,6 +158,12 @@ const MealsAllotedPage: React.FC = () => {
                                     className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white/60 hover:text-white'}`}
                                 >
                                     <FiList size={14} /> Timeline
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('weekly')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'weekly' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    <FiList size={14} /> Weekly
                                 </button>
                                 <button 
                                     onClick={() => setViewMode("calendar")}
@@ -255,6 +275,133 @@ const MealsAllotedPage: React.FC = () => {
                                     );
                                 }}
                             />
+                        </div>
+                    ) : viewMode === "weekly" ? (
+                        <div className="space-y-8">
+                            <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-6 rounded-[32px] border border-transparent dark:border-white/[0.05] shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <button 
+                                        onClick={() => {
+                                            const d = new Date(weeklyStartDate);
+                                            d.setDate(d.getDate() - 7);
+                                            setWeeklyStartDate(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <FiX className="rotate-180" /> {/* Using FiX as a placeholder for arrow if needed, but better use a real icon */}
+                                        <span className="sr-only">Previous Week</span>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    <div>
+                                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest italic">
+                                            Week of {new Date(weeklyStartDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                            {(() => {
+                                                const end = new Date(weeklyStartDate);
+                                                end.setDate(end.getDate() + 6);
+                                                return `Showing through ${end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+                                            })()}
+                                        </p>
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            const d = new Date(weeklyStartDate);
+                                            d.setDate(d.getDate() + 7);
+                                            setWeeklyStartDate(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input 
+                                        type="month" 
+                                        className="px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl text-xs font-bold border-none focus:ring-2 ring-indigo-500/20"
+                                        value={`${new Date(weeklyStartDate).getFullYear()}-${String(new Date(weeklyStartDate).getMonth() + 1).padStart(2, '0')}`}
+                                        onChange={(e) => {
+                                            const [y, m] = e.target.value.split('-');
+                                            const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+                                            const day = d.getDay();
+                                            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                                            setWeeklyStartDate(new Date(d.setDate(diff)).toISOString().split('T')[0]);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto pb-4 scrollbar-thin">
+                                <div className="min-w-[1200px] grid grid-cols-8 gap-4">
+                                    <div className="pt-16">
+                                        {['Breakfast', 'Lunch', 'Snacks', 'Dinner'].map(type => (
+                                            <div key={type} className="h-48 flex items-center justify-center">
+                                                <div className="rotate-[-90deg] whitespace-nowrap text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">
+                                                    {type}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {Array.from({ length: 7 }).map((_, i) => {
+                                        const d = new Date(weeklyStartDate);
+                                        d.setDate(d.getDate() + i);
+                                        const dateStr = d.toISOString().split('T')[0];
+                                        const dayMeals = allMeals.filter(m => m.meal_date === dateStr);
+                                        
+                                        return (
+                                            <div key={dateStr} className="space-y-4">
+                                                <div className="text-center p-4 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl mb-6">
+                                                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{d.toLocaleDateString(undefined, { weekday: 'short' })}</p>
+                                                    <p className="text-lg font-black text-gray-900 dark:text-white italic">{d.getDate()}</p>
+                                                </div>
+
+                                                {['Breakfast', 'Lunch', 'Snacks', 'Dinner'].map(type => {
+                                                    const typeMeals = dayMeals.filter(m => m.meal_type_details?.name.toLowerCase().includes(type.toLowerCase()));
+                                                    return (
+                                                        <div key={type} className="h-48 rounded-3xl border-2 border-dashed border-gray-100 dark:border-white/5 p-3 flex flex-col gap-2 overflow-y-auto scrollbar-none hover:border-indigo-500/20 transition-colors">
+                                                            {typeMeals.length === 0 ? (
+                                 <div className="flex-1 flex flex-col items-center justify-center opacity-20 grayscale">
+                                                                    {getMealIcon(type)}
+                                                                    <span className="text-[8px] font-bold uppercase mt-1">Empty</span>
+                                                                </div>
+                                                            ) : (
+                                                                typeMeals.map(m => (
+                                                                    <div key={m.id} className={`p-3 rounded-2xl ${m.is_consumed ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-500/20' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-white/10'} border shadow-sm`}>
+                                                                        <div className="flex items-center gap-1.5 mb-2">
+                                                                            <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${m.is_consumed ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 text-indigo-500 dark:bg-indigo-900/40'}`}>
+                                                                                {m.meal_type_details?.name || 'Meal'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex justify-between items-start mb-2">
+                                                                            <p className={`text-[9px] font-black uppercase tracking-tighter truncate leading-tight ${m.is_consumed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}>
+                                                                                {m.food_details?.name}
+                                                                            </p>
+                                                                            {m.is_consumed && <FiCheckCircle className="text-emerald-500 shrink-0" size={10} />}
+                                                                        </div>
+                                                                        <div className="flex items-center justify-between mt-auto">
+                                                                            <span className="text-[8px] font-bold text-gray-400">Qty: {m.quantity}</span>
+                                                                            {!m.is_consumed && (
+                                                                                <button 
+                                                                                    onClick={() => handleMarkConsumed(m.id)}
+                                                                                    className="p-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors"
+                                                                                >
+                                                                                    <FiCheck size={10} />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         /* Timeline View */
