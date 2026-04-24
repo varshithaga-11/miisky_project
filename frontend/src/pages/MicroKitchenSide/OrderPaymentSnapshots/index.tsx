@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
-import { FiSearch, FiDollarSign } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   getMicroKitchenOrderPaymentSnapshots,
   OrderPaymentSnapshotRow,
 } from "./api";
+import { FilterBar } from "../../../components/common";
+import { fetchSupplyChainUsers, SupplyChainUser } from "../DeliveryManagement/api";
+import { FiSearch, FiDollarSign, FiFilter, FiTruck } from "react-icons/fi";
 
 const fmtMoney = (s: string | undefined) => {
   const n = Number(s);
@@ -28,6 +31,14 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
   const [summaryPlatform, setSummaryPlatform] = useState<string | undefined>();
   const [summaryOrders, setSummaryOrders] = useState<number | undefined>();
 
+  // Filters
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [period, setPeriod] = useState("all");
+  const [deliveryPerson, setDeliveryPerson] = useState("all");
+  const [orderType, setOrderType] = useState("all");
+  const [teamUsers, setTeamUsers] = useState<SupplyChainUser[]>([]);
+
   useEffect(() => {
     const t = window.setTimeout(() => {
       const next = searchInput.trim();
@@ -39,12 +50,31 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
     return () => window.clearTimeout(t);
   }, [searchInput]);
 
+  const loadTeam = async () => {
+    if (teamUsers.length > 0) return;
+    try {
+      const users = await fetchSupplyChainUsers();
+      setTeamUsers(users);
+    } catch (e) {
+      console.error("Failed to load team users", e);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const data = await getMicroKitchenOrderPaymentSnapshots(page, pageSize, debouncedSearch);
+        const data = await getMicroKitchenOrderPaymentSnapshots(
+          page, 
+          pageSize, 
+          debouncedSearch,
+          period,
+          startDate,
+          endDate,
+          deliveryPerson,
+          orderType
+        );
         if (cancelled) return;
         setRows(data.results ?? []);
         setTotalPages(data.total_pages ?? 1);
@@ -64,7 +94,7 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, debouncedSearch]);
+  }, [page, pageSize, debouncedSearch, period, startDate, endDate, deliveryPerson, orderType]);
 
   return (
     <>
@@ -96,35 +126,81 @@ const OrderPaymentSnapshotsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center text-sm">
-          <div className="relative flex-1 max-w-md w-full">
-            <input
-              type="text"
-              placeholder="Search order ID or customer name..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            <FiSearch className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+        <div className="mb-6 space-y-6">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex-1 min-w-[280px]">
+              <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Search Order ID / Customer</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl font-bold text-sm"
+                />
+                <FiSearch className="absolute left-3 top-3 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Order Type</label>
+              <select
+                value={orderType}
+                onChange={(e) => {setOrderType(e.target.value); setPage(1);}}
+                className="px-4 py-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl font-bold text-sm"
+              >
+                <option value="all">All Types</option>
+                <option value="patient">Patient</option>
+                <option value="non_patient">Non-Patient</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Logistics Partner</label>
+              <select
+                value={deliveryPerson}
+                onFocus={loadTeam}
+                onChange={(e) => {setDeliveryPerson(e.target.value); setPage(1);}}
+                className="px-4 py-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl font-bold text-sm"
+              >
+                <option value="all">All Partners</option>
+                {teamUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4 text-sm font-medium">
+              <label className="text-gray-500 dark:text-gray-400">Per page:</label>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="px-3 py-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl font-bold text-sm"
+              >
+                {[10, 25, 50].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-4 text-sm font-medium">
-            <label className="text-gray-500 dark:text-gray-400">Per page:</label>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-white"
-            >
-              {[10, 25, 50].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
+
+          <FilterBar
+            startDate={startDate}
+            endDate={endDate}
+            activePeriod={period}
+            onPeriodChange={(p) => {setPeriod(p); setPage(1);}}
+            onFilterChange={(s, e, p) => {
+              setStartDate(s);
+              setEndDate(e);
+              setPeriod(p);
+              setPage(1);
+            }}
+          />
         </div>
 
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">

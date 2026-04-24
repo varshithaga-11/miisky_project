@@ -904,6 +904,26 @@ class MicroKitchenOrderPaymentSnapshotsView(generics.ListAPIView):
                     | Q(order__user__username__icontains=search)
                 )
 
+        # Additional Filters
+        dp = self.request.query_params.get("delivery_person")
+        if dp and dp != "all":
+            qs = qs.filter(order__delivery_person_id=dp)
+
+        ot = self.request.query_params.get("order_type")
+        if ot and ot != "all":
+            qs = qs.filter(order__order_type=ot)
+
+        period = self.request.query_params.get("period")
+        if period and period != "all":
+            from .utils.date_utils import get_period_range
+            sd = self.request.query_params.get("start_date")
+            ed = self.request.query_params.get("end_date")
+            try:
+                s, e = get_period_range(period, sd, ed)
+                qs = qs.filter(order__created_at__date__range=[s, e])
+            except Exception as ex:
+                print(f"MicroKitchenOrderPaymentSnapshotsView date filter error: {ex}")
+
         return qs.order_by("-created_at")
 
     def list(self, request, *args, **kwargs):

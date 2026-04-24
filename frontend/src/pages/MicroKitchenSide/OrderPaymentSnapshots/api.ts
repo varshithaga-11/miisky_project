@@ -33,10 +33,21 @@ export type PaginatedOrderPaymentSnapshots = {
 export async function getMicroKitchenOrderPaymentSnapshots(
   page = 1,
   limit = 10,
-  search = ""
+  search = "",
+  period = "",
+  startDate = "",
+  endDate = "",
+  deliveryPerson = "",
+  orderType = ""
 ): Promise<PaginatedOrderPaymentSnapshots> {
   const params: Record<string, string | number> = { page, limit };
   if (search.trim()) params.search = search.trim();
+  if (period && period !== "all") params.period = period;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  if (deliveryPerson && deliveryPerson !== "all") params.delivery_person = deliveryPerson;
+  if (orderType && orderType !== "all") params.order_type = orderType;
+
   const url = createApiUrl("api/microkitchen/order-payment-snapshots/");
   const res = await axios.get<PaginatedOrderPaymentSnapshots>(url, {
     headers: await getAuthHeaders(),
