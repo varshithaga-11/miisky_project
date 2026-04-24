@@ -98,6 +98,9 @@ const SetDailyMealsPage: React.FC = () => {
     const [rangeMealsLoading, setRangeMealsLoading] = useState(false);
     const rangeLoadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
     const rangeMealsFetchLockRef = useRef(false);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const topScrollRef = useRef<HTMLDivElement | null>(null);
+    const topInnerRef = useRef<HTMLDivElement | null>(null);
 
     const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
     const [calYear, setCalYear] = useState(() => new Date().getFullYear());
@@ -434,6 +437,55 @@ const SetDailyMealsPage: React.FC = () => {
         return dates;
     };
 
+    useEffect(() => {
+        const top = topScrollRef.current;
+        const main = scrollContainerRef.current;
+        if (!top || !main) return;
+
+        let isSyncingTop = false;
+        let isSyncingMain = false;
+
+        const onTopScroll = () => {
+            if (!isSyncingMain) {
+                isSyncingTop = true;
+                main.scrollLeft = top.scrollLeft;
+                setTimeout(() => { isSyncingTop = false; }, 50);
+            }
+        };
+        const onMainScroll = () => {
+            if (!isSyncingTop) {
+                isSyncingMain = true;
+                top.scrollLeft = main.scrollLeft;
+                setTimeout(() => { isSyncingMain = false; }, 50);
+            }
+        };
+
+        top.addEventListener("scroll", onTopScroll);
+        main.addEventListener("scroll", onMainScroll);
+        return () => {
+            top.removeEventListener("scroll", onTopScroll);
+            main.removeEventListener("scroll", onMainScroll);
+        };
+    }, [viewMode]);
+
+    useEffect(() => {
+        const main = scrollContainerRef.current;
+        const topInner = topInnerRef.current;
+        if (!main || !topInner) return;
+
+        const updateWidth = () => {
+            topInner.style.width = `${main.scrollWidth}px`;
+        };
+
+        const ro = new ResizeObserver(updateWidth);
+        ro.observe(main);
+        // Also observe some children to catch expansion
+        if (main.firstChild) ro.observe(main.firstChild as Element);
+        
+        updateWidth();
+        return () => ro.disconnect();
+    }, [viewMode, rangeMealsAccum]);
+
     const planMinDate = activePlan?.start_date || "";
     const planMaxDate = activePlan?.end_date || "";
 
@@ -739,7 +791,7 @@ const SetDailyMealsPage: React.FC = () => {
 
                     {/* Food list - LEFT SIDEBAR */}
                     <div className="xl:col-span-4 lg:col-span-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-[28px] p-5 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] sticky top-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-[28px] p-5 shadow-xl shadow-gray-200/50 dark:shadow-none border border-transparent dark:border-white/[0.05] sticky top-6 self-start">
                             <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2">
                                 <FiMenu className="text-indigo-500" size={16} /> Food Library
                             </h3>
@@ -796,7 +848,7 @@ const SetDailyMealsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                            <div className="max-h-[calc(100vh-280px)] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                                 {filteredFoods.length === 0 ? (
                                     <p className="text-gray-400 text-xs font-medium py-8 text-center">No foods found</p>
                                 ) : (
@@ -1085,7 +1137,20 @@ const SetDailyMealsPage: React.FC = () => {
 
                                 {/* List view - Day drop zones */}
                                 {viewMode === "list" && activePlan && (
-                                    <div className="space-y-8">
+                                    <div className="space-y-0">
+                                        {/* Top scrollbar (syncs with the main content) */}
+                                        <div 
+                                            ref={topScrollRef} 
+                                            className="overflow-x-auto h-3 scrollbar-thin mb-1"
+                                            style={{ display: datesToShow.length > 2 ? 'block' : 'none' }}
+                                        >
+                                            <div ref={topInnerRef} className="h-px" />
+                                        </div>
+
+                                        <div 
+                                            ref={scrollContainerRef}
+                                            className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-thin"
+                                        >
                                         {datesToShow.map((dateStr) => {
                                             const dayEntries = dailyEntries.filter(e => e.meal_date === dateStr);
                                             const dateObj = new Date(dateStr);
@@ -1105,7 +1170,7 @@ const SetDailyMealsPage: React.FC = () => {
                                             })();
 
                                             return (
-                                                <motion.div key={dateStr} layout className={`space-y-4 ${isReadOnly ? 'opacity-70 grayscale-[0.3]' : ''}`}>
+                                                <motion.div key={dateStr} layout className={`space-y-4 flex-shrink-0 w-[450px] ${isReadOnly ? 'opacity-70 grayscale-[0.3]' : ''}`}>
                                                     <div
                                                         onDrop={isReadOnly ? undefined : (e) => handleDropOnDay(e, dateStr)}
                                                         onDragOver={isReadOnly ? undefined : handleDragOver}
@@ -1288,15 +1353,23 @@ const SetDailyMealsPage: React.FC = () => {
                                             );
                                         })}
                                         {isRangeMode && rangeHasMore && (
-                                            <div className="flex flex-col items-center pt-6 pb-2">
-                                                <div ref={rangeLoadMoreSentinelRef} className="h-px w-full" aria-hidden />
-                                                {rangeMealsLoading && (
-                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider py-3">
-                                                        Loading more days…
+                                            <div className="flex-shrink-0 flex flex-col items-center justify-center w-48 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-[24px]">
+                                                <div ref={rangeLoadMoreSentinelRef} className="w-px h-full" aria-hidden />
+                                                {rangeMealsLoading ? (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                        <p className="text-[8px] text-gray-400 font-black uppercase tracking-wider">
+                                                            Loading...
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-wider">
+                                                        Scroll for more
                                                     </p>
                                                 )}
                                             </div>
                                         )}
+                                        </div>
                                     </div>
                                 )}
                             </>
