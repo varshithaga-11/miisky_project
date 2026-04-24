@@ -9,6 +9,7 @@ import { InfoRow, InfoSection, EmptyState } from "../PatientOverview/PatientData
 import { createApiUrl } from "../../../access/access";
 import { AdminOrderList } from "../shared/AdminOrderList";
 import type {
+  AdminMicroKitchenPatientCard,
   AdminKitchenDeliveryProfile,
   AdminKitchenGlobalAssignment,
   AdminKitchenMealDeliveryAssignment,
@@ -220,24 +221,18 @@ function distanceFromKitchen(
 
 export function DisplayKitchenPatients({
   items,
-  kitchen,
-  onLoadMore,
-  hasMore,
-  loadingMore
+  kitchen
 }: {
-  items: any[];
+  items: AdminMicroKitchenPatientCard[];
   kitchen?: { brand_name?: string | null };
-  onLoadMore: () => void;
-  hasMore: boolean;
-  loadingMore: boolean;
 }) {
   if (!items || items.length === 0) return <EmptyState message="No patients assigned to this kitchen." />;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {items.map((x: any) => {
-          const pd = x.patient_details || x.user_details;
+        {items.map((x) => {
+          const pd = x.patient_details;
           return (
             <div key={x.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-all">
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -250,7 +245,7 @@ export function DisplayKitchenPatients({
                       }`}>
                       {String(x.status || "").replace("_", " ")}
                     </span>
-                    <span>ID: {pd?.id ?? x.user}</span>
+                    <span>ID: {pd?.id ?? "—"}</span>
                   </div>
                 </div>
                 <div className="text-right flex flex-col items-end gap-2">
@@ -293,38 +288,34 @@ export function DisplayKitchenPatients({
                   <div className="text-[10px] font-black text-gray-400 uppercase mb-1">Diet Plan</div>
                   <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{x.diet_plan_details?.plan_name || "—"}</div>
                 </div>
+
+                {x.delivery_slots_details && x.delivery_slots_details.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase mb-1">Assigned Slots</div>
+                    <div className="flex flex-wrap gap-2">
+                      {x.delivery_slots_details.map((slot: any) => (
+                        <span key={slot.id} className="px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase border border-blue-100 dark:border-blue-900/50">
+                          {slot.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Patients"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
 export function DisplayKitchenDailyPrep({ 
   items, 
-  onMonthChange,
-  onLoadMore,
-  hasMore,
-  loadingMore 
+  onMonthChange
 }: { 
   items: any[]; 
   onMonthChange?: (m: number, y: number) => void;
-  onLoadMore: () => void;
-  hasMore: boolean;
-  loadingMore: boolean;
 }) {
   const [viewType, setViewType] = useState<"list" | "calendar">("calendar");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -405,18 +396,6 @@ export function DisplayKitchenDailyPrep({
           </div>
         )}
       </div>
-
-      {viewType === "list" && hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Schedule"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -510,17 +489,7 @@ export function DisplayKitchenInspections({ items }: { items: any[] }) {
   );
 }
 
-export function DisplayKitchenReviews({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean;
-}) {
+export function DisplayKitchenReviews({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No reviews yet for this kitchen." />;
   return (
     <div className="space-y-4">
@@ -543,46 +512,14 @@ export function DisplayKitchenReviews({
           </div>
         ))}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Reviews"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-export function DisplayKitchenOrders({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean;
-}) {
+export function DisplayKitchenOrders({ items }: { items: any[] }) {
   return (
     <div className="space-y-6">
       <AdminOrderList items={items || []} hideKitchen />
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Orders"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -623,30 +560,17 @@ export function DisplayKitchenDeliverySlabs({ slabs }: { slabs: DeliveryChargeSl
   );
 }
 
-export function DisplayKitchenFoods({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean;
-}) {
-  if (!items || items.length === 0) return <EmptyState message="No foods available in menu right now." />;
+export function DisplayKitchenFoods({ items }: { items: any[] }) {
+  if (!items || items.length === 0) return <EmptyState message="No foods found for this kitchen." />;
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((f: any) => (
-          <div key={f.id} className="group rounded-2xl border border-gray-100 dark:border-white/[0.05] bg-white/80 dark:bg-gray-800/40 p-5 shadow-sm hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-900 transition-all">
-            <div className="flex justify-between items-start mb-4">
-              <div className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors">{f.food_details?.name || "Food"}</div>
-              <div className="text-lg font-black text-blue-600 dark:text-blue-400 italic">₹ {f.price ?? 0}</div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <FiClock className="text-blue-500" /> <span>Prep: {f.preparation_time || "—"}</span>
+          <div key={f.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-5 bg-white/60 dark:bg-gray-800/30 shadow-sm transition-all hover:border-indigo-200">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{f.food_details?.name}</div>
+                <div className="text-[10px] text-gray-400 mt-1 uppercase font-bold italic">{f.category_name || "Food"}</div>
               </div>
               <div className={`text-[10px] font-black inline-flex px-2 py-0.5 rounded-full ${f.is_available ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"
                 }`}>
@@ -661,32 +585,11 @@ export function DisplayKitchenFoods({
           </div>
         ))}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Foods"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-export function DisplayKitchenTickets({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean;
-}) {
+export function DisplayKitchenTickets({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No support tickets for this kitchen." />;
   return (
     <div className="space-y-6">
@@ -730,17 +633,6 @@ export function DisplayKitchenTickets({
           </div>
         ))}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Tickets"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -804,17 +696,7 @@ function MealCard({ m }: { m: any }) {
   );
 }
 
-export function DisplayKitchenPayouts({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}) {
+export function DisplayKitchenPayouts({ items }: { items: any[] }) {
     if (!items || items.length === 0) return <EmptyState message="No patient-linked payout records found." />;
     return (
         <div className="space-y-8 pb-12">
@@ -897,32 +779,11 @@ export function DisplayKitchenPayouts({
                     );
                 })}
             </div>
-            {hasMore && (
-                <div className="pt-6 flex justify-center">
-                    <button
-                        onClick={onLoadMore}
-                        disabled={loadingMore}
-                        className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-                    >
-                        {loadingMore ? "Loading..." : "Load More Payouts"}
-                    </button>
-                </div>
-            )}
         </div>
     );
 }
 
-export function DisplayKitchenDeliveryRatings({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}): React.ReactNode {
+export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
   if (!items || items.length === 0)
     return <EmptyState message="No delivery feedback found for this kitchen's orders." />;
 
@@ -1018,17 +879,6 @@ export function DisplayKitchenDeliveryRatings({
           </div>
         );
       })}
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Feedback"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -1327,17 +1177,7 @@ export function DisplayKitchenPlannedLeaves({ items }: { items: AdminKitchenPlan
   );
 }
 
-export function DisplayOrderPaymentSnapshots({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}) {
+export function DisplayOrderPaymentSnapshots({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No order payment snapshots found." />;
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/5">
@@ -1365,32 +1205,11 @@ export function DisplayOrderPaymentSnapshots({
           ))}
         </tbody>
       </table>
-      {hasMore && (
-        <div className="p-6 flex justify-center border-t border-gray-100 dark:border-white/5 bg-gray-50/30">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Payments"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-export function DisplayKitchenExecution({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}) {
+export function DisplayKitchenExecution({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No meals scheduled for this date." />;
   return (
     <div className="space-y-6">
@@ -1417,32 +1236,11 @@ export function DisplayKitchenExecution({
           </div>
         ))}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Execution List"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-export function DisplayKitchenPlanPayouts({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}) {
+export function DisplayKitchenPlanPayouts({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No plan payout data found." />;
   return (
     <div className="space-y-8">
@@ -1497,31 +1295,10 @@ export function DisplayKitchenPlanPayouts({
           );
         })}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Plan Payouts"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
-export function DisplayStoreStaffItemsDeliveryFeedback({ 
-  items, 
-  onLoadMore, 
-  hasMore, 
-  loadingMore 
-}: { 
-  items: any[]; 
-  onLoadMore: () => void; 
-  hasMore: boolean; 
-  loadingMore: boolean; 
-}) {
+export function DisplayStoreStaffItemsDeliveryFeedback({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No item delivery feedback found." />;
   return (
     <div className="space-y-6">
@@ -1541,17 +1318,6 @@ export function DisplayStoreStaffItemsDeliveryFeedback({
           </div>
         ))}
       </div>
-      {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Feedback"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

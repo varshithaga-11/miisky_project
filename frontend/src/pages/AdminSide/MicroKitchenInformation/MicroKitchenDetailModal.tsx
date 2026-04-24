@@ -150,7 +150,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
   // Filter states
@@ -180,7 +179,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     setPayload(null);
     setError(null);
     setLoading(false);
-    setPage(1);
     setHasMore(false);
     
     // Reset filters on open if desired, or keep?
@@ -197,7 +195,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     setPayload(null);
     setError(null);
     setLoading(false);
-    setPage(1);
     setHasMore(false);
   };
 
@@ -209,14 +206,12 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
         setLoading(false);
         setPayload(null);
         setError(null);
-        setPage(1);
         return;
       }
       if (!isLoadMore) {
         setScreen(view);
         setLoading(true);
         setPayload(null);
-        setPage(1);
       } else {
         setLoadingMore(true);
       }
@@ -231,7 +226,11 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "patients":
             res = await getMicroKitchenPatients(id, p);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "delivery_team":
             setPayload({ results: await getMicroKitchenDeliveryTeamNoPagination(id), page: 1, hasMore: false });
@@ -250,27 +249,51 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "inspections":
             res = await getMicroKitchenInspections(id, p);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "reviews":
             res = await getMicroKitchenReviewsPaginated(id, p, 10, sd, ed, per);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "orders":
             res = await getMicroKitchenOrdersPaginated(id, p, 10, sd, ed, per);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "foods":
             res = await getMicroKitchenFoodsPaginated(id, p, 20);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "tickets":
             res = await getKitchenSupportTickets(kitchen.user, p, 10);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "payouts":
             res = await getMicroKitchenPayouts(id, p, 10, per, sd, ed);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "delivery_ratings":
             setPayload({ results: await getMicroKitchenDeliveryRatings(id), page: 1, hasMore: false });
@@ -281,20 +304,36 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
           case "prep":
             const nowPrep = new Date();
             res = await getMicroKitchenDailyMeals(id, p, 20, per, sd, ed, nowPrep.getMonth() + 1, nowPrep.getFullYear());
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "execution":
             const td = new Date().toISOString().split('T')[0];
             res = await getMicroKitchenExecutionList(id, p, 20, per, sd, ed, sd ? undefined : td);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "order_payments":
             res = await getMicroKitchenOrderPaymentSnapshots(id, p, 20);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "mk_plan_payouts":
             res = await getMicroKitchenPayouts(id, p, 10, per, sd, ed);
-            setPayload((prev: any) => isLoadMore ? { results: [...(prev?.results || []), ...res.results], page: res.current_page, hasMore: res.current_page < res.total_pages } : { results: res.results, page: 1, hasMore: res.current_page < res.total_pages });
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           default:
             break;
@@ -443,9 +482,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                         <DisplayKitchenPatients 
                           items={payload?.results} 
                           kitchen={kitchen} 
-                          onLoadMore={handleLoadMore}
-                          hasMore={payload?.hasMore || false}
-                          loadingMore={loadingMore}
                         />
                       )}
                       {screen === "delivery_team" && <DisplayKitchenDeliveryTeam items={payload?.results} />}
@@ -471,9 +507,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                            />
                            <DisplayKitchenReviews 
                               items={payload?.results} 
-                              onLoadMore={handleLoadMore}
-                              hasMore={payload?.hasMore || false}
-                              loadingMore={loadingMore}
                            />
                         </div>
                       )}
@@ -491,36 +524,22 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                            />
                            <DisplayKitchenOrders
                               items={payload?.results}
-                              onLoadMore={handleLoadMore}
-                              hasMore={payload?.hasMore || false}
-                              loadingMore={loadingMore}
                            />
                         </div>
                       )}
                       {screen === "delivery" && <DisplayKitchenDeliverySlabs slabs={payload?.results} />}
                       {screen === "foods" && (
-                        <DisplayKitchenFoods
-                          items={payload?.results}
-                          onLoadMore={handleLoadMore}
-                          hasMore={payload?.hasMore || false}
-                          loadingMore={loadingMore}
-                        />
+                        <DisplayKitchenFoods items={payload?.results} />
                       )}
                       {screen === "prep" && (
                         <DisplayKitchenDailyPrep 
                           items={payload?.results} 
                           onMonthChange={handlePrepMonthChange}
-                          onLoadMore={handleLoadMore}
-                          hasMore={payload?.hasMore || false}
-                          loadingMore={loadingMore}
                         />
                       )}
                       {screen === "tickets" && (
                         <DisplayKitchenTickets
                           items={payload?.results}
-                          onLoadMore={handleLoadMore}
-                          hasMore={payload?.hasMore || false}
-                          loadingMore={loadingMore}
                         />
                       )}
                       {screen === "payouts" && (
@@ -537,26 +556,17 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                            />
                            <DisplayKitchenPayouts 
                               items={payload?.results} 
-                              onLoadMore={handleLoadMore}
-                              hasMore={payload?.hasMore || false}
-                              loadingMore={loadingMore}
                            />
                         </div>
                       )}
                        {screen === "delivery_ratings" && (
                         <DisplayKitchenDeliveryRatings 
                           items={payload?.results} 
-                          onLoadMore={handleLoadMore}
-                          hasMore={payload?.hasMore || false}
-                          loadingMore={loadingMore}
                         />
                       )}
                       {screen === "order_payments" && (
                         <DisplayOrderPaymentSnapshots 
                            items={payload?.results} 
-                           onLoadMore={handleLoadMore}
-                           hasMore={payload?.hasMore || false}
-                           loadingMore={loadingMore}
                         />
                       )}
                       {screen === "execution" && (
@@ -573,9 +583,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                            />
                            <DisplayKitchenExecution 
                               items={payload?.results} 
-                              onLoadMore={handleLoadMore}
-                              hasMore={payload?.hasMore || false}
-                              loadingMore={loadingMore}
                            />
                         </div>
                       )}
@@ -593,9 +600,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                            />
                            <DisplayKitchenPlanPayouts 
                               items={payload?.results} 
-                              onLoadMore={handleLoadMore}
-                              hasMore={payload?.hasMore || false}
-                              loadingMore={loadingMore}
                            />
                         </div>
                       )}

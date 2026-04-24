@@ -8957,8 +8957,9 @@ class AdminMicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
             return UserDietPlan.objects.none()
 
         qs = UserDietPlan.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
-            'user', 'diet_plan'
-        )
+            'user', 'diet_plan', 'nutritionist', 'original_nutritionist', 
+            'micro_kitchen', 'original_micro_kitchen', 'delivery_assignment'
+        ).prefetch_related('delivery_assignment__delivery_slots')
 
         if status_param:
             qs = qs.filter(status=status_param)
@@ -9026,8 +9027,8 @@ class AdminMicroKitchenPatientsNoPaginationView(APIView):
         qs = UserDietPlan.objects.filter(
             Q(micro_kitchen_id=micro_kitchen_id) | Q(original_micro_kitchen_id=micro_kitchen_id)
         ).select_related(
-            "user", "diet_plan", "nutritionist", "original_nutritionist", "micro_kitchen", "original_micro_kitchen"
-        )
+            "user", "diet_plan", "nutritionist", "original_nutritionist", "micro_kitchen", "original_micro_kitchen", "delivery_assignment"
+        ).prefetch_related('delivery_assignment__delivery_slots')
 
         if status_param:
             qs = qs.filter(status=status_param)
@@ -9040,6 +9041,46 @@ class AdminMicroKitchenPatientsNoPaginationView(APIView):
             qs, many=True, context={'request': request, 'target_micro_kitchen_id': micro_kitchen_id}
         )
         return Response(serializer.data)
+
+
+class AdminMicroKitchenPatientCardsViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin-only slim payload for the "Allotted Patients & Slots" modal cards.
+    Returns only the fields required by the frontend UI.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    serializer_class = AdminMicroKitchenPatientCardSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["user__username", "user__email", "user__first_name", "user__last_name"]
+
+    def get_queryset(self):
+        micro_kitchen_id = self.request.query_params.get("micro_kitchen")
+        status_param = self.request.query_params.get("status")
+
+        if not micro_kitchen_id:
+            return UserDietPlan.objects.none()
+
+        qs = UserDietPlan.objects.filter(micro_kitchen_id=micro_kitchen_id).select_related(
+            "user",
+            "diet_plan",
+            "nutritionist",
+            "original_nutritionist",
+            "delivery_assignment",
+        ).prefetch_related("delivery_assignment__delivery_slots")
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        else:
+            qs = qs.filter(status__in=["active", "payment_pending", "approved"])
+
+        return qs.order_by("-suggested_on")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["target_micro_kitchen_id"] = self.request.query_params.get("micro_kitchen")
+        return context
 
 
 class AdminMicroKitchenInspectionsNoPaginationView(APIView):

@@ -4306,6 +4306,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
     original_micro_kitchen_details = serializers.SerializerMethodField()
     patient_questionnaire = serializers.SerializerMethodField()
     distance_km = serializers.SerializerMethodField()
+    delivery_slots_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
@@ -4315,7 +4316,7 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             'patient_questionnaire', 'nutritionist_notes',
             'original_nutritionist_details', 'nutritionist_effective_from',
             'original_micro_kitchen_details', 'micro_kitchen_effective_from',
-            'distance_km'
+            'distance_km', 'delivery_slots_details'
         ]
 
     def get_patient_details(self, obj):
@@ -4398,6 +4399,112 @@ class AdminMicroKitchenPatientSlotSerializer(serializers.ModelSerializer):
             return round(R * c, 2)
         except:
             return None
+
+    def get_delivery_slots_details(self, obj):
+        # Get delivery slots from the related DietPlanDeliveryAssignment
+        assignment = getattr(obj, 'delivery_assignment', None)
+        if assignment and assignment.delivery_slots.exists():
+            return DeliverySlotSerializer(assignment.delivery_slots.all(), many=True).data
+        return []
+
+
+class AdminMicroKitchenPatientCardSerializer(serializers.ModelSerializer):
+    """
+    Slim admin serializer for the modal cards in "Allotted Patients & Slots".
+    Includes only the fields currently rendered by the frontend.
+    """
+
+    patient_details = serializers.SerializerMethodField()
+    diet_plan_details = serializers.SerializerMethodField()
+    nutritionist_details = serializers.SerializerMethodField()
+    original_nutritionist_details = serializers.SerializerMethodField()
+    distance_km = serializers.SerializerMethodField()
+    delivery_slots_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserDietPlan
+        fields = [
+            "id",
+            "status",
+            "start_date",
+            "end_date",
+            "patient_details",
+            "diet_plan_details",
+            "nutritionist_details",
+            "original_nutritionist_details",
+            "nutritionist_effective_from",
+            "distance_km",
+            "delivery_slots_details",
+        ]
+
+    def get_patient_details(self, obj):
+        if obj.user:
+            return {
+                "id": obj.user.id,
+                "first_name": obj.user.first_name,
+                "last_name": obj.user.last_name,
+            }
+        return None
+
+    def get_diet_plan_details(self, obj):
+        if obj.diet_plan:
+            return {
+                "plan_name": obj.diet_plan.title,
+            }
+        return None
+
+    def get_nutritionist_details(self, obj):
+        if obj.nutritionist:
+            return {
+                "first_name": obj.nutritionist.first_name,
+                "last_name": obj.nutritionist.last_name,
+            }
+        return None
+
+    def get_original_nutritionist_details(self, obj):
+        if obj.original_nutritionist:
+            return {
+                "first_name": obj.original_nutritionist.first_name,
+                "last_name": obj.original_nutritionist.last_name,
+            }
+        return None
+
+    def get_distance_km(self, obj):
+        target_mk_id = self.context.get("target_micro_kitchen_id")
+        patient_user = obj.user
+
+        if not target_mk_id or not patient_user or not patient_user.latitude or not patient_user.longitude:
+            return None
+
+        try:
+            from .models import MicroKitchenProfile
+
+            mk = MicroKitchenProfile.objects.filter(id=target_mk_id).select_related("user").first()
+            if not mk or not mk.user or not mk.user.latitude or not mk.user.longitude:
+                return None
+
+            lat1, lon1 = mk.user.latitude, mk.user.longitude
+            lat2, lon2 = patient_user.latitude, patient_user.longitude
+
+            import math
+
+            R = 6371.0
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            return round(R * c, 2)
+        except Exception:
+            return None
+
+    def get_delivery_slots_details(self, obj):
+        assignment = getattr(obj, "delivery_assignment", None)
+        if assignment and assignment.delivery_slots.exists():
+            return [
+                {"id": slot.id, "name": slot.name}
+                for slot in assignment.delivery_slots.all()
+            ]
+        return []
 
 
 class MicroKitchenPatientSummarySerializer(serializers.ModelSerializer):

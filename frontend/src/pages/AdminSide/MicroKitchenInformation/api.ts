@@ -191,12 +191,41 @@ export type MicroKitchenFoodRow = {
   food_details?: { id?: number; name?: string; description?: string; image?: string | null } | null;
 };
 
+export type AdminMicroKitchenPatientCard = {
+  id: number;
+  status: string;
+  start_date: string | null;
+  end_date: string | null;
+  nutritionist_effective_from?: string | null;
+  distance_km?: number | null;
+  patient_details?: {
+    id: number;
+    first_name?: string;
+    last_name?: string;
+  } | null;
+  diet_plan_details?: {
+    plan_name?: string;
+  } | null;
+  nutritionist_details?: {
+    first_name?: string;
+    last_name?: string;
+  } | null;
+  original_nutritionist_details?: {
+    first_name?: string;
+    last_name?: string;
+  } | null;
+  delivery_slots_details?: Array<{
+    id: number;
+    name: string;
+  }>;
+};
+
 export const getMicroKitchenPatients = async (
   microKitchenId: number,
   page: number = 1,
   limit: number = 20
-): Promise<PaginatedResponse<any>> => {
-  const url = createApiUrl(`api/admin-microkitchen-patients-nopaginate/`);
+): Promise<PaginatedResponse<AdminMicroKitchenPatientCard>> => {
+  const url = createApiUrl(`api/admin-microkitchen-patient-cards/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
     params: { micro_kitchen: microKitchenId, page, limit },
