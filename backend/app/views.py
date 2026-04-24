@@ -8852,7 +8852,10 @@ class MicroKitchenOrdersViewSet(viewsets.ReadOnlyModelViewSet):
                 | Q(delivery_lat_lng_address__icontains=search)
                 | Q(id__icontains=search)
             )
-        period = request.query_params.get("period")
+        dp = request.query_params.get("delivery_person")
+        if dp and dp != "all":
+            qs = qs.filter(delivery_person_id=dp)
+        period = request.query_params.get("period", "today")
         if period and period != "all":
             from .utils.date_utils import get_period_range
 

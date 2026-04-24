@@ -289,6 +289,13 @@ export type MicroKitchenOrderListRow = {
   status: string;
   final_amount: string | number;
   created_at: string;
+  delivery_person?: number | null;
+  delivery_person_details?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    mobile?: string;
+  } | null;
 };
 
 export type PaginatedMicroKitchenOrderList = {
@@ -306,12 +313,14 @@ export const getMicroKitchenOrdersList = async (
   search?: string,
   period?: OrderDatePeriod | string,
   customRangeStart?: string,
-  customRangeEnd?: string
+  customRangeEnd?: string,
+  delivery_person?: string | number
 ): Promise<PaginatedMicroKitchenOrderList> => {
   let url = createApiUrl(`api/micro-kitchen-orders/?page=${page}&limit=${limit}`);
   if (status && status !== "all") url += `&status=${status}`;
   if (type && type !== "all") url += `&order_type=${type}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (delivery_person && delivery_person !== "all") url += `&delivery_person=${delivery_person}`;
   if (period && period !== "all") {
     url += `&period=${encodeURIComponent(period)}`;
     if (period === "custom_range" && customRangeStart && customRangeEnd) {

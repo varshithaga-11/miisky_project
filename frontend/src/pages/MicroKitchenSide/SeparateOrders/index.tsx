@@ -13,7 +13,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
-import { FiPackage, FiLoader, FiMapPin, FiStar, FiChevronUp, FiEye, FiSearch } from "react-icons/fi";
+import { FiPackage, FiLoader, FiMapPin, FiStar, FiChevronUp, FiEye, FiSearch, FiTruck } from "react-icons/fi";
 import { OrderDeliverySummary } from "../../../components/orders/OrderDeliverySummary";
 import { coordsFromFields, distanceKmBetween } from "../../../components/orders/orderGeo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,14 +47,15 @@ const SeparateOrdersPage: React.FC = () => {
     // Filters
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [period, setPeriod] = useState("all");
+    const [period, setPeriod] = useState("today");
+    const [logisticsFilter, setLogisticsFilter] = useState<string>("all");
 
-    const fetchOrders = async (p = 1, isLoadMore = false, s = search, st = statusFilter, t = typeFilter, sd = startDate, ed = endDate, per = period) => {
+    const fetchOrders = async (p = 1, isLoadMore = false, s = search, st = statusFilter, t = typeFilter, sd = startDate, ed = endDate, per = period, log = logisticsFilter) => {
         if (isLoadMore) setLoadingMore(true);
         else setLoading(true);
 
         try {
-            const data = await getMicroKitchenOrdersList(p, 10, st, t, s, per, sd, ed);
+            const data = await getMicroKitchenOrdersList(p, 10, st, t, s, per, sd, ed, log);
             if (isLoadMore) {
                 setOrders(prev => [...prev, ...(data.results || [])]);
             } else {
@@ -95,10 +96,10 @@ const SeparateOrdersPage: React.FC = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchOrders(1, false, search, statusFilter, typeFilter, startDate, endDate, period);
+            fetchOrders(1, false, search, statusFilter, typeFilter, startDate, endDate, period, logisticsFilter);
         }, search ? 500 : 0);
         return () => clearTimeout(timer);
-    }, [search, statusFilter, typeFilter, startDate, endDate, period]);
+    }, [search, statusFilter, typeFilter, startDate, endDate, period, logisticsFilter]);
 
     useEffect(() => {
         const loadTeam = async () => {
@@ -295,6 +296,19 @@ const SeparateOrdersPage: React.FC = () => {
                                 <option value="non_patient">Non Patient</option>
                             </select>
                         </div>
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Logistics Partner</label>
+                            <select
+                                value={logisticsFilter}
+                                onChange={(e) => setLogisticsFilter(e.target.value)}
+                                className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border-none shadow-sm font-bold text-sm"
+                            >
+                                <option value="all">All Partners</option>
+                                {teamUsers.map(u => (
+                                    <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <FilterBar 
@@ -328,6 +342,7 @@ const SeparateOrdersPage: React.FC = () => {
                                         <TableCell isHeader className="px-6 py-4">Status</TableCell>
                                         <TableCell isHeader className="px-6 py-4">Amount</TableCell>
                                         <TableCell isHeader className="px-6 py-4">Date</TableCell>
+                                        <TableCell isHeader className="px-6 py-4 text-center">Logistics</TableCell>
                                         <TableCell isHeader className="px-6 py-4 text-right">Actions</TableCell>
                                     </TableRow>
                                 </TableHeader>
@@ -375,6 +390,16 @@ const SeparateOrdersPage: React.FC = () => {
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                                                     {order.created_at ? new Date(order.created_at).toLocaleDateString() : ""}
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4 text-center">
+                                                    {order.delivery_person_details ? (
+                                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30 tracking-tighter italic">
+                                                            <FiTruck size={12} />
+                                                            {order.delivery_person_details.first_name} {order.delivery_person_details.last_name}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[9px] font-black uppercase text-gray-300 tracking-widest italic">Pending</span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>

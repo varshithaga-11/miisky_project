@@ -3602,6 +3602,7 @@ class MicroKitchenOrderListSerializer(serializers.ModelSerializer):
 
     customer_name = serializers.SerializerMethodField()
     customer_mobile = serializers.CharField(source="user.mobile", read_only=True, allow_null=True)
+    delivery_person_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -3613,7 +3614,20 @@ class MicroKitchenOrderListSerializer(serializers.ModelSerializer):
             "status",
             "final_amount",
             "created_at",
+            "delivery_person",
+            "delivery_person_details",
         ]
+
+    def get_delivery_person_details(self, obj):
+        if not obj.delivery_person:
+            return None
+        dp = obj.delivery_person
+        return {
+            "id": dp.id,
+            "first_name": dp.first_name or "",
+            "last_name": dp.last_name or "",
+            "mobile": getattr(dp, "mobile", None),
+        }
 
     def get_customer_name(self, obj):
         u = obj.user
