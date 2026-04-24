@@ -21,7 +21,6 @@ import {
   getMicroKitchenDeliveryTeamNoPagination,
   getMicroKitchenPatients,
   getMicroKitchenPatientsNoPagination,
-  getMicroKitchenInspections,
   getMicroKitchenInspectionsNoPagination,
   getMicroKitchenReviewsPaginated,
   getMicroKitchenReviewsNoPagination,
@@ -247,12 +246,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             setPayload({ results: await getMicroKitchenDeliveryProfilesNoPagination(id), page: 1, hasMore: false });
             break;
           case "inspections":
-            res = await getMicroKitchenInspections(id, p);
-            setPayload((prev: any) => ({
-              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
-              page: res.current_page,
-              hasMore: res.current_page < res.total_pages
-            }));
+            setPayload({ results: await getMicroKitchenInspectionsNoPagination(id), page: 1, hasMore: false });
             break;
           case "reviews":
             res = await getMicroKitchenReviewsPaginated(id, p, 10, sd, ed, per);
@@ -355,6 +349,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     let sd, ed, per;
     if (screen === 'orders') { sd = ordStartDate; ed = ordEndDate; per = ordPeriod; }
     else if (screen === 'reviews') { sd = revStartDate; ed = revEndDate; per = revPeriod; }
+    else if (screen === 'inspections') { return; }
     else if (screen === 'prep') { return; }
     else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
     else if (screen === 'payouts' || screen === 'mk_plan_payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
