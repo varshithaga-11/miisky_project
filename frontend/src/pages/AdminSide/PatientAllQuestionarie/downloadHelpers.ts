@@ -80,6 +80,15 @@ export function generatePDF(d: QuestionnaireData) {
     y += lines.length * 14;
   };
 
+  const hint = (text: string) => {
+    checkPage(16);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "italic");
+    pdf.setTextColor(120);
+    pdf.text(text, margin + 10, y);
+    y += 14;
+  };
+
   /** Draw a small checkbox square; if checked, draw a tick inside it. Returns the width consumed. */
   const drawCheckbox = (x: number, cy: number, checked: boolean): number => {
     const boxSize = 8;
@@ -169,8 +178,9 @@ export function generatePDF(d: QuestionnaireData) {
   // ── Health Issues
   heading("HEALTH ISSUES");
   yesNoField("Any Health Issues", d.anyHealthIssues);
+  hint("If yes, please fill the health conditions table below:");
 
-  if (d.anyHealthIssues === "yes" && d.healthRows.length) {
+  if (d.healthRows.length) {
     checkPage(60);
     autoTable(pdf, {
       startY: y,
@@ -193,44 +203,45 @@ export function generatePDF(d: QuestionnaireData) {
   checklist("Any vitamin or Mineral deficiency", d.deficiencyOptions, d.deficiencySelected);
 
   yesNoField("History of surgery", d.surgeryHistory);
-  if (d.surgeryHistory === "yes") field("Type of surgery", d.surgeryDetails);
+  hint("If yes, please specify the type of surgery below:");
+  field("Type of surgery", d.surgeryDetails);
   yesNoField("Allergy from medicine", d.medicineAllergy);
-  if (d.medicineAllergy === "yes") field("Medicine name", d.medicineAllergyName);
+  hint("If yes, please mention the medicine name below:");
+  field("Medicine name", d.medicineAllergyName);
   yesNoField("Consulted a doctor", d.consultedDoctor);
-  if (d.consultedDoctor === "yes") {
-    field("Doctor name", d.doctorName);
-    field("Specialty", d.doctorSpecialty);
-    field("Phone number", d.doctorPhone);
-  }
+  hint("If yes, please fill the doctor details below:");
+  field("Doctor name", d.doctorName);
+  field("Specialty", d.doctorSpecialty);
+  field("Phone number", d.doctorPhone);
   field("Other health concerns", d.otherHealthConcerns);
   if (d.gender === "female") radioField("Menstrual problem", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern);
 
   // ── Food Habit
   heading("FOOD HABIT");
   radioField("Diet patterns", ["Veg", "Non Veg"], d.dietPattern === "non_veg" ? "Non Veg" : d.dietPattern === "veg" ? "Veg" : "");
-  if (d.dietPattern === "non_veg") radioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency);
+  hint("If Non Veg, please select the frequency below:");
+  radioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency);
   yesNoField("Consume Egg", d.consumeEgg);
   yesNoField("Consume milk", d.consumeMilk);
   yesNoField("Food Allergy", d.foodAllergy);
-  if (d.foodAllergy === "yes") field("Food allergy name", d.foodAllergyName);
+  hint("If yes, please mention the food allergy name below:");
+  field("Food allergy name", d.foodAllergyName);
   checklist("Meals in one day", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], d.mealSlotsSelected);
   yesNoField("Snack between Meals", d.snacksBetweenMeals);
   yesNoField("Skip meals", d.skipMeals);
   checklist("Food source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource);
   yesNoField("Consulted dietician", d.dieticianConsulted);
-  if (d.dieticianConsulted === "yes") {
-    field("Dietician Name", d.dieticianName);
-    field("Location", d.dieticianLocation);
-    field("Phone number", d.dieticianPhone);
-  }
+  hint("If yes, please fill the dietician details below:");
+  field("Dietician Name", d.dieticianName);
+  field("Location", d.dieticianLocation);
+  field("Phone number", d.dieticianPhone);
 
   // ── Other Habit
   heading("OTHER HABIT");
   yesNoField("Physical activity", d.physicalActivity);
-  if (d.physicalActivity === "yes") {
-    checklist("Activities", d.activityOptions, d.activitySelected);
-    field("Others (activity)", d.activityOtherText);
-  }
+  hint("If yes, please choose from the activities list below:");
+  checklist("Activities", d.activityOptions, d.activitySelected);
+  field("Others (activity)", d.activityOtherText);
   checklist("Other habits", d.habitOptions, d.habitSelected);
   field("Others (habit)", d.habitOtherText);
   field("Improvement thoughts", d.improvementThoughts);
@@ -271,6 +282,16 @@ function docField(label: string, value: string): Paragraph {
     children: [
       new TextRun({ text: label + ": ", bold: true, size: 20, color: "555555" }),
       new TextRun({ text: value || "-", size: 20 }),
+    ],
+  });
+}
+
+function docHint(text: string): Paragraph {
+  return new Paragraph({
+    spacing: { before: 40, after: 40 },
+    indent: { left: 200 },
+    children: [
+      new TextRun({ text, italics: true, size: 18, color: "888888" }),
     ],
   });
 }
@@ -344,7 +365,8 @@ export async function generateDOCX(d: QuestionnaireData) {
   // Health Issues
   children.push(docHeading("HEALTH ISSUES"));
   children.push(docYesNoField("Any Health Issues", d.anyHealthIssues));
-  if (d.anyHealthIssues === "yes" && d.healthRows.length) {
+  children.push(docHint("If yes, please fill the health conditions table below:"));
+  if (d.healthRows.length) {
     children.push(docHealthTable(d.healthRows));
   }
   children.push(...docChecklist("Any auto immune Diseases", d.autoimmuneOptions, d.autoimmuneSelected));
@@ -352,44 +374,45 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(...docChecklist("Any skin issue", d.skinOptions, d.skinSelected));
   children.push(...docChecklist("Any vitamin or Mineral deficiency", d.deficiencyOptions, d.deficiencySelected));
   children.push(docYesNoField("History of surgery", d.surgeryHistory));
-  if (d.surgeryHistory === "yes") children.push(docField("Type of surgery", d.surgeryDetails));
+  children.push(docHint("If yes, please specify the type of surgery below:"));
+  children.push(docField("Type of surgery", d.surgeryDetails));
   children.push(docYesNoField("Allergy from medicine", d.medicineAllergy));
-  if (d.medicineAllergy === "yes") children.push(docField("Medicine name", d.medicineAllergyName));
+  children.push(docHint("If yes, please mention the medicine name below:"));
+  children.push(docField("Medicine name", d.medicineAllergyName));
   children.push(docYesNoField("Consulted a doctor", d.consultedDoctor));
-  if (d.consultedDoctor === "yes") {
-    children.push(docField("Doctor name", d.doctorName));
-    children.push(docField("Specialty", d.doctorSpecialty));
-    children.push(docField("Phone number", d.doctorPhone));
-  }
+  children.push(docHint("If yes, please fill the doctor details below:"));
+  children.push(docField("Doctor name", d.doctorName));
+  children.push(docField("Specialty", d.doctorSpecialty));
+  children.push(docField("Phone number", d.doctorPhone));
   children.push(docField("Other health concerns", d.otherHealthConcerns));
   if (d.gender === "female") children.push(docRadioField("Menstrual problem", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern));
 
   // Food Habit
   children.push(docHeading("FOOD HABIT"));
   children.push(docRadioField("Diet patterns", ["Veg", "Non Veg"], d.dietPattern === "non_veg" ? "Non Veg" : d.dietPattern === "veg" ? "Veg" : ""));
-  if (d.dietPattern === "non_veg") children.push(docRadioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency));
+  children.push(docHint("If Non Veg, please select the frequency below:"));
+  children.push(docRadioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency));
   children.push(docYesNoField("Consume Egg", d.consumeEgg));
   children.push(docYesNoField("Consume milk", d.consumeMilk));
   children.push(docYesNoField("Food Allergy", d.foodAllergy));
-  if (d.foodAllergy === "yes") children.push(docField("Food allergy name", d.foodAllergyName));
+  children.push(docHint("If yes, please mention the food allergy name below:"));
+  children.push(docField("Food allergy name", d.foodAllergyName));
   children.push(...docChecklist("Meals in one day", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], d.mealSlotsSelected));
   children.push(docYesNoField("Snack between Meals", d.snacksBetweenMeals));
   children.push(docYesNoField("Skip meals", d.skipMeals));
   children.push(...docChecklist("Food source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource));
   children.push(docYesNoField("Consulted dietician", d.dieticianConsulted));
-  if (d.dieticianConsulted === "yes") {
-    children.push(docField("Dietician Name", d.dieticianName));
-    children.push(docField("Location", d.dieticianLocation));
-    children.push(docField("Phone number", d.dieticianPhone));
-  }
+  children.push(docHint("If yes, please fill the dietician details below:"));
+  children.push(docField("Dietician Name", d.dieticianName));
+  children.push(docField("Location", d.dieticianLocation));
+  children.push(docField("Phone number", d.dieticianPhone));
 
   // Other Habit
   children.push(docHeading("OTHER HABIT"));
   children.push(docYesNoField("Physical activity", d.physicalActivity));
-  if (d.physicalActivity === "yes") {
-    children.push(...docChecklist("Activities", d.activityOptions, d.activitySelected));
-    children.push(docField("Others (activity)", d.activityOtherText));
-  }
+  children.push(docHint("If yes, please choose from the activities list below:"));
+  children.push(...docChecklist("Activities", d.activityOptions, d.activitySelected));
+  children.push(docField("Others (activity)", d.activityOtherText));
   children.push(...docChecklist("Other habits", d.habitOptions, d.habitSelected));
   children.push(docField("Others (habit)", d.habitOtherText));
   children.push(docField("Improvement thoughts", d.improvementThoughts));

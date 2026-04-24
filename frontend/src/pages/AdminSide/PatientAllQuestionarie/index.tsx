@@ -285,7 +285,7 @@ export default function PatientAllQuestionariePage() {
   const handleDownload = async (format: "pdf" | "docx") => {
     const data: QuestionnaireData = {
       title, name, age, gender, height, weight, workType,
-      anyHealthIssues, healthRows: anyHealthIssues === "yes" ? healthRows : [],
+      anyHealthIssues, healthRows,
       autoimmuneOptions, autoimmuneSelected,
       symptomOptions, symptomSelected,
       skinOptions, skinSelected,
