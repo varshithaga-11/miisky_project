@@ -595,15 +595,15 @@ export function DisplayKitchenTickets({ items }: { items: any[] }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4">
         {items.map((t: any) => (
-          <div key={t.id} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] p-6 bg-white/60 dark:bg-gray-800/30 shadow-sm relative overflow-hidden">
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+          <div key={t.id} className="rounded-[35px] border border-gray-100 dark:border-white/[0.05] p-6 bg-white/60 dark:bg-gray-800/30 shadow-sm relative overflow-hidden transition-all hover:shadow-lg">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-900 dark:text-white">Ticket #{t.id}</span>
+                  <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">Ticket #{t.id}</span>
                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                    t.status === 'open' ? 'bg-amber-100/50 text-amber-600 border border-amber-200' :
-                    t.status === 'resolved' ? 'bg-green-100/50 text-green-600 border border-green-200' :
-                    'bg-gray-100/50 text-gray-600 border border-gray-200'
+                    t.status === 'open' ? 'bg-amber-100 text-amber-600' :
+                    t.status === 'resolved' ? 'bg-green-100 text-green-600' :
+                    'bg-gray-100 text-gray-600'
                   }`}>
                     {t.status}
                   </span>
@@ -613,23 +613,57 @@ export function DisplayKitchenTickets({ items }: { items: any[] }) {
                     {t.priority}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.subject}</h4>
+                <h4 className="text-lg font-black text-gray-800 dark:text-white uppercase tracking-tight">{t.title || t.subject}</h4>
               </div>
-              <div className="text-right text-[10px] text-gray-400 font-bold uppercase italic">
-                {new Date(t.created_at).toLocaleString()}
+              <div className="text-right">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic leading-none">Created On</p>
+                <p className="text-[11px] font-black text-gray-600 dark:text-gray-300 mt-1 uppercase">
+                  {new Date(t.created_at).toLocaleDateString()}
+                </p>
               </div>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50/50 dark:bg-white/[0.02] p-3 rounded-xl border border-gray-100 dark:border-white/5">
-              {t.message || "No message body"}
-            </p>
-            {t.admin_response && (
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-1">
-                <div className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1">
-                  <FiInfo size={10} /> Admin Response
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="p-4 rounded-2xl bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-2">From (Sender)</div>
+                <div className="flex items-center gap-3">
+                   <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                      <FiUser size={14} />
+                   </div>
+                   <div>
+                      <p className="text-xs font-black text-gray-900 dark:text-white uppercase leading-none">
+                        {t.created_by_details ? `${t.created_by_details.first_name} ${t.created_by_details.last_name || ''}` : 'Unknown'}
+                      </p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">
+                        Role: {t.user_type || 'User'}
+                      </p>
+                   </div>
                 </div>
-                <p className="text-xs text-gray-700 dark:text-gray-300 italic">{t.admin_response}</p>
               </div>
-            )}
+              <div className="p-4 rounded-2xl bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                <div className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-2">To (Assigned)</div>
+                <div className="flex items-center gap-3">
+                   <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                      <FiUser size={14} />
+                   </div>
+                   <div>
+                      <p className="text-xs font-black text-gray-900 dark:text-white uppercase leading-none">
+                        {t.assigned_to_details ? `${t.assigned_to_details.first_name} ${t.assigned_to_details.last_name || ''}` : 'Unassigned'}
+                      </p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">
+                        Target Role: {t.target_user_type || 'N/A'}
+                      </p>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Ticket Description</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic">
+                &quot;{t.description || t.message || "No message body"}&quot;
+              </p>
+            </div>
           </div>
         ))}
       </div>
@@ -1240,64 +1274,6 @@ export function DisplayKitchenExecution({ items }: { items: any[] }) {
   );
 }
 
-export function DisplayKitchenPlanPayouts({ items }: { items: any[] }) {
-  if (!items || items.length === 0) return <EmptyState message="No plan payout data found." />;
-  return (
-    <div className="space-y-8">
-      <div className="space-y-6">
-        {items.map((group: any) => {
-          const p = group.patient;
-          if (!p) return null;
-          return (
-            <div key={p.id} className="p-6 rounded-[32px] border border-gray-100 dark:border-white/5 bg-white/70 dark:bg-gray-800/30 shadow-sm">
-              <div className="flex items-center justify-between mb-4 border-b dark:border-white/5 pb-3">
-                <div className="font-black text-gray-900 dark:text-white uppercase tracking-tighter text-lg">{p.name || "Unknown Patient"}</div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase">Patient ID: #{p.id}</div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 italic">Linked Plan Trackers</div>
-                <div className="grid grid-cols-1 gap-3">
-                  {group.trackers.map((t: any) => (
-                    <div key={t.id} className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5 flex items-center justify-between group transition-all hover:border-indigo-200 dark:hover:border-indigo-900">
-                      <div className="flex items-center gap-4">
-                        <div className="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
-                          <FiClipboard size={18} />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight">
-                            {t.plan_title || `Plan Ref #${t.id}`}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] font-black text-gray-400 uppercase">Amount: ₹{t.total_amount}</span>
-                            <span className="size-1 rounded-full bg-gray-300" />
-                            <span className={`text-[10px] font-black uppercase ${t.status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>{t.status}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
-                          {t.payout_type === 'kitchen' ? 'Kitchen Share' : t.payout_type}
-                        </div>
-                        <div className="text-xs font-bold text-gray-500">
-                          {t.period_from ? new Date(t.period_from).toLocaleDateString() : '—'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t dark:border-white/5">
-                <p className="text-[10px] text-gray-500 italic leading-relaxed">This view shows the cumulative plan-based payouts for this patient as linked to this micro kitchen. For line-item audits, use "Partner Payouts & Transfers".</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 export function DisplayStoreStaffItemsDeliveryFeedback({ items }: { items: any[] }) {
   if (!items || items.length === 0) return <EmptyState message="No item delivery feedback found." />;
   return (

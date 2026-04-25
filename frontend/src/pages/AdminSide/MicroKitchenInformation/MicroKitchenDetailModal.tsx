@@ -64,7 +64,6 @@ import {
   DisplayKitchenDeliveryRatings,
   DisplayOrderPaymentSnapshots,
   DisplayKitchenExecution,
-  DisplayKitchenPlanPayouts,
 } from "./MicroKitchenDataViews";
 
 export type KitchenDataView =
@@ -86,8 +85,7 @@ export type KitchenDataView =
   | "foods"
   | "tickets"
   | "execution"
-  | "order_payments"
-  | "mk_plan_payouts";
+  | "order_payments";
 
 const VIEW_TITLES: Record<KitchenDataView, string> = {
   info: "Kitchen Information & Questionnaire",
@@ -109,7 +107,6 @@ const VIEW_TITLES: Record<KitchenDataView, string> = {
   tickets: "Kitchen Support Tickets",
   execution: "Kitchen Daily Execution List",
   order_payments: "Customer Order Payment Split",
-  mk_plan_payouts: "Plan Payout Trackers (Patient)",
 };
 
 const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
@@ -132,7 +129,6 @@ const MENU_ITEMS: { key: KitchenDataView; description: string; icon: any }[] = [
   { key: "tickets", description: "Technical and operational support requests", icon: <FiClipboard /> },
   { key: "execution", description: "Real-time status of today's kitchen operations", icon: <FiClock /> },
   { key: "order_payments", description: "Per-order freeze snapshot of platform vs kitchen split", icon: <FiDollarSign /> },
-  { key: "mk_plan_payouts", description: "MK side view of patient plan payout trackers", icon: <FiPieChart /> },
 ];
 
 type Props = {
@@ -323,14 +319,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
               hasMore: res.current_page < res.total_pages
             }));
             break;
-          case "mk_plan_payouts":
-            res = await getMicroKitchenPayouts(id, p, 10, per, sd, ed);
-            setPayload((prev: any) => ({
-              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
-              page: res.current_page,
-              hasMore: res.current_page < res.total_pages
-            }));
-            break;
           default:
             break;
         }
@@ -352,7 +340,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     else if (screen === 'inspections') { return; }
     else if (screen === 'prep') { return; }
     else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
-    else if (screen === 'payouts' || screen === 'mk_plan_payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
+    else if (screen === 'payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
     
     loadView(screen as KitchenDataView, (payload.page || 1) + 1, true, sd, ed, per);
   }, [loading, loadingMore, payload, screen, ordStartDate, ordEndDate, ordPeriod, revStartDate, revEndDate, revPeriod, prepStartDate, prepEndDate, prepPeriod, execStartDate, execEndDate, execPeriod, payStartDate, payEndDate, payPeriod, loadView]);
@@ -366,6 +354,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     if (el) observer.observe(el);
     return () => observer.disconnect();
   }, [open, screen, loading, handleLoadMore]);
+
   const handlePrepMonthChange = async (m: number, y: number) => {
     setLoading(true);
     try {
@@ -556,7 +545,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                            />
                         </div>
                       )}
-                       {screen === "delivery_ratings" && (
+                      {screen === "delivery_ratings" && (
                         <DisplayKitchenDeliveryRatings 
                           items={payload?.results} 
                         />
@@ -579,23 +568,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                               }}
                            />
                            <DisplayKitchenExecution 
-                              items={payload?.results} 
-                           />
-                        </div>
-                      )}
-                      {screen === "mk_plan_payouts" && (
-                        <div className="space-y-4">
-                           <FilterBar 
-                              startDate={payStartDate} 
-                              endDate={payEndDate} 
-                              activePeriod={payPeriod}
-                              onPeriodChange={setPayPeriod}
-                              onFilterChange={(s, e, p) => {
-                                setPayStartDate(s); setPayEndDate(e);
-                                loadView("mk_plan_payouts", 1, false, s, e, p);
-                              }}
-                           />
-                           <DisplayKitchenPlanPayouts 
                               items={payload?.results} 
                            />
                         </div>
@@ -626,5 +598,3 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     </div>
   );
 }
-
-
