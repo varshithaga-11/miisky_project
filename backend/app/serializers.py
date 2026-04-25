@@ -3331,12 +3331,13 @@ class MicroKitchenRatingSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
+    delivery_person_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MicroKitchenRating
         fields = [
             'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
-            'rating', 'review', 'order', 'order_type', 'created_at'
+            'rating', 'review', 'order', 'order_type', 'delivery_person_details', 'created_at'
         ]
         read_only_fields = ['id', 'user', 'created_at']
 
@@ -3362,6 +3363,17 @@ class MicroKitchenRatingSerializer(serializers.ModelSerializer):
         if obj.order:
             return obj.order.order_type
         return 'general'
+
+    def get_delivery_person_details(self, obj):
+        if obj.order and obj.order.delivery_person:
+            dp = obj.order.delivery_person
+            return {
+                'id': dp.id,
+                'first_name': dp.first_name or dp.username,
+                'last_name': dp.last_name or '',
+                'mobile': getattr(dp, 'mobile', None),
+            }
+        return None
 
 
 class SupplyChainDeliveryFeedbackSerializer(serializers.ModelSerializer):

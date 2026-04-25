@@ -128,6 +128,11 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
   const [hasMoreOrderPayments, setHasMoreOrderPayments] = useState(true);
   const [loadingOrderPayments, setLoadingOrderPayments] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+  const [kitchenRatingsPage, setKitchenRatingsPage] = useState(1);
+  const [hasMoreKitchenRatings, setHasMoreKitchenRatings] = useState(true);
+  const [loadingKitchenRatings, setLoadingKitchenRatings] = useState(false);
+  const [kitchenDeliveryPersonFilter, setKitchenDeliveryPersonFilter] = useState<string>("");
+  const [kitchenDeliveryPersonOptions, setKitchenDeliveryPersonOptions] = useState<any[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -136,6 +141,9 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     setError(null);
     setLoading(false);
     setNutritionistUserId(null);
+    setKitchenRatingsPage(1);
+    setHasMoreKitchenRatings(true);
+    setKitchenDeliveryPersonFilter("");
   }, [open, patient.id]);
 
   const resetAndClose = () => {
@@ -249,7 +257,11 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             break;
           }
           case "kitchenRatings": {
-            setPayload(await fetchKitchenRatingsForPatient(id));
+            const data = await fetchKitchenRatingsForPatient(id, 1, 10, kitchenDeliveryPersonFilter);
+            setPayload(data.results);
+            setKitchenDeliveryPersonOptions(data.delivery_person_options);
+            setKitchenRatingsPage(1);
+            setHasMoreKitchenRatings(!!data.next);
             break;
           }
           default:
@@ -308,6 +320,37 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     }
   }, [patient.id, orderPaymentPage, hasMoreOrderPayments, loadingOrderPayments, screen]);
 
+  const loadMoreKitchenRatings = useCallback(async () => {
+    if (loadingKitchenRatings || !hasMoreKitchenRatings || screen !== "kitchenRatings") return;
+    setLoadingKitchenRatings(true);
+    try {
+      const nextPage = kitchenRatingsPage + 1;
+      const data = await fetchKitchenRatingsForPatient(patient.id, nextPage, 10, kitchenDeliveryPersonFilter);
+      setPayload((prev: any) => [...(Array.isArray(prev) ? prev : []), ...data.results]);
+      setKitchenRatingsPage(nextPage);
+      setHasMoreKitchenRatings(!!data.next);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingKitchenRatings(false);
+    }
+  }, [patient.id, kitchenRatingsPage, hasMoreKitchenRatings, loadingKitchenRatings, screen, kitchenDeliveryPersonFilter]);
+
+  const handleKitchenDeliveryPersonChange = async (dpId: string) => {
+    setKitchenDeliveryPersonFilter(dpId);
+    setLoading(true);
+    try {
+      const data = await fetchKitchenRatingsForPatient(patient.id, 1, 10, dpId);
+      setPayload(data.results);
+      setKitchenRatingsPage(1);
+      setHasMoreKitchenRatings(!!data.next);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (screen !== "orders" || !hasMoreOrders) return;
     const obs = new IntersectionObserver(
@@ -337,6 +380,21 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     if (sen) obs.observe(sen);
     return () => obs.disconnect();
   }, [screen, hasMoreOrderPayments, loadMoreOrderPayments]);
+
+  useEffect(() => {
+    if (screen !== "kitchenRatings" || !hasMoreKitchenRatings) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreKitchenRatings();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const sen = document.getElementById("kitchen-rating-scroll-sentinel");
+    if (sen) obs.observe(sen);
+    return () => obs.disconnect();
+  }, [screen, hasMoreKitchenRatings, loadMoreKitchenRatings]);
 
   if (!open) return null;
 
@@ -483,8 +541,16 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
               {!loading && !error && screen === "nutritionistRatings" && Array.isArray(payload) && (
                 <DisplayNutritionistRatings ratings={payload} />
               )}
-              {!loading && !error && screen === "kitchenRatings" && Array.isArray(payload) && (
-                <DisplayKitchenRatings ratings={payload} />
+              {screen === "kitchenRatings" && Array.isArray(payload) && (
+                <DisplayKitchenRatings 
+                  ratings={payload} 
+                  loadingMore={loadingKitchenRatings}
+                  hasMore={hasMoreKitchenRatings}
+                  onLoadMore={loadMoreKitchenRatings}
+                  deliveryPersonOptions={kitchenDeliveryPersonOptions}
+                  deliveryPersonFilter={kitchenDeliveryPersonFilter}
+                  onDeliveryPersonChange={handleKitchenDeliveryPersonChange}
+                />
               )}
             </>
           )}

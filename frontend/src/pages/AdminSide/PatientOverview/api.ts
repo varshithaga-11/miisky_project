@@ -312,10 +312,18 @@ export const fetchNutritionistRatingsForPatient = async (patientUserId: number):
   return unwrapResults(data);
 };
 
-/** Kitchen ratings given by patient (No Pagination) */
-export const fetchKitchenRatingsForPatient = async (patientUserId: number): Promise<unknown[]> => {
-  const data = await getJson<unknown>("api/admin-patient-kitchen-ratings-nopaginate/", {
+/** Kitchen ratings given by patient (Paginated) */
+export const fetchKitchenRatingsForPatient = async (
+  patientUserId: number, 
+  page = 1, 
+  limit = 10,
+  deliveryPersonId?: string
+): Promise<{ results: any[]; count: number; delivery_person_options: any[] }> => {
+  const data = await getJson<any>("api/admin-patient-kitchen-ratings-paginated/", {
     user: patientUserId,
+    page,
+    limit,
+    delivery_person: deliveryPersonId,
   });
   return unwrapResults(data);
 };

@@ -451,9 +451,9 @@ urlpatterns = [
         name="admin-patient-nutritionist-ratings-nopaginate",
     ),
     path(
-        "admin-patient-kitchen-ratings-nopaginate/",
-        views.AdminPatientKitchenRatingsNoPaginationView.as_view(),
-        name="admin-patient-kitchen-ratings-nopaginate",
+        "admin-patient-kitchen-ratings-paginated/",
+        views.AdminPatientKitchenRatingsPaginatedView.as_view(),
+        name="admin-patient-kitchen-ratings-paginated",
     ),
     path(
         "admin-order-payments-nopaginate/",

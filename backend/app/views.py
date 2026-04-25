@@ -10321,21 +10321,56 @@ class AdminPatientNutritionistRatingsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
-class AdminPatientKitchenRatingsNoPaginationView(APIView):
+class AdminPatientKitchenRatingsPaginatedView(APIView):
+    """
+    Admin: view kitchen ratings for a patient with pagination and supply chain filters.
+    """
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
         patient_id = request.query_params.get("user")
         if not patient_id:
-            return Response([])
+            return Response({"results": [], "count": 0})
 
-        qs = (
-            MicroKitchenRating.objects.filter(user_id=patient_id)
-            .select_related("user", "micro_kitchen", "order")
-            .order_by("-created_at")
-        )
-        serializer = MicroKitchenRatingSerializer(qs, many=True)
-        return Response(serializer.data)
+        qs = MicroKitchenRating.objects.filter(user_id=patient_id).select_related(
+            "user", "micro_kitchen", "order", "order__delivery_person"
+        ).order_by("-created_at")
+
+        # Delivery Person filter
+        dp_id = request.query_params.get("delivery_person")
+        if dp_id:
+            qs = qs.filter(order__delivery_person_id=dp_id)
+
+        # Order Type filter
+        ot = request.query_params.get("order_type")
+        if ot and ot != 'all':
+            qs = qs.filter(order__order_type=ot)
+
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = request.query_params.get("limit", 10)
+        page = paginator.paginate_queryset(qs, request)
+        
+        serializer = MicroKitchenRatingSerializer(page, many=True)
+
+        # Get delivery person options for this patient's orders
+        delivery_person_ids = MicroKitchenRating.objects.filter(
+            user_id=patient_id, 
+            order__delivery_person__isnull=False
+        ).values_list('order__delivery_person', flat=True).distinct()
+        
+        delivery_persons = UserRegister.objects.filter(id__in=delivery_person_ids).values('id', 'first_name', 'last_name', 'username')
+        delivery_person_options = [
+            {
+                "id": p["id"],
+                "name": f"{p['first_name']} {p['last_name']}".strip() or p["username"]
+            }
+            for p in delivery_persons
+        ]
+
+        response = paginator.get_paginated_response(serializer.data)
+        response.data["delivery_person_options"] = delivery_person_options
+        return response
 
 
 class AdminOrderPaymentsNoPaginationView(APIView):

@@ -2,15 +2,17 @@ import type { ReactNode } from "react";
 import { useMemo, useState, useEffect } from "react";
 import { resolveMediaUrl, fetchOrderPaymentDetailsAdmin } from "./api";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  FiClock, FiCheckCircle, FiAlertCircle, FiTag, FiCalendar, 
-  FiCreditCard, FiEye, FiUser, FiActivity, FiShield, FiSearch, FiTrendingUp, 
+import {
+  FiClock, FiCheckCircle, FiAlertCircle, FiTag, FiCalendar,
+  FiCreditCard, FiEye, FiUser, FiActivity, FiShield, FiSearch, FiTrendingUp,
   FiShoppingBag, FiMapPin, FiTruck, FiX,
   FiChevronRight,
   FiExternalLink,
   FiMessageSquare,
   FiStar,
-  FiHelpCircle
+  FiHelpCircle,
+  FiFilter,
+  FiBox
 } from "react-icons/fi";
 
 /** Definition list row */
@@ -168,7 +170,7 @@ function formatJsonish(val: unknown): ReactNode {
   }
   if (typeof val === "object") {
     const o = val as Record<string, unknown>;
-    
+
     // If it's a known named entity (e.g. from health conditions, symptoms, etc.), just return its name.
     if ("name" in o) {
       return String(o.name);
@@ -544,7 +546,7 @@ export function DisplayDietPlans({ items }: { items: DietPlanRow[] }) {
               {p.start_date || "—"} → {p.end_date || "—"}
               {p.diet_plan_details?.no_of_days != null ? ` (${p.diet_plan_details.no_of_days} day(s))` : ""}
             </div>
-            
+
             {p.kitchen_reassignments && p.kitchen_reassignments.length > 0 && (
               <div className="mt-2 border-l-2 border-amber-300 dark:border-amber-700 pl-3 pt-1 pb-1">
                 <span className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-500 mb-1 block tracking-wider">Kitchen Reassignments</span>
@@ -688,46 +690,46 @@ export function DisplayNutritionistHistory({ items }: { items: any[] }) {
         <div key={h.id} className="relative pl-8 pb-8 last:pb-0">
           <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-indigo-100 dark:bg-indigo-900/40" />
           <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-indigo-500 flex items-center justify-center z-10 shadow-sm">
-             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
           </div>
           <div className="rounded-2xl border border-indigo-100 dark:border-indigo-950 bg-white dark:bg-indigo-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-               <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
-               <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-900/60 uppercase">Audit Log #{h.id}</span>
+              <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-900/60 uppercase">Audit Log #{h.id}</span>
             </div>
             <div className="flex items-center gap-4 text-sm mb-4">
-               <div className="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Previous</div>
-                  <div className="font-bold text-slate-900 dark:text-white truncate">{h.previous_nutritionist_name || '—'}</div>
-               </div>
-               <div className="text-indigo-500 flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase">To</span>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="9 5l7 7-7 7" /></svg>
-               </div>
-               <div className="flex-1 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/40 text-center">
-                  <div className="text-[10px] text-indigo-400 uppercase font-bold mb-1">New Assignment</div>
-                  <div className="font-bold text-indigo-900 dark:text-indigo-200 truncate">{h.new_nutritionist_name || '—'}</div>
-               </div>
+              <div className="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
+                <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Previous</div>
+                <div className="font-bold text-slate-900 dark:text-white truncate">{h.previous_nutritionist_name || '—'}</div>
+              </div>
+              <div className="text-indigo-500 flex flex-col items-center">
+                <span className="text-[10px] font-black uppercase">To</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="9 5l7 7-7 7" /></svg>
+              </div>
+              <div className="flex-1 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/40 text-center">
+                <div className="text-[10px] text-indigo-400 uppercase font-bold mb-1">New Assignment</div>
+                <div className="font-bold text-indigo-900 dark:text-indigo-200 truncate">{h.new_nutritionist_name || '—'}</div>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-               <div className="space-y-1">
-                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Reason:</span>
-                  <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.reason?.replace(/_/g, ' ') || '—'}</p>
-               </div>
-               <div className="space-y-1">
-                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Effective From:</span>
-                  <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.effective_from || 'Immediate'}</p>
-               </div>
+              <div className="space-y-1">
+                <span className="text-gray-400 font-medium uppercase tracking-tighter">Reason:</span>
+                <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.reason?.replace(/_/g, ' ') || '—'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-gray-400 font-medium uppercase tracking-tighter">Effective From:</span>
+                <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.effective_from || 'Immediate'}</p>
+              </div>
             </div>
             {h.notes && (
-               <div className="mt-4 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20">
-                  <span className="text-[10px] font-black text-amber-600/70 uppercase tracking-widest block mb-1">Internal Notes</span>
-                  <p className="text-xs text-amber-800 dark:text-amber-200 italic">"{h.notes}"</p>
-               </div>
+              <div className="mt-4 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20">
+                <span className="text-[10px] font-black text-amber-600/70 uppercase tracking-widest block mb-1">Internal Notes</span>
+                <p className="text-xs text-amber-800 dark:text-amber-200 italic">"{h.notes}"</p>
+              </div>
             )}
             <div className="mt-4 pt-3 border-t border-gray-50 dark:border-gray-900 text-[10px] text-gray-400 flex justify-between">
-               <span>Authorized by: {h.reassigned_by_name || 'System'}</span>
-               <span>Audit verified</span>
+              <span>Authorized by: {h.reassigned_by_name || 'System'}</span>
+              <span>Audit verified</span>
             </div>
           </div>
         </div>
@@ -744,46 +746,46 @@ export function DisplayKitchenHistory({ items }: { items: any[] }) {
         <div key={h.id} className="relative pl-8 pb-8 last:pb-0">
           <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-amber-100 dark:bg-amber-900/40" />
           <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-amber-500 flex items-center justify-center z-10 shadow-sm">
-             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
           </div>
           <div className="rounded-2xl border border-amber-100 dark:border-amber-950 bg-white dark:bg-amber-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-               <span className="text-xs font-black text-amber-600 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
-               <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold border border-amber-100 dark:border-amber-900/60 uppercase">Kitchen Log #{h.id}</span>
+              <span className="text-xs font-black text-amber-600 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold border border-amber-100 dark:border-amber-900/60 uppercase">Kitchen Log #{h.id}</span>
             </div>
             <div className="flex items-center gap-4 text-sm mb-4">
-               <div className="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Original Kitchen</div>
-                  <div className="font-bold text-slate-900 dark:text-white truncate">{h.previous_kitchen_name || '—'}</div>
-               </div>
-               <div className="text-amber-500 flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase">Switch</span>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-               </div>
-               <div className="flex-1 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 text-center">
-                  <div className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-bold mb-1">Target Kitchen</div>
-                  <div className="font-bold text-amber-900 dark:text-amber-200 truncate">{h.new_kitchen_name || '—'}</div>
-               </div>
+              <div className="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
+                <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Original Kitchen</div>
+                <div className="font-bold text-slate-900 dark:text-white truncate">{h.previous_kitchen_name || '—'}</div>
+              </div>
+              <div className="text-amber-500 flex flex-col items-center">
+                <span className="text-[10px] font-black uppercase">Switch</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              </div>
+              <div className="flex-1 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 text-center">
+                <div className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-bold mb-1">Target Kitchen</div>
+                <div className="font-bold text-amber-900 dark:text-amber-200 truncate">{h.new_kitchen_name || '—'}</div>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-               <div className="space-y-1">
-                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Reason:</span>
-                  <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.reason?.replace(/_/g, ' ') || '—'}</p>
-               </div>
-               <div className="space-y-1">
-                  <span className="text-gray-400 font-medium uppercase tracking-tighter">Takes Effect From:</span>
-                  <p className="text-gray-900 dark:text-gray-200 font-semibold font-mono tracking-tight">{h.effective_from || '—'}</p>
-               </div>
+              <div className="space-y-1">
+                <span className="text-gray-400 font-medium uppercase tracking-tighter">Reason:</span>
+                <p className="text-gray-900 dark:text-gray-200 font-semibold">{h.reason?.replace(/_/g, ' ') || '—'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-gray-400 font-medium uppercase tracking-tighter">Takes Effect From:</span>
+                <p className="text-gray-900 dark:text-gray-200 font-semibold font-mono tracking-tight">{h.effective_from || '—'}</p>
+              </div>
             </div>
             {h.notes && (
-               <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Administrative Notes</span>
-                  <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{h.notes}"</p>
-               </div>
+              <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Administrative Notes</span>
+                <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{h.notes}"</p>
+              </div>
             )}
             <div className="mt-4 pt-3 border-t border-gray-50 dark:border-gray-900 text-[10px] text-gray-400 flex justify-between">
-               <span>Switched by: {h.reassigned_by_name || 'System'}</span>
-               <span className="font-bold text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Kitchen Verified</span>
+              <span>Switched by: {h.reassigned_by_name || 'System'}</span>
+              <span className="font-bold text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Kitchen Verified</span>
             </div>
           </div>
         </div>
@@ -1058,11 +1060,11 @@ export function DisplayPaymentHistory({ items }: { items: PaymentEntry[] }) {
 
   const getStatusStyles = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes("verified") || s === "paid" || s === "delivered" || s === "success") 
+    if (s.includes("verified") || s === "paid" || s === "delivered" || s === "success")
       return "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/10";
-    if (s.includes("pending")) 
+    if (s.includes("pending"))
       return "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border-amber-100 dark:border-amber-500/10";
-    if (s.includes("failed") || s.includes("rejected") || s === "cancelled") 
+    if (s.includes("failed") || s.includes("rejected") || s === "cancelled")
       return "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border-rose-100 dark:border-rose-500/10";
     return "bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-100 dark:border-white/5";
   };
@@ -1080,17 +1082,15 @@ export function DisplayPaymentHistory({ items }: { items: PaymentEntry[] }) {
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-start gap-4 flex-1 min-w-[240px]">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
-                  tx.type.includes("Plan") ? "bg-indigo-50 text-indigo-500 dark:bg-indigo-900/20" : "bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20"
-                }`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${tx.type.includes("Plan") ? "bg-indigo-50 text-indigo-500 dark:bg-indigo-900/20" : "bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20"
+                  }`}>
                   {tx.type.includes("Plan") ? <FiTag size={20} /> : <FiCreditCard size={20} />}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">ID: {tx.id}</span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                      tx.type.includes("Plan") ? "bg-indigo-100/50 text-indigo-600" : "bg-emerald-100/50 text-emerald-600"
-                    }`}>{tx.type}</span>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${tx.type.includes("Plan") ? "bg-indigo-100/50 text-indigo-600" : "bg-emerald-100/50 text-emerald-600"
+                      }`}>{tx.type}</span>
                   </div>
                   <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-md">{tx.details}</h4>
                   <div className="flex items-center gap-4 text-[11px] text-gray-400 font-medium">
@@ -1167,9 +1167,8 @@ function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClo
           <div className="flex justify-between items-start">
             <div>
               <div
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 ${
-                  entry.type.includes("Plan") ? "bg-indigo-50 text-indigo-500" : "bg-emerald-50 text-emerald-500"
-                }`}
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 ${entry.type.includes("Plan") ? "bg-indigo-50 text-indigo-500" : "bg-emerald-50 text-emerald-500"
+                  }`}
               >
                 {entry.type}
               </div>
@@ -1353,44 +1352,42 @@ export function DisplayMeetings({ items }: { items: any[] }) {
           className="relative pl-6 pb-6 last:pb-0"
         >
           <div className="absolute left-[7px] top-2 bottom-0 w-px bg-gray-100 dark:bg-white/5" />
-          <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 bg-white dark:bg-gray-900 z-10 ${
-            m.status === 'completed' ? 'border-emerald-500' : m.status === 'pending' ? 'border-amber-500' : 'border-indigo-500'
-          }`} />
-          
+          <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 bg-white dark:bg-gray-900 z-10 ${m.status === 'completed' ? 'border-emerald-500' : m.status === 'pending' ? 'border-amber-500' : 'border-indigo-500'
+            }`} />
+
           <div className="rounded-2xl border border-gray-100 dark:border-white/5 bg-white dark:bg-gray-800/40 p-4 shadow-sm hover:shadow-md transition-all">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-               <div className="flex items-center gap-2">
-                 <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-none">
-                   {new Date(m.preferred_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                 </span>
-                 <span className="text-[10px] text-gray-400 font-bold uppercase">• {m.preferred_time}</span>
-               </div>
-               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                 m.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                 m.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
-                 'bg-indigo-50 text-indigo-600 border-indigo-100'
-               }`}>{m.status}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-none">
+                  {new Date(m.preferred_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                <span className="text-[10px] text-gray-400 font-bold uppercase">• {m.preferred_time}</span>
+              </div>
+              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${m.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                  m.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                    'bg-indigo-50 text-indigo-600 border-indigo-100'
+                }`}>{m.status}</span>
             </div>
-            
+
             <div className="flex items-start gap-3">
-               <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 shrink-0">
-                 <FiCalendar size={18} />
-               </div>
-               <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">Consultation with {m.nutritionist_details?.first_name || 'Nutritionist'}</h4>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2 italic">"{m.reason || 'No reason provided'}"</p>
-               </div>
+              <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 shrink-0">
+                <FiCalendar size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">Consultation with {m.nutritionist_details?.first_name || 'Nutritionist'}</h4>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2 italic">"{m.reason || 'No reason provided'}"</p>
+              </div>
             </div>
 
             {m.meeting_link && (
-               <div className="mt-4 pt-3 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                    <FiActivity size={10} className="text-emerald-500" /> Recorded Session
-                  </div>
-                  <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:underline flex items-center gap-1">
-                    Join / View Link <FiChevronRight />
-                  </a>
-               </div>
+              <div className="mt-4 pt-3 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                  <FiActivity size={10} className="text-emerald-500" /> Recorded Session
+                </div>
+                <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:underline flex items-center gap-1">
+                  Join / View Link <FiChevronRight />
+                </a>
+              </div>
             )}
           </div>
         </motion.div>
@@ -1405,57 +1402,55 @@ export function DisplaySupportTickets({ items }: { items: any[] }) {
     <div className="space-y-4">
       {items.map((t, idx) => (
         <motion.div
-           key={t.id || idx}
-           initial={{ opacity: 0, y: 10 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ delay: idx * 0.05 }}
-           className="group bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-4 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all shadow-sm hover:shadow-md"
+          key={t.id || idx}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.05 }}
+          className="group bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-4 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all shadow-sm hover:shadow-md"
         >
-           <div className="flex items-start justify-between gap-4 mb-3">
-              <div className="flex-1 min-w-0">
-                 <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter leading-none">Ticket #{t.id}</span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
-                      t.priority === 'high' ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500'
-                    }`}>{t.priority} priority</span>
-                 </div>
-                 <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{t.title}</h4>
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter leading-none">Ticket #{t.id}</span>
+                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${t.priority === 'high' ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500'
+                  }`}>{t.priority} priority</span>
               </div>
-              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
-                t.status === 'open' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
-                t.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                'bg-gray-50 text-gray-500 border-gray-100'
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{t.title}</h4>
+            </div>
+            <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${t.status === 'open' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                t.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                  'bg-gray-50 text-gray-500 border-gray-100'
               }`}>{t.status}</span>
-           </div>
-           
-           <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">{t.description}</p>
-           
-           <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                 <FiMessageSquare size={12} className="text-indigo-400" /> {t.category_details?.name || 'General Support'}
-              </div>
-              <p className="text-[10px] text-gray-400 font-medium">Updated: {new Date(t.updated_at || t.created_at).toLocaleDateString()}</p>
-           </div>
+          </div>
 
-           <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                 <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
-                    <FiUser size={14} />
-                 </div>
-                 <div>
-                    <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
-                       {t.assigned_to_details ? `${t.assigned_to_details.first_name || ''} ${t.assigned_to_details.last_name || ''}`.trim() || t.assigned_to_details.username : 'Unassigned'}
-                    </p>
-                    <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest leading-none">
-                       {t.assigned_to_details ? t.assigned_to_details.role : 'Waiting for Assignment'}
-                    </p>
-                 </div>
+          <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">{t.description}</p>
+
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+              <FiMessageSquare size={12} className="text-indigo-400" /> {t.category_details?.name || 'General Support'}
+            </div>
+            <p className="text-[10px] text-gray-400 font-medium">Updated: {new Date(t.updated_at || t.created_at).toLocaleDateString()}</p>
+          </div>
+
+          <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                <FiUser size={14} />
               </div>
-              <div className="text-right">
-                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">Sent To</p>
-                 <p className="text-[10px] font-black text-gray-600 dark:text-gray-300 uppercase leading-none">{t.target_user_type || 'Admin'}</p>
+              <div>
+                <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
+                  {t.assigned_to_details ? `${t.assigned_to_details.first_name || ''} ${t.assigned_to_details.last_name || ''}`.trim() || t.assigned_to_details.username : 'Unassigned'}
+                </p>
+                <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest leading-none">
+                  {t.assigned_to_details ? t.assigned_to_details.role : 'Waiting for Assignment'}
+                </p>
               </div>
-           </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">Sent To</p>
+              <p className="text-[10px] font-black text-gray-600 dark:text-gray-300 uppercase leading-none">{t.target_user_type || 'Admin'}</p>
+            </div>
+          </div>
         </motion.div>
       ))}
     </div>
@@ -1469,77 +1464,185 @@ export function DisplayNutritionistRatings({ ratings }: { ratings: any[] }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {ratings.map((r, idx) => (
         <motion.div
-           key={idx}
-           initial={{ opacity: 0, scale: 0.98 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-5 relative overflow-hidden"
+          key={idx}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-5 relative overflow-hidden"
         >
-           <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
-              <FiStar size={40} className="text-amber-500 fill-current" />
-           </div>
-           
-           <div className="flex items-center gap-1 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <FiStar key={i} size={12} className={i < r.rating ? 'text-amber-400 fill-current' : 'text-gray-200 dark:text-gray-700'} />
-              ))}
-           </div>
+          <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
+            <FiStar size={40} className="text-amber-500 fill-current" />
+          </div>
 
-           <p className="text-xs text-gray-600 dark:text-gray-300 italic mb-4 leading-relaxed font-medium">"{r.review || 'No written feedback provided.'}"</p>
-           
-           <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
-                 <FiUser size={14} />
-              </div>
-              <div>
-                 <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
-                    {r.nutritionist_details?.first_name || 'Nutritionist'}
-                 </p>
-                 <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Expert Feedback</p>
-              </div>
-           </div>
+          <div className="flex items-center gap-1 mb-3">
+            {[...Array(5)].map((_, i) => (
+              <FiStar key={i} size={12} className={i < r.rating ? 'text-amber-400 fill-current' : 'text-gray-200 dark:text-gray-700'} />
+            ))}
+          </div>
+
+          <p className="text-xs text-gray-600 dark:text-gray-300 italic mb-4 leading-relaxed font-medium">"{r.review || 'No written feedback provided.'}"</p>
+
+          <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
+              <FiUser size={14} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
+                {r.nutritionist_details?.first_name || 'Nutritionist'}
+              </p>
+              <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Expert Feedback</p>
+            </div>
+          </div>
         </motion.div>
       ))}
     </div>
   );
 }
 
-export function DisplayKitchenRatings({ ratings }: { ratings: any[] }) {
-  if (!ratings.length) return <EmptyState message="Patient hasn't submitted any kitchen reviews yet." />;
+export function DisplayKitchenRatings({
+  ratings,
+  loadingMore,
+  hasMore,
+  onLoadMore,
+  deliveryPersonOptions = [],
+  deliveryPersonFilter = "",
+  onDeliveryPersonChange,
+}: {
+  ratings: any[];
+  loadingMore?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  deliveryPersonOptions?: any[];
+  deliveryPersonFilter?: string;
+  onDeliveryPersonChange?: (id: string) => void;
+}) {
+  if (!ratings.length && !deliveryPersonFilter)
+    return <EmptyState message="Patient hasn't submitted any kitchen reviews yet." />;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {ratings.map((r, idx) => (
-        <motion.div
-           key={idx}
-           initial={{ opacity: 0, scale: 0.98 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-white/5 p-5 relative overflow-hidden"
-        >
-           <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
-              <FiStar size={40} className="text-amber-500 fill-current" />
-           </div>
-           
-           <div className="flex items-center gap-1 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <FiStar key={i} size={12} className={i < r.rating ? 'text-amber-400 fill-current' : 'text-gray-200 dark:text-gray-700'} />
-              ))}
-           </div>
+    <div className="space-y-6">
+      {/* Header & Filter */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/50 dark:bg-white/[0.02] p-4 rounded-3xl border border-gray-100 dark:border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+            <FiFilter size={18} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+              Supply Chain Filters
+            </p>
+            <p className="text-xs font-bold text-gray-900 dark:text-white">
+              {ratings.length} Reviews Found
+            </p>
+          </div>
+        </div>
 
-           <p className="text-xs text-gray-600 dark:text-gray-300 italic mb-4 leading-relaxed font-medium">"{r.review || 'No written feedback provided.'}"</p>
-           
-           <div className="pt-3 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
-                 <FiUser size={14} />
+        <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
+          <FiTruck size={14} className="text-gray-400" />
+          <select
+            value={deliveryPersonFilter}
+            onChange={(e) => onDeliveryPersonChange?.(e.target.value)}
+            className="bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300"
+          >
+            <option value="">All Delivery Staff</option>
+            {deliveryPersonOptions.map((dp) => (
+              <option key={dp.id} value={dp.id}>
+                {dp.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {!ratings.length ? (
+        <EmptyState message="No reviews found for this delivery person." />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ratings.map((r, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white dark:bg-gray-800/40 rounded-[35px] border border-gray-100 dark:border-white/5 p-6 relative overflow-hidden shadow-sm"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <FiStar size={60} className="text-amber-500 fill-current" />
+                </div>
+
+                <div className="flex items-center gap-1.5 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <FiStar
+                      key={i}
+                      size={12}
+                      className={
+                        i < r.rating
+                          ? "text-amber-400 fill-current"
+                          : "text-gray-200 dark:text-gray-700"
+                      }
+                    />
+                  ))}
+                  <span className="ml-1 text-[10px] font-black text-amber-500/80">
+                    {r.rating}.0
+                  </span>
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-300 italic mb-6 leading-relaxed font-bold">
+                  "{r.review || "No written feedback provided."}"
+                </p>
+
+                <div className="pt-5 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                      <FiBox size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-1">
+                        {r.kitchen_details?.brand_name || "Kitchen"}
+                      </p>
+                      <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">
+                        Micro Kitchen
+                      </p>
+                    </div>
+                  </div>
+
+                  {r.delivery_person_details && (
+                    <div className="flex items-center gap-2 text-right">
+                      <div>
+                        <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-1">
+                          {r.delivery_person_details.first_name}{" "}
+                          {r.delivery_person_details.last_name}
+                        </p>
+                        <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
+                          Delivered By
+                        </p>
+                      </div>
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                        <FiTruck size={14} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div
+            id="kitchen-rating-scroll-sentinel"
+            className="h-20 flex items-center justify-center"
+          >
+            {loadingMore && (
+              <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
+                Loading more reviews...
               </div>
-              <div>
-                 <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
-                    {r.kitchen_details?.brand_name || 'Kitchen'}
-                 </p>
-                 <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Kitchen Feedback</p>
+            )}
+            {!hasMore && ratings.length > 0 && (
+              <div className="text-[10px] text-gray-400 font-bold uppercase">
+                End of history
               </div>
-           </div>
-        </motion.div>
-      ))}
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

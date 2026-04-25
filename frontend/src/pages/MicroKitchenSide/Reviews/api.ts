@@ -31,9 +31,9 @@ export interface MicroKitchenRatingPagination {
   total_pages: number;
 }
 
-export const getMicroKitchenRatings = async (params?: { 
-  search?: string; 
-  order_type?: string; 
+export const getMicroKitchenRatings = async (params?: {
+  search?: string;
+  order_type?: string;
   page?: number;
   limit?: number;
   period?: string;
@@ -49,7 +49,7 @@ export const getMicroKitchenRatings = async (params?: {
   if (params?.period && params.period !== 'all') query.append('period', params.period);
   if (params?.start_date) query.append('start_date', params.start_date);
   if (params?.end_date) query.append('end_date', params.end_date);
-  
+
   if (query.toString()) url += `?${query.toString()}`;
 
   const response = await axios.get<MicroKitchenRatingPagination>(url, {
@@ -63,30 +63,30 @@ export const getAllKitchenReviews = async (
   page = 1,
   limit = 5
 ): Promise<MicroKitchenRatingPagination> => {
-    const url = createApiUrl("api/microkitchenrating/all-reviews/");
-    const response = await axios.get<MicroKitchenRatingPagination | MicroKitchenRating[]>(url, {
-        headers: await getAuthHeaders(),
-        params: { kitchen_id: kitchenId, page, limit },
-    });
+  const url = createApiUrl("api/microkitchenrating/all-reviews/");
+  const response = await axios.get<MicroKitchenRatingPagination | MicroKitchenRating[]>(url, {
+    headers: await getAuthHeaders(),
+    params: { kitchen_id: kitchenId, page, limit },
+  });
 
-    const data = response.data;
-    if (Array.isArray(data)) {
-      return {
-        count: data.length,
-        next: null,
-        previous: null,
-        results: data,
-        current_page: 1,
-        total_pages: 1,
-      };
-    }
-
+  const data = response.data;
+  if (Array.isArray(data)) {
     return {
-      count: data.count ?? 0,
-      next: data.next ?? null,
-      previous: data.previous ?? null,
-      results: Array.isArray(data.results) ? data.results : [],
-      current_page: data.current_page ?? page,
-      total_pages: data.total_pages ?? 1,
+      count: data.length,
+      next: null,
+      previous: null,
+      results: data,
+      current_page: 1,
+      total_pages: 1,
     };
+  }
+
+  return {
+    count: data.count ?? 0,
+    next: data.next ?? null,
+    previous: data.previous ?? null,
+    results: Array.isArray(data.results) ? data.results : [],
+    current_page: data.current_page ?? page,
+    total_pages: data.total_pages ?? 1,
+  };
 };
