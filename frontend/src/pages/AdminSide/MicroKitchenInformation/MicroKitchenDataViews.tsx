@@ -822,32 +822,44 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
     return <EmptyState message="No delivery feedback found for this kitchen's orders." />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {items.map((r: any) => {
         const isIssue = r.feedback_type === "issue";
+        const customerName = r.user_meal_details?.customer_details?.name || r.order_details?.customer_details?.name || "Unknown Patient";
+        const dateLabel = r.user_meal_details ? `Meal: ${r.user_meal_details.meal_date}` : (r.order_details?.order_date ? `Order: ${new Date(r.order_details.order_date).toLocaleDateString()}` : "N/A");
+        
         return (
           <div
             key={r.id}
-            className={`group rounded-2xl border p-6 shadow-sm transition-all ${
+            className={`group rounded-[32px] border p-6 shadow-sm transition-all hover:shadow-lg ${
               isIssue
                 ? "border-red-100 bg-red-50/20 dark:border-red-900/30 dark:bg-red-900/10 hover:border-red-300"
                 : "border-gray-100 bg-white/60 dark:border-white/[0.05] dark:bg-gray-800/30 hover:border-indigo-200"
             }`}
           >
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div>
-                <div className="font-bold text-gray-900 dark:text-white uppercase text-base tracking-tight">
-                  {r.reported_by_details
-                    ? `${r.reported_by_details.first_name} ${r.reported_by_details.last_name}`
-                    : "Patient"}
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                   <div className="size-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                      <FiUser size={14} />
+                   </div>
+                   <div>
+                      <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-0.5">Customer (Patient)</div>
+                      <div className="font-black text-gray-900 dark:text-white uppercase text-lg tracking-tighter leading-none">
+                        {customerName}
+                      </div>
+                   </div>
                 </div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase mt-1 italic flex items-center gap-2">
+                <div className="text-[10px] text-gray-500 font-bold uppercase mt-2 italic flex items-center gap-1.5 ml-1">
+                  <FiCalendar size={10} /> {dateLabel}
+                  <span className="opacity-30">|</span>
                   <FiClock size={10} /> {new Date(r.created_at).toLocaleString()}
                 </div>
               </div>
+              
               <div className="flex items-center gap-2">
                 {isIssue && (
-                  <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
                     r.resolved ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                   }`}>
                     {r.resolved ? "Resolved" : "Active Issue"}
@@ -858,7 +870,7 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
                     ? "bg-red-50 text-red-600 border-red-100" 
                     : "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-100"
                 }`}>
-                  {isIssue ? (r.issue_type?.replace("_", " ") || "ISSUE") : (
+                  {isIssue ? (r.issue_type?.replace("_", " ").toUpperCase() || "ISSUE") : (
                     <>
                       {r.rating} <FiStar className="fill-current" />
                     </>
@@ -867,12 +879,10 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
               </div>
             </div>
 
-            <div className="bg-white/40 dark:bg-white/[0.02] p-4 rounded-2xl border border-gray-100/50 dark:border-white/5 mb-4 relative">
-              <div className="absolute top-2 left-2 opacity-5 text-indigo-600 font-black text-4xl leading-none italic pointer-events-none">
-                &quot;
-              </div>
+            <div className="bg-white/40 dark:bg-white/[0.02] p-5 rounded-[24px] border border-gray-100/50 dark:border-white/5 mb-4 relative group-hover:bg-white/60 transition-colors">
+              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 leading-none italic">Feedback Comments</div>
               <p className="text-sm text-gray-700 dark:text-gray-200 italic leading-relaxed relative z-10">
-                {r.description || r.review || "No comments provided"}
+                &quot;{r.description || r.review || "No comments provided"}&quot;
               </p>
             </div>
 
@@ -882,30 +892,27 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
                   <FiHash size={12} />
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Order: <span className="text-blue-500 dark:text-blue-400">#{r.order}</span>
+                  Order Ref: <span className="text-blue-500 dark:text-blue-400">#{r.order || r.user_meal}</span>
                 </span>
               </div>
-              {r.user_meal_details && (
-                <div className="flex items-center gap-2 border-l dark:border-white/10 pl-6">
-                  <div className="size-6 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
-                    <FiPackage size={12} />
-                  </div>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    Meal:{" "}
-                    <span className="text-blue-500 dark:text-blue-400">
-                      {r.user_meal_details.meal_date} (
-                      {r.user_meal_details.status || "N/A"})
-                    </span>
-                  </span>
-                </div>
-              )}
-              {r.delivery_person_details && (
+
+              {(r.user_meal_details?.delivery_person_name || r.order_details?.delivery_person_name) && (
                 <div className="flex items-center gap-2 border-l dark:border-white/10 pl-6">
                   <div className="size-6 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-green-600">
                     <FiTruck size={12} />
                   </div>
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    Staff: <span className="text-blue-500 dark:text-blue-400">{r.delivery_person_details.first_name} {r.delivery_person_details.last_name || ""}</span>
+                    Assigned Staff: <span className="text-green-600 dark:text-green-400">
+                      {r.user_meal_details?.delivery_person_name || r.order_details?.delivery_person_name}
+                    </span>
+                  </span>
+                </div>
+              )}
+
+              {r.reported_by_details && (
+                <div className="flex items-center gap-2 border-l dark:border-white/10 pl-6">
+                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-tighter">
+                    Reported By: {r.reported_by_details.first_name} ({r.reported_by_details.username})
                   </span>
                 </div>
               )}

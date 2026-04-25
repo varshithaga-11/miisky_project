@@ -3426,12 +3426,18 @@ class SupplyChainDeliveryFeedbackSerializer(serializers.ModelSerializer):
         if not order:
             return None
         dp = order.delivery_person
+        patient = order.user
         return {
             "id": order.id,
             "status": order.status,
             "order_type": order.order_type,
+            "order_date": order.created_at,
             "delivery_person": order.delivery_person_id,
-            "delivery_person_name": f"{dp.first_name or dp.username} {dp.last_name or ''}".strip() if dp else "N/A"
+            "delivery_person_name": f"{dp.first_name or dp.username} {dp.last_name or ''}".strip() if dp else "N/A",
+            "customer_details": {
+                "id": patient.id,
+                "name": f"{patient.first_name or patient.username} {patient.last_name or ''}".strip()
+            } if patient else None
         }
 
     def get_user_meal_details(self, obj):
@@ -3443,14 +3449,19 @@ class SupplyChainDeliveryFeedbackSerializer(serializers.ModelSerializer):
         delivery = meal.deliveries.filter(is_active=True).select_related("delivery_person").first()
         dp = delivery.delivery_person if delivery else None
         
+        patient = meal.user_diet_plan.user if meal.user_diet_plan else None
+        
         return {
             "id": meal.id,
             "meal_date": meal.meal_date,
             "status": meal.status,
             "user_diet_plan": meal.user_diet_plan_id,
-            "delivery_person_id": dp.id if dp else None,
-            "delivery_person_name": f"{dp.first_name or dp.username} {dp.last_name or ''}".strip() if dp else "N/A",
             "delivery_assignment_id": delivery.id if delivery else None,
+            "delivery_person_name": f"{dp.first_name or dp.username} {dp.last_name or ''}".strip() if dp else "N/A",
+            "customer_details": {
+                "id": patient.id,
+                "name": f"{patient.first_name or patient.username} {patient.last_name or ''}".strip()
+            } if patient else None
         }
 
 

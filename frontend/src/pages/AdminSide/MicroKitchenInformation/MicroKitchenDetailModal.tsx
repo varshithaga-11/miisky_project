@@ -38,6 +38,7 @@ import {
   getMicroKitchenAllottedPlanPayouts,
   getMicroKitchenPlannedLeavesNoPagination,
   getMicroKitchenDeliveryRatings,
+  getMicroKitchenDeliveryFeedbackPaginated,
   getMicroKitchenOrderPaymentSnapshots,
   getMicroKitchenExecutionList,
   getMicroKitchenDetail,
@@ -285,7 +286,12 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             }));
             break;
           case "delivery_ratings":
-            setPayload({ results: await getMicroKitchenDeliveryRatings(id), page: 1, hasMore: false });
+            res = await getMicroKitchenDeliveryFeedbackPaginated(id, p, 10);
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "delivery":
             setPayload({ results: await getMicroKitchenDeliverySlabs(id), page: 1, hasMore: false });
@@ -341,6 +347,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     else if (screen === 'prep') { return; }
     else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
     else if (screen === 'payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
+    else if (screen === 'delivery_ratings') { /* No extra filters yet */ }
     
     loadView(screen as KitchenDataView, (payload.page || 1) + 1, true, sd, ed, per);
   }, [loading, loadingMore, payload, screen, ordStartDate, ordEndDate, ordPeriod, revStartDate, revEndDate, revPeriod, prepStartDate, prepEndDate, prepPeriod, execStartDate, execEndDate, execPeriod, payStartDate, payEndDate, payPeriod, loadView]);

@@ -319,6 +319,11 @@ urlpatterns = [
         name="admin-microkitchen-delivery-ratings-nopaginate",
     ),
     path(
+        "admin-microkitchen-delivery-feedback-paginated/",
+        views.AdminMicroKitchenDeliveryFeedbackPaginatedView.as_view(),
+        name="admin-microkitchen-delivery-feedback-paginated",
+    ),
+    path(
         "admin-microkitchen-reviews-nopaginate/",
         views.AdminMicroKitchenReviewsNoPaginationView.as_view(),
         name="admin-microkitchen-reviews-nopaginate",

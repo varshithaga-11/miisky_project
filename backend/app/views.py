@@ -9358,6 +9358,36 @@ class AdminMicroKitchenReviewsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+class AdminMicroKitchenDeliveryFeedbackPaginatedView(APIView):
+    """Admin: delivery feedback (ratings and issues) for orders from this micro-kitchen with pagination."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response({"error": "micro_kitchen is required"}, status=400)
+            
+        feedback_type = request.query_params.get("feedback_type", "all")
+        
+        # Filter delivery feedback for this kitchen's orders or meals
+        qs = SupplyChainDeliveryFeedback.objects.filter(
+            Q(order__micro_kitchen_id=micro_kitchen_id) |
+            Q(user_meal__user_diet_plan__micro_kitchen_id=micro_kitchen_id)
+        ).distinct().select_related("reported_by", "order", "user_meal").order_by("-created_at")
+        
+        if feedback_type != "all":
+            qs = qs.filter(feedback_type=feedback_type)
+            
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        if page is not None:
+            serializer = SupplyChainDeliveryFeedbackSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
+        serializer = SupplyChainDeliveryFeedbackSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
 class AdminMicroKitchenDeliveryRatingsNoPaginationView(APIView):
     """Admin: delivery feedback (ratings and issues) for orders from this micro-kitchen."""
     permission_classes = [IsAuthenticated, IsAdminRole]
@@ -9369,7 +9399,9 @@ class AdminMicroKitchenDeliveryRatingsNoPaginationView(APIView):
 
         # Filter delivery feedback specifically for this kitchen's orders
         qs = SupplyChainDeliveryFeedback.objects.filter(
-            order__micro_kitchen_id=micro_kitchen_id,
+            Q(order__micro_kitchen_id=micro_kitchen_id) |
+            Q(user_meal__user_diet_plan__micro_kitchen_id=micro_kitchen_id)
+        ).distinct().filter(
             feedback_type=SupplyChainDeliveryFeedback.FEEDBACK_TYPE_RATING
         ).select_related("reported_by", "order", "user_meal").order_by("-created_at")
         
