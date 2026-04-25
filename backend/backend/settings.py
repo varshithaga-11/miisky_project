@@ -35,9 +35,9 @@ DEBUG = False
 #     if h.strip()
 # ]
 ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "15.206.151.207",
+    # "localhost",
+    # "127.0.0.1",
+    # "15.206.151.207",
     "api.miisky.com"
 ]
 
@@ -135,18 +135,18 @@ DATABASES = {
 # ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    # "http://localhost:5173",
 
-    "https://localhost",
-    "https://localhost:5173",
-    "http://localhost",
-    "http://localhost:5173",
-    "http://127.0.0.1",
-    "http://127.0.0.1:8000",
-    "http://15.206.151.207",
-    "http://15.206.151.207:8000",
-    "https://15.206.151.207",
-    "https://15.206.151.207:8000",
+    # "https://localhost",
+    # "https://localhost:5173",
+    # "http://localhost",
+    # "http://localhost:5173",
+    # "http://127.0.0.1",
+    # "http://127.0.0.1:8000",
+    # "http://15.206.151.207",
+    # "http://15.206.151.207:8000",
+    # "https://15.206.151.207",
+    # "https://15.206.151.207:8000",
     "https://api.miisky.com",
     "http://api.miisky.com",
     "https://web.miisky.com",
