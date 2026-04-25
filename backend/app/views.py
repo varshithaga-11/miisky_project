@@ -9893,6 +9893,40 @@ class AdminMicroKitchenGlobalAssignmentsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+class AdminMicroKitchenMealDeliveryAssignmentsPaginatedView(APIView):
+    """Admin: paginated meal-level delivery reassignments for this kitchen."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response({"error": "micro_kitchen is required"}, status=400)
+
+        qs = (
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=micro_kitchen_id, is_active=True)
+            .select_related(
+                "user_meal",
+                "user_meal__user",
+                "user_meal__meal_type",
+                "user_meal__food",
+                "user_meal__micro_kitchen",
+                "delivery_person",
+                "delivery_slot",
+                "plan_delivery_assignment",
+            )
+            .order_by("-scheduled_date", "-id")
+        )
+        
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        if page is not None:
+            serializer = KitchenMealDeliverySerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
+        serializer = KitchenMealDeliverySerializer(qs, many=True)
+        return Response(serializer.data)
+
+
 class AdminMicroKitchenMealDeliveryAssignmentsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
@@ -9956,6 +9990,52 @@ class AdminMicroKitchenDeliveryProfilesNoPaginationView(APIView):
             .order_by("user__first_name", "user__last_name", "id")
         )
         serializer = DeliveryProfileSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class AdminMicroKitchenPlannedLeavesPaginatedView(APIView):
+    """Admin: paginated leave records for all delivery staff linked to this kitchen."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        micro_kitchen_id = request.query_params.get("micro_kitchen")
+        if not micro_kitchen_id:
+            return Response({"error": "micro_kitchen is required"}, status=400)
+
+        # Build the set of all delivery person IDs attached to this kitchen
+        dp_ids = set(
+            MicroKitchenDeliveryTeam.objects.filter(micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            DietPlanDeliveryAssignment.objects.filter(micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        dp_ids |= set(
+            DietPlanSlotDeliveryPerson.objects.filter(
+                plan_assignment__micro_kitchen_id=micro_kitchen_id
+            ).values_list("delivery_person_id", flat=True)
+        )
+        dp_ids |= set(
+            DeliveryAssignment.objects.filter(user_meal__micro_kitchen_id=micro_kitchen_id).values_list(
+                "delivery_person_id", flat=True
+            )
+        )
+        
+        # Remove None if any
+        dp_ids = {i for i in dp_ids if i is not None}
+
+        qs = SupplyChainDeliveryLeave.objects.filter(user_id__in=dp_ids).select_related("user").order_by("-start_date")
+        
+        paginator = Pagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        if page is not None:
+            serializer = SupplyChainDeliveryLeaveSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
+        serializer = SupplyChainDeliveryLeaveSerializer(qs, many=True)
         return Response(serializer.data)
 
 

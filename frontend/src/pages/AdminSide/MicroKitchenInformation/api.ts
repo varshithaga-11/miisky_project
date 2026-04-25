@@ -465,6 +465,32 @@ export const getKitchenSupportTickets = async (
   return response.data;
 };
 
+export const getMicroKitchenMealDeliveryAssignmentsPaginated = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 20
+): Promise<PaginatedResponse<AdminKitchenMealDeliveryAssignment>> => {
+  const url = createApiUrl(`api/admin-microkitchen-meal-delivery-assignments-paginated/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, page, limit },
+  });
+  return response.data;
+};
+
+export const getMicroKitchenPlannedLeavesPaginated = async (
+  microKitchenId: number,
+  page: number = 1,
+  limit: number = 20
+): Promise<PaginatedResponse<AdminKitchenPlannedLeave>> => {
+  const url = createApiUrl(`api/admin-microkitchen-planned-leaves-paginated/`);
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: { micro_kitchen: microKitchenId, page, limit },
+  });
+  return response.data;
+};
+
 export type DeliveryChargeSlabAdmin = {
   id: number;
   micro_kitchen: number;

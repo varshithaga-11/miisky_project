@@ -32,10 +32,12 @@ import {
   getMicroKitchenDeliverySlabs,
   getMicroKitchenGlobalAssignmentsNoPagination,
   getKitchenSupportTickets,
+  getMicroKitchenMealDeliveryAssignmentsPaginated,
   getMicroKitchenMealDeliveryAssignmentsNoPagination,
   getMicroKitchenPayouts,
   getMicroKitchenPayoutsNoPagination,
   getMicroKitchenAllottedPlanPayouts,
+  getMicroKitchenPlannedLeavesPaginated,
   getMicroKitchenPlannedLeavesNoPagination,
   getMicroKitchenDeliveryRatings,
   getMicroKitchenDeliveryFeedbackPaginated,
@@ -234,10 +236,20 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             setPayload({ results: await getMicroKitchenGlobalAssignmentsNoPagination(id), page: 1, hasMore: false });
             break;
           case "daily_reassignments":
-            setPayload({ results: await getMicroKitchenMealDeliveryAssignmentsNoPagination(id), page: 1, hasMore: false });
+            res = await getMicroKitchenMealDeliveryAssignmentsPaginated(id, p, 10);
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "planned_leaves":
-            setPayload({ results: await getMicroKitchenPlannedLeavesNoPagination(id), page: 1, hasMore: false });
+            res = await getMicroKitchenPlannedLeavesPaginated(id, p, 10);
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "delivery_profiles":
             setPayload({ results: await getMicroKitchenDeliveryProfilesNoPagination(id), page: 1, hasMore: false });
@@ -348,6 +360,8 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
     else if (screen === 'payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
     else if (screen === 'delivery_ratings') { /* No extra filters yet */ }
+    else if (screen === 'daily_reassignments') { /* No extra filters */ }
+    else if (screen === 'planned_leaves') { /* No extra filters */ }
     
     loadView(screen as KitchenDataView, (payload.page || 1) + 1, true, sd, ed, per);
   }, [loading, loadingMore, payload, screen, ordStartDate, ordEndDate, ordPeriod, revStartDate, revEndDate, revPeriod, prepStartDate, prepEndDate, prepPeriod, execStartDate, execEndDate, execPeriod, payStartDate, payEndDate, payPeriod, loadView]);

@@ -364,6 +364,11 @@ urlpatterns = [
         name="admin-microkitchen-meal-delivery-assignments-nopaginate",
     ),
     path(
+        "admin-microkitchen-meal-delivery-assignments-paginated/",
+        views.AdminMicroKitchenMealDeliveryAssignmentsPaginatedView.as_view(),
+        name="admin-microkitchen-meal-delivery-assignments-paginated",
+    ),
+    path(
         "admin-microkitchen-delivery-profiles-nopaginate/",
         views.AdminMicroKitchenDeliveryProfilesNoPaginationView.as_view(),
         name="admin-microkitchen-delivery-profiles-nopaginate",
@@ -372,6 +377,11 @@ urlpatterns = [
         "admin-microkitchen-planned-leaves-nopaginate/",
         views.AdminMicroKitchenPlannedLeavesNoPaginationView.as_view(),
         name="admin-microkitchen-planned-leaves-nopaginate",
+    ),
+    path(
+        "admin-microkitchen-planned-leaves-paginated/",
+        views.AdminMicroKitchenPlannedLeavesPaginatedView.as_view(),
+        name="admin-microkitchen-planned-leaves-paginated",
     ),
     # Admin nutritionist panels (no pagination for modal display)
     path(
