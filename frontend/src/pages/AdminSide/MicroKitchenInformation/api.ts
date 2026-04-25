@@ -689,15 +689,13 @@ export type AdminKitchenPlannedLeave = {
 };
 
 /** Admin: distance–charge slabs configured for this kitchen. */
-export const getMicroKitchenDeliverySlabs = async (microKitchenId: number): Promise<DeliveryChargeSlabAdmin[]> => {
+export const getMicroKitchenDeliverySlabsNoPagination = async (microKitchenId: number): Promise<DeliveryChargeSlabAdmin[]> => {
   const url = createApiUrl(`api/deliverychargeslab/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { micro_kitchen: microKitchenId, limit: 200, page: 1 },
+    params: { micro_kitchen: microKitchenId },
   });
-  const d = response.data;
-  if (Array.isArray(d)) return d;
-  return d?.results ?? [];
+  return response.data;
 };
 
 export const getMicroKitchenDeliveryTeamNoPagination = async (

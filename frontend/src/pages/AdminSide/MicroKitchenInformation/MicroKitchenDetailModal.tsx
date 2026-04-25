@@ -30,7 +30,7 @@ import {
   getMicroKitchenFoodsPaginated,
   getMicroKitchenAvailableFoodsNoPagination,
   getMicroKitchenDailyMealsNoPagination,
-  getMicroKitchenDeliverySlabs,
+  getMicroKitchenDeliverySlabsNoPagination,
   getMicroKitchenGlobalAssignmentsNoPagination,
   getKitchenSupportTickets,
   getMicroKitchenMealDeliveryAssignmentsPaginated,
@@ -307,7 +307,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             }));
             break;
           case "delivery":
-            setPayload({ results: await getMicroKitchenDeliverySlabs(id), page: 1, hasMore: false });
+            setPayload({ results: await getMicroKitchenDeliverySlabsNoPagination(id), page: 1, hasMore: false });
             break;
           case "prep":
             const nowPrep = new Date();
