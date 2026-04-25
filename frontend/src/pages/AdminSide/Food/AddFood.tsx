@@ -7,6 +7,7 @@ import Label from "../../../components/form/Label";
 import { getUserRoleFromToken } from "../../../utils/auth";
 import { FiInfo } from "react-icons/fi";
 import MultiSelect from "../../../components/form/MultiSelect";
+import SearchableSelect2 from "../../../components/form/SearchableSelect2";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -153,8 +154,8 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
     }
   };
 
-  const mealTypeOptions = mealTypes.map(m => ({ value: String(m.id), text: m.name }));
-  const cuisineOptions = cuisines.map(c => ({ value: String(c.id), text: c.name }));
+  const mealTypeOptions = mealTypes.map(m => ({ value: String(m.id), label: m.name }));
+  const cuisineOptions = cuisines.map(c => ({ value: String(c.id), label: c.name }));
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
@@ -179,10 +180,23 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                 <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <MultiSelect label="Meal Types *" options={mealTypeOptions} onChange={setSelectedMealTypes} onFocus={fetchMealTypes} />
+                    <SearchableSelect2 
+                      label="Meal Types *" 
+                      options={mealTypeOptions} 
+                      value={selectedMealTypes} 
+                      onChange={setSelectedMealTypes} 
+                      onFocus={fetchMealTypes} 
+                      required
+                    />
                   </div>
                   <div className="md:col-span-2">
-                    <MultiSelect label="Cuisine Types" options={cuisineOptions} onChange={setSelectedCuisines} onFocus={fetchCuisineTypes} />
+                    <SearchableSelect2 
+                      label="Cuisine Types" 
+                      options={cuisineOptions} 
+                      value={selectedCuisines} 
+                      onChange={setSelectedCuisines} 
+                      onFocus={fetchCuisineTypes} 
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="name">Food Name *</Label>

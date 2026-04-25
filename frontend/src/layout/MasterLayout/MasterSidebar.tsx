@@ -63,9 +63,9 @@ const adminNavItems: NavItem[] = [
   },
   {
     icon: <Activity className="w-5 h-5" />,
-    name: "Questionnaire masters",
+    name: "Questionnaire Masters",
     subItems: [
-      { name: "Health conditions", path: "/admin/health-condition-master" },
+      { name: "Health Conditions", path: "/admin/health-condition-master" },
       { name: "Symptoms", path: "/admin/symptom-master" },
       { name: "Autoimmune", path: "/admin/autoimmune-master" },
       { name: "Deficiencies(Minerals and Vitamins)", path: "/admin/deficiency-master" },
@@ -76,20 +76,20 @@ const adminNavItems: NavItem[] = [
       { name: "Patient Questions", path: "/admin/patient-all-questionarie" },
     ],
   },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Food Management",
-    subItems: [
-      { name: "Meal Type", path: "/admin/meal-type" },
-      { name: "Cuisine Type", path: "/admin/cuisine-type" },
-      { name: "Packaging Material", path: "/admin/packaging-material" },
-      { name: "Delivery slots", path: "/admin/delivery-slot" },
-      { name: "Foods", path: "/admin/food" },
-      { name: "Units", path: "/admin/unit" },
-      { name: "Ingredients", path: "/admin/ingredient" },
-      { name: "Recipe Management", path: "/admin/recipe-creator" },
-    ],
-  },
+  // {
+  //   icon: <Briefcase className="w-5 h-5" />,
+  //   name: "Food Management",
+  //   subItems: [
+  //     { name: "Meal Type", path: "/admin/meal-type" },
+  //     { name: "Cuisine Type", path: "/admin/cuisine-type" },
+  //     { name: "Packaging Material", path: "/admin/packaging-material" },
+  //     { name: "Delivery slots", path: "/admin/delivery-slot" },
+  //     { name: "Foods", path: "/admin/food" },
+  //     { name: "Units", path: "/admin/unit" },
+  //     { name: "Ingredients", path: "/admin/ingredient" },
+  //     { name: "Recipe Management", path: "/admin/recipe-creator" },
+  //   ],
+  // },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Food Composition",
