@@ -43,9 +43,11 @@ export type AdminOrderListProps = {
   hideCustomer?: boolean;
   /** When true, hide the “Kitchen” block (e.g. patient’s orders — show kitchen per order). */
   hideKitchen?: boolean;
+  /** Custom detail fetcher (fallback to default admin fetcher) */
+  detailFetcher?: (id: number) => Promise<any>;
 };
 
-export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderListProps) {
+export function AdminOrderList({ items, hideCustomer, hideKitchen, detailFetcher }: AdminOrderListProps) {
   const [openId, setOpenId] = useState<number | null>(null);
   const [orderDetails, setOrderDetails] = useState<Record<number, OrderRow>>({});
   const [loadingDetails, setLoadingDetails] = useState<Record<number, boolean>>({});
@@ -53,7 +55,8 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderL
   useEffect(() => {
     if (openId !== null && !orderDetails[openId] && !loadingDetails[openId]) {
       setLoadingDetails((prev) => ({ ...prev, [openId]: true }));
-      fetchOrderDetailsAdmin(openId)
+      const fetcher = detailFetcher || fetchOrderDetailsAdmin;
+      fetcher(openId)
         .then((data) => {
           setOrderDetails((prev) => ({ ...prev, [openId]: data }));
         })
@@ -64,7 +67,7 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderL
           setLoadingDetails((prev) => ({ ...prev, [openId]: false }));
         });
     }
-  }, [openId, orderDetails, loadingDetails]);
+  }, [openId, orderDetails, loadingDetails, detailFetcher]);
 
   if (!items?.length) {
     return <EmptyState message="No orders found." />;
@@ -118,13 +121,13 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen }: AdminOrderL
                 <div className="text-xs text-gray-500">
                   {o.created_at ? new Date(o.created_at).toLocaleString() : "—"}
                 </div>
-                {!hideCustomer && ud && (
+                {!hideCustomer && (o.user_name || ud) && (
                   <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
                     <FiUser className="text-indigo-500 shrink-0" />
                     <span className="font-medium">
-                      {[ud.first_name, ud.last_name].filter(Boolean).join(" ") || "Customer"}
+                      {o.user_name || [ud?.first_name, ud?.last_name].filter(Boolean).join(" ") || "Customer"}
                     </span>
-                    {ud.mobile ? <span className="text-gray-400">· {ud.mobile}</span> : null}
+                    {ud?.mobile ? <span className="text-gray-400">· {ud.mobile}</span> : null}
                   </div>
                 )}
                 {!hideKitchen && kd?.brand_name && (

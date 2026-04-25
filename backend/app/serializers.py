@@ -3780,6 +3780,71 @@ class OrderSerializer(serializers.ModelSerializer):
             }
         return None
 
+
+class AdminMicroKitchenOrderSummarySerializer(serializers.ModelSerializer):
+    """Lightweight order serializer for admin list view."""
+    user_name = serializers.SerializerMethodField(read_only=True)
+    item_count = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'order_type', 'status', 'final_amount', 'created_at',
+            'user_name', 'item_count'
+        ]
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return f"{obj.user.first_name or obj.user.username} {obj.user.last_name or ''}".strip()
+        return "N/A"
+
+    def get_item_count(self, obj):
+        return obj.items.count()
+
+
+class AdminMicroKitchenOrderDetailSerializer(serializers.ModelSerializer):
+    """Full detail order serializer for admin by-id view."""
+    items = OrderItemSerializer(many=True, read_only=True)
+    user_details = serializers.SerializerMethodField(read_only=True)
+    kitchen_details = serializers.SerializerMethodField(read_only=True)
+    delivery_person_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
+            'order_type', 'status', 'total_amount', 'delivery_charge', 'final_amount',
+            'delivery_address', 'delivery_person', 'delivery_person_details',
+            'items', 'created_at'
+        ]
+
+    def get_user_details(self, obj):
+        u = obj.user
+        if not u: return None
+        return {
+            'id': u.id,
+            'name': f"{u.first_name or u.username} {u.last_name or ''}".strip(),
+            'mobile': u.mobile,
+            'address': obj.delivery_address
+        }
+
+    def get_kitchen_details(self, obj):
+        mk = obj.micro_kitchen
+        if not mk: return None
+        return {
+            'id': mk.id,
+            'brand_name': mk.brand_name
+        }
+
+    def get_delivery_person_details(self, obj):
+        dp = obj.delivery_person
+        if not dp: return None
+        return {
+            'id': dp.id,
+            'name': f"{dp.first_name or dp.username} {dp.last_name or ''}".strip(),
+            'mobile': dp.mobile
+        }
+
     def get_delivery_slab_details(self, obj):
         s = getattr(obj, 'delivery_slab', None)
         if not s:

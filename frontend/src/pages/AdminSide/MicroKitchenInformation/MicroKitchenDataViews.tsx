@@ -17,6 +17,7 @@ import type {
   AdminKitchenTeamMember,
   DeliveryChargeSlabAdmin,
 } from "./api";
+import { getAdminMicroKitchenOrderDetail } from "./api";
 
 const formatPersonName = (person: any) => {
   if (!person) return "N/A";
@@ -519,7 +520,11 @@ export function DisplayKitchenReviews({ items }: { items: any[] }) {
 export function DisplayKitchenOrders({ items }: { items: any[] }) {
   return (
     <div className="space-y-6">
-      <AdminOrderList items={items || []} hideKitchen />
+      <AdminOrderList 
+        items={items || []} 
+        hideKitchen 
+        detailFetcher={getAdminMicroKitchenOrderDetail}
+      />
     </div>
   );
 }

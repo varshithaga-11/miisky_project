@@ -24,6 +24,7 @@ import {
   getMicroKitchenInspectionsNoPagination,
   getMicroKitchenReviewsPaginated,
   getMicroKitchenReviewsNoPagination,
+  getAdminMicroKitchenOrdersPaginated,
   getMicroKitchenOrdersPaginated,
   getMicroKitchenOrdersNoPagination,
   getMicroKitchenFoodsPaginated,
@@ -266,7 +267,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             }));
             break;
           case "orders":
-            res = await getMicroKitchenOrdersPaginated(id, p, 10, sd, ed, per);
+            res = await getAdminMicroKitchenOrdersPaginated(id, p, 10, sd, ed);
             setPayload((prev: any) => ({
               results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
               page: res.current_page,

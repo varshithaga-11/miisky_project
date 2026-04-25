@@ -9358,6 +9358,31 @@ class AdminMicroKitchenReviewsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+class AdminMicroKitchenOrderViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin: micro kitchen specific orders with summary and detail views."""
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        micro_kitchen_id = self.request.query_params.get("micro_kitchen")
+        qs = Order.objects.all().select_related("user", "micro_kitchen", "delivery_person").prefetch_related("items")
+        if micro_kitchen_id:
+            qs = qs.filter(micro_kitchen_id=micro_kitchen_id)
+        
+        # Optional date filtering
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date and end_date:
+            qs = qs.filter(created_at__range=[start_date, end_date])
+            
+        return qs.order_by("-created_at")
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return AdminMicroKitchenOrderSummarySerializer
+        return AdminMicroKitchenOrderDetailSerializer
+
+
 class AdminMicroKitchenDeliveryFeedbackPaginatedView(APIView):
     """Admin: delivery feedback (ratings and issues) for orders from this micro-kitchen with pagination."""
     permission_classes = [IsAuthenticated, IsAdminRole]

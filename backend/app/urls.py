@@ -103,6 +103,7 @@ router.register(r'microkitchenrating', MicroKitchenRatingViewSet, basename='micr
 router.register(r'cart', CartViewSet, basename='cart')
 router.register(r'cart-item', CartItemViewSet, basename='cart-item')
 router.register(r'order', OrderViewSet, basename='order')
+router.register(r'admin-microkitchen-order', AdminMicroKitchenOrderViewSet, basename='admin-microkitchen-order')
 router.register(r'deliverychargeslab', DeliveryChargeSlabViewSet, basename='deliverychargeslab')
 router.register(r'delivery-slot', DeliverySlotKitchenViewSet, basename='delivery-slot')
 router.register(r'plandeliveryassignment', DietPlanDeliveryAssignmentViewSet, basename='plandeliveryassignment')
