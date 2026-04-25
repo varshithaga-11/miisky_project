@@ -1,79 +1,132 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Payment Invoice</title>
-  </head>
-  <body>
-    <div class="invoice-shell">
-      <header class="invoice-header">
-        <div class="brand-block">
-          {% if logo_uri %}
-          <img src="{{ logo_uri }}" alt="Miisky logo" class="brand-logo" />
-          {% endif %}
-          <div class="brand-text">
-            <h1>{{ company_name }}</h1>
-            <p>{{ company_line }}</p>
-          </div>
-        </div>
-        <div class="invoice-meta">
-          <h2>INVOICE</h2>
-          <p><span>Invoice No:</span> {{ invoice_number }}</p>
-          <p><span>Date:</span> {{ invoice_date }}</p>
-        </div>
-      </header>
+<head>
+    <meta charset="utf-8">
+    <title>Invoice - {{ invoice_number }}</title>
+</head>
+<body>
+    <div class="invoice-wrapper">
+        <!-- Accent Bar -->
+        <div class="top-accent"></div>
 
-      <section class="party-grid">
-        <div class="card">
-          <h3>Billed To</h3>
-          <p class="primary">{{ patient_name }}</p>
-          <p>{{ patient_email }}</p>
-        </div>
-        <div class="card">
-          <h3>Handled By</h3>
-          <p class="primary">{{ nutritionist_name }}</p>
-          <p>Payment verified on {{ verified_on }}</p>
-        </div>
-      </section>
+        <header class="main-header">
+            <div class="brand-section">
+                {% if logo_uri %}
+                <img src="{{ logo_uri }}" alt="Miisky" class="logo" />
+                {% endif %}
+                <div class="brand-info">
+                    <h1 class="company-name">{{ company_name }}</h1>
+                    <p class="company-tagline">{{ company_line }}</p>
+                </div>
+            </div>
+            <div class="invoice-title-section">
+                <h2 class="title">INVOICE</h2>
+                <div class="status-badge">Payment Verified</div>
+            </div>
+        </header>
 
-      <section class="line-items">
-        <table>
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Plan Code</th>
-              <th>Duration</th>
-              <th>Plan Start</th>
-              <th>Plan End</th>
-              <th class="right">Amount (INR)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{{ plan_title }}</td>
-              <td>{{ plan_code }}</td>
-              <td>{{ plan_days }} days</td>
-              <td>{{ plan_start_date }}</td>
-              <td>{{ plan_end_date }}</td>
-              <td class="right">{{ amount_paid }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+        <section class="meta-grid">
+            <div class="meta-item">
+                <span class="label">Invoice Number</span>
+                <span class="value">{{ invoice_number }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="label">Issue Date</span>
+                <span class="value">{{ invoice_date }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="label">Verified On</span>
+                <span class="value">{{ verified_on }}</span>
+            </div>
+        </section>
 
-      <section class="summary-row">
-        <div class="transaction-card">
-          <p><span>Transaction ID:</span> {{ transaction_id }}</p>
-        </div>
-        <div class="total-card">
-          <p>Total Paid</p>
-          <h3>INR {{ amount_paid }}</h3>
-        </div>
-      </section>
+        <div class="divider"></div>
 
-      <footer class="invoice-footer">
-        <p>This is a system-generated invoice for record purposes.</p>
-      </footer>
+        <section class="billing-grid">
+            <div class="billing-card">
+                <h3 class="section-title">Billed To</h3>
+                <div class="card-content">
+                    <p class="name">{{ patient_name }}</p>
+                    <p class="contact">{{ patient_email }}</p>
+                </div>
+            </div>
+            <div class="billing-card">
+                <h3 class="section-title">Professional Support</h3>
+                <div class="card-content">
+                    <p class="name">{{ nutritionist_name }}</p>
+                    <p class="contact">Nutritionist / Health Consultant</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="table-section">
+            <h3 class="section-title">Plan Details</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Code</th>
+                        <th>Duration</th>
+                        <th>Validity Period</th>
+                        <th class="text-right">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="item-name">{{ plan_title }}</div>
+                            <div class="item-desc">Personalized Nutrition & Diet Plan</div>
+                        </td>
+                        <td><span class="mono">{{ plan_code }}</span></td>
+                        <td>{{ plan_days }} Days</td>
+                        <td>
+                            <div class="date-range">
+                                <span>{{ plan_start_date }}</span>
+                                <span class="to">to</span>
+                                <span>{{ plan_end_date }}</span>
+                            </div>
+                        </td>
+                        <td class="text-right amount">INR {{ amount_paid }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="footer-grid">
+            <div class="transaction-info">
+                <div class="info-block">
+                    <span class="label">Transaction Reference</span>
+                    <p class="value mono">{{ transaction_id }}</p>
+                </div>
+                <div class="info-block">
+                    <span class="label">Payment Method</span>
+                    <p class="value">Direct Transfer / Manual Verification</p>
+                </div>
+            </div>
+            <div class="totals-section">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span>INR {{ amount_paid }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Tax (GST)</span>
+                    <span>Inclusive</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>Grand Total</span>
+                    <span class="price">INR {{ amount_paid }}</span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="main-footer">
+            <div class="footer-note">
+                <p><strong>Note:</strong> This is a digitally signed and system-generated document. No physical signature is required.</p>
+            </div>
+            <div class="company-address">
+                <p>&copy; {{ company_name }} SVASTH - All Rights Reserved</p>
+            </div>
+        </footer>
     </div>
-  </body>
+</body>
 </html>

@@ -117,24 +117,75 @@ def _pdf_escape_text(value: str) -> str:
 
 
 def _build_simple_pdf(title: str, lines: list[str]) -> bytes:
-    """Create a minimal single-page PDF without external dependencies."""
+    """Create a professional-looking PDF invoice without external dependencies."""
     safe_title = _pdf_escape_text(title)
-    capped_lines = lines[:38]
-    if len(lines) > 38:
-        capped_lines[-1] = "..."
-
+    
+    # PDF Header & Resources
     content_parts = [
-        "BT",
-        "/F1 14 Tf",
-        "50 800 Td",
+        "q",                      # Save state
+        "0.27 0.37 0.96 rg",     # Miisky Brand Blue (approx)
+        "0 780 595 62 re f",      # Header background rectangle
+        "Q",                      # Restore state
+        "BT",                     # Begin Text
+        "/F1 20 Tf",             # Title Font
+        "1 1 1 rg",              # White text for title
+        "50 810 Td",
         f"({safe_title}) Tj",
-        "0 -24 Td",
+        "0 -25 Td",
         "/F1 10 Tf",
+        "(HEALTH AND NUTRITION SERVICES) Tj",
+        "ET",
+        
+        # Grid/Lines
+        "q",
+        "0.9 0.9 0.9 rg",        # Light gray
+        "0.5 w",                 # Line width
+        "50 750 m 545 750 l s",  # Top divider
+        "50 100 m 545 100 l s",  # Bottom divider
+        "Q",
+        
+        "BT",
+        "0 0 0 rg",              # Reset to black
+        "/F1 12 Tf",
+        "50 720 Td",             # Start position for body
     ]
-    for raw_line in capped_lines:
-        content_parts.append(f"({_pdf_escape_text(str(raw_line))}) Tj")
-        content_parts.append("0 -16 Td")
+
+    # Process lines into a structured layout
+    y_pos = 720
+    for i, raw_line in enumerate(lines):
+        if not raw_line.strip():
+            content_parts.append("0 -20 Td")
+            y_pos -= 20
+            continue
+            
+        # Detect Label: Value pattern
+        if ":" in raw_line:
+            label, val = raw_line.split(":", 1)
+            content_parts.append("/F1 9 Tf") # Label font
+            content_parts.append("0.4 0.4 0.4 rg") # Gray labels
+            content_parts.append(f"({_pdf_escape_text(label.strip() + ': ')}) Tj")
+            content_parts.append("0.1 0.1 0.1 rg") # Darker value
+            content_parts.append("/F1 11 Tf") # Value font
+            content_parts.append(f"({_pdf_escape_text(val.strip())}) Tj")
+        else:
+            content_parts.append("/F1 10 Tf")
+            content_parts.append(f"({_pdf_escape_text(str(raw_line))}) Tj")
+            
+        content_parts.append("0 -18 Td")
+        y_pos -= 18
+        
+        if y_pos < 120: break # Page limit
+
     content_parts.append("ET")
+    
+    # Footer
+    content_parts.append("BT")
+    content_parts.append("/F1 8 Tf")
+    content_parts.append("0.6 0.6 0.6 rg")
+    content_parts.append("50 85 Td")
+    content_parts.append("(This is a system-generated invoice. Miisky SVASTH - All Rights Reserved.) Tj")
+    content_parts.append("ET")
+
     content_stream = "\n".join(content_parts).encode("latin-1", errors="replace")
 
     objects = [
