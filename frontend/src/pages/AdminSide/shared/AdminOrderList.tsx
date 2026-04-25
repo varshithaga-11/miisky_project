@@ -20,6 +20,7 @@ type OrderRow = Record<string, unknown> & {
   status?: string;
   order_type?: string;
   created_at?: string;
+  user_name?: string;
   delivery_address?: string | null;
   total_amount?: unknown;
   delivery_charge?: unknown;
