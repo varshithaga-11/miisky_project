@@ -285,7 +285,18 @@ class IsAdminOrNutritionistRole(BasePermission):
     def has_permission(self, request, view):
         u = request.user
         return bool(
-            u and u.is_authenticated and getattr(u, 'role', None) in ('admin', 'nutritionist')
+            u and u.is_authenticated and getattr(u, "role", None) in ("admin", "nutritionist")
+        )
+
+
+class IsAdminOrNutritionistOrKitchenRole(BasePermission):
+    """Allow authenticated users with role admin, nutritionist or micro_kitchen."""
+
+    def has_permission(self, request, view):
+        u = request.user
+        return bool(
+            u and u.is_authenticated
+            and getattr(u, "role", None) in ("admin", "nutritionist", "micro_kitchen")
         )
 
 
@@ -4232,7 +4243,7 @@ class AdminQuestionnaireMasterDeleteView(APIView):
 
 
 class AdminFoodManagementDeleteView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminRole]
+    permission_classes = [IsAuthenticated, IsAdminOrNutritionistRole]
 
     def get(self, request):
         mtype = request.query_params.get('type')
@@ -4402,7 +4413,7 @@ class MealTypeViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrNutritionistRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4430,7 +4441,7 @@ class PackagingMaterialViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrNutritionistRole]
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_packagingmaterials(self, request):
@@ -4444,7 +4455,7 @@ class CuisineTypeViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrNutritionistRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4474,6 +4485,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'meal_types__name', 'cuisine_types__name']
+    permission_classes = [IsAdminOrNutritionistRole]
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foods(self, request):
@@ -4511,10 +4523,6 @@ class FoodViewSet(viewsets.ModelViewSet):
             has_step = FoodStep.objects.filter(food_id=OuterRef('pk'))
             queryset = queryset.filter(Exists(has_ingredient) | Exists(has_step))
         return queryset.distinct()
-    permission_classes = [AllowAny]
-    pagination_class = Pagination
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'meal_types__name', 'cuisine_types__name', 'micro_kitchen__brand_name']
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4878,7 +4886,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     Endpoints: /app/ingredient/
     """
     serializer_class = IngredientSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrNutritionistRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4903,7 +4911,7 @@ class UnitViewSet(viewsets.ModelViewSet):
     Endpoints: /app/unit/
     """
     serializer_class = UnitSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrNutritionistRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4929,7 +4937,7 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
     Filter by food: /app/foodingredient/?food=<id>
     """
     serializer_class = FoodIngredientSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrNutritionistRole]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food__name', 'ingredient__name']
@@ -11779,12 +11787,12 @@ class SupplyChainUsersListView(APIView):
 class DeliverySlotKitchenViewSet(viewsets.ModelViewSet):
     queryset = DeliverySlot.objects.select_related("micro_kitchen").all()
     serializer_class = DeliverySlotSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     def get_queryset(self):
         u = self.request.user
         role = getattr(u, "role", None)
-        if role == "admin":
+        if role in ("admin", "nutritionist"):
             return DeliverySlot.objects.select_related("micro_kitchen").all().order_by("name")
         if role == "micro_kitchen":
             mk = MicroKitchenProfile.objects.filter(user=u).first()
@@ -11798,23 +11806,23 @@ class DeliverySlotKitchenViewSet(viewsets.ModelViewSet):
         return DeliverySlot.objects.none()
 
     def create(self, request, *args, **kwargs):
-        if getattr(request.user, "role", None) != "admin":
-            return Response({"detail": "Only admin can create delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        if getattr(request.user, "role", None) not in ("admin", "nutritionist"):
+            return Response({"detail": "Only admin or nutritionist can create delivery slots."}, status=status.HTTP_403_FORBIDDEN)
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        if getattr(request.user, "role", None) != "admin":
-            return Response({"detail": "Only admin can update delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        if getattr(request.user, "role", None) not in ("admin", "nutritionist"):
+            return Response({"detail": "Only admin or nutritionist can update delivery slots."}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        if getattr(request.user, "role", None) != "admin":
-            return Response({"detail": "Only admin can update delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        if getattr(request.user, "role", None) not in ("admin", "nutritionist"):
+            return Response({"detail": "Only admin or nutritionist can update delivery slots."}, status=status.HTTP_403_FORBIDDEN)
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if getattr(request.user, "role", None) != "admin":
-            return Response({"detail": "Only admin can delete delivery slots."}, status=status.HTTP_403_FORBIDDEN)
+        if getattr(request.user, "role", None) not in ("admin", "nutritionist"):
+            return Response({"detail": "Only admin or nutritionist can delete delivery slots."}, status=status.HTTP_403_FORBIDDEN)
         return super().destroy(request, *args, **kwargs)
 
 

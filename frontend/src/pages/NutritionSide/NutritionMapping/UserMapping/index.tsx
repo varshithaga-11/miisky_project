@@ -94,16 +94,20 @@ const UserNutritionMappingPage: React.FC = () => {
     fetchData();
   }, [currentPage, pageSize, appliedFilters]);
 
-  const applyFilters = async () => {
-    await loadNutritionists();
-    setCurrentPage(1);
-    setAppliedFilters({
-      search: searchTerm.trim(),
-      allottedBy: allotmentFilter.trim(),
-      mapped: mappingStatus,
-      nutritionistId: selectedNutritionistId,
-    });
-  };
+  // Real-time search/filter with debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setCurrentPage(1);
+      setAppliedFilters({
+        search: searchTerm.trim(),
+        allottedBy: allotmentFilter.trim(),
+        mapped: mappingStatus,
+        nutritionistId: selectedNutritionistId,
+      });
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, allotmentFilter, mappingStatus, selectedNutritionistId]);
 
   const handleAssignSuccess = () => {
     setIsModalOpen(false);
@@ -148,14 +152,6 @@ const UserNutritionMappingPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full xl:w-auto">
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 xl:flex-none inline-flex items-center justify-center gap-2"
-              onClick={() => void applyFilters()}
-            >
-              Filter
-            </Button>
             <Button size="sm" variant="outline" className="flex-1 xl:flex-none inline-flex items-center justify-center gap-2" onClick={() => setIsReassignOpen(true)}>
               <FiRefreshCw className="w-4 h-4" />
               Reassign
@@ -172,13 +168,7 @@ const UserNutritionMappingPage: React.FC = () => {
           <select
             value={mappingStatus}
             onChange={(e) => {
-              const value = e.target.value as "all" | "mapped" | "unmapped";
-              setMappingStatus(value);
-              setCurrentPage(1);
-              setAppliedFilters((prev) => ({
-                ...prev,
-                mapped: value,
-              }));
+              setMappingStatus(e.target.value as "all" | "mapped" | "unmapped");
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
           >
@@ -190,13 +180,7 @@ const UserNutritionMappingPage: React.FC = () => {
           <select
             value={selectedNutritionistId}
             onChange={(e) => {
-              const value = e.target.value;
-              setSelectedNutritionistId(value);
-              setCurrentPage(1);
-              setAppliedFilters((prev) => ({
-                ...prev,
-                nutritionistId: value,
-              }));
+              setSelectedNutritionistId(e.target.value);
             }}
             onFocus={() => void loadNutritionists()}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
@@ -245,12 +229,6 @@ const UserNutritionMappingPage: React.FC = () => {
                 setMappingStatus("all");
                 setSelectedNutritionistId("all");
                 setCurrentPage(1);
-                setAppliedFilters({
-                  search: "",
-                  allottedBy: "",
-                  mapped: "all",
-                  nutritionistId: "all",
-                });
               }}
               className="text-blue-600 hover:underline ml-2 text-xs"
             >
