@@ -1646,3 +1646,181 @@ export function DisplayKitchenRatings({
     </div>
   );
 }
+
+export function DisplayDeliveryFeedback({
+  items,
+  loadingMore,
+  hasMore,
+  typeFilter,
+  resolvedFilter,
+  onFilterChange,
+}: {
+  items: any[];
+  loadingMore?: boolean;
+  hasMore?: boolean;
+  typeFilter: string;
+  resolvedFilter: string;
+  onFilterChange: (type: string, resolved: string) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Filters Bar */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/50 dark:bg-white/[0.02] p-4 rounded-3xl border border-gray-100 dark:border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+            <FiFilter size={18} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+              Audit Feedbacks
+            </p>
+            <p className="text-xs font-bold text-gray-900 dark:text-white">
+              {items.length} records found
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
+            <FiMessageSquare size={14} className="text-gray-400" />
+            <select
+              value={typeFilter}
+              onChange={(e) => onFilterChange(e.target.value, resolvedFilter)}
+              className="bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300"
+            >
+              <option value="all">All Types</option>
+              <option value="rating">Ratings</option>
+              <option value="issue">Issues</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
+            <FiCheckCircle size={14} className="text-gray-400" />
+            <select
+              value={resolvedFilter}
+              onChange={(e) => onFilterChange(typeFilter, e.target.value)}
+              className="bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300"
+            >
+              <option value="all">All Status</option>
+              <option value="true">Resolved</option>
+              <option value="false">Unresolved</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {!items.length ? (
+        <EmptyState message="No delivery feedback found." />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {items.map((item, idx) => (
+            <motion.div
+              key={item.id || idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="group bg-white dark:bg-gray-800/40 rounded-[35px] border border-gray-100 dark:border-white/5 p-6 relative overflow-hidden transition-all hover:shadow-xl hover:shadow-gray-200/50 dark:hover:shadow-none"
+            >
+              <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity pointer-events-none">
+                <FiTruck size={80} />
+              </div>
+
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        item.feedback_type === "rating"
+                          ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                          : "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                      }`}
+                    >
+                      {item.feedback_type}
+                    </span>
+                    {item.resolved ? (
+                      <span className="flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                        <FiCheckCircle size={10} /> Resolved
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[9px] font-black text-orange-500 uppercase tracking-widest">
+                        <FiClock size={10} /> Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    {new Date(item.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+
+                {item.feedback_type === "rating" && item.rating && (
+                  <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-xl">
+                    <FiStar size={12} className="text-amber-500 fill-current" />
+                    <span className="text-xs font-black text-amber-600">{item.rating}.0</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {item.feedback_type === "issue" && item.issue_type && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                        Issue Type
+                      </p>
+                      <p className="text-xs font-bold text-gray-900 dark:text-white uppercase">
+                        {item.issue_type.replace(/_/g, " ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {(item.review || item.description) && (
+                  <div className="bg-gray-50/80 dark:bg-white/[0.02] p-4 rounded-2xl italic text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                    "{item.review || item.description}"
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50 dark:border-white/5">
+                  <div>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                      Order Info
+                    </p>
+                    <p className="text-[10px] font-bold text-indigo-500 uppercase truncate">
+                      {item.order_details ? `Order #${item.order_details.id}` : "User Meal"}
+                    </p>
+                  </div>
+                  {item.resolved && item.resolved_at && (
+                    <div className="text-right">
+                      <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">
+                        Resolved On
+                      </p>
+                      <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">
+                        {new Date(item.resolved_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Sentinel */}
+      <div id="delivery-feedback-scroll-sentinel" className="h-20 flex items-center justify-center">
+        {loadingMore && (
+          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
+            Loading more feedback...
+          </div>
+        )}
+        {!hasMore && items.length > 0 && (
+          <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
+        )}
+      </div>
+    </div>
+  );
+}

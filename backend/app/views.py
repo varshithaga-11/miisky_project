@@ -10373,6 +10373,41 @@ class AdminPatientKitchenRatingsPaginatedView(APIView):
         return response
 
 
+class AdminPatientDeliveryFeedbackPaginatedView(APIView):
+    """
+    Admin: view delivery feedbacks (issues/ratings) reported by a patient.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        patient_id = request.query_params.get("user")
+        if not patient_id:
+            return Response({"results": [], "count": 0})
+
+        qs = SupplyChainDeliveryFeedback.objects.filter(reported_by_id=patient_id).select_related(
+            "reported_by", "order", "user_meal", "resolved_by"
+        ).prefetch_related("user_meal__deliveries").order_by("-created_at")
+
+        # Feedback Type filter
+        ft = request.query_params.get("feedback_type")
+        if ft and ft != "all":
+            qs = qs.filter(feedback_type=ft)
+
+        # Resolved status filter
+        res = request.query_params.get("resolved")
+        if res == "true":
+            qs = qs.filter(resolved=True)
+        elif res == "false":
+            qs = qs.filter(resolved=False)
+
+        paginator = PageNumberPagination()
+        paginator.page_size = request.query_params.get("limit", 10)
+        page = paginator.paginate_queryset(qs, request)
+        
+        serializer = SupplyChainDeliveryFeedbackSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
 class AdminOrderPaymentsNoPaginationView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 

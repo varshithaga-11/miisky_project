@@ -325,5 +325,23 @@ export const fetchKitchenRatingsForPatient = async (
     limit,
     delivery_person: deliveryPersonId,
   });
-  return unwrapResults(data);
+  return data;
+};
+
+/** Delivery feedbacks (Issues/Ratings) (Paginated) */
+export const fetchDeliveryFeedbackForPatient = async (
+  patientUserId: number,
+  page = 1,
+  limit = 10,
+  feedbackType?: string,
+  resolved?: string
+): Promise<any> => {
+  const data = await getJson<any>("api/delivery-feedback-paginated/", {
+    user: patientUserId,
+    page,
+    limit,
+    feedback_type: feedbackType,
+    resolved: resolved,
+  });
+  return data;
 };

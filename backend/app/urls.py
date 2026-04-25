@@ -154,6 +154,11 @@ router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path(
+        "delivery-feedback-paginated/",
+        views.AdminPatientDeliveryFeedbackPaginatedView.as_view(),
+        name="admin-patient-delivery-feedback-paginated",
+    ),
+    path(
         "admin-questionnaire-questions/",
         AdminQuestionnaireQuestionListViewSet.as_view({"get": "list"}),
         name="admin-questionnaire-questions-list",

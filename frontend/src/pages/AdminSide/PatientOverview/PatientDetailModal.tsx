@@ -17,6 +17,7 @@ import {
   fetchSupportTicketsForPatient,
   fetchNutritionistRatingsForPatient,
   fetchKitchenRatingsForPatient,
+  fetchDeliveryFeedbackForPatient,
   fetchPatientDietPlansNoPaginate,
   PatientUserRow,
 } from "./api";
@@ -38,6 +39,7 @@ import {
   DisplaySupportTickets,
   DisplayNutritionistRatings,
   DisplayKitchenRatings,
+  DisplayDeliveryFeedback,
   type UserDetailRecord,
   type HealthReportRow,
   type MappingRow,
@@ -65,7 +67,8 @@ export type DataView =
   | "meetings"
   | "tickets"
   | "nutritionistRatings"
-  | "kitchenRatings";
+  | "kitchenRatings"
+  | "deliveryFeedback";
 
 const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   profile: "User profile",
@@ -85,6 +88,7 @@ const VIEW_TITLES: Record<Exclude<DataView, never>, string> = {
   tickets: "Support tickets & issues",
   nutritionistRatings: "Expert feedback & ratings",
   kitchenRatings: "Kitchen feedback & ratings",
+  deliveryFeedback: "Delivery feedback & issues",
 };
 
 const MENU_ITEMS: { key: DataView; description: string }[] = [
@@ -105,6 +109,7 @@ const MENU_ITEMS: { key: DataView; description: string }[] = [
   { key: "tickets", description: "Raised support cases and technical issues" },
   { key: "nutritionistRatings", description: "Reviews given to nutritionists" },
   { key: "kitchenRatings", description: "Reviews given to micro-kitchens" },
+  { key: "deliveryFeedback", description: "Delivery ratings and reported issues" },
 ];
 
 type Props = {
@@ -133,6 +138,11 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
   const [loadingKitchenRatings, setLoadingKitchenRatings] = useState(false);
   const [kitchenDeliveryPersonFilter, setKitchenDeliveryPersonFilter] = useState<string>("");
   const [kitchenDeliveryPersonOptions, setKitchenDeliveryPersonOptions] = useState<any[]>([]);
+  const [deliveryFeedbackPage, setDeliveryFeedbackPage] = useState(1);
+  const [hasMoreDeliveryFeedback, setHasMoreDeliveryFeedback] = useState(true);
+  const [loadingDeliveryFeedback, setLoadingDeliveryFeedback] = useState(false);
+  const [deliveryFeedbackTypeFilter, setDeliveryFeedbackTypeFilter] = useState<string>("all");
+  const [deliveryFeedbackResolvedFilter, setDeliveryFeedbackResolvedFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!open) return;
@@ -144,6 +154,10 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     setKitchenRatingsPage(1);
     setHasMoreKitchenRatings(true);
     setKitchenDeliveryPersonFilter("");
+    setDeliveryFeedbackPage(1);
+    setHasMoreDeliveryFeedback(true);
+    setDeliveryFeedbackTypeFilter("all");
+    setDeliveryFeedbackResolvedFilter("all");
   }, [open, patient.id]);
 
   const resetAndClose = () => {
@@ -264,6 +278,13 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             setHasMoreKitchenRatings(!!data.next);
             break;
           }
+          case "deliveryFeedback": {
+            const data = await fetchDeliveryFeedbackForPatient(id, 1, 10, deliveryFeedbackTypeFilter, deliveryFeedbackResolvedFilter);
+            setPayload(data.results);
+            setDeliveryFeedbackPage(1);
+            setHasMoreDeliveryFeedback(!!data.next);
+            break;
+          }
           default:
             break;
         }
@@ -351,6 +372,44 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     }
   };
 
+  const loadMoreDeliveryFeedback = useCallback(async () => {
+    if (loadingDeliveryFeedback || !hasMoreDeliveryFeedback || screen !== "deliveryFeedback") return;
+    setLoadingDeliveryFeedback(true);
+    try {
+      const nextPage = deliveryFeedbackPage + 1;
+      const data = await fetchDeliveryFeedbackForPatient(
+        patient.id,
+        nextPage,
+        10,
+        deliveryFeedbackTypeFilter,
+        deliveryFeedbackResolvedFilter
+      );
+      setPayload((prev: any) => [...(Array.isArray(prev) ? prev : []), ...data.results]);
+      setDeliveryFeedbackPage(nextPage);
+      setHasMoreDeliveryFeedback(!!data.next);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingDeliveryFeedback(false);
+    }
+  }, [patient.id, deliveryFeedbackPage, hasMoreDeliveryFeedback, loadingDeliveryFeedback, screen, deliveryFeedbackTypeFilter, deliveryFeedbackResolvedFilter]);
+
+  const handleDeliveryFeedbackFilterChange = async (type: string, resolved: string) => {
+    setDeliveryFeedbackTypeFilter(type);
+    setDeliveryFeedbackResolvedFilter(resolved);
+    setLoading(true);
+    try {
+      const data = await fetchDeliveryFeedbackForPatient(patient.id, 1, 10, type, resolved);
+      setPayload(data.results);
+      setDeliveryFeedbackPage(1);
+      setHasMoreDeliveryFeedback(!!data.next);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (screen !== "orders" || !hasMoreOrders) return;
     const obs = new IntersectionObserver(
@@ -395,6 +454,21 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     if (sen) obs.observe(sen);
     return () => obs.disconnect();
   }, [screen, hasMoreKitchenRatings, loadMoreKitchenRatings]);
+
+  useEffect(() => {
+    if (screen !== "deliveryFeedback" || !hasMoreDeliveryFeedback) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreDeliveryFeedback();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const sen = document.getElementById("delivery-feedback-scroll-sentinel");
+    if (sen) obs.observe(sen);
+    return () => obs.disconnect();
+  }, [screen, hasMoreDeliveryFeedback, loadMoreDeliveryFeedback]);
 
   if (!open) return null;
 
@@ -550,6 +624,16 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                   deliveryPersonOptions={kitchenDeliveryPersonOptions}
                   deliveryPersonFilter={kitchenDeliveryPersonFilter}
                   onDeliveryPersonChange={handleKitchenDeliveryPersonChange}
+                />
+              )}
+              {screen === "deliveryFeedback" && Array.isArray(payload) && (
+                <DisplayDeliveryFeedback
+                  items={payload}
+                  loadingMore={loadingDeliveryFeedback}
+                  hasMore={hasMoreDeliveryFeedback}
+                  typeFilter={deliveryFeedbackTypeFilter}
+                  resolvedFilter={deliveryFeedbackResolvedFilter}
+                  onFilterChange={handleDeliveryFeedbackFilterChange}
                 />
               )}
             </>
