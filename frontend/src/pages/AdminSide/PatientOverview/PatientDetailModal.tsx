@@ -300,7 +300,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
         setLoading(false);
       }
     },
-    [patient.id, nutritionistUserId, mealMonth, mealYear]
+    [patient.id, nutritionistUserId, mealMonth, mealYear, kitchenDeliveryPersonFilter, deliveryFeedbackTypeFilter, deliveryFeedbackResolvedFilter]
   );
 
   useEffect(() => {

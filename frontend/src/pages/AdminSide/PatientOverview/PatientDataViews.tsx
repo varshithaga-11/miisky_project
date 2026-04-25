@@ -1793,6 +1793,14 @@ export function DisplayDeliveryFeedback({
                       {item.order_details ? `Order #${item.order_details.id}` : "User Meal"}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                      Delivery Staff
+                    </p>
+                    <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">
+                      {item.order_details?.delivery_person_name || item.user_meal_details?.delivery_person_name || "N/A"}
+                    </p>
+                  </div>
                   {item.resolved && item.resolved_at && (
                     <div className="text-right">
                       <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">

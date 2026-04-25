@@ -3425,23 +3425,32 @@ class SupplyChainDeliveryFeedbackSerializer(serializers.ModelSerializer):
         order = getattr(obj, "order", None)
         if not order:
             return None
+        dp = order.delivery_person
         return {
             "id": order.id,
             "status": order.status,
             "order_type": order.order_type,
             "delivery_person": order.delivery_person_id,
+            "delivery_person_name": f"{dp.first_name or dp.username} {dp.last_name or ''}".strip() if dp else "N/A"
         }
 
     def get_user_meal_details(self, obj):
         meal = getattr(obj, "user_meal", None)
         if not meal:
             return None
+        
+        # Try to find delivery person from the active delivery assignment
+        delivery = meal.deliveries.filter(is_active=True).select_related("delivery_person").first()
+        dp = delivery.delivery_person if delivery else None
+        
         return {
             "id": meal.id,
             "meal_date": meal.meal_date,
             "status": meal.status,
             "user_diet_plan": meal.user_diet_plan_id,
-            "delivery_assignment_id": meal.deliveries.filter(is_active=True).values_list("id", flat=True).first(),
+            "delivery_person_id": dp.id if dp else None,
+            "delivery_person_name": f"{dp.first_name or dp.username} {dp.last_name or ''}".strip() if dp else "N/A",
+            "delivery_assignment_id": delivery.id if delivery else None,
         }
 
 

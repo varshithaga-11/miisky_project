@@ -10353,11 +10353,18 @@ class AdminPatientKitchenRatingsPaginatedView(APIView):
         
         serializer = MicroKitchenRatingSerializer(page, many=True)
 
-        # Get delivery person options for this patient's orders
-        delivery_person_ids = MicroKitchenRating.objects.filter(
+        # Get delivery person options for this patient (from both Orders and UserMeal deliveries)
+        order_dp_ids = Order.objects.filter(
             user_id=patient_id, 
-            order__delivery_person__isnull=False
-        ).values_list('order__delivery_person', flat=True).distinct()
+            delivery_person__isnull=False
+        ).values_list('delivery_person', flat=True).distinct()
+        
+        meal_dp_ids = DeliveryAssignment.objects.filter(
+            user_meal__user_id=patient_id,
+            delivery_person__isnull=False
+        ).values_list('delivery_person', flat=True).distinct()
+
+        delivery_person_ids = set(list(order_dp_ids) + list(meal_dp_ids))
         
         delivery_persons = UserRegister.objects.filter(id__in=delivery_person_ids).values('id', 'first_name', 'last_name', 'username')
         delivery_person_options = [

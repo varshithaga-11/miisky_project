@@ -75,7 +75,7 @@ export const fetchMicroKitchenDistancesForPatient = async (
   return getJson<MicroKitchenDistanceRow[]>(`api/admin/patient-microkitchen-distances/${patientId}/`);
 };
 
-async function getJson<T>(path: string, params?: Record<string, string | number>): Promise<T> {
+async function getJson<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
   const url = createApiUrl(path);
   const response = await axios.get<T>(url, {
     headers: await getAuthHeaders(),
@@ -314,11 +314,11 @@ export const fetchNutritionistRatingsForPatient = async (patientUserId: number):
 
 /** Kitchen ratings given by patient (Paginated) */
 export const fetchKitchenRatingsForPatient = async (
-  patientUserId: number, 
-  page = 1, 
+  patientUserId: number,
+  page = 1,
   limit = 10,
   deliveryPersonId?: string
-): Promise<{ results: any[]; count: number; delivery_person_options: any[] }> => {
+): Promise<PaginatedResponse<any> & { delivery_person_options: any[] }> => {
   const data = await getJson<any>("api/admin-patient-kitchen-ratings-paginated/", {
     user: patientUserId,
     page,
@@ -335,7 +335,7 @@ export const fetchDeliveryFeedbackForPatient = async (
   limit = 10,
   feedbackType?: string,
   resolved?: string
-): Promise<any> => {
+): Promise<PaginatedResponse<any>> => {
   const data = await getJson<any>("api/delivery-feedback-paginated/", {
     user: patientUserId,
     page,
