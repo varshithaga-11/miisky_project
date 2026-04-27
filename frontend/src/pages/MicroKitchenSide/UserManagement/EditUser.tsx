@@ -5,7 +5,7 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getCountryList, Country } from "../../AdminSide/Country/countryapi";
 import { getStateList, State } from "../../AdminSide/State/stateapi";
 import { getCityList, City } from "../../AdminSide/City/cityapi";
@@ -317,7 +317,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
 
           <div>
             <Label htmlFor="gender">Gender</Label>
-            <Select
+            <SearchableSelect
               value={(userData.gender as any) || ""}
               onChange={(val) => handleChange("gender", (val as any) || null)}
               options={[
@@ -350,7 +350,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
 
           <div>
             <Label htmlFor="country">Country</Label>
-            <Select
+            <SearchableSelect
               value={userData.country ? String(userData.country) : ""}
               onChange={(val) => handleChange("country", val ? Number(val) : null)}
               options={countryOptions}
@@ -361,7 +361,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
 
           <div>
             <Label htmlFor="state">State</Label>
-            <Select
+            <SearchableSelect
               value={userData.state ? String(userData.state) : ""}
               onChange={(val) => handleChange("state", val ? Number(val) : null)}
               options={stateOptions}
@@ -372,7 +372,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
 
           <div>
             <Label htmlFor="city">City</Label>
-            <Select
+            <SearchableSelect
               value={userData.city ? String(userData.city) : ""}
               onChange={(val) => handleChange("city", val ? Number(val) : null)}
               options={cityOptions}

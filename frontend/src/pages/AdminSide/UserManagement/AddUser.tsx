@@ -5,7 +5,7 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { getCountryList, Country } from "../Country/countryapi";
 import { getStateList, State } from "../State/stateapi";
 import { getCityList, City } from "../City/cityapi";
@@ -302,9 +302,9 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
           {/* Role */}
           <div>
             <Label htmlFor="role">Role</Label>
-            <Select
+            <SearchableSelect
               value={role}
-              onChange={(val) => setRole(val)}
+              onChange={(val) => setRole(val as any)}
               options={[
                 { value: "admin", label: "Admin" },
                 { value: "master", label: "Master" },
@@ -341,7 +341,7 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
 
           <div>
             <Label htmlFor="gender">Gender</Label>
-            <Select
+            <SearchableSelect
               value={gender ?? ""}
               onChange={(val) => setGender((val as any) || null)}
               options={[
@@ -374,17 +374,17 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
 
           <div>
             <Label htmlFor="country">Country</Label>
-            <Select value={countryId} onChange={(val) => setCountryId(val)} options={countryOptions} className="w-full" disabled={loading} />
+            <SearchableSelect value={countryId} onChange={(val) => setCountryId(val as string)} options={countryOptions} className="w-full" disabled={loading} />
           </div>
 
           <div>
             <Label htmlFor="state">State</Label>
-            <Select value={stateId} onChange={(val) => setStateId(val)} options={stateOptions} className="w-full" disabled={loading} />
+            <SearchableSelect value={stateId} onChange={(val) => setStateId(val as string)} options={stateOptions} className="w-full" disabled={loading} />
           </div>
 
           <div>
             <Label htmlFor="city">City</Label>
-            <Select value={cityId} onChange={(val) => setCityId(val)} options={cityOptions} className="w-full" disabled={loading} />
+            <SearchableSelect value={cityId} onChange={(val) => setCityId(val as string)} options={cityOptions} className="w-full" disabled={loading} />
           </div>
 
           <div>
