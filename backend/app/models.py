@@ -760,6 +760,14 @@ class UserQuestionnaire(models.Model):
     )
 
     on_medication = models.BooleanField(null=True, blank=True)
+    specify_medication = models.CharField(max_length=200, null=True, blank=True)
+
+    consulted_doctor_before = models.BooleanField(null=True, blank=True)
+    consulted_doctor_name = models.CharField(max_length=200, null=True, blank=True)
+    consulted_doctor_specialty = models.CharField(max_length=200, null=True, blank=True)
+    consulted_doctor_phone = models.CharField(max_length=30, null=True, blank=True)
+    consulted_doctor_location = models.CharField(max_length=200, null=True, blank=True)
+    consulted_doctor_notes = models.TextField(null=True, blank=True)
 
     # 🔹 WELL-BEING
     sleep_quality = models.CharField(

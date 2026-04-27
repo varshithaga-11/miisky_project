@@ -1434,12 +1434,7 @@ class UserHealthConditionSerializer(serializers.ModelSerializer):
 
 
 class UserQuestionnaireSerializer(serializers.ModelSerializer):
-    """
-    Questionnaire fields on UserQuestionnaire; list selections (symptoms, habits, activities, etc.)
-    live on junction tables under UserRegister and are exposed as read-only computed fields.
-    Saving sends those lists in the payload; sync_user_questionnaire_relations updates junction rows.
-    """
-
+    meal_slots = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     health_conditions = serializers.SerializerMethodField()
     symptoms = serializers.SerializerMethodField()
     deficiencies = serializers.SerializerMethodField()
@@ -1475,13 +1470,16 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "surgery_details",
             "medicine_allergy",
             "medicine_allergy_details",
-            "consulted_doctor",
-            "consultant_doctor_name",
-            "consultant_doctor_specialty",
-            "consultant_doctor_phone",
+            "consulted_doctor_before",
+            "consulted_doctor_name",
+            "consulted_doctor_specialty",
+            "consulted_doctor_phone",
+            "consulted_doctor_location",
+            "consulted_doctor_notes",
             "other_health_concerns",
             "menstrual_pattern",
             "on_medication",
+            "specify_medication",
             "sleep_quality",
             "stress_level",
             "falls_sick_frequency",
@@ -1535,10 +1533,15 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
         if merged.get("medicine_allergy") is False:
             attrs["medicine_allergy_details"] = None
 
-        if merged.get("consulted_doctor") is False:
-            attrs["consultant_doctor_name"] = None
-            attrs["consultant_doctor_specialty"] = None
-            attrs["consultant_doctor_phone"] = None
+        if merged.get("consulted_doctor_before") is False:
+            attrs["consulted_doctor_name"] = None
+            attrs["consulted_doctor_specialty"] = None
+            attrs["consulted_doctor_phone"] = None
+            attrs["consulted_doctor_location"] = None
+            attrs["consulted_doctor_notes"] = None
+
+        if merged.get("on_medication") is False:
+            attrs["specify_medication"] = None
 
         if "meal_slots" in attrs:
             raw = attrs["meal_slots"]

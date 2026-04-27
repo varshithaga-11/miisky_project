@@ -129,7 +129,9 @@ function normalizeMealSlots(value: unknown): string[] {
 
   if ((raw.startsWith("[") && raw.endsWith("]")) || (raw.startsWith("{") && raw.endsWith("}"))) {
     try {
-      const parsed = JSON.parse(raw);
+      // JSON.parse requires double quotes. Python/Django MultiSelectField often returns single quotes.
+      const fixedRaw = raw.replace(/'/g, '"');
+      const parsed = JSON.parse(fixedRaw);
       if (Array.isArray(parsed)) return fromArray(parsed);
       return [];
     } catch {
@@ -190,20 +192,35 @@ export default function PatientQuestionnairePage() {
 
   const setField = (key: keyof UserQuestionnaire, value: unknown) => setData((p) => ({ ...p, [key]: value }));
 
-  // 1. Initial Load (Base Data + Step 1 Masters)
+  // 1. Initial Load (Base Data + All Masters)
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const [res, hm, actm] = await Promise.all([
+        const [res, hm, actm, hcm, sm, am, dm, dig, sk] = await Promise.all([
           getMyQuestionnaire(),
           fetchHabitMasters(),
           fetchActivityMasters(),
+          fetchHealthConditionMasters(),
+          fetchSymptomMasters(),
+          fetchAutoimmuneMasters(),
+          fetchDeficiencyMasters(),
+          fetchDigestiveIssueMasters(),
+          fetchSkinIssueMasters(),
         ]);
 
         setData({ ...(res || {}), meal_slots: normalizeMealSlots(res?.meal_slots) });
         setHabitMasters(hm);
         setActivityMasters(actm);
+        setHcMasters(hcm);
+        setSymptomMasters(sm);
+        setAutoimmuneMasters(am);
+        setDeficiencyMasters(dm);
+        setDigestiveMasters(dig);
+        setSkinMasters(sk);
+
+        setHcMastersLoaded(true);
+        setStep3MastersLoaded(true);
         questionnaireLoadedRef.current = true;
 
         // Initialize Step 1 states
@@ -260,46 +277,6 @@ export default function PatientQuestionnairePage() {
     })();
   }, []);
 
-  // 2. Step-based Lazy Loading
-  useEffect(() => {
-    if (step === 2 && !hcMastersLoaded && !fetchingStep2Ref.current) {
-      (async () => {
-        fetchingStep2Ref.current = true;
-        try {
-          const hcm = await fetchHealthConditionMasters();
-          setHcMasters(hcm);
-          setHcMastersLoaded(true);
-        } catch (err) {
-          console.error("Error loading Step 2 masters:", err);
-        } finally {
-          fetchingStep2Ref.current = false;
-        }
-      })();
-    } else if (step === 3 && !step3MastersLoaded && !fetchingStep3Ref.current) {
-      (async () => {
-        fetchingStep3Ref.current = true;
-        try {
-          const [sm, am, dm, dig, sk] = await Promise.all([
-            fetchSymptomMasters(),
-            fetchAutoimmuneMasters(),
-            fetchDeficiencyMasters(),
-            fetchDigestiveIssueMasters(),
-            fetchSkinIssueMasters(),
-          ]);
-          setSymptomMasters(sm);
-          setAutoimmuneMasters(am);
-          setDeficiencyMasters(dm);
-          setDigestiveMasters(dig);
-          setSkinMasters(sk);
-          setStep3MastersLoaded(true);
-        } catch (err) {
-          console.error("Error loading Step 3 masters:", err);
-        } finally {
-          fetchingStep3Ref.current = false;
-        }
-      })();
-    }
-  }, [step, hcMastersLoaded, step3MastersLoaded]);
 
   // 3. Deferred Initializations (run once prerequisite masters are loaded)
   useEffect(() => {
@@ -763,6 +740,37 @@ export default function PatientQuestionnairePage() {
                     className="w-full"
                   />
                 </div>
+                <div className="md:col-span-2">
+                  <Label>Preferred meal slots</Label>
+                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { value: "early_morning", label: "Early Morning" },
+                      { value: "breakfast", label: "Breakfast" },
+                      { value: "mid_morning", label: "Mid Morning" },
+                      { value: "lunch", label: "Lunch" },
+                      { value: "evening_snacks", label: "Evening Snacks" },
+                      { value: "dinner", label: "Dinner" },
+                      { value: "none", label: "None" },
+                    ].map((slot) => (
+                      <label key={slot.value} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={(data.meal_slots as string[] || []).includes(slot.value)}
+                          onChange={(e) => {
+                            const current = (data.meal_slots as string[] || []);
+                            if (e.target.checked) {
+                              setField("meal_slots", [...current, slot.value]);
+                            } else {
+                              setField("meal_slots", current.filter((s) => s !== slot.value));
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        {slot.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div>
                   <Label htmlFor="skips_meals">Skip meals?</Label>
                   {triSelect(data.skips_meals, (v) => setField("skips_meals", v), "skips_meals")}
@@ -905,6 +913,24 @@ export default function PatientQuestionnairePage() {
                     ))}
                   </div>
                 </div>
+                {data.diet_pattern === "non_veg" && (
+                  <div>
+                    <Label htmlFor="non_veg_frequency">Non-veg frequency</Label>
+                    <Select
+                      id="non_veg_frequency"
+                      value={data.non_veg_frequency || ""}
+                      onChange={(val) => setField("non_veg_frequency", val || null)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "daily", label: "Daily" },
+                        { value: "three_four_times_week", label: "3–4 times a week" },
+                        { value: "one_two_times_week", label: "1–2 times a week" },
+                        { value: "occasional", label: "Occasionally (once in 2–3 weeks)" },
+                      ]}
+                      className="w-full"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="consumes_egg">Consume eggs?</Label>
                   {triSelect(data.consumes_egg, (v) => setField("consumes_egg", v), "consumes_egg")}
@@ -957,10 +983,104 @@ export default function PatientQuestionnairePage() {
                   <Label htmlFor="surgery_history">History of surgery?</Label>
                   {triSelect(data.surgery_history, (v) => setField("surgery_history", v), "surgery_history")}
                 </div>
+                {data.surgery_history === true && (
+                  <div className="md:col-span-2">
+                    <Label htmlFor="surgery_details">Surgery details</Label>
+                    <textarea
+                      id="surgery_details"
+                      value={data.surgery_details || ""}
+                      onChange={(e) => setField("surgery_details", e.target.value)}
+                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                      rows={2}
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="medicine_allergy">Medicine allergy?</Label>
+                  {triSelect(data.medicine_allergy, (v) => setField("medicine_allergy", v), "medicine_allergy")}
+                </div>
+                {data.medicine_allergy === true && (
+                  <div className="md:col-span-2">
+                    <Label htmlFor="medicine_allergy_details">Medicine allergy details</Label>
+                    <textarea
+                      id="medicine_allergy_details"
+                      value={data.medicine_allergy_details || ""}
+                      onChange={(e) => setField("medicine_allergy_details", e.target.value)}
+                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                      rows={2}
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="on_medication">On medication?</Label>
                   {triSelect(data.on_medication, (v) => setField("on_medication", v), "on_medication")}
                 </div>
+                {data.on_medication === true && (
+                  <div className="md:col-span-2">
+                    <Label htmlFor="specify_medication">Specify medication</Label>
+                    <textarea
+                      id="specify_medication"
+                      value={data.specify_medication || ""}
+                      onChange={(e) => setField("specify_medication", e.target.value)}
+                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                      rows={2}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Doctor Consultation</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="consulted_doctor_before">Have you consulted any doctor before?</Label>
+                  {triSelect(data.consulted_doctor_before, (v) => setField("consulted_doctor_before", v), "consulted_doctor_before")}
+                </div>
+                {data.consulted_doctor_before === true && (
+                  <>
+                    <div>
+                      <Label htmlFor="consulted_doctor_name">Doctor Name</Label>
+                      <Input
+                        id="consulted_doctor_name"
+                        value={data.consulted_doctor_name || ""}
+                        onChange={(e) => setField("consulted_doctor_name", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="consulted_doctor_specialty">Specialty</Label>
+                      <Input
+                        id="consulted_doctor_specialty"
+                        value={data.consulted_doctor_specialty || ""}
+                        onChange={(e) => setField("consulted_doctor_specialty", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="consulted_doctor_phone">Phone Number</Label>
+                      <Input
+                        id="consulted_doctor_phone"
+                        value={data.consulted_doctor_phone || ""}
+                        onChange={(e) => setField("consulted_doctor_phone", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="consulted_doctor_location">Location</Label>
+                      <Input
+                        id="consulted_doctor_location"
+                        value={data.consulted_doctor_location || ""}
+                        onChange={(e) => setField("consulted_doctor_location", e.target.value)}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="consulted_doctor_notes">Doctor notes</Label>
+                      <textarea
+                        id="consulted_doctor_notes"
+                        value={data.consulted_doctor_notes || ""}
+                        onChange={(e) => setField("consulted_doctor_notes", e.target.value)}
+                        className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                        rows={2}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Well-being</h2>
@@ -1038,6 +1158,36 @@ export default function PatientQuestionnairePage() {
                   onChange={(e) => setField("additional_notes", e.target.value)}
                   className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
                   rows={4}
+                />
+              </div>
+              <div>
+                <Label htmlFor="other_health_concerns">Other health concerns</Label>
+                <textarea
+                  id="other_health_concerns"
+                  value={data.other_health_concerns || ""}
+                  onChange={(e) => setField("other_health_concerns", e.target.value)}
+                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="any_other_comments">Any other comments</Label>
+                <textarea
+                  id="any_other_comments"
+                  value={data.any_other_comments || ""}
+                  onChange={(e) => setField("any_other_comments", e.target.value)}
+                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="any_notes_for_care_team">Any notes for care team</Label>
+                <textarea
+                  id="any_notes_for_care_team"
+                  value={data.any_notes_for_care_team || ""}
+                  onChange={(e) => setField("any_notes_for_care_team", e.target.value)}
+                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                  rows={3}
                 />
               </div>
             </div>

@@ -61,18 +61,24 @@ export type UserQuestionnaire = {
   surgery_details?: string | null;
   medicine_allergy?: boolean | null;
   medicine_allergy_details?: string | null;
-  consulted_doctor?: boolean | null;
-  consultant_doctor_name?: string | null;
-  consultant_doctor_specialty?: string | null;
-  consultant_doctor_phone?: string | null;
+  consulted_doctor_before?: boolean | null;
+  consulted_doctor_name?: string | null;
+  consulted_doctor_specialty?: string | null;
+  consulted_doctor_phone?: string | null;
+  consulted_doctor_location?: string | null;
+  consulted_doctor_notes?: string | null;
   other_health_concerns?: string | null;
   menstrual_pattern?: "heavy" | "very_less" | "none" | null;
   on_medication?: boolean | null;
+  specify_medication?: string | null;
   sleep_quality?: "fresh" | "not_fresh" | null;
   stress_level?: "low" | "medium" | "high" | null;
   falls_sick_frequency?: "once" | "twice" | "frequent" | null;
-  food_preferences?: unknown;
+  food_preferences?: string | null;
   additional_notes?: string | null;
+  any_other_comments?: string | null;
+  any_notes_for_care_team?: string | null;
+  non_veg_frequency?: "daily" | "three_four_times_week" | "one_two_times_week" | "occasional" | null;
 };
 
 export type MasterRow = { id: number; name: string; category?: string };
@@ -102,7 +108,8 @@ function sanitizeMealSlotsForSave(value: unknown): string[] | null {
   }
   if (raw.startsWith("[") && raw.endsWith("]")) {
     try {
-      return sanitizeMealSlotsForSave(JSON.parse(raw));
+      const fixedRaw = raw.replace(/'/g, '"');
+      return sanitizeMealSlotsForSave(JSON.parse(fixedRaw));
     } catch {
       return null;
     }
@@ -115,7 +122,9 @@ function sanitizeMealSlotsForSave(value: unknown): string[] | null {
 
 export const saveMyQuestionnaire = async (data: Partial<UserQuestionnaire>): Promise<UserQuestionnaire> => {
   const url = createApiUrl("api/userquestionnaire/me/");
-  const payload = { ...data, meal_slots: sanitizeMealSlotsForSave(data.meal_slots) };
+  const slots = sanitizeMealSlotsForSave(data.meal_slots);
+  // MultiSelectField often expects a comma-separated string in standard DRF setups
+  const payload = { ...data, meal_slots: Array.isArray(slots) ? slots.join(",") : slots };
   const response = await axios.put(url, payload, { headers: await getAuthHeaders() });
   return response.data;
 };
