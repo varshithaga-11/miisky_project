@@ -2545,6 +2545,11 @@ class NutritionistProfileViewSet(viewsets.ModelViewSet):
 class MicroKitchenProfileViewSet(viewsets.ModelViewSet):
     serializer_class = MicroKitchenProfileSerializer
     permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='dropdown')
+    def dropdown(self, request):
+        qs = self.get_queryset().values('id', 'brand_name')
+        return Response(list(qs))
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
@@ -5031,6 +5036,11 @@ class DietPlanViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'code']
 
+    @action(detail=False, methods=['get'], url_path='dropdown')
+    def dropdown(self, request):
+        qs = self.get_queryset().values('id', 'title')
+        return Response(list(qs))
+
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
 
@@ -5928,14 +5938,33 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(status=status_filter)
             if payment_status_filter:
                 queryset = queryset.filter(payment_status=payment_status_filter)
-            if start_date_filter:
-                queryset = queryset.filter(start_date__gte=start_date_filter)
-            if end_date_filter:
-                queryset = queryset.filter(end_date__lte=end_date_filter)
+            
+            # Period filter
+            period = self.request.query_params.get('period', 'this_month')
+            if period != 'all':
+                from .utils.date_utils import get_period_range
+                try:
+                    s, e = get_period_range(period, start_date_filter, end_date_filter)
+                    queryset = queryset.filter(suggested_on__date__range=[s, e])
+                except Exception:
+                    pass
+            elif start_date_filter or end_date_filter:
+                if start_date_filter:
+                    queryset = queryset.filter(start_date__gte=start_date_filter)
+                if end_date_filter:
+                    queryset = queryset.filter(end_date__lte=end_date_filter)
             
             diet_plan_id = self.request.query_params.get('diet_plan')
             if diet_plan_id:
                 queryset = queryset.filter(diet_plan_id=diet_plan_id)
+
+            micro_kitchen_id = self.request.query_params.get('micro_kitchen')
+            if micro_kitchen_id:
+                queryset = queryset.filter(micro_kitchen_id=micro_kitchen_id)
+
+            nutritionist_id = self.request.query_params.get('nutritionist')
+            if nutritionist_id:
+                queryset = queryset.filter(nutritionist_id=nutritionist_id)
                 
             return queryset.order_by('-suggested_on')
 
@@ -9218,6 +9247,11 @@ class AdminPatientOverviewViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
 
+    @action(detail=False, methods=['get'], url_path='dropdown')
+    def dropdown(self, request):
+        qs = self.get_queryset().values('id', 'first_name', 'last_name')
+        return Response(list(qs))
+
     def get_queryset(self):
         from django.db.models import Count, Exists, OuterRef, Prefetch
 
@@ -10632,6 +10666,11 @@ class AdminNutritionistOverviewViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name', 'mobile']
+
+    @action(detail=False, methods=['get'], url_path='dropdown')
+    def dropdown(self, request):
+        qs = self.get_queryset().values('id', 'first_name', 'last_name')
+        return Response(list(qs))
 
     def get_queryset(self):
         return UserRegister.objects.filter(role='nutritionist').order_by('-id')

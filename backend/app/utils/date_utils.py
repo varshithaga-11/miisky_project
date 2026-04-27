@@ -20,6 +20,9 @@ def get_period_range(period: str, start_date: Optional[str] = None, end_date: Op
     year = today.year
     month = today.month
 
+    if period == "all":
+        return date(2000, 1, 1), date(2100, 1, 1)
+
     if period == "today":
         return today, today
 

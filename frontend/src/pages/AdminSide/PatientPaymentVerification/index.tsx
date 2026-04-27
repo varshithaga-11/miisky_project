@@ -1,14 +1,32 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getAllPaymentPlans, verifyPayment, rejectPayment, stopPlan, finishPlan, updateDietPlan, downloadInvoice, buildInvoiceFilename, UserDietPlanPayment } from "./api";
+import {
+  getAllPaymentPlans,
+  verifyPayment,
+  rejectPayment,
+  stopPlan,
+  finishPlan,
+  updateDietPlan,
+  downloadInvoice,
+  buildInvoiceFilename,
+  UserDietPlanPayment,
+  getKitchensDropdown,
+  getPatientsDropdown,
+  getNutritionistsDropdown,
+  getPlansDropdown,
+} from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiCheckCircle, FiXCircle, FiCreditCard, FiImage, FiEdit, FiPower, FiFlag, FiCheckSquare, FiDownload } from "react-icons/fi";
 
 import DatePicker2 from "../../../components/form/date-picker2";
+import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
+import Label from "../../../components/form/Label";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import axios from "axios";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -33,18 +51,6 @@ const canMarkPlanCompletedByEndDate = (plan: UserDietPlanPayment): boolean => {
   return isEndDateOnOrBeforeToday(plan.end_date);
 };
 
-type FilterType = "all" | "uploaded" | "verified" | "suggested" | "payment_pending" | "active" | "completed" | "rejected";
-
-const FILTERS: { key: FilterType; label: string; status?: string; payment_status?: string }[] = [
-  { key: "all", label: "All" },
-  { key: "uploaded", label: "Pending Verification", payment_status: "uploaded" },
-  { key: "verified", label: "Verified", payment_status: "verified" },
-  { key: "suggested", label: "Suggested", status: "suggested" },
-  { key: "payment_pending", label: "Payment Pending", status: "payment_pending" },
-  { key: "active", label: "Active", status: "active" },
-  { key: "completed", label: "Completed", status: "completed" },
-  { key: "rejected", label: "Rejected", status: "rejected" },
-];
 
 const PatientPaymentVerificationPage: React.FC = () => {
   const [plans, setPlans] = useState<UserDietPlanPayment[]>([]);
@@ -57,27 +63,42 @@ const PatientPaymentVerificationPage: React.FC = () => {
   const [finishModal, setFinishModal] = useState<UserDietPlanPayment | null>(null);
   const [editModal, setEditModal] = useState<UserDietPlanPayment | null>(null);
   const [startDate, setStartDate] = useState("");
-  const [filter, setFilter] = useState<FilterType>("all");
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
   const [kitchenSearch, setKitchenSearch] = useState("");
+  const [selectedKitchen, setSelectedKitchen] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState("");
+  const [selectedNutritionist, setSelectedNutritionist] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("this_month");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [kitchens, setKitchens] = useState<any[]>([]);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [nutritionists, setNutritionists] = useState<any[]>([]);
+  const [plansList, setPlansList] = useState<any[]>([]);
 
 
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const f = FILTERS.find((x) => x.key === filter);
-      const trimmedKitchenSearch = kitchenSearch.trim();
-      const params =
-        f?.status || f?.payment_status || startDateFilter || endDateFilter || trimmedKitchenSearch
-          ? {
-              status: f?.status,
-              payment_status: f?.payment_status,
-              start_date: startDateFilter || undefined,
-              end_date: endDateFilter || undefined,
-              search: trimmedKitchenSearch || undefined,
-            }
-          : undefined;
+      let s = selectedStatus === "all" ? undefined : selectedStatus;
+      let ps = undefined;
+      
+      if (s === "uploaded") { ps = "uploaded"; s = undefined; }
+      if (s === "verified") { ps = "verified"; s = undefined; }
+
+      const params = {
+        status: s,
+        payment_status: ps,
+        start_date: startDateFilter || undefined,
+        end_date: endDateFilter || undefined,
+        search: kitchenSearch.trim() || undefined,
+        micro_kitchen: selectedKitchen || undefined,
+        user: selectedPatient || undefined,
+        nutritionist: selectedNutritionist || undefined,
+        diet_plan: selectedPlan || undefined,
+        period: selectedPeriod || undefined,
+      };
       const data = await getAllPaymentPlans(params);
       setPlans(data);
     } catch (error) {
@@ -89,7 +110,47 @@ const PatientPaymentVerificationPage: React.FC = () => {
 
   useEffect(() => {
     fetchPlans();
-  }, [filter, startDateFilter, endDateFilter, kitchenSearch]);
+  }, [startDateFilter, endDateFilter, kitchenSearch, selectedKitchen, selectedPatient, selectedNutritionist, selectedPlan, selectedPeriod, selectedStatus]);
+
+  const loadKitchens = async () => {
+    if (kitchens.length > 0) return;
+    try {
+      const res = await getKitchensDropdown();
+      setKitchens(res || []);
+    } catch (err) {
+      console.error("Failed to load kitchens", err);
+    }
+  };
+
+  const loadPatients = async () => {
+    if (patients.length > 0) return;
+    try {
+      const res = await getPatientsDropdown();
+      setPatients(res || []);
+    } catch (err) {
+      console.error("Failed to load patients", err);
+    }
+  };
+
+  const loadNutritionists = async () => {
+    if (nutritionists.length > 0) return;
+    try {
+      const res = await getNutritionistsDropdown();
+      setNutritionists(res || []);
+    } catch (err) {
+      console.error("Failed to load nutritionists", err);
+    }
+  };
+
+  const loadPlansList = async () => {
+    if (plansList.length > 0) return;
+    try {
+      const res = await getPlansDropdown();
+      setPlansList(res || []);
+    } catch (err) {
+      console.error("Failed to load plans", err);
+    }
+  };
 
   const getMinStartDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -211,66 +272,147 @@ const PatientPaymentVerificationPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                filter === f.key
-                  ? "bg-indigo-600 text-white shadow-lg"
-                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-white/10"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <DatePicker2
-              key={`table-filter-start-${startDateFilter || "empty"}`}
-              id="table-filter-start-date"
-              label="Start Date"
-              value={startDateFilter}
-              onChange={(date) => setStartDateFilter(date)}
-              placeholder="Select start date"
-            />
-            <DatePicker2
-              key={`table-filter-end-${endDateFilter || "empty"}`}
-              id="table-filter-end-date"
-              label="End Date"
-              value={endDateFilter}
-              onChange={(date) => setEndDateFilter(date)}
-              placeholder="Select end date"
-            />
+        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03] space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="mb-2.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Micro Kitchen
-              </label>
-              <input
-                type="text"
-                value={kitchenSearch}
-                onChange={(e) => setKitchenSearch(e.target.value)}
-                placeholder="Search by kitchen name or code"
-                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Micro Kitchen</Label>
+              <SearchableSelect
+                value={selectedKitchen}
+                onChange={(val) => setSelectedKitchen(val as string)}
+                onFocus={loadKitchens}
+                options={[
+                  { value: "", label: "All Kitchens" },
+                  ...kitchens.map((k) => ({ value: String(k.id), label: k.brand_name })),
+                ]}
+                placeholder="Search Kitchen..."
               />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Patient</Label>
+              <SearchableSelect
+                value={selectedPatient}
+                onChange={(val) => setSelectedPatient(val as string)}
+                onFocus={loadPatients}
+                options={[
+                  { value: "", label: "All Patients" },
+                  ...patients.map((p) => ({ value: String(p.id), label: `${p.first_name} ${p.last_name}` })),
+                ]}
+                placeholder="Search Patient..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Nutritionist</Label>
+              <SearchableSelect
+                value={selectedNutritionist}
+                onChange={(val) => setSelectedNutritionist(val as string)}
+                onFocus={loadNutritionists}
+                options={[
+                  { value: "", label: "All Nutritionists" },
+                  ...nutritionists.map((n) => ({ value: String(n.id), label: `${n.first_name} ${n.last_name}` })),
+                ]}
+                placeholder="Search Nutritionist..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Plan</Label>
+              <SearchableSelect
+                value={selectedPlan}
+                onChange={(val) => setSelectedPlan(val as string)}
+                onFocus={loadPlansList}
+                options={[
+                  { value: "", label: "All Plans" },
+                  ...plansList.map((p) => ({ value: String(p.id), label: p.title })),
+                ]}
+                placeholder="Search Plan..."
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Month Period</Label>
+              <Select
+                value={selectedPeriod}
+                onChange={(val) => setSelectedPeriod(val)}
+                options={[
+                  { value: "all", label: "All Time" },
+                  { value: "this_month", label: "This Month" },
+                  { value: "last_month", label: "Last Month" },
+                  { value: "next_month", label: "Next Month" },
+                  { value: "this_quarter", label: "This Quarter" },
+                  { value: "this_year", label: "This Year" },
+                  { value: "custom_range", label: "Custom Range" },
+                ]}
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Status</Label>
+              <Select
+                value={selectedStatus}
+                onChange={(val) => setSelectedStatus(val)}
+                options={[
+                  { value: "all", label: "All Status" },
+                  { value: "uploaded", label: "Pending Verification" },
+                  { value: "verified", label: "Verified" },
+                  { value: "suggested", label: "Suggested" },
+                  { value: "payment_pending", label: "Payment Pending" },
+                  { value: "active", label: "Active" },
+                  { value: "completed", label: "Completed" },
+                  { value: "rejected", label: "Rejected" },
+                ]}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Search Bar</Label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={kitchenSearch}
+                  onChange={(e) => setKitchenSearch(e.target.value)}
+                  placeholder="Search name, code..."
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                />
+              </div>
             </div>
             <div className="flex items-end">
               <button
                 onClick={() => {
+                  setSelectedKitchen("");
+                  setSelectedPatient("");
+                  setSelectedNutritionist("");
+                  setSelectedPlan("");
+                  setSelectedPeriod("this_month");
+                  setSelectedStatus("all");
+                  setKitchenSearch("");
                   setStartDateFilter("");
                   setEndDateFilter("");
-                  setKitchenSearch("");
                 }}
-                disabled={!startDateFilter && !endDateFilter && !kitchenSearch.trim()}
-                className="h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
-                Clear Filters
+                Clear All Filters
               </button>
             </div>
           </div>
+
+          {selectedPeriod === "custom_range" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-top-1 duration-200">
+              <DatePicker2
+                id="table-filter-start-date"
+                label="Start Date (Custom)"
+                value={startDateFilter}
+                onChange={(date) => setStartDateFilter(date)}
+                placeholder="Select start date"
+              />
+              <DatePicker2
+                id="table-filter-end-date"
+                label="End Date (Custom)"
+                value={endDateFilter}
+                onChange={(date) => setEndDateFilter(date)}
+                placeholder="Select end date"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">

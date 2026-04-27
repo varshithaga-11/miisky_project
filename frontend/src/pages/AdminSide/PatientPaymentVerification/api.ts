@@ -41,6 +41,11 @@ export const getAllPaymentPlans = async (params?: {
   start_date?: string;
   end_date?: string;
   search?: string;
+  micro_kitchen?: string;
+  nutritionist?: string;
+  user?: string;
+  diet_plan?: string;
+  period?: string;
 }): Promise<UserDietPlanPayment[]> => {
   const search = new URLSearchParams();
   if (params?.status) search.append("status", params.status);
@@ -48,6 +53,12 @@ export const getAllPaymentPlans = async (params?: {
   if (params?.start_date) search.append("start_date", params.start_date);
   if (params?.end_date) search.append("end_date", params.end_date);
   if (params?.search) search.append("search", params.search);
+  if (params?.micro_kitchen) search.append("micro_kitchen", params.micro_kitchen);
+  if (params?.nutritionist) search.append("nutritionist", params.nutritionist);
+  if (params?.user) search.append("user", params.user);
+  if (params?.diet_plan) search.append("diet_plan", params.diet_plan);
+  if (params?.period) search.append("period", params.period);
+  
   const query = search.toString();
   const url = createApiUrl(query ? `api/userdietplan/?${query}` : "api/userdietplan/");
   const response = await axios.get(url, { headers: await getAuthHeaders() });
@@ -137,4 +148,28 @@ export const downloadInvoice = async (id: number, preferredFilename?: string): P
   link.click();
   link.remove();
   URL.revokeObjectURL(objectUrl);
+};
+
+export const getKitchensDropdown = async () => {
+  const url = createApiUrl("api/microkitchenprofile/dropdown/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+export const getPatientsDropdown = async () => {
+  const url = createApiUrl("api/admin-patients/dropdown/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+export const getNutritionistsDropdown = async () => {
+  const url = createApiUrl("api/admin-nutritionists/dropdown/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+};
+
+export const getPlansDropdown = async () => {
+  const url = createApiUrl("api/dietplan/dropdown/");
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
 };
