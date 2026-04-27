@@ -155,9 +155,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
   const [ordStartDate, setOrdStartDate] = useState("");
   const [ordEndDate, setOrdEndDate] = useState("");
 
-  const [revPeriod, setRevPeriod] = useState("");
-  const [revStartDate, setRevStartDate] = useState("");
-  const [revEndDate, setRevEndDate] = useState("");
 
   const [prepPeriod, setPrepPeriod] = useState("");
   const [prepStartDate, setPrepStartDate] = useState("");
@@ -182,7 +179,6 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     // Reset filters on open if desired, or keep?
     // User usually wants fresh state on modal open
     setOrdPeriod(""); setOrdStartDate(""); setOrdEndDate("");
-    setRevPeriod(""); setRevStartDate(""); setRevEndDate("");
     setPrepPeriod(""); setPrepStartDate(""); setPrepEndDate("");
     setExecPeriod(""); setExecStartDate(""); setExecEndDate("");
     setPayPeriod(""); setPayStartDate(""); setPayEndDate("");
@@ -223,7 +219,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             setPayload({ results: res, page: 1, hasMore: false });
             break;
           case "patients":
-            res = await getMicroKitchenPatients(id, p);
+            res = await getMicroKitchenPatients(id, p, 10);
             setPayload((prev: any) => ({
               results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
               page: res.current_page,
@@ -256,10 +252,15 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             setPayload({ results: await getMicroKitchenDeliveryProfilesNoPagination(id), page: 1, hasMore: false });
             break;
           case "inspections":
-            setPayload({ results: await getMicroKitchenInspectionsNoPagination(id), page: 1, hasMore: false });
+            res = await getMicroKitchenInspections(id, p, 10);
+            setPayload((prev: any) => ({
+              results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
+              page: res.current_page,
+              hasMore: res.current_page < res.total_pages
+            }));
             break;
           case "reviews":
-            res = await getMicroKitchenReviewsPaginated(id, p, 10, sd, ed, per);
+            res = await getMicroKitchenReviewsPaginated(id, p, 10);
             setPayload((prev: any) => ({
               results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
               page: res.current_page,
@@ -275,7 +276,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             }));
             break;
           case "foods":
-            res = await getMicroKitchenFoodsPaginated(id, p, 20);
+            res = await getMicroKitchenFoodsPaginated(id, p, 10);
             setPayload((prev: any) => ({
               results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
               page: res.current_page,
@@ -323,7 +324,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             break;
           case "execution":
             const td = new Date().toISOString().split('T')[0];
-            res = await getMicroKitchenExecutionList(id, p, 20, per, sd, ed, sd ? undefined : td);
+            res = await getMicroKitchenExecutionList(id, p, 10, per, sd, ed, sd ? undefined : td);
             setPayload((prev: any) => ({
               results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
               page: res.current_page,
@@ -331,7 +332,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
             }));
             break;
           case "order_payments":
-            res = await getMicroKitchenOrderPaymentSnapshots(id, p, 20);
+            res = await getMicroKitchenOrderPaymentSnapshots(id, p, 10);
             setPayload((prev: any) => ({
               results: isLoadMore ? [...(prev?.results || []), ...res.results] : res.results,
               page: res.current_page,
@@ -355,8 +356,8 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     if (loading || loadingMore || !payload?.hasMore || !screen || screen === "hub") return;
     let sd, ed, per;
     if (screen === 'orders') { sd = ordStartDate; ed = ordEndDate; per = ordPeriod; }
-    else if (screen === 'reviews') { sd = revStartDate; ed = revEndDate; per = revPeriod; }
-    else if (screen === 'inspections') { return; }
+    else if (screen === 'reviews') { /* Only pagination */ }
+    else if (screen === 'inspections') { /* Pagination enabled */ }
     else if (screen === 'prep') { return; }
     else if (screen === 'execution') { sd = execStartDate; ed = execEndDate; per = execPeriod; }
     else if (screen === 'payouts') { sd = payStartDate; ed = payEndDate; per = payPeriod; }
@@ -365,7 +366,7 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
     else if (screen === 'planned_leaves') { /* No extra filters */ }
     
     loadView(screen as KitchenDataView, (payload.page || 1) + 1, true, sd, ed, per);
-  }, [loading, loadingMore, payload, screen, ordStartDate, ordEndDate, ordPeriod, revStartDate, revEndDate, revPeriod, prepStartDate, prepEndDate, prepPeriod, execStartDate, execEndDate, execPeriod, payStartDate, payEndDate, payPeriod, loadView]);
+  }, [loading, loadingMore, payload, screen, ordStartDate, ordEndDate, ordPeriod, prepStartDate, prepEndDate, prepPeriod, execStartDate, execEndDate, execPeriod, payStartDate, payEndDate, payPeriod, loadView]);
 
   useEffect(() => {
     if (!open || screen === "hub" || loading) return;
@@ -501,22 +502,9 @@ export function MicroKitchenDetailModal({ kitchen, open, onClose }: Props) {
                         <DisplayKitchenInspections items={payload?.results} />
                       )}
                       {screen === "reviews" && (
-                        <div className="space-y-4">
-                           <FilterBar 
-                              startDate={revStartDate} 
-                              endDate={revEndDate} 
-                              activePeriod={revPeriod}
-                              onPeriodChange={setRevPeriod}
-                              onFilterChange={(s: string, e: string, p: string) => {
-                                setRevStartDate(s); setRevEndDate(e);
-                                setRevPeriod(p);
-                                loadView("reviews", 1, false, s, e, p);
-                              }}
-                           />
-                           <DisplayKitchenReviews 
-                              items={payload?.results} 
-                           />
-                        </div>
+                         <DisplayKitchenReviews 
+                            items={payload?.results} 
+                         />
                       )}
                       {screen === "orders" && (
                         <div className="space-y-4">

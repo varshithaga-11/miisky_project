@@ -477,6 +477,11 @@ urlpatterns = [
         name="admin-patient-kitchen-ratings-paginated",
     ),
     path(
+        "admin-patient-kitchen-ratings-nopaginate/",
+        views.AdminPatientKitchenRatingsNoPaginationView.as_view(),
+        name="admin-patient-kitchen-ratings-nopaginate",
+    ),
+    path(
         "admin-order-payments-nopaginate/",
         views.AdminOrderPaymentsNoPaginationView.as_view(),
         name="admin-order-payments-nopaginate",

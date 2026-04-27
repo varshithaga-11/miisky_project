@@ -41,11 +41,11 @@ export const fetchSupportTicketsForUser = async (userId: number): Promise<unknow
 };
 
 /** Kitchen ratings given by any user (No Pagination) */
-export const fetchKitchenRatingsForUser = async (userId: number): Promise<unknown[]> => {
+export const fetchKitchenRatingsForUser = async (userId: number, deliveryPersonId?: string): Promise<{ results: any[], delivery_person_options: any[] }> => {
   const url = createApiUrl("api/admin-patient-kitchen-ratings-nopaginate/");
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { user: userId },
+    params: { user: userId, delivery_person: deliveryPersonId },
   });
   return res.data;
 };
@@ -89,4 +89,28 @@ export const fetchQuestionnairesForUser = async (userId: number): Promise<unknow
     return (res.data as any).results;
   }
   return [];
+};
+
+/** Delivery feedback (issues/ratings) reported by user (Paginated) */
+export const fetchDeliveryFeedbackForUser = async (
+  userId: number,
+  page = 1,
+  limit = 10,
+  feedbackType = "all",
+  resolved = "all"
+): Promise<{ results: any[]; count: number; next: string | null }> => {
+  const url = createApiUrl("api/delivery-feedback-paginated/");
+  const params: Record<string, any> = {
+    user: userId,
+    page,
+    limit,
+    feedback_type: feedbackType,
+  };
+  if (resolved !== "all") params.resolved = resolved;
+
+  const res = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params,
+  });
+  return res.data;
 };

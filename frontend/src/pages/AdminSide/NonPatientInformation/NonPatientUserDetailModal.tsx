@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
-import { FiArrowLeft, FiX, FiUser, FiShoppingBag, FiTool, FiStar, FiCreditCard, FiClipboard } from "react-icons/fi";
-import { getUserById, type UserRegister, fetchSupportTicketsForUser, fetchKitchenRatingsForUser, fetchOrderPaymentsForUser, fetchQuestionnairesForUser } from "./api";
+import { FiArrowLeft, FiX, FiUser, FiShoppingBag, FiTool, FiStar, FiCreditCard, FiClipboard, FiTruck } from "react-icons/fi";
+import { getUserById, type UserRegister, fetchSupportTicketsForUser, fetchKitchenRatingsForUser, fetchOrderPaymentsForUser, fetchQuestionnairesForUser, fetchDeliveryFeedbackForUser } from "./api";
 import { fetchOrdersForUserAdmin } from "../shared/adminOrderApi";
 import { AdminOrderList } from "../shared/AdminOrderList";
-import { DisplayUserProfile, DisplaySupportTickets, DisplayKitchenRatings, DisplayPaymentHistory, DisplayQuestionnaire, type UserDetailRecord } from "../PatientOverview/PatientDataViews";
+import { DisplayUserProfile, DisplaySupportTickets, DisplayKitchenRatings, DisplayPaymentHistory, DisplayQuestionnaire, DisplayDeliveryFeedback, type UserDetailRecord } from "../PatientOverview/PatientDataViews";
 
-type Screen = "hub" | "profile" | "orders" | "tickets" | "kitchenRatings" | "orderPayments" | "questionnaire";
+type Screen = "hub" | "profile" | "orders" | "tickets" | "kitchenRatings" | "orderPayments" | "questionnaire" | "deliveryFeedback";
+
+interface KitchenRatingsPayload {
+  results: any[];
+  delivery_person_options: any[];
+}
 
 type Props = {
   user: UserRegister;
@@ -20,6 +25,7 @@ const MENU_ITEMS: { key: Exclude<Screen, "hub">; label: string; description: str
   { key: "tickets", label: "Support Tickets", description: "Technical issues and service desk history", icon: FiTool },
   { key: "kitchenRatings", label: "Kitchen Ratings", description: "Reviews and feedback given to kitchens", icon: FiStar },
   { key: "orderPayments", label: "Payment History", description: "Financial audit trail for all food purchases", icon: FiCreditCard },
+  { key: "deliveryFeedback", label: "Delivery Feedback", description: "Issues and ratings for delivery services", icon: FiTruck },
 ];
 
 export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
@@ -40,6 +46,16 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
   const [hasMoreOrders, setHasMoreOrders] = useState(true);
   const [loadingMoreOrders, setLoadingMoreOrders] = useState(false);
 
+  const [kitchenDeliveryPersonFilter, setKitchenDeliveryPersonFilter] = useState<string>("");
+
+  // Pagination for delivery feedback
+  const [deliveryFeedback, setDeliveryFeedback] = useState<any[]>([]);
+  const [deliveryFeedbackPage, setDeliveryFeedbackPage] = useState(1);
+  const [hasMoreDeliveryFeedback, setHasMoreDeliveryFeedback] = useState(true);
+  const [loadingMoreDeliveryFeedback, setLoadingMoreDeliveryFeedback] = useState(false);
+  const [deliveryFeedbackTypeFilter, setDeliveryFeedbackTypeFilter] = useState<string>("all");
+  const [deliveryFeedbackResolvedFilter, setDeliveryFeedbackResolvedFilter] = useState<string>("all");
+
   const uid = user.id;
 
   useEffect(() => {
@@ -54,6 +70,12 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     setOrders([]);
     setOrderPage(1);
     setHasMoreOrders(true);
+    setKitchenDeliveryPersonFilter("");
+    setDeliveryFeedback([]);
+    setDeliveryFeedbackPage(1);
+    setHasMoreDeliveryFeedback(true);
+    setDeliveryFeedbackTypeFilter("all");
+    setDeliveryFeedbackResolvedFilter("all");
   }, [open, uid]);
 
   const goHub = () => {
@@ -89,7 +111,7 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
             setPayload(await fetchSupportTicketsForUser(uid));
             break;
           case "kitchenRatings":
-            setPayload(await fetchKitchenRatingsForUser(uid));
+            setPayload(await fetchKitchenRatingsForUser(uid, kitchenDeliveryPersonFilter));
             break;
           case "orderPayments":
             const pRes = await fetchOrderPaymentsForUser(uid, 1);
@@ -97,6 +119,13 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
             setPaymentPage(1);
             setHasMorePayments(!!pRes.next);
             setPayload(pRes.results);
+            break;
+          case "deliveryFeedback":
+            const fRes = await fetchDeliveryFeedbackForUser(uid, 1, 10, deliveryFeedbackTypeFilter, deliveryFeedbackResolvedFilter);
+            setDeliveryFeedback(fRes.results);
+            setDeliveryFeedbackPage(1);
+            setHasMoreDeliveryFeedback(!!fRes.next);
+            setPayload(fRes.results);
             break;
         }
       } catch (e: unknown) {
@@ -146,6 +175,53 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     }
   }, [loadingMoreOrders, hasMoreOrders, uid, orderPage]);
 
+  const handleKitchenDeliveryPersonChange = async (dpId: string) => {
+    setKitchenDeliveryPersonFilter(dpId);
+    if (uid == null) return;
+    setLoading(true);
+    try {
+      setPayload(await fetchKitchenRatingsForUser(uid, dpId));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMoreDeliveryFeedback = useCallback(async () => {
+    if (loadingMoreDeliveryFeedback || !hasMoreDeliveryFeedback || uid == null) return;
+    setLoadingMoreDeliveryFeedback(true);
+    try {
+      const nextPage = deliveryFeedbackPage + 1;
+      const res = await fetchDeliveryFeedbackForUser(uid, nextPage, 10, deliveryFeedbackTypeFilter, deliveryFeedbackResolvedFilter);
+      setDeliveryFeedback((prev) => [...prev, ...res.results]);
+      setDeliveryFeedbackPage(nextPage);
+      setHasMoreDeliveryFeedback(!!res.next);
+    } catch (e) {
+      console.error("Failed to load more delivery feedback", e);
+    } finally {
+      setLoadingMoreDeliveryFeedback(false);
+    }
+  }, [loadingMoreDeliveryFeedback, hasMoreDeliveryFeedback, uid, deliveryFeedbackPage, deliveryFeedbackTypeFilter, deliveryFeedbackResolvedFilter]);
+
+  const handleDeliveryFeedbackFilterChange = async (type: string, resolved: string) => {
+    setDeliveryFeedbackTypeFilter(type);
+    setDeliveryFeedbackResolvedFilter(resolved);
+    if (uid == null) return;
+    setLoading(true);
+    try {
+      const res = await fetchDeliveryFeedbackForUser(uid, 1, 10, type, resolved);
+      setDeliveryFeedback(res.results);
+      setDeliveryFeedbackPage(1);
+      setHasMoreDeliveryFeedback(!!res.next);
+      setPayload(res.results);
+    } catch (e) {
+      console.error("Failed to filter delivery feedback", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Observer for infinite scroll
   useEffect(() => {
     if (screen === "orderPayments") {
@@ -183,7 +259,25 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
 
       return () => observer.disconnect();
     }
-  }, [screen, hasMorePayments, hasMoreOrders, loading, loadMorePayments, loadMoreOrders]);
+
+    if (screen === "deliveryFeedback") {
+      if (!hasMoreDeliveryFeedback || loading) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadMoreDeliveryFeedback();
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      const sentinel = document.getElementById("np-delivery-feedback-sentinel");
+      if (sentinel) observer.observe(sentinel);
+
+      return () => observer.disconnect();
+    }
+  }, [screen, hasMorePayments, hasMoreOrders, hasMoreDeliveryFeedback, loading, loadMorePayments, loadMoreOrders, loadMoreDeliveryFeedback]);
 
   if (!open || uid == null) return null;
 
@@ -295,8 +389,39 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
                   {screen === "tickets" && Array.isArray(payload) && (
                     <DisplaySupportTickets items={payload} />
                   )}
-                  {screen === "kitchenRatings" && Array.isArray(payload) && (
-                    <DisplayKitchenRatings ratings={payload} />
+                  {screen === "kitchenRatings" && payload && (
+                    <DisplayKitchenRatings
+                      ratings={(payload as KitchenRatingsPayload).results || []}
+                      deliveryPersonOptions={(payload as KitchenRatingsPayload).delivery_person_options || []}
+                      deliveryPersonFilter={kitchenDeliveryPersonFilter}
+                      onDeliveryPersonChange={(id) => {
+                        handleKitchenDeliveryPersonChange(id);
+                      }}
+                    />
+                  )}
+                  {screen === "deliveryFeedback" && (
+                    <div className="space-y-6">
+                      <DisplayDeliveryFeedback
+                        items={deliveryFeedback}
+                        loadingMore={loadingMoreDeliveryFeedback}
+                        hasMore={hasMoreDeliveryFeedback}
+                        typeFilter={deliveryFeedbackTypeFilter}
+                        resolvedFilter={deliveryFeedbackResolvedFilter}
+                        onFilterChange={handleDeliveryFeedbackFilterChange}
+                      />
+                      <div id="np-delivery-feedback-sentinel" className="h-20 flex items-center justify-center">
+                        {loadingMoreDeliveryFeedback && (
+                          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
+                            Loading more feedback...
+                          </div>
+                        )}
+                        {!hasMoreDeliveryFeedback && deliveryFeedback.length > 0 && (
+                          <div className="text-[10px] text-gray-400 font-bold uppercase">
+                            End of history
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                   {screen === "orderPayments" && (
                     <div className="space-y-6">

@@ -8310,22 +8310,6 @@ class MicroKitchenRatingViewSet(viewsets.ModelViewSet):
                 Q(review__icontains=search) |
                 Q(order__id__icontains=search)
             )
-        # New Date range filtering
-        period = self.request.query_params.get('period')
-        if period and period != 'all':
-            from .utils.date_utils import get_period_range
-            start_date = self.request.query_params.get('start_date')
-            end_date = self.request.query_params.get('end_date')
-            try:
-                s, e = get_period_range(period, start_date, end_date)
-                qs = qs.filter(created_at__date__range=[s, e])
-            except:
-                pass
-        else:
-            sd = self.request.query_params.get('start_date')
-            ed = self.request.query_params.get('end_date')
-            if sd and ed:
-                qs = qs.filter(created_at__date__range=[sd, ed])
 
         return qs.order_by('-created_at')
 
@@ -9747,6 +9731,22 @@ class AdminSupplyChainDeliveryRatingsNoPaginationView(APIView):
             qs = qs.filter(created_at__date__gte=start_date)
         if end_date:
             qs = qs.filter(created_at__date__lte=end_date)
+        feedback_type = request.query_params.get("feedback_type")
+        if feedback_type and feedback_type != 'all':
+            qs = qs.filter(feedback_type=feedback_type)
+
+        target_type = request.query_params.get("target_type")
+        if target_type == 'order':
+            qs = qs.filter(order__isnull=False)
+        elif target_type == 'user_meal':
+            qs = qs.filter(user_meal__isnull=False)
+
+        order_type = request.query_params.get("order_type")
+        if order_type and order_type != 'all':
+            if order_type == 'patient':
+                qs = qs.filter(Q(order__order_type='patient') | Q(user_meal__isnull=False))
+            elif order_type == 'non_patient':
+                qs = qs.filter(order__order_type='non_patient')
 
         qs = qs.select_related(
             "reported_by", "order", "user_meal"
@@ -10641,6 +10641,32 @@ class AdminPatientNutritionistRatingsNoPaginationView(APIView):
         return Response(serializer.data)
 
 
+def get_delivery_person_options_for_patient(patient_id):
+    """Helper to get delivery persons who have delivered to this patient."""
+    from .models import Order, DeliveryAssignment, UserRegister
+    
+    order_dp_ids = Order.objects.filter(
+        user_id=patient_id, 
+        delivery_person__isnull=False
+    ).values_list('delivery_person', flat=True).distinct()
+    
+    meal_dp_ids = DeliveryAssignment.objects.filter(
+        user_meal__user_id=patient_id,
+        delivery_person__isnull=False
+    ).values_list('delivery_person', flat=True).distinct()
+
+    delivery_person_ids = set(list(order_dp_ids) + list(meal_dp_ids))
+    
+    delivery_persons = UserRegister.objects.filter(id__in=delivery_person_ids).values('id', 'first_name', 'last_name', 'username')
+    return [
+        {
+            "id": p["id"],
+            "name": f"{p['first_name']} {p['last_name']}".strip() or p["username"]
+        }
+        for p in delivery_persons
+    ]
+
+
 class AdminPatientKitchenRatingsPaginatedView(APIView):
     """
     Admin: view kitchen ratings for a patient with pagination and supply chain filters.
@@ -10673,31 +10699,45 @@ class AdminPatientKitchenRatingsPaginatedView(APIView):
         
         serializer = MicroKitchenRatingSerializer(page, many=True)
 
-        # Get delivery person options for this patient (from both Orders and UserMeal deliveries)
-        order_dp_ids = Order.objects.filter(
-            user_id=patient_id, 
-            delivery_person__isnull=False
-        ).values_list('delivery_person', flat=True).distinct()
-        
-        meal_dp_ids = DeliveryAssignment.objects.filter(
-            user_meal__user_id=patient_id,
-            delivery_person__isnull=False
-        ).values_list('delivery_person', flat=True).distinct()
-
-        delivery_person_ids = set(list(order_dp_ids) + list(meal_dp_ids))
-        
-        delivery_persons = UserRegister.objects.filter(id__in=delivery_person_ids).values('id', 'first_name', 'last_name', 'username')
-        delivery_person_options = [
-            {
-                "id": p["id"],
-                "name": f"{p['first_name']} {p['last_name']}".strip() or p["username"]
-            }
-            for p in delivery_persons
-        ]
+        delivery_person_options = get_delivery_person_options_for_patient(patient_id)
 
         response = paginator.get_paginated_response(serializer.data)
         response.data["delivery_person_options"] = delivery_person_options
         return response
+
+
+class AdminPatientKitchenRatingsNoPaginationView(APIView):
+    """
+    Admin: view ALL kitchen ratings for a patient without pagination.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        patient_id = request.query_params.get("user")
+        if not patient_id:
+            return Response([])
+
+        qs = MicroKitchenRating.objects.filter(user_id=patient_id).select_related(
+            "user", "micro_kitchen", "order", "order__delivery_person"
+        ).order_by("-created_at")
+
+        # Delivery Person filter
+        dp_id = request.query_params.get("delivery_person")
+        if dp_id:
+            qs = qs.filter(order__delivery_person_id=dp_id)
+
+        # Order Type filter
+        ot = request.query_params.get("order_type")
+        if ot and ot != 'all':
+            qs = qs.filter(order__order_type=ot)
+
+        serializer = MicroKitchenRatingSerializer(qs, many=True)
+        delivery_person_options = get_delivery_person_options_for_patient(patient_id)
+        
+        return Response({
+            "results": serializer.data,
+            "delivery_person_options": delivery_person_options
+        })
 
 
 class AdminPatientDeliveryFeedbackPaginatedView(APIView):

@@ -382,10 +382,7 @@ export const getMicroKitchenDailyMealsNoPagination = async (
 export const getMicroKitchenReviewsPaginated = async (
   microKitchenId: number,
   page: number = 1,
-  limit: number = 10,
-  startDate?: string,
-  endDate?: string,
-  period?: string
+  limit: number = 10
 ): Promise<PaginatedResponse<any>> => {
   const url = createApiUrl(`api/microkitchenrating/`);
   const response = await axios.get(url, {
@@ -393,10 +390,7 @@ export const getMicroKitchenReviewsPaginated = async (
     params: { 
       micro_kitchen: microKitchenId, 
       page, 
-      limit, 
-      start_date: startDate, 
-      end_date: endDate, 
-      period 
+      limit 
     },
   });
   return response.data;
