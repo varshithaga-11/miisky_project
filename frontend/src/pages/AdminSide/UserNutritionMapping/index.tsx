@@ -142,7 +142,7 @@ const UserNutritionMappingPage: React.FC = () => {
                                 : nutritionist.username}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {nutritionist.username} · {nutritionist.email}
+                              {nutritionist.email}
                             </span>
                           </div>
                         </TableCell>
@@ -181,8 +181,7 @@ const UserNutritionMappingPage: React.FC = () => {
                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">#</TableCell>
-                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Username</TableCell>
-                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Name</TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">User</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Email</TableCell>
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">Mobile</TableCell>
                   </TableRow>
@@ -204,8 +203,11 @@ const UserNutritionMappingPage: React.FC = () => {
                     unmappedPatients.map((p, idx) => (
                       <TableRow key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                         <TableCell className="px-5 py-4 text-theme-sm text-gray-800 dark:text-white/90">{idx + 1}</TableCell>
-                        <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">{p.username}</TableCell>
-                        <TableCell className="px-5 py-4 text-gray-500 dark:text-gray-400">{`${p.first_name || ""} ${p.last_name || ""}`}</TableCell>
+                        <TableCell className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">
+                          {p.first_name || p.last_name
+                            ? `${p.first_name || ""} ${p.last_name || ""}`
+                            : p.username}
+                        </TableCell>
                         <TableCell className="px-5 py-4 text-gray-500 dark:text-gray-400">{p.email}</TableCell>
                         <TableCell className="px-5 py-4 text-gray-500 dark:text-gray-400">{p.mobile || "-"}</TableCell>
                       </TableRow>

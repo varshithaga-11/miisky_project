@@ -188,7 +188,7 @@ const UserNutritionMappingPage: React.FC = () => {
             <option value="all">Select Specific Nutritionist...</option>
             {nutritionists.map(n => (
               <option key={n.id} value={n.id}>
-                {n.first_name || n.last_name ? `${n.first_name || ""} ${n.last_name || ""}` : n.username} ({n.username})
+                {n.first_name || n.last_name ? `${n.first_name || ""} ${n.last_name || ""}` : n.username}
               </option>
             ))}
           </select>
@@ -272,9 +272,13 @@ const UserNutritionMappingPage: React.FC = () => {
                       <TableCell className="px-5 py-4">
                         <div className="flex flex-col">
                           <span className="font-semibold text-gray-800 dark:text-white/90">
-                            {r.first_name || r.last_name ? `${r.first_name || ""} ${r.last_name || ""}` : r.username}
+                            {r.first_name || r.last_name
+                              ? `${r.first_name || ""} ${r.last_name || ""}`
+                              : r.username}
                           </span>
-                          <span className="text-[11px] text-gray-500">{r.username}</span>
+                          {!(r.first_name || r.last_name) && (
+                            <span className="text-[11px] text-gray-500">{r.username}</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="px-5 py-4">

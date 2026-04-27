@@ -19,10 +19,10 @@ interface Props {
   onSuccess: () => void;
 }
 
-const labelForUser = (u: SimpleUser) =>
-  u.first_name || u.last_name
-    ? `${u.first_name || ""} ${u.last_name || ""} (${u.username})`
-    : u.username;
+const labelForUser = (u: SimpleUser) => {
+  const fullName = `${u.first_name || ""} ${u.last_name || ""}`.trim();
+  return fullName || u.username;
+};
 
 const ReassignNutrition: React.FC<Props> = ({
   onClose,

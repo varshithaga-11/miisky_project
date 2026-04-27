@@ -98,10 +98,13 @@ const AssignNutritionistModal: React.FC<Props> = ({
             <SearchableSelect
               value={selectedPatientId}
               onChange={(val) => setSelectedPatientId(val as number)}
-              options={unmappedPatients.map((p) => ({
-                value: p.id,
-                label: `${p.first_name || ""} ${p.last_name || ""} (${p.username})`,
-              }))}
+              options={unmappedPatients.map((p) => {
+                const fullName = `${p.first_name || ""} ${p.last_name || ""}`.trim();
+                return {
+                  value: p.id,
+                  label: fullName || p.username,
+                };
+              })}
               placeholder="Select Patient"
               className="w-full"
             />
@@ -111,10 +114,13 @@ const AssignNutritionistModal: React.FC<Props> = ({
             <SearchableSelect
               value={selectedNutritionistId}
               onChange={(val) => setSelectedNutritionistId(val as number)}
-              options={nutritionists.map((n) => ({
-                value: n.id,
-                label: `${n.first_name || ""} ${n.last_name || ""} (${n.username})`,
-              }))}
+              options={nutritionists.map((n) => {
+                const fullName = `${n.first_name || ""} ${n.last_name || ""}`.trim();
+                return {
+                  value: n.id,
+                  label: fullName || n.username,
+                };
+              })}
               placeholder={
                 fetchingNuts || fetchingPatients ? "Loading nutritionists..." : "Select Nutritionist"
               }
