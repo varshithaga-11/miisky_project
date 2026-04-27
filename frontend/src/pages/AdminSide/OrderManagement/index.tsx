@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiSearch, FiEye, FiDownload } from "react-icons/fi";
+import { FiSearch, FiEye } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import Label from "../../../components/form/Label";
 import DatePicker2 from "../../../components/form/date-picker2";
 import { getAllOrders, getMicroKitchens, getOrderById, OrderListDatePeriod } from "./api";
@@ -159,44 +160,6 @@ const OrderManagementPage: React.FC = () => {
     }
   };
 
-  const handleExport = async () => {
-    try {
-      setLoading(true);
-      const res = await getAllOrders(1, 10000, searchTerm, selectedKitchen, dateFilterOptions);
-      const allRows = res.results || [];
-
-      if (allRows.length === 0) {
-        return;
-      }
-
-      const headers = ["Order ID", "Patient Name", "Kitchen", "Amount", "Delivery charge", "Status", "Date"];
-      const csvRows = allRows.map((r: any) =>
-        [
-          `"${r.order_id || `#ORD-${r.id}`}"`,
-          `"${r.patient_name}"`,
-          `"${r.kitchen_name || "—"}"`,
-          r.amount,
-          r.delivery_charge ?? 0,
-          `"${r.status}"`,
-          `"${new Date(r.created_at).toLocaleString()}"`,
-        ].join(",")
-      );
-
-      const csvContent = [headers.join(","), ...csvRows].join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `miisky_orders_export_${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("Export failed", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading && rows.length === 0) {
     return <div className="text-black dark:text-white p-6">Loading orders...</div>;
@@ -222,10 +185,10 @@ const OrderManagementPage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 flex-1 min-w-0">
             <div className="w-full sm:w-56">
-              <Select
+              <SearchableSelect
                 value={selectedKitchen}
                 onChange={(val) => {
-                  setSelectedKitchen(val);
+                  setSelectedKitchen(val as string);
                   setCurrentPage(1);
                 }}
                 options={[
@@ -239,6 +202,7 @@ const OrderManagementPage: React.FC = () => {
                   void loadKitchensOnDemand();
                 }}
                 className="w-full"
+                placeholder="Select Micro-Kitchen"
               />
             </div>
             <div className="w-full sm:w-48">
@@ -255,15 +219,6 @@ const OrderManagementPage: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-4 xl:ml-auto">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleExport}
-              disabled={loading || rows.length === 0}
-              className="inline-flex items-center gap-2"
-            >
-              <FiDownload /> Export
-            </Button>
             <div className="flex items-center gap-2">
               <Label className="text-sm dark:text-gray-600 whitespace-nowrap">Show:</Label>
               <Select

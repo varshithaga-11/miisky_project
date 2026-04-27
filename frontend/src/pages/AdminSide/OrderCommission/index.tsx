@@ -5,7 +5,10 @@ import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import Label from "../../../components/form/Label";
+import DatePicker2 from "../../../components/form/date-picker2";
+import { getMicroKitchens } from "../OrderManagement/api";
 import {
   createOrderCommissionConfig,
   getOrderCommissionConfigs,
@@ -61,7 +64,8 @@ export default function OrderCommissionPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [billingMonth, setBillingMonth] = useState("");
+  const [selectedKitchen, setSelectedKitchen] = useState("");
+  const [kitchens, setKitchens] = useState<any[]>([]);
   const [period, setPeriod] = useState<SnapshotDatePeriod>("all");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -97,14 +101,21 @@ export default function OrderCommissionPage() {
     }
   };
 
-  const snapshotDateOptions = useMemo(() => {
-    if (billingMonth.trim()) return { billing_month: billingMonth.trim() };
-    if (period === "custom_range") {
-      return { period, start_date: customStart, end_date: customEnd };
+  const loadKitchens = async () => {
+    try {
+      const res = await getMicroKitchens();
+      setKitchens(res.results || []);
+    } catch (err) {
+      console.error("Failed to load kitchens", err);
     }
-    if (period !== "all") return { period };
-    return undefined;
-  }, [billingMonth, period, customStart, customEnd]);
+  };
+
+  const snapshotDateOptions = useMemo(() => {
+    if (period === "custom_range") {
+      return { period, start_date: customStart, end_date: customEnd, kitchen: selectedKitchen };
+    }
+    return { period, kitchen: selectedKitchen };
+  }, [period, customStart, customEnd, selectedKitchen]);
 
   const loadSnapshots = useCallback(
     async (page = 1, size = pageSize, search = searchTerm) => {
@@ -146,6 +157,7 @@ export default function OrderCommissionPage() {
 
   useEffect(() => {
     void loadConfigs();
+    void loadKitchens();
   }, []);
 
   useEffect(() => {
@@ -309,17 +321,23 @@ export default function OrderCommissionPage() {
 
           <div className="mb-6 grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-white/[0.08] dark:bg-gray-900/40 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400">Calendar month</Label>
-              <input
-                type="month"
-                value={billingMonth}
-                onChange={(e) => {
-                  setBillingMonth(e.target.value);
+              <Label className="text-xs text-gray-500 dark:text-gray-400">Micro-Kitchen</Label>
+              <SearchableSelect
+                value={selectedKitchen}
+                onChange={(val) => {
+                  setSelectedKitchen(val as string);
                   setSnapshotPage(1);
                 }}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                options={[
+                  { value: "", label: "All Micro-Kitchens" },
+                  ...kitchens.map((k) => ({
+                    value: String(k.id),
+                    label: k.brand_name || `Kitchen #${k.id}`,
+                  })),
+                ]}
+                className="mt-1 w-full"
+                placeholder="Select Micro-Kitchen"
               />
-              <p className="mt-1 text-xs text-gray-500">If set, overrides the period preset (filters snapshot date).</p>
             </div>
             <div className="md:col-span-1 lg:col-span-2">
               <Label className="text-xs text-gray-500 dark:text-gray-400">Period (same as order reports)</Label>
@@ -334,29 +352,31 @@ export default function OrderCommissionPage() {
               />
             </div>
             {period === "custom_range" && (
-              <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-2">
-                <div>
-                  <Label className="text-xs text-gray-500">From</Label>
-                  <input
-                    type="date"
+              <div className="flex flex-wrap items-end gap-4 md:col-span-2 lg:col-span-2">
+                <div className="w-full sm:w-48">
+                  <DatePicker2
+                    id="snapshot-custom-start"
+                    label="From"
                     value={customStart}
-                    onChange={(e) => {
-                      setCustomStart(e.target.value);
+                    placeholder="Start date"
+                    maxDate={customEnd || undefined}
+                    onChange={(date) => {
+                      setCustomStart(date);
                       setSnapshotPage(1);
                     }}
-                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
-                <div>
-                  <Label className="text-xs text-gray-500">To</Label>
-                  <input
-                    type="date"
+                <div className="w-full sm:w-48">
+                  <DatePicker2
+                    id="snapshot-custom-end"
+                    label="To"
                     value={customEnd}
-                    onChange={(e) => {
-                      setCustomEnd(e.target.value);
+                    placeholder="End date"
+                    minDate={customStart || undefined}
+                    onChange={(date) => {
+                      setCustomEnd(date);
                       setSnapshotPage(1);
                     }}
-                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
               </div>

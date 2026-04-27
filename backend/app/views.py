@@ -1467,30 +1467,22 @@ class OrderPaymentSnapshotAdminViewSet(viewsets.ReadOnlyModelViewSet):
             "order__micro_kitchen",
         ).order_by("-created_at")
 
-        # Optional calendar month: billing_month=YYYY-MM (filters snapshot created_at)
-        billing_month = (self.request.query_params.get("billing_month") or "").strip()
-        if billing_month and len(billing_month) >= 7:
+        # Kitchen filter
+        kitchen_id = self.request.query_params.get("kitchen")
+        if kitchen_id:
+            qs = qs.filter(order__micro_kitchen_id=kitchen_id)
+
+        period = (self.request.query_params.get("period") or "all").strip()
+        if period != "all":
+            from .utils.date_utils import get_period_range
+
+            start_date = self.request.query_params.get("start_date")
+            end_date = self.request.query_params.get("end_date")
             try:
-                parts = billing_month.split("-")
-                y, m = int(parts[0]), int(parts[1])
-                from .utils.date_utils import month_start_end
-
-                s, e = month_start_end(y, m)
+                s, e = get_period_range(period, start_date, end_date)
                 qs = qs.filter(created_at__date__range=[s, e])
-            except (ValueError, TypeError, IndexError):
-                pass
-        else:
-            period = (self.request.query_params.get("period") or "all").strip()
-            if period != "all":
-                from .utils.date_utils import get_period_range
-
-                start_date = self.request.query_params.get("start_date")
-                end_date = self.request.query_params.get("end_date")
-                try:
-                    s, e = get_period_range(period, start_date, end_date)
-                    qs = qs.filter(created_at__date__range=[s, e])
-                except Exception as ex:
-                    print(f"OrderPaymentSnapshotAdminViewSet date filter: {ex}")
+            except Exception as ex:
+                print(f"OrderPaymentSnapshotAdminViewSet date filter: {ex}")
 
         search = (self.request.query_params.get("search") or "").strip()
         if search:

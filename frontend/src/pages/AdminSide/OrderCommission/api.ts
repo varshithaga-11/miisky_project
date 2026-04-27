@@ -104,14 +104,16 @@ export const getOrderPaymentSnapshots = async (
     period?: SnapshotDatePeriod;
     start_date?: string;
     end_date?: string;
-    /** YYYY-MM — if set, filters that month (snapshot `created_at`); takes precedence over `period`. */
-    billing_month?: string;
+    /** Filter by MicroKitchen ID. */
+    kitchen?: string;
   }
 ): Promise<PaginatedResponse<OrderPaymentSnapshot>> => {
   const params: Record<string, string | number | undefined> = { page, limit, search: search.trim() || undefined };
-  if (options?.billing_month?.trim()) {
-    params.billing_month = options.billing_month.trim();
-  } else if (options?.period && options.period !== "all") {
+  if (options?.kitchen) {
+    params.kitchen = options.kitchen;
+  }
+
+  if (options?.period && options.period !== "all") {
     params.period = options.period;
     if (options.period === "custom_range") {
       if (options.start_date) params.start_date = options.start_date;
