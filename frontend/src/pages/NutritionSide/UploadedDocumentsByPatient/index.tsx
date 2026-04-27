@@ -12,6 +12,7 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import { FiUsers, FiFileText, FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiInfo, FiChevronLeft, FiChevronRight, FiEye, FiDownload } from "react-icons/fi";
 import { resolveMediaUrl } from "../../AdminSide/PatientOverview/api";
+import { saveAs } from "file-saver";
 
 const PAGE_SIZE = 5;
 
@@ -131,6 +132,25 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
         if (p < 1 || (totalPages > 0 && p > totalPages)) return;
         setExplicitPatientId(null);
         setPage(p);
+    };
+
+    const handleDownload = async (e: React.MouseEvent, report: PatientHealthReport) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = resolveMediaUrl(report.report_file);
+        const fileName = getReportDownloadFilename(report);
+        
+        const id = toast.loading("Preparing download...");
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const blob = await response.blob();
+            saveAs(blob, fileName);
+            toast.update(id, { render: "Download started", type: "success", isLoading: false, autoClose: 2000 });
+        } catch (error) {
+            console.error("Download failed", error);
+            toast.update(id, { render: "Download failed", type: "error", isLoading: false, autoClose: 3000 });
+        }
     };
 
     return (
@@ -379,14 +399,14 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
                                                             >
                                                                 <FiEye size={16} /> View
                                                             </a>
-                                                            <a
-                                                                href={resolveMediaUrl(report.report_file)}
-                                                                download={getReportDownloadFilename(report)}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleDownload(e, report)}
                                                                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-white dark:bg-gray-700 text-slate-900 dark:text-white border border-gray-100 dark:border-white/10 hover:border-emerald-500 hover:text-emerald-600 transition-all duration-300 shadow-sm"
                                                                 title="Download for offline access"
                                                             >
                                                                 <FiDownload size={16} /> Download
-                                                            </a>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ))

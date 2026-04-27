@@ -157,7 +157,7 @@ const AvailabilityCalendar: React.FC = () => {
                                     onChange={(date) => setSelectedDate(date)}
                                 />
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-6">
                                     <TimePicker
                                         id="start-time"
                                         label="Start Time"
