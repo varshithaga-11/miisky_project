@@ -1725,20 +1725,51 @@ class AdminPlanPaymentsOverviewView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
+        pk = request.query_params.get("id")
+        if pk:
+            obj = get_object_or_404(
+                PlanPaymentSnapshot.objects.select_related(
+                    "user_diet_plan__user",
+                    "user_diet_plan__diet_plan",
+                    "user_diet_plan__nutritionist",
+                    "user_diet_plan__micro_kitchen",
+                    "user_diet_plan__verified_by",
+                ).prefetch_related(
+                    Prefetch(
+                        "payouts",
+                        queryset=PayoutTracker.objects.select_related(
+                            "nutritionist", "micro_kitchen"
+                        ).order_by("payout_type", "id"),
+                    ),
+                ),
+                pk=pk
+            )
+            obj.total_disbursed = obj.payouts.aggregate(
+                total=Coalesce(Sum("paid_amount"), Value(Decimal("0.00")), output_field=DecimalField(max_digits=12, decimal_places=2))
+            )["total"]
+            ser = AdminPlanPaymentOverviewSerializer(obj)
+            return Response(ser.data)
+
         qs = PlanPaymentSnapshot.objects.select_related(
             "user_diet_plan__user",
             "user_diet_plan__diet_plan",
             "user_diet_plan__nutritionist",
             "user_diet_plan__micro_kitchen",
             "user_diet_plan__verified_by",
-        ).prefetch_related(
-            Prefetch(
-                "payouts",
-                queryset=PayoutTracker.objects.select_related(
-                    "nutritionist", "micro_kitchen"
-                ).order_by("payout_type", "id"),
-            ),
         )
+        
+        is_lite = request.query_params.get("lite", "false").lower() == "true"
+        if not is_lite:
+            qs = qs.prefetch_related(
+                Prefetch(
+                    "payouts",
+                    queryset=PayoutTracker.objects.select_related(
+                        "nutritionist", "micro_kitchen"
+                    ).order_by("payout_type", "id"),
+                ),
+            )
+
+        # Filters
         search = request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
@@ -1750,6 +1781,36 @@ class AdminPlanPaymentsOverviewView(APIView):
                 | Q(user_diet_plan__diet_plan__code__icontains=search)
                 | Q(user_diet_plan__transaction_id__icontains=search)
             )
+
+        patient_id = request.query_params.get("patient")
+        if patient_id:
+            qs = qs.filter(user_diet_plan__user_id=patient_id)
+        
+        kitchen_id = request.query_params.get("micro_kitchen")
+        if kitchen_id:
+            qs = qs.filter(user_diet_plan__micro_kitchen_id=kitchen_id)
+        
+        nutritionist_id = request.query_params.get("nutritionist")
+        if nutritionist_id:
+            qs = qs.filter(user_diet_plan__nutritionist_id=nutritionist_id)
+        
+        plan_id = request.query_params.get("diet_plan")
+        if plan_id:
+            qs = qs.filter(user_diet_plan__diet_plan_id=plan_id)
+        
+        status = request.query_params.get("status")
+        if status and status != "all":
+            qs = qs.filter(user_diet_plan__status=status)
+        
+        period = request.query_params.get("period")
+        if period:
+            from .utils.date_utils import get_period_range
+            start_date = request.query_params.get("start_date")
+            end_date = request.query_params.get("end_date")
+            p_start, p_end = get_period_range(period, start_date, end_date)
+            if p_start and p_end:
+                qs = qs.filter(created_at__range=(p_start, p_end))
+
         qs = (
             qs.annotate(
                 total_disbursed=Coalesce(
@@ -1760,9 +1821,12 @@ class AdminPlanPaymentsOverviewView(APIView):
             )
             .order_by("-created_at")
         )
+        
         paginator = Pagination()
         page = paginator.paginate_queryset(qs, request)
-        ser = AdminPlanPaymentOverviewSerializer(page, many=True)
+        
+        serializer_class = AdminPlanPaymentOverviewLiteSerializer if is_lite else AdminPlanPaymentOverviewSerializer
+        ser = serializer_class(page, many=True)
         return paginator.get_paginated_response(ser.data)
 
 

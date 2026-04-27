@@ -3,9 +3,24 @@ import { FiChevronDown, FiSearch } from "react-icons/fi";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
+import {
+  fetchPlanPaymentDetail,
+  fetchPlanPaymentsOverview,
+  PayoutTrackerLine,
+  PlanPaymentOverviewRow,
+} from "./api";
+import {
+  getKitchensDropdown,
+  getPatientsDropdown,
+  getNutritionistsDropdown,
+  getPlansDropdown,
+} from "../PatientPaymentVerification/api";
+import Label from "../../../components/form/Label";
+import SearchableSelect from "../../../components/form/SearchableSelect";
+import Select from "../../../components/form/Select";
+import DatePicker2 from "../../../components/form/date-picker2";
 import Button from "../../../components/ui/button/Button";
 import { toast } from "react-toastify";
-import { fetchPlanPaymentsOverview, PlanPaymentOverviewRow, PayoutTrackerLine } from "./api";
 
 const COL_SPAN = 8;
 
@@ -221,20 +236,61 @@ export default function PlanPaymentsOverviewPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+  const [loadingDetailById, setLoadingDetailById] = useState<Record<number, boolean>>({});
 
-  const toggleExpand = (id: number) => {
+  const [selectedPatient, setSelectedPatient] = useState("");
+  const [selectedKitchen, setSelectedKitchen] = useState("");
+  const [selectedNutritionist, setSelectedNutritionist] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedPeriod, setSelectedPeriod] = useState("this_month");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+
+  const [kitchens, setKitchens] = useState<any[]>([]);
+  const [patientsList, setPatientsList] = useState<any[]>([]);
+  const [nutritionists, setNutritionists] = useState<any[]>([]);
+  const [plansList, setPlansList] = useState<any[]>([]);
+
+  const toggleExpand = async (id: number) => {
+    const isExpanding = !expanded.has(id);
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+
+    if (isExpanding) {
+      const row = rows.find(r => r.id === id);
+      if (row && (!row.payout_trackers || row.payout_trackers.length === 0)) {
+        setLoadingDetailById(prev => ({ ...prev, [id]: true }));
+        try {
+          const detail = await fetchPlanPaymentDetail(id);
+          setRows(prevRows => prevRows.map(r => r.id === id ? detail : r));
+        } catch (err) {
+          console.error("Failed to load details for " + id, err);
+        } finally {
+          setLoadingDetailById(prev => ({ ...prev, [id]: false }));
+        }
+      }
+    }
   };
 
   const load = async (p: number, q: string) => {
     setLoading(true);
     try {
-      const res = await fetchPlanPaymentsOverview(p, 12, q);
+      const res = await fetchPlanPaymentsOverview(p, 12, q, {
+        lite: true,
+        patient: selectedPatient || undefined,
+        micro_kitchen: selectedKitchen || undefined,
+        nutritionist: selectedNutritionist || undefined,
+        diet_plan: selectedPlan || undefined,
+        status: selectedStatus === "all" ? undefined : selectedStatus,
+        period: selectedPeriod,
+        start_date: startDateFilter || undefined,
+        end_date: endDateFilter || undefined,
+      });
       setRows(res.results || []);
       setTotalPages(res.total_pages || 1);
       setTotalCount(res.count || 0);
@@ -248,12 +304,46 @@ export default function PlanPaymentsOverviewPage() {
 
   useEffect(() => {
     load(page, search);
-  }, [page, search]);
+  }, [page, search, selectedPatient, selectedKitchen, selectedNutritionist, selectedPlan, selectedStatus, selectedPeriod, startDateFilter, endDateFilter]);
 
-  const onSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
+  const loadKitchens = async () => {
+    if (kitchens.length > 0) return;
+    try {
+      const res = await getKitchensDropdown();
+      setKitchens(res || []);
+    } catch (err) {
+      console.error("Failed to load kitchens", err);
+    }
+  };
+
+  const loadPatientsList = async () => {
+    if (patientsList.length > 0) return;
+    try {
+      const res = await getPatientsDropdown();
+      setPatientsList(res || []);
+    } catch (err) {
+      console.error("Failed to load patients", err);
+    }
+  };
+
+  const loadNutritionists = async () => {
+    if (nutritionists.length > 0) return;
+    try {
+      const res = await getNutritionistsDropdown();
+      setNutritionists(res || []);
+    } catch (err) {
+      console.error("Failed to load nutritionists", err);
+    }
+  };
+
+  const loadPlansList = async () => {
+    if (plansList.length > 0) return;
+    try {
+      const res = await getPlansDropdown();
+      setPlansList(res || []);
+    } catch (err) {
+      console.error("Failed to load plans", err);
+    }
   };
 
   return (
@@ -265,55 +355,174 @@ export default function PlanPaymentsOverviewPage() {
       <PageBreadcrumb pageTitle="Plan payments overview" />
 
       <div className="max-w-[1400px] mx-auto space-y-6">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Each row is a <strong>payment snapshot</strong> created when admin verifies a patient&apos;s plan payment.
-          Amounts and percentages are frozen at verification. Use the row control to expand and see frozen splits,
-          enrolment, patient-reported payment, verification, and per-recipient payout trackers.{" "}
-          <strong>Total disbursed</strong> is the sum of amounts recorded on linked payout trackers;{" "}
-          <strong>outstanding</strong> is what remains to pay per tracker.
-        </p>
-
-        <form onSubmit={onSearch} className="rounded-2xl border border-gray-100 dark:border-white/[0.05] bg-white dark:bg-gray-900 p-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <FiSearch className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search patient, email, plan title, code, transaction id…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/[0.1] bg-gray-50/50 dark:bg-white/[0.02] text-sm focus:ring-2 focus:ring-brand-500 dark:text-white outline-none transition-all"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
+        <div className="flex flex-col gap-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] space-y-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Patient</Label>
+                <SearchableSelect
+                  value={selectedPatient}
+                  onChange={(val) => {
+                    setSelectedPatient(val as string);
+                    setPage(1);
+                  }}
+                  onFocus={loadPatientsList}
+                  options={[
+                    { value: "", label: "All Patients" },
+                    ...patientsList.map((p) => ({ value: String(p.id), label: `${p.first_name} ${p.last_name}` })),
+                  ]}
+                  placeholder="Search Patient..."
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Micro Kitchen</Label>
+                <SearchableSelect
+                  value={selectedKitchen}
+                  onChange={(val) => {
+                    setSelectedKitchen(val as string);
+                    setPage(1);
+                  }}
+                  onFocus={loadKitchens}
+                  options={[
+                    { value: "", label: "All Kitchens" },
+                    ...kitchens.map((k) => ({ value: String(k.id), label: k.brand_name })),
+                  ]}
+                  placeholder="Search Kitchen..."
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Nutritionist</Label>
+                <SearchableSelect
+                  value={selectedNutritionist}
+                  onChange={(val) => {
+                    setSelectedNutritionist(val as string);
+                    setPage(1);
+                  }}
+                  onFocus={loadNutritionists}
+                  options={[
+                    { value: "", label: "All Nutritionists" },
+                    ...nutritionists.map((n) => ({ value: String(n.id), label: `${n.first_name} ${n.last_name}` })),
+                  ]}
+                  placeholder="Search Nutritionist..."
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Plan</Label>
+                <SearchableSelect
+                  value={selectedPlan}
+                  onChange={(val) => {
+                    setSelectedPlan(val as string);
+                    setPage(1);
+                  }}
+                  onFocus={loadPlansList}
+                  options={[
+                    { value: "", label: "All Plans" },
+                    ...plansList.map((p) => ({ value: String(p.id), label: p.title })),
+                  ]}
+                  placeholder="Search Plan..."
+                />
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" className="px-6 h-[46px] text-xs uppercase font-black tracking-widest shadow-lg shadow-brand-500/20">
-                Apply Search
-              </Button>
-              {search && (
-                <button
-                  type="button"
-                  className="px-4 h-[46px] rounded-xl border border-gray-200 dark:border-white/[0.1] text-[10px] uppercase font-black tracking-widest text-gray-500 hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Month Period</Label>
+                <Select
+                  value={selectedPeriod}
+                  onChange={(val) => {
+                    setSelectedPeriod(val);
+                    setPage(1);
+                  }}
+                  options={[
+                    { value: "all", label: "All Time" },
+                    { value: "this_month", label: "This Month" },
+                    { value: "last_month", label: "Last Month" },
+                    { value: "next_month", label: "Next Month" },
+                    { value: "this_quarter", label: "This Quarter" },
+                    { value: "this_year", label: "This Year" },
+                    { value: "custom_range", label: "Custom Range" },
+                  ]}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Status</Label>
+                <Select
+                  value={selectedStatus}
+                  onChange={(val) => {
+                    setSelectedStatus(val);
+                    setPage(1);
+                  }}
+                  options={[
+                    { value: "all", label: "All Status" },
+                    { value: "suggested", label: "Suggested" },
+                    { value: "payment_pending", label: "Payment Pending" },
+                    { value: "uploaded", label: "Uploaded" },
+                    { value: "verified", label: "Verified" },
+                    { value: "active", label: "Active" },
+                    { value: "completed", label: "Completed" },
+                    { value: "rejected", label: "Rejected" },
+                  ]}
+                />
+              </div>
+              <div className="lg:col-span-1">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Search Bar</Label>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setSearch(searchInput);
+                    setPage(1);
+                  }}
+                  className="relative"
+                >
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search transaction, code..."
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                  <button type="submit" className="absolute right-3 top-3 text-gray-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  </button>
+                </form>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  className="h-11 w-full rounded-lg text-xs font-bold uppercase tracking-wider"
                   onClick={() => {
+                    setSelectedPatient("");
+                    setSelectedKitchen("");
+                    setSelectedNutritionist("");
+                    setSelectedPlan("");
+                    setSelectedStatus("all");
+                    setSelectedPeriod("this_month");
                     setSearchInput("");
                     setSearch("");
                     setPage(1);
                   }}
                 >
-                  Clear
-                </button>
-              )}
+                  Clear Filters
+                </Button>
+              </div>
             </div>
-          </div>
-        </form>
 
-        <div className="rounded-2xl border border-gray-100 dark:border-white/[0.05] bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
-          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-50 dark:border-white/[0.05]">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              Verified Payment Registry
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 dark:bg-brand-900/20">
-                {totalCount} Total
-              </span>
-            </h2>
+            {selectedPeriod === "custom_range" && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                <DatePicker2
+                  id="start-date"
+                  label="Start Date"
+                  value={startDateFilter}
+                  onChange={(d) => setStartDateFilter(d)}
+                />
+                <DatePicker2
+                  id="end-date"
+                  label="End Date"
+                  value={endDateFilter}
+                  onChange={(d) => setEndDateFilter(d)}
+                />
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -329,75 +538,81 @@ export default function PlanPaymentsOverviewPage() {
               <p className="text-sm font-bold text-gray-400">No verified plan payments found.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50/50 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/[0.05]">
-                    <TableCell isHeader className="w-12 px-4 py-4" aria-label="Expand row"> </TableCell>
-                    <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                      Reference
-                    </TableCell>
-                    <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Patient Profile</TableCell>
-                    <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Plan Selection</TableCell>
-                    <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Status</TableCell>
-                    <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Gross Total</TableCell>
-                    <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Disbursed / Rem</TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((r) => {
-                    const isOpen = expanded.has(r.id);
-                    return (
-                      <Fragment key={r.id}>
-                        <TableRow className={`group hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${isOpen ? 'bg-gray-50/50 dark:bg-white/[0.02]' : ''}`}>
-                          <TableCell className="px-4 py-4">
-                            <button
-                              type="button"
-                              className={`flex items-center justify-center w-8 h-8 rounded-full border border-gray-100 dark:border-white/[0.05] text-gray-400 transition-all shadow-sm ${
-                                isOpen ? "rotate-180 bg-brand-50 text-brand-600 border-brand-100" : "hover:bg-white dark:hover:bg-white/[0.05] hover:text-brand-500"
-                              }`}
-                              onClick={() => toggleExpand(r.id)}
-                            >
-                              <FiChevronDown className="w-4 h-4" />
-                            </button>
-                          </TableCell>
-                          <TableCell className="px-4 py-4">
-                            <div className="text-[11px] font-black text-gray-900 dark:text-white tracking-widest">#{r.id}</div>
-                            <div className="text-[9px] font-bold text-gray-400 tracking-tighter uppercase mt-0.5">UDP {r.user_diet_plan}</div>
-                          </TableCell>
-                          <TableCell className="px-4 py-4">
-                            <div className="font-bold text-gray-900 dark:text-white text-sm tracking-tight">{r.patient?.name || "Anonymous Patient"}</div>
-                            <div className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]">{r.patient?.email || "No email provided"}</div>
-                          </TableCell>
-                          <TableCell className="px-4 py-4">
-                            <div className="font-bold text-gray-700 dark:text-gray-300 text-xs">{r.diet_plan?.title || "Plan Not Named"}</div>
-                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-tighter mt-0.5">{r.diet_plan?.code || "NO_CODE"}</div>
-                          </TableCell>
-                          <TableCell className="px-4 py-4">
-                            <span className={statusBadge(r.user_diet_plan_status)}>{r.user_diet_plan_status}</span>
-                          </TableCell>
-                          <TableCell className="px-4 py-4 text-right font-black text-gray-900 dark:text-white">
-                            ₹{fmtMoney(r.total_amount)}
-                          </TableCell>
-                          <TableCell className="px-4 py-4 text-right">
-                            <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">₹{fmtMoney(r.total_disbursed)}</div>
-                            <div className={`text-[10px] font-black uppercase tracking-tighter mt-0.5 ${parseFloat(r.total_outstanding) > 0 ? 'text-rose-500' : 'text-gray-400'}`}>
-                              ₹{fmtMoney(r.total_outstanding)} rem
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {isOpen && (
-                          <TableRow className="bg-gray-50/30 dark:bg-white/[0.01]">
-                            <TableCell colSpan={COL_SPAN} className="px-6 py-6 border-t border-gray-100 dark:border-white/[0.05] shadow-inner">
-                              <RowDetail r={r} />
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03]">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/50 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/[0.05]">
+                      <TableCell isHeader className="w-12 px-4 py-4"> </TableCell>
+                      <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                        Reference
+                      </TableCell>
+                      <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Patient Profile</TableCell>
+                      <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Plan Selection</TableCell>
+                      <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Status</TableCell>
+                      <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Gross Total</TableCell>
+                      <TableCell isHeader className="px-4 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Disbursed / Rem</TableCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r) => {
+                      const isOpen = expanded.has(r.id);
+                      return (
+                        <Fragment key={r.id}>
+                          <TableRow className={`group hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${isOpen ? 'bg-gray-50/50 dark:bg-white/[0.02]' : ''}`}>
+                            <TableCell className="px-4 py-4">
+                              <button
+                                onClick={() => toggleExpand(r.id)}
+                                disabled={loadingDetailById[r.id]}
+                                className={`inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-brand-600 transition-all ${
+                                  isOpen ? "rotate-180 border-brand-200 text-brand-600 shadow-sm" : ""
+                                }`}
+                              >
+                                {loadingDetailById[r.id] ? (
+                                  <div className="w-4 h-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <FiChevronDown className="w-4 h-4" />
+                                )}
+                              </button>
+                            </TableCell>
+                            <TableCell className="px-4 py-4">
+                              <div className="text-[11px] font-black text-gray-900 dark:text-white tracking-widest">#{r.id}</div>
+                              <div className="text-[9px] font-bold text-gray-400 tracking-tighter uppercase mt-0.5">UDP {r.user_diet_plan}</div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4">
+                              <div className="font-bold text-gray-900 dark:text-white text-sm tracking-tight">{r.patient?.name || "Anonymous Patient"}</div>
+                              <div className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]">{r.patient?.email || "No email provided"}</div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4">
+                              <div className="font-bold text-gray-700 dark:text-gray-300 text-xs">{r.diet_plan?.title || "Plan Not Named"}</div>
+                              <div className="text-[9px] font-black text-gray-400 uppercase tracking-tighter mt-0.5">{r.diet_plan?.code || "NO_CODE"}</div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4">
+                              <span className={statusBadge(r.user_diet_plan_status)}>{r.user_diet_plan_status}</span>
+                            </TableCell>
+                            <TableCell className="px-4 py-4 text-right font-black text-gray-900 dark:text-white">
+                              ₹{fmtMoney(r.total_amount)}
+                            </TableCell>
+                            <TableCell className="px-4 py-4 text-right">
+                              <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">₹{fmtMoney(r.total_disbursed)}</div>
+                              <div className={`text-[10px] font-black uppercase tracking-tighter mt-0.5 ${parseFloat(r.total_outstanding) > 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+                                ₹{fmtMoney(r.total_outstanding)} rem
+                              </div>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          {isOpen && (
+                            <TableRow className="bg-gray-50/30 dark:bg-white/[0.01]">
+                              <TableCell colSpan={COL_SPAN} className="px-6 py-6 border-t border-gray-100 dark:border-white/[0.05] shadow-inner">
+                                <RowDetail r={r} />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
 

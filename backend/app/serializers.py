@@ -1344,6 +1344,41 @@ class AdminPlanPaymentOverviewSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
+
+class AdminPlanPaymentOverviewLiteSerializer(AdminPlanPaymentOverviewSerializer):
+    """Lite version for list views (excludes detailed payout_trackers)."""
+
+    class Meta:
+        model = PlanPaymentSnapshot
+        fields = (
+            "id",
+            "user_diet_plan",
+            "created_at",
+            "total_amount",
+            "platform_percent",
+            "nutrition_percent",
+            "kitchen_percent",
+            "platform_amount",
+            "nutrition_amount",
+            "kitchen_amount",
+            "patient",
+            "diet_plan",
+            "nutritionist",
+            "micro_kitchen",
+            "user_diet_plan_status",
+            "payment_status",
+            "amount_paid_reported",
+            "transaction_id",
+            "verified_on",
+            "verified_by_name",
+            "plan_start_date",
+            "plan_end_date",
+            "total_disbursed",
+            "total_outstanding",
+            "is_payment_verified",
+        )
+        read_only_fields = fields
+
     def get_payout_trackers(self, obj):
         rows = []
         for t in obj.payouts.all().order_by("payout_type", "id"):

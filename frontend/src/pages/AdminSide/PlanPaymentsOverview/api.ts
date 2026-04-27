@@ -54,11 +54,33 @@ export interface PaginatedPlanPayments {
 export async function fetchPlanPaymentsOverview(
   page = 1,
   limit = 12,
-  search = ""
+  search = "",
+  params?: {
+    lite?: boolean;
+    patient?: string;
+    micro_kitchen?: string;
+    nutritionist?: string;
+    diet_plan?: string;
+    status?: string;
+    period?: string;
+    start_date?: string;
+    end_date?: string;
+  }
 ): Promise<PaginatedPlanPayments> {
-  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (search.trim()) params.set("search", search.trim());
-  const url = createApiUrl(`api/admin/plan-payments-overview/?${params.toString()}`);
+  const queryParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search.trim()) queryParams.set("search", search.trim());
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== "") queryParams.append(k, String(v));
+    });
+  }
+  const url = createApiUrl(`api/admin/plan-payments-overview/?${queryParams.toString()}`);
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data as PaginatedPlanPayments;
+}
+
+export async function fetchPlanPaymentDetail(id: number): Promise<PlanPaymentOverviewRow> {
+  const url = createApiUrl(`api/admin/plan-payments-overview/?id=${id}`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data as PlanPaymentOverviewRow;
 }
