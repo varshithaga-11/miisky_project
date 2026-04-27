@@ -481,7 +481,7 @@ const SetDailyMealsPage: React.FC = () => {
         ro.observe(main);
         // Also observe some children to catch expansion
         if (main.firstChild) ro.observe(main.firstChild as Element);
-        
+
         updateWidth();
         return () => ro.disconnect();
     }, [viewMode, rangeMealsAccum]);
@@ -498,12 +498,12 @@ const SetDailyMealsPage: React.FC = () => {
     const datesToShow: string[] = !activePlan
         ? []
         : isRangeMode
-          ? fullRangeDates.slice(0, Math.min(rangeDayCount, fullRangeDates.length))
-          : isParticularRange
-            ? fullRangeDates
-            : selectedDate
-              ? [selectedDate]
-              : [];
+            ? fullRangeDates.slice(0, Math.min(rangeDayCount, fullRangeDates.length))
+            : isParticularRange
+                ? fullRangeDates
+                : selectedDate
+                    ? [selectedDate]
+                    : [];
 
     const filteredFoods = foods;
 
@@ -523,9 +523,9 @@ const SetDailyMealsPage: React.FC = () => {
     };
 
     const handleDragStart = (e: React.DragEvent, food: Food) => {
-        e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ 
-            id: food.id, 
-            name: food.name, 
+        e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({
+            id: food.id,
+            name: food.name,
             meal_types: food.meal_types,
             meal_type_details: food.meal_type_details
         }));
@@ -648,16 +648,16 @@ const SetDailyMealsPage: React.FC = () => {
 
             // If the user SPECIFICALLY requested to save a date range where they have NO authority, notify them
             if (authorizedMeals.length === 0 && mealsWithPackaging.length > 0) {
-                 toast.error(`You cannot edit meals for past dates or restricted dates.`);
-                 return;
+                toast.error(`You cannot edit meals for past dates or restricted dates.`);
+                return;
             }
 
             mealsWithPackaging = authorizedMeals;
         }
 
         if (mealsWithPackaging.length === 0) {
-             toast.warning(`No meals found to save.`);
-             return;
+            toast.warning(`No meals found to save.`);
+            return;
         }
 
         setSaving(true);
@@ -739,20 +739,18 @@ const SetDailyMealsPage: React.FC = () => {
                                             key={p.user.id}
                                             type="button"
                                             onClick={() => setSelectedPatient(p)}
-                                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                                                selectedPatient?.user.id === p.user.id
+                                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${selectedPatient?.user.id === p.user.id
                                                     ? "bg-indigo-600 text-white shadow-lg"
                                                     : "bg-gray-50 dark:bg-white/[0.02] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
-                                            }`}
+                                                }`}
                                         >
                                             {p.user.first_name} {p.user.last_name}
                                             {p.active_kitchen?.current_kitchen && (
                                                 <span
-                                                    className={`ml-2 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
-                                                        selectedPatient?.user.id === p.user.id
+                                                    className={`ml-2 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${selectedPatient?.user.id === p.user.id
                                                             ? "bg-white/20 text-white"
                                                             : "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-500"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {p.active_kitchen.current_kitchen}
                                                 </span>
@@ -965,7 +963,7 @@ const SetDailyMealsPage: React.FC = () => {
                                                     Switch Date: {selectedPatient.reassignment_details.effective_from}
                                                 </p>
                                                 <p className="text-[10px] text-gray-400 mt-1">
-                                                    {currentUserId === activePlan?.nutritionist 
+                                                    {currentUserId === activePlan?.nutritionist
                                                         ? "You are the new nutritionist. You can edit meals from this date onwards."
                                                         : "You were the prior nutritionist. You can edit meals before this date."
                                                     }
@@ -1139,236 +1137,236 @@ const SetDailyMealsPage: React.FC = () => {
                                 {viewMode === "list" && activePlan && (
                                     <div className="space-y-0">
                                         {/* Top scrollbar (syncs with the main content) */}
-                                        <div 
-                                            ref={topScrollRef} 
+                                        <div
+                                            ref={topScrollRef}
                                             className="overflow-x-auto h-3 scrollbar-thin mb-1"
                                             style={{ display: datesToShow.length > 2 ? 'block' : 'none' }}
                                         >
                                             <div ref={topInnerRef} className="h-px" />
                                         </div>
 
-                                        <div 
+                                        <div
                                             ref={scrollContainerRef}
                                             className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-thin"
                                         >
-                                        {datesToShow.map((dateStr) => {
-                                            const dayEntries = dailyEntries.filter(e => e.meal_date === dateStr);
-                                            const dateObj = new Date(dateStr);
-                                            const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
+                                            {datesToShow.map((dateStr) => {
+                                                const dayEntries = dailyEntries.filter(e => e.meal_date === dateStr);
+                                                const dateObj = new Date(dateStr);
+                                                const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
 
-                                            const isReadOnly = (() => {
-                                                if (dateStr < todayStr) return true;
-                                                if (!activePlan?.nutritionist_effective_from || !currentUserId) return false;
-                                                const effectiveDate = activePlan.nutritionist_effective_from;
-                                                if (currentUserId === activePlan.nutritionist) {
-                                                    return dateStr < effectiveDate;
-                                                }
-                                                if (currentUserId === activePlan.original_nutritionist) {
-                                                    return dateStr >= effectiveDate;
-                                                }
-                                                return false;
-                                            })();
+                                                const isReadOnly = (() => {
+                                                    if (dateStr < todayStr) return true;
+                                                    if (!activePlan?.nutritionist_effective_from || !currentUserId) return false;
+                                                    const effectiveDate = activePlan.nutritionist_effective_from;
+                                                    if (currentUserId === activePlan.nutritionist) {
+                                                        return dateStr < effectiveDate;
+                                                    }
+                                                    if (currentUserId === activePlan.original_nutritionist) {
+                                                        return dateStr >= effectiveDate;
+                                                    }
+                                                    return false;
+                                                })();
 
-                                            return (
-                                                <motion.div key={dateStr} layout className={`space-y-4 flex-shrink-0 w-[450px] ${isReadOnly ? 'opacity-70 grayscale-[0.3]' : ''}`}>
-                                                    <div
-                                                        onDrop={isReadOnly ? undefined : (e) => handleDropOnDay(e, dateStr)}
-                                                        onDragOver={isReadOnly ? undefined : handleDragOver}
-                                                        onDragLeave={isReadOnly ? undefined : handleDragLeave}
-                                                        className={`min-h-[120px] rounded-[24px] border-2 border-dashed ${isReadOnly ? 'border-gray-200 dark:border-white/5 bg-gray-100/50 dark:bg-transparent' : 'border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/30'} p-6 transition-all relative`}
-                                                    >
-                                                        {isReadOnly && (
-                                                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-none rounded-[24px]">
-                                                                <span className="bg-gray-900/80 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full flex items-center gap-2">
-                                                                    <FiInfo size={12} /> Restricted
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-lg">
-                                                                    {dateObj.getDate()}
+                                                return (
+                                                    <motion.div key={dateStr} layout className={`space-y-4 flex-shrink-0 w-[450px] ${isReadOnly ? 'opacity-70 grayscale-[0.3]' : ''}`}>
+                                                        <div
+                                                            onDrop={isReadOnly ? undefined : (e) => handleDropOnDay(e, dateStr)}
+                                                            onDragOver={isReadOnly ? undefined : handleDragOver}
+                                                            onDragLeave={isReadOnly ? undefined : handleDragLeave}
+                                                            className={`min-h-[120px] rounded-[24px] border-2 border-dashed ${isReadOnly ? 'border-gray-200 dark:border-white/5 bg-gray-100/50 dark:bg-transparent' : 'border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/30'} p-6 transition-all relative`}
+                                                        >
+                                                            {isReadOnly && (
+                                                                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-none rounded-[24px]">
+                                                                    <span className="bg-gray-900/80 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full flex items-center gap-2">
+                                                                        <FiInfo size={12} /> Restricted
+                                                                    </span>
                                                                 </div>
-                                                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">{formatted}</h3>
-                                                                <span className="text-[10px] text-gray-400 font-bold">Drop food here</span>
-                                                                {activePlan && (
-                                                                    <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-indigo-100 dark:border-indigo-500/20">
-                                                                        <FiMapPin size={10} /> 
-                                                                        {(() => {
-                                                                            const dayStr = dateStr;
-                                                                            const switchDate = activePlan.micro_kitchen_effective_from;
-                                                                            if (switchDate && dayStr < switchDate && activePlan.original_micro_kitchen_details) {
-                                                                                return activePlan.original_micro_kitchen_details.brand_name;
-                                                                            }
-                                                                            return activePlan.micro_kitchen_details?.brand_name || 'No Kitchen';
-                                                                        })()}
+                                                            )}
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-lg">
+                                                                        {dateObj.getDate()}
                                                                     </div>
+                                                                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">{formatted}</h3>
+                                                                    <span className="text-[10px] text-gray-400 font-bold">Drop food here</span>
+                                                                    {activePlan && (
+                                                                        <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-full text-[8px] font-black uppercase tracking-tighter border border-indigo-100 dark:border-indigo-500/20">
+                                                                            <FiMapPin size={10} />
+                                                                            {(() => {
+                                                                                const dayStr = dateStr;
+                                                                                const switchDate = activePlan.micro_kitchen_effective_from;
+                                                                                if (switchDate && dayStr < switchDate && activePlan.original_micro_kitchen_details) {
+                                                                                    return activePlan.original_micro_kitchen_details.brand_name;
+                                                                                }
+                                                                                return activePlan.micro_kitchen_details?.brand_name || 'No Kitchen';
+                                                                            })()}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {(() => {
+                                                                const dayUnavails = isRangeMode
+                                                                    ? rangePatientUnavailabilities.filter(
+                                                                        (u) => u.from_date <= dateStr && u.to_date >= dateStr
+                                                                    )
+                                                                    : dayPatientUnavailabilities;
+                                                                if (dayUnavails.length === 0) return null;
+                                                                return (
+                                                                    <div className="mb-4 space-y-2">
+                                                                        {dayUnavails.map((u) => (
+                                                                            <div
+                                                                                key={u.id}
+                                                                                className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/90 dark:bg-amber-900/25 px-4 py-3 text-xs"
+                                                                            >
+                                                                                <p className="font-black uppercase text-amber-800 dark:text-amber-200 tracking-wide">
+                                                                                    Patient unavailability
+                                                                                </p>
+                                                                                <p className="text-amber-900/90 dark:text-amber-100/90 mt-1">
+                                                                                    {u.from_date} → {u.to_date}
+                                                                                    {u.scope === "meal_type" && u.meal_types_details?.length
+                                                                                        ? ` · ${u.meal_types_details.map((m) => m.name).join(", ")}`
+                                                                                        : " · All meals"}
+                                                                                </p>
+                                                                                {u.reason ? (
+                                                                                    <p className="mt-1 text-gray-700 dark:text-gray-300">
+                                                                                        <span className="font-bold">Reason:</span> {u.reason}
+                                                                                    </p>
+                                                                                ) : null}
+                                                                                {u.patient_comments ? (
+                                                                                    <p className="mt-1 text-gray-700 dark:text-gray-300">
+                                                                                        <span className="font-bold">Patient note:</span>{" "}
+                                                                                        {u.patient_comments}
+                                                                                    </p>
+                                                                                ) : null}
+                                                                                <p className="mt-1 text-[10px] font-bold text-amber-700/80 uppercase">
+                                                                                    Status: {u.status}
+                                                                                </p>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                );
+                                                            })()}
+
+                                                            <div className="space-y-3">
+                                                                {dayEntries.length === 0 ? (
+                                                                    <p className="text-gray-400 text-xs font-medium py-4 text-center">No meals yet — drag from the left</p>
+                                                                ) : (
+                                                                    dayEntries.map((entry) => {
+                                                                        const globalIdx = dailyEntries.indexOf(entry);
+                                                                        const mealTypeName =
+                                                                            entry.meal_type_details?.name ||
+                                                                            mealTypes.find((m) => m.id === entry.meal_type)?.name ||
+                                                                            "Meal";
+                                                                        const foodName =
+                                                                            entry.food_details?.name ||
+                                                                            foods.find((f) => f.id === entry.food)?.name ||
+                                                                            "Food";
+                                                                        return (
+                                                                            <motion.div
+                                                                                key={globalIdx}
+                                                                                layout
+                                                                                initial={{ opacity: 0, y: 8 }}
+                                                                                animate={{ opacity: 1, y: 0 }}
+                                                                                className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-white/5 shadow-sm"
+                                                                            >
+                                                                                <div className="flex flex-wrap gap-4 items-end">
+                                                                                    <div className="flex-1 min-w-[120px]">
+                                                                                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meal Type</label>
+                                                                                        <select
+                                                                                            value={entry.meal_type || ""}
+                                                                                            disabled={isReadOnly}
+                                                                                            onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
+                                                                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold outline-none disabled:opacity-50"
+                                                                                        >
+                                                                                            {((entry.available_meal_type_details && entry.available_meal_type_details.length > 0) ||
+                                                                                                (entry.food_details?.meal_type_details && entry.food_details.meal_type_details.length > 0)) ? (
+                                                                                                (entry.available_meal_type_details || entry.food_details?.meal_type_details || []).map(mt => (
+                                                                                                    <option key={mt.id} value={mt.id}>{mt.name}</option>
+                                                                                                ))
+                                                                                            ) : entry.available_meal_types && entry.available_meal_types.length > 0 ? (
+                                                                                                entry.available_meal_types.map(mtid => {
+                                                                                                    const mt = mealTypes.find(m => m.id === mtid);
+                                                                                                    return <option key={mtid} value={mtid}>{mt?.name || `Type ${mtid}`}</option>;
+                                                                                                })
+                                                                                            ) : (
+                                                                                                mealTypes.map(mt => (
+                                                                                                    <option key={mt.id} value={mt.id}>{mt.name}</option>
+                                                                                                ))
+                                                                                            )}
+                                                                                        </select>
+                                                                                    </div>
+                                                                                    <div className="flex-1 min-w-[140px]">
+                                                                                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Food</label>
+                                                                                        <div className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold">
+                                                                                            {foodName}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="w-20">
+                                                                                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qty</label>
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            step="0.1"
+                                                                                            value={entry.quantity ?? ''}
+                                                                                            disabled={isReadOnly}
+                                                                                            onChange={(e) => handleEntryUpdate(globalIdx, 'quantity', Number(e.target.value))}
+                                                                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="w-32">
+                                                                                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Packaging</label>
+                                                                                        <select
+                                                                                            value={entry.packaging_material || ""}
+                                                                                            disabled={isReadOnly}
+                                                                                            onChange={(e) => handleEntryUpdate(globalIdx, 'packaging_material', e.target.value ? Number(e.target.value) : null)}
+                                                                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                        >
+                                                                                            <option value="">None</option>
+                                                                                            {packagingMaterials.map(pm => <option key={pm.id} value={pm.id}>{pm.name}</option>)}
+                                                                                        </select>
+                                                                                    </div>
+                                                                                    <button
+                                                                                        onClick={() => handleRemoveSlot(globalIdx)}
+                                                                                        disabled={isReadOnly}
+                                                                                        className="p-2 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                                    >
+                                                                                        <FiTrash2 size={18} />
+                                                                                    </button>
+                                                                                </div>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    placeholder="Notes (optional)"
+                                                                                    value={entry.notes || ''}
+                                                                                    disabled={isReadOnly}
+                                                                                    onChange={(e) => handleEntryUpdate(globalIdx, 'notes', e.target.value)}
+                                                                                    className="mt-3 w-full text-xs font-medium bg-transparent border-b border-gray-100 dark:border-white/5 px-2 py-1 outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                />
+                                                                            </motion.div>
+                                                                        );
+                                                                    })
                                                                 )}
                                                             </div>
                                                         </div>
-
-                                                        {(() => {
-                                                            const dayUnavails = isRangeMode
-                                                                ? rangePatientUnavailabilities.filter(
-                                                                      (u) => u.from_date <= dateStr && u.to_date >= dateStr
-                                                                  )
-                                                                : dayPatientUnavailabilities;
-                                                            if (dayUnavails.length === 0) return null;
-                                                            return (
-                                                                <div className="mb-4 space-y-2">
-                                                                    {dayUnavails.map((u) => (
-                                                                        <div
-                                                                            key={u.id}
-                                                                            className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/90 dark:bg-amber-900/25 px-4 py-3 text-xs"
-                                                                        >
-                                                                            <p className="font-black uppercase text-amber-800 dark:text-amber-200 tracking-wide">
-                                                                                Patient unavailability
-                                                                            </p>
-                                                                            <p className="text-amber-900/90 dark:text-amber-100/90 mt-1">
-                                                                                {u.from_date} → {u.to_date}
-                                                                                {u.scope === "meal_type" && u.meal_types_details?.length
-                                                                                    ? ` · ${u.meal_types_details.map((m) => m.name).join(", ")}`
-                                                                                    : " · All meals"}
-                                                                            </p>
-                                                                            {u.reason ? (
-                                                                                <p className="mt-1 text-gray-700 dark:text-gray-300">
-                                                                                    <span className="font-bold">Reason:</span> {u.reason}
-                                                                                </p>
-                                                                            ) : null}
-                                                                            {u.patient_comments ? (
-                                                                                <p className="mt-1 text-gray-700 dark:text-gray-300">
-                                                                                    <span className="font-bold">Patient note:</span>{" "}
-                                                                                    {u.patient_comments}
-                                                                                </p>
-                                                                            ) : null}
-                                                                            <p className="mt-1 text-[10px] font-bold text-amber-700/80 uppercase">
-                                                                                Status: {u.status}
-                                                                            </p>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            );
-                                                        })()}
-
-                                                        <div className="space-y-3">
-                                                            {dayEntries.length === 0 ? (
-                                                                <p className="text-gray-400 text-xs font-medium py-4 text-center">No meals yet — drag from the left</p>
-                                                            ) : (
-                                                                dayEntries.map((entry) => {
-                                                                    const globalIdx = dailyEntries.indexOf(entry);
-                                                                    const mealTypeName =
-                                                                        entry.meal_type_details?.name ||
-                                                                        mealTypes.find((m) => m.id === entry.meal_type)?.name ||
-                                                                        "Meal";
-                                                                    const foodName =
-                                                                        entry.food_details?.name ||
-                                                                        foods.find((f) => f.id === entry.food)?.name ||
-                                                                        "Food";
-                                                                    return (
-                                                                        <motion.div
-                                                                            key={globalIdx}
-                                                                            layout
-                                                                            initial={{ opacity: 0, y: 8 }}
-                                                                            animate={{ opacity: 1, y: 0 }}
-                                                                            className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-white/5 shadow-sm"
-                                                                        >
-                                                                            <div className="flex flex-wrap gap-4 items-end">
-                                                                                <div className="flex-1 min-w-[120px]">
-                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meal Type</label>
-                                                                                    <select
-                                                                                        value={entry.meal_type || ""}
-                                                                                        disabled={isReadOnly}
-                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'meal_type', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold outline-none disabled:opacity-50"
-                                                                                    >
-                                                                                        {((entry.available_meal_type_details && entry.available_meal_type_details.length > 0) || 
-                                                                                         (entry.food_details?.meal_type_details && entry.food_details.meal_type_details.length > 0)) ? (
-                                                                                            (entry.available_meal_type_details || entry.food_details?.meal_type_details || []).map(mt => (
-                                                                                                <option key={mt.id} value={mt.id}>{mt.name}</option>
-                                                                                            ))
-                                                                                        ) : entry.available_meal_types && entry.available_meal_types.length > 0 ? (
-                                                                                            entry.available_meal_types.map(mtid => {
-                                                                                                const mt = mealTypes.find(m => m.id === mtid);
-                                                                                                return <option key={mtid} value={mtid}>{mt?.name || `Type ${mtid}`}</option>;
-                                                                                            })
-                                                                                        ) : (
-                                                                                            mealTypes.map(mt => (
-                                                                                                <option key={mt.id} value={mt.id}>{mt.name}</option>
-                                                                                            ))
-                                                                                        )}
-                                                                                    </select>
-                                                                                </div>
-                                                                                <div className="flex-1 min-w-[140px]">
-                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Food</label>
-                                                                                    <div className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold">
-                                                                                        {foodName}
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="w-20">
-                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qty</label>
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        step="0.1"
-                                                                                        value={entry.quantity ?? ''}
-                                                                                        disabled={isReadOnly}
-                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'quantity', Number(e.target.value))}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                                    />
-                                                                                </div>
-                                                                                <div className="w-32">
-                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Packaging</label>
-                                                                                    <select
-                                                                                        value={entry.packaging_material || ""}
-                                                                                        disabled={isReadOnly}
-                                                                                        onChange={(e) => handleEntryUpdate(globalIdx, 'packaging_material', e.target.value ? Number(e.target.value) : null)}
-                                                                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                                    >
-                                                                                        <option value="">None</option>
-                                                                                        {packagingMaterials.map(pm => <option key={pm.id} value={pm.id}>{pm.name}</option>)}
-                                                                                    </select>
-                                                                                </div>
-                                                                                <button 
-                                                                                    onClick={() => handleRemoveSlot(globalIdx)} 
-                                                                                    disabled={isReadOnly}
-                                                                                    className="p-2 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                                                                >
-                                                                                    <FiTrash2 size={18} />
-                                                                                </button>
-                                                                            </div>
-                                                                            <input
-                                                                                type="text"
-                                                                                placeholder="Notes (optional)"
-                                                                                value={entry.notes || ''}
-                                                                                disabled={isReadOnly}
-                                                                                onChange={(e) => handleEntryUpdate(globalIdx, 'notes', e.target.value)}
-                                                                                className="mt-3 w-full text-xs font-medium bg-transparent border-b border-gray-100 dark:border-white/5 px-2 py-1 outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                            />
-                                                                        </motion.div>
-                                                                    );
-                                                                })
-                                                            )}
+                                                    </motion.div>
+                                                );
+                                            })}
+                                            {isRangeMode && rangeHasMore && (
+                                                <div className="flex-shrink-0 flex flex-col items-center justify-center w-48 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-[24px]">
+                                                    <div ref={rangeLoadMoreSentinelRef} className="w-px h-full" aria-hidden />
+                                                    {rangeMealsLoading ? (
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                            <p className="text-[8px] text-gray-400 font-black uppercase tracking-wider">
+                                                                Loading...
+                                                            </p>
                                                         </div>
-                                                    </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                        {isRangeMode && rangeHasMore && (
-                                            <div className="flex-shrink-0 flex flex-col items-center justify-center w-48 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-[24px]">
-                                                <div ref={rangeLoadMoreSentinelRef} className="w-px h-full" aria-hidden />
-                                                {rangeMealsLoading ? (
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
                                                         <p className="text-[8px] text-gray-400 font-black uppercase tracking-wider">
-                                                            Loading...
+                                                            Scroll for more
                                                         </p>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-wider">
-                                                        Scroll for more
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -1419,9 +1417,18 @@ const SetDailyMealsPage: React.FC = () => {
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Calcium:</span> <span className="font-bold">{foodNutrition.calcium ?? "-"}</span></div>
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Iron:</span> <span className="font-bold">{foodNutrition.iron ?? "-"}</span></div>
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin A:</span> <span className="font-bold">{foodNutrition.vitamin_a ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B1:</span> <span className="font-bold">{foodNutrition.vitamin_b1 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B2:</span> <span className="font-bold">{foodNutrition.vitamin_b2 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B3:</span> <span className="font-bold">{foodNutrition.vitamin_b3 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B5:</span> <span className="font-bold">{foodNutrition.vitamin_b5 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B6:</span> <span className="font-bold">{foodNutrition.vitamin_b6 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B7:</span> <span className="font-bold">{foodNutrition.vitamin_b7 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B9:</span> <span className="font-bold">{foodNutrition.vitamin_b9 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B12:</span> <span className="font-bold">{foodNutrition.vitamin_b12 ?? "-"}</span></div>
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin C:</span> <span className="font-bold">{foodNutrition.vitamin_c ?? "-"}</span></div>
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin D:</span> <span className="font-bold">{foodNutrition.vitamin_d ?? "-"}</span></div>
-                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B12:</span> <span className="font-bold">{foodNutrition.vitamin_b12 ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin E:</span> <span className="font-bold">{foodNutrition.vitamin_e ?? "-"}</span></div>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin K:</span> <span className="font-bold">{foodNutrition.vitamin_k ?? "-"}</span></div>
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Cholesterol:</span> <span className="font-bold">{foodNutrition.cholesterol ?? "-"}</span></div>
                                     <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Glycemic Index:</span> <span className="font-bold">{foodNutrition.glycemic_index ?? "-"}</span></div>
                                 </div>

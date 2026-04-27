@@ -50,9 +50,9 @@ export interface UserMeal {
     is_consumed?: boolean;
     meal_type_details?: { id: number; name: string };
     cuisine_type_details?: { id: number; name: string };
-    food_details?: { 
-        id: number; 
-        name: string; 
+    food_details?: {
+        id: number;
+        name: string;
         image?: string;
         meal_types?: number[];
         meal_type_details?: { id: number; name: string }[];
@@ -81,9 +81,18 @@ export interface FoodNutritionById {
     calcium: number | null;
     iron: number | null;
     vitamin_a: number | null;
+    vitamin_b1: number | null;
+    vitamin_b2: number | null;
+    vitamin_b3: number | null;
+    vitamin_b5: number | null;
+    vitamin_b6: number | null;
+    vitamin_b7: number | null;
+    vitamin_b9: number | null;
+    vitamin_b12: number | null;
     vitamin_c: number | null;
     vitamin_d: number | null;
-    vitamin_b12: number | null;
+    vitamin_e: number | null;
+    vitamin_k: number | null;
     cholesterol: number | null;
     glycemic_index: number | null;
     serving_size: string | null;
@@ -92,11 +101,11 @@ export interface FoodNutritionById {
 export interface ReassignMicroKitchenPayload {
     new_micro_kitchen: number;
     reason:
-        | "kitchen_closed"
-        | "kitchen_suspended"
-        | "patient_request"
-        | "admin_decision"
-        | "quality_issue";
+    | "kitchen_closed"
+    | "kitchen_suspended"
+    | "patient_request"
+    | "admin_decision"
+    | "quality_issue";
     notes?: string;
     effective_from?: string | null;
 }
