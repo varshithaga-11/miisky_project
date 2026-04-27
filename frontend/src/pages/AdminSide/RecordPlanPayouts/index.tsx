@@ -4,6 +4,8 @@ import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
+import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { toast } from "react-toastify";
 import { Modal } from "../../../components/ui/modal";
@@ -15,6 +17,12 @@ import {
   PatientPayoutSummaryRow,
   PatientTrackersRow,
 } from "./api";
+import {
+  getKitchensDropdown,
+  getPatientsDropdown,
+  getNutritionistsDropdown,
+  getPlansDropdown,
+} from "../PatientPaymentVerification/api";
 
 const METHODS: { value: string; label: string }[] = [
   { value: "bank_transfer", label: "Bank transfer" },
@@ -32,6 +40,15 @@ export default function RecordPlanPayoutsPage() {
     results: [],
     totalPages: 1,
   });
+  const [selectedPatient, setSelectedPatient] = useState("");
+  const [selectedKitchen, setSelectedKitchen] = useState("");
+  const [selectedNutritionist, setSelectedNutritionist] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("");
+
+  const [kitchens, setKitchens] = useState<any[]>([]);
+  const [patientsList, setPatientsList] = useState<any[]>([]);
+  const [nutritionists, setNutritionists] = useState<any[]>([]);
+  const [plansList, setPlansList] = useState<any[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [expandedPatients, setExpandedPatients] = useState<number[]>([]);
   const [patientDetailsById, setPatientDetailsById] = useState<Record<number, PatientTrackersRow>>({});
@@ -56,7 +73,12 @@ export default function RecordPlanPayoutsPage() {
   const loadPatients = useCallback(async () => {
     setLoadingPatients(true);
     try {
-      const res = await fetchPayoutPatientSummaries(patientPage, 10, searchTerm);
+      const res = await fetchPayoutPatientSummaries(patientPage, 10, searchTerm, {
+        patient: selectedPatient || undefined,
+        micro_kitchen: selectedKitchen || undefined,
+        nutritionist: selectedNutritionist || undefined,
+        diet_plan: selectedPlan || undefined,
+      });
       setPatientData({ results: res.results || [], totalPages: res.total_pages || 1 });
     } catch {
       toast.error("Failed to load patient payout data");
@@ -64,7 +86,48 @@ export default function RecordPlanPayoutsPage() {
     } finally {
       setLoadingPatients(false);
     }
-  }, [patientPage, searchTerm]);
+  }, [patientPage, searchTerm, selectedPatient, selectedKitchen, selectedNutritionist, selectedPlan]);
+
+
+  const loadKitchens = async () => {
+    if (kitchens.length > 0) return;
+    try {
+      const res = await getKitchensDropdown();
+      setKitchens(res || []);
+    } catch (err) {
+      console.error("Failed to load kitchens", err);
+    }
+  };
+
+  const loadPatientsList = async () => {
+    if (patientsList.length > 0) return;
+    try {
+      const res = await getPatientsDropdown();
+      setPatientsList(res || []);
+    } catch (err) {
+      console.error("Failed to load patients", err);
+    }
+  };
+
+  const loadNutritionists = async () => {
+    if (nutritionists.length > 0) return;
+    try {
+      const res = await getNutritionistsDropdown();
+      setNutritionists(res || []);
+    } catch (err) {
+      console.error("Failed to load nutritionists", err);
+    }
+  };
+
+  const loadPlansList = async () => {
+    if (plansList.length > 0) return;
+    try {
+      const res = await getPlansDropdown();
+      setPlansList(res || []);
+    } catch (err) {
+      console.error("Failed to load plans", err);
+    }
+  };
 
 
   useEffect(() => {
@@ -140,33 +203,116 @@ export default function RecordPlanPayoutsPage() {
 
         <div className="rounded-2xl border border-slate-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm space-y-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payable Patients</h2>
-          <div className="relative max-w-md">
-            <input
-              type="text"
-              value={searchTerm}
-              placeholder="Search patient, plan, nutritionist, kitchen..."
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
+          
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Patient</Label>
+              <SearchableSelect
+                value={selectedPatient}
+                onChange={(val) => {
+                  setSelectedPatient(val as string);
+                  setPatientPage(1);
+                }}
+                onFocus={loadPatientsList}
+                options={[
+                  { value: "", label: "All Patients" },
+                  ...patientsList.map((p) => ({ value: String(p.id), label: `${p.first_name} ${p.last_name}` })),
+                ]}
+                placeholder="Search Patient..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Micro Kitchen</Label>
+              <SearchableSelect
+                value={selectedKitchen}
+                onChange={(val) => {
+                  setSelectedKitchen(val as string);
+                  setPatientPage(1);
+                }}
+                onFocus={loadKitchens}
+                options={[
+                  { value: "", label: "All Kitchens" },
+                  ...kitchens.map((k) => ({ value: String(k.id), label: k.brand_name })),
+                ]}
+                placeholder="Search Kitchen..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Nutritionist</Label>
+              <SearchableSelect
+                value={selectedNutritionist}
+                onChange={(val) => {
+                  setSelectedNutritionist(val as string);
+                  setPatientPage(1);
+                }}
+                onFocus={loadNutritionists}
+                options={[
+                  { value: "", label: "All Nutritionists" },
+                  ...nutritionists.map((n) => ({ value: String(n.id), label: `${n.first_name} ${n.last_name}` })),
+                ]}
+                placeholder="Search Nutritionist..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Plan</Label>
+              <SearchableSelect
+                value={selectedPlan}
+                onChange={(val) => {
+                  setSelectedPlan(val as string);
+                  setPatientPage(1);
+                }}
+                onFocus={loadPlansList}
+                options={[
+                  { value: "", label: "All Plans" },
+                  ...plansList.map((p) => ({ value: String(p.id), label: p.title })),
+                ]}
+                placeholder="Search Plan..."
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                value={searchTerm}
+                placeholder="Search name, code..."
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPatientPage(1);
+                  setExpandedPatients([]);
+                  setPatientDetailsById({});
+                }}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              />
+              <svg
+                className="absolute left-3 top-2.5 text-gray-400"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedPatient("");
+                setSelectedKitchen("");
+                setSelectedNutritionist("");
+                setSelectedPlan("");
+                setSearchTerm("");
                 setPatientPage(1);
-                setExpandedPatients([]);
-                setPatientDetailsById({});
               }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-            />
-            <svg
-              className="absolute left-3 top-2.5 text-gray-400"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              className="h-11 px-4 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+              Clear All
+            </button>
           </div>
           {loadingPatients ? (
             <p className="text-sm text-gray-500 py-6">Loading patients…</p>

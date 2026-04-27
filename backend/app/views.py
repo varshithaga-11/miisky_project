@@ -1596,6 +1596,24 @@ class AdminPayoutTrackersForPayView(APIView):
             qs = qs.filter(payout_type=PayoutTracker.PAYOUT_TYPE_NUTRITIONIST)
         elif ptype == "kitchen":
             qs = qs.filter(payout_type=PayoutTracker.PAYOUT_TYPE_KITCHEN)
+
+        # Additional filters
+        patient_id = request.query_params.get("patient")
+        if patient_id:
+            qs = qs.filter(snapshot__user_diet_plan__user_id=patient_id)
+        
+        nutritionist_id = request.query_params.get("nutritionist")
+        if nutritionist_id:
+            qs = qs.filter(nutritionist_id=nutritionist_id)
+        
+        kitchen_id = request.query_params.get("micro_kitchen")
+        if kitchen_id:
+            qs = qs.filter(micro_kitchen_id=kitchen_id)
+        
+        plan_id = request.query_params.get("diet_plan")
+        if plan_id:
+            qs = qs.filter(snapshot__user_diet_plan__diet_plan_id=plan_id)
+
         return Response(AdminPayoutTrackerForPayoutSerializer(qs, many=True).data)
 
 
@@ -1648,10 +1666,23 @@ class AdminPayoutPatientsWithTrackersView(generics.ListAPIView):
                 | Q(diet_plans__payment_snapshot__payouts__nutritionist__username__icontains=search)
                 | Q(diet_plans__payment_snapshot__payouts__micro_kitchen__brand_name__icontains=search)
             ).distinct()
-        patient_id = self.request.query_params.get("patient_id")
+        patient_id = self.request.query_params.get("patient") or self.request.query_params.get("patient_id")
         if patient_id:
             qs = qs.filter(id=patient_id)
-        return qs
+        
+        nutritionist_id = self.request.query_params.get("nutritionist")
+        if nutritionist_id:
+            qs = qs.filter(diet_plans__payment_snapshot__payouts__nutritionist_id=nutritionist_id)
+        
+        kitchen_id = self.request.query_params.get("micro_kitchen")
+        if kitchen_id:
+            qs = qs.filter(diet_plans__payment_snapshot__payouts__micro_kitchen_id=kitchen_id)
+        
+        plan_id = self.request.query_params.get("diet_plan")
+        if plan_id:
+            qs = qs.filter(diet_plans__diet_plan_id=plan_id)
+
+        return qs.distinct()
 
 
 class AdminPayoutTransactionListCreateView(APIView):

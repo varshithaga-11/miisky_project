@@ -72,12 +72,25 @@ export interface PaginatedPatientSummaries {
 export async function fetchPayoutPatientSummaries(
   page = 1,
   limit = 15,
-  search = ""
+  search = "",
+  params?: {
+    patient?: string;
+    micro_kitchen?: string;
+    nutritionist?: string;
+    diet_plan?: string;
+  }
 ): Promise<PaginatedPatientSummaries> {
   const q = search.trim();
   const searchPart = q ? `&search=${encodeURIComponent(q)}` : "";
+  const filterPart = params
+    ? Object.entries(params)
+        .filter(([_, v]) => v)
+        .map(([k, v]) => `&${k}=${encodeURIComponent(v!)}`)
+        .join("")
+    : "";
+
   const url = createApiUrl(
-    `api/admin/plan-payout-patients/?page=${page}&limit=${limit}&include_trackers=0${searchPart}`
+    `api/admin/plan-payout-patients/?page=${page}&limit=${limit}&include_trackers=0${searchPart}${filterPart}`
   );
   const res = await axios.get(url, { headers: await getAuthHeaders() });
   return res.data as PaginatedPatientSummaries;
@@ -94,9 +107,24 @@ export async function fetchPayoutPatientDetails(patientId: number, search = ""):
   return data.results?.[0] ?? null;
 }
 
-export async function fetchPayableTrackers(type: PayableTrackerType = "all"): Promise<PayableTrackerRow[]> {
-  const params = type === "all" ? "" : `?type=${type}`;
-  const url = createApiUrl(`api/admin/plan-payout-trackers/${params}`);
+export async function fetchPayableTrackers(
+  type: PayableTrackerType = "all",
+  params?: {
+    patient?: string;
+    micro_kitchen?: string;
+    nutritionist?: string;
+    diet_plan?: string;
+  }
+): Promise<PayableTrackerRow[]> {
+  const searchParams = new URLSearchParams();
+  if (type !== "all") searchParams.append("type", type);
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v) searchParams.append(k, v);
+    });
+  }
+  const query = searchParams.toString();
+  const url = createApiUrl(query ? `api/admin/plan-payout-trackers/?${query}` : "api/admin/plan-payout-trackers/");
   const res = await axios.get<PayableTrackerRow[]>(url, { headers: await getAuthHeaders() });
   return res.data;
 }
