@@ -21,7 +21,7 @@ import {
   getMicroKitchenDeliveryTeamNoPagination,
   getMicroKitchenPatients,
   getMicroKitchenPatientsNoPagination,
-  getMicroKitchenInspectionsNoPagination,
+  getMicroKitchenInspections,
   getMicroKitchenReviewsPaginated,
   getMicroKitchenReviewsNoPagination,
   getAdminMicroKitchenOrdersPaginated,

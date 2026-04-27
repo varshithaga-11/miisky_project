@@ -30,7 +30,7 @@ const MENU_ITEMS: { key: Exclude<Screen, "hub">; label: string; description: str
 
 export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
   const [screen, setScreen] = useState<Screen>("hub");
-  const [payload, setPayload] = useState<unknown>(null);
+  const [payload, setPayload] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
