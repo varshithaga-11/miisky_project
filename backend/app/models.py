@@ -926,10 +926,20 @@ class FoodNutrition(models.Model):
     iron = models.FloatField(null=True, blank=True)      # mg
 
     # 🔥 VITAMINS
-    vitamin_a = models.FloatField(null=True, blank=True)
-    vitamin_c = models.FloatField(null=True, blank=True)
-    vitamin_d = models.FloatField(null=True, blank=True)
-    vitamin_b12 = models.FloatField(null=True, blank=True)
+    vitamin_a = models.FloatField(null=True, blank=True)#µg(mcg/IU)
+    vitamin_b1 = models.FloatField(null=True, blank=True)#Thiamine#mg
+    vitamin_b2 = models.FloatField(null=True, blank=True)#Riboflavin#mg
+    vitamin_b3 = models.FloatField(null=True, blank=True)#Niacin#mg
+    vitamin_b5 = models.FloatField(null=True, blank=True)#Pantothenic acid#mg
+    vitamin_b6 = models.FloatField(null=True, blank=True)#Pyridoxine#mg
+    vitamin_b7 = models.FloatField(null=True, blank=True)#Biotin#µg(mcg)
+    vitamin_b9 = models.FloatField(null=True, blank=True)#Folate#µg(mcg)
+    vitamin_b12 = models.FloatField(null=True, blank=True)#Cobalamin#µg(mcg)
+    vitamin_c = models.FloatField(null=True, blank=True)#mg
+    vitamin_d = models.FloatField(null=True, blank=True)#µg(mcg)
+    vitamin_e = models.FloatField(null=True, blank=True)#mg
+    vitamin_k = models.FloatField(null=True, blank=True)#µg(mcg)
+    
 
     # 🔥 OTHER USEFUL
     cholesterol = models.FloatField(null=True, blank=True)  # mg

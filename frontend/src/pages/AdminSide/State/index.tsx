@@ -327,13 +327,26 @@ const StateManagementPage: React.FC = () => {
         </div>
       )}
 
-      {isAddModalOpen && <AddState onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchStates()} />}
+      {isAddModalOpen && (
+        <AddState 
+          onClose={() => setIsAddModalOpen(false)} 
+          onAdd={() => {
+            fetchStates();
+            setIsAddModalOpen(false);
+            setCurrentPage(1);
+          }} 
+        />
+      )}
       {isEditModalOpen && editStateId !== null && (
         <EditState
           stateId={editStateId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={() => { fetchStates(); setIsEditModalOpen(false); setEditStateId(null); }}
+          onUpdated={() => { 
+            fetchStates(); 
+            setIsEditModalOpen(false); 
+            setEditStateId(null); 
+          }}
         />
       )}
 

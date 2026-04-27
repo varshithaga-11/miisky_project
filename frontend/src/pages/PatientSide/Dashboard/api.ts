@@ -18,6 +18,7 @@ export interface PatientDashboardStats {
   plansActive: number;
   plansCompleted: number;
   consultationsPending: number;
+  consultationsResolved: number;
 }
 
 export const getPatientDashboardStats = async (): Promise<PatientDashboardStats> => {

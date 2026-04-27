@@ -476,7 +476,7 @@ class PatientDashboardCountsView(APIView):
             "microKitchens": MicroKitchenProfile.objects.filter(status="approved").count(),
             "suggestedPlans": UserDietPlan.objects.filter(user=user, status="suggested").count(),
             "mealsAllotted": UserMeal.objects.filter(user=user).count(),
-            "consultations": MeetingRequest.objects.filter(patient=user).count(),
+            "consultations": MeetingRequest.objects.filter(patient=user, status='pending').count(),
             "foods": MicroKitchenFood.objects.filter(is_available=True).count(),
             "cartItems": CartItem.objects.filter(cart__user=user).count(),
             "bookings": Order.objects.filter(user=user).count(),
@@ -486,6 +486,7 @@ class PatientDashboardCountsView(APIView):
             "plansActive": UserDietPlan.objects.filter(user=user, status='active').count(),
             "plansCompleted": UserDietPlan.objects.filter(user=user, status='completed').count(),
             "consultationsPending": MeetingRequest.objects.filter(patient=user, status='pending').count(),
+            "consultationsResolved": MeetingRequest.objects.filter(patient=user, status='completed').count(),
         })
 
 
@@ -614,13 +615,13 @@ class NutritionDashboardCountsView(APIView):
             "patientDocuments": PatientHealthReport.objects.filter(user_id__in=mapped_ids).count(),
             "suggestedPlans": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
             "approvedPlans": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
-            "meetingRequests": MeetingRequest.objects.filter(nutritionist=user).count(),
+            "meetingRequests": MeetingRequest.objects.filter(nutritionist=user, status='pending').count(),
             "supportTickets": SupportTicket.objects.filter(Q(created_by=user) | Q(assigned_to=user)).count(),
             # Status based analytics
             "plansSuggested": UserDietPlan.objects.filter(nutritionist=user, status="suggested").count(),
             "plansApproved": UserDietPlan.objects.filter(nutritionist=user, status="approved").count(),
             "meetingsPending": MeetingRequest.objects.filter(nutritionist=user, status="pending").count(),
-            "meetingsResolved": MeetingRequest.objects.filter(nutritionist=user, status="resolved").count(),
+            "meetingsResolved": MeetingRequest.objects.filter(nutritionist=user, status="completed").count(),
         })
 
 
@@ -5185,7 +5186,9 @@ class TemplateDownloadView(APIView):
                          "calories", "protein", "carbs", "fat", "fiber", "serving_size",
                          "glycemic_index", "sugar", "saturated_fat", "trans_fat", "cholesterol",
                          "sodium", "potassium", "calcium", "iron", 
-                         "vitamin_a", "vitamin_c", "vitamin_d", "vitamin_b12"],
+                         "vitamin_a", "vitamin_b1", "vitamin_b2", "vitamin_b3", "vitamin_b5", 
+                         "vitamin_b6", "vitamin_b7", "vitamin_b9", "vitamin_b12", 
+                         "vitamin_c", "vitamin_d", "vitamin_e", "vitamin_k"],
                 "foodproximate": [
                     "food_name", "base_unit", "proximate", "water", "protein", "fat", "ash", "fat_crude_extract", "fiber_total", "fiber_insoluble", "fiber_soluble", "carbohydrates", "energy"
                 ],
@@ -5290,16 +5293,16 @@ class TemplateDownloadView(APIView):
                 ["French"], ["Japanese"], ["Thai"], ["American"], ["Mediterranean"]
             ],
             "food": [
-                ["Masala Dosa", "Crispy rice crepe with potato filling", "Breakfast, Snacks", "South Indian", "350", "8", "50", "12", "4", "1 plate", "55", "2", "1.5", "0", "0", "450", "150", "30", "1.5", "0", "0", "0", "0"],
-                ["Pizza Margherita", "Classic Italian pizza with tomato and mozzarella", "Lunch, Dinner", "Italian", "300", "12", "40", "10", "2", "1 slice", "60", "3", "2", "0", "0", "500", "200", "35", "2", "0", "0", "0", "0"],
-                ["Sushi", "Japanese rice rolls with fish", "Lunch, Dinner", "Japanese", "250", "15", "35", "5", "1", "6 pieces", "30", "1", "0.5", "0", "0", "400", "100", "20", "1", "0", "0", "0", "0"],
-                ["Tacos", "Mexican corn tortillas with filling", "Lunch, Dinner", "Mexican", "220", "10", "30", "7", "2", "2 tacos", "25", "1", "0.8", "0", "0", "350", "90", "18", "1", "0", "0", "0", "0"],
-                ["Croissant", "French buttery pastry", "Breakfast, Snack", "French", "180", "4", "20", "9", "1", "1 piece", "15", "0.5", "0.3", "0", "0", "200", "50", "10", "0.5", "0", "0", "0", "0"],
-                ["Pad Thai", "Thai stir-fried noodles", "Lunch, Dinner", "Thai", "400", "14", "60", "12", "3", "1 plate", "70", "2", "1.7", "0", "0", "600", "180", "40", "2", "0", "0", "0", "0"],
-                ["Cheeseburger", "American beef burger with cheese", "Lunch, Dinner", "American", "500", "20", "45", "25", "2", "1 burger", "80", "4", "2.5", "0", "0", "700", "250", "50", "3", "0", "0", "0", "0"],
-                ["Green Salad", "Fresh mixed greens", "Lunch, Dinner", "Mediterranean", "120", "3", "15", "4", "2", "1 bowl", "10", "0.2", "0.1", "0", "0", "100", "40", "8", "0.3", "0", "0", "0", "0"],
-                ["Spring Rolls", "Chinese crispy rolls with vegetables", "Snack, Appetizer", "Chinese", "160", "5", "20", "6", "1", "2 rolls", "18", "0.7", "0.4", "0", "0", "220", "60", "12", "0.6", "0", "0", "0", "0"],
-                ["Ramen", "Japanese noodle soup", "Lunch, Dinner", "Japanese", "380", "13", "55", "8", "2", "1 bowl", "65", "2.2", "1.1", "0", "0", "520", "170", "32", "1.8", "0", "0", "0", "0"]
+                ["Masala Dosa", "Crispy rice crepe with potato filling", "Breakfast, Snacks", "South Indian", "350", "8", "50", "12", "4", "1 plate", "55", "2", "1.5", "0", "0", "450", "150", "30", "1.5", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Pizza Margherita", "Classic Italian pizza with tomato and mozzarella", "Lunch, Dinner", "Italian", "300", "12", "40", "10", "2", "1 slice", "60", "3", "2", "0", "0", "500", "200", "35", "2", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Sushi", "Japanese rice rolls with fish", "Lunch, Dinner", "Japanese", "250", "15", "35", "5", "1", "6 pieces", "30", "1", "0.5", "0", "0", "400", "100", "20", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Tacos", "Mexican corn tortillas with filling", "Lunch, Dinner", "Mexican", "220", "10", "30", "7", "2", "2 tacos", "25", "1", "0.8", "0", "0", "350", "90", "18", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Croissant", "French buttery pastry", "Breakfast, Snack", "French", "180", "4", "20", "9", "1", "1 piece", "15", "0.5", "0.3", "0", "0", "200", "50", "10", "0.5", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Pad Thai", "Thai stir-fried noodles", "Lunch, Dinner", "Thai", "400", "14", "60", "12", "3", "1 plate", "70", "2", "1.7", "0", "0", "600", "180", "40", "2", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Cheeseburger", "American beef burger with cheese", "Lunch, Dinner", "American", "500", "20", "45", "25", "2", "1 burger", "80", "4", "2.5", "0", "0", "700", "250", "50", "3", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Green Salad", "Fresh mixed greens", "Lunch, Dinner", "Mediterranean", "120", "3", "15", "4", "2", "1 bowl", "10", "0.2", "0.1", "0", "0", "100", "40", "8", "0.3", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Spring Rolls", "Chinese crispy rolls with vegetables", "Snack, Appetizer", "Chinese", "160", "5", "20", "6", "1", "2 rolls", "18", "0.7", "0.4", "0", "0", "220", "60", "12", "0.6", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                ["Ramen", "Japanese noodle soup", "Lunch, Dinner", "Japanese", "380", "13", "55", "8", "2", "1 bowl", "65", "2.2", "1.1", "0", "0", "520", "170", "32", "1.8", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
             ],
             "unit": [
                 ["Gram"], ["Kilogram"], ["Liter"], ["Milliliter"], ["Tablespoon"],

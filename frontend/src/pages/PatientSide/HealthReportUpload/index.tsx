@@ -3,7 +3,7 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { getMyHealthReports, uploadHealthReport, deleteHealthReport, PatientHealthReport } from "./api";
 import { toast, ToastContainer } from "react-toastify";
-import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiDownload, FiMessageSquare, FiSearch, FiX } from "react-icons/fi";
+import { FiUpload, FiFileText, FiTrash2, FiPlus, FiCheckCircle, FiDownload, FiMessageSquare, FiSearch, FiX, FiEye } from "react-icons/fi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const HealthReportUploadPage: React.FC = () => {
@@ -243,7 +243,7 @@ const HealthReportUploadPage: React.FC = () => {
                                                     className="p-3 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:text-blue-500 rounded-xl transition-all"
                                                     title="Download or open file"
                                                 >
-                                                    <FiDownload size={18} />
+                                                    <FiEye size={18} />
                                                 </a>
                                                 <button 
                                                     onClick={() => handleDelete(report)}

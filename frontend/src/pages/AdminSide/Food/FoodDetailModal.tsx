@@ -120,13 +120,20 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({ food, onClose }) => {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {food.nutrition ? (
                 Object.entries(food.nutrition).map(([key, value]) => {
-                  if (['id', 'food'].includes(key) || value === null) return null;
+                  if (['id', 'food', 'serving_size'].includes(key) || value === null || value === undefined) return null;
+                  
+                  let unit = 'g';
+                  if (['calories', 'glycemic_index'].includes(key)) unit = '';
+                  else if (['sodium', 'potassium', 'calcium', 'iron', 'cholesterol', 'vitamin_b1', 'vitamin_b2', 'vitamin_b3', 'vitamin_b5', 'vitamin_b6', 'vitamin_c', 'vitamin_e'].includes(key)) unit = 'mg';
+                  else if (['vitamin_a', 'vitamin_b7', 'vitamin_b9', 'vitamin_b12', 'vitamin_d', 'vitamin_k'].includes(key)) unit = 'µg';
+
+                  const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
                   return (
                     <div key={key} className="p-4 bg-gray-50/50 dark:bg-white/[0.02] rounded-[24px] border border-gray-100 dark:border-white/[0.05] transition-all hover:border-red-500/30">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{key.replace('_', ' ')}</p>
-                      <p className="text-xl font-black text-gray-900 dark:text-white">
-                        {value}
-                        {['calories', 'glycemic_index'].includes(key) ? '' : 'g'}
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+                      <p className="text-xl font-black text-gray-900 dark:text-white tabular-nums">
+                        {value} <span className="text-xs text-gray-400 font-bold ml-1">{unit}</span>
                       </p>
                     </div>
                   );

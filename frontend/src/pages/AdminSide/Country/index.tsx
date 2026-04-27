@@ -268,13 +268,26 @@ const CountryManagementPage: React.FC = () => {
         </div>
       )}
 
-      {isAddModalOpen && <AddCountry onClose={() => setIsAddModalOpen(false)} onAdd={() => { fetchCountries(); setIsAddModalOpen(false); }} />}
+      {isAddModalOpen && (
+        <AddCountry 
+          onClose={() => setIsAddModalOpen(false)} 
+          onAdd={() => { 
+            fetchCountries(); 
+            setIsAddModalOpen(false); 
+            setCurrentPage(1);
+          }} 
+        />
+      )}
       {isEditModalOpen && editCountryId !== null && (
         <EditCountry
           countryId={editCountryId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={() => { fetchCountries(); setIsEditModalOpen(false); setEditCountryId(null); }}
+          onUpdated={() => { 
+            fetchCountries(); 
+            setIsEditModalOpen(false); 
+            setEditCountryId(null); 
+          }}
         />
       )}
 

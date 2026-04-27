@@ -385,13 +385,26 @@ const CityManagementPage: React.FC = () => {
         </div>
       )}
 
-      {isAddModalOpen && <AddCity onClose={() => setIsAddModalOpen(false)} onAdd={() => fetchCities()} />}
+      {isAddModalOpen && (
+        <AddCity 
+          onClose={() => setIsAddModalOpen(false)} 
+          onAdd={() => {
+            fetchCities();
+            setIsAddModalOpen(false);
+            setCurrentPage(1);
+          }} 
+        />
+      )}
       {isEditModalOpen && editCityId !== null && (
         <EditCity
           cityId={editCityId}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdated={() => { fetchCities(); setIsEditModalOpen(false); setEditCityId(null); }}
+          onUpdated={() => { 
+            fetchCities(); 
+            setIsEditModalOpen(false); 
+            setEditCityId(null); 
+          }}
         />
       )}
 

@@ -48,9 +48,18 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
     calcium: undefined,
     iron: undefined,
     vitamin_a: undefined,
+    vitamin_b1: undefined,
+    vitamin_b2: undefined,
+    vitamin_b3: undefined,
+    vitamin_b5: undefined,
+    vitamin_b6: undefined,
+    vitamin_b7: undefined,
+    vitamin_b9: undefined,
+    vitamin_b12: undefined,
     vitamin_c: undefined,
     vitamin_d: undefined,
-    vitamin_b12: undefined,
+    vitamin_e: undefined,
+    vitamin_k: undefined,
     cholesterol: undefined,
     glycemic_index: undefined,
     serving_size: "",
@@ -129,9 +138,18 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                 calcium: undefined,
                 iron: undefined,
                 vitamin_a: undefined,
+                vitamin_b1: undefined,
+                vitamin_b2: undefined,
+                vitamin_b3: undefined,
+                vitamin_b5: undefined,
+                vitamin_b6: undefined,
+                vitamin_b7: undefined,
+                vitamin_b9: undefined,
+                vitamin_b12: undefined,
                 vitamin_c: undefined,
                 vitamin_d: undefined,
-                vitamin_b12: undefined,
+                vitamin_e: undefined,
+                vitamin_k: undefined,
                 cholesterol: undefined,
                 glycemic_index: undefined,
                 serving_size: "",
@@ -358,20 +376,56 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                   <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Vitamins</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <Label htmlFor="vitamin_a">Vit A</Label>
+                      <Label htmlFor="vitamin_a">Vit A (µg)</Label>
                       <Input id="vitamin_a" type="number" step="0.1" value={nutrition.vitamin_a} onChange={(e) => handleNutritionChange("vitamin_a", e.target.value)} disabled={saving} />
                     </div>
                     <div>
-                      <Label htmlFor="vitamin_c">Vit C</Label>
+                      <Label htmlFor="vitamin_b1">Vit B1 (mg)</Label>
+                      <Input id="vitamin_b1" type="number" step="0.1" value={nutrition.vitamin_b1} onChange={(e) => handleNutritionChange("vitamin_b1", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b2">Vit B2 (mg)</Label>
+                      <Input id="vitamin_b2" type="number" step="0.1" value={nutrition.vitamin_b2} onChange={(e) => handleNutritionChange("vitamin_b2", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b3">Vit B3 (mg)</Label>
+                      <Input id="vitamin_b3" type="number" step="0.1" value={nutrition.vitamin_b3} onChange={(e) => handleNutritionChange("vitamin_b3", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b5">Vit B5 (mg)</Label>
+                      <Input id="vitamin_b5" type="number" step="0.1" value={nutrition.vitamin_b5} onChange={(e) => handleNutritionChange("vitamin_b5", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b6">Vit B6 (mg)</Label>
+                      <Input id="vitamin_b6" type="number" step="0.1" value={nutrition.vitamin_b6} onChange={(e) => handleNutritionChange("vitamin_b6", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b7">Vit B7 (µg)</Label>
+                      <Input id="vitamin_b7" type="number" step="0.1" value={nutrition.vitamin_b7} onChange={(e) => handleNutritionChange("vitamin_b7", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b9">Vit B9 (µg)</Label>
+                      <Input id="vitamin_b9" type="number" step="0.1" value={nutrition.vitamin_b9} onChange={(e) => handleNutritionChange("vitamin_b9", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_b12">Vit B12 (µg)</Label>
+                      <Input id="vitamin_b12" type="number" step="0.1" value={nutrition.vitamin_b12} onChange={(e) => handleNutritionChange("vitamin_b12", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_c">Vit C (mg)</Label>
                       <Input id="vitamin_c" type="number" step="0.1" value={nutrition.vitamin_c} onChange={(e) => handleNutritionChange("vitamin_c", e.target.value)} disabled={saving} />
                     </div>
                     <div>
-                      <Label htmlFor="vitamin_d">Vit D</Label>
+                      <Label htmlFor="vitamin_d">Vit D (µg)</Label>
                       <Input id="vitamin_d" type="number" step="0.1" value={nutrition.vitamin_d} onChange={(e) => handleNutritionChange("vitamin_d", e.target.value)} disabled={saving} />
                     </div>
                     <div>
-                      <Label htmlFor="vitamin_b12">Vit B12</Label>
-                      <Input id="vitamin_b12" type="number" step="0.1" value={nutrition.vitamin_b12} onChange={(e) => handleNutritionChange("vitamin_b12", e.target.value)} disabled={saving} />
+                      <Label htmlFor="vitamin_e">Vit E (mg)</Label>
+                      <Input id="vitamin_e" type="number" step="0.1" value={nutrition.vitamin_e} onChange={(e) => handleNutritionChange("vitamin_e", e.target.value)} disabled={saving} />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitamin_k">Vit K (µg)</Label>
+                      <Input id="vitamin_k" type="number" step="0.1" value={nutrition.vitamin_k} onChange={(e) => handleNutritionChange("vitamin_k", e.target.value)} disabled={saving} />
                     </div>
                   </div>
                 </section>
