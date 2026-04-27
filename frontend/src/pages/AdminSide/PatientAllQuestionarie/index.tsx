@@ -398,7 +398,7 @@ export default function PatientAllQuestionariePage() {
                 ))}
 
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Do you have any history of surgery?</p>
+                  <p className="text-sm font-medium">History of surgery? (If yes, specify below)</p>
                   <div className="flex gap-5 text-sm">
                     <label><input type="radio" checked={surgeryHistory === "yes"} onChange={() => setSurgeryHistory("yes")} /> Yes</label>
                     <label><input type="radio" checked={surgeryHistory === "no"} onChange={() => setSurgeryHistory("no")} /> No</label>
@@ -407,7 +407,7 @@ export default function PatientAllQuestionariePage() {
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Any Allergy from medicine</p>
+                  <p className="text-sm font-medium">Medicine Allergy? (If yes, specify below)</p>
                   <div className="flex gap-5 text-sm">
                     <label><input type="radio" checked={medicineAllergy === "yes"} onChange={() => setMedicineAllergy("yes")} /> Yes</label>
                     <label><input type="radio" checked={medicineAllergy === "no"} onChange={() => setMedicineAllergy("no")} /> No</label>
@@ -459,11 +459,15 @@ export default function PatientAllQuestionariePage() {
                 </label>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Are you currently on any medication?</p>
-                  <div className="flex gap-5 text-sm">
-                    <label><input type="radio" checked={onMedication === "yes"} onChange={() => setOnMedication("yes")} /> Yes</label>
-                    <label><input type="radio" checked={onMedication === "no"} onChange={() => setOnMedication("no")} /> No</label>
-                  </div>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={onMedication === "yes"}
+                      onChange={(e) => setOnMedication(e.target.checked ? "yes" : "no")}
+                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Are you currently on any medication? (Tick if yes)</span>
+                  </label>
                   <input value={specifyMedication} onChange={(e) => setSpecifyMedication(e.target.value)} placeholder="Please specify medication" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 </div>
               </section>
@@ -495,11 +499,11 @@ export default function PatientAllQuestionariePage() {
                 </div>
 
                 {[
-                  { label: "Do you consume Egg", value: consumeEgg, setValue: setConsumeEgg },
-                  { label: "Do you consume milk", value: consumeMilk, setValue: setConsumeMilk },
-                  { label: "Any food Allergy", value: foodAllergy, setValue: setFoodAllergy },
-                  { label: "Do you consume Snack in between Meals", value: snacksBetweenMeals, setValue: setSnacksBetweenMeals },
-                  { label: "Do you skip meals", value: skipMeals, setValue: setSkipMeals },
+                  { label: "Do you consume Egg?", value: consumeEgg, setValue: setConsumeEgg },
+                  { label: "Do you consume milk?", value: consumeMilk, setValue: setConsumeMilk },
+                  { label: "Any food Allergy? (If yes, specify below)", value: foodAllergy, setValue: setFoodAllergy },
+                  { label: "Do you consume Snack in between Meals?", value: snacksBetweenMeals, setValue: setSnacksBetweenMeals },
+                  { label: "Do you skip meals?", value: skipMeals, setValue: setSkipMeals },
                 ].map((item) => (
                   <div key={item.label} className="space-y-1">
                     <p className="text-sm font-medium">{item.label}</p>

@@ -271,13 +271,13 @@ export function generatePDF(d: QuestionnaireData) {
   checklist("Digestive Issues", d.digestiveOptions, d.digestiveSelected);
 
   heading("Clinical History");
-  yesNoField("History of Surgery", d.surgeryHistory);
+  yesNoField("History of Surgery (If yes, specify below)", d.surgeryHistory);
   field("Surgery Details", d.surgeryDetails);
 
-  yesNoField("Medicine Allergy", d.medicineAllergy);
+  yesNoField("Medicine Allergy (If yes, specify below)", d.medicineAllergy);
   field("Medicine Details", d.medicineAllergyDetails);
 
-  yesNoField("On Medication", d.onMedication);
+  yesNoField("On Medication (Tick if yes)", d.onMedication);
   field("Medication Details", d.specifyMedication);
 
   yesNoField("Dietitian Consultation Before (Tick if yes)", d.dietitianConsultationBefore);
@@ -298,12 +298,12 @@ export function generatePDF(d: QuestionnaireData) {
   // ── Food Habit
   heading("Food Habits");
   radioField("Diet Pattern", ["Veg", "Non Veg", "Eggetarian"], d.dietPattern);
-  radioField("Non-Veg Frequency", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally"], d.nonVegFrequency);
+  radioField("Non-Veg Frequency (If Non-Veg)", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally"], d.nonVegFrequency);
 
   const dietGridY = y;
   field("Consume Egg", yn(d.consumeEgg));
   field("Consume Milk", yn(d.consumeMilk));
-  yesNoField("Food Allergy", d.foodAllergy);
+  yesNoField("Food Allergy (If yes, specify below)", d.foodAllergy);
   field("Allergy Details", d.foodAllergyDetails);
 
   field("Fruits/Day", d.fruitsPerDay);
@@ -469,13 +469,13 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(...docChecklist("Any skin issue", d.skinOptions, d.skinSelected));
   children.push(...docChecklist("Any vitamin or Mineral deficiency", d.deficiencyOptions, d.deficiencySelected));
   children.push(...docChecklist("Digestive issues", d.digestiveOptions, d.digestiveSelected));
-  children.push(docYesNoField("History of surgery", d.surgeryHistory));
+  children.push(docYesNoField("History of surgery (If yes, specify below)", d.surgeryHistory));
   children.push(docHint("If yes, please specify the type of surgery below:"));
   children.push(docField("Type of surgery", d.surgeryDetails));
-  children.push(docYesNoField("Allergy from medicine", d.medicineAllergy));
+  children.push(docYesNoField("Allergy from medicine (If yes, specify below)", d.medicineAllergy));
   children.push(docHint("If yes, please mention the medicine name/details below:"));
   children.push(docField("Medicine details", d.medicineAllergyDetails));
-  children.push(docYesNoField("On Medication", d.onMedication));
+  children.push(docYesNoField("On Medication (Tick if yes)", d.onMedication));
   children.push(docHint("If yes, please specify the medication below:"));
   children.push(docField("Medication details", d.specifyMedication));
   children.push(docYesNoField("Dietitian consultation before (Tick if yes)", d.dietitianConsultationBefore));
@@ -497,10 +497,10 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(docHeading("FOOD HABIT"));
   children.push(docRadioField("Diet patterns", ["Veg", "Non Veg", "Eggetarian"], d.dietPattern));
   children.push(docHint("If Non Veg, please select the frequency below:"));
-  children.push(docRadioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency));
+  children.push(docRadioField("Frequency of Non-Veg Intake (If Non-Veg)", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency));
   children.push(docYesNoField("Consume Egg", d.consumeEgg));
   children.push(docYesNoField("Consume milk", d.consumeMilk));
-  children.push(docYesNoField("Food Allergy", d.foodAllergy));
+  children.push(docYesNoField("Food Allergy (If yes, specify below)", d.foodAllergy));
   children.push(docHint("If yes, please mention the food allergy name below:"));
   children.push(docField("Food allergy details", d.foodAllergyDetails));
   children.push(docField("Fruits per day", d.fruitsPerDay));
