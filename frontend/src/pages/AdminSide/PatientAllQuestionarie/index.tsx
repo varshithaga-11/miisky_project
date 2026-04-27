@@ -61,6 +61,7 @@ export default function PatientAllQuestionariePage() {
   const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
   const [skinOptions, setSkinOptions] = useState<string[]>([]);
   const [deficiencyOptions, setDeficiencyOptions] = useState<string[]>([]);
+  const [digestiveOptions, setDigestiveOptions] = useState<string[]>([]);
   const [habitOptions, setHabitOptions] = useState<string[]>([]);
   const [activityOptions, setActivityOptions] = useState<string[]>([]);
 
@@ -68,6 +69,7 @@ export default function PatientAllQuestionariePage() {
   const [symptomSelected, setSymptomSelected] = useState<string[]>([]);
   const [skinSelected, setSkinSelected] = useState<string[]>([]);
   const [deficiencySelected, setDeficiencySelected] = useState<string[]>([]);
+  const [digestiveSelected, setDigestiveSelected] = useState<string[]>([]);
   const [habitSelected, setHabitSelected] = useState<string[]>([]);
   const [activitySelected, setActivitySelected] = useState<string[]>([]);
 
@@ -76,6 +78,7 @@ export default function PatientAllQuestionariePage() {
   const [addSymptom, setAddSymptom] = useState("");
   const [addSkinIssue, setAddSkinIssue] = useState("");
   const [addDeficiency, setAddDeficiency] = useState("");
+  const [addDigestive, setAddDigestive] = useState("");
   const [addHabit, setAddHabit] = useState("");
   const [addActivity, setAddActivity] = useState("");
 
@@ -90,28 +93,30 @@ export default function PatientAllQuestionariePage() {
   const [surgeryHistory, setSurgeryHistory] = useState<YesNo>("");
   const [surgeryDetails, setSurgeryDetails] = useState("");
   const [medicineAllergy, setMedicineAllergy] = useState<YesNo>("");
-  const [medicineAllergyName, setMedicineAllergyName] = useState("");
+  const [medicineAllergyDetails, setMedicineAllergyDetails] = useState("");
+  const [dietitianConsultationBefore, setDietitianConsultationBefore] = useState<YesNo>("");
+  const [dietitianConsultationName, setDietitianConsultationName] = useState("");
+  const [dietitianConsultationSpecialty, setDietitianConsultationSpecialty] = useState("");
+  const [dietitianConsultationPhone, setDietitianConsultationPhone] = useState("");
+  const [dietitianConsultationLocation, setDietitianConsultationLocation] = useState("");
+  const [dietitianConsultationNotes, setDietitianConsultationNotes] = useState("");
   const [consultedDoctor, setConsultedDoctor] = useState<YesNo>("");
-  const [doctorName, setDoctorName] = useState("");
-  const [doctorSpecialty, setDoctorSpecialty] = useState("");
-  const [doctorPhone, setDoctorPhone] = useState("");
+  const [consultantDoctorName, setConsultantDoctorName] = useState("");
+  const [consultantDoctorSpecialty, setConsultantDoctorSpecialty] = useState("");
+  const [consultantDoctorPhone, setConsultantDoctorPhone] = useState("");
   const [otherHealthConcerns, setOtherHealthConcerns] = useState("");
   const [menstrualPattern, setMenstrualPattern] = useState<"heavy" | "very_less" | "none" | "">("");
 
-  const [dietPattern, setDietPattern] = useState<DietPattern>("");
+  const [dietPattern, setDietPattern] = useState<DietPattern | "eggetarian" | "">("");
   const [nonVegFrequency, setNonVegFrequency] = useState("");
   const [consumeEgg, setConsumeEgg] = useState<YesNo>("");
   const [consumeMilk, setConsumeMilk] = useState<YesNo>("");
   const [foodAllergy, setFoodAllergy] = useState<YesNo>("");
-  const [foodAllergyName, setFoodAllergyName] = useState("");
+  const [foodAllergyDetails, setFoodAllergyDetails] = useState("");
   const [mealSlotsSelected, setMealSlotsSelected] = useState<string[]>([]);
   const [snacksBetweenMeals, setSnacksBetweenMeals] = useState<YesNo>("");
   const [skipMeals, setSkipMeals] = useState<YesNo>("");
   const [foodSource, setFoodSource] = useState<string[]>([]);
-  const [dieticianConsulted, setDieticianConsulted] = useState<YesNo>("");
-  const [dieticianName, setDieticianName] = useState("");
-  const [dieticianLocation, setDieticianLocation] = useState("");
-  const [dieticianPhone, setDieticianPhone] = useState("");
 
   const [physicalActivity, setPhysicalActivity] = useState<YesNo>("");
   const [activityOtherText, setActivityOtherText] = useState("");
@@ -122,6 +127,7 @@ export default function PatientAllQuestionariePage() {
   const [fruitsPerDay, setFruitsPerDay] = useState("");
   const [vegetablesPerDay, setVegetablesPerDay] = useState("");
   const [onMedication, setOnMedication] = useState<YesNo>("");
+  const [specifyMedication, setSpecifyMedication] = useState("");
   const [sleepQuality, setSleepQuality] = useState("");
   const [stressLevel, setStressLevel] = useState("");
   const [fallsSickFrequency, setFallsSickFrequency] = useState("");
@@ -161,6 +167,7 @@ export default function PatientAllQuestionariePage() {
         setSymptomOptions(mergeOptions([], symptoms.map((item) => item.name)));
         setSkinOptions(mergeOptions([], skinIssues.map((item) => item.name)));
         setDeficiencyOptions(mergeOptions([], deficiencies.map((item) => item.name)));
+        setDigestiveOptions(mergeOptions([], digestiveIssues.map((item) => item.name)));
         setHabitOptions(mergeOptions([], habits.map((item) => item.name)));
         setActivityOptions(mergeOptions([], activities.map((item) => item.name)));
       } catch (err) {
@@ -193,16 +200,19 @@ export default function PatientAllQuestionariePage() {
       symptomOptions, symptomSelected,
       skinOptions, skinSelected,
       deficiencyOptions, deficiencySelected,
+      digestiveOptions, digestiveSelected,
       surgeryHistory, surgeryDetails,
-      medicineAllergy, medicineAllergyName,
-      consultedDoctor, doctorName, doctorSpecialty, doctorPhone,
+      medicineAllergy, medicineAllergyDetails,
+      dietitianConsultationBefore,
+      dietitianConsultationName, dietitianConsultationSpecialty, dietitianConsultationPhone,
+      dietitianConsultationLocation, dietitianConsultationNotes,
+      consultedDoctor, consultantDoctorName, consultantDoctorSpecialty, consultantDoctorPhone,
       otherHealthConcerns, menstrualPattern,
       dietPattern, nonVegFrequency,
       consumeEgg, consumeMilk,
-      foodAllergy, foodAllergyName,
+      foodAllergy, foodAllergyDetails,
       mealSlotsSelected, snacksBetweenMeals, skipMeals,
       foodSource,
-      dieticianConsulted, dieticianName, dieticianLocation, dieticianPhone,
       physicalActivity,
       activityOptions, activitySelected,
       activityOtherText,
@@ -213,6 +223,7 @@ export default function PatientAllQuestionariePage() {
       fruitsPerDay,
       vegetablesPerDay,
       onMedication,
+      specifyMedication,
       sleepQuality,
       stressLevel,
       fallsSickFrequency,
@@ -358,6 +369,7 @@ export default function PatientAllQuestionariePage() {
                   { title: "Symptoms any other", options: symptomOptions, selected: symptomSelected, setSelected: setSymptomSelected, addValue: addSymptom, setAddValue: setAddSymptom, setOptions: setSymptomOptions },
                   { title: "Any skin issue", options: skinOptions, selected: skinSelected, setSelected: setSkinSelected, addValue: addSkinIssue, setAddValue: setAddSkinIssue, setOptions: setSkinOptions },
                   { title: "Any vitamin or Mineral deficiency", options: deficiencyOptions, selected: deficiencySelected, setSelected: setDeficiencySelected, addValue: addDeficiency, setAddValue: setAddDeficiency, setOptions: setDeficiencyOptions },
+                  { title: "Any digestive issues", options: digestiveOptions, selected: digestiveSelected, setSelected: setDigestiveSelected, addValue: addDigestive, setAddValue: setAddDigestive, setOptions: setDigestiveOptions },
                 ].map((group) => (
                   <div key={group.title} className="space-y-2">
                     <p className="text-sm font-medium">{group.title}</p>
@@ -391,9 +403,7 @@ export default function PatientAllQuestionariePage() {
                     <label><input type="radio" checked={surgeryHistory === "yes"} onChange={() => setSurgeryHistory("yes")} /> Yes</label>
                     <label><input type="radio" checked={surgeryHistory === "no"} onChange={() => setSurgeryHistory("no")} /> No</label>
                   </div>
-                  {surgeryHistory === "yes" ? (
-                    <input value={surgeryDetails} onChange={(e) => setSurgeryDetails(e.target.value)} placeholder="Please specify the type of surgery" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                  ) : null}
+                  <input value={surgeryDetails} onChange={(e) => setSurgeryDetails(e.target.value)} placeholder="Type of surgery" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 </div>
 
                 <div className="space-y-1">
@@ -402,24 +412,45 @@ export default function PatientAllQuestionariePage() {
                     <label><input type="radio" checked={medicineAllergy === "yes"} onChange={() => setMedicineAllergy("yes")} /> Yes</label>
                     <label><input type="radio" checked={medicineAllergy === "no"} onChange={() => setMedicineAllergy("no")} /> No</label>
                   </div>
-                  {medicineAllergy === "yes" ? (
-                    <input value={medicineAllergyName} onChange={(e) => setMedicineAllergyName(e.target.value)} placeholder="Please mention the name" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                  ) : null}
+                  <input value={medicineAllergyDetails} onChange={(e) => setMedicineAllergyDetails(e.target.value)} placeholder="Please mention the name/details" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Have you consulted a doctor?</p>
-                  <div className="flex gap-5 text-sm">
-                    <label><input type="radio" checked={consultedDoctor === "yes"} onChange={() => setConsultedDoctor("yes")} /> Yes</label>
-                    <label><input type="radio" checked={consultedDoctor === "no"} onChange={() => setConsultedDoctor("no")} /> No</label>
-                  </div>
-                  {consultedDoctor === "yes" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
-                      <input value={doctorName} onChange={(e) => setDoctorName(e.target.value)} placeholder="Consultant Doctor name" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                      <input value={doctorSpecialty} onChange={(e) => setDoctorSpecialty(e.target.value)} placeholder="Specialty" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                      <input value={doctorPhone} onChange={(e) => setDoctorPhone(e.target.value)} placeholder="Phone number" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={dietitianConsultationBefore === "yes"}
+                      onChange={(e) => setDietitianConsultationBefore(e.target.checked ? "yes" : "no")}
+                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Have you consulted any dietitian before? (Tick if yes)</span>
+                  </label>
+                  <div className="space-y-2 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <input value={dietitianConsultationName} onChange={(e) => setDietitianConsultationName(e.target.value)} placeholder="Dietitian name" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                      <input value={dietitianConsultationSpecialty} onChange={(e) => setDietitianConsultationSpecialty(e.target.value)} placeholder="Specialty" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                      <input value={dietitianConsultationPhone} onChange={(e) => setDietitianConsultationPhone(e.target.value)} placeholder="Phone number" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                     </div>
-                  ) : null}
+                    <input value={dietitianConsultationLocation} onChange={(e) => setDietitianConsultationLocation(e.target.value)} placeholder="Location" className="w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                    <textarea value={dietitianConsultationNotes} onChange={(e) => setDietitianConsultationNotes(e.target.value)} placeholder="Dietitian notes" rows={2} className="w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                  </div>
+                </div>
+
+                <div className="space-y-1 border-t pt-2 dark:border-gray-700">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={consultedDoctor === "yes"}
+                      onChange={(e) => setConsultedDoctor(e.target.checked ? "yes" : "no")}
+                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Have you consulted a consultant doctor? (Tick if yes)</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                    <input value={consultantDoctorName} onChange={(e) => setConsultantDoctorName(e.target.value)} placeholder="Consultant Doctor name" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                    <input value={consultantDoctorSpecialty} onChange={(e) => setConsultantDoctorSpecialty(e.target.value)} placeholder="Specialty" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                    <input value={consultantDoctorPhone} onChange={(e) => setConsultantDoctorPhone(e.target.value)} placeholder="Phone number" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
+                  </div>
                 </div>
 
                 <label className="text-sm block">
@@ -433,6 +464,7 @@ export default function PatientAllQuestionariePage() {
                     <label><input type="radio" checked={onMedication === "yes"} onChange={() => setOnMedication("yes")} /> Yes</label>
                     <label><input type="radio" checked={onMedication === "no"} onChange={() => setOnMedication("no")} /> No</label>
                   </div>
+                  <input value={specifyMedication} onChange={(e) => setSpecifyMedication(e.target.value)} placeholder="Please specify medication" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
                 </div>
               </section>
 
@@ -443,6 +475,7 @@ export default function PatientAllQuestionariePage() {
                   <div className="flex gap-5 text-sm">
                     <label><input type="radio" checked={dietPattern === "veg"} onChange={() => setDietPattern("veg")} /> Veg</label>
                     <label><input type="radio" checked={dietPattern === "non_veg"} onChange={() => setDietPattern("non_veg")} /> Non Veg</label>
+                    <label><input type="radio" checked={dietPattern === "eggetarian"} onChange={() => setDietPattern("eggetarian")} /> Eggetarian</label>
                   </div>
                   {dietPattern === "non_veg" ? (
                     <div className="space-y-2 mt-2 text-sm">
@@ -477,9 +510,7 @@ export default function PatientAllQuestionariePage() {
                   </div>
                 ))}
 
-                {foodAllergy === "yes" ? (
-                  <input value={foodAllergyName} onChange={(e) => setFoodAllergyName(e.target.value)} placeholder="Please mention the name" className="w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                ) : null}
+                  <textarea value={foodAllergyDetails} onChange={(e) => setFoodAllergyDetails(e.target.value)} placeholder="Please mention the food name" className="mt-2 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label className="text-sm">Fruits intake per day <input type="number" value={fruitsPerDay} onChange={(e) => setFruitsPerDay(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
@@ -503,21 +534,6 @@ export default function PatientAllQuestionariePage() {
                       <label key={source}><input type="checkbox" checked={foodSource.includes(source)} onChange={() => setFoodSource((prev) => toggleItem(prev, source))} /> {source}</label>
                     ))}
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Have you taken any consultation from a dietician previously?</p>
-                  <div className="flex gap-5 text-sm">
-                    <label><input type="radio" checked={dieticianConsulted === "yes"} onChange={() => setDieticianConsulted("yes")} /> Yes</label>
-                    <label><input type="radio" checked={dieticianConsulted === "no"} onChange={() => setDieticianConsulted("no")} /> No</label>
-                  </div>
-                  {dieticianConsulted === "yes" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
-                      <input value={dieticianName} onChange={(e) => setDieticianName(e.target.value)} placeholder="Dietician Name" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                      <input value={dieticianLocation} onChange={(e) => setDieticianLocation(e.target.value)} placeholder="Location" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                      <input value={dieticianPhone} onChange={(e) => setDieticianPhone(e.target.value)} placeholder="Phone number" className="rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" />
-                    </div>
-                  ) : null}
                 </div>
               </section>
 
@@ -613,14 +629,16 @@ export default function PatientAllQuestionariePage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Menstrual Pattern</p>
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <label><input type="radio" checked={menstrualPattern === "heavy"} onChange={() => setMenstrualPattern("heavy")} /> Heavy bleeding</label>
-                      <label><input type="radio" checked={menstrualPattern === "very_less"} onChange={() => setMenstrualPattern("very_less")} /> Very less bleeding</label>
-                      <label><input type="radio" checked={menstrualPattern === "none"} onChange={() => setMenstrualPattern("none")} /> None</label>
+                  {gender !== "male" && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Menstrual Pattern</p>
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        <label><input type="radio" checked={menstrualPattern === "heavy"} onChange={() => setMenstrualPattern("heavy")} /> Heavy bleeding</label>
+                        <label><input type="radio" checked={menstrualPattern === "very_less"} onChange={() => setMenstrualPattern("very_less")} /> Very less bleeding</label>
+                        <label><input type="radio" checked={menstrualPattern === "none"} onChange={() => setMenstrualPattern("none")} /> None</label>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <label className="text-sm block">

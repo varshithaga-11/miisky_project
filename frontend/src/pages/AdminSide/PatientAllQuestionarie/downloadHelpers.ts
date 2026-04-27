@@ -17,17 +17,26 @@ export interface QuestionnaireData {
   symptomOptions: string[]; symptomSelected: string[];
   skinOptions: string[]; skinSelected: string[];
   deficiencyOptions: string[]; deficiencySelected: string[];
+  digestiveOptions: string[]; digestiveSelected: string[];
   surgeryHistory: YesNo; surgeryDetails: string;
-  medicineAllergy: YesNo; medicineAllergyName: string;
-  consultedDoctor: YesNo; doctorName: string; doctorSpecialty: string; doctorPhone: string;
+  medicineAllergy: YesNo; medicineAllergyDetails: string;
+  dietitianConsultationBefore: YesNo;
+  dietitianConsultationName: string;
+  dietitianConsultationSpecialty: string;
+  dietitianConsultationPhone: string;
+  dietitianConsultationLocation: string;
+  dietitianConsultationNotes: string;
+  consultedDoctor: YesNo;
+  consultantDoctorName: string;
+  consultantDoctorSpecialty: string;
+  consultantDoctorPhone: string;
   otherHealthConcerns: string; menstrualPattern: string;
   dietPattern: string; nonVegFrequency: string;
   consumeEgg: YesNo; consumeMilk: YesNo;
-  foodAllergy: YesNo; foodAllergyName: string;
+  foodAllergy: YesNo; foodAllergyDetails: string;
   mealSlotsSelected: string[]; snacksBetweenMeals: YesNo; skipMeals: YesNo;
   mealsPerDay: string;
   foodSource: string[];
-  dieticianConsulted: YesNo; dieticianName: string; dieticianLocation: string; dieticianPhone: string;
   physicalActivity: YesNo;
   activityOptions: string[]; activitySelected: string[];
   activityOtherText: string;
@@ -36,6 +45,7 @@ export interface QuestionnaireData {
   improvementThoughts: string;
   fruitsPerDay: string; vegetablesPerDay: string;
   onMedication: YesNo;
+  specifyMedication: string;
   sleepQuality: string; stressLevel: string; fallsSickFrequency: string;
   foodPreferences: string; additionalNotes: string;
   anyOtherComments: string; anyNotesForCareTeam: string;
@@ -60,12 +70,12 @@ export function generatePDF(d: QuestionnaireData) {
   const addHeader = () => {
     pdf.setFillColor(...brandColor);
     pdf.rect(0, 0, pageW, 40, "F");
-    
+
     pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(255, 255, 255);
     pdf.text("MIISKY", margin, 25);
-    
+
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
     pdf.text("Patient Assessment Report", pageW - margin, 25, { align: "right" });
@@ -94,12 +104,12 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(...brandColor);
     pdf.text(text.toUpperCase(), margin, y);
-    
+
     y += 6;
     pdf.setDrawColor(...brandColor);
     pdf.setLineWidth(1.5);
     pdf.line(margin, y, margin + 40, y);
-    
+
     pdf.setDrawColor(226, 232, 240); // Slate-200
     pdf.setLineWidth(0.5);
     pdf.line(margin + 40, y, pageW - margin, y);
@@ -112,11 +122,11 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(...secondaryColor);
     pdf.text(label, margin, y);
-    
+
     const labelW = 120; // Fixed label width for alignment
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(...textColor);
-    
+
     const lines = pdf.splitTextToSize(value || "-", usable - labelW);
     pdf.text(lines, margin + labelW, y);
     y += Math.max(1, lines.length) * 14 + 4;
@@ -152,7 +162,7 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(...secondaryColor);
     pdf.text(label, margin, y);
-    
+
     y += 14;
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(...textColor);
@@ -179,20 +189,20 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setTextColor(...secondaryColor);
     pdf.text(title, margin, y);
     y += 14;
-    
+
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(...textColor);
     let xPos = margin + 10;
     for (const opt of options) {
       const checked = selected.includes(opt);
       const optW = pdf.getTextWidth(opt) + 25;
-      
+
       if (xPos + optW > pageW - margin) {
         y += 18;
         xPos = margin + 10;
         checkPage(18);
       }
-      
+
       const cbW = drawCheckbox(xPos, y, checked);
       pdf.text(opt, xPos + cbW, y);
       xPos += cbW + pdf.getTextWidth(opt) + 20;
@@ -206,7 +216,7 @@ export function generatePDF(d: QuestionnaireData) {
 
   // Initial Header
   addHeader();
-  
+
   // Title
   y += 30;
   pdf.setFontSize(22);
@@ -258,49 +268,52 @@ export function generatePDF(d: QuestionnaireData) {
   checklist("Symptoms", d.symptomOptions, d.symptomSelected);
   checklist("Skin Issues", d.skinOptions, d.skinSelected);
   checklist("Vitamin/Mineral Deficiencies", d.deficiencyOptions, d.deficiencySelected);
+  checklist("Digestive Issues", d.digestiveOptions, d.digestiveSelected);
 
   heading("Clinical History");
   yesNoField("History of Surgery", d.surgeryHistory);
-  if (d.surgeryHistory === "yes") field("Surgery Details", d.surgeryDetails);
-  
+  field("Surgery Details", d.surgeryDetails);
+
   yesNoField("Medicine Allergy", d.medicineAllergy);
-  if (d.medicineAllergy === "yes") field("Medicine Name", d.medicineAllergyName);
-  
+  field("Medicine Details", d.medicineAllergyDetails);
+
   yesNoField("On Medication", d.onMedication);
-  yesNoField("Consulted Doctor", d.consultedDoctor);
-  if (d.consultedDoctor === "yes") {
-    field("Doctor Name", d.doctorName);
-    field("Specialty", d.doctorSpecialty);
-    field("Phone", d.doctorPhone);
-  }
+  field("Medication Details", d.specifyMedication);
+
+  yesNoField("Dietitian Consultation Before (Tick if yes)", d.dietitianConsultationBefore);
+  hint("If yes, please see dietitian details below:");
+  field("Dietitian Name", d.dietitianConsultationName);
+  field("Specialty", d.dietitianConsultationSpecialty);
+  field("Phone", d.dietitianConsultationPhone);
+  field("Location", d.dietitianConsultationLocation);
+  field("Notes", d.dietitianConsultationNotes);
+
+  yesNoField("Consulted Consultant Doctor (Tick if yes)", d.consultedDoctor);
+  hint("If yes, please see consultant doctor details below:");
+  field("Consultant Doctor Name", d.consultantDoctorName);
+  field("Specialty", d.consultantDoctorSpecialty);
+  field("Phone", d.consultantDoctorPhone);
   field("Other Health Concerns", d.otherHealthConcerns);
 
   // ── Food Habit
   heading("Food Habits");
-  radioField("Diet Pattern", ["Veg", "Non Veg"], d.dietPattern === "non_veg" ? "Non Veg" : d.dietPattern === "veg" ? "Veg" : "");
+  radioField("Diet Pattern", ["Veg", "Non Veg", "Eggetarian"], d.dietPattern);
   radioField("Non-Veg Frequency", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally"], d.nonVegFrequency);
-  
+
   const dietGridY = y;
   field("Consume Egg", yn(d.consumeEgg));
   field("Consume Milk", yn(d.consumeMilk));
   yesNoField("Food Allergy", d.foodAllergy);
-  if (d.foodAllergy === "yes") field("Allergy Details", d.foodAllergyName);
-  
+  field("Allergy Details", d.foodAllergyDetails);
+
   field("Fruits/Day", d.fruitsPerDay);
   field("Veggies/Day", d.vegetablesPerDay);
   field("Meals Count", d.mealsPerDay);
   checklist("Meal Slots", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner"], d.mealSlotsSelected);
-  
+
   yesNoField("Snack Between Meals", d.snacksBetweenMeals);
   yesNoField("Skip Meals", d.skipMeals);
   checklist("Food Source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource);
-  
-  yesNoField("Consulted Dietician", d.dieticianConsulted);
-  if (d.dieticianConsulted === "yes") {
-    field("Dietician Name", d.dieticianName);
-    field("Location", d.dieticianLocation);
-    field("Phone", d.dieticianPhone);
-  }
 
   // ── Other Habit
   heading("Lifestyle & Habits");
@@ -309,16 +322,16 @@ export function generatePDF(d: QuestionnaireData) {
     checklist("Activities", d.activityOptions, d.activitySelected);
     field("Activity Others", d.activityOtherText);
   }
-  
+
   checklist("General Habits", d.habitOptions, d.habitSelected);
   field("Habit Others", d.habitOtherText);
   field("Improvement Goals", d.improvementThoughts);
-  
+
   radioField("Sleep Quality", ["Fresh", "Not Fresh"], d.sleepQuality);
   radioField("Stress Level", ["Low", "Medium", "High"], d.stressLevel);
   radioField("Sick Frequency", ["Once", "Twice", "Frequent"], d.fallsSickFrequency);
   radioField("Menstrual Pattern", ["Heavy bleeding", "Very less bleeding", "None"], d.menstrualPattern);
-  
+
   heading("Additional Information");
   field("Food Preferences", d.foodPreferences);
   field("Additional Notes", d.additionalNotes);
@@ -455,30 +468,41 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(...docChecklist("Symptoms", d.symptomOptions, d.symptomSelected));
   children.push(...docChecklist("Any skin issue", d.skinOptions, d.skinSelected));
   children.push(...docChecklist("Any vitamin or Mineral deficiency", d.deficiencyOptions, d.deficiencySelected));
+  children.push(...docChecklist("Digestive issues", d.digestiveOptions, d.digestiveSelected));
   children.push(docYesNoField("History of surgery", d.surgeryHistory));
   children.push(docHint("If yes, please specify the type of surgery below:"));
   children.push(docField("Type of surgery", d.surgeryDetails));
   children.push(docYesNoField("Allergy from medicine", d.medicineAllergy));
-  children.push(docHint("If yes, please mention the medicine name below:"));
-  children.push(docField("Medicine name", d.medicineAllergyName));
-  children.push(docYesNoField("Consulted a doctor", d.consultedDoctor));
-  children.push(docHint("If yes, please fill the doctor details below:"));
-  children.push(docField("Doctor name", d.doctorName));
-  children.push(docField("Specialty", d.doctorSpecialty));
-  children.push(docField("Phone number", d.doctorPhone));
-  children.push(docField("Other health concerns", d.otherHealthConcerns));
+  children.push(docHint("If yes, please mention the medicine name/details below:"));
+  children.push(docField("Medicine details", d.medicineAllergyDetails));
   children.push(docYesNoField("On Medication", d.onMedication));
+  children.push(docHint("If yes, please specify the medication below:"));
+  children.push(docField("Medication details", d.specifyMedication));
+  children.push(docYesNoField("Dietitian consultation before (Tick if yes)", d.dietitianConsultationBefore));
+  children.push(docHint("If yes, please fill the dietitian details below:"));
+  children.push(docField("Dietitian name", d.dietitianConsultationName));
+  children.push(docField("Specialty", d.dietitianConsultationSpecialty));
+  children.push(docField("Phone number", d.dietitianConsultationPhone));
+  children.push(docField("Location", d.dietitianConsultationLocation));
+  children.push(docField("Notes", d.dietitianConsultationNotes));
+
+  children.push(docYesNoField("Consulted a consultant doctor (Tick if yes)", d.consultedDoctor));
+  children.push(docHint("If yes, please fill the consultant doctor details below:"));
+  children.push(docField("Consultant Doctor name", d.consultantDoctorName));
+  children.push(docField("Specialty", d.consultantDoctorSpecialty));
+  children.push(docField("Phone number", d.consultantDoctorPhone));
+  children.push(docField("Other health concerns", d.otherHealthConcerns));
 
   // Food Habit
   children.push(docHeading("FOOD HABIT"));
-  children.push(docRadioField("Diet patterns", ["Veg", "Non Veg"], d.dietPattern === "non_veg" ? "Non Veg" : d.dietPattern === "veg" ? "Veg" : ""));
+  children.push(docRadioField("Diet patterns", ["Veg", "Non Veg", "Eggetarian"], d.dietPattern));
   children.push(docHint("If Non Veg, please select the frequency below:"));
   children.push(docRadioField("Frequency of Non-Veg Intake", ["Daily", "3-4 times a week", "1-2 times a week", "Occasionally (once in 2-3 weeks)"], d.nonVegFrequency));
   children.push(docYesNoField("Consume Egg", d.consumeEgg));
   children.push(docYesNoField("Consume milk", d.consumeMilk));
   children.push(docYesNoField("Food Allergy", d.foodAllergy));
   children.push(docHint("If yes, please mention the food allergy name below:"));
-  children.push(docField("Food allergy name", d.foodAllergyName));
+  children.push(docField("Food allergy details", d.foodAllergyDetails));
   children.push(docField("Fruits per day", d.fruitsPerDay));
   children.push(docField("Vegetables per day", d.vegetablesPerDay));
   children.push(...docChecklist("Meals in one day", ["Early Morning", "Breakfast", "Mid morning", "Lunch", "Evening snacks", "Dinner", "None"], d.mealSlotsSelected));
@@ -486,11 +510,6 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(docYesNoField("Snack between Meals", d.snacksBetweenMeals));
   children.push(docYesNoField("Skip meals", d.skipMeals));
   children.push(...docChecklist("Food source", ["Home", "Canteen", "Hotel", "Home supplies"], d.foodSource));
-  children.push(docYesNoField("Consulted dietician", d.dieticianConsulted));
-  children.push(docHint("If yes, please fill the dietician details below:"));
-  children.push(docField("Dietician Name", d.dieticianName));
-  children.push(docField("Location", d.dieticianLocation));
-  children.push(docField("Phone number", d.dieticianPhone));
 
   // Other Habit
   children.push(docHeading("OTHER HABIT"));

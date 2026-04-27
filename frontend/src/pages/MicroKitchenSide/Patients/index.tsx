@@ -650,14 +650,14 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="space-y-4">
-                                            {selectedPatient.patient_questionnaire?.consulted_doctor_before && (
-                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl space-y-2">
-                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Previous Consultation</p>
-                                                    <p className="text-xs font-black text-gray-900 dark:text-white">Dr. {selectedPatient.patient_questionnaire.consulted_doctor_name || "???"} ({selectedPatient.patient_questionnaire.consulted_doctor_specialty || "???"})</p>
-                                                    <p className="text-[10px] text-gray-500 font-bold">Ph: {selectedPatient.patient_questionnaire.consulted_doctor_phone || "N/A"}</p>
-                                                    <p className="text-[10px] text-gray-500 font-bold">Loc: {selectedPatient.patient_questionnaire.consulted_doctor_location || "N/A"}</p>
-                                                    {selectedPatient.patient_questionnaire.consulted_doctor_notes && (
-                                                        <p className="text-[9px] text-gray-400 italic pt-1 border-t border-gray-100 dark:border-white/5">{selectedPatient.patient_questionnaire.consulted_doctor_notes}</p>
+                                            {selectedPatient.patient_questionnaire?.dietitian_consultation_before && (
+                                                <div className="flex-1 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Dietitian Consultation</span>
+                                                    <p className="text-xs font-black text-gray-900 dark:text-white">{selectedPatient.patient_questionnaire.dietitian_consultation_name || "???"} ({selectedPatient.patient_questionnaire.dietitian_consultation_specialty || "???"})</p>
+                                                    <p className="text-[10px] text-gray-500 font-bold">Ph: {selectedPatient.patient_questionnaire.dietitian_consultation_phone || "N/A"}</p>
+                                                    <p className="text-[10px] text-gray-500 font-bold">Loc: {selectedPatient.patient_questionnaire.dietitian_consultation_location || "N/A"}</p>
+                                                    {selectedPatient.patient_questionnaire.dietitian_consultation_notes && (
+                                                        <p className="text-[9px] text-gray-400 italic pt-1 border-t border-gray-100 dark:border-white/5">{selectedPatient.patient_questionnaire.dietitian_consultation_notes}</p>
                                                     )}
                                                 </div>
                                             )}

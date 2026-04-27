@@ -391,9 +391,9 @@ export default function PatientQuestionnairePage() {
     const foodPrefParts =
       foodPreferencesText.trim().length > 0
         ? foodPreferencesText
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
         : [];
     const food_preferences = foodPrefParts.length ? foodPrefParts.join(", ") : null;
 
@@ -609,11 +609,10 @@ export default function PatientQuestionnairePage() {
                 key={s.id}
                 type="button"
                 onClick={() => setStep(s.id)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  step === s.id
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${step === s.id
                     ? "bg-brand-500 text-white"
                     : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                }`}
+                  }`}
               >
                 {s.id}. {s.title}
               </button>
@@ -1033,54 +1032,87 @@ export default function PatientQuestionnairePage() {
                 )}
               </div>
 
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Doctor Consultation</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Dietitian Consultation</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="consulted_doctor_before">Have you consulted any doctor before?</Label>
-                  {triSelect(data.consulted_doctor_before, (v) => setField("consulted_doctor_before", v), "consulted_doctor_before")}
+                  <Label htmlFor="dietitian_consultation_before">Have you consulted any dietitian before?</Label>
+                  {triSelect(data.dietitian_consultation_before, (v) => setField("dietitian_consultation_before", v), "dietitian_consultation_before")}
                 </div>
-                {data.consulted_doctor_before === true && (
+                {data.dietitian_consultation_before === true && (
                   <>
                     <div>
-                      <Label htmlFor="consulted_doctor_name">Doctor Name</Label>
+                      <Label htmlFor="dietitian_consultation_name">Dietitian Name</Label>
                       <Input
-                        id="consulted_doctor_name"
-                        value={data.consulted_doctor_name || ""}
-                        onChange={(e) => setField("consulted_doctor_name", e.target.value)}
+                        id="dietitian_consultation_name"
+                        value={data.dietitian_consultation_name || ""}
+                        onChange={(e) => setField("dietitian_consultation_name", e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="consulted_doctor_specialty">Specialty</Label>
+                      <Label htmlFor="dietitian_consultation_specialty">Specialty</Label>
                       <Input
-                        id="consulted_doctor_specialty"
-                        value={data.consulted_doctor_specialty || ""}
-                        onChange={(e) => setField("consulted_doctor_specialty", e.target.value)}
+                        id="dietitian_consultation_specialty"
+                        value={data.dietitian_consultation_specialty || ""}
+                        onChange={(e) => setField("dietitian_consultation_specialty", e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="consulted_doctor_phone">Phone Number</Label>
+                      <Label htmlFor="dietitian_consultation_phone">Phone Number</Label>
                       <Input
-                        id="consulted_doctor_phone"
-                        value={data.consulted_doctor_phone || ""}
-                        onChange={(e) => setField("consulted_doctor_phone", e.target.value)}
+                        id="dietitian_consultation_phone"
+                        value={data.dietitian_consultation_phone || ""}
+                        onChange={(e) => setField("dietitian_consultation_phone", e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="consulted_doctor_location">Location</Label>
+                      <Label htmlFor="dietitian_consultation_location">Location</Label>
                       <Input
-                        id="consulted_doctor_location"
-                        value={data.consulted_doctor_location || ""}
-                        onChange={(e) => setField("consulted_doctor_location", e.target.value)}
+                        id="dietitian_consultation_location"
+                        value={data.dietitian_consultation_location || ""}
+                        onChange={(e) => setField("dietitian_consultation_location", e.target.value)}
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="consulted_doctor_notes">Doctor notes</Label>
+                      <Label htmlFor="dietitian_consultation_notes">Dietitian notes</Label>
                       <textarea
-                        id="consulted_doctor_notes"
-                        value={data.consulted_doctor_notes || ""}
-                        onChange={(e) => setField("consulted_doctor_notes", e.target.value)}
+                        id="dietitian_consultation_notes"
+                        value={data.dietitian_consultation_notes || ""}
+                        onChange={(e) => setField("dietitian_consultation_notes", e.target.value)}
                         className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
                         rows={2}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="md:col-span-2 border-t pt-4 mt-2">
+                  <Label htmlFor="consulted_doctor">Have you consulted a consultant doctor?</Label>
+                  {triSelect(data.consulted_doctor, (v) => setField("consulted_doctor", v), "consulted_doctor")}
+                </div>
+                {data.consulted_doctor === true && (
+                  <>
+                    <div>
+                      <Label htmlFor="consultant_doctor_name">Consultant Doctor Name</Label>
+                      <Input
+                        id="consultant_doctor_name"
+                        value={data.consultant_doctor_name || ""}
+                        onChange={(e) => setField("consultant_doctor_name", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="consultant_doctor_specialty">Specialty</Label>
+                      <Input
+                        id="consultant_doctor_specialty"
+                        value={data.consultant_doctor_specialty || ""}
+                        onChange={(e) => setField("consultant_doctor_specialty", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="consultant_doctor_phone">Phone Number</Label>
+                      <Input
+                        id="consultant_doctor_phone"
+                        value={data.consultant_doctor_phone || ""}
+                        onChange={(e) => setField("consultant_doctor_phone", e.target.value)}
                       />
                     </div>
                   </>

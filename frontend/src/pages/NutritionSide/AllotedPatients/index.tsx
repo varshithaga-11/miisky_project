@@ -697,20 +697,20 @@ const AllottedPatientsPage: React.FC = () => {
                                                      <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 italic">{p.questionnaire.specify_medication || "No details provided"}</p>
                                                   </div>
                                                )}
-                                               {p.questionnaire?.consulted_doctor_before && (
-                                                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                                                     <span className="text-[9px] font-bold text-gray-400 block uppercase">Previous Consultation</span>
-                                                     <p className="text-[10px] font-black text-gray-700 dark:text-gray-300">
-                                                        Dr. {p.questionnaire.consulted_doctor_name || "???"} ({p.questionnaire.consulted_doctor_specialty || "???"})
-                                                     </p>
-                                                     <p className="text-[9px] font-medium text-gray-500">
-                                                        Ph: {p.questionnaire.consulted_doctor_phone || "N/A"} | {p.questionnaire.consulted_doctor_location || "N/A"}
-                                                     </p>
-                                                     {p.questionnaire.consulted_doctor_notes && (
-                                                        <p className="mt-1 text-[9px] italic text-gray-400">Notes: {p.questionnaire.consulted_doctor_notes}</p>
-                                                     )}
-                                                  </div>
-                                               )}
+                                               {p.questionnaire?.dietitian_consultation_before && (
+                                               <div className="flex-1 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Dietitian Consultation</span>
+                                                  <p className="text-xs font-black text-gray-900 dark:text-white">
+                                                     {p.questionnaire.dietitian_consultation_name || "???"} ({p.questionnaire.dietitian_consultation_specialty || "???"})
+                                                  </p>
+                                                  <p className="text-[10px] text-gray-500 font-bold">
+                                                     Ph: {p.questionnaire.dietitian_consultation_phone || "N/A"} | {p.questionnaire.dietitian_consultation_location || "N/A"}
+                                                  </p>
+                                                  {p.questionnaire.dietitian_consultation_notes && (
+                                                     <p className="mt-1 text-[9px] italic text-gray-400">Notes: {p.questionnaire.dietitian_consultation_notes}</p>
+                                                  )}
+                                               </div>
+                                             )}
                                             </div>
                                            
                                            <div className="pt-6 border-t border-gray-100 dark:border-white/5 space-y-4">

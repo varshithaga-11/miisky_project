@@ -258,12 +258,12 @@ function QuestionnaireView({ data }: { data: any }) {
     "surgery_details",
     "medicine_allergy",
     "medicine_allergy_details",
-    "consulted_doctor_before",
-    "consulted_doctor_name",
-    "consulted_doctor_specialty",
-    "consulted_doctor_phone",
-    "consulted_doctor_location",
-    "consulted_doctor_notes",
+    "dietitian_consultation_before",
+    "dietitian_consultation_name",
+    "dietitian_consultation_specialty",
+    "dietitian_consultation_phone",
+    "dietitian_consultation_location",
+    "dietitian_consultation_notes",
     "other_health_concerns",
     "menstrual_pattern",
     "on_medication",
@@ -418,12 +418,12 @@ function QuestionnaireView({ data }: { data: any }) {
           <InfoItem label="Surgery Details" value={data.surgery_details} />
           <InfoItem label="Medicine Allergy" value={data.medicine_allergy} />
           <InfoItem label="Medicine Allergy Details" value={data.medicine_allergy_details} />
-          <InfoItem label="Consulted Doctor Before" value={data.consulted_doctor_before} />
-          <InfoItem label="Doctor Name" value={data.consulted_doctor_name} />
-          <InfoItem label="Doctor Specialty" value={data.consulted_doctor_specialty} />
-          <InfoItem label="Doctor Phone" value={data.consulted_doctor_phone} />
-          <InfoItem label="Doctor Location" value={data.consulted_doctor_location} />
-          <InfoItem label="Doctor Notes" value={data.consulted_doctor_notes} />
+          <InfoItem label="Dietitian Consultation Before" value={data.dietitian_consultation_before} />
+          <InfoItem label="Dietitian Name" value={data.dietitian_consultation_name} />
+          <InfoItem label="Dietitian Specialty" value={data.dietitian_consultation_specialty} />
+          <InfoItem label="Dietitian Phone" value={data.dietitian_consultation_phone} />
+          <InfoItem label="Dietitian Location" value={data.dietitian_consultation_location} />
+          <InfoItem label="Dietitian Notes" value={data.dietitian_consultation_notes} />
           <InfoItem label="Other Health Concerns" value={data.other_health_concerns} />
           <InfoItem label="Menstrual Pattern" value={data.menstrual_pattern} />
           <InfoItem label="On Medication" value={data.on_medication} />
