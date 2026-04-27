@@ -129,10 +129,12 @@ const Q_LABELS: Record<string, string> = {
   weight_kg: "Weight (kg)",
   work_type: "Work type",
   meals_per_day: "Meals per day",
+  meal_slots: "Meal slots",
   skips_meals: "Skips meals",
   snacks_between_meals: "Snacks between meals",
   food_source: "Food source",
   diet_pattern: "Diet pattern",
+  non_veg_frequency: "Non-veg frequency",
   consumes_egg: "Consumes egg",
   consumes_dairy: "Consumes dairy",
   food_allergy: "Food allergy",
@@ -140,11 +142,26 @@ const Q_LABELS: Record<string, string> = {
   fruits_per_day: "Fruits per day",
   vegetables_per_day: "Vegetables per day",
   surgery_history: "Surgery history",
+  surgery_details: "Surgery details",
+  medicine_allergy: "Medicine allergy",
+  medicine_allergy_details: "Medicine allergy details",
+  consulted_doctor_before: "Consulted doctor before",
+  consulted_doctor_name: "Consulted doctor name",
+  consulted_doctor_specialty: "Doctor specialty",
+  consulted_doctor_phone: "Doctor phone",
+  consulted_doctor_location: "Doctor location",
+  consulted_doctor_notes: "Doctor notes",
   on_medication: "On medication",
+  specify_medication: "Specify medication",
+  other_health_concerns: "Other health concerns",
+  menstrual_pattern: "Menstrual pattern",
   sleep_quality: "Sleep quality",
   stress_level: "Stress level",
   falls_sick_frequency: "Falls sick frequency",
+  food_preferences: "Food preferences",
   additional_notes: "Additional notes",
+  any_other_comments: "Any other comments",
+  any_notes_for_care_team: "Notes for care team",
   habits: "Lifestyle habits",
   physical_activities: "Physical activities",
   created_on: "Created",
@@ -155,7 +172,17 @@ function formatJsonish(val: unknown): ReactNode {
   if (val === null || val === undefined) return "—";
   if (typeof val === "boolean") return val ? "Yes" : "No";
   if (typeof val === "number") return String(val);
-  if (typeof val === "string") return val || "—";
+  if (typeof val === "string") {
+    if (val.trim().startsWith("[") && val.trim().endsWith("]")) {
+      try {
+        const parsed = JSON.parse(val.replace(/'/g, '"'));
+        return formatJsonish(parsed);
+      } catch {
+        return val || "—";
+      }
+    }
+    return val || "—";
+  }
   if (Array.isArray(val)) {
     if (val.length === 0) return "—";
     return (

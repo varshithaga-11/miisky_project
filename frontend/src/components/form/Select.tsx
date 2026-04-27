@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 interface Option { value: string; label: string; }
 interface SelectProps {
+  id?: string;
   name?: string;                // optional name
   options: Option[];
   value?: string;
@@ -15,6 +16,7 @@ interface SelectProps {
 }
 
 const Select: React.FC<SelectProps> = ({
+  id,
   options,
   value,
   onChange,
@@ -50,6 +52,7 @@ const Select: React.FC<SelectProps> = ({
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
+        id={id}
         type="button"
         onClick={() => { 
           if (!open) onFocus?.();

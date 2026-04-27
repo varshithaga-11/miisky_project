@@ -481,6 +481,12 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Food Source</p>
                                                 <p className="text-xs font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.food_source || "Kitchen"}</p>
                                             </div>
+                                            {selectedPatient.patient_questionnaire?.non_veg_frequency && (
+                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl col-span-2">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Non-Veg Frequency</p>
+                                                    <p className="text-xs font-black text-indigo-500 uppercase italic">{selectedPatient.patient_questionnaire.non_veg_frequency.replace(/_/g, ' ')}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -612,6 +618,59 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                                     <p className="text-xs font-black text-indigo-500 uppercase italic tracking-tighter">{selectedPatient.patient_questionnaire?.sleep_quality || 'Consistent'}</p>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Clinical History */}
+                                <div className="bg-white dark:bg-gray-800 rounded-[40px] p-8 border border-gray-100 dark:border-white/5 space-y-6 shadow-sm">
+                                    <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-4">
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Clinical History</h3>
+                                        <FiInfo className="text-indigo-500" />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                        <div className="space-y-4">
+                                            {selectedPatient.patient_questionnaire?.surgery_history && (
+                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Surgery History</p>
+                                                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 italic">{selectedPatient.patient_questionnaire.surgery_details || "Yes (No details)"}</p>
+                                                </div>
+                                            )}
+                                            {selectedPatient.patient_questionnaire?.medicine_allergy && (
+                                                <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/20">
+                                                    <p className="text-[9px] font-black text-rose-600 uppercase tracking-widest mb-1">Medicine Allergy</p>
+                                                    <p className="text-xs font-bold text-rose-700 dark:text-rose-300 italic">{selectedPatient.patient_questionnaire.medicine_allergy_details || "Yes (No details)"}</p>
+                                                </div>
+                                            )}
+                                            {selectedPatient.patient_questionnaire?.on_medication && (
+                                                <div className="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl">
+                                                    <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Current Medication</p>
+                                                    <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300 italic">{selectedPatient.patient_questionnaire.specify_medication || "Yes (No details)"}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-4">
+                                            {selectedPatient.patient_questionnaire?.consulted_doctor_before && (
+                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl space-y-2">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Previous Consultation</p>
+                                                    <p className="text-xs font-black text-gray-900 dark:text-white">Dr. {selectedPatient.patient_questionnaire.consulted_doctor_name || "???"} ({selectedPatient.patient_questionnaire.consulted_doctor_specialty || "???"})</p>
+                                                    <p className="text-[10px] text-gray-500 font-bold">Ph: {selectedPatient.patient_questionnaire.consulted_doctor_phone || "N/A"}</p>
+                                                    <p className="text-[10px] text-gray-500 font-bold">Loc: {selectedPatient.patient_questionnaire.consulted_doctor_location || "N/A"}</p>
+                                                    {selectedPatient.patient_questionnaire.consulted_doctor_notes && (
+                                                        <p className="text-[9px] text-gray-400 italic pt-1 border-t border-gray-100 dark:border-white/5">{selectedPatient.patient_questionnaire.consulted_doctor_notes}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Menstrual Pattern</p>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic">{selectedPatient.patient_questionnaire?.menstrual_pattern?.replace(/_/g, ' ') || "N/A"}</p>
+                                            </div>
+                                            {selectedPatient.patient_questionnaire?.other_health_concerns && (
+                                                <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Other Concerns</p>
+                                                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 italic">{selectedPatient.patient_questionnaire.other_health_concerns}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

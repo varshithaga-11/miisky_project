@@ -10,9 +10,6 @@ import "react-toastify/dist/ReactToastify.css";
 import {
   getMyQuestionnaire,
   saveMyQuestionnaire,
-  UserQuestionnaire,
-  QuestionnaireHealthConditionRow,
-  MasterRow,
   fetchHealthConditionMasters,
   fetchSymptomMasters,
   fetchAutoimmuneMasters,
@@ -21,7 +18,11 @@ import {
   fetchSkinIssueMasters,
   fetchHabitMasters,
   fetchActivityMasters,
+  type UserQuestionnaire,
+  type MasterRow,
+  type QuestionnaireHealthConditionRow,
 } from "./api";
+import { getProfile } from "../../ProfileInformation/api";
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Modal } from "../../../components/ui/modal";
 
@@ -151,6 +152,7 @@ export default function PatientQuestionnairePage() {
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(1);
   const [data, setData] = useState<Partial<UserQuestionnaire>>({});
+  const [userGender, setUserGender] = useState<string | null>(null);
 
   const [hcMasters, setHcMasters] = useState<MasterRow[]>([]);
   const [symptomMasters, setSymptomMasters] = useState<{ id: number; name: string }[]>([]);
@@ -197,7 +199,7 @@ export default function PatientQuestionnairePage() {
     (async () => {
       setLoading(true);
       try {
-        const [res, hm, actm, hcm, sm, am, dm, dig, sk] = await Promise.all([
+        const [res, hm, actm, hcm, sm, am, dm, dig, sk, prof] = await Promise.all([
           getMyQuestionnaire(),
           fetchHabitMasters(),
           fetchActivityMasters(),
@@ -207,9 +209,11 @@ export default function PatientQuestionnairePage() {
           fetchDeficiencyMasters(),
           fetchDigestiveIssueMasters(),
           fetchSkinIssueMasters(),
+          getProfile().catch(() => null),
         ]);
 
         setData({ ...(res || {}), meal_slots: normalizeMealSlots(res?.meal_slots) });
+        setUserGender(prof?.gender || null);
         setHabitMasters(hm);
         setActivityMasters(actm);
         setHcMasters(hcm);
@@ -1126,20 +1130,22 @@ export default function PatientQuestionnairePage() {
                     className="w-full"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="menstrual_pattern">Menstrual Pattern (if female)</Label>
-                  <Select
-                    value={data.menstrual_pattern || ""}
-                    onChange={(val) => setField("menstrual_pattern", val || null)}
-                    options={[
-                      { value: "", label: "Select" },
-                      { value: "heavy", label: "Heavy bleeding" },
-                      { value: "very_less", label: "Very less bleeding" },
-                      { value: "none", label: "None" },
-                    ]}
-                    className="w-full"
-                  />
-                </div>
+                {(userGender === "female" || userGender === null) && (
+                  <div>
+                    <Label htmlFor="menstrual_pattern">Menstrual Pattern</Label>
+                    <Select
+                      value={data.menstrual_pattern || ""}
+                      onChange={(val) => setField("menstrual_pattern", val || null)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "heavy", label: "Heavy bleeding" },
+                        { value: "very_less", label: "Very less bleeding" },
+                        { value: "none", label: "None" },
+                      ]}
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
