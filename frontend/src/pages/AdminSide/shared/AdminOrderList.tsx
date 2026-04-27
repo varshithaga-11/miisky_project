@@ -29,6 +29,7 @@ type OrderRow = Record<string, unknown> & {
   delivery_slab_details?: { min_km?: string; max_km?: string; charge?: string } | null;
   user_details?: { first_name?: string; last_name?: string; mobile?: string | null } | null;
   kitchen_details?: { brand_name?: string | null } | null;
+  delivery_person_details?: { id?: number; first_name?: string; last_name?: string; mobile?: string | null } | null;
   items?: Array<{
     id?: number;
     quantity?: number;
@@ -157,34 +158,65 @@ export function AdminOrderList({ items, hideCustomer, hideKitchen, detailFetcher
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-3">
-                      <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Delivery address</span>
-                        <p className="text-gray-700 dark:text-gray-200 text-xs leading-relaxed">
-                          {o.delivery_address?.trim() || "—"}
-                        </p>
-                      </div>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between gap-2">
-                          <span className="text-gray-500">Straight-line distance</span>
-                          <span className="font-mono font-semibold text-gray-800 dark:text-gray-100">
-                            {fmtKm(o.delivery_distance_km)}
-                          </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
+                      <div className="space-y-4">
+                        <div>
+                          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-2">Delivery address</span>
+                          <p className="text-gray-700 dark:text-gray-200 text-xs leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-100 dark:border-white/5">
+                            {o.delivery_address?.trim() || "—"}
+                          </p>
                         </div>
-                        <div className="flex justify-between gap-2">
-                          <span className="text-gray-500">Food subtotal</span>
-                          <span className="font-semibold">{money(o.total_amount)}</span>
-                        </div>
-                        <div className="flex justify-between gap-2">
-                          <span className="text-gray-500">Delivery charge</span>
-                          <span className="font-semibold">{money(o.delivery_charge)}</span>
-                        </div>
-                        {o.delivery_slab_details && (
-                          <div className="text-[10px] text-gray-400 pt-1">
-                            Slab applied: {o.delivery_slab_details.min_km}–{o.delivery_slab_details.max_km} km @{" "}
-                            {money(o.delivery_slab_details.charge)}
+                        {o.delivery_person_details && (
+                          <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/20">
+                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block mb-1">Assigned Delivery</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600">
+                                <FiUser size={14} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-900 dark:text-white">
+                                  {[o.delivery_person_details.first_name, o.delivery_person_details.last_name].filter(Boolean).join(" ") || "Delivery Person"}
+                                </p>
+                                {o.delivery_person_details.mobile && (
+                                  <p className="text-[10px] text-gray-500 font-medium">{o.delivery_person_details.mobile}</p>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         )}
+                      </div>
+
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-2">Logistics & Charges</span>
+                        <div className="space-y-2.5 bg-slate-50/50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-500 font-medium">Straight-line distance</span>
+                            <span className="font-black text-gray-900 dark:text-gray-100 tabular-nums">
+                              {fmtKm(o.delivery_distance_km)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-500 font-medium">Food subtotal</span>
+                            <span className="font-bold text-gray-900 dark:text-white tabular-nums">{money(o.total_amount)}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-500 font-medium">Delivery charge</span>
+                            <span className="font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">{money(o.delivery_charge)}</span>
+                          </div>
+                          {o.delivery_slab_details && (
+                            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-white/5 flex flex-col gap-1">
+                              <span className="text-[9px] font-black text-gray-400 uppercase">Slab Applied</span>
+                              <div className="flex justify-between items-center text-[10px] font-bold text-indigo-500/80">
+                                <span>{o.delivery_slab_details.min_km} – {o.delivery_slab_details.max_km} km</span>
+                                <span>{money(o.delivery_slab_details.charge)}</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="pt-2 border-t border-slate-200 dark:border-white/5 flex justify-between items-center">
+                            <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase">Final Amount</span>
+                            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{money(finalAmt)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

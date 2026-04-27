@@ -3831,6 +3831,28 @@ class OrderSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def get_delivery_slab_details(self, obj):
+        s = getattr(obj, 'delivery_slab', None)
+        if not s:
+            return None
+        return {
+            'id': s.id,
+            'min_km': str(s.min_km),
+            'max_km': str(s.max_km),
+            'charge': str(s.charge),
+        }
+
+    def get_delivery_person_details(self, obj):
+        dp = getattr(obj, 'delivery_person', None)
+        if not dp:
+            return None
+        return {
+            'id': dp.id,
+            'first_name': dp.first_name or '',
+            'last_name': dp.last_name or '',
+            'mobile': dp.mobile or '',
+        }
+
 
 class AdminMicroKitchenOrderSummarySerializer(serializers.ModelSerializer):
     """Lightweight order serializer for admin list view."""
@@ -3859,6 +3881,7 @@ class AdminMicroKitchenOrderDetailSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     kitchen_details = serializers.SerializerMethodField(read_only=True)
     delivery_person_details = serializers.SerializerMethodField(read_only=True)
+    delivery_slab_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -3866,6 +3889,7 @@ class AdminMicroKitchenOrderDetailSerializer(serializers.ModelSerializer):
             'id', 'user', 'user_details', 'micro_kitchen', 'kitchen_details',
             'order_type', 'status', 'total_amount', 'delivery_charge', 'final_amount',
             'delivery_address', 'delivery_person', 'delivery_person_details',
+            'delivery_slab', 'delivery_slab_details',
             'items', 'created_at'
         ]
 
@@ -3888,12 +3912,14 @@ class AdminMicroKitchenOrderDetailSerializer(serializers.ModelSerializer):
         }
 
     def get_delivery_person_details(self, obj):
-        dp = obj.delivery_person
-        if not dp: return None
+        dp = getattr(obj, 'delivery_person', None)
+        if not dp:
+            return None
         return {
             'id': dp.id,
-            'name': f"{dp.first_name or dp.username} {dp.last_name or ''}".strip(),
-            'mobile': dp.mobile
+            'first_name': dp.first_name or '',
+            'last_name': dp.last_name or '',
+            'mobile': dp.mobile or '',
         }
 
     def get_delivery_slab_details(self, obj):
@@ -3907,16 +3933,7 @@ class AdminMicroKitchenOrderDetailSerializer(serializers.ModelSerializer):
             'charge': str(s.charge),
         }
 
-    def get_delivery_person_details(self, obj):
-        dp = getattr(obj, 'delivery_person', None)
-        if not dp:
-            return None
-        return {
-            'id': dp.id,
-            'first_name': dp.first_name or '',
-            'last_name': dp.last_name or '',
-            'mobile': dp.mobile or '',
-        }
+
 
 
 class AdminSupplyChainOrderRowSerializer(serializers.ModelSerializer):
