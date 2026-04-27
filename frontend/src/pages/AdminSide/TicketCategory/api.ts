@@ -46,3 +46,9 @@ export async function deleteTicketCategory(id: number): Promise<void> {
   await axios.delete(url, { headers: await getAuthHeaders() });
 }
 
+export async function checkTicketCategoryUsage(id: number): Promise<{ is_used: boolean }> {
+  const url = createApiUrl(`api/ticketcategory/${id}/check-usage/`);
+  const res = await axios.get(url, { headers: await getAuthHeaders() });
+  return res.data;
+}
+

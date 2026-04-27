@@ -11146,7 +11146,11 @@ class TicketCategoryViewSet(viewsets.ModelViewSet):
         qs = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
-
+    @action(detail=True, methods=["get"], url_path="check-usage")
+    def check_usage(self, request, pk=None):
+        category = self.get_object()
+        is_used = SupportTicket.objects.filter(category=category).exists()
+        return Response({"is_used": is_used})
 
 class SupportTicketViewSet(viewsets.ModelViewSet):
     serializer_class = SupportTicketSerializer

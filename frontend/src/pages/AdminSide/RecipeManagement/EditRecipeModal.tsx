@@ -12,24 +12,24 @@ import { toast, ToastContainer } from 'react-toastify';
 import { FiPlus, FiTrash2, FiSave, FiList, FiEdit2 } from "react-icons/fi";
 
 interface EditRecipeModalProps {
-  isOpen: boolean;
-  food: Food | null;
-  onClose: () => void;
-  onSuccess: () => void;
+    isOpen: boolean;
+    food: Food | null;
+    onClose: () => void;
+    onSuccess: () => void;
 }
 
 const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose, onSuccess }) => {
     const [ingredients, setIngredients] = useState<Ingredient[]>([]);
     const [units, setUnits] = useState<Unit[]>([]);
-    
+
     const [ingredientRows, setIngredientRows] = useState([
         { ingredient: "", quantity: "", unit: "", notes: "" }
     ]);
-    
+
     const [stepRows, setStepRows] = useState([
         { step_number: "1", instruction: "" }
     ]);
-    
+
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(false);
     const [ingredientsLoaded, setIngredientsLoaded] = useState(false);
@@ -80,7 +80,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
                 ingredients.length === 0 ? getIngredientList(1, "all") : Promise.resolve({ results: ingredients }),
                 units.length === 0 ? getUnitList(1, "all") : Promise.resolve({ results: units })
             ]);
-            
+
             if (ingredients.length === 0) {
                 setIngredients(ingList.results || []);
                 setIngredientsLoaded(true);
@@ -184,7 +184,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto relative shadow-2xl">
                 <button onClick={onClose} className="absolute top-4 right-6 text-3xl text-gray-400 hover:text-gray-600 z-10">×</button>
-                
+
                 <div className="p-8">
                     <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-white flex items-center gap-3">
                         <FiEdit2 className="text-blue-500" />
@@ -218,14 +218,23 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
                                                         placeholder="Select Ingredient"
                                                     />
                                                     <div className="flex gap-2">
-                                                        <Input placeholder="Qty" type="number" value={row.quantity} onChange={e => handleIngChange(idx, "quantity", e.target.value)} />
-                                                        <SearchableSelect<string>
-                                                            value={row.unit}
-                                                            onFocus={fetchUnits}
-                                                            onChange={v => handleIngChange(idx, "unit", v)}
-                                                            options={units.map(u => ({ value: String(u.id), label: u.name }))}
-                                                            placeholder="Unit"
-                                                        />
+                                                        <div className="w-24 flex-shrink-0">
+                                                            <Input 
+                                                                placeholder="Qty" 
+                                                                type="number" 
+                                                                value={row.quantity} 
+                                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleIngChange(idx, "quantity", e.target.value)} 
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <SearchableSelect<string>
+                                                                value={row.unit}
+                                                                onFocus={fetchUnits}
+                                                                onChange={(v: string) => handleIngChange(idx, "unit", v)}
+                                                                options={units.map(u => ({ value: String(u.id), label: u.name }))}
+                                                                placeholder="Unit"
+                                                            />
+                                                        </div>
                                                     </div>
                                                     <Input placeholder="Notes" value={row.notes} onChange={e => handleIngChange(idx, "notes", e.target.value)} />
                                                 </div>
@@ -275,8 +284,8 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, food, onClose
 
                             <div className="flex justify-end gap-3 pt-6 border-t dark:border-gray-700">
                                 <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
-                                <Button 
-                                    onClick={handleUpdate} 
+                                <Button
+                                    onClick={handleUpdate}
                                     disabled={loading}
                                     className="flex items-center gap-2"
                                 >
