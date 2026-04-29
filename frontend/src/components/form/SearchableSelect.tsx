@@ -58,6 +58,13 @@ const SearchableSelect = <T extends string | number>({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  // Reset touched state when value is cleared from outside (e.g., form reset)
+  useEffect(() => {
+    if (value === "" || value === undefined || value === null) {
+      setTouched(false);
+    }
+  }, [value]);
+
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
