@@ -70,8 +70,20 @@ const IngredientManagementPage: React.FC = () => {
     try {
       await deleteFoodRecord("ingredient", recordToDelete);
       toast.success("Ingredient deleted successfully!");
+      
+      // Optimistic update: remove from local state immediately
+      setIngredients((prev) => prev.filter((i) => i.id !== recordToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setRecordToDelete(null);
-      fetchIngredients();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchIngredients();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (ingredients.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete ingredient.");
     } finally {

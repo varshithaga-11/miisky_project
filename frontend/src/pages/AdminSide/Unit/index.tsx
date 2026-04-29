@@ -70,8 +70,20 @@ const UnitManagementPage: React.FC = () => {
     try {
       await deleteFoodRecord("unit", recordToDelete);
       toast.success("Unit deleted successfully!");
+      
+      // Optimistic update: remove from local state immediately
+      setUnits((prev) => prev.filter((u) => u.id !== recordToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setRecordToDelete(null);
-      fetchUnits();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchUnits();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (units.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete unit.");
     } finally {

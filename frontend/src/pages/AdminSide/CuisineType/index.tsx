@@ -71,8 +71,20 @@ const CuisineTypePage: React.FC = () => {
     try {
       await deleteFoodRecord("cuisine_type", recordToDelete);
       toast.success("Cuisine type deleted successfully!");
+      
+      // Optimistic update: remove from local state immediately
+      setCuisines((prev) => prev.filter((c) => c.id !== recordToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setRecordToDelete(null);
-      fetchCuisines();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchCuisines();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (cuisines.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete cuisine type");
     } finally {

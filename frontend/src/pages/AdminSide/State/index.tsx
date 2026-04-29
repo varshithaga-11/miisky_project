@@ -97,8 +97,20 @@ const StateManagementPage: React.FC = () => {
     try {
       await deleteState(stateToDelete);
       toast.success("State deleted successfully.");
+      
+      // Optimistic update: remove from local state immediately
+      setStates((prev) => prev.filter((s) => s.id !== stateToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setStateToDelete(null);
-      fetchStates();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchStates();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (states.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete state. Please try again later.");
     } finally {

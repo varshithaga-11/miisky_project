@@ -70,8 +70,20 @@ const FoodGroupManagementPage: React.FC = () => {
     try {
       await deleteFoodRecord("food_group", recordToDelete);
       toast.success("Food group deleted successfully.");
+      
+      // Optimistic update: remove from local state immediately
+      setItems((prev) => prev.filter((i) => i.id !== recordToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setRecordToDelete(null);
-      fetchData();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchData();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (items.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete food group.");
     } finally {

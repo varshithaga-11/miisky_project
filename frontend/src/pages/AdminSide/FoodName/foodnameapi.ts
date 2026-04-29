@@ -43,7 +43,10 @@ export const getFoodNameList = async (
   console.log(`FoodName API Call: ${isAll ? "Fetching all" : "Page " + page}, URL: ${url}`);
   const response = await axios.get<PaginatedResponses<FoodName> | FoodName[]>(url, {
     headers: await getAuthHeaders(),
-    params: isAll ? { search, food_group } : params,
+    params: {
+      ...(isAll ? { search, food_group } : params),
+      _t: Date.now(), // Cache buster
+    },
   });
 
   console.log(`FoodName API Response Status: ${response.status}, Data type: ${Array.isArray(response.data) ? "Array" : typeof response.data}`);

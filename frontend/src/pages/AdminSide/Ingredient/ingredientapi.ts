@@ -42,7 +42,10 @@ export const getIngredientList = async (
     const url = createApiUrl(isAll ? "api/ingredient/all/" : "api/ingredient/");
     const response = await axios.get<PaginatedResponses<Ingredient> | Ingredient[]>(url, {
       headers: await getAuthHeaders(),
-      params: isAll ? { search } : params,
+      params: {
+        ...(isAll ? { search } : params),
+        _t: Date.now(), // Cache buster
+      },
     });
 
     if (isAll) {

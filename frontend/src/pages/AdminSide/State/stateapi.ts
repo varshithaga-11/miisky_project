@@ -45,7 +45,10 @@ export const getStateList = async (
     const url = createApiUrl(isAll ? "api/state/all/" : "api/state/");
     const response = await axios.get<PaginatedResponses<State> | State[]>(url, {
       headers: await getAuthHeaders(),
-      params: isAll ? { search, country } : params,
+      params: {
+        ...(isAll ? { search, country } : params),
+        _t: Date.now(), // Cache buster
+      },
     });
 
     if (isAll) {

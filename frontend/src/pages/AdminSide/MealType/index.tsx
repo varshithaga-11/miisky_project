@@ -73,8 +73,20 @@ const MealTypeManagementPage: React.FC = () => {
     try {
       await deleteFoodRecord("meal_type", recordToDelete);
       toast.success("Meal type deleted successfully.");
+      
+      // Optimistic update: remove from local state immediately
+      setMealTypes((prev) => prev.filter((m) => m.id !== recordToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setRecordToDelete(null);
-      fetchMealTypes();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchMealTypes();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (mealTypes.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete meal type.");
     } finally {

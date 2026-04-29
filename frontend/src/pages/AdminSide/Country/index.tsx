@@ -72,8 +72,20 @@ const CountryManagementPage: React.FC = () => {
     try {
       await deleteCountry(countryToDelete);
       toast.success("Country deleted successfully.");
+      
+      // Optimistic update: remove from local state immediately
+      setCountries((prev) => prev.filter((c) => c.id !== countryToDelete));
+      setTotalItems((prev) => prev - 1);
+      
       setCountryToDelete(null);
-      fetchCountries();
+      
+      // Fetch latest data to sync pagination and other states
+      await fetchCountries();
+      
+      // If we are on a page that is now empty, go to the previous page
+      if (countries.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch {
       toast.error("Failed to delete country. Please try again later.");
     } finally {

@@ -48,7 +48,10 @@ export const getCityList = async (
     const url = createApiUrl(isAll ? "api/city/all/" : "api/city/");
     const response = await axios.get<PaginatedResponses<City> | City[]>(url, {
       headers: await getAuthHeaders(),
-      params: isAll ? { search, state, country } : params,
+      params: {
+        ...(isAll ? { search, state, country } : params),
+        _t: Date.now(), // Cache buster
+      },
     });
 
     if (isAll) {

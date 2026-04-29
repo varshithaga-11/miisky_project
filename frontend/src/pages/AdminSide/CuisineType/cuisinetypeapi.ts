@@ -41,7 +41,10 @@ export const getCuisineTypeList = async (
     const url = createApiUrl(isAll ? "api/cuisinetype/all/" : "api/cuisinetype/");
     const response = await axios.get<PaginatedResponses<CuisineType> | CuisineType[]>(url, {
       headers: await getAuthHeaders(),
-      params: isAll ? { search } : params,
+      params: {
+        ...(isAll ? { search } : params),
+        _t: Date.now(), // Cache buster
+      },
     });
 
     if (isAll) {
