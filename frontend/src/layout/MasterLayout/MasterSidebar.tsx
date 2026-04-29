@@ -76,20 +76,20 @@ const adminNavItems: NavItem[] = [
       { name: "Patient Questions", path: "/admin/patient-all-questionarie" },
     ],
   },
-  {
-    icon: <Briefcase className="w-5 h-5" />,
-    name: "Food Management",
-    subItems: [
-      { name: "Meal Type", path: "/admin/meal-type" },
-      { name: "Cuisine Type", path: "/admin/cuisine-type" },
-      { name: "Packaging Material", path: "/admin/packaging-material" },
-      { name: "Delivery slots", path: "/admin/delivery-slot" },
-      { name: "Foods", path: "/admin/food" },
-      { name: "Units", path: "/admin/unit" },
-      { name: "Ingredients", path: "/admin/ingredient" },
-      { name: "Recipe Management", path: "/admin/recipe-creator" },
-    ],
-  },
+  // {
+  //   icon: <Briefcase className="w-5 h-5" />,
+  //   name: "Food Management",
+  //   subItems: [
+  //     { name: "Meal Type", path: "/admin/meal-type" },
+  //     { name: "Cuisine Type", path: "/admin/cuisine-type" },
+  //     { name: "Packaging Material", path: "/admin/packaging-material" },
+  //     { name: "Delivery slots", path: "/admin/delivery-slot" },
+  //     { name: "Foods", path: "/admin/food" },
+  //     { name: "Units", path: "/admin/unit" },
+  //     { name: "Ingredients", path: "/admin/ingredient" },
+  //     { name: "Recipe Management", path: "/admin/recipe-creator" },
+  //   ],
+  // },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Food Composition",
@@ -298,7 +298,7 @@ const nutritionistNavItems: NavItem[] = [
   },
   {
     icon: <FileText className="w-5 h-5" />,
-    name: "Questionnaire",
+    name: "Nutrition Questionnaire",
     path: "/nutrition/questionnaire",
   },
   {
@@ -358,10 +358,12 @@ const nutritionistNavItems: NavItem[] = [
     path: "/nutrition/plan-payouts",
   },
   {
-    icon: <BookOpen className="w-5 h-5" />,
-    name: "Reference Library",
+    icon: <FileText className="w-5 h-5" />,
+    name: "Health Monitoring",
     subItems: [
-      { name: "Normal Ranges", path: "/nutrition/reference/ranges" }
+      { name: "Health Parameters", path: "/nutrition/health-parameter" },
+      { name: "Normal Ranges", path: "/nutrition/normal-range" },
+      { name: "Diet Plans", path: "/nutrition/diet-plan" },
     ],
   },
   {

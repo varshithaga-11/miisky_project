@@ -328,6 +328,13 @@ export function appRoutes() {
           <Route path="admin/health-parameter" element={<HealthParameterManagementPage />} />
           <Route path="admin/normal-range" element={<NormalRangeManagementPage />} />
           <Route path="admin/diet-plan" element={<DietPlanManagementPage />} />
+
+
+          <Route path="nutrition/health-parameter" element={<HealthParameterManagementPage />} />
+          <Route path="nutrition/normal-range" element={<NormalRangeManagementPage />} />
+          <Route path="nutrition/diet-plan" element={<DietPlanManagementPage />} />
+
+
           <Route path="admin/food-group" element={<FoodGroupManagementPage />} />
           <Route path="admin/food-name" element={<FoodNameManagementPage />} />
           <Route path="admin/food-proximate" element={<FoodProximateManagementPage />} />

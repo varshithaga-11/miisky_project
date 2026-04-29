@@ -311,7 +311,6 @@ class AuthenticatedReadAdminWrite(BasePermission):
             return True
         return getattr(u, "role", None) == "admin"
 
-
 class PatientToMicroKitchenDistanceView(APIView):
     """
     Calculate distances between a specific patient and all approved micro-kitchens.

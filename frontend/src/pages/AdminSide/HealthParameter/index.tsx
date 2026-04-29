@@ -160,10 +160,10 @@ const HealthParameterManagement: React.FC = () => {
                   className="px-5 py-3 font-medium text-gray-500 text-start text-xs uppercase dark:text-gray-400 cursor-pointer"
                   onClick={() => handleSort('name')}
                 >
-                    <div className="flex items-center gap-2">
-                        Parameter Name
-                        <span>{sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    Parameter Name
+                    <span>{sortField === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span>
+                  </div>
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs uppercase dark:text-gray-400">Normal Ranges</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-xs uppercase dark:text-gray-400">Action</TableCell>
@@ -171,7 +171,7 @@ const HealthParameterManagement: React.FC = () => {
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && params.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell></TableRow>
               ) : sortedParams.length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">No parameters found</TableCell></TableRow>
               ) : (
@@ -184,25 +184,25 @@ const HealthParameterManagement: React.FC = () => {
                       {p.name}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm">
-                        <div className="flex flex-col gap-1.5">
-                          {p.normal_ranges && p.normal_ranges.length > 0 ? (
-                            p.normal_ranges.slice(0, 3).map((nr: any, idx: number) => (
-                              <div key={nr.id || idx} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/20 text-[11px] font-black tracking-tight text-brand-700 dark:text-brand-300">
-                                <FiActivity className="text-brand-400" size={12} />
-                                <span>{nr.min_value} - {nr.max_value} {nr.unit}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                                No ranges
-                            </span>
-                          )}
-                          {p.normal_ranges && p.normal_ranges.length > 3 && (
-                            <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest pl-2">
-                                +{p.normal_ranges.length - 3} more
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex flex-col gap-1.5">
+                        {p.normal_ranges && p.normal_ranges.length > 0 ? (
+                          p.normal_ranges.slice(0, 3).map((nr: any, idx: number) => (
+                            <div key={nr.id || idx} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/20 text-[11px] font-black tracking-tight text-brand-700 dark:text-brand-300">
+                              <FiActivity className="text-brand-400" size={12} />
+                              <span>{nr.min_value} - {nr.max_value} {nr.unit}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                            No ranges
+                          </span>
+                        )}
+                        {p.normal_ranges && p.normal_ranges.length > 3 && (
+                          <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest pl-2">
+                            +{p.normal_ranges.length - 3} more
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-sm">
                       <div className="flex items-center gap-3">
@@ -227,30 +227,30 @@ const HealthParameterManagement: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                <Button 
-                    variant="outline" size="sm" 
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(prev => prev - 1)}
-                >Previous</Button>
-                <div className="flex gap-1">
-                    {Array.from({length: totalPages}, (_, i) => i+1).map(page => (
-                        <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${currentPage === page ? 'bg-primary-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
-                        >
-                            {page}
-                        </button>
-                    ))}
-                </div>
-                <Button 
-                    variant="outline" size="sm"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(prev => prev + 1)}
-                >Next</Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline" size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => prev - 1)}
+            >Previous</Button>
+            <div className="flex gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${currentPage === page ? 'bg-primary-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
+                >
+                  {page}
+                </button>
+              ))}
             </div>
-            <div className="text-sm text-gray-500">Showing {Math.min(currentPage * pageSize, totalItems)} of {totalItems}</div>
+            <Button
+              variant="outline" size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+            >Next</Button>
+          </div>
+          <div className="text-sm text-gray-500">Showing {Math.min(currentPage * pageSize, totalItems)} of {totalItems}</div>
         </div>
       )}
 
