@@ -12,8 +12,15 @@ import { DeliveryProfile, downloadProfileFile, getMyDeliveryProfile, saveMyDeliv
 export default function DeliveryQuestionarePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [data, setData] = useState<Partial<DeliveryProfile>>({});
   const [slotsText, setSlotsText] = useState("");
+
+  const ReadOnlyValue = ({ value, className = "" }: { value: any; className?: string }) => (
+    <div className={`bg-brand-50/30 dark:bg-brand-500/5 border border-brand-100/50 dark:border-brand-500/10 rounded-lg px-3 py-2 text-sm font-semibold text-brand-900 dark:text-brand-300 ${className}`}>
+      {value || "—"}
+    </div>
+  );
 
   useEffect(() => {
     (async () => {
@@ -44,6 +51,7 @@ export default function DeliveryQuestionarePage() {
       };
       await saveMyDeliveryProfile(payload);
       toast.success("Saved successfully");
+      setIsEditing(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to save (check required fields and file sizes)");
@@ -70,13 +78,18 @@ export default function DeliveryQuestionarePage() {
 
   const isServerFile = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
 
-  const FileCurrentRow = ({ value }: { value: unknown }) => (
-    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-      <p className="text-xs text-gray-500 dark:text-gray-400">Current: {fileLabel(value as string)}</p>
+  const FileCurrentRow = ({ value, label }: { value: unknown; label: string }) => (
+    <div className="mb-1 flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-gray-50/50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+      <div className="flex flex-col">
+        <span className="text-[10px] uppercase font-bold text-gray-400">{label}</span>
+        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
+          {fileLabel(value as string)}
+        </p>
+      </div>
       {isServerFile(value) && (
         <button
           type="button"
-          className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 underline underline-offset-2 shrink-0"
+          className="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1 rounded text-[10px] font-bold transition-colors shadow-sm"
           onClick={async () => {
             try {
               await downloadProfileFile(value, fileLabel(value));
@@ -85,7 +98,7 @@ export default function DeliveryQuestionarePage() {
             }
           }}
         >
-          Download
+          DOWNLOAD
         </button>
       )}
     </div>
@@ -100,7 +113,31 @@ export default function DeliveryQuestionarePage() {
       {loading ? (
         <div className="p-6 text-gray-600 dark:text-gray-300">Loading...</div>
       ) : (
-        <div className="space-y-10 max-w-4xl pb-16">
+        <div className="space-y-8 max-w-4xl pb-16">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-white/5 pb-4">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Delivery Profile & KYC</h1>
+              <p className="text-sm text-gray-500">Manage your vehicle details and identity documents</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {!isEditing ? (
+                <Button 
+                  onClick={() => setIsEditing(true)}
+                  className="!px-6 !py-2.5 !rounded-full shadow-lg hover:shadow-brand-500/20"
+                >
+                  Edit Questionnaire
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  className="!px-6 !py-2.5 !rounded-full"
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </div>
           {data.is_verified && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
               Your profile has been verified by a micro kitchen.
@@ -119,57 +156,77 @@ export default function DeliveryQuestionarePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="vehicle_type">Vehicle type</Label>
-                <Select
-                  value={data.vehicle_type || ""}
-                  onChange={(val) => setField("vehicle_type", (val as string) || null)}
-                  options={[
-                    { value: "", label: "Select" },
-                    { value: "bike", label: "Bike" },
-                    { value: "scooter", label: "Scooter" },
-                    { value: "car", label: "Car" },
-                    { value: "van", label: "Van" },
-                    { value: "other", label: "Other" },
-                  ]}
-                  className="w-full"
-                />
+                {isEditing ? (
+                  <Select
+                    value={data.vehicle_type || ""}
+                    onChange={(val) => setField("vehicle_type", (val as string) || null)}
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "bike", label: "Bike" },
+                      { value: "scooter", label: "Scooter" },
+                      { value: "car", label: "Car" },
+                      { value: "van", label: "Van" },
+                      { value: "other", label: "Other" },
+                    ]}
+                    className="w-full"
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.vehicle_type} />
+                )}
               </div>
               {data.vehicle_type === "other" && (
                 <div>
                   <Label htmlFor="other_vehicle_name">Other vehicle name</Label>
-                  <Input
-                    id="other_vehicle_name"
-                    value={data.other_vehicle_name || ""}
-                    onChange={(e) => setField("other_vehicle_name", e.target.value)}
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="other_vehicle_name"
+                      value={data.other_vehicle_name || ""}
+                      onChange={(e) => setField("other_vehicle_name", e.target.value)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.other_vehicle_name} />
+                  )}
                 </div>
               )}
             </div>
             <div>
               <Label htmlFor="vehicle_details">Vehicle details</Label>
-              <textarea
-                id="vehicle_details"
-                value={data.vehicle_details || ""}
-                onChange={(e) => setField("vehicle_details", e.target.value)}
-                className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
-                rows={3}
-              />
+              {isEditing ? (
+                <textarea
+                  id="vehicle_details"
+                  value={data.vehicle_details || ""}
+                  onChange={(e) => setField("vehicle_details", e.target.value)}
+                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                  rows={3}
+                />
+              ) : (
+                <ReadOnlyValue value={data.vehicle_details} className="!whitespace-pre-wrap" />
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="register_number">Registration number</Label>
-                <Input
-                  id="register_number"
-                  value={data.register_number || ""}
-                  onChange={(e) => setField("register_number", e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="register_number"
+                    value={data.register_number || ""}
+                    onChange={(e) => setField("register_number", e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.register_number} />
+                )}
               </div>
               <div>
                 <Label htmlFor="license_number">Driving licence number</Label>
-                <Input
-                  id="license_number"
-                  value={data.license_number || ""}
-                  onChange={(e) => setField("license_number", e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="license_number"
+                    value={data.license_number || ""}
+                    onChange={(e) => setField("license_number", e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.license_number} />
+                )}
               </div>
             </div>
           </section>
@@ -181,8 +238,8 @@ export default function DeliveryQuestionarePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="license_copy">Licence copy</Label>
-                <FileCurrentRow value={data.license_copy} />
-                {fileInputBox(
+                <FileCurrentRow value={data.license_copy} label="Licence" />
+                {isEditing && fileInputBox(
                   <input
                     id="license_copy"
                     type="file"
@@ -194,8 +251,8 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="rc_copy">RC (registration certificate)</Label>
-                <FileCurrentRow value={data.rc_copy} />
-                {fileInputBox(
+                <FileCurrentRow value={data.rc_copy} label="RC" />
+                {isEditing && fileInputBox(
                   <input
                     id="rc_copy"
                     type="file"
@@ -207,8 +264,8 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="insurance_copy">Insurance copy</Label>
-                <FileCurrentRow value={data.insurance_copy} />
-                {fileInputBox(
+                <FileCurrentRow value={data.insurance_copy} label="Insurance" />
+                {isEditing && fileInputBox(
                   <input
                     id="insurance_copy"
                     type="file"
@@ -220,8 +277,8 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="puc_image">PUC (pollution certificate)</Label>
-                <FileCurrentRow value={data.puc_image} />
-                {fileInputBox(
+                <FileCurrentRow value={data.puc_image} label="PUC" />
+                {isEditing && fileInputBox(
                   <input
                     id="puc_image"
                     type="file"
@@ -241,17 +298,21 @@ export default function DeliveryQuestionarePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="aadhar_number">Aadhaar number</Label>
-                <Input
-                  id="aadhar_number"
-                  value={data.aadhar_number || ""}
-                  onChange={(e) => setField("aadhar_number", e.target.value)}
-                  maxLength={12}
-                />
+                {isEditing ? (
+                  <Input
+                    id="aadhar_number"
+                    value={data.aadhar_number || ""}
+                    onChange={(e) => setField("aadhar_number", e.target.value)}
+                    maxLength={12}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.aadhar_number} />
+                )}
               </div>
               <div>
                 <Label htmlFor="aadhar_image">Aadhaar image</Label>
-                <FileCurrentRow value={data.aadhar_image} />
-                {fileInputBox(
+                <FileCurrentRow value={data.aadhar_image} label="Aadhaar" />
+                {isEditing && fileInputBox(
                   <input
                     id="aadhar_image"
                     type="file"
@@ -263,17 +324,21 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="pan_number">PAN number</Label>
-                <Input
-                  id="pan_number"
-                  value={data.pan_number || ""}
-                  onChange={(e) => setField("pan_number", e.target.value)}
-                  maxLength={10}
-                />
+                {isEditing ? (
+                  <Input
+                    id="pan_number"
+                    value={data.pan_number || ""}
+                    onChange={(e) => setField("pan_number", e.target.value)}
+                    maxLength={10}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.pan_number} />
+                )}
               </div>
               <div>
                 <Label htmlFor="pan_image">PAN image</Label>
-                <FileCurrentRow value={data.pan_image} />
-                {fileInputBox(
+                <FileCurrentRow value={data.pan_image} label="PAN" />
+                {isEditing && fileInputBox(
                   <input
                     id="pan_image"
                     type="file"
@@ -293,35 +358,51 @@ export default function DeliveryQuestionarePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="account_holder_name">Account holder name</Label>
-                <Input
-                  id="account_holder_name"
-                  value={data.account_holder_name || ""}
-                  onChange={(e) => setField("account_holder_name", e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="account_holder_name"
+                    value={data.account_holder_name || ""}
+                    onChange={(e) => setField("account_holder_name", e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.account_holder_name} />
+                )}
               </div>
               <div>
                 <Label htmlFor="bank_name">Bank name</Label>
-                <Input
-                  id="bank_name"
-                  value={data.bank_name || ""}
-                  onChange={(e) => setField("bank_name", e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="bank_name"
+                    value={data.bank_name || ""}
+                    onChange={(e) => setField("bank_name", e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.bank_name} />
+                )}
               </div>
               <div>
                 <Label htmlFor="bank_account_number">Account number</Label>
-                <Input
-                  id="bank_account_number"
-                  value={data.bank_account_number || ""}
-                  onChange={(e) => setField("bank_account_number", e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="bank_account_number"
+                    value={data.bank_account_number || ""}
+                    onChange={(e) => setField("bank_account_number", e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.bank_account_number} />
+                )}
               </div>
               <div>
                 <Label htmlFor="ifsc_code">IFSC code</Label>
-                <Input
-                  id="ifsc_code"
-                  value={data.ifsc_code || ""}
-                  onChange={(e) => setField("ifsc_code", e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="ifsc_code"
+                    value={data.ifsc_code || ""}
+                    onChange={(e) => setField("ifsc_code", e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.ifsc_code} />
+                )}
               </div>
             </div>
           </section>
@@ -332,22 +413,28 @@ export default function DeliveryQuestionarePage() {
             </h2>
             <div>
               <Label htmlFor="available_slots">Preferred slots</Label>
-              <textarea
-                id="available_slots"
-                value={slotsText}
-                onChange={(e) => setSlotsText(e.target.value)}
-                className="w-full border rounded-lg p-3 text-sm dark:bg-gray-800 dark:border-gray-700"
-                rows={4}
-                placeholder="Example: Mon-Fri 10:00 AM to 2:00 PM"
-              />
+              {isEditing ? (
+                <textarea
+                  id="available_slots"
+                  value={slotsText}
+                  onChange={(e) => setSlotsText(e.target.value)}
+                  className="w-full border rounded-lg p-3 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  rows={4}
+                  placeholder="Example: Mon-Fri 10:00 AM to 2:00 PM"
+                />
+              ) : (
+                <ReadOnlyValue value={slotsText} className="!whitespace-pre-wrap" />
+              )}
             </div>
           </section>
 
-          <div className="flex justify-end">
-            <Button onClick={onSave} disabled={saving}>
-              {saving ? "Saving..." : "Save profile"}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-white/5">
+              <Button onClick={onSave} disabled={saving} className="!px-8">
+                {saving ? "Saving..." : "Save Profile"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </>

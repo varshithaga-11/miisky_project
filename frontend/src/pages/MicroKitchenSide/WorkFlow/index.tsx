@@ -27,6 +27,14 @@ const MicroKitchenWorkFlow: React.FC = () => {
   const steps: Step[] = [
     {
       id: 1,
+      title: "Delivery Questionnaire",
+      description: "Complete your delivery profile and KYC details.",
+      icon: <ClipboardCheck className="w-6 h-6" />,
+      path: "/supplychain/delivery-questionnaire",
+      status: "completed",
+    },
+    {
+      id: 2,
       title: "Inspection Reports",
       description: "Review and manage kitchen hygiene and safety reports.",
       icon: <FileText className="w-6 h-6" />,
@@ -34,7 +42,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "current",
     },
     {
-      id: 2,
+      id: 3,
       title: "Daily Prep List",
       description: "Get daily meal requirements from assigned patients.",
       icon: <Utensils className="w-6 h-6" />,
@@ -42,7 +50,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 3,
+      id: 4,
       title: "Kitchen Execution",
       description: "Manage real-time cooking and food preparation tasks.",
       icon: <ClipboardCheck className="w-6 h-6" />,
@@ -50,7 +58,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 4,
+      id: 5,
       title: "Order Management",
       description: "Track and process orders from patients and non-patients.",
       icon: <Package className="w-6 h-6" />,
@@ -58,7 +66,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 5,
+      id: 6,
       title: "Delivery Setup",
       description: "Assign and manage global delivery logistics.",
       icon: <Truck className="w-6 h-6" />,
@@ -66,7 +74,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 6,
+      id: 7,
       title: "Payment Snapshots",
       description: "Monitor and verify order payment histories.",
       icon: <CreditCard className="w-6 h-6" />,
@@ -74,7 +82,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 7,
+      id: 8,
       title: "Reviews & Feedback",
       description: "View patient feedback and improve service quality.",
       icon: <Star className="w-6 h-6" />,
