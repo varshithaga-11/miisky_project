@@ -189,6 +189,9 @@ const FoodNameManagementPage: React.FC = () => {
                   #
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  Image
+                </TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Food Name
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -220,6 +223,15 @@ const FoodNameManagementPage: React.FC = () => {
                   <TableRow key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                       {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      {row.image ? (
+                        <img src={typeof row.image === "string" ? row.image : ""} alt={row.name} className="h-10 w-10 object-cover rounded-lg border border-gray-100" />
+                      ) : (
+                        <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400">
+                          N/A
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start font-bold text-gray-800 text-theme-sm dark:text-white/90">{row.name}</TableCell>
                     <TableCell className="px-5 py-4 text-start">{groupNameFor(row)}</TableCell>
@@ -344,7 +356,12 @@ const FoodNameManagementPage: React.FC = () => {
               
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50">
                 <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Food Name</div>
-                <div className="text-xl font-bold text-gray-900 dark:text-white">{viewData.name}</div>
+                <div className="flex items-center gap-4">
+                  {viewData.image && (
+                    <img src={typeof viewData.image === "string" ? viewData.image : ""} alt={viewData.name} className="h-20 w-20 object-cover rounded-xl border-2 border-white shadow-sm" />
+                  )}
+                  <div className="text-xl font-bold text-gray-900 dark:text-white">{viewData.name}</div>
+                </div>
               </div>
 
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">

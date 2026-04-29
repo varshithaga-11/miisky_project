@@ -18,10 +18,22 @@ interface EditFoodNameProps {
 const EditFoodName: React.FC<EditFoodNameProps> = ({ foodNameId, isOpen, onClose, onUpdated }) => {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [image, setImage] = useState<File | string | null>(null);
   const [foodGroupId, setFoodGroupId] = useState<string>("");
   const [foodGroups, setFoodGroups] = useState<FoodGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!image || typeof image === "string") {
+      setPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(image);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [image]);
 
   useEffect(() => {
     getFoodGroupList(1, "all")
@@ -36,6 +48,7 @@ const EditFoodName: React.FC<EditFoodNameProps> = ({ foodNameId, isOpen, onClose
       .then((data) => {
         setName(data.name || "");
         setCode(data.code || "");
+        setImage(data.image || null);
         setFoodGroupId(data.food_group ? String(data.food_group) : "");
       })
       .catch(() => toast.error("Failed to load food name"))
@@ -50,6 +63,7 @@ const EditFoodName: React.FC<EditFoodNameProps> = ({ foodNameId, isOpen, onClose
         name,
         code: code || null,
         food_group: foodGroupId ? Number(foodGroupId) : null,
+        image: image instanceof File ? image : undefined,
       });
       toast.success("Food name updated successfully!");
       setTimeout(() => {
@@ -113,6 +127,28 @@ const EditFoodName: React.FC<EditFoodNameProps> = ({ foodNameId, isOpen, onClose
             <div>
               <Label htmlFor="code">Code</Label>
               <Input id="code" type="text" value={code} onChange={(e) => setCode(e.target.value)} disabled={saving} />
+            </div>
+
+            <div>
+              <Label htmlFor="image">Image</Label>
+              <input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
+                className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 p-2"
+                disabled={saving}
+              />
+              {(preview || (image && typeof image === "string")) && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 mb-1">{preview ? "New Preview:" : "Current Image:"}</p>
+                  <img 
+                    src={preview || (image as string)} 
+                    alt="Food logo" 
+                    className="h-20 w-20 object-cover rounded-lg border border-gray-200" 
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 mt-6">

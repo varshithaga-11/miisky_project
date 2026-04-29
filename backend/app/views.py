@@ -4670,6 +4670,7 @@ class FoodNameViewSet(viewsets.ModelViewSet):
     queryset = FoodName.objects.select_related('food_group').all()
     serializer_class = FoodNameSerializer
     permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code', 'food_group__name']

@@ -16,9 +16,21 @@ interface AddFoodNameProps {
 const AddFoodName: React.FC<AddFoodNameProps> = ({ onClose, onAdd }) => {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [image, setImage] = useState<File | null>(null);
   const [foodGroupId, setFoodGroupId] = useState<string>("");
   const [foodGroups, setFoodGroups] = useState<FoodGroup[]>([]);
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!image) {
+      setPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(image);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [image]);
 
   useEffect(() => {
     getFoodGroupList(1, "all")
@@ -34,6 +46,7 @@ const AddFoodName: React.FC<AddFoodNameProps> = ({ onClose, onAdd }) => {
         name,
         code: code || null,
         food_group: foodGroupId ? Number(foodGroupId) : null,
+        image,
       };
       const created = await createFoodName(payload);
       toast.success("Food name created successfully!");
@@ -101,6 +114,24 @@ const AddFoodName: React.FC<AddFoodNameProps> = ({ onClose, onAdd }) => {
           <div>
             <Label htmlFor="code">Code</Label>
             <Input id="code" type="text" value={code} onChange={(e) => setCode(e.target.value)} disabled={loading} placeholder="Enter code (optional)" />
+          </div>
+
+          <div>
+            <Label htmlFor="image">Image</Label>
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
+              className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 p-2"
+              disabled={loading}
+            />
+            {preview && (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500 mb-1">Preview:</p>
+                <img src={preview} alt="Preview" className="h-20 w-20 object-cover rounded-lg border border-gray-200" />
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 mt-6">

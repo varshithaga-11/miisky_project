@@ -2264,7 +2264,16 @@ class FoodNameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FoodName
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "food_group",
+            "food_group_name",
+            "food_group_name_input",
+            "image",
+            "code",
+            "created_at",
+        ]
 
     def create(self, validated_data):
         group_name = validated_data.pop('food_group_name_input', None)
@@ -2481,6 +2490,7 @@ class FoodNameNutritionDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "image",
             "code",
             "created_at",
             "food_group",

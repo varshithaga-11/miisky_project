@@ -1208,9 +1208,11 @@ class FoodName(models.Model):
         on_delete=models.SET_NULL,null=True,blank=True,
         related_name='foods'
     )
+    image=models.ImageField(upload_to='foodcomposition/food_images/', null=True, blank=True)
     code = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
+        
     def __str__(self):
         return self.name
 

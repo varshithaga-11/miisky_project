@@ -6,6 +6,7 @@ export interface FoodName {
   name: string;
   food_group?: number | null;
   food_group_name?: string;
+  image?: string | File | null;
   code?: string | null;
   created_at?: string;
 }
@@ -23,7 +24,16 @@ export interface PaginatedResponses<T> {
 
 export const createFoodName = async (data: FoodName) => {
   const url = createApiUrl("api/foodname/");
-  const response = await axios.post(url, data, { headers: await getAuthHeaders() });
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      formData.append(key, value instanceof File ? value : String(value));
+    }
+  });
+  const headers = await getAuthHeaders();
+  const response = await axios.post(url, formData, {
+    headers: { ...headers, "Content-Type": "multipart/form-data" },
+  });
   return response.data;
 };
 
@@ -73,7 +83,17 @@ export const getFoodNameById = async (id: number) => {
 
 export const updateFoodName = async (id: number, data: Partial<FoodName>) => {
   const url = createApiUrl(`api/foodname/${id}/`);
-  const response = await axios.put(url, data, { headers: await getAuthHeaders() });
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      if (key === "image" && typeof value === "string") return; // Don't re-upload image if it's a URL
+      formData.append(key, value instanceof File ? value : String(value));
+    }
+  });
+  const headers = await getAuthHeaders();
+  const response = await axios.put(url, formData, {
+    headers: { ...headers, "Content-Type": "multipart/form-data" },
+  });
   return response.data;
 };
 
