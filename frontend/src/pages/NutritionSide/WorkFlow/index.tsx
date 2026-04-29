@@ -89,6 +89,14 @@ const NutritionWorkFlow: React.FC = () => {
       path: "/nutrition/suggest-foods",
       status: "pending",
     },
+    {
+      id: 9,
+      title: "Suggested Food History",
+      description: "Review and manage all food items suggested to patients.",
+      icon: <FileText className="w-6 h-6" />,
+      path: "/nutrition/suggested-foods-list",
+      status: "pending",
+    },
   ];
 
   return (

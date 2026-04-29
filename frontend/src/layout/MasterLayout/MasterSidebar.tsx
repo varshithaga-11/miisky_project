@@ -306,8 +306,9 @@ const nutritionistNavItems: NavItem[] = [
     name: "Allotted Patients",
     subItems: [
       { name: "Allotted Patients", path: "/nutrition/allotted-patients" },
-      { name: "Suggest foods", path: "/nutrition/suggest-foods" },
       { name: "Patient Documents", path: "/nutrition/uploaded-documents" },
+      { name: "Suggest foods", path: "/nutrition/suggest-foods" },
+      { name: "Suggested Foods List", path: "/nutrition/suggested-foods-list" },
     ],
   },
   {

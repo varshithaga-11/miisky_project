@@ -35,17 +35,31 @@ export type PatientFoodRecommendationPage = {
 export { getMealTypeList };
 export type { MealType };
 
-export const fetchFoodRecommendationsForPatient = async (
-  patientUserId: number,
-  page: number = 1,
-  limit: number = 10
+export const fetchAllFoodRecommendations = async (
+  params: {
+    patient?: number | string;
+    period?: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}
 ): Promise<PatientFoodRecommendationPage> => {
-  const url = createApiUrl(
-    `api/patient-food-recommendation/?patient=${patientUserId}&page=${page}&limit=${limit}`
-  );
+  const { patient, period, start_date, end_date, search, page = 1, limit = 10 } = params;
+  
+  let query = `page=${page}&limit=${limit}`;
+  if (patient) query += `&patient=${patient}`;
+  if (period) query += `&period=${period}`;
+  if (start_date) query += `&start_date=${start_date}`;
+  if (end_date) query += `&end_date=${end_date}`;
+  if (search) query += `&search=${encodeURIComponent(search)}`;
+
+  const url = createApiUrl(`api/patient-food-recommendation/?${query}`);
   const res = await axios.get<PatientFoodRecommendationPage | PatientFoodRecommendation[]>(url, {
     headers: await getAuthHeaders(),
   });
+
   if (Array.isArray(res.data)) {
     const list = res.data;
     return {
@@ -57,6 +71,7 @@ export const fetchFoodRecommendationsForPatient = async (
       results: list,
     };
   }
+
   return {
     count: res.data.count ?? 0,
     next: res.data.next ?? null,
@@ -65,6 +80,14 @@ export const fetchFoodRecommendationsForPatient = async (
     total_pages: res.data.total_pages ?? 1,
     results: Array.isArray(res.data.results) ? res.data.results : [],
   };
+};
+
+export const fetchFoodRecommendationsForPatient = async (
+  patientUserId: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<PatientFoodRecommendationPage> => {
+  return fetchAllFoodRecommendations({ patient: patientUserId, page, limit });
 };
 
 export const createFoodRecommendation = async (payload: {
