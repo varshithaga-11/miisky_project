@@ -1,11 +1,11 @@
 import React from "react";
-import { 
-  Users, 
-  FileText, 
-  ClipboardList, 
-  Briefcase, 
-  CheckCircle2, 
-  Layers, 
+import {
+  Users,
+  FileText,
+  ClipboardList,
+  Briefcase,
+  CheckCircle2,
+  Layers,
   Video,
   ArrowRight
 } from "lucide-react";
@@ -35,22 +35,14 @@ const NutritionWorkFlow: React.FC = () => {
     },
     {
       id: 2,
-      title: "Nutrition Questionnaire",
-      description: "Analyze patient health conditions and lifestyle habits.",
-      icon: <FileText className="w-6 h-6" />,
-      path: "/nutrition/questionnaire",
-      status: "current",
-    },
-    {
-      id: 3,
-      title: "Allotted Patients",
+      title: "Allotted Patients(Along wih their Questionarie)",
       description: "View and manage all patients currently allotted to you.",
       icon: <Users className="w-6 h-6" />,
       path: "/nutrition/allotted-patients",
       status: "pending",
     },
     {
-      id: 4,
+      id: 3,
       title: "Medical Reports",
       description: "Review uploaded medical and blood test reports.",
       icon: <ClipboardList className="w-6 h-6" />,
@@ -58,7 +50,7 @@ const NutritionWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 5,
+      id: 4,
       title: "Diet Plan Suggestion",
       description: "Suggest personalized diet plans and micro-kitchens.",
       icon: <Briefcase className="w-6 h-6" />,
@@ -66,7 +58,7 @@ const NutritionWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 6,
+      id: 5,
       title: "Approved Plan",
       description: "Monitor plans that have been approved by patients.",
       icon: <CheckCircle2 className="w-6 h-6" />,
@@ -74,7 +66,7 @@ const NutritionWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 7,
+      id: 6,
       title: "Daily Set Up",
       description: "Configure and optimize daily meal schedules.",
       icon: <Layers className="w-6 h-6" />,
@@ -82,7 +74,7 @@ const NutritionWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 8,
+      id: 7,
       title: "Engagement Hub",
       description: "Manage consultations and meeting requests.",
       icon: <Video className="w-6 h-6" />,
@@ -90,19 +82,11 @@ const NutritionWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 9,
+      id: 8,
       title: "Suggest Food",
       description: "Suggest specific food items to your patients.",
       icon: <FileText className="w-6 h-6" />,
       path: "/nutrition/suggest-foods",
-      status: "pending",
-    },
-    {
-      id: 10,
-      title: "Suggested Food",
-      description: "View history of food items suggested to patients.",
-      icon: <Layers className="w-6 h-6" />,
-      path: "/nutrition/suggest-foods", // Assuming same path or history view
       status: "pending",
     },
   ];
@@ -116,8 +100,8 @@ const NutritionWorkFlow: React.FC = () => {
 
       <div className="workflow-grid">
         {steps.map((step, index) => (
-          <div 
-            key={step.id} 
+          <div
+            key={step.id}
             className={`workflow-card ${step.status}`}
             onClick={() => navigate(step.path)}
           >

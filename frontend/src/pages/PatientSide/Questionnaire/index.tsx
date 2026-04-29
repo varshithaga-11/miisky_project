@@ -35,17 +35,38 @@ const STEPS = [
 
 type HcRowState = { has: boolean; since: string; comments: string };
 
-/** Matches admin-configured master row named "Other" (case-insensitive). */
 function isOtherMasterName(name: string): boolean {
   return name.trim().toLowerCase() === "other";
 }
 
+const ReadOnlyValue = ({ value, className = "" }: { value: any; className?: string }) => (
+  <div className={`bg-brand-50/30 dark:bg-brand-500/5 border border-brand-100/50 dark:border-brand-500/10 rounded-lg px-3 py-2 text-sm font-semibold text-brand-900 dark:text-brand-300 ${className}`}>
+    {value || "—"}
+  </div>
+);
+
 function triSelect(
   value: boolean | null | undefined,
   onChange: (v: boolean | null) => void,
-  id: string
+  id: string,
+  disabled?: boolean
 ) {
   const v = value === null || value === undefined ? "" : value ? "yes" : "no";
+  const selectedLabel = value === true ? "Yes" : value === false ? "No" : "—";
+
+  if (disabled) {
+    return (
+      <div className={`w-full rounded-lg border px-3 py-2 text-sm font-semibold flex items-center gap-2 ${
+        value != null 
+          ? 'bg-brand-50 border-brand-200 text-brand-700 dark:bg-brand-500/10 dark:border-brand-500/20 dark:text-brand-400' 
+          : 'bg-gray-50 border-gray-200 text-gray-400 dark:bg-gray-800/50 dark:border-gray-700'
+      }`}>
+        <span className={`w-2 h-2 rounded-full ${value === true ? 'bg-green-500' : value === false ? 'bg-red-500' : 'bg-gray-300'}`} />
+        {selectedLabel}
+      </div>
+    );
+  }
+
   return (
     <select
       id={id}
@@ -150,6 +171,7 @@ function normalizeMealSlots(value: unknown): string[] {
 export default function PatientQuestionnairePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [step, setStep] = useState(1);
   const [data, setData] = useState<Partial<UserQuestionnaire>>({});
   const [userGender, setUserGender] = useState<string | null>(null);
@@ -314,6 +336,47 @@ export default function PatientQuestionnairePage() {
       }
     }
   }, [step3MastersLoaded, data, symptomMasters, autoimmuneMasters, deficiencyMasters, digestiveMasters, skinMasters]);
+
+  useEffect(() => {
+    if (questionnaireLoadedRef.current) {
+      if (!initializedMap.current.habits && habitMasters.length > 0) {
+        setHabitIds(namesToIds(data.habits, habitMasters));
+        const extras: Record<number, { other_text: string }> = {};
+        if (Array.isArray(data.habits)) {
+          for (const h of data.habits) {
+            if (h && typeof h === "object" && "id" in h && (h as any).other_text) {
+              extras[(h as any).id] = { other_text: (h as any).other_text };
+            }
+          }
+        }
+        setHabitExtras(extras);
+        initializedMap.current.habits = true;
+      }
+      if (!initializedMap.current.activities && activityMasters.length > 0) {
+        setPhysicalActivityIds(namesToIds(data.physical_activities, activityMasters));
+        const extras: Record<number, { other_text: string; duration_minutes?: string }> = {};
+        if (Array.isArray(data.physical_activities)) {
+          for (const a of data.physical_activities) {
+            if (a && typeof a === "object" && "id" in a) {
+              const aa = a as any;
+              if (aa.other_text || aa.duration_minutes) {
+                extras[aa.id] = {
+                  other_text: aa.other_text || "",
+                  duration_minutes: aa.duration_minutes ? String(aa.duration_minutes) : "",
+                };
+              }
+            }
+          }
+        }
+        setActivityExtras(extras);
+        initializedMap.current.activities = true;
+      }
+      if (!initializedMap.current.foodPref && data.food_preferences !== undefined) {
+        setFoodPreferencesText(data.food_preferences || "");
+        initializedMap.current.foodPref = true;
+      }
+    }
+  }, [data, habitMasters, activityMasters]);
 
   const toggleId = (list: number[], setList: (v: number[]) => void, id: number) => {
     if (list.includes(id)) setList(list.filter((x) => x !== id));
@@ -498,6 +561,7 @@ export default function PatientQuestionnairePage() {
       toast.error("Failed to save questionnaire");
     } finally {
       setSaving(false);
+      setIsEditing(false); // Exit edit mode on success
     }
   };
 
@@ -512,22 +576,44 @@ export default function PatientQuestionnairePage() {
     title: string,
     masters: { id: number; name: string }[],
     ids: number[],
-    setIds: (v: number[]) => void
+    setIds: (v: number[]) => void,
+    disabled?: boolean
   ) => (
-    <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-3">
+    <div className={`rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-3 ${disabled ? 'bg-gray-50/50 dark:bg-white/[0.01]' : ''}`}>
       <p className="font-medium text-gray-900 dark:text-white">{title}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {masters.map((m) => (
-          <label key={m.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={ids.includes(m.id)}
-              onChange={() => toggleId(ids, setIds, m.id)}
-              className="rounded border-gray-300"
-            />
-            {m.name}
-          </label>
-        ))}
+        {masters.map((m) => {
+          const isSelected = ids.includes(m.id);
+          return (
+            <label 
+              key={m.id} 
+              className={`flex items-center gap-2 text-sm transition-all duration-200 px-3 py-2 rounded-xl border ${
+                disabled 
+                  ? isSelected 
+                    ? 'bg-brand-50 border-brand-200 text-brand-700 dark:bg-brand-500/10 dark:border-brand-500/30 dark:text-brand-400 font-bold shadow-sm' 
+                    : 'bg-transparent border-transparent opacity-30 grayscale'
+                  : isSelected
+                    ? 'bg-brand-50/50 border-brand-200 text-brand-600 dark:bg-brand-500/5 dark:border-brand-500/20'
+                    : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-white/10 hover:border-brand-300'
+              } ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
+            >
+              {!disabled && (
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleId(ids, setIds, m.id)}
+                  className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                />
+              )}
+              {isSelected && disabled && (
+                <svg className="w-4 h-4 text-brand-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              <span>{m.name}</span>
+            </label>
+          );
+        })}
       </div>
     </div>
   );
@@ -603,20 +689,41 @@ export default function PatientQuestionnairePage() {
         <div className="p-6 text-gray-600 dark:text-gray-300">Loading questionnaire...</div>
       ) : (
         <div className="space-y-6 max-w-4xl">
-          <div className="flex flex-wrap gap-2">
-            {STEPS.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setStep(s.id)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${step === s.id
-                    ? "bg-brand-500 text-white"
-                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                  }`}
-              >
-                {s.id}. {s.title}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-wrap gap-2">
+              {STEPS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setStep(s.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${step === s.id
+                      ? "bg-brand-500 text-white"
+                      : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    }`}
+                >
+                  {s.id}. {s.title}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!isEditing ? (
+                <Button 
+                  onClick={() => setIsEditing(true)}
+                  className="!px-6 !py-2.5 !rounded-full shadow-lg hover:shadow-brand-500/20"
+                >
+                  Edit Questionnaire
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  className="!px-6 !py-2.5 !rounded-full"
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
 
           {step === 1 && (
@@ -625,30 +732,42 @@ export default function PatientQuestionnairePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="age">Age</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={data.age ?? ""}
-                    onChange={(e) => setField("age", e.target.value ? Number(e.target.value) : null)}
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="age"
+                      type="number"
+                      value={data.age ?? ""}
+                      onChange={(e) => setField("age", e.target.value ? Number(e.target.value) : null)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.age} />
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="height_cm">Height (cm)</Label>
-                  <Input
-                    id="height_cm"
-                    type="number"
-                    value={data.height_cm ?? ""}
-                    onChange={(e) => setField("height_cm", e.target.value ? Number(e.target.value) : null)}
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="height_cm"
+                      type="number"
+                      value={data.height_cm ?? ""}
+                      onChange={(e) => setField("height_cm", e.target.value ? Number(e.target.value) : null)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.height_cm} />
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="weight_kg">Weight (kg)</Label>
-                  <Input
-                    id="weight_kg"
-                    type="number"
-                    value={data.weight_kg ?? ""}
-                    onChange={(e) => setField("weight_kg", e.target.value ? Number(e.target.value) : null)}
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="weight_kg"
+                      type="number"
+                      value={data.weight_kg ?? ""}
+                      onChange={(e) => setField("weight_kg", e.target.value ? Number(e.target.value) : null)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.weight_kg} />
+                  )}
                 </div>
               </div>
               <div>
@@ -660,17 +779,35 @@ export default function PatientQuestionnairePage() {
                       ["moderate", "Moderate"],
                       ["heavy", "Heavy"],
                     ] as const
-                  ).map(([val, label]) => (
-                    <label key={val} className="inline-flex items-center gap-2 text-sm">
-                      <input
-                        type="radio"
-                        name="work_type"
-                        checked={data.work_type === val}
-                        onChange={() => setField("work_type", val)}
-                      />
-                      {label}
-                    </label>
-                  ))}
+                  ).map(([val, label]) => {
+                    const isSelected = data.work_type === val;
+                    if (!isEditing && !isSelected) return null;
+                    return (
+                      <label 
+                        key={val} 
+                        className={`inline-flex items-center gap-2 text-sm transition-all ${
+                          !isEditing 
+                            ? 'bg-brand-100 dark:bg-brand-500/20 text-brand-900 dark:text-brand-300 px-4 py-2 rounded-full font-bold border border-brand-200 dark:border-brand-500/30' 
+                            : 'cursor-pointer'
+                        }`}
+                      >
+                        {isEditing && (
+                          <input
+                            type="radio"
+                            name="work_type"
+                            checked={isSelected}
+                            onChange={() => setField("work_type", val)}
+                          />
+                        )}
+                        {!isEditing && (
+                          <svg className="w-4 h-4 text-brand-600 dark:text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {label}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -686,22 +823,43 @@ export default function PatientQuestionnairePage() {
                   What types of movement or exercise do you do on a typical week? (Select all that apply.)
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {activityMasters.map((m) => (
-                    <label key={m.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={physicalActivityIds.includes(m.id)}
-                        onChange={(e) => toggleActivity(m, e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
-                      <span>
-                        {m.name}
-                        {isOtherMasterName(m.name) ? (
-                          <span className="text-gray-400"> (details in pop-up)</span>
-                        ) : null}
-                      </span>
-                    </label>
-                  ))}
+                  {activityMasters.map((m) => {
+                    const isSelected = physicalActivityIds.includes(m.id);
+                    return (
+                      <label 
+                        key={m.id} 
+                        className={`flex items-center gap-2 text-sm transition-all duration-200 px-3 py-2 rounded-xl border ${
+                          !isEditing 
+                            ? isSelected 
+                              ? 'bg-brand-50 border-brand-200 text-brand-700 dark:bg-brand-500/10 dark:border-brand-500/30 dark:text-brand-400 font-bold shadow-sm' 
+                              : 'bg-transparent border-transparent opacity-20 grayscale'
+                            : isSelected
+                              ? 'bg-brand-50/50 border-brand-200 text-brand-600 dark:bg-brand-500/5 dark:border-brand-500/20'
+                              : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-white/10 hover:border-brand-300'
+                        } ${!isEditing ? 'cursor-default' : 'cursor-pointer'}`}
+                      >
+                        {isEditing && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => toggleActivity(m, e.target.checked)}
+                            className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                          />
+                        )}
+                        {isSelected && !isEditing && (
+                          <svg className="w-4 h-4 text-brand-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        <span>
+                          {m.name}
+                          {isOtherMasterName(m.name) ? (
+                            <span className="text-gray-400"> (details in pop-up)</span>
+                          ) : null}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -712,40 +870,65 @@ export default function PatientQuestionnairePage() {
                   clinic configures the exact options.)
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {habitMasters.map((m) => (
-                    <label key={m.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={habitIds.includes(m.id)}
-                        onChange={(e) => toggleHabit(m, e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
-                      <span>
-                        {m.name}
-                        {isOtherMasterName(m.name) ? <span className="text-gray-400"> (details in pop-up)</span> : null}
-                      </span>
-                    </label>
-                  ))}
+                  {habitMasters.map((m) => {
+                    const isSelected = habitIds.includes(m.id);
+                    return (
+                      <label 
+                        key={m.id} 
+                        className={`flex items-center gap-2 text-sm transition-all duration-200 px-3 py-2 rounded-xl border ${
+                          !isEditing 
+                            ? isSelected 
+                              ? 'bg-brand-50 border-brand-200 text-brand-700 dark:bg-brand-500/10 dark:border-brand-500/30 dark:text-brand-400 font-bold shadow-sm' 
+                              : 'bg-transparent border-transparent opacity-20 grayscale'
+                            : isSelected
+                              ? 'bg-brand-50/50 border-brand-200 text-brand-600 dark:bg-brand-500/5 dark:border-brand-500/20'
+                              : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-white/10 hover:border-brand-300'
+                        } ${!isEditing ? 'cursor-default' : 'cursor-pointer'}`}
+                      >
+                        {isEditing && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => toggleHabit(m, e.target.checked)}
+                            className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                          />
+                        )}
+                        {isSelected && !isEditing && (
+                          <svg className="w-4 h-4 text-brand-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        <span>
+                          {m.name}
+                          {isOtherMasterName(m.name) ? <span className="text-gray-400"> (details in pop-up)</span> : null}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="meals_per_day">Meals per day</Label>
-                  <Select
-                    value={data.meals_per_day != null ? String(data.meals_per_day) : ""}
-                    onChange={(val) =>
-                      setField("meals_per_day", val === "" ? null : Number.parseInt(String(val), 10))
-                    }
-                    options={[
-                      { value: "", label: "Select" },
-                      ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: String(n), label: String(n) })),
-                    ]}
-                    className="w-full"
-                  />
+                  {isEditing ? (
+                    <Select
+                      value={data.meals_per_day != null ? String(data.meals_per_day) : ""}
+                      onChange={(val) =>
+                        setField("meals_per_day", val === "" ? null : Number.parseInt(String(val), 10))
+                      }
+                      options={[
+                        { value: "", label: "Select" },
+                        ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: String(n), label: String(n) })),
+                      ]}
+                      className="w-full"
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.meals_per_day} />
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <Label>Preferred meal slots</Label>
-                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {[
                       { value: "early_morning", label: "Early Morning" },
                       { value: "breakfast", label: "Breakfast" },
@@ -754,33 +937,49 @@ export default function PatientQuestionnairePage() {
                       { value: "evening_snacks", label: "Evening Snacks" },
                       { value: "dinner", label: "Dinner" },
                       { value: "none", label: "None" },
-                    ].map((slot) => (
-                      <label key={slot.value} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={(data.meal_slots as string[] || []).includes(slot.value)}
-                          onChange={(e) => {
-                            const current = (data.meal_slots as string[] || []);
-                            if (e.target.checked) {
-                              setField("meal_slots", [...current, slot.value]);
-                            } else {
-                              setField("meal_slots", current.filter((s) => s !== slot.value));
-                            }
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        {slot.label}
-                      </label>
-                    ))}
+                    ].map((slot) => {
+                      const isSelected = (data.meal_slots as string[] || []).includes(slot.value);
+                      if (!isEditing && !isSelected) return null;
+                      return (
+                        <label 
+                          key={slot.value} 
+                          className={`flex items-center gap-2 text-sm transition-all ${
+                            !isEditing 
+                              ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-300 px-3 py-1.5 rounded-lg font-bold border border-brand-200/50 dark:border-brand-500/20' 
+                              : 'cursor-pointer'
+                          }`}
+                        >
+                          {isEditing && (
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const current = (data.meal_slots as string[] || []);
+                                if (e.target.checked) {
+                                  setField("meal_slots", [...current, slot.value]);
+                                } else {
+                                  setField("meal_slots", current.filter((s) => s !== slot.value));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                            />
+                          )}
+                          {!isEditing && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                          )}
+                          {slot.label}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="skips_meals">Skip meals?</Label>
-                  {triSelect(data.skips_meals, (v) => setField("skips_meals", v), "skips_meals")}
+                  {triSelect(data.skips_meals, (v) => setField("skips_meals", v), "skips_meals", !isEditing)}
                 </div>
                 <div>
                   <Label htmlFor="snacks_between_meals">Snacks between meals?</Label>
-                  {triSelect(data.snacks_between_meals, (v) => setField("snacks_between_meals", v), "snacks_between_meals")}
+                  {triSelect(data.snacks_between_meals, (v) => setField("snacks_between_meals", v), "snacks_between_meals", !isEditing)}
                 </div>
                 <div className="md:col-span-2">
                   <Label>Food source</Label>
@@ -791,17 +990,35 @@ export default function PatientQuestionnairePage() {
                         ["canteen", "Canteen"],
                         ["hotel", "Hotel"],
                       ] as const
-                    ).map(([val, label]) => (
-                      <label key={val} className="inline-flex items-center gap-2 text-sm">
-                        <input
-                          type="radio"
-                          name="food_source"
-                          checked={data.food_source === val}
-                          onChange={() => setField("food_source", val)}
-                        />
-                        {label}
-                      </label>
-                    ))}
+                    ).map(([val, label]) => {
+                      const isSelected = data.food_source === val;
+                      if (!isEditing && !isSelected) return null;
+                      return (
+                        <label 
+                          key={val} 
+                          className={`inline-flex items-center gap-2 text-sm transition-all ${
+                            !isEditing 
+                              ? 'bg-brand-100 dark:bg-brand-500/20 text-brand-900 dark:text-brand-300 px-4 py-2 rounded-full font-bold border border-brand-200 dark:border-brand-500/30' 
+                              : 'cursor-pointer'
+                          }`}
+                        >
+                          {isEditing && (
+                            <input
+                              type="radio"
+                              name="food_source"
+                              checked={isSelected}
+                              onChange={() => setField("food_source", val)}
+                            />
+                          )}
+                          {!isEditing && (
+                            <svg className="w-4 h-4 text-brand-600 dark:text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          {label}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -828,45 +1045,64 @@ export default function PatientQuestionnairePage() {
                       {groupedConditions.flatMap(([cat, rows]) =>
                         rows.map((m) => {
                           const row = hcRows[m.id] || { has: false, since: "", comments: "" };
+                          if (!isEditing && !row.has) return null; // Only show 'Yes' conditions in read-only
                           return (
-                            <tr key={m.id} className="border-b border-gray-100 dark:border-white/5">
-                              <td className="p-2 align-top">{m.name}</td>
+                            <tr key={m.id} className={`border-b border-gray-100 dark:border-white/5 transition-colors ${
+                              !isEditing ? 'bg-brand-50/30 dark:bg-brand-500/5' : ''
+                            }`}>
+                              <td className="p-2 align-top font-medium">{m.name}</td>
                               <td className="p-2 align-top text-gray-500 capitalize">{cat}</td>
-                              <td className="p-2 text-center">
-                                <input
-                                  type="radio"
-                                  name={`hc-${m.id}`}
-                                  checked={row.has === true}
-                                  onChange={() => updateHcRow(m.id, { has: true })}
-                                />
-                              </td>
-                              <td className="p-2 text-center">
-                                <input
-                                  type="radio"
-                                  name={`hc-${m.id}`}
-                                  checked={row.has === false}
-                                  onChange={() => updateHcRow(m.id, { has: false, since: "", comments: "" })}
-                                />
-                              </td>
+                              {isEditing ? (
+                                <>
+                                  <td className="p-2 text-center">
+                                    <input
+                                      type="radio"
+                                      name={`hc-${m.id}`}
+                                      checked={row.has === true}
+                                      onChange={() => updateHcRow(m.id, { has: true })}
+                                    />
+                                  </td>
+                                  <td className="p-2 text-center">
+                                    <input
+                                      type="radio"
+                                      name={`hc-${m.id}`}
+                                      checked={row.has === false}
+                                      onChange={() => updateHcRow(m.id, { has: false, since: "", comments: "" })}
+                                    />
+                                  </td>
+                                </>
+                              ) : (
+                                <td colSpan={2} className="p-2 text-center">
+                                  <span className="bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Yes</span>
+                                </td>
+                              )}
                               <td className="p-2 align-top">
                                 {row.has ? (
-                                  <DatePicker2
-                                    id={`hc-since-${m.id}`}
-                                    value={row.since}
-                                    onChange={(date) => updateHcRow(m.id, { since: date })}
-                                  />
+                                  isEditing ? (
+                                    <DatePicker2
+                                      id={`hc-since-${m.id}`}
+                                      value={row.since}
+                                      onChange={(date) => updateHcRow(m.id, { since: date })}
+                                    />
+                                  ) : (
+                                    <ReadOnlyValue value={row.since} className="!py-1 !px-2" />
+                                  )
                                 ) : (
                                   <span className="text-gray-400">—</span>
                                 )}
                               </td>
                               <td className="p-2">
-                                <input
-                                  type="text"
-                                  className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 px-2 py-1 text-xs"
-                                  value={row.comments}
-                                  disabled={!row.has}
-                                  onChange={(e) => updateHcRow(m.id, { comments: e.target.value })}
-                                />
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 px-2 py-1 text-xs"
+                                    value={row.comments}
+                                    disabled={!row.has}
+                                    onChange={(e) => updateHcRow(m.id, { comments: e.target.value })}
+                                  />
+                                ) : (
+                                  <ReadOnlyValue value={row.comments} className="!py-1 !px-2" />
+                                )}
                               </td>
                             </tr>
                           );
@@ -882,11 +1118,11 @@ export default function PatientQuestionnairePage() {
           {step === 3 && (
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Related selections</h2>
-              {masterCheckboxSection("Autoimmune diseases", autoimmuneMasters, autoimmuneIds, setAutoimmuneIds)}
-              {masterCheckboxSection("Symptoms", symptomMasters, symptomIds, setSymptomIds)}
-              {masterCheckboxSection("Vitamin / mineral deficiencies", deficiencyMasters, deficiencyIds, setDeficiencyIds)}
-              {masterCheckboxSection("Digestive issues", digestiveMasters, digestiveIds, setDigestiveIds)}
-              {masterCheckboxSection("Skin issues", skinMasters, skinIds, setSkinIds)}
+              {masterCheckboxSection("Autoimmune diseases", autoimmuneMasters, autoimmuneIds, setAutoimmuneIds, !isEditing)}
+              {masterCheckboxSection("Symptoms", symptomMasters, symptomIds, setSymptomIds, !isEditing)}
+              {masterCheckboxSection("Vitamin / mineral deficiencies", deficiencyMasters, deficiencyIds, setDeficiencyIds, !isEditing)}
+              {masterCheckboxSection("Digestive issues", digestiveMasters, digestiveIds, setDigestiveIds, !isEditing)}
+              {masterCheckboxSection("Skin issues", skinMasters, skinIds, setSkinIds, !isEditing)}
             </div>
           )}
 
@@ -903,68 +1139,98 @@ export default function PatientQuestionnairePage() {
                         ["non_veg", "Non Veg"],
                         ["eggetarian", "Eggetarian"],
                       ] as const
-                    ).map(([val, label]) => (
-                      <label key={val} className="inline-flex items-center gap-2 text-sm">
-                        <input
-                          type="radio"
-                          name="diet_pattern"
-                          checked={data.diet_pattern === val}
-                          onChange={() => setField("diet_pattern", val)}
-                        />
-                        {label}
-                      </label>
-                    ))}
+                    ).map(([val, label]) => {
+                      const isSelected = data.diet_pattern === val;
+                      if (!isEditing && !isSelected) return null;
+                      return (
+                        <label 
+                          key={val} 
+                          className={`inline-flex items-center gap-2 text-sm transition-all ${
+                            !isEditing 
+                              ? 'bg-brand-100 dark:bg-brand-500/20 text-brand-900 dark:text-brand-300 px-4 py-2 rounded-full font-bold border border-brand-200 dark:border-brand-500/30' 
+                              : 'cursor-pointer'
+                          }`}
+                        >
+                          {isEditing && (
+                            <input
+                              type="radio"
+                              name="diet_pattern"
+                              checked={isSelected}
+                              onChange={() => setField("diet_pattern", val)}
+                            />
+                          )}
+                          {!isEditing && (
+                            <svg className="w-4 h-4 text-brand-600 dark:text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          {label}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
                 {data.diet_pattern === "non_veg" && (
                   <div>
                     <Label htmlFor="non_veg_frequency">Non-veg frequency</Label>
-                    <Select
-                      id="non_veg_frequency"
-                      value={data.non_veg_frequency || ""}
-                      onChange={(val) => setField("non_veg_frequency", val || null)}
-                      options={[
-                        { value: "", label: "Select" },
-                        { value: "daily", label: "Daily" },
-                        { value: "three_four_times_week", label: "3–4 times a week" },
-                        { value: "one_two_times_week", label: "1–2 times a week" },
-                        { value: "occasional", label: "Occasionally (once in 2–3 weeks)" },
-                      ]}
-                      className="w-full"
-                    />
+                    {isEditing ? (
+                      <Select
+                        id="non_veg_frequency"
+                        value={data.non_veg_frequency || ""}
+                        onChange={(val) => setField("non_veg_frequency", val || null)}
+                        options={[
+                          { value: "", label: "Select" },
+                          { value: "daily", label: "Daily" },
+                          { value: "three_four_times_week", label: "3–4 times a week" },
+                          { value: "one_two_times_week", label: "1–2 times a week" },
+                          { value: "occasional", label: "Occasionally (once in 2–3 weeks)" },
+                        ]}
+                        className="w-full"
+                      />
+                    ) : (
+                      <ReadOnlyValue value={data.non_veg_frequency} />
+                    )}
                   </div>
                 )}
                 <div>
                   <Label htmlFor="consumes_egg">Consume eggs?</Label>
-                  {triSelect(data.consumes_egg, (v) => setField("consumes_egg", v), "consumes_egg")}
+                  {triSelect(data.consumes_egg, (v) => setField("consumes_egg", v), "consumes_egg", !isEditing)}
                 </div>
                 <div>
                   <Label htmlFor="consumes_dairy">Consume milk / dairy?</Label>
-                  {triSelect(data.consumes_dairy, (v) => setField("consumes_dairy", v), "consumes_dairy")}
+                  {triSelect(data.consumes_dairy, (v) => setField("consumes_dairy", v), "consumes_dairy", !isEditing)}
                 </div>
                 <div>
                   <Label htmlFor="food_allergy">Any food allergy?</Label>
-                  {triSelect(data.food_allergy, (v) => setField("food_allergy", v), "food_allergy")}
+                  {triSelect(data.food_allergy, (v) => setField("food_allergy", v), "food_allergy", !isEditing)}
                 </div>
                 <div>
                   <Label htmlFor="fruits_per_day">Fruits per day</Label>
-                  <Input
-                    id="fruits_per_day"
-                    type="number"
-                    min={0}
-                    value={data.fruits_per_day ?? ""}
-                    onChange={(e) => setField("fruits_per_day", e.target.value ? Number(e.target.value) : null)}
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="fruits_per_day"
+                      type="number"
+                      min={0}
+                      value={data.fruits_per_day ?? ""}
+                      onChange={(e) => setField("fruits_per_day", e.target.value ? Number(e.target.value) : null)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.fruits_per_day} />
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="vegetables_per_day">Vegetables per day</Label>
-                  <Input
-                    id="vegetables_per_day"
-                    type="number"
-                    min={0}
-                    value={data.vegetables_per_day ?? ""}
-                    onChange={(e) => setField("vegetables_per_day", e.target.value ? Number(e.target.value) : null)}
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="vegetables_per_day"
+                      type="number"
+                      min={0}
+                      value={data.vegetables_per_day ?? ""}
+                      onChange={(e) => setField("vegetables_per_day", e.target.value ? Number(e.target.value) : null)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.vegetables_per_day} />
+                  )}
                 </div>
               </div>
               {data.food_allergy === true && (
@@ -974,7 +1240,8 @@ export default function PatientQuestionnairePage() {
                     id="food_allergy_details"
                     value={data.food_allergy_details || ""}
                     onChange={(e) => setField("food_allergy_details", e.target.value)}
-                    className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                    disabled={!isEditing}
+                    className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700 disabled:opacity-50"
                     rows={3}
                   />
                 </div>
@@ -984,7 +1251,7 @@ export default function PatientQuestionnairePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="surgery_history">History of surgery?</Label>
-                  {triSelect(data.surgery_history, (v) => setField("surgery_history", v), "surgery_history")}
+                  {triSelect(data.surgery_history, (v) => setField("surgery_history", v), "surgery_history", !isEditing)}
                 </div>
                 {data.surgery_history === true && (
                   <div className="md:col-span-2">
@@ -993,14 +1260,15 @@ export default function PatientQuestionnairePage() {
                       id="surgery_details"
                       value={data.surgery_details || ""}
                       onChange={(e) => setField("surgery_details", e.target.value)}
-                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                      disabled={!isEditing}
+                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700 disabled:opacity-50"
                       rows={2}
                     />
                   </div>
                 )}
                 <div>
                   <Label htmlFor="medicine_allergy">Medicine allergy?</Label>
-                  {triSelect(data.medicine_allergy, (v) => setField("medicine_allergy", v), "medicine_allergy")}
+                  {triSelect(data.medicine_allergy, (v) => setField("medicine_allergy", v), "medicine_allergy", !isEditing)}
                 </div>
                 {data.medicine_allergy === true && (
                   <div className="md:col-span-2">
@@ -1009,14 +1277,15 @@ export default function PatientQuestionnairePage() {
                       id="medicine_allergy_details"
                       value={data.medicine_allergy_details || ""}
                       onChange={(e) => setField("medicine_allergy_details", e.target.value)}
-                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                      disabled={!isEditing}
+                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700 disabled:opacity-50"
                       rows={2}
                     />
                   </div>
                 )}
                 <div>
                   <Label htmlFor="on_medication">On medication?</Label>
-                  {triSelect(data.on_medication, (v) => setField("on_medication", v), "on_medication")}
+                  {triSelect(data.on_medication, (v) => setField("on_medication", v), "on_medication", !isEditing)}
                 </div>
                 {data.on_medication === true && (
                   <div className="md:col-span-2">
@@ -1025,7 +1294,8 @@ export default function PatientQuestionnairePage() {
                       id="specify_medication"
                       value={data.specify_medication || ""}
                       onChange={(e) => setField("specify_medication", e.target.value)}
-                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                      disabled={!isEditing}
+                      className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700 disabled:opacity-50"
                       rows={2}
                     />
                   </div>
@@ -1036,84 +1306,116 @@ export default function PatientQuestionnairePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="dietitian_consultation_before">Have you consulted any dietitian before?</Label>
-                  {triSelect(data.dietitian_consultation_before, (v) => setField("dietitian_consultation_before", v), "dietitian_consultation_before")}
+                  {triSelect(data.dietitian_consultation_before, (v) => setField("dietitian_consultation_before", v), "dietitian_consultation_before", !isEditing)}
                 </div>
                 {data.dietitian_consultation_before === true && (
                   <>
                     <div>
                       <Label htmlFor="dietitian_consultation_name">Dietitian Name</Label>
-                      <Input
-                        id="dietitian_consultation_name"
-                        value={data.dietitian_consultation_name || ""}
-                        onChange={(e) => setField("dietitian_consultation_name", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="dietitian_consultation_name"
+                          value={data.dietitian_consultation_name || ""}
+                          onChange={(e) => setField("dietitian_consultation_name", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.dietitian_consultation_name} />
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="dietitian_consultation_specialty">Specialty</Label>
-                      <Input
-                        id="dietitian_consultation_specialty"
-                        value={data.dietitian_consultation_specialty || ""}
-                        onChange={(e) => setField("dietitian_consultation_specialty", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="dietitian_consultation_specialty"
+                          value={data.dietitian_consultation_specialty || ""}
+                          onChange={(e) => setField("dietitian_consultation_specialty", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.dietitian_consultation_specialty} />
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="dietitian_consultation_phone">Phone Number</Label>
-                      <Input
-                        id="dietitian_consultation_phone"
-                        value={data.dietitian_consultation_phone || ""}
-                        onChange={(e) => setField("dietitian_consultation_phone", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="dietitian_consultation_phone"
+                          value={data.dietitian_consultation_phone || ""}
+                          onChange={(e) => setField("dietitian_consultation_phone", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.dietitian_consultation_phone} />
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="dietitian_consultation_location">Location</Label>
-                      <Input
-                        id="dietitian_consultation_location"
-                        value={data.dietitian_consultation_location || ""}
-                        onChange={(e) => setField("dietitian_consultation_location", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="dietitian_consultation_location"
+                          value={data.dietitian_consultation_location || ""}
+                          onChange={(e) => setField("dietitian_consultation_location", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.dietitian_consultation_location} />
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="dietitian_consultation_notes">Dietitian notes</Label>
-                      <textarea
-                        id="dietitian_consultation_notes"
-                        value={data.dietitian_consultation_notes || ""}
-                        onChange={(e) => setField("dietitian_consultation_notes", e.target.value)}
-                        className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
-                        rows={2}
-                      />
+                      {isEditing ? (
+                        <textarea
+                          id="dietitian_consultation_notes"
+                          value={data.dietitian_consultation_notes || ""}
+                          onChange={(e) => setField("dietitian_consultation_notes", e.target.value)}
+                          className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                          rows={2}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.dietitian_consultation_notes} className="!whitespace-pre-wrap" />
+                      )}
                     </div>
                   </>
                 )}
 
                 <div className="md:col-span-2 border-t pt-4 mt-2">
                   <Label htmlFor="consulted_doctor">Have you consulted a consultant doctor?</Label>
-                  {triSelect(data.consulted_doctor, (v) => setField("consulted_doctor", v), "consulted_doctor")}
+                  {triSelect(data.consulted_doctor, (v) => setField("consulted_doctor", v), "consulted_doctor", !isEditing)}
                 </div>
                 {data.consulted_doctor === true && (
                   <>
                     <div>
                       <Label htmlFor="consultant_doctor_name">Consultant Doctor Name</Label>
-                      <Input
-                        id="consultant_doctor_name"
-                        value={data.consultant_doctor_name || ""}
-                        onChange={(e) => setField("consultant_doctor_name", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="consultant_doctor_name"
+                          value={data.consultant_doctor_name || ""}
+                          onChange={(e) => setField("consultant_doctor_name", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.consultant_doctor_name} />
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="consultant_doctor_specialty">Specialty</Label>
-                      <Input
-                        id="consultant_doctor_specialty"
-                        value={data.consultant_doctor_specialty || ""}
-                        onChange={(e) => setField("consultant_doctor_specialty", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="consultant_doctor_specialty"
+                          value={data.consultant_doctor_specialty || ""}
+                          onChange={(e) => setField("consultant_doctor_specialty", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.consultant_doctor_specialty} />
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="consultant_doctor_phone">Phone Number</Label>
-                      <Input
-                        id="consultant_doctor_phone"
-                        value={data.consultant_doctor_phone || ""}
-                        onChange={(e) => setField("consultant_doctor_phone", e.target.value)}
-                      />
+                      {isEditing ? (
+                        <Input
+                          id="consultant_doctor_phone"
+                          value={data.consultant_doctor_phone || ""}
+                          onChange={(e) => setField("consultant_doctor_phone", e.target.value)}
+                        />
+                      ) : (
+                        <ReadOnlyValue value={data.consultant_doctor_phone} />
+                      )}
                     </div>
                   </>
                 )}
@@ -1123,110 +1425,146 @@ export default function PatientQuestionnairePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="sleep_quality">Sleep quality</Label>
-                  <Select
-                    value={data.sleep_quality || ""}
-                    onChange={(val) => setField("sleep_quality", val || null)}
-                    options={[
-                      { value: "", label: "Select" },
-                      { value: "fresh", label: "Fresh" },
-                      { value: "not_fresh", label: "Not Fresh" },
-                    ]}
-                    className="w-full"
-                  />
+                  {isEditing ? (
+                    <Select
+                      value={data.sleep_quality || ""}
+                      onChange={(val) => setField("sleep_quality", val || null)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "fresh", label: "Fresh" },
+                        { value: "not_fresh", label: "Not Fresh" },
+                      ]}
+                      className="w-full"
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.sleep_quality} />
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="stress_level">Stress level</Label>
-                  <Select
-                    value={data.stress_level || ""}
-                    onChange={(val) => setField("stress_level", val || null)}
-                    options={[
-                      { value: "", label: "Select" },
-                      { value: "low", label: "Low" },
-                      { value: "medium", label: "Medium" },
-                      { value: "high", label: "High" },
-                    ]}
-                    className="w-full"
-                  />
+                  {isEditing ? (
+                    <Select
+                      value={data.stress_level || ""}
+                      onChange={(val) => setField("stress_level", val || null)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "low", label: "Low" },
+                        { value: "medium", label: "Medium" },
+                        { value: "high", label: "High" },
+                      ]}
+                      className="w-full"
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.stress_level} />
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="falls_sick_frequency">How often do you fall sick?</Label>
-                  <Select
-                    value={data.falls_sick_frequency || ""}
-                    onChange={(val) => setField("falls_sick_frequency", val || null)}
-                    options={[
-                      { value: "", label: "Select" },
-                      { value: "once", label: "Once" },
-                      { value: "twice", label: "Twice" },
-                      { value: "frequent", label: "Frequent" },
-                    ]}
-                    className="w-full"
-                  />
+                  {isEditing ? (
+                    <Select
+                      value={data.falls_sick_frequency || ""}
+                      onChange={(val) => setField("falls_sick_frequency", val || null)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "once", label: "Once" },
+                        { value: "twice", label: "Twice" },
+                        { value: "frequent", label: "Frequent" },
+                      ]}
+                      className="w-full"
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.falls_sick_frequency} />
+                  )}
                 </div>
                 {(userGender === "female" || userGender === null) && (
                   <div>
                     <Label htmlFor="menstrual_pattern">Menstrual Pattern</Label>
-                    <Select
-                      value={data.menstrual_pattern || ""}
-                      onChange={(val) => setField("menstrual_pattern", val || null)}
-                      options={[
-                        { value: "", label: "Select" },
-                        { value: "heavy", label: "Heavy bleeding" },
-                        { value: "very_less", label: "Very less bleeding" },
-                        { value: "none", label: "None" },
-                      ]}
-                      className="w-full"
-                    />
+                    {isEditing ? (
+                      <Select
+                        value={data.menstrual_pattern || ""}
+                        onChange={(val) => setField("menstrual_pattern", val || null)}
+                        options={[
+                          { value: "", label: "Select" },
+                          { value: "heavy", label: "Heavy bleeding" },
+                          { value: "very_less", label: "Very less bleeding" },
+                          { value: "none", label: "None" },
+                        ]}
+                        className="w-full"
+                      />
+                    ) : (
+                      <ReadOnlyValue value={data.menstrual_pattern} />
+                    )}
                   </div>
                 )}
               </div>
 
               <div>
                 <Label htmlFor="food_preferences">Food preferences (comma-separated)</Label>
-                <Input
-                  id="food_preferences"
-                  value={foodPreferencesText}
-                  onChange={(e) => setFoodPreferencesText(e.target.value)}
-                />
+                {isEditing ? (
+                  <Input
+                    id="food_preferences"
+                    value={foodPreferencesText}
+                    onChange={(e) => setFoodPreferencesText(e.target.value)}
+                  />
+                ) : (
+                  <ReadOnlyValue value={foodPreferencesText} />
+                )}
               </div>
               <div>
                 <Label htmlFor="additional_notes">Additional notes</Label>
-                <textarea
-                  id="additional_notes"
-                  value={data.additional_notes || ""}
-                  onChange={(e) => setField("additional_notes", e.target.value)}
-                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
-                  rows={4}
-                />
+                {isEditing ? (
+                  <textarea
+                    id="additional_notes"
+                    value={data.additional_notes || ""}
+                    onChange={(e) => setField("additional_notes", e.target.value)}
+                    className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                    rows={4}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.additional_notes} className="!whitespace-pre-wrap" />
+                )}
               </div>
               <div>
                 <Label htmlFor="other_health_concerns">Other health concerns</Label>
-                <textarea
-                  id="other_health_concerns"
-                  value={data.other_health_concerns || ""}
-                  onChange={(e) => setField("other_health_concerns", e.target.value)}
-                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
-                  rows={3}
-                />
+                {isEditing ? (
+                  <textarea
+                    id="other_health_concerns"
+                    value={data.other_health_concerns || ""}
+                    onChange={(e) => setField("other_health_concerns", e.target.value)}
+                    className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                    rows={3}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.other_health_concerns} className="!whitespace-pre-wrap" />
+                )}
               </div>
               <div>
                 <Label htmlFor="any_other_comments">Any other comments</Label>
-                <textarea
-                  id="any_other_comments"
-                  value={data.any_other_comments || ""}
-                  onChange={(e) => setField("any_other_comments", e.target.value)}
-                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
-                  rows={3}
-                />
+                {isEditing ? (
+                  <textarea
+                    id="any_other_comments"
+                    value={data.any_other_comments || ""}
+                    onChange={(e) => setField("any_other_comments", e.target.value)}
+                    className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                    rows={3}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.any_other_comments} className="!whitespace-pre-wrap" />
+                )}
               </div>
               <div>
                 <Label htmlFor="any_notes_for_care_team">Any notes for care team</Label>
-                <textarea
-                  id="any_notes_for_care_team"
-                  value={data.any_notes_for_care_team || ""}
-                  onChange={(e) => setField("any_notes_for_care_team", e.target.value)}
-                  className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
-                  rows={3}
-                />
+                {isEditing ? (
+                  <textarea
+                    id="any_notes_for_care_team"
+                    value={data.any_notes_for_care_team || ""}
+                    onChange={(e) => setField("any_notes_for_care_team", e.target.value)}
+                    className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700"
+                    rows={3}
+                  />
+                ) : (
+                  <ReadOnlyValue value={data.any_notes_for_care_team} className="!whitespace-pre-wrap" />
+                )}
               </div>
             </div>
           )}
@@ -1240,9 +1578,11 @@ export default function PatientQuestionnairePage() {
                 Next
               </Button>
             </div>
-            <Button type="button" onClick={onSave} disabled={saving}>
-              {saving ? "Saving..." : "Save questionnaire"}
-            </Button>
+            {isEditing && (
+              <Button type="button" onClick={onSave} disabled={saving}>
+                {saving ? "Saving..." : "Save questionnaire"}
+              </Button>
+            )}
           </div>
         </div>
       )}
