@@ -12,7 +12,7 @@ export type PatientFoodRecommendation = {
     email: string;
   } | null;
   food: number;
-  food_details?: { id: number; name: string; code?: string | null } | null;
+  food_details?: { id: number; name: string; code?: string | null, image?: string | null } | null;
   quantity: string | null;
   meal_time?: number | null;
   meal_time_details?: { id: number; name: string } | null;

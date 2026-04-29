@@ -254,6 +254,12 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
+                    Image
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
                     Food
                   </TableCell>
                   <TableCell
@@ -303,7 +309,7 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={10} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       {searchQuery || period !== "all"
                         ? "No entries match your filters."
                         : "No food suggestions yet. When your nutritionist adds recommendations, they will appear here."}
@@ -318,6 +324,15 @@ const SuggestedFoodNameFromNutritionPage: React.FC = () => {
                       <TableRow key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                         <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {(currentPage - 1) * PAGE_SIZE + index + 1}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-start">
+                          {r.food_details?.image ? (
+                            <img src={r.food_details.image} alt={foodLabel} className="h-10 w-10 object-cover rounded-lg border border-gray-100 dark:border-white/5" />
+                          ) : (
+                            <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-[10px] text-gray-400">
+                              N/A
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="px-5 py-4 text-start font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {foodLabel}

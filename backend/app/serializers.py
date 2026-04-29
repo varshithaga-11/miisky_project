@@ -5473,7 +5473,11 @@ class PatientFoodRecommendationSerializer(serializers.ModelSerializer):
         f = obj.food
         if not f:
             return None
-        return {"id": f.id, "name": f.name, "code": f.code}
+        request = self.context.get('request')
+        image_url = f.image.url if f.image else None
+        if image_url and request:
+            image_url = request.build_absolute_uri(image_url)
+        return {"id": f.id, "name": f.name, "code": f.code, "image": image_url}
 
     def get_meal_time_details(self, obj):
         m = obj.meal_time

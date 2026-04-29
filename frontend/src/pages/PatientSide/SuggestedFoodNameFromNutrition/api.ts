@@ -5,7 +5,7 @@ export type PatientFoodRecommendation = {
   id: number;
   patient: number;
   food: number;
-  food_details?: { id: number; name: string; code?: string | null } | null;
+  food_details?: { id: number; name: string; code?: string | null, image?: string | null } | null;
   quantity: string | null;
   meal_time: string | null;
   notes: string | null;
@@ -70,13 +70,13 @@ export const fetchMyFoodRecommendationsFromNutrition = async (
   const data = res.data as
     | PatientFoodRecommendation[]
     | {
-        count?: number;
-        next?: number | null;
-        previous?: number | null;
-        current_page?: number;
-        total_pages?: number;
-        results?: PatientFoodRecommendation[];
-      };
+      count?: number;
+      next?: number | null;
+      previous?: number | null;
+      current_page?: number;
+      total_pages?: number;
+      results?: PatientFoodRecommendation[];
+    };
 
   if (Array.isArray(data)) {
     return {

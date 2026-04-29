@@ -7,7 +7,7 @@ import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { FiTrash2, FiPlus } from "react-icons/fi";
 
 import { getMyPatients, MappedPatientResponse } from "../UploadedDocumentsByPatient/api";
-import { getFoodNameList } from "../../AdminSide/FoodName/foodnameapi";
+import { getFoodNameList, getFoodNameById } from "../../AdminSide/FoodName/foodnameapi";
 import {
   createFoodRecommendation,
   deleteFoodRecommendation,
@@ -43,16 +43,38 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Food dropdown pagination state
+  const [foodPage, setFoodPage] = useState(1);
+  const [hasMoreFood, setHasMoreFood] = useState(true);
+  const [isLoadingMoreFood, setIsLoadingMoreFood] = useState(false);
+  const [lastSearch, setLastSearch] = useState("");
+  const [selectedFoodImage, setSelectedFoodImage] = useState<string | null>(null);
+
 
   const selectedPatient = useMemo(
     () => patients.find((p) => p.user.id === selectedPatientId) ?? null,
     [patients, selectedPatientId]
   );
 
+  const patientOptions = useMemo(() => {
+    return patients.map((p) => ({
+      value: p.user.id,
+      label: `${p.user.first_name || ""} ${p.user.last_name || ""}`.trim() || p.user.email,
+    }));
+  }, [patients]);
+
+  const selectedFood = useMemo(
+    () => foodOptions.find((f) => f.value === selectedFoodId),
+    [foodOptions, selectedFoodId]
+  );
+
   const loadFoodOptions = useCallback(async (search: string) => {
+    setLastSearch(search);
+    setFoodPage(1);
     try {
-      const res = await getFoodNameList(1, 80, search || undefined);
+      const res = await getFoodNameList(1, 10, search || undefined);
       const list = res.results ?? [];
+      setHasMoreFood(!!res.next);
       setFoodOptions(
         list.map((f) => ({
           value: f.id as number,
@@ -63,6 +85,29 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
       setFoodOptions([]);
     }
   }, []);
+
+  const loadMoreFood = useCallback(async () => {
+    if (!hasMoreFood || isLoadingMoreFood) return;
+    setIsLoadingMoreFood(true);
+    try {
+      const nextPage = foodPage + 1;
+      const res = await getFoodNameList(nextPage, 10, lastSearch || undefined);
+      const list = res.results ?? [];
+      setHasMoreFood(!!res.next);
+      setFoodPage(nextPage);
+      setFoodOptions((prev) => [
+        ...prev,
+        ...list.map((f) => ({
+          value: f.id as number,
+          label: f.name + (f.code ? ` (${f.code})` : ""),
+        })),
+      ]);
+    } catch (err) {
+      console.error("Error loading more food:", err);
+    } finally {
+      setIsLoadingMoreFood(false);
+    }
+  }, [foodPage, hasMoreFood, isLoadingMoreFood, lastSearch]);
 
   const loadMealTypeOptions = useCallback(async (search: string) => {
     try {
@@ -94,6 +139,21 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
     load();
   }, []); // Only load patients once on mount
 
+  useEffect(() => {
+    if (!selectedFoodId) {
+      setSelectedFoodImage(null);
+      return;
+    }
+    const fetchImage = async () => {
+      try {
+        const data = await getFoodNameById(selectedFoodId);
+        setSelectedFoodImage(data.image || null);
+      } catch (err) {
+        console.error("Error fetching food image:", err);
+      }
+    };
+    fetchImage();
+  }, [selectedFoodId]);
 
 
   useEffect(() => {
@@ -220,21 +280,16 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Patient</label>
-                <select
-                  value={selectedPatientId ?? ""}
-                  onChange={(e) => {
-                    setSelectedPatientId(Number(e.target.value) || undefined);
+                <SearchableSelect<number>
+                  options={patientOptions}
+                  value={selectedPatientId}
+                  onChange={(val) => {
+                    setSelectedPatientId(val || undefined);
                     setCurrentPage(1);
                   }}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  <option value="">Select a patient</option>
-                  {patients.map((p) => (
-                    <option key={p.user.id} value={p.user.id}>
-                      {`${p.user.first_name || ""} ${p.user.last_name || ""}`.trim() || p.user.email}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Search and select a patient"
+                  required
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Food (catalog)</label>
@@ -244,9 +299,20 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
                   onChange={(v) => setSelectedFoodId(v)}
                   onSearch={(q) => void loadFoodOptions(q)}
                   onFocus={() => void loadFoodOptions("")}
+                  onLoadMore={loadMoreFood}
+                  isLoadingMore={isLoadingMoreFood}
                   placeholder="Search food name…"
                   required
                 />
+                {selectedFoodImage && (
+                  <div className="mt-2 flex items-center gap-3 p-2 rounded-lg border border-gray-100 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <img src={selectedFoodImage} alt={selectedFood?.label} className="h-16 w-16 object-cover rounded-md shadow-sm border border-white dark:border-gray-700" />
+                    <div>
+                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Selected Food</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedFood?.label || "Loading..."}</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -331,6 +397,9 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
             <TableHeader>
               <TableRow className="border-b border-gray-200 dark:border-white/10">
                 <TableCell isHeader className="px-4 py-3">
+                  Image
+                </TableCell>
+                <TableCell isHeader className="px-4 py-3">
                   Food
                 </TableCell>
                 <TableCell isHeader className="px-4 py-3">
@@ -353,19 +422,28 @@ const SuggestFoodNameToPatientsPage: React.FC = () => {
             <TableBody>
               {rowsLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  <TableCell colSpan={7} className="px-4 py-8 text-center text-gray-500">
                     Loading suggestions...
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  <TableCell colSpan={7} className="px-4 py-8 text-center text-gray-500">
                     No food suggestions yet for this patient.
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((r) => (
-                  <TableRow key={r.id} className="border-b border-gray-100 dark:border-white/5">
+                   <TableRow key={r.id} className="border-b border-gray-100 dark:border-white/5">
+                    <TableCell className="px-4 py-3">
+                      {r.food_details?.image ? (
+                        <img src={r.food_details.image} alt={r.food_details.name} className="h-10 w-10 object-cover rounded-lg" />
+                      ) : (
+                        <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-[10px] text-gray-400">
+                          N/A
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                       {r.food_details?.name ?? `#${r.food}`}
                     </TableCell>

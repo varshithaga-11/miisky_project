@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 export interface Option<T = string | number> {
   value: T;
   label: string;
+  image?: string | null;
 }
 
 interface SearchableSelectProps<T = string | number> {
@@ -17,6 +18,8 @@ interface SearchableSelectProps<T = string | number> {
   error?: string;
   required?: boolean;
   onFocus?: () => void | Promise<void>;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
 const SearchableSelect = <T extends string | number>({
@@ -30,6 +33,8 @@ const SearchableSelect = <T extends string | number>({
   error,
   required = false,
   onFocus,
+  onLoadMore,
+  isLoadingMore = false,
 }: SearchableSelectProps<T>) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -83,7 +88,12 @@ const SearchableSelect = <T extends string | number>({
         `}
       >
         {selected ? (
-          selected.label
+          <div className="flex items-center gap-2">
+            {selected.image && (
+              <img src={selected.image} alt="" className="h-6 w-6 rounded-md object-cover" />
+            )}
+            <span>{selected.label}</span>
+          </div>
         ) : (
           <span className="text-gray-400">{placeholder}</span>
         )}
@@ -124,30 +134,50 @@ const SearchableSelect = <T extends string | number>({
           </div>
 
           {/* Options list */}
-          <ul className="max-h-56 overflow-y-auto">
+          <ul 
+            className="max-h-56 overflow-y-auto"
+            onScroll={(e) => {
+              const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+              if (scrollHeight - scrollTop <= clientHeight + 10) {
+                if (onLoadMore && !isLoadingMore) {
+                  onLoadMore();
+                }
+              }
+            }}
+          >
             {filtered.length > 0 ? (
-              filtered.map((opt) => (
-                <li key={String(opt.value)}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange(opt.value);
-                      setOpen(false);
-                      setSearch("");
-                      if (onSearch) onSearch(""); // Reset backend search when item selected
-                    }}
-                    className={`block w-full px-4 py-2 text-left text-sm
-                      ${
-                        value === opt.value
-                          ? "bg-gray-100 dark:bg-gray-800"
-                          : "hover:bg-gray-50 dark:hover:bg-gray-800/70"
-                      }
-                      text-gray-900 dark:text-gray-100`}
-                  >
-                    {opt.label}
-                  </button>
-                </li>
-              ))
+              <>
+                {filtered.map((opt) => (
+                  <li key={String(opt.value)}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onChange(opt.value);
+                        setOpen(false);
+                        setSearch("");
+                        if (onSearch) onSearch(""); // Reset backend search when item selected
+                      }}
+                      className={`flex items-center gap-3 w-full px-4 py-2 text-left text-sm
+                        ${
+                          value === opt.value
+                            ? "bg-gray-100 dark:bg-gray-800"
+                            : "hover:bg-gray-50 dark:hover:bg-gray-800/70"
+                        }
+                        text-gray-900 dark:text-gray-100`}
+                    >
+                      {opt.image && (
+                        <img src={opt.image} alt="" className="h-8 w-8 rounded-lg object-cover flex-shrink-0" />
+                      )}
+                      <span className="truncate">{opt.label}</span>
+                    </button>
+                  </li>
+                ))}
+                {isLoadingMore && (
+                  <li className="px-4 py-2 text-center text-xs text-gray-400">
+                    Loading more...
+                  </li>
+                )}
+              </>
             ) : (
               <li>
                 <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
