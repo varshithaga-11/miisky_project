@@ -1848,14 +1848,37 @@ class MicroKitchenProfileSerializer(serializers.ModelSerializer):
 
 class MicroKitchenProfileListSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
+    latest_inspection = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField(read_only=True)
+    longitude = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MicroKitchenProfile
         fields = [
             'id', 'user', 'brand_name', 'kitchen_code',
             'status', 'no_of_staff', 'lpg_cylinders',
-            'user_details',
+            'cuisine_type', 'meal_type', 'photo_exterior',
+            'time_available', 'latitude', 'longitude',
+            'user_details', 'latest_inspection'
         ]
+
+    def get_latitude(self, obj):
+        return obj.user.latitude if obj.user else None
+
+    def get_longitude(self, obj):
+        return obj.user.longitude if obj.user else None
+
+    def get_latest_inspection(self, obj):
+        inspection = obj.inspections.filter(status__in=["approved", "submitted"]).order_by("-inspection_date").first()
+        if inspection:
+            return {
+                "overall_score": inspection.overall_score,
+                "status": inspection.status,
+                "inspection_date": inspection.inspection_date,
+                "notes": inspection.notes,
+                "recommendation": inspection.recommendation
+            }
+        return None
 
     def get_user_details(self, obj):
         if obj.user:
@@ -1864,6 +1887,10 @@ class MicroKitchenProfileListSerializer(serializers.ModelSerializer):
                 "first_name": obj.user.first_name,
                 "last_name": obj.user.last_name,
                 "email": obj.user.email,
+                "address": obj.user.address,
+                "city": obj.user.city.name if obj.user.city else None,
+                "state": obj.user.state.name if obj.user.state else None,
+                "country": obj.user.country.name if obj.user.country else None,
             }
         return None
 

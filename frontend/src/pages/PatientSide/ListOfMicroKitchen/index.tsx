@@ -153,10 +153,17 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                     <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-white/[0.05]">
                                         {/* Address */}
                                         <div 
-                                            className={`flex items-start gap-3 text-sm ${kitchen.latitude && kitchen.longitude ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map' : ''}`}
+                                            className="flex items-start gap-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map"
                                             onClick={() => {
-                                                if (kitchen.latitude && kitchen.longitude) {
+                                                if (kitchen.latitude != null && kitchen.longitude != null) {
                                                     window.open(`https://www.google.com/maps?q=${kitchen.latitude},${kitchen.longitude}`, "_blank");
+                                                } else {
+                                                    const addr = [kitchen.user_details?.address, kitchen.user_details?.city, kitchen.user_details?.state].filter(Boolean).join(", ");
+                                                    if (addr) {
+                                                        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`, "_blank");
+                                                    } else {
+                                                        toast.info("Address details not available.");
+                                                    }
                                                 }
                                             }}
                                         >
@@ -166,9 +173,7 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                             <div className="text-gray-600 dark:text-gray-400 font-medium">
                                                 <div className="flex items-center gap-1.5">
                                                     <p className="line-clamp-1">{kitchen.user_details?.address || "Location on request"}</p>
-                                                    {kitchen.latitude && kitchen.longitude && (
-                                                        <span className="text-[9px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">Map</span>
-                                                    )}
+                                                    <span className="text-[9px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">Map</span>
                                                 </div>
                                                 <p className="text-[10px] text-gray-400 uppercase font-black tracking-tight mt-0.5">
                                                     {kitchen.user_details?.city}, {kitchen.user_details?.state}
