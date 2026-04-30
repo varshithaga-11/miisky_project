@@ -13,8 +13,9 @@ import { getMyMicroKitchenProfile, MicroKitchenProfile, saveMyMicroKitchenProfil
 import { generateProfilePDF, ProfileSection } from "../../AdminSide/PatientAllQuestionarie/downloadHelpers";
 import { FiDownload } from "react-icons/fi";
 
-const getMediaUrl = (path: string | undefined | null) => {
+const getMediaUrl = (path: string | File | undefined | null) => {
   if (!path) return "";
+  if (path instanceof File) return URL.createObjectURL(path);
   if (path.startsWith("http")) return path;
   return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
 };

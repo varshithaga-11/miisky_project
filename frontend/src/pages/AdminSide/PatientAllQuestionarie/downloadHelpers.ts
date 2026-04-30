@@ -8,6 +8,13 @@ import { saveAs } from "file-saver";
 
 type YesNo = "yes" | "no" | "";
 
+export interface HealthIssueRow {
+  name: string;
+  value: YesNo;
+  sinceWhen: string;
+  comments: string;
+}
+
 const isSelectedMatch = (opt: string, selected: string | string[]) => {
   const sList = Array.isArray(selected) ? selected : [selected];
   const normalizedOpt = opt.toLowerCase().replace(/_/g, " ").trim();
@@ -472,7 +479,7 @@ export const generateProfilePDF = async (title: string, sections: ProfileSection
     heading(section.title);
     
     for (const f of section.fields) {
-      if (!f.value && f.value !== 0) continue;
+      if (f.value === undefined || f.value === null || f.value === "") continue;
       
       if (f.type === 'image') {
         try {
