@@ -6,8 +6,21 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 
-type HealthIssueRow = { name: string; value: "yes" | "no" | ""; sinceWhen: string; comments: string };
 type YesNo = "yes" | "no" | "";
+
+const isSelectedMatch = (opt: string, selected: string | string[]) => {
+  const sList = Array.isArray(selected) ? selected : [selected];
+  const normalizedOpt = opt.toLowerCase().replace(/_/g, " ").trim();
+  return sList.some((s) => {
+    if (!s) return false;
+    const normalizedS = String(s).toLowerCase().replace(/_/g, " ").trim();
+    return (
+      normalizedOpt === normalizedS ||
+      normalizedOpt.includes(normalizedS) ||
+      normalizedS.includes(normalizedOpt)
+    );
+  });
+};
 
 export interface QuestionnaireData {
   title: string;
@@ -160,19 +173,6 @@ export function generatePDF(d: QuestionnaireData) {
     return boxSize + 6;
   };
 
-  const isSelectedMatch = (opt: string, selected: string | string[]) => {
-    const sList = Array.isArray(selected) ? selected : [selected];
-    const normalizedOpt = opt.toLowerCase().replace(/_/g, " ").trim();
-    return sList.some((s) => {
-      if (!s) return false;
-      const normalizedS = String(s).toLowerCase().replace(/_/g, " ").trim();
-      return (
-        normalizedOpt === normalizedS ||
-        normalizedOpt.includes(normalizedS) ||
-        normalizedS.includes(normalizedOpt)
-      );
-    });
-  };
 
   const radioField = (label: string, options: string[], selected: string) => {
     checkPage(40);
@@ -409,8 +409,8 @@ function docRadioField(label: string, options: string[], selected: string): Para
     new TextRun({ text: label + ": ", bold: true, size: 20, color: "555555" }),
   ];
   options.forEach((opt, i) => {
-    const isSelected = opt.toLowerCase() === selected.toLowerCase();
-    children.push(new TextRun({ text: (isSelected ? "[\u2713] " : "") + opt, size: 20 }));
+    const isSelected = isSelectedMatch(opt, selected);
+    children.push(new TextRun({ text: (isSelected ? "[\u2713] " : "[  ] ") + opt, size: 20 }));
     if (i < options.length - 1) children.push(new TextRun({ text: "   ", size: 20 }));
   });
   return new Paragraph({ spacing: { after: 60 }, children });
@@ -451,11 +451,11 @@ function docChecklist(title: string, options: string[], selected: string[]): (Pa
     const cells = [0, 1, 2].map(idx => {
       const opt = options[i + idx];
       if (!opt) return new TableCell({ children: [], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } } });
-      const checked = selected.includes(opt);
+      const checked = isSelectedMatch(opt, selected);
       return new TableCell({
         children: [
           new Paragraph({
-            children: [new TextRun({ text: (checked ? "[\u2713] " : "") + opt, size: 18 })]
+            children: [new TextRun({ text: (checked ? "[\u2713] " : "[  ] ") + opt, size: 18 })]
           })
         ],
         borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
