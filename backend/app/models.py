@@ -4020,3 +4020,55 @@ def create_order_payment_snapshot(sender, instance, created, **kwargs):
         platform_amount=platform_amount,
         kitchen_amount=kitchen_amount,
     )
+
+
+
+
+
+
+# -----------------------------------------------
+# -----------------------------------------------
+# ----------------------------------------------- 
+
+
+
+
+class MicroKitchenIngredientUnit(models.Model):
+    unit = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.unit
+
+
+class MicroKitchenIngredient(models.Model):
+    name = models.CharField(max_length=100)
+    unit = models.ForeignKey(
+        MicroKitchenIngredientUnit,
+        on_delete=models.CASCADE,
+        related_name="ingredients"
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.unit.unit})"
+
+class InventoryIngredient(models.Model):
+    micro_kitchen = models.ForeignKey(
+        MicroKitchenProfile,
+        on_delete=models.CASCADE,   # ✅ FIX
+        related_name="inventory"
+    )
+    ingredient = models.ForeignKey(
+        MicroKitchenIngredient,
+        on_delete=models.CASCADE,   # ✅ FIX
+        related_name="inventory_items"
+    )
+
+    quantity = models.FloatField(default=0)
+    low_stock_threshold = models.FloatField(default=5)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('micro_kitchen', 'ingredient')
+
+    def __str__(self):
+        return f"{self.micro_kitchen.brand_name} - {self.ingredient.name} ({self.quantity} {self.ingredient.unit.unit})"

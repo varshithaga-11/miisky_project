@@ -13056,3 +13056,39 @@ class AdminNonPatientOrderPaymentsSummaryView(generics.ListAPIView):
         if not user_id:
             return Order.objects.none()
         return Order.objects.filter(user_id=user_id).select_related('micro_kitchen').order_by('-created_at')
+
+class MicroKitchenIngredientUnitViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenIngredientUnit.objects.all()
+    serializer_class = MicroKitchenIngredientUnitSerializer
+    permission_classes = [IsAuthenticated]
+
+class MicroKitchenIngredientViewSet(viewsets.ModelViewSet):
+    queryset = MicroKitchenIngredient.objects.all()
+    serializer_class = MicroKitchenIngredientSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+
+class InventoryIngredientViewSet(viewsets.ModelViewSet):
+    serializer_class = InventoryIngredientSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, 'role', None) == 'micro_kitchen':
+            return InventoryIngredient.objects.filter(micro_kitchen__user=user).select_related('ingredient', 'ingredient__unit')
+        elif getattr(user, 'role', None) == 'admin':
+            return InventoryIngredient.objects.all().select_related('micro_kitchen', 'ingredient', 'ingredient__unit')
+        return InventoryIngredient.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if getattr(user, 'role', None) == 'micro_kitchen':
+            try:
+                kitchen = MicroKitchenProfile.objects.get(user=user)
+                serializer.save(micro_kitchen=kitchen)
+            except MicroKitchenProfile.DoesNotExist:
+                from rest_framework import serializers as drf_serializers
+                raise drf_serializers.ValidationError({"detail": "Micro Kitchen profile not found for this user."})
+        else:
+            serializer.save()

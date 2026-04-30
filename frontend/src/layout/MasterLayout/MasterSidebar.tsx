@@ -488,6 +488,15 @@ const microKitchenNavItems: NavItem[] = [
     path: "/microkitchen/user-management",
   },
   {
+    icon: <ClipboardList className="w-5 h-5" />,
+    name: "Inventory",
+    subItems: [
+      { name: "Ingredient Units", path: "/microkitchen/ingredient-units" },
+      { name: "Base Ingredients", path: "/microkitchen/ingredients" },
+      { name: "Stock Management", path: "/microkitchen/inventory" },
+    ],
+  },
+  {
     icon: <Milestone className="w-5 h-5" />,
     name: "Delivery management",
     subItems: [

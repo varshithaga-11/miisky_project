@@ -164,6 +164,9 @@ import NutritionWorkFlowPage from "./pages/NutritionSide/WorkFlow/index";
 import MicroKitchenWorkFlowPage from "./pages/MicroKitchenSide/WorkFlow/index";
 import NutritionUserMappingPage from "./pages/NutritionSide/NutritionMapping/UserMapping";
 import PatientWorkFlowPage from "./pages/PatientSide/WorkFlow/index";
+import IngredientUnitPage from "./pages/MicroKitchenSide/IngredientUnit/index";
+import IngredientPage from "./pages/MicroKitchenSide/Ingredient/index";
+import InventoryPage from "./pages/MicroKitchenSide/InventoryIngredient/index";
 
 
 
@@ -449,6 +452,9 @@ export function appRoutes() {
           <Route path="microkitchen/delivery/profiles" element={<MicroKitchenDeliveryPersonInfoPage />} />
           <Route path="microkitchen/planned-leave" element={<MicroKitchenPlannedLeavePage />} />
           <Route path="microkitchen/user-management" element={<SupplyChainUserManagementPage />} />
+          <Route path="microkitchen/ingredient-units" element={<IngredientUnitPage />} />
+          <Route path="microkitchen/ingredients" element={<IngredientPage />} />
+          <Route path="microkitchen/inventory" element={<InventoryPage />} />
           <Route path="non-patient/payment-history" element={<NonPatientPaymentHistoryPage />} />
           <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />

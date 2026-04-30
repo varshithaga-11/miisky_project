@@ -5632,3 +5632,25 @@ class DeliveryPersonGlobalAssignmentSerializer(serializers.ModelSerializer):
 
     def get_delivery_slots_details(self, obj):
         return [{"id": s.id, "name": s.name} for s in obj.delivery_slots.all()]
+
+class MicroKitchenIngredientUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MicroKitchenIngredientUnit
+        fields = '__all__'
+
+class MicroKitchenIngredientSerializer(serializers.ModelSerializer):
+    unit_name = serializers.ReadOnlyField(source='unit.unit')
+    
+    class Meta:
+        model = MicroKitchenIngredient
+        fields = '__all__'
+
+class InventoryIngredientSerializer(serializers.ModelSerializer):
+    ingredient_name = serializers.ReadOnlyField(source='ingredient.name')
+    unit_name = serializers.ReadOnlyField(source='ingredient.unit.unit')
+    kitchen_name = serializers.ReadOnlyField(source='micro_kitchen.brand_name')
+
+    class Meta:
+        model = InventoryIngredient
+        fields = '__all__'
+        read_only_fields = ['micro_kitchen']

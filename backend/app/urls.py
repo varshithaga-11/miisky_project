@@ -110,6 +110,9 @@ router.register(r'plandeliveryassignment', DietPlanDeliveryAssignmentViewSet, ba
 router.register(r'mealdeliveryassignment', KitchenMealDeliveryViewSet, basename='mealdeliveryassignment')
 router.register(r'supply-chain-leave', SupplyChainDeliveryLeaveViewSet, basename='supply-chain-leave')
 router.register(r'micro-kitchen-delivery-team', MicroKitchenDeliveryTeamViewSet, basename='micro-kitchen-delivery-team')
+router.register(r'microkitchen-ingredient-unit', MicroKitchenIngredientUnitViewSet, basename='microkitchen-ingredient-unit')
+router.register(r'microkitchen-ingredient', MicroKitchenIngredientViewSet, basename='microkitchen-ingredient')
+router.register(r'inventory-ingredient', InventoryIngredientViewSet, basename='inventory-ingredient')
 
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
