@@ -25,6 +25,7 @@ import {
 import { getProfile } from "../../ProfileInformation/api";
 import DatePicker2 from "../../../components/form/date-picker2";
 import { Modal } from "../../../components/ui/modal";
+import { generatePDF, type QuestionnaireData } from "../../AdminSide/PatientAllQuestionarie/downloadHelpers";
 
 const STEPS = [
   { id: 1, title: "Basic & lifestyle" },
@@ -175,6 +176,7 @@ export default function PatientQuestionnairePage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<Partial<UserQuestionnaire>>({});
   const [userGender, setUserGender] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const [hcMasters, setHcMasters] = useState<MasterRow[]>([]);
   const [symptomMasters, setSymptomMasters] = useState<{ id: number; name: string }[]>([]);
@@ -236,6 +238,7 @@ export default function PatientQuestionnairePage() {
 
         setData({ ...(res || {}), meal_slots: normalizeMealSlots(res?.meal_slots) });
         setUserGender(prof?.gender || null);
+        setUserName(prof?.name || null);
         setHabitMasters(hm);
         setActivityMasters(actm);
         setHcMasters(hcm);
@@ -536,6 +539,94 @@ export default function PatientQuestionnairePage() {
     foodPreferencesText,
   ]);
 
+  const handleDownloadPDF = () => {
+    const toYesNo = (v: boolean | null | undefined): "yes" | "no" | "" => {
+      if (v === true) return "yes";
+      if (v === false) return "no";
+      return "";
+    };
+
+    const qData: QuestionnaireData = {
+      title: "Questionnaire Report",
+      name: userName || "Patient",
+      age: data.age ? String(data.age) : "",
+      gender: userGender || "",
+      height: data.height_cm ? String(data.height_cm) : "",
+      weight: data.weight_kg ? String(data.weight_kg) : "",
+      workType: data.work_type || "",
+      anyHealthIssues: Object.values(hcRows).some((r) => r.has) ? "yes" : "no",
+      healthRows: hcMasters.map((m) => ({
+        name: m.name,
+        value: hcRows[m.id]?.has ? "yes" : "no",
+        sinceWhen: hcRows[m.id]?.since || "",
+        comments: hcRows[m.id]?.comments || "",
+      })),
+      autoimmuneOptions: autoimmuneMasters.map((m) => m.name),
+      autoimmuneSelected: autoimmuneMasters.filter((m) => autoimmuneIds.includes(m.id)).map((m) => m.name),
+      symptomOptions: symptomMasters.map((m) => m.name),
+      symptomSelected: symptomMasters.filter((m) => symptomIds.includes(m.id)).map((m) => m.name),
+      skinOptions: skinMasters.map((m) => m.name),
+      skinSelected: skinMasters.filter((m) => skinIds.includes(m.id)).map((m) => m.name),
+      deficiencyOptions: deficiencyMasters.map((m) => m.name),
+      deficiencySelected: deficiencyMasters.filter((m) => deficiencyIds.includes(m.id)).map((m) => m.name),
+      digestiveOptions: digestiveMasters.map((m) => m.name),
+      digestiveSelected: digestiveMasters.filter((m) => digestiveIds.includes(m.id)).map((m) => m.name),
+      surgeryHistory: toYesNo(data.surgery_history),
+      surgeryDetails: data.surgery_details || "",
+      medicineAllergy: toYesNo(data.medicine_allergy),
+      medicineAllergyDetails: data.medicine_allergy_details || "",
+      dietitianConsultationBefore: toYesNo(data.dietitian_consultation_before),
+      dietitianConsultationName: data.dietitian_consultation_name || "",
+      dietitianConsultationSpecialty: data.dietitian_consultation_specialty || "",
+      dietitianConsultationPhone: data.dietitian_consultation_phone || "",
+      dietitianConsultationLocation: data.dietitian_consultation_location || "",
+      dietitianConsultationNotes: data.dietitian_consultation_notes || "",
+      consultedDoctor: toYesNo(data.consulted_doctor),
+      consultantDoctorName: data.consultant_doctor_name || "",
+      consultantDoctorSpecialty: data.consultant_doctor_specialty || "",
+      consultantDoctorPhone: data.consultant_doctor_phone || "",
+      otherHealthConcerns: data.other_health_concerns || "",
+      menstrualPattern: data.menstrual_pattern || "",
+      dietPattern: data.diet_pattern || "",
+      nonVegFrequency: data.non_veg_frequency || "",
+      consumeEgg: toYesNo(data.consumes_egg),
+      consumeMilk: toYesNo(data.consumes_dairy),
+      foodAllergy: toYesNo(data.food_allergy),
+      foodAllergyDetails: data.food_allergy_details || "",
+      mealSlotsSelected: (data.meal_slots as string[]) || [],
+      snacksBetweenMeals: toYesNo(data.snacks_between_meals),
+      skipMeals: toYesNo(data.skips_meals),
+      mealsPerDay: data.meals_per_day ? String(data.meals_per_day) : "",
+      foodSource: data.food_source ? [data.food_source] : [],
+      physicalActivity: physicalActivityIds.length > 0 ? "yes" : "no",
+      activityOptions: activityMasters.map((m) => m.name),
+      activitySelected: activityMasters.filter((m) => physicalActivityIds.includes(m.id)).map((m) => m.name),
+      activityOtherText: Object.values(activityExtras)
+        .map((e) => e.other_text)
+        .filter(Boolean)
+        .join(", "),
+      habitOptions: habitMasters.map((m) => m.name),
+      habitSelected: habitMasters.filter((m) => habitIds.includes(m.id)).map((m) => m.name),
+      habitOtherText: Object.values(habitExtras)
+        .map((e) => e.other_text)
+        .filter(Boolean)
+        .join(", "),
+      improvementThoughts: "",
+      fruitsPerDay: data.fruits_per_day ? String(data.fruits_per_day) : "",
+      vegetablesPerDay: data.vegetables_per_day ? String(data.vegetables_per_day) : "",
+      onMedication: toYesNo(data.on_medication),
+      specifyMedication: data.specify_medication || "",
+      sleepQuality: data.sleep_quality || "",
+      stressLevel: data.stress_level || "",
+      fallsSickFrequency: data.falls_sick_frequency || "",
+      foodPreferences: foodPreferencesText || "",
+      additionalNotes: data.additional_notes || "",
+      anyOtherComments: data.any_other_comments || "",
+      anyNotesForCareTeam: data.any_notes_for_care_team || "",
+    };
+    generatePDF(qData);
+  };
+
   const onSave = async () => {
     for (const hid of habitIds) {
       const m = habitMasters.find((x) => x.id === hid);
@@ -707,6 +798,16 @@ export default function PatientQuestionnairePage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                className="!px-6 !py-2.5 !rounded-full shadow-lg hover:shadow-brand-500/20 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </Button>
               {!isEditing ? (
                 <Button 
                   onClick={() => setIsEditing(true)}

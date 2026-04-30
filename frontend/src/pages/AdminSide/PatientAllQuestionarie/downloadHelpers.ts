@@ -79,6 +79,8 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
     pdf.text("Patient Assessment Report", pageW - margin, 25, { align: "right" });
+
+    pdf.setTextColor(...textColor);
   };
 
   const addFooter = (pageNum: number) => {
@@ -141,12 +143,14 @@ export function generatePDF(d: QuestionnaireData) {
     y += 12;
   };
 
-  const drawCheckbox = (x: number, cy: number, checked: boolean): number => {
+  const drawCheckbox = (x: number, cy: number, checked: boolean, showBox: boolean = true): number => {
     const boxSize = 10;
     const boxY = cy - boxSize + 2;
-    pdf.setDrawColor(203, 213, 225); // Slate-300
-    pdf.setLineWidth(0.8);
-    pdf.rect(x, boxY, boxSize, boxSize);
+    if (showBox) {
+      pdf.setDrawColor(203, 213, 225); // Slate-300
+      pdf.setLineWidth(0.8);
+      pdf.rect(x, boxY, boxSize, boxSize);
+    }
     if (checked) {
       pdf.setDrawColor(...brandColor);
       pdf.setLineWidth(1.5);
@@ -154,6 +158,20 @@ export function generatePDF(d: QuestionnaireData) {
       pdf.line(x + 4, boxY + boxSize - 2, x + boxSize - 2, boxY + 2);
     }
     return boxSize + 6;
+  };
+
+  const isSelectedMatch = (opt: string, selected: string | string[]) => {
+    const sList = Array.isArray(selected) ? selected : [selected];
+    const normalizedOpt = opt.toLowerCase().replace(/_/g, " ").trim();
+    return sList.some((s) => {
+      if (!s) return false;
+      const normalizedS = String(s).toLowerCase().replace(/_/g, " ").trim();
+      return (
+        normalizedOpt === normalizedS ||
+        normalizedOpt.includes(normalizedS) ||
+        normalizedS.includes(normalizedOpt)
+      );
+    });
   };
 
   const radioField = (label: string, options: string[], selected: string) => {
@@ -168,7 +186,7 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setTextColor(...textColor);
     let xPos = margin + 10;
     for (const opt of options) {
-      const isSelected = opt.toLowerCase() === selected.toLowerCase();
+      const isSelected = isSelectedMatch(opt, selected);
       const optW = pdf.getTextWidth(opt) + 25;
       if (xPos + optW > pageW - margin) {
         y += 18;
@@ -188,26 +206,37 @@ export function generatePDF(d: QuestionnaireData) {
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(...secondaryColor);
     pdf.text(title, margin, y);
-    y += 14;
+    y += 16;
 
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(...textColor);
-    let xPos = margin + 10;
-    for (const opt of options) {
-      const checked = selected.includes(opt);
-      const optW = pdf.getTextWidth(opt) + 25;
 
-      if (xPos + optW > pageW - margin) {
-        y += 18;
-        xPos = margin + 10;
-        checkPage(18);
+    const colWidth = usable / 3;
+    let rowMaxLines = 1;
+
+    for (let i = 0; i < options.length; i++) {
+      const opt = options[i];
+      const col = i % 3;
+      const xPos = margin + col * colWidth;
+      const checked = isSelectedMatch(opt, selected);
+      
+      const cbW = drawCheckbox(xPos, y, checked, true); // Show boxes for all
+      const textX = xPos + cbW;
+      const maxTextW = colWidth - cbW - 10;
+
+      const lines = pdf.splitTextToSize(opt, maxTextW);
+      pdf.text(lines, textX, y);
+
+      if (lines.length > rowMaxLines) rowMaxLines = lines.length;
+
+      // At end of row or end of list, advance Y
+      if (col === 2 || i === options.length - 1) {
+        y += rowMaxLines * 14 + 6;
+        rowMaxLines = 1;
+        checkPage(20);
       }
-
-      const cbW = drawCheckbox(xPos, y, checked);
-      pdf.text(opt, xPos + cbW, y);
-      xPos += cbW + pdf.getTextWidth(opt) + 20;
     }
-    y += 20;
+    y += 10;
   };
 
   const yesNoField = (label: string, value: YesNo) => {
@@ -249,9 +278,29 @@ export function generatePDF(d: QuestionnaireData) {
       head: [["#", "Condition", "Yes", "No", "Since", "Comments"]],
       body: d.healthRows.map((r, i) => [
         String(i + 1), r.name,
-        r.value === "yes" ? "✓" : "", r.value === "no" ? "✓" : "",
+        r.value === "yes" ? "Y" : "",
+        r.value === "no" ? "Y" : "",
         r.sinceWhen || "-", r.comments || "-",
       ]),
+      didParseCell: (data) => {
+        if (data.section === "body" && (data.column.index === 2 || data.column.index === 3)) {
+          if (data.cell.text[0] === "Y") {
+            (data.cell as any).isTicked = true;
+          }
+          data.cell.text = [""]; // Clear text early so it's not drawn
+        }
+      },
+      didDrawCell: (data) => {
+        if ((data.cell as any).isTicked) {
+          const x = data.cell.x + data.cell.width / 2 - 5;
+          const cy = data.cell.y + data.cell.height / 2 + 3;
+          // Draw a tick (custom line drawing to avoid font issues)
+          pdf.setDrawColor(...brandColor);
+          pdf.setLineWidth(1.5);
+          pdf.line(x + 2, cy - 5, x + 4, cy - 2);
+          pdf.line(x + 4, cy - 2, x + 8, cy - 8);
+        }
+      },
       styles: { fontSize: 8, cellPadding: 6, font: "helvetica" },
       headStyles: { fillColor: brandColor, textColor: 255, fontStyle: "bold" },
       alternateRowStyles: { fillColor: [248, 250, 252] }, // Slate-50
@@ -361,7 +410,7 @@ function docRadioField(label: string, options: string[], selected: string): Para
   ];
   options.forEach((opt, i) => {
     const isSelected = opt.toLowerCase() === selected.toLowerCase();
-    children.push(new TextRun({ text: (isSelected ? "[\u2713] " : "[  ] ") + opt, size: 20 }));
+    children.push(new TextRun({ text: (isSelected ? "[\u2713] " : "") + opt, size: 20 }));
     if (i < options.length - 1) children.push(new TextRun({ text: "   ", size: 20 }));
   });
   return new Paragraph({ spacing: { after: 60 }, children });
@@ -391,22 +440,37 @@ function docHint(text: string): Paragraph {
   });
 }
 
-function docChecklist(title: string, options: string[], selected: string[]): Paragraph[] {
-  const paras: Paragraph[] = [
-    new Paragraph({
-      spacing: { before: 120, after: 60 },
-      children: [new TextRun({ text: title + ":", bold: true, size: 20, color: "555555" })],
-    }),
-  ];
-  for (const opt of options) {
-    const checked = selected.includes(opt);
-    paras.push(new Paragraph({
-      spacing: { after: 30 },
-      indent: { left: 300 },
-      children: [new TextRun({ text: (checked ? "[\u2713] " : "[  ] ") + opt, size: 20 })],
-    }));
+function docChecklist(title: string, options: string[], selected: string[]): (Paragraph | Table)[] {
+  const titlePara = new Paragraph({
+    spacing: { before: 120, after: 60 },
+    children: [new TextRun({ text: title + ":", bold: true, size: 20, color: "555555" })],
+  });
+
+  const tableRows: TableRow[] = [];
+  for (let i = 0; i < options.length; i += 3) {
+    const cells = [0, 1, 2].map(idx => {
+      const opt = options[i + idx];
+      if (!opt) return new TableCell({ children: [], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } } });
+      const checked = selected.includes(opt);
+      return new TableCell({
+        children: [
+          new Paragraph({
+            children: [new TextRun({ text: (checked ? "[\u2713] " : "") + opt, size: 18 })]
+          })
+        ],
+        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
+      });
+    });
+    tableRows.push(new TableRow({ children: cells }));
   }
-  return paras;
+
+  const table = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: tableRows,
+    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } }
+  });
+
+  return [titlePara, table];
 }
 
 function docHealthTable(rows: HealthIssueRow[]): Table {
@@ -416,13 +480,13 @@ function docHealthTable(rows: HealthIssueRow[]): Table {
       shading: { fill: "E6E6E6" },
     })
   );
-  const dataRows = rows.map((r, i) =>
+    const dataRows = rows.map((r, i) =>
     new TableRow({
       children: [
         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(i + 1), size: 18 })] })] }),
         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.name, size: 18 })] })] }),
-        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.value === "yes" ? "Yes" : "", size: 18 })] })] }),
-        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.value === "no" ? "Yes" : "", size: 18 })] })] }),
+        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.value === "yes" ? "✓" : "", size: 18 })] })] }),
+        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.value === "no" ? "✓" : "", size: 18 })] })] }),
         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.sinceWhen || "-", size: 18 })] })] }),
         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: r.comments || "-", size: 18 })] })] }),
       ],
