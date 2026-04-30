@@ -393,6 +393,94 @@ export function generatePDF(d: QuestionnaireData) {
   pdf.save(`${d.name.replace(/\s+/g, "_")}_Questionnaire.pdf`);
 }
 
+export const generateProfilePDF = (title: string, sections: ProfileSection[], userName?: string) => {
+  const pdf = new jsPDF();
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 20;
+  const usable = pageW - margin * 2;
+  const brandColor: [number, number, number] = [79, 70, 229]; // Indigo-600
+  const textColor: [number, number, number] = [31, 41, 55]; // Gray-800
+  const secondaryColor: [number, number, number] = [75, 85, 99]; // Gray-600
+
+  let y = 60;
+
+  const addHeader = () => {
+    pdf.setFillColor(...brandColor);
+    pdf.rect(0, 0, pageW, 40, "F");
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("MIISKY", margin, 25);
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("Profile Assessment Report", pageW - margin, 25, { align: "right" });
+    pdf.setTextColor(...textColor);
+  };
+
+  const checkPage = (need: number) => {
+    if (y + need > pageH - 20) {
+      pdf.addPage();
+      addHeader();
+      y = 60;
+    }
+  };
+
+  const heading = (text: string) => {
+    checkPage(15);
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(...brandColor);
+    pdf.text(text, margin, y);
+    y += 5;
+    pdf.setDrawColor(229, 231, 235);
+    pdf.line(margin, y, pageW - margin, y);
+    y += 10;
+  };
+
+  addHeader();
+
+  if (userName) {
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(`Partner: ${userName}`, margin, y);
+    y += 10;
+  }
+
+  sections.forEach((section) => {
+    heading(section.title);
+    
+    section.fields.forEach((f) => {
+      if (!f.value && f.value !== 0) return; // Skip empty fields to save space
+      
+      checkPage(12);
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(...secondaryColor);
+      pdf.text(f.label + ":", margin, y);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(...textColor);
+      
+      let displayValue = "";
+      if (f.value === true) displayValue = "Yes";
+      else if (f.value === false) displayValue = "No";
+      else displayValue = String(f.value);
+
+      const lines = pdf.splitTextToSize(displayValue, usable - 60);
+      pdf.text(lines, margin + 60, y);
+      
+      y += Math.max(1, lines.length) * 7 + 2;
+    });
+    
+    y += 5;
+  });
+
+  const fileName = `${(userName || "Profile").replace(/\s+/g, "_")}_${title.replace(/\s+/g, "_")}.pdf`;
+  pdf.save(fileName);
+};
+
 // ─── DOCX ────────────────────────────────────────────────────────────────────
 
 function docHeading(text: string): Paragraph {

@@ -7,6 +7,8 @@ import Label from "../../../components/form/Label";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getMyNutritionProfile, NutritionistProfile, saveMyNutritionProfile } from "./api";
+import { generateProfilePDF, ProfileSection } from "../../AdminSide/PatientAllQuestionarie/downloadHelpers";
+import { FiDownload } from "react-icons/fi";
 
 export default function NutritionQuestionarePage() {
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,42 @@ export default function NutritionQuestionarePage() {
     "social_media_links_website_links",
     "available_modes",
   ];
+
+  const handleDownloadPDF = () => {
+    const sections: ProfileSection[] = [
+      {
+        title: "Professional Details",
+        fields: [
+          { label: "Qualification", value: data.qualification },
+          { label: "Years of Experience", value: data.years_of_experience },
+          { label: "License Number", value: data.license_number },
+        ]
+      },
+      {
+        title: "Expertise & Education",
+        fields: [
+          { label: "Specializations", value: data.specializations },
+          { label: "Certifications", value: data.certifications },
+          { label: "Education", value: data.education },
+        ]
+      },
+      {
+        title: "Availability & Communication",
+        fields: [
+          { label: "Languages", value: data.languages },
+          { label: "Available Modes", value: data.available_modes },
+        ]
+      },
+      {
+        title: "Links",
+        fields: [
+          { label: "Social Media / Website", value: data.social_media_links_website_links },
+        ]
+      }
+    ];
+
+    generateProfilePDF("Nutritionist Profile", sections);
+  };
 
   useEffect(() => {
     (async () => {
@@ -98,6 +136,14 @@ export default function NutritionQuestionarePage() {
               <p className="text-sm text-gray-500">Manage your professional credentials and experience</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                className="!px-4 !py-2.5 !rounded-full border-gray-200 dark:border-white/10"
+              >
+                <FiDownload className="mr-2" />
+                Download PDF
+              </Button>
               {!isEditing ? (
                 <Button 
                   onClick={() => setIsEditing(true)}

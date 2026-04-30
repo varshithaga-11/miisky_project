@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { FiImage } from "react-icons/fi";
 import { createApiUrl } from "../../../access/access";
 import { getMyMicroKitchenProfile, MicroKitchenProfile, saveMyMicroKitchenProfile } from "./api";
+import { generateProfilePDF, ProfileSection } from "../../AdminSide/PatientAllQuestionarie/downloadHelpers";
+import { FiDownload } from "react-icons/fi";
 
 const getMediaUrl = (path: string | undefined | null) => {
   if (!path) return "";
@@ -107,6 +109,62 @@ export default function MicroKitchenQuestionarePage() {
     </div>
   );
 
+  const handleDownloadPDF = () => {
+    const sections: ProfileSection[] = [
+      {
+        title: "Brand & Compliance",
+        fields: [
+          { label: "Brand Name", value: data.brand_name },
+          { label: "Kitchen Code", value: data.kitchen_code },
+          { label: "FSSAI No", value: data.fssai_no },
+          { label: "PAN No", value: data.pan_no },
+          { label: "GST No", value: data.gst_no },
+        ]
+      },
+      {
+        title: "Operations & Facility",
+        fields: [
+          { label: "Kitchen Area (sq.ft)", value: data.kitchen_area },
+          { label: "Platform Area (sq.ft)", value: data.platform_area },
+          { label: "Water Source", value: data.water_source },
+          { label: "Purification Type", value: data.purification_type },
+          { label: "No of Water Taps", value: data.no_of_water_taps },
+          { label: "Cuisine Type", value: data.cuisine_type },
+          { label: "Meal Type", value: data.meal_type },
+        ]
+      },
+      {
+        title: "Equipment & Safety",
+        fields: [
+          { label: "Has Pets", value: data.has_pets },
+          { label: "Has Pests", value: data.has_pests },
+          { label: "Has Hobs", value: data.has_hobs },
+          { label: "Has Refrigerator", value: data.has_refrigerator },
+          { label: "Has Mixer", value: data.has_mixer },
+          { label: "Has Grinder", value: data.has_grinder },
+          { label: "Has Blender", value: data.has_blender },
+          { label: "Pest Control Frequency", value: data.pest_control_frequency },
+          { label: "LPG Cylinders", value: data.lpg_cylinders },
+          { label: "No of Staff", value: data.no_of_staff },
+        ]
+      },
+      {
+        title: "About & Availability",
+        fields: [
+          { label: "About You", value: data.about_you },
+          { label: "Passion for Cooking", value: data.passion_for_cooking },
+          { label: "Time Available", value: data.time_available },
+        ]
+      }
+    ];
+
+    const partnerName = data.user_details ? 
+      ([data.user_details.first_name, data.user_details.last_name].filter(Boolean).join(" ") || data.user_details.username) : 
+      data.brand_name;
+
+    generateProfilePDF("Micro Kitchen Profile", sections, partnerName);
+  };
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -154,6 +212,14 @@ export default function MicroKitchenQuestionarePage() {
               <p className="text-sm text-gray-500">Manage your brand details, equipment, and operations</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                className="!px-4 !py-2.5 !rounded-full border-gray-200 dark:border-white/10"
+              >
+                <FiDownload className="mr-2" />
+                Download PDF
+              </Button>
               {!isEditing ? (
                 <Button 
                   onClick={() => setIsEditing(true)}

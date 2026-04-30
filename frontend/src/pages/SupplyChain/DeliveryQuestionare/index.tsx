@@ -8,6 +8,8 @@ import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { DeliveryProfile, downloadProfileFile, getMyDeliveryProfile, saveMyDeliveryProfile } from "./api";
+import { generateProfilePDF, ProfileSection } from "../../AdminSide/PatientAllQuestionarie/downloadHelpers";
+import { FiDownload } from "react-icons/fi";
 
 export default function DeliveryQuestionarePage() {
   const [loading, setLoading] = useState(true);
@@ -21,6 +23,49 @@ export default function DeliveryQuestionarePage() {
       {value || "—"}
     </div>
   );
+
+  const handleDownloadPDF = () => {
+    const sections: ProfileSection[] = [
+      {
+        title: "Vehicle Details",
+        fields: [
+          { label: "Vehicle Type", value: data.vehicle_type },
+          { label: "Other Vehicle Name", value: data.other_vehicle_name },
+          { label: "Vehicle Details", value: data.vehicle_details },
+          { label: "Registration Number", value: data.register_number },
+          { label: "License Number", value: data.license_number },
+        ]
+      },
+      {
+        title: "Identity & KYC",
+        fields: [
+          { label: "Aadhaar Number", value: data.aadhar_number },
+          { label: "PAN Number", value: data.pan_number },
+        ]
+      },
+      {
+        title: "Bank Details",
+        fields: [
+          { label: "Account Holder Name", value: data.account_holder_name },
+          { label: "Bank Name", value: data.bank_name },
+          { label: "Account Number", value: data.bank_account_number },
+          { label: "IFSC Code", value: data.ifsc_code },
+        ]
+      },
+      {
+        title: "Availability",
+        fields: [
+          { label: "Preferred Slots", value: slotsText },
+        ]
+      }
+    ];
+
+    const partnerName = data.user_details ? 
+      ([data.user_details.first_name, data.user_details.last_name].filter(Boolean).join(" ")) : 
+      "Delivery Partner";
+
+    generateProfilePDF("Delivery Profile", sections, partnerName);
+  };
 
   useEffect(() => {
     (async () => {
@@ -120,6 +165,14 @@ export default function DeliveryQuestionarePage() {
               <p className="text-sm text-gray-500">Manage your vehicle details and identity documents</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                className="!px-4 !py-2.5 !rounded-full border-gray-200 dark:border-white/10"
+              >
+                <FiDownload className="mr-2" />
+                Download PDF
+              </Button>
               {!isEditing ? (
                 <Button 
                   onClick={() => setIsEditing(true)}
