@@ -657,6 +657,10 @@ class UserQuestionnaire(models.Model):
     height_cm = models.FloatField(null=True, blank=True)
     weight_kg = models.FloatField(null=True, blank=True)
 
+
+    religion=models.CharField(max_length=50,null=True,blank=True)
+    caste=models.CharField(max_length=50,null=True,blank=True)
+
     # 🔹 LIFESTYLE
     work_type = models.CharField(
         max_length=20,

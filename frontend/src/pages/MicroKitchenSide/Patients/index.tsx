@@ -16,28 +16,28 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { GiBreadSlice, GiBowlOfRice, GiHamburger, GiCookingPot } from "react-icons/gi";
 
 function healthConditionLabel(c: unknown): string {
-  if (typeof c === "string") return c;
-  if (c && typeof c === "object" && "name" in c) return String((c as { name: string }).name);
-  return "";
+    if (typeof c === "string") return c;
+    if (c && typeof c === "object" && "name" in c) return String((c as { name: string }).name);
+    return "";
 }
 
 function foodPreferenceChips(fp: unknown): string[] {
-  if (fp == null) return [];
-  if (Array.isArray(fp)) return fp.map(String);
-  if (typeof fp === "object") {
-    const out: string[] = [];
-    for (const v of Object.values(fp as Record<string, unknown>)) {
-      if (Array.isArray(v)) out.push(...v.map(String));
+    if (fp == null) return [];
+    if (Array.isArray(fp)) return fp.map(String);
+    if (typeof fp === "object") {
+        const out: string[] = [];
+        for (const v of Object.values(fp as Record<string, unknown>)) {
+            if (Array.isArray(v)) out.push(...v.map(String));
+        }
+        return out;
     }
-    return out;
-  }
-  return [];
+    return [];
 }
 
 function conditionNamesMatch(hc: unknown, needle: string): boolean {
-  const n = needle.toLowerCase();
-  if (!Array.isArray(hc)) return false;
-  return hc.some((x) => healthConditionLabel(x).toLowerCase().includes(n));
+    const n = needle.toLowerCase();
+    if (!Array.isArray(hc)) return false;
+    return hc.some((x) => healthConditionLabel(x).toLowerCase().includes(n));
 }
 
 interface UserMeal {
@@ -410,16 +410,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="pt-6 mt-4 border-t border-gray-50 dark:border-white/5">
-                                            <div className="flex gap-4">
-                                                <button className="flex-1 py-4 bg-indigo-600 rounded-3xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all">
-                                                    Initiate Dispatch
-                                                </button>
-                                                <button className="px-6 border border-gray-100 dark:border-white/5 rounded-3xl text-gray-400 hover:text-rose-500 transition-colors">
-                                                    <FiActivity size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
+                                         {/* Action section removed */}
                                     </div>
                                 </div>
 
@@ -782,7 +773,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] animate-pulse">Syncing Meal Schedule...</p>
                                     </div>
                                 )}
-                                
+
                                 <FullCalendar
                                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                     initialView="dayGridMonth"
@@ -796,7 +787,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                         centerDate.setDate(centerDate.getDate() + 15);
                                         const m = centerDate.getMonth() + 1;
                                         const y = centerDate.getFullYear();
-                                        
+
                                         // Only fetch if month or year actually changed OR it's the first load for this patient
                                         if (m !== currentCalMonth || y !== currentCalYear || patientMeals.length === 0) {
                                             setCurrentCalMonth(m);
