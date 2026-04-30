@@ -109,3 +109,28 @@ export const getFoodByIdNutrition = async (foodId: number): Promise<FoodNutritio
     const response = await axios.get(url, { headers: await getAuthHeaders() });
     return response.data;
 };
+
+export interface FoodRecipe {
+    id: number;
+    name: string;
+    description: string;
+    image: string | null;
+    ingredients: {
+        id: number;
+        ingredient_name: string;
+        quantity: number;
+        unit_name: string;
+        notes: string | null;
+    }[];
+    steps: {
+        id: number;
+        step_number: number;
+        instruction: string;
+    }[];
+}
+
+export const getFoodRecipeById = async (foodId: number): Promise<FoodRecipe> => {
+    const url = createApiUrl(`api/foodrecipebyid/${foodId}/`);
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
+};

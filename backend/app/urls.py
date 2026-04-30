@@ -131,6 +131,7 @@ router.register(r'foodingredient', FoodIngredientViewSet, basename='foodingredie
 router.register(r'foodstep',      FoodStepViewSet,       basename='foodstep')
 router.register(r'foodnutrition', FoodNutritionViewSet)
 router.register(r'foodbyid', FoodByIdViewSet, basename='foodbyid')
+router.register(r'foodrecipebyid', FoodRecipeByIdViewSet, basename='foodrecipebyid')
 router.register(r'foodgroup', FoodGroupViewSet)
 router.register(r'foodname', FoodNameViewSet)
 router.register(r'foodproximate', FoodProximateViewSet)

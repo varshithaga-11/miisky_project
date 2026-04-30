@@ -1464,32 +1464,98 @@ const SetDailyMealsPage: React.FC = () => {
                             {patientDetailLoading ? (
                                 <p className="text-gray-500 text-sm">Loading…</p>
                             ) : patientDetail ? (
-                                <div className="space-y-6 text-sm">
-                                    <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase">Kitchen</p>
-                                        <pre className="mt-1 text-xs bg-gray-50 dark:bg-gray-800/80 p-3 rounded-xl overflow-x-auto whitespace-pre-wrap">
-                                            {JSON.stringify(patientDetail.kitchen, null, 2)}
-                                        </pre>
+                                <div className="space-y-6">
+                                    {/* Patient Basic Info */}
+                                    <div className="flex flex-wrap gap-4 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10">
+                                        <div className="flex-1 min-w-[140px]">
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Patient Name</p>
+                                            <p className="text-sm font-black text-gray-900 dark:text-white mt-1">
+                                                {patientDetail.user.first_name} {patientDetail.user.last_name}
+                                            </p>
+                                        </div>
+                                        <div className="flex-1 min-w-[140px]">
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Contact</p>
+                                            <p className="text-sm font-bold text-gray-600 dark:text-gray-300 mt-1">{patientDetail.user.email}</p>
+                                            <p className="text-xs font-medium text-gray-500 mt-0.5">{patientDetail.user.mobile}</p>
+                                        </div>
                                     </div>
+
+                                    {/* Kitchen / Plan Info */}
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase">Questionnaire</p>
-                                        <pre className="mt-1 text-xs bg-gray-50 dark:bg-gray-800/80 p-3 rounded-xl overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap">
-                                            {JSON.stringify(patientDetail.questionnaire, null, 2)}
-                                        </pre>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Kitchen & Plan Details</p>
+                                        {patientDetail.kitchen ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-100 dark:border-white/5">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Plan ID</p>
+                                                    <p className="text-sm font-black text-gray-900 dark:text-white mt-1">#{(patientDetail.kitchen as any).plan_id || "-"}</p>
+                                                </div>
+                                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-100 dark:border-white/5">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Active Kitchen</p>
+                                                    <p className="text-sm font-black text-indigo-600 dark:text-indigo-400 mt-1">
+                                                        {(patientDetail.kitchen as any).current_micro_kitchen?.brand_name || "No Kitchen Assigned"}
+                                                    </p>
+                                                </div>
+                                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-100 dark:border-white/5">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Start Date</p>
+                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mt-1">{(patientDetail.kitchen as any).start_date || "-"}</p>
+                                                </div>
+                                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-100 dark:border-white/5">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase">End Date</p>
+                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mt-1">{(patientDetail.kitchen as any).end_date || "-"}</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-500 italic p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">No plan details available</p>
+                                        )}
                                     </div>
+
+                                    {/* Questionnaire */}
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase">Today&apos;s meals</p>
-                                        <p className="text-xs text-gray-500 mt-1">{patientDetail.today_food?.length ?? 0} meal(s)</p>
-                                        <ul className="mt-2 space-y-2">
-                                            {(patientDetail.today_food || []).map((m) => (
-                                                <li key={m.id ?? `${m.meal_date}-${m.meal_type}`} className="text-xs border border-gray-100 dark:border-white/10 rounded-lg p-2">
-                                                    {m.meal_type_details?.name} — {m.food_details?.name} ({m.meal_date})
-                                                    {m.micro_kitchen_details?.brand_name && (
-                                                        <span className="text-indigo-500 ml-2">· {m.micro_kitchen_details.brand_name}</span>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Questionnaire</p>
+                                        {patientDetail.questionnaire ? (
+                                            <div className="max-h-48 overflow-y-auto pr-2 scrollbar-thin">
+                                                <pre className="text-[11px] font-medium bg-gray-50 dark:bg-gray-800/80 p-4 rounded-2xl whitespace-pre-wrap border border-gray-100 dark:border-white/5">
+                                                    {JSON.stringify(patientDetail.questionnaire, null, 2)}
+                                                </pre>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-white/10">
+                                                <FiInfo className="text-gray-400" />
+                                                <p className="text-xs text-gray-500 italic">No questionnaire data submitted</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Today's Meals */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Today&apos;s Meals</p>
+                                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-[10px] font-black text-gray-500 rounded-full">
+                                                {patientDetail.today_food?.length ?? 0} MEAL(S)
+                                            </span>
+                                        </div>
+                                        {patientDetail.today_food && patientDetail.today_food.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {patientDetail.today_food.map((m) => (
+                                                    <div key={m.id ?? `${m.meal_date}-${m.meal_type}`} className="group p-3 rounded-xl border border-gray-100 dark:border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all duration-300">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-indigo-500 uppercase">{m.meal_type_details?.name}</span>
+                                                                <span className="text-sm font-bold text-gray-900 dark:text-white">{m.food_details?.name}</span>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="text-[10px] text-gray-400 font-medium block">{(m.meal_date)}</span>
+                                                                {m.micro_kitchen_details?.brand_name && (
+                                                                    <span className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">· {m.micro_kitchen_details.brand_name}</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-500 italic p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 text-center">No meals scheduled for today</p>
+                                        )}
                                     </div>
                                 </div>
                             ) : (

@@ -4649,6 +4649,27 @@ class FoodByIdViewSet(viewsets.ViewSet):
         return Response(FoodByIdNutritionSerializer(nutrition).data)
 
 
+class FoodRecipeByIdViewSet(viewsets.ViewSet):
+    """
+    Returns full recipe details (food info, ingredients, steps) for a specific food_id.
+    Accessible to all authenticated users (including patients).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, pk=None):
+        try:
+            food = Food.objects.prefetch_related(
+                'foodingredient_set__ingredient',
+                'foodingredient_set__unit',
+                'foodstep_set'
+            ).get(id=pk)
+        except Food.DoesNotExist:
+            return Response({"detail": "Food not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        serializer = FoodSerializer(food)
+        return Response(serializer.data)
+
+
 # ── Food Composition (FoodName-based) ViewSets ─────────────────────────────────
 
 class FoodGroupViewSet(viewsets.ModelViewSet):
