@@ -1,11 +1,11 @@
 import React from "react";
-import { 
-  FileText, 
-  Utensils, 
-  ClipboardCheck, 
-  Package, 
-  Truck, 
-  CreditCard, 
+import {
+  FileText,
+  Utensils,
+  ClipboardCheck,
+  Package,
+  Truck,
+  CreditCard,
   Star,
   ArrowRight
 } from "lucide-react";
@@ -27,10 +27,10 @@ const MicroKitchenWorkFlow: React.FC = () => {
   const steps: Step[] = [
     {
       id: 1,
-      title: "Delivery Questionnaire",
-      description: "Complete your delivery profile and KYC details.",
+      title: "Micro Kitchen Questionnaire",
+      description: "Complete your kitchen profile, certifications, and business details.",
       icon: <ClipboardCheck className="w-6 h-6" />,
-      path: "/supplychain/delivery-questionnaire",
+      path: "/microkitchen/questionnaire",
       status: "completed",
     },
     {
@@ -100,8 +100,8 @@ const MicroKitchenWorkFlow: React.FC = () => {
 
       <div className="workflow-grid">
         {steps.map((step, index) => (
-          <div 
-            key={step.id} 
+          <div
+            key={step.id}
             className={`workflow-card ${step.status}`}
             onClick={() => navigate(step.path)}
           >
