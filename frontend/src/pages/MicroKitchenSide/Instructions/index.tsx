@@ -90,7 +90,26 @@ const MicroKitchenInstructions: React.FC = () => {
       menu: "Delivery charges",
     },
     {
-      title: "10. Delivery management",
+      title: "10. Team Management",
+      description:
+        "Manage supply chain users and staff assignments specifically for your kitchen operations.",
+      icon: <Users className="w-6 h-6 text-blue-600" />,
+      menu: "Team Management",
+    },
+    {
+      title: "11. Inventory",
+      description:
+        "Manage kitchen stocks, ingredients, and measurement units to ensure preparation resources are always accounted for.",
+      icon: <ClipboardList className="w-6 h-6 text-violet-500" />,
+      menu: "Inventory",
+      subItems: [
+        "Ingredient Units",
+        "Base Ingredients",
+        "Stock Management",
+      ],
+    },
+    {
+      title: "12. Delivery management",
       description:
         "Manage assignment, team planning, profiles, and delivery quality workflows from one control section.",
       icon: <Milestone className="w-6 h-6 text-orange-600" />,
@@ -105,42 +124,42 @@ const MicroKitchenInstructions: React.FC = () => {
       ],
     },
     {
-      title: "11. Available Foods",
+      title: "13. Available Foods",
       description:
         "Maintain the kitchen's available food catalog so discoverability and ordering remain current.",
       icon: <Layers className="w-6 h-6 text-orange-500" />,
       menu: "Available Foods",
     },
     {
-      title: "12. Diet plan payouts",
+      title: "14. Diet plan payouts",
       description:
         "Track payouts linked to diet-plan execution and review related settlement details.",
       icon: <Wallet className="w-6 h-6 text-teal-500" />,
       menu: "Diet plan payouts",
     },
     {
-      title: "13. Kitchen Reviews",
+      title: "15. Kitchen Reviews",
       description:
         "Monitor Kitchen Reviews to assess service quality feedback and improve delivery performance.",
       icon: <Star className="w-6 h-6 text-yellow-500" />,
       menu: "Kitchen Reviews",
     },
     {
-      title: "14. Profile",
+      title: "16. Profile",
       description:
         "Maintain profile and account details used for kitchen identity, communication, and secure access.",
       icon: <UserCog className="w-6 h-6 text-indigo-600" />,
       menu: "Profile",
     },
     {
-      title: "15. Support Tickets",
+      title: "17. Support Tickets",
       description:
         "Create and track support issues with platform teams for operational or technical assistance.",
       icon: <HelpCircle className="w-6 h-6 text-purple-500" />,
       menu: "Support Tickets",
     },
     {
-      title: "16. Notifications",
+      title: "18. Notifications",
       description:
         "Monitor real-time updates related to orders, delivery actions, support status, and workflow changes.",
       icon: <Bell className="w-6 h-6 text-red-500" />,

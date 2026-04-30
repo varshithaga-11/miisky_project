@@ -46,7 +46,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       title: "Inventory Ingredient",
       description: "Review and manage your kitchen inventory.",
       icon: <FileText className="w-6 h-6" />,
-      path: "/microkitchen/inventory-ingredient",
+      path: "/microkitchen/inventory",
       status: "pending",
     },
     {
