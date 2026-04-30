@@ -7,7 +7,7 @@ import Label from "../../../components/form/Label";
 import Select from "../../../components/form/Select";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { DeliveryProfile, downloadProfileFile, getMyDeliveryProfile, saveMyDeliveryProfile } from "./api";
+import { DeliveryProfile, downloadProfileFile, getMyDeliveryProfile, saveMyDeliveryProfile, profileFileUrl } from "./api";
 import { generateProfilePDF, ProfileSection } from "../../AdminSide/PatientAllQuestionarie/downloadHelpers";
 import { FiDownload } from "react-icons/fi";
 
@@ -57,6 +57,17 @@ export default function DeliveryQuestionarePage() {
         fields: [
           { label: "Preferred Slots", value: slotsText },
         ]
+      },
+      {
+        title: "Documents (KYC)",
+        fields: [
+          { label: "Licence Copy", value: profileFileUrl(data.license_copy as string), type: "image" },
+          { label: "RC Copy", value: profileFileUrl(data.rc_copy as string), type: "image" },
+          { label: "Insurance Copy", value: profileFileUrl(data.insurance_copy as string), type: "image" },
+          { label: "Aadhaar Image", value: profileFileUrl(data.aadhar_image as string), type: "image" },
+          { label: "PAN Image", value: profileFileUrl(data.pan_image as string), type: "image" },
+          { label: "PUC Image", value: profileFileUrl(data.puc_image as string), type: "image" },
+        ].filter(f => f.value && typeof f.value === "string" && (f.value.includes(".jpg") || f.value.includes(".jpeg") || f.value.includes(".png") || f.value.includes(".webp"))) as any
       }
     ];
 

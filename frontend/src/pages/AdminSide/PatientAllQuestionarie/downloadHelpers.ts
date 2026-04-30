@@ -22,6 +22,26 @@ const isSelectedMatch = (opt: string, selected: string | string[]) => {
   });
 };
 
+export interface ProfileSection {
+  title: string;
+  fields: { 
+    label: string; 
+    value: string | boolean | number | null | undefined; 
+    type?: 'text' | 'image' 
+  }[];
+}
+
+async function urlToBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export interface QuestionnaireData {
   title: string;
   name: string; age: string; gender: string; height: string; weight: string; workType: string;
@@ -393,7 +413,7 @@ export function generatePDF(d: QuestionnaireData) {
   pdf.save(`${d.name.replace(/\s+/g, "_")}_Questionnaire.pdf`);
 }
 
-export const generateProfilePDF = (title: string, sections: ProfileSection[], userName?: string) => {
+export const generateProfilePDF = async (title: string, sections: ProfileSection[], userName?: string) => {
   const pdf = new jsPDF();
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
@@ -448,12 +468,34 @@ export const generateProfilePDF = (title: string, sections: ProfileSection[], us
     y += 10;
   }
 
-  sections.forEach((section) => {
+  for (const section of sections) {
     heading(section.title);
     
-    section.fields.forEach((f) => {
-      if (!f.value && f.value !== 0) return; // Skip empty fields to save space
+    for (const f of section.fields) {
+      if (!f.value && f.value !== 0) continue;
       
+      if (f.type === 'image') {
+        try {
+          const base64 = await urlToBase64(String(f.value));
+          const imgProps = pdf.getImageProperties(base64);
+          const ratio = imgProps.height / imgProps.width;
+          const imgW = 60; // Standard width for images in report
+          const imgH = imgW * ratio;
+          
+          checkPage(imgH + 15);
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(...secondaryColor);
+          pdf.text(f.label + ":", margin, y);
+          
+          pdf.addImage(base64, 'JPEG', margin + 60, y - 5, imgW, imgH);
+          y += imgH + 10;
+        } catch (e) {
+          console.error("Failed to add image to PDF", e);
+        }
+        continue;
+      }
+
       checkPage(12);
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "bold");
@@ -472,10 +514,10 @@ export const generateProfilePDF = (title: string, sections: ProfileSection[], us
       pdf.text(lines, margin + 60, y);
       
       y += Math.max(1, lines.length) * 7 + 2;
-    });
+    }
     
     y += 5;
-  });
+  }
 
   const fileName = `${(userName || "Profile").replace(/\s+/g, "_")}_${title.replace(/\s+/g, "_")}.pdf`;
   pdf.save(fileName);

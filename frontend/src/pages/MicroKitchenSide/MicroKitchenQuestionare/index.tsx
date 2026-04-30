@@ -155,6 +155,15 @@ export default function MicroKitchenQuestionarePage() {
           { label: "Passion for Cooking", value: data.passion_for_cooking },
           { label: "Time Available", value: data.time_available },
         ]
+      },
+      {
+        title: "Photos",
+        fields: [
+          { label: "Exterior", value: getMediaUrl(data.photo_exterior), type: "image" },
+          { label: "Entrance", value: getMediaUrl(data.photo_entrance), type: "image" },
+          { label: "Kitchen", value: getMediaUrl(data.photo_kitchen), type: "image" },
+          { label: "Platform", value: getMediaUrl(data.photo_platform), type: "image" },
+        ].filter(f => f.value) as any
       }
     ];
 
