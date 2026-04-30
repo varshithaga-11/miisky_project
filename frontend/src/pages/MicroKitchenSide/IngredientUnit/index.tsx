@@ -4,6 +4,7 @@ import {
     createIngredientUnit, 
     updateIngredientUnit, 
     deleteIngredientUnit, 
+    checkUnitUsage,
     IngredientUnit 
 } from "./api";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
@@ -66,8 +67,15 @@ const IngredientUnitPage: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this unit?")) return;
         try {
+            const usage = await checkUnitUsage(id);
+            if (usage.is_used) {
+                alert(`Cannot delete this unit as it is used in ${usage.usage_count} ingredient(s). Please delete or update those ingredients first.`);
+                return;
+            }
+
+            if (!window.confirm("Are you sure you want to delete this unit?")) return;
+            
             await deleteIngredientUnit(id);
             toast.success("Unit deleted successfully");
             loadUnits();

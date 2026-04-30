@@ -4044,7 +4044,9 @@ class MicroKitchenIngredient(models.Model):
     name = models.CharField(max_length=100)
     unit = models.ForeignKey(
         MicroKitchenIngredientUnit,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="ingredients"
     )
 
@@ -4054,12 +4056,16 @@ class MicroKitchenIngredient(models.Model):
 class InventoryIngredient(models.Model):
     micro_kitchen = models.ForeignKey(
         MicroKitchenProfile,
-        on_delete=models.CASCADE,   # ✅ FIX
+        on_delete=models.SET_NULL, 
+        null=True,
+        blank=True,  
         related_name="inventory"
     )
     ingredient = models.ForeignKey(
         MicroKitchenIngredient,
-        on_delete=models.CASCADE,   # ✅ FIX
+        on_delete=models.SET_NULL, 
+        null=True,
+        blank=True,  
         related_name="inventory_items"
     )
 

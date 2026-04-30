@@ -4,6 +4,7 @@ import {
     createInventoryItem,
     updateInventoryItem,
     deleteInventoryItem,
+    checkInventoryUsage,
     InventoryIngredient
 } from "./api";
 import { fetchIngredients, MicroKitchenIngredient } from "../Ingredient/api";
@@ -125,8 +126,16 @@ const InventoryPage: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to remove this item from inventory?")) return;
         try {
+            const usage = await checkInventoryUsage(id);
+            if (usage.is_used) {
+                if (!window.confirm(`This item still has ${usage.quantity} in stock. Are you sure you want to remove it from inventory?`)) {
+                    return;
+                }
+            } else {
+                if (!window.confirm("Are you sure you want to remove this item from inventory?")) return;
+            }
+
             await deleteInventoryItem(id);
             toast.success("Item removed from inventory");
             loadData(currentPage);

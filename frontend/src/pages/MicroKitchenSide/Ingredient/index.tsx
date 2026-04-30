@@ -4,6 +4,7 @@ import {
     createIngredient, 
     updateIngredient, 
     deleteIngredient, 
+    checkIngredientUsage,
     MicroKitchenIngredient 
 } from "./api";
 import { fetchIngredientUnits, IngredientUnit } from "../IngredientUnit/api";
@@ -89,8 +90,15 @@ const IngredientPage: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this ingredient?")) return;
         try {
+            const usage = await checkIngredientUsage(id);
+            if (usage.is_used) {
+                alert(`Cannot delete this ingredient as it is present in ${usage.usage_count} kitchen inventory list(s). Please remove it from those inventories first.`);
+                return;
+            }
+
+            if (!window.confirm("Are you sure you want to delete this ingredient?")) return;
+
             await deleteIngredient(id);
             toast.success("Ingredient deleted successfully");
             loadData(currentPage);

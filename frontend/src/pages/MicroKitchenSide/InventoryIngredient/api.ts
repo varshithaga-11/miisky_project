@@ -43,3 +43,9 @@ export const deleteInventoryItem = async (id: number): Promise<void> => {
     const url = createApiUrl(`api/inventory-ingredient/${id}/`);
     await axios.delete(url, { headers: await getAuthHeaders() });
 };
+
+export const checkInventoryUsage = async (id: number): Promise<{ is_used: boolean; quantity: number }> => {
+    const url = createApiUrl(`api/inventory-ingredient/${id}/check-usage/`);
+    const res = await axios.get(url, { headers: await getAuthHeaders() });
+    return res.data;
+};

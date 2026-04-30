@@ -28,3 +28,9 @@ export const deleteIngredientUnit = async (id: number): Promise<void> => {
     const url = createApiUrl(`api/microkitchen-ingredient-unit/${id}/`);
     await axios.delete(url, { headers: await getAuthHeaders() });
 };
+
+export const checkUnitUsage = async (id: number): Promise<{ is_used: boolean; usage_count: number }> => {
+    const url = createApiUrl(`api/microkitchen-ingredient-unit/${id}/check-usage/`);
+    const res = await axios.get(url, { headers: await getAuthHeaders() });
+    return res.data;
+};

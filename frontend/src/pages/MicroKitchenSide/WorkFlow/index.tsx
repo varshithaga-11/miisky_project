@@ -7,10 +7,12 @@ import {
   Truck,
   CreditCard,
   Star,
-  ArrowRight
+  ArrowRight,
+  User
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./WorkFlow.css";
+import path from "path";
 
 interface Step {
   id: number;
@@ -49,8 +51,17 @@ const MicroKitchenWorkFlow: React.FC = () => {
       path: "/microkitchen/inventory",
       status: "pending",
     },
+
     {
       id: 4,
+      title: "Allotted Patients",
+      description: "View and manage patients assigned to your micro-kitchen.",
+      icon: <User className="w-6 h-6" />,
+      path: "/microkitchen/patients",
+      status: "pending",
+    },
+    {
+      id: 5,
       title: "Daily Prep List",
       description: "Get daily meal requirements from assigned patients.",
       icon: <Utensils className="w-6 h-6" />,
@@ -58,7 +69,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 5,
+      id: 6,
       title: "Kitchen Execution",
       description: "Manage real-time cooking and food preparation tasks.",
       icon: <ClipboardCheck className="w-6 h-6" />,
@@ -66,7 +77,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 6,
+      id: 7,
       title: "Order Management",
       description: "Track and process orders from patients and non-patients.",
       icon: <Package className="w-6 h-6" />,
@@ -74,7 +85,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 7,
+      id: 8,
       title: "Delivery Setup",
       description: "Assign and manage global delivery logistics.",
       icon: <Truck className="w-6 h-6" />,
@@ -82,7 +93,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 8,
+      id: 9,
       title: "Payment Snapshots",
       description: "Monitor and verify order payment histories.",
       icon: <CreditCard className="w-6 h-6" />,
@@ -90,7 +101,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 9,
+      id: 10,
       title: "Reviews & Feedback",
       description: "View patient feedback and improve service quality.",
       icon: <Star className="w-6 h-6" />,

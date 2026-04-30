@@ -13062,6 +13062,12 @@ class MicroKitchenIngredientUnitViewSet(viewsets.ModelViewSet):
     serializer_class = MicroKitchenIngredientUnitSerializer
     permission_classes = [IsAuthenticated]
 
+    @action(detail=True, methods=['get'], url_path='check-usage')
+    def check_usage(self, request, pk=None):
+        unit = self.get_object()
+        count = MicroKitchenIngredient.objects.filter(unit=unit).count()
+        return Response({'is_used': count > 0, 'usage_count': count})
+
 class MicroKitchenIngredientViewSet(viewsets.ModelViewSet):
     serializer_class = MicroKitchenIngredientSerializer
     permission_classes = [IsAuthenticated]
@@ -13073,6 +13079,12 @@ class MicroKitchenIngredientViewSet(viewsets.ModelViewSet):
         if search:
             queryset = queryset.filter(name__icontains=search)
         return queryset
+
+    @action(detail=True, methods=['get'], url_path='check-usage')
+    def check_usage(self, request, pk=None):
+        ingredient = self.get_object()
+        count = InventoryIngredient.objects.filter(ingredient=ingredient).count()
+        return Response({'is_used': count > 0, 'usage_count': count})
 
 class InventoryIngredientViewSet(viewsets.ModelViewSet):
     serializer_class = InventoryIngredientSerializer
@@ -13097,6 +13109,11 @@ class InventoryIngredientViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(quantity__lte=F('low_stock_threshold'))
         
         return queryset
+
+    @action(detail=True, methods=['get'], url_path='check-usage')
+    def check_usage(self, request, pk=None):
+        item = self.get_object()
+        return Response({'is_used': item.quantity > 0, 'quantity': item.quantity})
 
     def perform_create(self, serializer):
         user = self.request.user
