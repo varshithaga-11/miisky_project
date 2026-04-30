@@ -329,11 +329,10 @@ const nutritionistNavItems: NavItem[] = [
 
   {
     icon: <Briefcase className="w-5 h-5" />,
-    name: "Micro Kitchens & Diet Plans",
+    name: "Micro Kitchens",
     subItems: [
       { name: "Micro Kitchens", path: "/nutrition/micro-kitchens" },
       { name: "Kitchen inspection", path: "/nutrition/micro-kitchen-inspection" },
-      { name: "Diet Plans", path: "/nutrition/plans" },
     ],
   },
 
@@ -360,12 +359,8 @@ const nutritionistNavItems: NavItem[] = [
   },
   {
     icon: <FileText className="w-5 h-5" />,
-    name: "Health Monitoring",
-    subItems: [
-      { name: "Health Parameters", path: "/nutrition/health-parameter" },
-      { name: "Normal Ranges", path: "/nutrition/normal-range" },
-      { name: "Diet Plans", path: "/nutrition/diet-plan" },
-    ],
+    name: "Diet Plans",
+    path: "/nutrition/diet-plan",
   },
   {
     icon: <Briefcase className="w-5 h-5" />,
