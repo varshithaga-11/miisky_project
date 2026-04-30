@@ -47,7 +47,7 @@ except Exception:
 
 class Pagination(PageNumberPagination):
     page_query_param = "page"
-    page_size_query_param = "limit"
+    page_size_query_param = "page_size"
     page_size = 10
     max_page_size = 500
 
@@ -13063,10 +13063,16 @@ class MicroKitchenIngredientUnitViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 class MicroKitchenIngredientViewSet(viewsets.ModelViewSet):
-    queryset = MicroKitchenIngredient.objects.all()
     serializer_class = MicroKitchenIngredientSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = Pagination
+
+    def get_queryset(self):
+        queryset = MicroKitchenIngredient.objects.all().select_related('unit')
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        return queryset
 
 class InventoryIngredientViewSet(viewsets.ModelViewSet):
     serializer_class = InventoryIngredientSerializer
@@ -13076,16 +13082,30 @@ class InventoryIngredientViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if getattr(user, 'role', None) == 'micro_kitchen':
-            return InventoryIngredient.objects.filter(micro_kitchen__user=user).select_related('ingredient', 'ingredient__unit')
+            queryset = InventoryIngredient.objects.filter(micro_kitchen__user=user).select_related('ingredient', 'ingredient__unit')
         elif getattr(user, 'role', None) == 'admin':
-            return InventoryIngredient.objects.all().select_related('micro_kitchen', 'ingredient', 'ingredient__unit')
-        return InventoryIngredient.objects.none()
+            queryset = InventoryIngredient.objects.all().select_related('micro_kitchen', 'ingredient', 'ingredient__unit')
+        else:
+            queryset = InventoryIngredient.objects.none()
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(ingredient__name__icontains=search)
+        
+        return queryset
 
     def perform_create(self, serializer):
         user = self.request.user
         if getattr(user, 'role', None) == 'micro_kitchen':
             try:
                 kitchen = MicroKitchenProfile.objects.get(user=user)
+                ingredient = serializer.validated_data.get('ingredient')
+                
+                # Proactive check for duplicate ingredient in kitchen inventory
+                if InventoryIngredient.objects.filter(micro_kitchen=kitchen, ingredient=ingredient).exists():
+                    from rest_framework import serializers as drf_serializers
+                    raise drf_serializers.ValidationError({"ingredient": "This ingredient is already present in your inventory."})
+                
                 serializer.save(micro_kitchen=kitchen)
             except MicroKitchenProfile.DoesNotExist:
                 from rest_framework import serializers as drf_serializers

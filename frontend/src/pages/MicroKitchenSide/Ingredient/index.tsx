@@ -36,18 +36,23 @@ const IngredientPage: React.FC = () => {
     const loadData = async (page = 1, limit = pageSize, search = searchTerm) => {
         setLoading(true);
         try {
-            const [ingData, unitData] = await Promise.all([
-                fetchIngredients(page, limit, search),
-                fetchIngredientUnits()
-            ]);
+            const ingData = await fetchIngredients(page, limit, search);
             setIngredients(ingData.results);
             setTotalItems(ingData.count);
-            setUnits(unitData);
             setCurrentPage(page);
         } catch (error) {
-            toast.error("Failed to load data");
+            toast.error("Failed to load ingredients");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadUnits = async () => {
+        try {
+            const unitData = await fetchIngredientUnits();
+            setUnits(unitData);
+        } catch (error) {
+            toast.error("Failed to load units");
         }
     };
 
@@ -264,7 +269,7 @@ const IngredientPage: React.FC = () => {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/10"
+                            className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[32px] shadow-2xl border border-gray-100 dark:border-white/10 min-h-[480px]"
                         >
                             <div className="p-8">
                                 <div className="flex items-center justify-between mb-8">
@@ -298,6 +303,7 @@ const IngredientPage: React.FC = () => {
                                             onChange={(val) => setFormData({ ...formData, unit: Number(val) })}
                                             options={units.map(u => ({ label: u.unit, value: u.id! }))}
                                             placeholder="Search and select unit"
+                                            onFocus={loadUnits}
                                         />
                                     </div>
 

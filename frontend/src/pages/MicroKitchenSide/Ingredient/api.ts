@@ -16,7 +16,7 @@ export interface PaginatedIngredients {
 }
 
 export const fetchIngredients = async (page: number = 1, pageSize: number = 10, search: string = ""): Promise<PaginatedIngredients> => {
-    const url = createApiUrl(`api/microkitchen-ingredient/?page=${page}&page_size=${pageSize}&search=${search}`);
+    const url = createApiUrl(`api/microkitchen-ingredient/?page=${page}&limit=${pageSize}&search=${search}`);
     const res = await axios.get(url, { headers: await getAuthHeaders() });
     return res.data;
 };

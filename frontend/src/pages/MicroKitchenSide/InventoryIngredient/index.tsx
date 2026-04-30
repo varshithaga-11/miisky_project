@@ -27,8 +27,14 @@ const InventoryPage: React.FC = () => {
     const [editingItem, setEditingItem] = useState<InventoryIngredient | null>(null);
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Infinite scroll for base ingredients
+    const [baseIngPage, setBaseIngPage] = useState(1);
+    const [loadingMoreIng, setLoadingMoreIng] = useState(false);
+    const [hasMoreIng, setHasMoreIng] = useState(true);
     const [pageSize, setPageSize] = useState(10);
     const [searchTerm, setSearchTerm] = useState("");
+    const [ingSearchTerm, setIngSearchTerm] = useState("");
 
     const [formData, setFormData] = useState<Partial<InventoryIngredient>>({
         ingredient: 0,
@@ -39,13 +45,9 @@ const InventoryPage: React.FC = () => {
     const loadData = async (page = 1, limit = pageSize, search = searchTerm) => {
         setLoading(true);
         try {
-            const [invData, ingData] = await Promise.all([
-                fetchInventory(page, limit, search),
-                fetchIngredients(1, 100) // Load a larger list for the dropdown
-            ]);
+            const invData = await fetchInventory(page, limit, search);
             setInventory(invData.results);
             setTotalItems(invData.count);
-            setBaseIngredients(ingData.results || []);
             setCurrentPage(page);
         } catch (error) {
             toast.error("Failed to load inventory");
@@ -53,6 +55,41 @@ const InventoryPage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const loadBaseIngredients = async (page = 1, append = false, search = ingSearchTerm) => {
+        if (append) setLoadingMoreIng(true);
+        
+        try {
+            const ingData = await fetchIngredients(page, 10, search);
+            const results = ingData.results || [];
+            if (append) {
+                setBaseIngredients(prev => [...prev, ...results]);
+            } else {
+                setBaseIngredients(results);
+            }
+            setHasMoreIng(results.length === 10);
+            setBaseIngPage(page);
+        } catch (error) {
+            toast.error("Failed to load base ingredients");
+        } finally {
+            setLoadingMoreIng(false);
+        }
+    };
+
+    const handleLoadMoreIngredients = () => {
+        if (hasMoreIng && !loadingMoreIng) {
+            loadBaseIngredients(baseIngPage + 1, true, ingSearchTerm);
+        }
+    };
+
+    useEffect(() => {
+        if (isModalOpen) {
+            const timer = setTimeout(() => {
+                loadBaseIngredients(1, false, ingSearchTerm);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [ingSearchTerm, isModalOpen]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -80,8 +117,9 @@ const InventoryPage: React.FC = () => {
             setIsModalOpen(false);
             setEditingItem(null);
             loadData(currentPage);
-        } catch (error) {
-            toast.error("Failed to save stock item");
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.ingredient || error.response?.data?.detail || "Failed to save stock item";
+            toast.error(errorMsg);
         }
     };
 
@@ -107,9 +145,9 @@ const InventoryPage: React.FC = () => {
         } else {
             setEditingItem(null);
             setFormData({
-                ingredient: 0,
-                quantity: 0,
-                low_stock_threshold: 0
+                // ingredient: 0,
+                // quantity: 0,
+                // low_stock_threshold: 0
             });
         }
         setIsModalOpen(true);
@@ -285,7 +323,7 @@ const InventoryPage: React.FC = () => {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/10"
+                            className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[32px] shadow-2xl border border-gray-100 dark:border-white/10 min-h-[550px]"
                         >
                             <div className="p-8">
                                 <div className="flex items-center justify-between mb-8">
@@ -309,6 +347,12 @@ const InventoryPage: React.FC = () => {
                                                 onChange={(val) => setFormData({ ...formData, ingredient: Number(val) })}
                                                 options={baseIngredients.map(i => ({ label: `${i.name} (${i.unit_name})`, value: i.id! }))}
                                                 placeholder="Search and select ingredient"
+                                                onFocus={() => {
+                                                    if (baseIngredients.length === 0) loadBaseIngredients(1, false, "");
+                                                }}
+                                                onSearch={(val) => setIngSearchTerm(val)}
+                                                onLoadMore={handleLoadMoreIngredients}
+                                                isLoadingMore={loadingMoreIng}
                                             />
                                         </div>
                                     )}
@@ -318,7 +362,8 @@ const InventoryPage: React.FC = () => {
                                             <Label className="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-3">Quantity</Label>
                                             <Input
                                                 type="number"
-                                                step="0.01"
+                                                step="1"
+                                                placeholder="Enter Quantity"
                                                 value={formData.quantity}
                                                 onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
                                                 required
@@ -328,7 +373,8 @@ const InventoryPage: React.FC = () => {
                                             <Label className="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-3">Low Threshold</Label>
                                             <Input
                                                 type="number"
-                                                step="0.01"
+                                                step="1"
+                                                placeholder="Lowest that quantity can go"
                                                 value={formData.low_stock_threshold}
                                                 onChange={(e) => setFormData({ ...formData, low_stock_threshold: Number(e.target.value) })}
                                                 required
