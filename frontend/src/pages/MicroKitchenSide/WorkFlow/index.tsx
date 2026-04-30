@@ -43,6 +43,14 @@ const MicroKitchenWorkFlow: React.FC = () => {
     },
     {
       id: 3,
+      title: "Inventory Ingredient",
+      description: "Review and manage your kitchen inventory.",
+      icon: <FileText className="w-6 h-6" />,
+      path: "/microkitchen/inventory-ingredient",
+      status: "pending",
+    },
+    {
+      id: 4,
       title: "Daily Prep List",
       description: "Get daily meal requirements from assigned patients.",
       icon: <Utensils className="w-6 h-6" />,
@@ -50,7 +58,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 4,
+      id: 5,
       title: "Kitchen Execution",
       description: "Manage real-time cooking and food preparation tasks.",
       icon: <ClipboardCheck className="w-6 h-6" />,
@@ -58,7 +66,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 5,
+      id: 6,
       title: "Order Management",
       description: "Track and process orders from patients and non-patients.",
       icon: <Package className="w-6 h-6" />,
@@ -66,7 +74,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 6,
+      id: 7,
       title: "Delivery Setup",
       description: "Assign and manage global delivery logistics.",
       icon: <Truck className="w-6 h-6" />,
@@ -74,7 +82,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 7,
+      id: 8,
       title: "Payment Snapshots",
       description: "Monitor and verify order payment histories.",
       icon: <CreditCard className="w-6 h-6" />,
@@ -82,7 +90,7 @@ const MicroKitchenWorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 8,
+      id: 9,
       title: "Reviews & Feedback",
       description: "View patient feedback and improve service quality.",
       icon: <Star className="w-6 h-6" />,

@@ -13092,6 +13092,10 @@ class InventoryIngredientViewSet(viewsets.ModelViewSet):
         if search:
             queryset = queryset.filter(ingredient__name__icontains=search)
         
+        low_stock = self.request.query_params.get('low_stock')
+        if low_stock == 'true':
+            queryset = queryset.filter(quantity__lte=F('low_stock_threshold'))
+        
         return queryset
 
     def perform_create(self, serializer):

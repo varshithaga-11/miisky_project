@@ -34,6 +34,7 @@ const InventoryPage: React.FC = () => {
     const [hasMoreIng, setHasMoreIng] = useState(true);
     const [pageSize, setPageSize] = useState(10);
     const [searchTerm, setSearchTerm] = useState("");
+    const [lowStockFilter, setLowStockFilter] = useState(false);
     const [ingSearchTerm, setIngSearchTerm] = useState("");
 
     const [formData, setFormData] = useState<Partial<InventoryIngredient>>({
@@ -42,10 +43,10 @@ const InventoryPage: React.FC = () => {
         low_stock_threshold: 5
     });
 
-    const loadData = async (page = 1, limit = pageSize, search = searchTerm) => {
+    const loadData = async (page = 1, limit = pageSize, search = searchTerm, lowStock = lowStockFilter) => {
         setLoading(true);
         try {
-            const invData = await fetchInventory(page, limit, search);
+            const invData = await fetchInventory(page, limit, search, lowStock);
             setInventory(invData.results);
             setTotalItems(invData.count);
             setCurrentPage(page);
@@ -93,10 +94,10 @@ const InventoryPage: React.FC = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            loadData(1, pageSize, searchTerm);
+            loadData(1, pageSize, searchTerm, lowStockFilter);
         }, 500);
         return () => clearTimeout(timer);
-    }, [searchTerm, pageSize]);
+    }, [searchTerm, pageSize, lowStockFilter]);
 
     const totalPages = Math.ceil(totalItems / pageSize);
 
@@ -177,15 +178,28 @@ const InventoryPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                    <div className="relative w-full md:w-96">
-                        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search inventory..."
-                            value={searchTerm}
-                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-brand-500/20 transition-all outline-none text-sm"
-                        />
+                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                        <div className="relative w-full md:w-96">
+                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search inventory..."
+                                value={searchTerm}
+                                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-brand-500/20 transition-all outline-none text-sm"
+                            />
+                        </div>
+                        <div className="w-full md:w-48">
+                            <Select
+                                value={lowStockFilter ? "low" : "all"}
+                                onChange={(val) => { setLowStockFilter(val === "low"); setCurrentPage(1); }}
+                                options={[
+                                    { value: "all", label: "All Stock" },
+                                    { value: "low", label: "Low Stock Only" },
+                                ]}
+                                placeholder="Filter by status"
+                            />
+                        </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <Label className="text-sm font-bold text-gray-500">Show:</Label>

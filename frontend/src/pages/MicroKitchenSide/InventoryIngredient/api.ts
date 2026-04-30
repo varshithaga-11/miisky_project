@@ -20,8 +20,9 @@ export interface PaginatedInventory {
     current_page?: number;
 }
 
-export const fetchInventory = async (page: number = 1, pageSize: number = 10, search: string = ""): Promise<PaginatedInventory> => {
-    const url = createApiUrl(`api/inventory-ingredient/?page=${page}&limit=${pageSize}&search=${search}`);
+export const fetchInventory = async (page: number = 1, pageSize: number = 10, search: string = "", lowStock: boolean = false): Promise<PaginatedInventory> => {
+    let url = createApiUrl(`api/inventory-ingredient/?page=${page}&limit=${pageSize}&search=${search}`);
+    if (lowStock) url += `&low_stock=true`;
     const res = await axios.get(url, { headers: await getAuthHeaders() });
     return res.data;
 };
