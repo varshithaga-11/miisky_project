@@ -26,7 +26,7 @@ import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-ico
 
 // Custom Form Components
 import { FilterBar } from "../../../components/common";
-import Select from "../../../components/form/Select";
+import SearchableSelect from "../../../components/form/SearchableSelect";
 import Button from "../../../components/ui/button/Button";
 
 const getMediaUrl = (path: string | undefined | null) => {
@@ -306,7 +306,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                         <div className="flex flex-wrap items-end gap-4">
                             <div className="flex-1 min-w-[300px]">
                                 <label className="text-[10px] font-black text-gray-400 uppercase block mb-1.5 ml-1">Search Patient</label>
-                                <Select
+                                <SearchableSelect
                                     value={selectedPatient}
                                     onChange={setSelectedPatient}
                                     onFocus={fetchPatients}
@@ -321,7 +321,7 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                 />
                             </div>
                             <div className="flex-1 min-w-[200px]">
-                                <Select
+                                <SearchableSelect
                                     value={bulkPersonId}
                                     onChange={setBulkPersonId}
                                     onFocus={fetchAssignContext}
@@ -474,16 +474,16 @@ const MealsBasedOnDailyPage: React.FC = () => {
 
                                 <div className="space-y-3">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Manual Override</p>
-                                    <select
+                                    <SearchableSelect
                                         value={manualSupplyPersonId}
-                                        onChange={(e) => setManualSupplyPersonId(e.target.value)}
-                                        className="w-full rounded-2xl border-none bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm font-bold shadow-sm"
-                                    >
-                                        <option value="">Select Partner</option>
-                                        {supplyUsers.map(u => (
-                                            <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
-                                        ))}
-                                    </select>
+                                        onChange={setManualSupplyPersonId}
+                                        onFocus={fetchAssignContext}
+                                        placeholder="Select Partner"
+                                        options={supplyUsers.map(u => ({
+                                            value: String(u.id),
+                                            label: `${u.first_name} ${u.last_name}`
+                                        }))}
+                                    />
                                     <Button onClick={() => handleAssignManualSupply(assignModalMeal)} disabled={assignSaving} className="w-full !rounded-2xl !py-4 shadow-xl shadow-indigo-600/20 text-[10px] font-black uppercase italic tracking-widest">
                                         {assignSaving ? 'Synchronizing...' : 'Authorize Manual Assignment'}
                                     </Button>
