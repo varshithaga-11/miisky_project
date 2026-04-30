@@ -661,6 +661,8 @@ class UserQuestionnaire(models.Model):
     religion=models.CharField(max_length=50,null=True,blank=True)
     caste=models.CharField(max_length=50,null=True,blank=True)
 
+    language=models.CharField(max_length=100,null=True,blank=True)
+
     # 🔹 LIFESTYLE
     work_type = models.CharField(
         max_length=20,

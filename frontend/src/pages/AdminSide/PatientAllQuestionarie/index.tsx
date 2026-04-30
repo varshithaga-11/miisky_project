@@ -89,6 +89,7 @@ export default function PatientAllQuestionariePage() {
   const [weight, setWeight] = useState("");
   const [religion, setReligion] = useState("");
   const [caste, setCaste] = useState("");
+  const [language, setLanguage] = useState("");
   const [workType, setWorkType] = useState<WorkType>("");
 
   const [anyHealthIssues, setAnyHealthIssues] = useState<YesNo>("");
@@ -196,7 +197,7 @@ export default function PatientAllQuestionariePage() {
 
   const handleDownload = async (format: "pdf" | "docx") => {
     const data: QuestionnaireData = {
-      title, name, age, gender, religion, caste, height, weight, workType,
+      title, name, age, gender, religion, caste, language, height, weight, workType,
       anyHealthIssues, healthRows,
       autoimmuneOptions, autoimmuneSelected,
       symptomOptions, symptomSelected,
@@ -303,6 +304,7 @@ export default function PatientAllQuestionariePage() {
                   <label className="text-sm">Weight <input value={weight} onChange={(e) => setWeight(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
                   <label className="text-sm">Religion <input value={religion} onChange={(e) => setReligion(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
                   <label className="text-sm">Caste <input value={caste} onChange={(e) => setCaste(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
+                  <label className="text-sm">Language <input value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700" /></label>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Gender</p>

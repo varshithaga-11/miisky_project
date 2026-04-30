@@ -553,6 +553,7 @@ export default function PatientQuestionnairePage() {
       gender: userGender || "",
       religion: data.religion || "",
       caste: data.caste || "",
+      language: data.language || "",
       height: data.height_cm ? String(data.height_cm) : "",
       weight: data.weight_kg ? String(data.weight_kg) : "",
       workType: data.work_type || "",
@@ -896,6 +897,19 @@ export default function PatientQuestionnairePage() {
                     />
                   ) : (
                     <ReadOnlyValue value={data.caste} />
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="language">Language</Label>
+                  {isEditing ? (
+                    <Input
+                      id="language"
+                      type="text"
+                      value={data.language ?? ""}
+                      onChange={(e) => setField("language", e.target.value)}
+                    />
+                  ) : (
+                    <ReadOnlyValue value={data.language} />
                   )}
                 </div>
               </div>

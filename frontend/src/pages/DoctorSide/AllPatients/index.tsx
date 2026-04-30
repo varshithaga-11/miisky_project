@@ -291,6 +291,7 @@ function QuestionnaireView({ data }: { data: any }) {
               <InfoItem label="Age" value={`${data.age} years`} />
               <InfoItem label="Religion" value={data.religion} />
               <InfoItem label="Caste" value={data.caste} />
+              <InfoItem label="Language" value={data.language} />
               <InfoItem label="Height" value={`${data.height_cm} cm`} />
               <InfoItem label="Weight" value={`${data.weight_kg} kg`} />
               <InfoItem label="BMI" value={bmi} />

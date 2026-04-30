@@ -1506,6 +1506,7 @@ class UserQuestionnaireSerializer(serializers.ModelSerializer):
             "non_veg_frequency",
             "religion",
             "caste",
+            "language",
             "consumes_egg",
             "consumes_dairy",
             "food_allergy",

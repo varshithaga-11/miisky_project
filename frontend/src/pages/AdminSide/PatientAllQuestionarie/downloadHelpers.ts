@@ -51,7 +51,7 @@ async function urlToBase64(url: string): Promise<string> {
 
 export interface QuestionnaireData {
   title: string;
-  name: string; age: string; gender: string; religion: string; caste: string; height: string; weight: string; workType: string;
+  name: string; age: string; gender: string; religion: string; caste: string; language: string; height: string; weight: string; workType: string;
   anyHealthIssues: YesNo; healthRows: HealthIssueRow[];
   autoimmuneOptions: string[]; autoimmuneSelected: string[];
   symptomOptions: string[]; symptomSelected: string[];
@@ -288,6 +288,7 @@ export function generatePDF(d: QuestionnaireData) {
   radioField("Gender", ["Male", "Female", "Other"], d.gender);
   field("Religion", d.religion);
   field("Caste", d.caste);
+  field("Language", d.language);
   field("Height", d.height);
   field("Weight", d.weight);
   radioField("Work Type", ["Sedentary", "Moderate", "Heavy"], d.workType);
@@ -658,6 +659,7 @@ export async function generateDOCX(d: QuestionnaireData) {
   children.push(docRadioField("Gender", ["Male", "Female", "Other"], d.gender));
   children.push(docField("Religion", d.religion));
   children.push(docField("Caste", d.caste));
+  children.push(docField("Language", d.language));
   children.push(docField("Height", d.height));
   children.push(docField("Weight", d.weight));
   children.push(docRadioField("Types of work", ["Sedentary", "Moderate", "Heavy"], d.workType));

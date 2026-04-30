@@ -361,6 +361,10 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Caste</p>
                                                 <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.caste || "--"}</p>
                                             </div>
+                                            <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Language</p>
+                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.language || "--"}</p>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-4">
