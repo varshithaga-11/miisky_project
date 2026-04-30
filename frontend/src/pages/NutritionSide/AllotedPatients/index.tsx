@@ -374,6 +374,10 @@ const AllottedPatientsPage: React.FC = () => {
                                         
                                         <div className="bg-white dark:bg-gray-900/50 p-6 rounded-3xl border border-gray-100 dark:border-white/5 space-y-4 shadow-sm">
                                            <div className="flex justify-between items-center text-[10px] border-b border-gray-50 dark:border-white/5 pb-3">
+                                              <span className="text-gray-400 font-bold uppercase">Religion / Caste</span>
+                                              <span className="text-gray-900 dark:text-white font-black">{p.questionnaire?.religion || '??'} / {p.questionnaire?.caste || '??'}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] border-b border-gray-50 dark:border-white/5 pb-3">
                                               <span className="text-gray-400 font-bold uppercase">Height / Weight</span>
                                               <span className="text-gray-900 dark:text-white font-black">{p.questionnaire?.height_cm || '??'}cm / {p.questionnaire?.weight_kg || '??'}kg</span>
                                            </div>

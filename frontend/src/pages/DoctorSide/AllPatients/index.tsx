@@ -289,6 +289,8 @@ function QuestionnaireView({ data }: { data: any }) {
             <FiUser className="w-4 h-4" />,
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
               <InfoItem label="Age" value={`${data.age} years`} />
+              <InfoItem label="Religion" value={data.religion} />
+              <InfoItem label="Caste" value={data.caste} />
               <InfoItem label="Height" value={`${data.height_cm} cm`} />
               <InfoItem label="Weight" value={`${data.weight_kg} kg`} />
               <InfoItem label="BMI" value={bmi} />

@@ -125,6 +125,8 @@ const Q_LABELS: Record<string, string> = {
   id: "Record ID",
   user: "User ID",
   age: "Age",
+  religion: "Religion",
+  caste: "Caste",
   height_cm: "Height (cm)",
   weight_kg: "Weight (kg)",
   work_type: "Work type",

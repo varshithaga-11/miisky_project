@@ -83,6 +83,8 @@ export type UserQuestionnaire = {
   any_other_comments?: string | null;
   any_notes_for_care_team?: string | null;
   non_veg_frequency?: "daily" | "three_four_times_week" | "one_two_times_week" | "occasional" | null;
+  religion?: string | null;
+  caste?: string | null;
 };
 
 export type MasterRow = { id: number; name: string; category?: string };

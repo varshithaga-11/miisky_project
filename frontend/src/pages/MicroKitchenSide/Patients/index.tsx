@@ -350,8 +350,16 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                                 <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.diet_plan_details.plan_name}</p>
                                             </div>
                                             <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
-                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Age / Weight</p>
-                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.age ?? '--'}Y / {selectedPatient.patient_questionnaire?.weight_kg ?? '--'}kg</p>
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Age / Ht / Wt</p>
+                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.age ?? "--"}Y / {selectedPatient.patient_questionnaire?.height_cm ?? "--"}cm / {selectedPatient.patient_questionnaire?.weight_kg ?? "--"}kg</p>
+                                            </div>
+                                            <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Religion</p>
+                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.religion || "--"}</p>
+                                            </div>
+                                            <div className="p-5 bg-gray-50 dark:bg-white/[0.02] rounded-3xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Caste</p>
+                                                <p className="text-sm font-black text-indigo-500 uppercase">{selectedPatient.patient_questionnaire?.caste || "--"}</p>
                                             </div>
                                         </div>
 
@@ -363,6 +371,32 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             <div className="flex items-center justify-between py-1">
                                                 <span className="text-xs font-bold text-gray-500 uppercase">Meals Per Day</span>
                                                 <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{selectedPatient.patient_questionnaire?.meals_per_day || '3'} Sessions</span>
+                                            </div>
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Meal Slots</span>
+                                                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate max-w-[150px]">
+                                                    {Array.isArray(selectedPatient.patient_questionnaire?.meal_slots) 
+                                                        ? selectedPatient.patient_questionnaire.meal_slots.join(", ") 
+                                                        : (typeof selectedPatient.patient_questionnaire?.meal_slots === 'string' 
+                                                            ? selectedPatient.patient_questionnaire.meal_slots.replace(/[\[\]']/g, '') 
+                                                            : '--')}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Skips Meals / Snacks</span>
+                                                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                                                    {selectedPatient.patient_questionnaire?.skips_meals ? "Yes" : "No"} / {selectedPatient.patient_questionnaire?.snacks_between_meals ? "Yes" : "No"}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Fruits / Veg Per Day</span>
+                                                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                                                    {selectedPatient.patient_questionnaire?.fruits_per_day ?? '--'} / {selectedPatient.patient_questionnaire?.vegetables_per_day ?? '--'} SV
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between py-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Sickness Frequency</span>
+                                                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{selectedPatient.patient_questionnaire?.falls_sick_frequency || '--'}</span>
                                             </div>
                                             <div className="py-2 space-y-2">
                                                 <div className="flex items-center justify-between">
@@ -654,7 +688,7 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                             )}
                                             <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
                                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Menstrual Pattern</p>
-                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic">{selectedPatient.patient_questionnaire?.menstrual_pattern?.replace(/_/g, ' ') || "N/A"}</p>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic">{selectedPatient.patient_questionnaire?.menstrual_pattern?.replace(/_/g, " ") || "N/A"}</p>
                                             </div>
                                             {selectedPatient.patient_questionnaire?.other_health_concerns && (
                                                 <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
@@ -663,6 +697,26 @@ const MicroKitchenPatientsPage: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-6 mt-6">
+                                        {selectedPatient.patient_questionnaire?.additional_notes && (
+                                            <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-900/20">
+                                                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">Additional Dietary Notes</p>
+                                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{selectedPatient.patient_questionnaire.additional_notes}</p>
+                                            </div>
+                                        )}
+                                        {selectedPatient.patient_questionnaire?.any_other_comments && (
+                                            <div className="p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Other Comments</p>
+                                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{selectedPatient.patient_questionnaire.any_other_comments}</p>
+                                            </div>
+                                        )}
+                                        {selectedPatient.patient_questionnaire?.any_notes_for_care_team && (
+                                            <div className="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/20">
+                                                <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Notes for Care Team</p>
+                                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{selectedPatient.patient_questionnaire.any_notes_for_care_team}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
