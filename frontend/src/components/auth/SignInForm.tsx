@@ -52,6 +52,8 @@ export default function SignInForm() {
           targetPath = "/non-patient/dashboard";
         } else if (role === 'doctor') {
           targetPath = "/doctor/all-patients";
+        } else if (role === 'supply_chain') {
+          targetPath = "/supplychain/workflow";
         }
 
         setTimeout(() => {

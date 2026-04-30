@@ -548,6 +548,11 @@ const supplyChainNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/supplychain/dashboard",
   },
+  {
+    icon: <Activity className="w-5 h-5" />,
+    name: "Workflow",
+    path: "/supplychain/workflow",
+  },
 
   {
     icon: <FileText className="w-5 h-5" />,

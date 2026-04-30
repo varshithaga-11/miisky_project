@@ -167,6 +167,7 @@ import PatientWorkFlowPage from "./pages/PatientSide/WorkFlow/index";
 import IngredientUnitPage from "./pages/MicroKitchenSide/IngredientUnit/index";
 import IngredientPage from "./pages/MicroKitchenSide/Ingredient/index";
 import InventoryPage from "./pages/MicroKitchenSide/InventoryIngredient/index";
+import SupplyChainWorkFlowPage from "./pages/SupplyChain/Workflow/index";
 
 
 
@@ -459,6 +460,7 @@ export function appRoutes() {
           <Route path="non-patient/instructions" element={<NonPatientInstructionsPage />} />
           <Route path="non-patient/support-tickets" element={<NonPatientSupportTicketPage />} />
           <Route path="supplychain/dashboard" element={<SupplyChainDashboardPage />} />
+          <Route path="supplychain/workflow" element={<SupplyChainWorkFlowPage />} />
           <Route path="supplychain/daily-work" element={<DeliveryAssignmentsPage />} />
           <Route path="supplychain/seperate-orders" element={<SupplyChainSeperateOrdersPage />} />
           <Route path="supplychain/earnings" element={<SupplyChainEarningsPage />} />
