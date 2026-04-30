@@ -46,25 +46,39 @@ function PhotoUploadField({
   const displaySrc = value instanceof File ? previewUrl : (typeof value === "string" && value ? getMediaUrl(value) : null);
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        <div className={`w-full ${isEditing ? 'sm:w-40' : 'sm:w-64'} flex-shrink-0 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800/50 min-h-[100px] flex items-center justify-center transition-all`}>
+    <div className="space-y-2 group">
+      <Label htmlFor={id} className="group-hover:text-brand-500 transition-colors">{label}</Label>
+      <div className="flex flex-col gap-3">
+        <div className={`relative w-full rounded-2xl border border-gray-200 dark:border-gray-700/50 overflow-hidden bg-gray-50 dark:bg-gray-800/50 ${isEditing ? 'aspect-[4/3]' : 'aspect-video'} flex items-center justify-center transition-all duration-500 hover:shadow-xl hover:shadow-brand-500/10`}>
           {displaySrc ? (
-            <img
-              src={displaySrc}
-              alt={label}
-              className={`w-full ${isEditing ? 'h-32' : 'h-48'} object-cover`}
-            />
+            <>
+              <img
+                src={displaySrc}
+                alt={label}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
+                <a 
+                  href={displaySrc} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="bg-white/90 dark:bg-gray-900/90 text-gray-900 dark:text-white px-6 py-2 rounded-full text-xs font-bold backdrop-blur-md shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                >
+                  View Full Image
+                </a>
+              </div>
+            </>
           ) : (
-            <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4">
-              <FiImage className="w-10 h-10 mb-1" />
-              <span className="text-xs">No image</span>
+            <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center mb-3">
+                <FiImage className="w-8 h-8" />
+              </div>
+              <span className="text-xs font-semibold tracking-wider uppercase opacity-60">No image uploaded</span>
             </div>
           )}
         </div>
         {isEditing && (
-          <div className="flex-1 w-full">
+          <div className="relative group/input">
             <input
               id={id}
               type="file"
@@ -74,15 +88,15 @@ function PhotoUploadField({
                 onChange(file);
                 e.target.value = "";
               }}
-              className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-900/30 dark:file:text-indigo-400 file:font-medium hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/40"
+              className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-50 file:text-brand-600 dark:file:bg-brand-900/30 dark:file:text-brand-400 file:font-bold hover:file:bg-brand-100 dark:hover:file:bg-brand-900/40 transition-all cursor-pointer"
             />
             {value instanceof File && (
               <button
                 type="button"
                 onClick={() => onChange(null)}
-                className="mt-2 text-xs text-red-600 dark:text-red-400 hover:underline"
+                className="mt-2 text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-600 ml-4"
               >
-                Remove new image
+                × Remove Selection
               </button>
             )}
           </div>

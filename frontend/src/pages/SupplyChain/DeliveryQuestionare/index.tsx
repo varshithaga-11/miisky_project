@@ -134,31 +134,91 @@ export default function DeliveryQuestionarePage() {
 
   const isServerFile = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
 
-  const FileCurrentRow = ({ value, label }: { value: unknown; label: string }) => (
-    <div className="mb-1 flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-gray-50/50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-      <div className="flex flex-col">
-        <span className="text-[10px] uppercase font-bold text-gray-400">{label}</span>
-        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
-          {fileLabel(value as string)}
-        </p>
+  const getDocPreviewUrl = (path: any) => {
+    if (!path) return "";
+    if (path instanceof File) return URL.createObjectURL(path);
+    return profileFileUrl(path);
+  };
+
+  const isImageFile = (path: any) => {
+    if (!path) return false;
+    const name = path instanceof File ? path.name : String(path);
+    return /\.(jpg|jpeg|png|webp|gif)$/i.test(name);
+  };
+
+  const FileCurrentRow = ({ value, label, id }: { value: unknown; label: string; id: string }) => {
+    const [preview, setPreview] = useState<string | null>(null);
+    const isImg = isImageFile(value);
+
+    useEffect(() => {
+      if (value instanceof File && isImg) {
+        const url = URL.createObjectURL(value);
+        setPreview(url);
+        return () => URL.revokeObjectURL(url);
+      }
+      return () => {};
+    }, [value, isImg]);
+
+    const displaySrc = value instanceof File ? preview : (isServerFile(value) && isImg ? profileFileUrl(value) : null);
+
+    return (
+      <div className="group relative flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all duration-300">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-brand-500 tracking-wider">{label}</span>
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
+              {fileLabel(value as string)}
+            </p>
+          </div>
+          <div className="flex gap-1">
+            {isServerFile(value) && (
+              <button
+                type="button"
+                className="bg-gray-100 dark:bg-white/10 hover:bg-brand-500 hover:text-white text-gray-600 dark:text-gray-400 p-1.5 rounded-lg transition-colors"
+                title="Download"
+                onClick={async () => {
+                  try {
+                    await downloadProfileFile(value, fileLabel(value));
+                  } catch {
+                    toast.error("Could not download file");
+                  }
+                }}
+              >
+                <FiDownload className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {displaySrc ? (
+          <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 group-hover:ring-2 ring-brand-500/20 transition-all">
+            <img
+              src={displaySrc}
+              alt={label}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <a 
+                href={displaySrc} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white px-3 py-1.5 rounded-full text-[10px] font-bold backdrop-blur-sm"
+              >
+                VIEW FULL
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="aspect-video rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-gray-400">
+            <svg className="w-8 h-8 mb-1 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-[10px] font-medium uppercase tracking-tighter italic">Document Only</span>
+          </div>
+        )}
       </div>
-      {isServerFile(value) && (
-        <button
-          type="button"
-          className="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1 rounded text-[10px] font-bold transition-colors shadow-sm"
-          onClick={async () => {
-            try {
-              await downloadProfileFile(value, fileLabel(value));
-            } catch {
-              toast.error("Could not download file");
-            }
-          }}
-        >
-          DOWNLOAD
-        </button>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <>
@@ -302,7 +362,7 @@ export default function DeliveryQuestionarePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="license_copy">Licence copy</Label>
-                <FileCurrentRow value={data.license_copy} label="Licence" />
+                <FileCurrentRow value={data.license_copy} label="Licence" id="license_copy" />
                 {isEditing && fileInputBox(
                   <input
                     id="license_copy"
@@ -315,7 +375,7 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="rc_copy">RC (registration certificate)</Label>
-                <FileCurrentRow value={data.rc_copy} label="RC" />
+                <FileCurrentRow value={data.rc_copy} label="RC" id="rc_copy" />
                 {isEditing && fileInputBox(
                   <input
                     id="rc_copy"
@@ -328,7 +388,7 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="insurance_copy">Insurance copy</Label>
-                <FileCurrentRow value={data.insurance_copy} label="Insurance" />
+                <FileCurrentRow value={data.insurance_copy} label="Insurance" id="insurance_copy" />
                 {isEditing && fileInputBox(
                   <input
                     id="insurance_copy"
@@ -341,7 +401,7 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="puc_image">PUC (pollution certificate)</Label>
-                <FileCurrentRow value={data.puc_image} label="PUC" />
+                <FileCurrentRow value={data.puc_image} label="PUC" id="puc_image" />
                 {isEditing && fileInputBox(
                   <input
                     id="puc_image"
@@ -375,7 +435,7 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="aadhar_image">Aadhaar image</Label>
-                <FileCurrentRow value={data.aadhar_image} label="Aadhaar" />
+                <FileCurrentRow value={data.aadhar_image} label="Aadhaar" id="aadhar_image" />
                 {isEditing && fileInputBox(
                   <input
                     id="aadhar_image"
@@ -401,7 +461,7 @@ export default function DeliveryQuestionarePage() {
               </div>
               <div>
                 <Label htmlFor="pan_image">PAN image</Label>
-                <FileCurrentRow value={data.pan_image} label="PAN" />
+                <FileCurrentRow value={data.pan_image} label="PAN" id="pan_image" />
                 {isEditing && fileInputBox(
                   <input
                     id="pan_image"
