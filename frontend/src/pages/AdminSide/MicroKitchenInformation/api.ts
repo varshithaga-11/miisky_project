@@ -32,6 +32,9 @@ export type MicroKitchenProfile = {
   water_source: string | null;
   cuisine_type: string | null;
   meal_type: string | null;
+  religion: string | null;
+  caste: string | null;
+  languages: string | null;
   lpg_cylinders: number | null;
   no_of_staff: number | null;
   time_available: string | null;
@@ -69,6 +72,9 @@ export type MicroKitchenProfileSummary = {
   status: 'draft' | 'approved' | 'rejected';
   no_of_staff: number | null;
   lpg_cylinders: number | null;
+  religion?: string | null;
+  caste?: string | null;
+  languages?: string | null;
   user_details: {
     id: number;
     first_name: string;

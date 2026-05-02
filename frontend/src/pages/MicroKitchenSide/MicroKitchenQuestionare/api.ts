@@ -6,6 +6,11 @@ export type MicroKitchenProfile = {
   user?: number;
   brand_name?: string;
   kitchen_code?: string;
+
+  religion?: string | null;
+  caste?: string | null;
+  languages?: string | null;
+
   fssai_no?: string;
   fssai_cert?: File | string | null;
   pan_no?: string;

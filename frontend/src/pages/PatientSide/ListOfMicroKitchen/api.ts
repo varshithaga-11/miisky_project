@@ -7,6 +7,9 @@ export type MicroKitchenProfile = {
   kitchen_code: string | null;
   cuisine_type: string | null;
   meal_type: string | null;
+  religion: string | null;
+  caste: string | null;
+  languages: string | null;
   photo_exterior: string | null;
   time_available: string | null;
   status: string;

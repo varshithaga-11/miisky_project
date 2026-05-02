@@ -1803,6 +1803,7 @@ class MicroKitchenProfileSerializer(serializers.ModelSerializer):
             'id', 'user', 'brand_name', 'kitchen_code', 'fssai_no', 'fssai_cert',
             'pan_no', 'gst_no', 'bank_name', 'acc_no', 'ifsc_code', 'kitchen_area',
             'platform_area', 'water_source', 'cuisine_type', 'meal_type',
+            'religion', 'caste', 'languages',
             'lpg_cylinders', 'no_of_staff',
             'time_available', 'purification_type', 'has_pets', 'pet_details',
             'has_pests', 'pest_details', 'pest_control_frequency', 'has_hobs',
@@ -1861,6 +1862,7 @@ class MicroKitchenProfileListSerializer(serializers.ModelSerializer):
             'id', 'user', 'brand_name', 'kitchen_code',
             'status', 'no_of_staff', 'lpg_cylinders',
             'cuisine_type', 'meal_type', 'photo_exterior',
+            'religion', 'caste', 'languages',
             'time_available', 'latitude', 'longitude',
             'user_details', 'latest_inspection'
         ]

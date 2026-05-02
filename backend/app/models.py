@@ -142,6 +142,12 @@ class MicroKitchenProfile(models.Model):
     brand_name = models.CharField(max_length=100,null=True,blank=True)
     kitchen_code = models.CharField(max_length=50, unique=True,null=True,blank=True)
 
+    # 
+    religion=models.CharField(max_length=50,null=True,blank=True)
+    caste=models.CharField(max_length=50,null=True,blank=True)
+    languages=models.CharField(max_length=100,null=True,blank=True)
+
+
     # 🔹 Compliance
     fssai_no = models.CharField(max_length=14,null=True,blank=True)
     fssai_cert = models.FileField(upload_to='kitchen/fssai/',null=True,blank=True)

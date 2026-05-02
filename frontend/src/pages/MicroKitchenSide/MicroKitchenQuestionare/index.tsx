@@ -134,6 +134,9 @@ export default function MicroKitchenQuestionarePage() {
           { label: "FSSAI No", value: data.fssai_no },
           { label: "PAN No", value: data.pan_no },
           { label: "GST No", value: data.gst_no },
+          { label: "Religion", value: data.religion },
+          { label: "Caste", value: data.caste },
+          { label: "Languages", value: data.languages },
         ]
       },
       {
@@ -308,6 +311,9 @@ export default function MicroKitchenQuestionarePage() {
               ["ifsc_code", "IFSC code"],
               ["cuisine_type", "Cuisine type", "South Indian, North Indian, etc"],
               ["meal_type", "Meal type", "Breakfast, Lunch, Dinner, etc"],
+              ["religion", "Religion"],
+              ["caste", "Caste"],
+              ["languages", "Languages"],
             ].map(([key, label, placeholder]) => (
               <div key={key}>
                 <Label htmlFor={key}>{label}</Label>

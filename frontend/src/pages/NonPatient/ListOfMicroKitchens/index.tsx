@@ -142,6 +142,21 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                                                     {c.trim()}
                                                 </span>
                                             ))}
+                                            {kitchen.religion && (
+                                                <span className="px-4 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-black rounded-xl uppercase tracking-widest border border-amber-100/50 dark:border-amber-500/10">
+                                                    {kitchen.religion}
+                                                </span>
+                                            )}
+                                            {kitchen.caste && (
+                                                <span className="px-4 py-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded-xl uppercase tracking-widest border border-rose-100/50 dark:border-rose-500/10">
+                                                    {kitchen.caste}
+                                                </span>
+                                            )}
+                                            {kitchen.languages && (
+                                                <span className="px-4 py-1.5 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-[10px] font-black rounded-xl uppercase tracking-widest border border-teal-100/50 dark:border-teal-500/10">
+                                                    {kitchen.languages}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 

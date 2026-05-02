@@ -62,6 +62,9 @@ export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
             <DenseInfoRow label="Mobile" value={kitchen.user_details?.mobile} />
             <DenseInfoRow label="Cuisine" value={kitchen.cuisine_type} />
             <DenseInfoRow label="Meal Type" value={kitchen.meal_type} />
+            <DenseInfoRow label="Religion" value={kitchen.religion} />
+            <DenseInfoRow label="Caste" value={kitchen.caste} />
+            <DenseInfoRow label="Languages" value={kitchen.languages} />
           </div>
         </section>
 
@@ -158,48 +161,48 @@ export function DisplayKitchenInfo({ kitchen }: { kitchen: any }) {
           </InfoSection>
           <InfoSection title="Utilities & Equipment">
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-               <DenseInfoRow label="Water Source" value={kitchen.water_source} />
-               <DenseInfoRow label="Purification" value={kitchen.purification_type} />
-               <DenseInfoRow label="LPG Cylinders" value={kitchen.lpg_cylinders} />
-               <DenseInfoRow label="Staff Count" value={kitchen.no_of_staff} />
-               <DenseInfoRow label="Water Taps" value={kitchen.no_of_water_taps} />
+              <DenseInfoRow label="Water Source" value={kitchen.water_source} />
+              <DenseInfoRow label="Purification" value={kitchen.purification_type} />
+              <DenseInfoRow label="LPG Cylinders" value={kitchen.lpg_cylinders} />
+              <DenseInfoRow label="Staff Count" value={kitchen.no_of_staff} />
+              <DenseInfoRow label="Water Taps" value={kitchen.no_of_water_taps} />
             </div>
           </InfoSection>
-          
+
           <InfoSection title="Checklist / Facilities">
-             <div className="space-y-2">
-                {[
-                  ["has_pets", "Has Pets"],
-                  ["has_pests", "Has Pests"],
-                  ["has_hobs", "Has Hobs"],
-                  ["has_refrigerator", "Refrigerator"],
-                  ["has_mixer", "Mixer"],
-                  ["has_grinder", "Grinder"],
-                  ["has_blender", "Blender"],
-                ].map(([k, label]) => (
-                  <div key={k} className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">{label}</span>
-                    {kitchen[k] ? <FiCheck className="text-green-500" /> : <span className="text-gray-300">No</span>}
-                  </div>
-                ))}
-             </div>
+            <div className="space-y-2">
+              {[
+                ["has_pets", "Has Pets"],
+                ["has_pests", "Has Pests"],
+                ["has_hobs", "Has Hobs"],
+                ["has_refrigerator", "Refrigerator"],
+                ["has_mixer", "Mixer"],
+                ["has_grinder", "Grinder"],
+                ["has_blender", "Blender"],
+              ].map(([k, label]) => (
+                <div key={k} className="flex items-center justify-between text-xs">
+                  <span className="text-gray-500">{label}</span>
+                  {kitchen[k] ? <FiCheck className="text-green-500" /> : <span className="text-gray-300">No</span>}
+                </div>
+              ))}
+            </div>
           </InfoSection>
 
           <InfoSection title="Details">
-             <div className="space-y-1">
-                <DenseInfoRow label="Pet Details" value={kitchen.pet_details} />
-                <DenseInfoRow label="Pest Details" value={kitchen.pest_details} />
-                <DenseInfoRow label="Pest Control" value={kitchen.pest_control_frequency} />
-             </div>
+            <div className="space-y-1">
+              <DenseInfoRow label="Pet Details" value={kitchen.pet_details} />
+              <DenseInfoRow label="Pest Details" value={kitchen.pest_details} />
+              <DenseInfoRow label="Pest Control" value={kitchen.pest_control_frequency} />
+            </div>
           </InfoSection>
 
           <InfoSection title="Other Info">
-             <div className="space-y-1">
-                <DenseInfoRow label="Constraints" value={kitchen.constraints} />
-                <DenseInfoRow label="Available Time" value={kitchen.time_available} />
-                <DenseInfoRow label="Other Equipment" value={kitchen.other_equipment} />
-                <DenseInfoRow label="Video URL" value={kitchen.kitchen_video_url} />
-             </div>
+            <div className="space-y-1">
+              <DenseInfoRow label="Constraints" value={kitchen.constraints} />
+              <DenseInfoRow label="Available Time" value={kitchen.time_available} />
+              <DenseInfoRow label="Other Equipment" value={kitchen.other_equipment} />
+              <DenseInfoRow label="Video URL" value={kitchen.kitchen_video_url} />
+            </div>
           </InfoSection>
         </div>
       </section>
@@ -279,7 +282,7 @@ export function DisplayKitchenPatients({
                   </div>
                   {x.original_nutritionist_details && (
                     <div className="mt-1 text-[10px] text-gray-500 italic">
-                      Was: {x.original_nutritionist_details.first_name} {x.original_nutritionist_details.last_name} 
+                      Was: {x.original_nutritionist_details.first_name} {x.original_nutritionist_details.last_name}
                       {x.nutritionist_effective_from && ` (until ${x.nutritionist_effective_from})`}
                     </div>
                   )}
@@ -311,11 +314,11 @@ export function DisplayKitchenPatients({
   );
 }
 
-export function DisplayKitchenDailyPrep({ 
-  items, 
+export function DisplayKitchenDailyPrep({
+  items,
   onMonthChange
-}: { 
-  items: any[]; 
+}: {
+  items: any[];
   onMonthChange?: (m: number, y: number) => void;
 }) {
   const [viewType, setViewType] = useState<"list" | "calendar">("calendar");
@@ -520,9 +523,9 @@ export function DisplayKitchenReviews({ items }: { items: any[] }) {
 export function DisplayKitchenOrders({ items }: { items: any[] }) {
   return (
     <div className="space-y-6">
-      <AdminOrderList 
-        items={items || []} 
-        hideKitchen 
+      <AdminOrderList
+        items={items || []}
+        hideKitchen
         detailFetcher={getAdminMicroKitchenOrderDetail}
       />
     </div>
@@ -605,16 +608,14 @@ export function DisplayKitchenTickets({ items }: { items: any[] }) {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">Ticket #{t.id}</span>
-                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                    t.status === 'open' ? 'bg-amber-100 text-amber-600' :
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${t.status === 'open' ? 'bg-amber-100 text-amber-600' :
                     t.status === 'resolved' ? 'bg-green-100 text-green-600' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
+                      'bg-gray-100 text-gray-600'
+                    }`}>
                     {t.status}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${
-                    t.priority === 'high' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
-                  }`}>
+                  <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${t.priority === 'high' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
+                    }`}>
                     {t.priority}
                   </span>
                 </div>
@@ -632,33 +633,33 @@ export function DisplayKitchenTickets({ items }: { items: any[] }) {
               <div className="p-4 rounded-2xl bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
                 <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-2">From (Sender)</div>
                 <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
-                      <FiUser size={14} />
-                   </div>
-                   <div>
-                      <p className="text-xs font-black text-gray-900 dark:text-white uppercase leading-none">
-                        {t.created_by_details ? `${t.created_by_details.first_name} ${t.created_by_details.last_name || ''}` : 'Unknown'}
-                      </p>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">
-                        Role: {t.user_type || 'User'}
-                      </p>
-                   </div>
+                  <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                    <FiUser size={14} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-gray-900 dark:text-white uppercase leading-none">
+                      {t.created_by_details ? `${t.created_by_details.first_name} ${t.created_by_details.last_name || ''}` : 'Unknown'}
+                    </p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">
+                      Role: {t.user_type || 'User'}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="p-4 rounded-2xl bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
                 <div className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-2">To (Assigned)</div>
                 <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
-                      <FiUser size={14} />
-                   </div>
-                   <div>
-                      <p className="text-xs font-black text-gray-900 dark:text-white uppercase leading-none">
-                        {t.assigned_to_details ? `${t.assigned_to_details.first_name} ${t.assigned_to_details.last_name || ''}` : 'Unassigned'}
-                      </p>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">
-                        Target Role: {t.target_user_type || 'N/A'}
-                      </p>
-                   </div>
+                  <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                    <FiUser size={14} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-gray-900 dark:text-white uppercase leading-none">
+                      {t.assigned_to_details ? `${t.assigned_to_details.first_name} ${t.assigned_to_details.last_name || ''}` : 'Unassigned'}
+                    </p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">
+                      Target Role: {t.target_user_type || 'N/A'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -736,90 +737,89 @@ function MealCard({ m }: { m: any }) {
 }
 
 export function DisplayKitchenPayouts({ items }: { items: any[] }) {
-    if (!items || items.length === 0) return <EmptyState message="No patient-linked payout records found." />;
-    return (
-        <div className="space-y-8 pb-12">
-            <div className="space-y-8">
-                {items.map((group: any) => {
-                    if (!group || !group.patient) return null;
-                    return (
-                        <div key={group.patient.id} className="p-8 rounded-[44px] bg-white border border-gray-100 dark:bg-gray-800/30 dark:border-white/5 shadow-sm overflow-hidden relative group">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b dark:border-white/5">
-                                <div className="flex items-center gap-5">
-                                    <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-black text-xl shadow-inner uppercase italic">
-                                        {group.patient.name?.[0]}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2">{group.patient.name}</h3>
-                                        <div className="flex flex-wrap gap-4">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiUser size={12} /> ID: #{group.patient.id}</span>
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiList size={12} /> {group.trackers.length} Active Records</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 italic">Recipient: Micro Kitchen</div>
-                                    <div className="px-5 py-2 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase italic tracking-widest border border-indigo-100 dark:border-indigo-900/30 shadow-sm">
-                                        Financial Audit Tracked
-                                    </div>
-                                </div>
-                            </div>
+  if (!items || items.length === 0) return <EmptyState message="No patient-linked payout records found." />;
+  return (
+    <div className="space-y-8 pb-12">
+      <div className="space-y-8">
+        {items.map((group: any) => {
+          if (!group || !group.patient) return null;
+          return (
+            <div key={group.patient.id} className="p-8 rounded-[44px] bg-white border border-gray-100 dark:bg-gray-800/30 dark:border-white/5 shadow-sm overflow-hidden relative group">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b dark:border-white/5">
+                <div className="flex items-center gap-5">
+                  <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-black text-xl shadow-inner uppercase italic">
+                    {group.patient.name?.[0]}
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2">{group.patient.name}</h3>
+                    <div className="flex flex-wrap gap-4">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiUser size={12} /> ID: #{group.patient.id}</span>
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FiList size={12} /> {group.trackers.length} Active Records</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 italic">Recipient: Micro Kitchen</div>
+                  <div className="px-5 py-2 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase italic tracking-widest border border-indigo-100 dark:border-indigo-900/30 shadow-sm">
+                    Financial Audit Tracked
+                  </div>
+                </div>
+              </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {group.trackers.map((p: any) => (
-                                    <div key={p.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-6 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-white dark:hover:bg-white/[0.03] transition-all relative overflow-hidden group/card shadow-sm hover:shadow-xl">
-                                        <div className="flex justify-between items-start gap-4 mb-4">
-                                            <div className="min-w-0">
-                                                    <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1 italic">
-                                                        #{p.id} · {p.payout_type?.toUpperCase()} · SNAPSHOT: {p.snapshot}
-                                                    </div>
-                                                    <div className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2 truncate">
-                                                        {p.recipient_label}
-                                                    </div>
-                                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-1.5 opacity-60">
-                                                        <FiCalendar size={10} /> {p.period_from} → {p.period_to}
-                                                    </div>
-                                            </div>
-                                            <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase italic shadow-sm border ${
-                                                    p.status === 'paid' ? "text-green-600 bg-green-50/50 border-green-100" : p.status === 'pending' ? "text-amber-600 bg-amber-50/50 border-amber-100" : "text-blue-600 bg-blue-50/50 border-blue-100"
-                                            }`}>
-                                                    {p.status}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-end justify-between gap-4 mt-6">
-                                            <div className="space-y-1">
-                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Remaining</div>
-                                                    <div className={`text-lg font-black ${parseFloat(p.remaining_amount) > 0 ? 'text-amber-600' : 'text-green-600'}`}>₹{parseFloat(p.remaining_amount).toFixed(2)}</div>
-                                            </div>
-                                            <div className="text-right space-y-1">
-                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Share (%{p.shared_percentage})</div>
-                                                    <div className="text-lg font-black text-gray-900 dark:text-white italic">₹{parseFloat(p.total_amount).toFixed(2)}</div>
-                                            </div>
-                                        </div>
-
-                                        {p.kitchen_reassignments && p.kitchen_reassignments.length > 0 && (
-                                            <div className="mt-4 pt-4 border-t dark:border-white/5">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <FiRefreshCcw size={10} className="text-amber-500 animate-spin-slow" />
-                                                        <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Migration Log</span>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        {p.kitchen_reassignments.map((kr: any, idx: number) => (
-                                                            <div key={idx} className="text-[9px] text-gray-400 italic font-medium"> {kr.from} → {kr.to} · {kr.reason} ({new Date(kr.date).toLocaleDateString()})</div>
-                                                        ))}
-                                                    </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {group.trackers.map((p: any) => (
+                  <div key={p.id} className="rounded-3xl border border-gray-100 dark:border-white/[0.05] p-6 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-white dark:hover:bg-white/[0.03] transition-all relative overflow-hidden group/card shadow-sm hover:shadow-xl">
+                    <div className="flex justify-between items-start gap-4 mb-4">
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1 italic">
+                          #{p.id} · {p.payout_type?.toUpperCase()} · SNAPSHOT: {p.snapshot}
                         </div>
-                    );
-                })}
+                        <div className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none mb-2 truncate">
+                          {p.recipient_label}
+                        </div>
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-1.5 opacity-60">
+                          <FiCalendar size={10} /> {p.period_from} → {p.period_to}
+                        </div>
+                      </div>
+                      <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase italic shadow-sm border ${p.status === 'paid' ? "text-green-600 bg-green-50/50 border-green-100" : p.status === 'pending' ? "text-amber-600 bg-amber-50/50 border-amber-100" : "text-blue-600 bg-blue-50/50 border-blue-100"
+                        }`}>
+                        {p.status}
+                      </div>
+                    </div>
+
+                    <div className="flex items-end justify-between gap-4 mt-6">
+                      <div className="space-y-1">
+                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Remaining</div>
+                        <div className={`text-lg font-black ${parseFloat(p.remaining_amount) > 0 ? 'text-amber-600' : 'text-green-600'}`}>₹{parseFloat(p.remaining_amount).toFixed(2)}</div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Share (%{p.shared_percentage})</div>
+                        <div className="text-lg font-black text-gray-900 dark:text-white italic">₹{parseFloat(p.total_amount).toFixed(2)}</div>
+                      </div>
+                    </div>
+
+                    {p.kitchen_reassignments && p.kitchen_reassignments.length > 0 && (
+                      <div className="mt-4 pt-4 border-t dark:border-white/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FiRefreshCcw size={10} className="text-amber-500 animate-spin-slow" />
+                          <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Migration Log</span>
+                        </div>
+                        <div className="space-y-1">
+                          {p.kitchen_reassignments.map((kr: any, idx: number) => (
+                            <div key={idx} className="text-[9px] text-gray-400 italic font-medium"> {kr.from} → {kr.to} · {kr.reason} ({new Date(kr.date).toLocaleDateString()})</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-        </div>
-    );
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
@@ -832,28 +832,27 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
         const isIssue = r.feedback_type === "issue";
         const customerName = r.user_meal_details?.customer_details?.name || r.order_details?.customer_details?.name || "Unknown Patient";
         const dateLabel = r.user_meal_details ? `Meal: ${r.user_meal_details.meal_date}` : (r.order_details?.order_date ? `Order: ${new Date(r.order_details.order_date).toLocaleDateString()}` : "N/A");
-        
+
         return (
           <div
             key={r.id}
-            className={`group rounded-[32px] border p-6 shadow-sm transition-all hover:shadow-lg ${
-              isIssue
-                ? "border-red-100 bg-red-50/20 dark:border-red-900/30 dark:bg-red-900/10 hover:border-red-300"
-                : "border-gray-100 bg-white/60 dark:border-white/[0.05] dark:bg-gray-800/30 hover:border-indigo-200"
-            }`}
+            className={`group rounded-[32px] border p-6 shadow-sm transition-all hover:shadow-lg ${isIssue
+              ? "border-red-100 bg-red-50/20 dark:border-red-900/30 dark:bg-red-900/10 hover:border-red-300"
+              : "border-gray-100 bg-white/60 dark:border-white/[0.05] dark:bg-gray-800/30 hover:border-indigo-200"
+              }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                   <div className="size-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
-                      <FiUser size={14} />
-                   </div>
-                   <div>
-                      <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-0.5">Customer (Patient)</div>
-                      <div className="font-black text-gray-900 dark:text-white uppercase text-lg tracking-tighter leading-none">
-                        {customerName}
-                      </div>
-                   </div>
+                  <div className="size-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                    <FiUser size={14} />
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-0.5">Customer (Patient)</div>
+                    <div className="font-black text-gray-900 dark:text-white uppercase text-lg tracking-tighter leading-none">
+                      {customerName}
+                    </div>
+                  </div>
                 </div>
                 <div className="text-[10px] text-gray-500 font-bold uppercase mt-2 italic flex items-center gap-1.5 ml-1">
                   <FiCalendar size={10} /> {dateLabel}
@@ -861,20 +860,18 @@ export function DisplayKitchenDeliveryRatings({ items }: { items: any[] }) {
                   <FiClock size={10} /> {new Date(r.created_at).toLocaleString()}
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 {isIssue && (
-                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                    r.resolved ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${r.resolved ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    }`}>
                     {r.resolved ? "Resolved" : "Active Issue"}
                   </span>
                 )}
-                <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-2xl font-black border shadow-sm ${
-                  isIssue 
-                    ? "bg-red-50 text-red-600 border-red-100" 
-                    : "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-100"
-                }`}>
+                <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-2xl font-black border shadow-sm ${isIssue
+                  ? "bg-red-50 text-red-600 border-red-100"
+                  : "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-100"
+                  }`}>
                   {isIssue ? (r.issue_type?.replace("_", " ").toUpperCase() || "ISSUE") : (
                     <>
                       {r.rating} <FiStar className="fill-current" />
@@ -949,9 +946,8 @@ export function DisplayKitchenDeliveryTeam({ items }: { items: AdminKitchenTeamM
               </div>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                member.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-              }`}
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${member.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                }`}
             >
               {member.is_active ? "Active" : "Inactive"}
             </span>
@@ -1000,9 +996,8 @@ export function DisplayKitchenGlobalAssignments({ items }: { items: AdminKitchen
               </div>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                assignment.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-              }`}
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${assignment.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                }`}
             >
               {assignment.is_active ? "Active" : "Inactive"}
             </span>
@@ -1140,9 +1135,8 @@ export function DisplayKitchenDeliveryProfiles({ items }: { items: AdminKitchenD
               </div>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                row.is_verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-              }`}
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${row.is_verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                }`}
             >
               {row.is_verified ? "Verified" : "Pending"}
             </span>
@@ -1262,23 +1256,22 @@ export function DisplayKitchenExecution({ items }: { items: any[] }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {items.map((m) => (
           <div key={m.id} className="p-4 rounded-3xl border border-gray-100 dark:border-white/5 bg-white/50 dark:bg-gray-800/20 shadow-sm flex items-center justify-between transition-all hover:bg-white dark:hover:bg-gray-800/40">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
-                   {m.meal_type_details?.name?.[0]}
-                </div>
-                <div>
-                   <div className="text-sm font-black text-gray-900 dark:text-white uppercase leading-none">{m.user_details?.first_name} {m.user_details?.last_name}</div>
-                   <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{m.food_details?.name}</div>
-                </div>
-             </div>
-             <div className="text-right">
-                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
-                  m.status === 'delivered' ? 'bg-green-100 text-green-600' : 
-                  m.status === 'prepared' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
+                {m.meal_type_details?.name?.[0]}
+              </div>
+              <div>
+                <div className="text-sm font-black text-gray-900 dark:text-white uppercase leading-none">{m.user_details?.first_name} {m.user_details?.last_name}</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{m.food_details?.name}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${m.status === 'delivered' ? 'bg-green-100 text-green-600' :
+                m.status === 'prepared' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
                 }`}>
-                  {m.status || 'scheduled'}
-                </span>
-             </div>
+                {m.status || 'scheduled'}
+              </span>
+            </div>
           </div>
         ))}
       </div>

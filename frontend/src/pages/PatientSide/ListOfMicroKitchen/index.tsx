@@ -147,6 +147,21 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                             <span className="px-3 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded-lg uppercase tracking-wide">
                                                 {kitchen.meal_type || "Veg/Non-Veg"}
                                             </span>
+                                            {kitchen.religion && (
+                                                <span className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold rounded-lg uppercase tracking-wide">
+                                                    {kitchen.religion}
+                                                </span>
+                                            )}
+                                            {kitchen.caste && (
+                                                <span className="px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[10px] font-bold rounded-lg uppercase tracking-wide">
+                                                    {kitchen.caste}
+                                                </span>
+                                            )}
+                                            {kitchen.languages && (
+                                                <span className="px-3 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-[10px] font-bold rounded-lg uppercase tracking-wide">
+                                                    {kitchen.languages}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
