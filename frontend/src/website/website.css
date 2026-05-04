@@ -2905,6 +2905,29 @@ html, body {
   display: block;
 }
 
+.home-image-caption-section .home-image-caption-full-banner-wrap {
+  margin-top: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+.home-image-caption-section .home-image-caption-full-banner-card {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 14px 42px rgba(15, 23, 42, 0.1);
+  display: grid;
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+.home-image-caption-section .home-image-caption-full-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 @media only screen and (max-width: 767px) {
   .home-image-caption-section {
     padding-top: 70px !important;

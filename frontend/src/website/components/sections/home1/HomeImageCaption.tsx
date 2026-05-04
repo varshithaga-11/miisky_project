@@ -23,6 +23,9 @@ const SECONDARY_HEADING = "Health based End to End Food Management Solutions";
 const SECONDARY_CAPTION =
   "NEATS is a Health based End to End Food Management Solutions. NEATS is focused in PERSONALISED HEALTH FOODS, curated by NUTRITIONAL EXPERTS, cooked and delivered by MICRO KITCHEN and delivered by SUPPLY CHAIN managers. ";
 
+const ECOSYSTEM_BANNER_SRC = "/images/homeimg/Picture7.jpg";
+const ECOSYSTEM_BANNER_ALT = "NiSENSE Ecosystem Overview";
+
 export default function HomeImageCaption() {
   return (
     <section className="home-image-caption-section p_relative pt_120 pb_120">
@@ -78,6 +81,16 @@ export default function HomeImageCaption() {
               width={891}
               height={891}
               className="home-image-caption-center-img"
+            />
+          </div>
+        </div>
+
+        <div className="home-image-caption-full-banner-wrap">
+          <div className="home-image-caption-full-banner-card">
+            <Image
+              src={ECOSYSTEM_BANNER_SRC}
+              alt={ECOSYSTEM_BANNER_ALT}
+              className="home-image-caption-full-banner-img"
             />
           </div>
         </div>
