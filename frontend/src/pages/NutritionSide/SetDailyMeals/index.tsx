@@ -135,7 +135,7 @@ const SetDailyMealsPage: React.FC = () => {
         try {
             const res = await getSetDailyMealsPatients({
                 page: patientPage,
-                page_size: 5,
+                limit: 5,
                 search: debouncedPatientSearch || undefined,
             });
             setPatients(res.results);

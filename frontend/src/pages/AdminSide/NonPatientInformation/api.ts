@@ -51,11 +51,11 @@ export const fetchKitchenRatingsForUser = async (userId: number, deliveryPersonI
 };
 
 /** Order payments for non-patient users (Paginated Summary) */
-export const fetchOrderPaymentsForUser = async (userId: number, page = 1): Promise<{ results: any[], count: number, next: string | null }> => {
+export const fetchOrderPaymentsForUser = async (userId: number, page = 1, limit = 10): Promise<{ results: any[], count: number, next: string | null }> => {
   const url = createApiUrl("api/admin/non-patient-order-payments-summary/");
   const res = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { user: userId, page },
+    params: { user: userId, page, limit },
   });
   
   const transformed = (res.data.results as any[]).map((o: any) => ({

@@ -321,6 +321,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
       setHasMoreOrders(!!data.next);
     } catch (e) {
       console.error(e);
+      setHasMoreOrders(false);
     } finally {
       setLoadingOrders(false);
     }
@@ -353,6 +354,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
       setHasMoreKitchenRatings(!!data.next);
     } catch (e) {
       console.error(e);
+      setHasMoreKitchenRatings(false);
     } finally {
       setLoadingKitchenRatings(false);
     }
@@ -390,6 +392,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
       setHasMoreDeliveryFeedback(!!data.next);
     } catch (e) {
       console.error(e);
+      setHasMoreDeliveryFeedback(false);
     } finally {
       setLoadingDeliveryFeedback(false);
     }

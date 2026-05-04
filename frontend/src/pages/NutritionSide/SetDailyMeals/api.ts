@@ -168,13 +168,13 @@ export const getUserMealsList = async (
 /** Paginated allotted patients for Set Daily Meals (nutritionist-only). */
 export const getSetDailyMealsPatients = async (params: {
     page?: number;
-    page_size?: number;
+    limit?: number;
     search?: string;
     patient_id?: number;
 }): Promise<{
     count: number;
     page: number;
-    page_size: number;
+    limit: number;
     next: number | null;
     previous: number | null;
     total_pages: number;
@@ -186,7 +186,7 @@ export const getSetDailyMealsPatients = async (params: {
         headers: await getAuthHeaders(),
         params: {
             page: params.page ?? 1,
-            page_size: params.page_size ?? 5,
+            limit: params.limit ?? 5,
             search: params.search || undefined,
             patient_id: params.patient_id,
         },

@@ -61,7 +61,7 @@ const UploadedDocumentsByPatientPage: React.FC = () => {
         try {
             const res = await getClinicalReviewDashboard({
                 page,
-                page_size: PAGE_SIZE,
+                limit: PAGE_SIZE,
                 search: debouncedSearch || undefined,
                 patient_id: explicitPatientId ?? undefined,
             });

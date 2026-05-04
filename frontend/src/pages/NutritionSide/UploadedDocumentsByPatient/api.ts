@@ -83,7 +83,7 @@ export const getMyPatients = async (): Promise<MappedPatientResponse[]> => {
 export type ClinicalReviewDashboardResponse = {
   count: number;
   page: number;
-  page_size: number;
+  limit: number;
   next: number | null;
   previous: number | null;
   total_pages: number;
@@ -95,9 +95,34 @@ export type ClinicalReviewDashboardResponse = {
   reviews_total: number;
 };
 
+export const getMappedPatients = async (params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<{
+  count: number;
+  page: number;
+  limit: number;
+  next: number | null;
+  previous: number | null;
+  total_pages: number;
+  results: MappedPatientResponse[];
+}> => {
+  const url = createApiUrl("api/patient-nutrition-mapping-summary/");
+  const response = await axios.get(url, {
+    headers: await getAuthHeaders(),
+    params: {
+      page: params.page ?? 1,
+      limit: params.limit ?? 5,
+      search: params.search || undefined,
+    },
+  });
+  return response.data;
+};
+
 export const getClinicalReviewDashboard = async (params: {
   page?: number;
-  page_size?: number;
+  limit?: number;
   search?: string;
   patient_id?: number;
 }): Promise<ClinicalReviewDashboardResponse> => {
@@ -106,7 +131,7 @@ export const getClinicalReviewDashboard = async (params: {
     headers: await getAuthHeaders(),
     params: {
       page: params.page ?? 1,
-      page_size: params.page_size ?? 5,
+      limit: params.limit ?? 5,
       search: params.search || undefined,
       patient_id: params.patient_id,
     },

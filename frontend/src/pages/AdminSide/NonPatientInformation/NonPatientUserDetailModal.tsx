@@ -4,6 +4,7 @@ import { getUserById, type UserRegister, fetchSupportTicketsForUser, fetchKitche
 import { fetchOrdersForUserAdmin } from "../shared/adminOrderApi";
 import { AdminOrderList } from "../shared/AdminOrderList";
 import { DisplayUserProfile, DisplaySupportTickets, DisplayKitchenRatings, DisplayPaymentHistory, DisplayQuestionnaire, DisplayDeliveryFeedback, type UserDetailRecord } from "../PatientOverview/PatientDataViews";
+import { InfiniteScrollTrigger } from "../../../components/common/InfiniteScrollTrigger";
 
 type Screen = "hub" | "profile" | "orders" | "tickets" | "kitchenRatings" | "orderPayments" | "questionnaire" | "deliveryFeedback";
 
@@ -101,7 +102,7 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
             setPayload(await fetchQuestionnairesForUser(uid));
             break;
           case "orders":
-            const oRes = await fetchOrdersForUserAdmin(uid, 1);
+            const oRes = await fetchOrdersForUserAdmin(uid, 1, 10);
             setOrders(oRes.results);
             setOrderPage(1);
             setHasMoreOrders(!!oRes.next);
@@ -114,7 +115,7 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
             setPayload(await fetchKitchenRatingsForUser(uid, kitchenDeliveryPersonFilter));
             break;
           case "orderPayments":
-            const pRes = await fetchOrderPaymentsForUser(uid, 1);
+            const pRes = await fetchOrderPaymentsForUser(uid, 1, 10);
             setPayments(pRes.results);
             setPaymentPage(1);
             setHasMorePayments(!!pRes.next);
@@ -148,12 +149,13 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     setLoadingMorePayments(true);
     try {
       const nextPage = paymentPage + 1;
-      const res = await fetchOrderPaymentsForUser(uid, nextPage);
+      const res = await fetchOrderPaymentsForUser(uid, nextPage, 10);
       setPayments((prev) => [...prev, ...res.results]);
       setPaymentPage(nextPage);
       setHasMorePayments(!!res.next);
     } catch (e) {
       console.error("Failed to load more payments", e);
+      setHasMorePayments(false);
     } finally {
       setLoadingMorePayments(false);
     }
@@ -164,12 +166,13 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     setLoadingMoreOrders(true);
     try {
       const nextPage = orderPage + 1;
-      const res = await fetchOrdersForUserAdmin(uid, nextPage);
+      const res = await fetchOrdersForUserAdmin(uid, nextPage, 10);
       setOrders((prev) => [...prev, ...res.results]);
       setOrderPage(nextPage);
       setHasMoreOrders(!!res.next);
     } catch (e) {
       console.error("Failed to load more orders", e);
+      setHasMoreOrders(false); // Stop trying if it fails
     } finally {
       setLoadingMoreOrders(false);
     }
@@ -199,6 +202,7 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
       setHasMoreDeliveryFeedback(!!res.next);
     } catch (e) {
       console.error("Failed to load more delivery feedback", e);
+      setHasMoreDeliveryFeedback(false);
     } finally {
       setLoadingMoreDeliveryFeedback(false);
     }
@@ -222,62 +226,6 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
     }
   };
 
-  // Observer for infinite scroll
-  useEffect(() => {
-    if (screen === "orderPayments") {
-      if (!hasMorePayments || loading) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMorePayments();
-          }
-        },
-        { threshold: 0.1 }
-      );
-
-      const sentinel = document.getElementById("np-payment-sentinel");
-      if (sentinel) observer.observe(sentinel);
-
-      return () => observer.disconnect();
-    }
-
-    if (screen === "orders") {
-      if (!hasMoreOrders || loading) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMoreOrders();
-          }
-        },
-        { threshold: 0.1 }
-      );
-
-      const sentinel = document.getElementById("np-order-sentinel");
-      if (sentinel) observer.observe(sentinel);
-
-      return () => observer.disconnect();
-    }
-
-    if (screen === "deliveryFeedback") {
-      if (!hasMoreDeliveryFeedback || loading) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMoreDeliveryFeedback();
-          }
-        },
-        { threshold: 0.1 }
-      );
-
-      const sentinel = document.getElementById("np-delivery-feedback-sentinel");
-      if (sentinel) observer.observe(sentinel);
-
-      return () => observer.disconnect();
-    }
-  }, [screen, hasMorePayments, hasMoreOrders, hasMoreDeliveryFeedback, loading, loadMorePayments, loadMoreOrders, loadMoreDeliveryFeedback]);
 
   if (!open || uid == null) return null;
 
@@ -372,18 +320,7 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
                   {screen === "orders" && (
                     <div className="space-y-6">
                       <AdminOrderList items={orders} hideCustomer />
-                      <div id="np-order-sentinel" className="h-20 flex items-center justify-center">
-                        {loadingMoreOrders && (
-                          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
-                            Loading more orders...
-                          </div>
-                        )}
-                        {!hasMoreOrders && orders.length > 0 && (
-                          <div className="text-[10px] text-gray-400 font-bold uppercase">
-                            End of history
-                          </div>
-                        )}
-                      </div>
+                      <InfiniteScrollTrigger hasMore={hasMoreOrders} loading={loadingMoreOrders} onLoad={loadMoreOrders} />
                     </div>
                   )}
                   {screen === "tickets" && Array.isArray(payload) && (
@@ -408,36 +345,14 @@ export function NonPatientUserDetailModal({ user, open, onClose }: Props) {
                         typeFilter={deliveryFeedbackTypeFilter}
                         resolvedFilter={deliveryFeedbackResolvedFilter}
                         onFilterChange={handleDeliveryFeedbackFilterChange}
+                        onLoadMore={loadMoreDeliveryFeedback}
                       />
-                      <div id="np-delivery-feedback-sentinel" className="h-20 flex items-center justify-center">
-                        {loadingMoreDeliveryFeedback && (
-                          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
-                            Loading more feedback...
-                          </div>
-                        )}
-                        {!hasMoreDeliveryFeedback && deliveryFeedback.length > 0 && (
-                          <div className="text-[10px] text-gray-400 font-bold uppercase">
-                            End of history
-                          </div>
-                        )}
-                      </div>
                     </div>
                   )}
                   {screen === "orderPayments" && (
                     <div className="space-y-6">
                       <DisplayPaymentHistory items={payments} />
-                      <div id="np-payment-sentinel" className="h-20 flex items-center justify-center">
-                        {loadingMorePayments && (
-                          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
-                            Loading more transactions...
-                          </div>
-                        )}
-                        {!hasMorePayments && payments.length > 0 && (
-                          <div className="text-[10px] text-gray-400 font-bold uppercase">
-                            End of history
-                          </div>
-                        )}
-                      </div>
+                      <InfiniteScrollTrigger hasMore={hasMorePayments} loading={loadingMorePayments} onLoad={loadMorePayments} />
                     </div>
                   )}
                 </div>
