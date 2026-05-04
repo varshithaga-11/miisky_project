@@ -1394,7 +1394,7 @@ function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClo
             </>
           )}
 
-          <div className="flex gap-4">
+          {/* <div className="flex gap-4">
             <button
               onClick={onClose}
               className="flex-1 py-4 rounded-2xl border-2 border-gray-100 dark:border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-colors"
@@ -1406,7 +1406,7 @@ function TransactionDetailModal({ entry, onClose }: { entry: PaymentEntry; onClo
                 Print Receipt
               </button>
             )}
-          </div>
+          </div> */}
         </div>
       </motion.div>
     </div>
@@ -1702,7 +1702,7 @@ export function DisplayKitchenRatings({
             ))}
           </div>
 
-          <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => {})} />
+          <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => { })} />
         </>
       )}
     </div>
@@ -1881,7 +1881,7 @@ export function DisplayDeliveryFeedback({
         </div>
       )}
 
-      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => {})} />
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => { })} />
     </div>
   );
 }
