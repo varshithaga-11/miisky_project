@@ -14,6 +14,42 @@ import {
   FiFilter,
   FiBox
 } from "react-icons/fi";
+import { InfiniteScrollTrigger } from "../../../components/common/InfiniteScrollTrigger";
+
+/** Formats a date string into a human-readable date and time */
+export function formatDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+/** Formats a date string into a human-readable date */
+export function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 /** Definition list row */
 export function InfoRow({ label, value }: { label: string; value: ReactNode }) {
@@ -115,7 +151,7 @@ export function DisplayUserProfile({ user }: { user: UserDetailRecord }) {
       </InfoSection>
       <InfoSection title="Care">
         <InfoRow label="Mapped to nutritionist" value={user.is_patient_mapped ? "Yes" : "No"} />
-        <InfoRow label="Joined" value={user.joined_date ?? user.created_on} />
+        <InfoRow label="Joined" value={formatDateTime(user.joined_date ?? user.created_on)} />
       </InfoSection>
     </div>
   );
@@ -187,6 +223,10 @@ function formatJsonish(val: unknown): ReactNode {
       } catch {
         return val || "—";
       }
+    }
+    // Detect ISO date strings and format them
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+      return formatDateTime(val);
     }
     return val || "—";
   }
@@ -291,7 +331,7 @@ export function DisplayHealthReports({ items }: { items: HealthReportRow[] }) {
         >
           <div className="font-medium text-gray-900 dark:text-white">{rep.title || "Untitled report"}</div>
           <div className="text-xs text-gray-500 mt-1">
-            Type: {rep.report_type || "—"} · Uploaded: {rep.uploaded_on || "—"}
+            Type: {rep.report_type || "—"} · Uploaded: {formatDateTime(rep.uploaded_on)}
           </div>
           {rep.reviews && rep.reviews.length > 0 && (
             <div className="mt-3 space-y-2">
@@ -299,7 +339,7 @@ export function DisplayHealthReports({ items }: { items: HealthReportRow[] }) {
               {rep.reviews.map((rev) => (
                 <div key={rev.id} className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border-l-2 border-indigo-400 dark:border-indigo-500 shadow-sm">
                   <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">
-                    {rev.nutritionist_name || "Nutritionist"} · {rev.created_on ? new Date(rev.created_on).toLocaleDateString() : ""}
+                    {rev.nutritionist_name || "Nutritionist"} · {formatDate(rev.created_on)}
                   </div>
                   <div className="whitespace-pre-wrap">{rev.comments}</div>
                 </div>
@@ -313,7 +353,7 @@ export function DisplayHealthReports({ items }: { items: HealthReportRow[] }) {
               rel="noopener noreferrer"
               className="inline-block mt-3 text-sm text-blue-600 hover:underline font-medium"
             >
-              Open file
+              Download file
             </a>
           )}
         </li>
@@ -395,12 +435,12 @@ export function DisplayNutritionistMapping({ items }: { items: MappingRow[] }) {
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 border-t border-emerald-100 dark:border-emerald-900/40 pt-3">
-            <div>Assigned on: <span className="text-gray-700 dark:text-gray-300 font-medium">{m.assigned_on ?? "—"}</span></div>
+            <div>Assigned on: <span className="text-gray-700 dark:text-gray-300 font-medium">{formatDateTime(m.assigned_on)}</span></div>
             {m.reassignment_details && (
               <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg border border-amber-100 dark:border-amber-900/40">
                 <span className="text-amber-600 dark:text-amber-400 font-bold uppercase tracking-tighter">Switched from: {m.reassignment_details.previous_nutritionist || "Unknown"}</span>
                 <span className="text-gray-400">·</span>
-                <span className="text-gray-600 dark:text-gray-300">Effective: {m.reassignment_details.effective_from}</span>
+                <span className="text-gray-600 dark:text-gray-300">Effective: {formatDate(m.reassignment_details.effective_from)}</span>
               </div>
             )}
           </div>
@@ -455,7 +495,7 @@ export function DisplayReviews({ items }: { items: ReviewRow[] }) {
         >
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div className="text-xs text-gray-500">
-              {r.created_on ? new Date(r.created_on).toLocaleString() : "—"}
+              {formatDateTime(r.created_on)}
             </div>
             {r.nutritionist_details && (
               <div className="text-sm font-medium text-violet-800 dark:text-violet-300">
@@ -480,7 +520,7 @@ export function DisplayReviews({ items }: { items: ReviewRow[] }) {
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">{rep.title || `Report #${rep.id}`}</div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {rep.report_type || "—"} · {rep.uploaded_on ? new Date(rep.uploaded_on).toLocaleString() : "—"}
+                        {rep.report_type || "—"} · {formatDateTime(rep.uploaded_on)}
                       </div>
                     </div>
                     {rep.report_file && (
@@ -623,7 +663,7 @@ export function DisplayDietPlans({ items }: { items: DietPlanRow[] }) {
                 <div className="text-xs text-gray-500">Payment status</div>
                 <div className="font-medium">{p.payment_status || "—"}</div>
                 {p.payment_uploaded_on && (
-                  <div className="text-xs text-gray-500 mt-1">Uploaded {new Date(p.payment_uploaded_on).toLocaleString()}</div>
+                  <div className="text-xs text-gray-500 mt-1">Uploaded {formatDateTime(p.payment_uploaded_on)}</div>
                 )}
               </div>
               <div className="rounded-lg bg-white/70 dark:bg-gray-800/50 p-3 border border-amber-100 dark:border-gray-700">
@@ -639,7 +679,7 @@ export function DisplayDietPlans({ items }: { items: DietPlanRow[] }) {
                       : "—"}
                 </div>
                 {p.verified_on && (
-                  <div className="text-xs text-gray-500 mt-1">{new Date(p.verified_on).toLocaleString()}</div>
+                  <div className="text-xs text-gray-500 mt-1">{formatDateTime(p.verified_on)}</div>
                 )}
               </div>
             </div>
@@ -728,7 +768,7 @@ export function DisplayNutritionistHistory({ items }: { items: any[] }) {
           </div>
           <div className="rounded-2xl border border-indigo-100 dark:border-indigo-950 bg-white dark:bg-indigo-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
+              <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{formatDate(h.reassigned_on)}</span>
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-900/60 uppercase">Audit Log #{h.id}</span>
             </div>
             <div className="flex items-center gap-4 text-sm mb-4">
@@ -782,9 +822,9 @@ export function DisplayKitchenHistory({ items }: { items: any[] }) {
           <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-amber-500 flex items-center justify-center z-10 shadow-sm">
             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
           </div>
-          <div className="rounded-2xl border border-amber-100 dark:border-amber-950 bg-white dark:bg-amber-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="rounded-2xl border border-amber-100 dark:border-amber-950 bg-white dark:amber-950/20 p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-black text-amber-600 uppercase tracking-widest">{h.reassigned_on ? new Date(h.reassigned_on).toLocaleDateString() : 'N/A'}</span>
+              <span className="text-xs font-black text-amber-600 uppercase tracking-widest">{formatDate(h.reassigned_on)}</span>
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold border border-amber-100 dark:border-amber-900/60 uppercase">Kitchen Log #{h.id}</span>
             </div>
             <div className="flex items-center gap-4 text-sm mb-4">
@@ -1398,8 +1438,8 @@ export function DisplayMeetings({ items }: { items: any[] }) {
                 <span className="text-[10px] text-gray-400 font-bold uppercase">• {m.preferred_time}</span>
               </div>
               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${m.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                  m.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                    'bg-indigo-50 text-indigo-600 border-indigo-100'
+                m.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                  'bg-indigo-50 text-indigo-600 border-indigo-100'
                 }`}>{m.status}</span>
             </div>
 
@@ -1408,7 +1448,9 @@ export function DisplayMeetings({ items }: { items: any[] }) {
                 <FiCalendar size={18} />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">Consultation with {m.nutritionist_details?.first_name || 'Nutritionist'}</h4>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                  Consultation with {[m.nutritionist_details?.first_name, m.nutritionist_details?.last_name].filter(Boolean).join(" ") || "Nutritionist"}
+                </h4>
                 <p className="text-xs text-gray-500 mt-1 line-clamp-2 italic">"{m.reason || 'No reason provided'}"</p>
               </div>
             </div>
@@ -1452,8 +1494,8 @@ export function DisplaySupportTickets({ items }: { items: any[] }) {
               <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{t.title}</h4>
             </div>
             <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${t.status === 'open' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                t.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                  'bg-gray-50 text-gray-500 border-gray-100'
+              t.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                'bg-gray-50 text-gray-500 border-gray-100'
               }`}>{t.status}</span>
           </div>
 
@@ -1521,7 +1563,7 @@ export function DisplayNutritionistRatings({ ratings }: { ratings: any[] }) {
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-none mb-0.5">
-                {r.nutritionist_details?.first_name || 'Nutritionist'}
+                {[r.nutritionist_details?.first_name, r.nutritionist_details?.last_name].filter(Boolean).join(" ") || "Nutritionist"}
               </p>
               <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Expert Feedback</p>
             </div>
@@ -1660,21 +1702,7 @@ export function DisplayKitchenRatings({
             ))}
           </div>
 
-          <div
-            id="kitchen-rating-scroll-sentinel"
-            className="h-20 flex items-center justify-center"
-          >
-            {loadingMore && (
-              <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
-                Loading more reviews...
-              </div>
-            )}
-            {!hasMore && ratings.length > 0 && (
-              <div className="text-[10px] text-gray-400 font-bold uppercase">
-                End of history
-              </div>
-            )}
-          </div>
+          <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => {})} />
         </>
       )}
     </div>
@@ -1688,6 +1716,7 @@ export function DisplayDeliveryFeedback({
   typeFilter,
   resolvedFilter,
   onFilterChange,
+  onLoadMore,
 }: {
   items: any[];
   loadingMore?: boolean;
@@ -1695,6 +1724,7 @@ export function DisplayDeliveryFeedback({
   typeFilter: string;
   resolvedFilter: string;
   onFilterChange: (type: string, resolved: string) => void;
+  onLoadMore?: () => void;
 }) {
   return (
     <div className="space-y-6">
@@ -1762,11 +1792,10 @@ export function DisplayDeliveryFeedback({
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                        item.feedback_type === "rating"
-                          ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
-                          : "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.feedback_type === "rating"
+                        ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                        : "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                        }`}
                     >
                       {item.feedback_type}
                     </span>
@@ -1852,17 +1881,7 @@ export function DisplayDeliveryFeedback({
         </div>
       )}
 
-      {/* Sentinel */}
-      <div id="delivery-feedback-scroll-sentinel" className="h-20 flex items-center justify-center">
-        {loadingMore && (
-          <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">
-            Loading more feedback...
-          </div>
-        )}
-        {!hasMore && items.length > 0 && (
-          <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
-        )}
-      </div>
+      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => {})} />
     </div>
   );
 }

@@ -48,6 +48,7 @@ import {
   type MealRow,
   type PaymentEntry,
 } from "./PatientDataViews";
+import { InfiniteScrollTrigger } from "../../../components/common/InfiniteScrollTrigger";
 
 export type HubView = "hub";
 export type DataView =
@@ -251,7 +252,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
             break;
           }
           case "orderPayments": {
-            const data = await fetchOrderPaymentsForUserAdmin(id, 1, 20);
+            const data = await fetchOrderPaymentsForUserAdmin(id, 1, 10);
             setPayload(data.results);
             setTotalItems(data.count);
             setOrderPaymentPage(1);
@@ -330,7 +331,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     setLoadingOrderPayments(true);
     try {
       const nextPage = orderPaymentPage + 1;
-      const data = await fetchOrderPaymentsForUserAdmin(patient.id, nextPage, 20);
+      const data = await fetchOrderPaymentsForUserAdmin(patient.id, nextPage, 10);
       setPayload((prev: any) => [...(Array.isArray(prev) ? prev : []), ...data.results]);
       setOrderPaymentPage(nextPage);
       setHasMoreOrderPayments(!!data.next);
@@ -410,65 +411,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
     }
   };
 
-  useEffect(() => {
-    if (screen !== "orders" || !hasMoreOrders) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMoreOrders();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    const sen = document.getElementById("order-scroll-sentinel");
-    if (sen) obs.observe(sen);
-    return () => obs.disconnect();
-  }, [screen, hasMoreOrders, loadMoreOrders]);
 
-  useEffect(() => {
-    if (screen !== "orderPayments" || !hasMoreOrderPayments) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMoreOrderPayments();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    const sen = document.getElementById("order-payment-scroll-sentinel");
-    if (sen) obs.observe(sen);
-    return () => obs.disconnect();
-  }, [screen, hasMoreOrderPayments, loadMoreOrderPayments]);
-
-  useEffect(() => {
-    if (screen !== "kitchenRatings" || !hasMoreKitchenRatings) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMoreKitchenRatings();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    const sen = document.getElementById("kitchen-rating-scroll-sentinel");
-    if (sen) obs.observe(sen);
-    return () => obs.disconnect();
-  }, [screen, hasMoreKitchenRatings, loadMoreKitchenRatings]);
-
-  useEffect(() => {
-    if (screen !== "deliveryFeedback" || !hasMoreDeliveryFeedback) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMoreDeliveryFeedback();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    const sen = document.getElementById("delivery-feedback-scroll-sentinel");
-    if (sen) obs.observe(sen);
-    return () => obs.disconnect();
-  }, [screen, hasMoreDeliveryFeedback, loadMoreDeliveryFeedback]);
 
   if (!open) return null;
 
@@ -576,15 +519,10 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                   }}
                 />
               )}
-               {!loading && !error && screen === "orders" && Array.isArray(payload) && (
+              {!loading && !error && screen === "orders" && Array.isArray(payload) && (
                 <div className="space-y-6">
                   <AdminOrderList items={payload} hideCustomer />
-                  <div id="order-scroll-sentinel" className="h-20 flex items-center justify-center">
-                    {loadingOrders && <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">Loading more orders...</div>}
-                    {!hasMoreOrders && payload.length > 0 && (
-                      <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
-                    )}
-                  </div>
+                  <InfiniteScrollTrigger hasMore={hasMoreOrders} loading={loadingOrders} onLoad={loadMoreOrders} />
                 </div>
               )}
               {!loading && !error && (screen === "dietPlanPayments" || screen === "orderPayments") && Array.isArray(payload) && (
@@ -597,12 +535,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                   </div>
                   <DisplayPaymentHistory items={payload as PaymentEntry[]} />
                   {screen === "orderPayments" && (
-                    <div id="order-payment-scroll-sentinel" className="h-20 flex items-center justify-center">
-                      {loadingOrderPayments && <div className="text-xs text-indigo-500 font-bold uppercase animate-pulse">Loading more payments...</div>}
-                      {!hasMoreOrderPayments && payload.length > 0 && (
-                        <div className="text-[10px] text-gray-400 font-bold uppercase">End of history</div>
-                      )}
-                    </div>
+                    <InfiniteScrollTrigger hasMore={hasMoreOrderPayments} loading={loadingOrderPayments} onLoad={loadMoreOrderPayments} />
                   )}
                 </div>
               )}
@@ -634,6 +567,7 @@ export function PatientDetailModal({ patient, open, onClose }: Props) {
                   typeFilter={deliveryFeedbackTypeFilter}
                   resolvedFilter={deliveryFeedbackResolvedFilter}
                   onFilterChange={handleDeliveryFeedbackFilterChange}
+                  onLoadMore={loadMoreDeliveryFeedback}
                 />
               )}
             </>
