@@ -74,6 +74,7 @@ const MicroKitchenInspectionPage: React.FC = () => {
   const [detailKitchen, setDetailKitchen] = useState<MicroKitchenProfile | null>(null);
   const [inspectionItems, setInspectionItems] = useState<any[]>([]);
   const [loadingInspect, setLoadingInspect] = useState(false);
+  const [showInspectionForm, setShowInspectionForm] = useState(false);
 
   const [confirmAction, setConfirmAction] = useState<{
     id: number;
@@ -141,6 +142,7 @@ const MicroKitchenInspectionPage: React.FC = () => {
     setLoadingInspect(true);
     setDetailKitchen(null);
     setInspectionItems([]);
+    setShowInspectionForm(false);
     try {
       const [full, inspections] = await Promise.all([
         getMicroKitchenById(p.id),
@@ -160,6 +162,41 @@ const MicroKitchenInspectionPage: React.FC = () => {
     } finally {
       setLoadingInspect(false);
     }
+  };
+
+  const resetInspectionForm = () => {
+    if (!detailKitchen) return;
+    setInspectionData({
+      status: 'draft',
+      mc_code: detailKitchen.kitchen_code || '',
+      inspection_date: new Date().toISOString().split('T')[0],
+      external_cleanliness: 5,
+      interior_cleanliness: 5,
+      kitchen_platform_adequacy: 5,
+      kitchen_platform_neatness: 5,
+      safety: 5,
+      pure_water: 5,
+      storage_facilities: 5,
+      packing_space: 5,
+      kitchen_size: 5,
+      discussion_with_chef: 5,
+      other_observations: 5,
+      support_staff: 5,
+      external_cleanliness_media: null,
+      interior_cleanliness_media: null,
+      kitchen_platform_adequacy_media: null,
+      kitchen_platform_neatness_media: null,
+      safety_media: null,
+      pure_water_media: null,
+      storage_facilities_media: null,
+      packing_space_media: null,
+      kitchen_size_media: null,
+      discussion_with_chef_media: null,
+      other_observations_media: null,
+      support_staff_media: null,
+      notes: '',
+      recommendation: '',
+    });
   };
 
   const handleInspectionSubmit = async (e?: React.FormEvent, nextStatus?: string) => {
@@ -187,9 +224,21 @@ const MicroKitchenInspectionPage: React.FC = () => {
         await updateMicroKitchenStatus(detailKitchen.id, nextStatus);
       }
       toast.success(nextStatus ? `Inspection saved and profile ${nextStatus}` : "Inspection record saved");
-      setInspectKitchen(null);
-      setDetailKitchen(null);
-      setInspectionItems([]);
+      
+      // Refresh history
+      const updatedHistory = await getMicroKitchenInspectionsForKitchen(detailKitchen.id);
+      setInspectionItems(updatedHistory);
+      
+      // Hide form and reset
+      setShowInspectionForm(false);
+      resetInspectionForm();
+
+      if (nextStatus) {
+        // If final action taken, we can close or just update detail
+        const updatedDetail = await getMicroKitchenById(detailKitchen.id);
+        setDetailKitchen(updatedDetail);
+      }
+      
       fetchData(currentPage, searchTerm, activeTab);
     } catch (error) {
       console.error(error);
@@ -514,152 +563,186 @@ const MicroKitchenInspectionPage: React.FC = () => {
                     <DisplayKitchenInspections items={inspectionItems} />
                   </section>
 
-                  {/* New Inspection Form */}
+                  {/* Inspection Report Section */}
                   <section className="border-t dark:border-white/[0.05] pt-10">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 uppercase tracking-wider">
-                      <FiClipboard className="size-4 text-blue-500" />
-                      New Inspection Report
-                    </h4>
+                    <div className="flex justify-between items-center mb-6">
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
+                        <FiClipboard className="size-4 text-blue-500" />
+                        {showInspectionForm ? "New Inspection Report" : "Inspection Report"}
+                      </h4>
+                      {!showInspectionForm && (
+                        <Button
+                          variant="primary"
+                          onClick={() => {
+                            resetInspectionForm();
+                            setShowInspectionForm(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-xs py-2"
+                        >
+                          Add New Inspection Report
+                        </Button>
+                      )}
+                    </div>
 
-                    <form onSubmit={handleInspectionSubmit} className="space-y-8">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">MC Code</label>
-                          <input
-                            type="text"
-                            required
-                            value={inspectionData.mc_code}
-                            onChange={e => setInspectionData(prev => ({ ...prev, mc_code: e.target.value }))}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                          />
+                    {showInspectionForm ? (
+                      <form onSubmit={handleInspectionSubmit} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">MC Code</label>
+                            <input
+                              type="text"
+                              required
+                              value={inspectionData.mc_code}
+                              onChange={e => setInspectionData(prev => ({ ...prev, mc_code: e.target.value }))}
+                              className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Inspection Date</label>
+                            <input
+                              type="date"
+                              required
+                              value={inspectionData.inspection_date}
+                              onChange={e => setInspectionData(prev => ({ ...prev, inspection_date: e.target.value }))}
+                              className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Inspection Date</label>
-                          <input
-                            type="date"
-                            required
-                            value={inspectionData.inspection_date}
-                            onChange={e => setInspectionData(prev => ({ ...prev, inspection_date: e.target.value }))}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                          />
-                        </div>
-                      </div>
 
-                      <div>
-                        <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4 border-b pb-2">Ratings (1-10)</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                          {[
-                            { key: 'external_cleanliness', label: 'External Cleanliness', media: 'external_cleanliness_media' },
-                            { key: 'interior_cleanliness', label: 'Interior Cleanliness', media: 'interior_cleanliness_media' },
-                            { key: 'kitchen_platform_adequacy', label: 'Platform Adequacy', media: 'kitchen_platform_adequacy_media' },
-                            { key: 'kitchen_platform_neatness', label: 'Platform Neatness', media: 'kitchen_platform_neatness_media' },
-                            { key: 'safety', label: 'Safety Measures', media: 'safety_media' },
-                            { key: 'pure_water', label: 'Water Purity', media: 'pure_water_media' },
-                            { key: 'storage_facilities', label: 'Storage', media: 'storage_facilities_media' },
-                            { key: 'packing_space', label: 'Packing Space', media: 'packing_space_media' },
-                            { key: 'kitchen_size', label: 'Kitchen Size', media: 'kitchen_size_media' },
-                            { key: 'discussion_with_chef', label: 'Chef Interview', media: 'discussion_with_chef_media' },
-                            { key: 'other_observations', label: 'Other Obs.', media: 'other_observations_media' },
-                            { key: 'support_staff', label: 'Staff Quality', media: 'support_staff_media' },
-                          ].map((field) => (
-                            <div key={field.key} className="flex flex-col bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-transparent hover:border-emerald-200 transition-all gap-3">
-                              <div className="flex justify-between items-center">
-                                <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold">{field.label}</label>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-6 text-center text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 rounded px-1">
-                                    {inspectionData[field.key as keyof MicroKitchenInspection] as number || 5}
-                                  </span>
+                        <div>
+                          <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4 border-b pb-2">Ratings (1-10)</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                            {[
+                              { key: 'external_cleanliness', label: 'External Cleanliness', media: 'external_cleanliness_media' },
+                              { key: 'interior_cleanliness', label: 'Interior Cleanliness', media: 'interior_cleanliness_media' },
+                              { key: 'kitchen_platform_adequacy', label: 'Platform Adequacy', media: 'kitchen_platform_adequacy_media' },
+                              { key: 'kitchen_platform_neatness', label: 'Platform Neatness', media: 'kitchen_platform_neatness_media' },
+                              { key: 'safety', label: 'Safety Measures', media: 'safety_media' },
+                              { key: 'pure_water', label: 'Water Purity', media: 'pure_water_media' },
+                              { key: 'storage_facilities', label: 'Storage', media: 'storage_facilities_media' },
+                              { key: 'packing_space', label: 'Packing Space', media: 'packing_space_media' },
+                              { key: 'kitchen_size', label: 'Kitchen Size', media: 'kitchen_size_media' },
+                              { key: 'discussion_with_chef', label: 'Chef Interview', media: 'discussion_with_chef_media' },
+                              { key: 'other_observations', label: 'Other Obs.', media: 'other_observations_media' },
+                              { key: 'support_staff', label: 'Staff Quality', media: 'support_staff_media' },
+                            ].map((field) => (
+                              <div key={field.key} className="flex flex-col bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-transparent hover:border-emerald-200 transition-all gap-3">
+                                <div className="flex justify-between items-center">
+                                  <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold">{field.label}</label>
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-6 text-center text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 rounded px-1">
+                                      {inspectionData[field.key as keyof MicroKitchenInspection] as number || 5}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div className="flex items-center gap-4">
-                                <input
-                                  type="range"
-                                  min="1"
-                                  max="10"
-                                  step="1"
-                                  value={inspectionData[field.key as keyof MicroKitchenInspection] as number || 5}
-                                  onChange={e => setInspectionData(prev => ({ ...prev, [field.key]: parseInt(e.target.value) }))}
-                                  className="flex-1 h-1.5 bg-emerald-100 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                                />
-
-                                <label className={`cursor-pointer p-2 rounded-xl transition-colors flex items-center gap-2 shrink-0 ${inspectionData[field.media as keyof MicroKitchenInspection]
-                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                                  : "bg-gray-200 dark:bg-gray-700 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-600"
-                                  }`}>
+                                <div className="flex items-center gap-4">
                                   <input
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*,video/*"
-                                    onChange={e => {
-                                      const file = e.target.files?.[0];
-                                      if (file) setInspectionData(prev => ({ ...prev, [field.media]: file }));
-                                      e.target.value = "";
-                                    }}
+                                    type="range"
+                                    min="1"
+                                    max="10"
+                                    step="1"
+                                    value={inspectionData[field.key as keyof MicroKitchenInspection] as number || 5}
+                                    onChange={e => setInspectionData(prev => ({ ...prev, [field.key]: parseInt(e.target.value) }))}
+                                    className="flex-1 h-1.5 bg-emerald-100 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                                   />
-                                  <FiUpload size={14} />
-                                  {inspectionData[field.media as keyof MicroKitchenInspection] && <FiCheck size={12} />}
-                                </label>
+
+                                  <label className={`cursor-pointer p-2 rounded-xl transition-colors flex items-center gap-2 shrink-0 ${inspectionData[field.media as keyof MicroKitchenInspection]
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    }`}>
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      accept="image/*,video/*"
+                                      onChange={e => {
+                                        const file = e.target.files?.[0];
+                                        if (file) setInspectionData(prev => ({ ...prev, [field.media]: file }));
+                                        e.target.value = "";
+                                      }}
+                                    />
+                                    <FiUpload size={14} />
+                                    {inspectionData[field.media as keyof MicroKitchenInspection] && <FiCheck size={12} />}
+                                  </label>
+                                </div>
+                                <InspectionMediaPreview
+                                  file={inspectionData[field.media as keyof MicroKitchenInspection] instanceof File ? inspectionData[field.media as keyof MicroKitchenInspection] as File : null}
+                                  onRemove={() => setInspectionData(prev => ({ ...prev, [field.media]: null }))}
+                                />
                               </div>
-                              <InspectionMediaPreview
-                                file={inspectionData[field.media as keyof MicroKitchenInspection] instanceof File ? inspectionData[field.media as keyof MicroKitchenInspection] as File : null}
-                                onRemove={() => setInspectionData(prev => ({ ...prev, [field.media]: null }))}
-                              />
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</label>
-                          <textarea
-                            rows={3}
-                            value={inspectionData.notes}
-                            onChange={e => setInspectionData(prev => ({ ...prev, notes: e.target.value }))}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                            placeholder="Specific observations..."
-                          ></textarea>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</label>
+                            <textarea
+                              rows={3}
+                              value={inspectionData.notes}
+                              onChange={e => setInspectionData(prev => ({ ...prev, notes: e.target.value }))}
+                              className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                              placeholder="Specific observations..."
+                            ></textarea>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Recommendation</label>
+                            <textarea
+                              rows={3}
+                              value={inspectionData.recommendation}
+                              onChange={e => setInspectionData(prev => ({ ...prev, recommendation: e.target.value }))}
+                              className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                              placeholder="Final recommendation..."
+                            ></textarea>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Recommendation</label>
-                          <textarea
-                            rows={3}
-                            value={inspectionData.recommendation}
-                            onChange={e => setInspectionData(prev => ({ ...prev, recommendation: e.target.value }))}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                            placeholder="Final recommendation..."
-                          ></textarea>
-                        </div>
-                      </div>
 
-                      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t dark:border-white/[0.05]">
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={() => handleInspectionSubmit()}
-                          className="border-amber-500 text-amber-600 hover:bg-amber-50"
-                        >
-                          Save as Draft
-                        </Button>
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t dark:border-white/[0.05]">
+                          <Button variant="outline" type="button" onClick={() => setShowInspectionForm(false)}>Cancel</Button>
+                          <Button
+                            variant="outline"
+                            type="button"
+                            onClick={() => handleInspectionSubmit()}
+                            className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                          >
+                            Save as Draft
+                          </Button>
+                          <Button
+                            variant="primary"
+                            type="button"
+                            onClick={() => handleInspectionSubmit(undefined, 'rejected')}
+                            className="bg-red-500 hover:bg-red-600 border-red-500"
+                          >
+                            Reject Kitchen
+                          </Button>
+                          <Button
+                            variant="primary"
+                            type="button"
+                            onClick={() => handleInspectionSubmit(undefined, 'approved')}
+                            className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 px-8"
+                          >
+                            Approve & Verify
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="p-8 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center text-center">
+                        <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 mb-3">
+                          <FiClipboard size={24} />
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No inspection report is currently being filled.</p>
                         <Button
                           variant="primary"
-                          type="button"
-                          onClick={() => handleInspectionSubmit(undefined, 'rejected')}
-                          className="bg-red-500 hover:bg-red-600 border-red-500"
+                          onClick={() => {
+                            resetInspectionForm();
+                            setShowInspectionForm(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 px-6"
                         >
-                          Reject Kitchen
-                        </Button>
-                        <Button
-                          variant="primary"
-                          type="button"
-                          onClick={() => handleInspectionSubmit(undefined, 'approved')}
-                          className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 px-8"
-                        >
-                          Approve & Verify
+                          Add New Inspection Report
                         </Button>
                       </div>
-                    </form>
+                    )}
                   </section>
                 </div>
               </>
