@@ -12,7 +12,7 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
     const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    
+
     // Reviews Modal States
     const [showReviewsModal, setShowReviewsModal] = useState(false);
     const [selectedKitchen, setSelectedKitchen] = useState<MicroKitchenProfile | null>(null);
@@ -65,7 +65,7 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-2">Our Culinary Network</h1>
                         <p className="text-gray-500 font-medium italic">Verified local kitchens dedicated to preparing high-quality, personalized meals.</p>
                     </div>
-                    
+
                     <div className="relative w-full md:w-96 group">
                         <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
                         <input
@@ -95,27 +95,27 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {kitchens.map((kitchen, idx) => (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.05 }}
-                                key={kitchen.id} 
+                                key={kitchen.id}
                                 className="group bg-white dark:bg-gray-800 rounded-[40px] overflow-hidden shadow-2xl shadow-gray-200/40 dark:shadow-none border border-transparent hover:border-indigo-500/30 dark:border-white/[0.05] transition-all duration-500 hover:-translate-y-2"
                             >
                                 {/* Media Section */}
                                 <div className="relative aspect-[4/3] overflow-hidden">
                                     {kitchen.photo_exterior ? (
-                                        <img 
-                                            src={kitchen.photo_exterior} 
-                                            alt={kitchen.brand_name || ""} 
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                        <img
+                                            src={kitchen.photo_exterior}
+                                            alt={kitchen.brand_name || ""}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                                             <FiMapPin className="size-16 text-indigo-100 dark:text-gray-600" />
                                         </div>
                                     )}
-                                    
+
                                     <div className="absolute top-6 left-6 bg-emerald-500 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-xl border border-white/20">
                                         <FiCheckCircle size={14} /> Certified
                                     </div>
@@ -198,14 +198,14 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                                                     <FiClock className="size-4 text-gray-300" />
                                                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{kitchen.time_available || "08:00 - 22:00"}</span>
                                                 </div>
-                                                <Link 
+                                                <Link
                                                     to={`/patient/kitchen/${kitchen.id}/menu`}
                                                     className="flex items-center gap-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest group-hover:translate-x-1 transition-transform"
                                                 >
                                                     View Menu <FiInfo size={14} />
                                                 </Link>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => fetchReviews(kitchen)}
                                                 className="w-full py-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm text-[10px] font-black uppercase text-gray-600 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
                                             >
@@ -224,14 +224,14 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
             <AnimatePresence>
                 {showReviewsModal && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div 
-                            initial={{ opacity: 0 }} 
-                            animate={{ opacity: 1 }} 
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowReviewsModal(false)}
                             className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
                         />
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -244,7 +244,7 @@ const NonPatientListOfMicroKitchenPage: React.FC = () => {
                                     </h3>
                                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">Verified Experiences</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setShowReviewsModal(false)}
                                     className="p-3 rounded-2xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white"
                                 >

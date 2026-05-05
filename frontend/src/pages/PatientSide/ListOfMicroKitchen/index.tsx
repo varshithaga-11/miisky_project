@@ -11,7 +11,7 @@ const ListOfMicroKitchenPage: React.FC = () => {
     const [kitchens, setKitchens] = useState<MicroKitchenProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    
+
     // Reviews Modal States
     const [showReviewsModal, setShowReviewsModal] = useState(false);
     const [selectedKitchen, setSelectedKitchen] = useState<MicroKitchenProfile | null>(null);
@@ -75,7 +75,7 @@ const ListOfMicroKitchenPage: React.FC = () => {
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white">Our Kitchen Network</h1>
                         <p className="text-gray-500 mt-1 font-medium">Verified local kitchens preparing your personalized meals with care.</p>
                     </div>
-                    
+
                     <div className="relative w-full md:w-96 group">
                         <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
@@ -107,17 +107,17 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                 {/* Image Holder */}
                                 <div className="relative aspect-[4/3] overflow-hidden">
                                     {kitchen.photo_exterior ? (
-                                        <img 
-                                            src={kitchen.photo_exterior} 
-                                            alt={kitchen.brand_name || ""} 
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                        <img
+                                            src={kitchen.photo_exterior}
+                                            alt={kitchen.brand_name || ""}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                                             <FiMapPin className="size-12 text-blue-200 dark:text-gray-600" />
                                         </div>
                                     )}
-                                    
+
                                     {/* Verification Badge */}
                                     <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
                                         <FiCheckCircle size={12} /> Verified
@@ -167,7 +167,7 @@ const ListOfMicroKitchenPage: React.FC = () => {
 
                                     <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-white/[0.05]">
                                         {/* Address */}
-                                        <div 
+                                        <div
                                             className="flex items-start gap-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 -m-2 rounded-2xl transition-colors group/map"
                                             onClick={() => {
                                                 if (kitchen.latitude != null && kitchen.longitude != null) {
@@ -206,14 +206,14 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                                     Explore <FiInfo size={12} />
                                                 </div>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => fetchReviews(kitchen, 1)}
                                                 className="w-full py-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/5 shadow-sm text-[10px] font-black uppercase text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
                                             >
                                                 <FiStar size={14} /> User Reviews
                                             </button>
                                         </div>
-                                        
+
                                         {/* Latest Inspection Note */}
                                         {kitchen.latest_inspection?.recommendation && (
                                             <div className="p-4 bg-green-50/30 dark:bg-green-900/10 rounded-2xl border border-green-100/50 dark:border-green-900/20">
@@ -237,14 +237,14 @@ const ListOfMicroKitchenPage: React.FC = () => {
             <AnimatePresence>
                 {showReviewsModal && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div 
-                            initial={{ opacity: 0 }} 
-                            animate={{ opacity: 1 }} 
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowReviewsModal(false)}
                             className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
                         />
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -257,7 +257,7 @@ const ListOfMicroKitchenPage: React.FC = () => {
                                     </h3>
                                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Verified Experiences</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setShowReviewsModal(false)}
                                     className="p-3 rounded-2xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white"
                                 >

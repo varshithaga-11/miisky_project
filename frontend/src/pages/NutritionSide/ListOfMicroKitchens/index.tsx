@@ -41,7 +41,7 @@ const ListOfMicroKitchensPage: React.FC = () => {
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Kitchen Discovery</h1>
                         <p className="text-gray-500 mt-1 font-medium italic">Monitor and select verified local kitchens for your patient diet plans.</p>
                     </div>
-                    
+
                     <div className="relative w-full md:w-96 group">
                         <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
@@ -73,17 +73,17 @@ const ListOfMicroKitchensPage: React.FC = () => {
                                 {/* Image Holder */}
                                 <div className="relative aspect-[4/3] overflow-hidden">
                                     {kitchen.photo_exterior ? (
-                                        <img 
-                                            src={kitchen.photo_exterior} 
-                                            alt={kitchen.brand_name || ""} 
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-95" 
+                                        <img
+                                            src={kitchen.photo_exterior}
+                                            alt={kitchen.brand_name || ""}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-95"
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                                             <FiMapPin className="size-12 text-indigo-200 dark:text-gray-600" />
                                         </div>
                                     )}
-                                    
+
                                     {/* Verification Badge */}
                                     <div className="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
                                         <FiCheckCircle size={12} /> Approved
@@ -169,13 +169,13 @@ const ListOfMicroKitchensPage: React.FC = () => {
                                                 Vetted <FiCheckCircle size={10} />
                                             </div>
                                         </div>
-                                        
+
                                         {/* Latest Inspection Note */}
                                         {kitchen.latest_inspection?.recommendation && (
                                             <div className="p-4 bg-emerald-50/20 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100/30 dark:border-emerald-900/20 relative">
                                                 <FiInfo className="absolute top-3 right-3 text-emerald-300 dark:text-emerald-700" size={12} />
                                                 <div className="text-[9px] uppercase font-black text-emerald-600 tracking-wider mb-2 flex items-center gap-2">
-                                                     INSPECTION INSIGHT
+                                                    INSPECTION INSIGHT
                                                 </div>
                                                 <p className="text-xs text-emerald-800/80 dark:text-emerald-300/60 line-clamp-2 italic leading-relaxed font-medium">
                                                     "{kitchen.latest_inspection.recommendation}"

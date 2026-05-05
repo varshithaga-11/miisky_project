@@ -35,13 +35,13 @@ export type MicroKitchenProfile = {
 };
 
 export interface MicroKitchenListResponse {
-    results: MicroKitchenProfile[];
-    count: number;
+  results: MicroKitchenProfile[];
+  count: number;
 }
 
 export const getApprovedMicroKitchens = async (search = ""): Promise<MicroKitchenListResponse> => {
-    // For nutritionists, show approved ones as well
-    const url = createApiUrl(`api/microkitchenprofile/?status=approved&search=${search}`);
-    const response = await axios.get(url, { headers: await getAuthHeaders() });
-    return response.data;
+  // For nutritionists, show approved ones as well
+  const url = createApiUrl(`api/microkitchenprofile/?status=approved&search=${search}`);
+  const response = await axios.get(url, { headers: await getAuthHeaders() });
+  return response.data;
 };

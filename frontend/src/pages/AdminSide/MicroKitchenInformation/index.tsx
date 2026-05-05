@@ -145,7 +145,7 @@ const MicroKitchenInformationPage: React.FC = () => {
             // Pre-check for dependencies (Foods)
             const { getFoodList } = await import("../Food/foodapi");
             const foodsResponse = await getFoodList(1, 1, "", undefined, undefined, id);
-            
+
             if (foodsResponse.count > 0) {
                 toast.error(`Cannot delete micro kitchen. It has ${foodsResponse.count} associated foods. Please delete them first.`);
                 return;

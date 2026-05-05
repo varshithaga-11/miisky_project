@@ -90,7 +90,7 @@ export type MicroKitchenInspection = {
   mc_code: string;
   inspection_date: string;
   status: 'draft' | 'submitted' | 'approved' | 'rejected';
-  
+
   external_cleanliness?: number;
   interior_cleanliness?: number;
   kitchen_platform_adequacy?: number;
@@ -143,7 +143,7 @@ export const getMicroKitchenList = async (
   if (filters.country) params.country = filters.country;
 
   const url = createApiUrl(`api/microkitchenprofile/`);
-  const response = await axios.get(url, { 
+  const response = await axios.get(url, {
     headers: await getAuthHeaders(),
     params
   });
@@ -169,7 +169,7 @@ export const deleteMicroKitchen = async (id: number): Promise<void> => {
 
 export const saveMicroKitchenInspection = async (inspection: FormData): Promise<MicroKitchenInspection> => {
   const url = createApiUrl(`api/microkitcheninspection/`);
-  const response = await axios.post(url, inspection, { 
+  const response = await axios.post(url, inspection, {
     headers: {
       ...(await getAuthHeaders()),
       'Content-Type': 'multipart/form-data',
@@ -346,15 +346,15 @@ export const getMicroKitchenDailyMeals = async (
   const url = createApiUrl(`api/admin-microkitchen-meals-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { 
-      micro_kitchen: microKitchenId, 
+    params: {
+      micro_kitchen: microKitchenId,
       page,
       limit,
-      month, 
-      year, 
-      start_date: startDate, 
-      end_date: endDate, 
-      period 
+      month,
+      year,
+      start_date: startDate,
+      end_date: endDate,
+      period
     },
   });
   return response.data;
@@ -393,10 +393,10 @@ export const getMicroKitchenReviewsPaginated = async (
   const url = createApiUrl(`api/microkitchenrating/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { 
-      micro_kitchen: microKitchenId, 
-      page, 
-      limit 
+    params: {
+      micro_kitchen: microKitchenId,
+      page,
+      limit
     },
   });
   return response.data;
@@ -413,13 +413,13 @@ export const getMicroKitchenOrdersPaginated = async (
   const url = createApiUrl(`api/order/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { 
-      micro_kitchen: microKitchenId, 
-      page, 
-      limit, 
-      start_date: startDate, 
-      end_date: endDate, 
-      period 
+    params: {
+      micro_kitchen: microKitchenId,
+      page,
+      limit,
+      start_date: startDate,
+      end_date: endDate,
+      period
     },
   });
   return response.data;
@@ -764,13 +764,13 @@ export const getMicroKitchenPayouts = async (
   const url = createApiUrl(`api/admin-microkitchen-payouts-nopaginate/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { 
-        micro_kitchen: microKitchenId, 
-        page,
-        limit,
-        start_date: startDate, 
-        end_date: endDate, 
-        period 
+    params: {
+      micro_kitchen: microKitchenId,
+      page,
+      limit,
+      start_date: startDate,
+      end_date: endDate,
+      period
     },
   });
   return response.data;
@@ -813,14 +813,14 @@ export const getMicroKitchenExecutionList = async (
   const url = createApiUrl(`api/usermeal/execution-list/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
-    params: { 
-        micro_kitchen: microKitchenId, 
-        page,
-        limit,
-        meal_date: mealDate, 
-        start_date: startDate, 
-        end_date: endDate, 
-        period 
+    params: {
+      micro_kitchen: microKitchenId,
+      page,
+      limit,
+      meal_date: mealDate,
+      start_date: startDate,
+      end_date: endDate,
+      period
     },
   });
   return response.data;
