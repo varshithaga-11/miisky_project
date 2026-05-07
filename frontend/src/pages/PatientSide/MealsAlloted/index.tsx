@@ -7,11 +7,18 @@ import { toast, ToastContainer } from "react-toastify";
 import { FiClock, FiCheckCircle, FiActivity, FiCalendar, FiList, FiPackage, FiEdit2, FiX, FiCheck, FiEye } from "react-icons/fi";
 import { GiBreadSlice, GiBowlOfRice, GiHamburger, GiCookingPot } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
+import { createApiUrl } from "../../../access/access";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+
+const getMediaUrl = (path: string | undefined | null) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return createApiUrl(path.startsWith("/") ? path.slice(1) : path);
+};
 
 const MealsAllotedPage: React.FC = () => {
     const [allMeals, setAllMeals] = useState<UserMeal[]>([]);
@@ -209,12 +216,15 @@ const MealsAllotedPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center py-32 space-y-6">
-                            <div className="w-16 h-16 border-[6px] border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing nutrition profile...</p>
-                        </div>
-                    ) : viewMode === "calendar" ? (
+                    <div className="relative">
+                        {loading && (
+                            <div className={`flex flex-col items-center justify-center space-y-6 ${viewMode === 'list' ? 'py-32' : 'absolute inset-0 z-[50] bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-[40px]'}`}>
+                                <div className="w-16 h-16 border-[6px] border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing nutrition profile...</p>
+                            </div>
+                        )}
+
+                        {viewMode === "calendar" ? (
                         <div className="bg-white dark:bg-gray-900 p-8 rounded-[40px] border border-transparent dark:border-white/[0.05] shadow-xl overflow-hidden custom-calendar relative">
                             {/* Hover Card */}
                             <AnimatePresence>
@@ -238,6 +248,11 @@ const MealsAllotedPage: React.FC = () => {
                                         <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-2 italic">
                                             {hoveredEvent.food_details?.name}
                                         </h4>
+                                        {hoveredEvent.food_details?.image && (
+                                            <div className="mb-3 rounded-xl overflow-hidden aspect-video border border-gray-100 dark:border-white/10">
+                                                <img src={getMediaUrl(hoveredEvent.food_details.image)} alt={hoveredEvent.food_details.name} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
                                         <div className="flex flex-wrap justify-between items-center gap-2 text-[10px] font-bold text-gray-400">
                                             <span>Qty: {hoveredEvent.quantity}</span>
                                             {hoveredEvent.packaging_material_details?.name && (
@@ -256,6 +271,7 @@ const MealsAllotedPage: React.FC = () => {
                             <FullCalendar
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView="dayGridMonth"
+                                initialDate={`${calendarYear}-${String(calendarMonth).padStart(2, '0')}-01`}
                                 headerToolbar={{
                                     left: "prev,next",
                                     center: "title",
@@ -392,11 +408,18 @@ const MealsAllotedPage: React.FC = () => {
                                                                             </span>
                                                                         </div>
                                                                         <div className="flex justify-between items-start mb-2">
-                                                                            <p className={`text-[9px] font-black uppercase tracking-tighter truncate leading-tight ${m.is_consumed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}>
-                                                                                {m.food_details?.name}
-                                                                            </p>
-                                                                            {m.is_consumed && <FiCheckCircle className="text-emerald-500 shrink-0" size={10} />}
-                                                                        </div>
+                                                                             <div className="flex items-center gap-2 overflow-hidden">
+                                                                                 {m.food_details?.image && (
+                                                                                     <div className="size-6 rounded-lg overflow-hidden shrink-0 border border-gray-100 dark:border-white/10 shadow-sm">
+                                                                                         <img src={getMediaUrl(m.food_details.image)} alt="" className="w-full h-full object-cover" />
+                                                                                     </div>
+                                                                                 )}
+                                                                                 <p className={`text-[9px] font-black uppercase tracking-tighter truncate leading-tight ${m.is_consumed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}>
+                                                                                     {m.food_details?.name}
+                                                                                 </p>
+                                                                             </div>
+                                                                             {m.is_consumed && <FiCheckCircle className="text-emerald-500 shrink-0" size={10} />}
+                                                                         </div>
                                                                         <div className="flex items-center justify-between mt-auto">
                                                                             <span className="text-[8px] font-bold text-gray-400">Qty: {m.quantity}</span>
                                                                             {!m.is_consumed && (
@@ -476,6 +499,15 @@ const MealsAllotedPage: React.FC = () => {
                                                             <p className="text-[10px] font-black italic text-indigo-500 uppercase tracking-widest mb-4">
                                                                 {meal.meal_type_details?.name || 'Meal'}
                                                             </p>
+                                                            {meal.food_details?.image && (
+                                                                <div className="mb-6 rounded-[30px] overflow-hidden aspect-video shadow-lg group-hover:shadow-indigo-500/20 transition-all">
+                                                                    <img 
+                                                                        src={getMediaUrl(meal.food_details.image)} 
+                                                                        alt={meal.food_details.name} 
+                                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                                                    />
+                                                                </div>
+                                                            )}
                                                             <div className="flex items-start justify-between gap-2 mb-4">
                                                                 <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-tight group-hover:text-indigo-600 transition-colors">
                                                                     {meal.food_details?.name}
@@ -606,6 +638,7 @@ const MealsAllotedPage: React.FC = () => {
                             )}
                         </div>
                     )}
+                    </div>
                 </div>
             </div>
 
@@ -760,7 +793,7 @@ const MealsAllotedPage: React.FC = () => {
                                         <div className="space-y-10">
                                             {foodRecipe.image && (
                                                 <div className="relative rounded-[32px] overflow-hidden aspect-video shadow-xl">
-                                                    <img src={foodRecipe.image} alt={foodRecipe.name} className="w-full h-full object-cover" />
+                                                    <img src={getMediaUrl(foodRecipe.image)} alt={foodRecipe.name} className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                                                 </div>
                                             )}
