@@ -4505,7 +4505,7 @@ class MealTypeViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4533,7 +4533,7 @@ class PackagingMaterialViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_packagingmaterials(self, request):
@@ -4547,7 +4547,7 @@ class CuisineTypeViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -4577,7 +4577,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'meal_types__name', 'cuisine_types__name']
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     @action(detail=False, methods=['get'], url_path='all')
     def get_all_foods(self, request):
@@ -5000,7 +5000,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     Endpoints: /app/ingredient/
     """
     serializer_class = IngredientSerializer
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -5025,7 +5025,7 @@ class UnitViewSet(viewsets.ModelViewSet):
     Endpoints: /app/unit/
     """
     serializer_class = UnitSerializer
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -5051,7 +5051,7 @@ class FoodIngredientViewSet(viewsets.ModelViewSet):
     Filter by food: /app/foodingredient/?food=<id>
     """
     serializer_class = FoodIngredientSerializer
-    permission_classes = [IsAdminOrNutritionistRole]
+    permission_classes = [IsAdminOrNutritionistOrKitchenRole]
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['food__name', 'ingredient__name']
