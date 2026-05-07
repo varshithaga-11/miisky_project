@@ -418,6 +418,29 @@ class AvailableRolesView(APIView):
         return Response({"roles": [r['role'] for r in roles]})
 
 
+class UserDetailsByIdentifierView(APIView):
+    """
+    AllowAny endpoint — fetches entire details for a given identifier (email or username).
+    Used by the sign-up form to pre-populate details if the user exists.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        identifier = request.query_params.get('identifier', '').strip()
+        if not identifier:
+            return Response({"error": "Identifier required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = UserRegister.objects.filter(
+            Q(email__iexact=identifier) | Q(username=identifier)
+        ).first()
+
+        if not user:
+            return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        from .serializers import UserRegisterSerializer
+        serializer = UserRegisterSerializer(user)
+        return Response(serializer.data)
+
 class UserRolesByIdentifierView(APIView):
     """
     AllowAny endpoint — fetches available roles for a given identifier (email or username)
@@ -445,7 +468,6 @@ class UserRolesByIdentifierView(APIView):
         roles = list({u['role'] for u in users})
         # Use the actual username found for the login step
         username = users.first()['username']
-        return Response({"roles": roles, "username": username})
         return Response({"roles": roles, "username": username})
 
 class SwitchRoleView(APIView):
