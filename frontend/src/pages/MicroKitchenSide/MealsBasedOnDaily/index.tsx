@@ -12,15 +12,17 @@ import {
     getKitchenMealsCalendar,
     assignMealDelivery,
     bulkAssignDelivery,
+    getFoodRecipeById,
+    getFoodByIdNutrition
 } from "./api";
-import type { DailyMeal, KitchenPatient } from "./api";
+import type { DailyMeal, KitchenPatient, FoodRecipe, FoodNutritionById } from "./api";
 import type { DeliveryFeedback } from "../../NonPatient/orderapi";
 import { getMicroKitchenUserMealDeliveryFeedback } from "../../NonPatient/orderapi";
 import { fetchPlanDeliveryAssignments, fetchSupplyChainUsers } from "../DeliveryManagement/api";
 import type { PlanDeliveryAssignment, SupplyChainUser } from "../DeliveryManagement/api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle, FiStar, FiLoader, FiMapPin } from "react-icons/fi";
+import { FiClock, FiSearch, FiTruck, FiCheckCircle, FiUser, FiInfo, FiHash, FiFilter, FiCalendar, FiX, FiPackage, FiPlusCircle, FiStar, FiLoader, FiMapPin, FiEye } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiCookingPot, GiBowlOfRice, GiHamburger, GiBreadSlice } from "react-icons/gi";
 
@@ -120,6 +122,43 @@ const MealsBasedOnDailyPage: React.FC = () => {
     const [bulkPersonId, setBulkPersonId] = useState<string>("");
     const [bulkOnlyUnassigned, setBulkOnlyUnassigned] = useState(true);
     const [bulkSaving, setBulkSaving] = useState(false);
+
+    // Recipe & Nutrition Modal State
+    const [foodRecipeOpen, setFoodRecipeOpen] = useState(false);
+    const [foodRecipeLoading, setFoodRecipeLoading] = useState(false);
+    const [foodRecipe, setFoodRecipe] = useState<FoodRecipe | null>(null);
+
+    const [foodNutritionOpen, setFoodNutritionOpen] = useState(false);
+    const [foodNutritionLoading, setFoodNutritionLoading] = useState(false);
+    const [foodNutrition, setFoodNutrition] = useState<FoodNutritionById | null>(null);
+
+    const openFoodNutrition = async (foodId: number) => {
+        setFoodNutritionOpen(true);
+        setFoodNutritionLoading(true);
+        setFoodNutrition(null);
+        try {
+            const data = await getFoodByIdNutrition(foodId);
+            setFoodNutrition(data);
+        } catch {
+            toast.error("Failed to load food nutrition");
+        } finally {
+            setFoodNutritionLoading(false);
+        }
+    };
+
+    const openFoodRecipe = async (foodId: number) => {
+        setFoodRecipeOpen(true);
+        setFoodRecipeLoading(true);
+        setFoodRecipe(null);
+        try {
+            const data = await getFoodRecipeById(foodId);
+            setFoodRecipe(data);
+        } catch {
+            toast.error("Failed to load recipe details");
+        } finally {
+            setFoodRecipeLoading(false);
+        }
+    };
 
     const loadMealFeedback = async (mealId: number) => {
         if (deliveryFeedbackByMealId[mealId]) return;
@@ -380,7 +419,27 @@ const MealsBasedOnDailyPage: React.FC = () => {
                                                 ) : <GiBowlOfRice size={24} className="m-5 text-gray-200" />}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic truncate">{meal.food_details.name}</h4>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-tighter italic truncate">{meal.food_details.name}</h4>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openFoodRecipe(meal.food_details.id)}
+                                                            className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                                            title="View recipe"
+                                                        >
+                                                            <GiCookingPot size={14} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openFoodNutrition(meal.food_details.id)}
+                                                            className="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                                            title="View nutrients"
+                                                        >
+                                                            <FiEye size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-lg">
                                                         {meal.meal_type_details.name}
@@ -657,6 +716,192 @@ const MealsBasedOnDailyPage: React.FC = () => {
                             </div>
                         </motion.div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Food Nutrition Modal */}
+            <AnimatePresence>
+                {foodNutritionOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-gray-950/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ scale: 0.92, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.92, opacity: 0 }}
+                            className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-[32px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/10"
+                        >
+                            <div className="p-6 lg:p-8">
+                                <div className="flex items-start justify-between mb-4">
+                                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                                        {foodNutrition?.food_name || "Food Nutrients"}
+                                    </h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFoodNutritionOpen(false)}
+                                        className="p-2 rounded-xl bg-gray-50 dark:bg-white/[0.03] text-gray-400 hover:text-rose-500"
+                                    >
+                                        <FiX size={18} />
+                                    </button>
+                                </div>
+                                {foodNutritionLoading ? (
+                                    <p className="text-sm text-gray-500">Loading...</p>
+                                ) : foodNutrition ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Serving Size:</span> <span className="font-bold">{foodNutrition.serving_size || "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Calories:</span> <span className="font-bold">{foodNutrition.calories ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Protein:</span> <span className="font-bold">{foodNutrition.protein ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Carbs:</span> <span className="font-bold">{foodNutrition.carbs ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Fat:</span> <span className="font-bold">{foodNutrition.fat ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Fiber:</span> <span className="font-bold">{foodNutrition.fiber ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Sugar:</span> <span className="font-bold">{foodNutrition.sugar ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Saturated Fat:</span> <span className="font-bold">{foodNutrition.saturated_fat ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Trans Fat:</span> <span className="font-bold">{foodNutrition.trans_fat ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Sodium:</span> <span className="font-bold">{foodNutrition.sodium ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Potassium:</span> <span className="font-bold">{foodNutrition.potassium ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Calcium:</span> <span className="font-bold">{foodNutrition.calcium ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Iron:</span> <span className="font-bold">{foodNutrition.iron ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin A:</span> <span className="font-bold">{foodNutrition.vitamin_a ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin C:</span> <span className="font-bold">{foodNutrition.vitamin_c ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin D:</span> <span className="font-bold">{foodNutrition.vitamin_d ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Vitamin B12:</span> <span className="font-bold">{foodNutrition.vitamin_b12 ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Cholesterol:</span> <span className="font-bold">{foodNutrition.cholesterol ?? "-"}</span></div>
+                                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3"><span className="text-gray-500">Glycemic Index:</span> <span className="font-bold">{foodNutrition.glycemic_index ?? "-"}</span></div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">No nutrition data</p>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Food Recipe Modal */}
+            <AnimatePresence>
+                {foodRecipeOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-gray-950/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ scale: 0.92, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.92, opacity: 0 }}
+                            className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-[40px] overflow-hidden shadow-2xl border border-gray-100 dark:border-white/10 flex flex-col"
+                        >
+                            <div className="p-8 border-b dark:border-white/5 flex items-start justify-between bg-gray-50/50 dark:bg-white/[0.02]">
+                                <div className="flex items-center gap-6">
+                                    <div className="size-16 rounded-2xl bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                                        <GiCookingPot size={32} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-tight">
+                                            {foodRecipe?.name || "Recipe Details"}
+                                        </h2>
+                                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Cooking Instructions & Ingredients</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setFoodRecipeOpen(false)}
+                                    className="p-3 rounded-2xl bg-white dark:bg-white/[0.03] text-gray-400 hover:text-rose-500 shadow-sm transition-all"
+                                >
+                                    <FiX size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-8 lg:p-12 no-scrollbar">
+                                {foodRecipeLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                        <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading recipe secrets...</p>
+                                    </div>
+                                ) : foodRecipe ? (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                        {/* Left Side: Image & Ingredients */}
+                                        <div className="space-y-10">
+                                            {foodRecipe.image && (
+                                                <div className="relative rounded-[32px] overflow-hidden aspect-video shadow-xl">
+                                                    <img src={getMediaUrl(foodRecipe.image)} alt={foodRecipe.name} className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-8 h-1 bg-indigo-500 rounded-full"></div>
+                                                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Ingredients</h3>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {foodRecipe.ingredients.length > 0 ? (
+                                                        foodRecipe.ingredients.map((ing, idx) => (
+                                                            <div key={ing.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/[0.03] rounded-2xl group hover:bg-indigo-50/50 dark:hover:bg-white/[0.05] transition-colors">
+                                                                <div className="flex items-center gap-4">
+                                                                    <span className="size-8 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-indigo-500 shadow-sm">{idx + 1}</span>
+                                                                    <div>
+                                                                        <p className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{ing.ingredient_name}</p>
+                                                                        {ing.notes && <p className="text-[9px] text-gray-400 font-medium italic">{ing.notes}</p>}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{ing.quantity} {ing.unit_name}</p>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400 italic">No ingredients listed.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Right Side: Description & Steps */}
+                                        <div className="space-y-10">
+                                            {foodRecipe.description && (
+                                                <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-[32px] border border-indigo-100/50 dark:border-indigo-900/20">
+                                                    <p className="text-xs leading-relaxed text-indigo-900 dark:text-indigo-300 font-medium italic">
+                                                        "{foodRecipe.description}"
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-8 h-1 bg-emerald-500 rounded-full"></div>
+                                                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Cooking Steps</h3>
+                                                </div>
+                                                <div className="space-y-6">
+                                                    {foodRecipe.steps.length > 0 ? (
+                                                        foodRecipe.steps.sort((a, b) => a.step_number - b.step_number).map((step) => (
+                                                            <div key={step.id} className="relative pl-12">
+                                                                <div className="absolute left-0 top-0 size-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-lg shadow-emerald-500/20">
+                                                                    {step.step_number}
+                                                                </div>
+                                                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed pt-1">
+                                                                    {step.instruction}
+                                                                </p>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400 italic">No steps provided.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-20">
+                                        <p className="text-gray-400 font-bold">Recipe details are missing for this item.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-8 bg-gray-50/50 dark:bg-white/[0.02] border-t dark:border-white/5 flex justify-end">
+                                <button
+                                    onClick={() => setFoodRecipeOpen(false)}
+                                    className="px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:scale-105 transition-transform"
+                                >
+                                    Close Recipe
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>

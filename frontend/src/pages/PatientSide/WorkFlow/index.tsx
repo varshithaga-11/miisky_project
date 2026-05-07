@@ -1,13 +1,10 @@
 import React from "react";
 import {
   FileText,
-  MessageSquare,
-  CheckCircle2,
-  CreditCard,
   ShieldCheck,
-  ArrowRight,
   Briefcase,
-  CheckCircle
+  CheckCircle,
+  ArrowRight
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./WorkFlow.css";
@@ -43,30 +40,14 @@ const WorkFlow: React.FC = () => {
     },
     {
       id: 3,
-      title: "Diet Plan Suggestion",
-      description: "Get a personalized diet plan tailored to your needs.",
+      title: "Plan Selection & Approval",
+      description: "Review, approve, and complete payment for your personalized diet plans.",
       icon: <Briefcase className="w-6 h-6" />,
       path: "/patient/suggested-plans",
       status: "pending",
     },
     {
       id: 4,
-      title: "Patient Approval",
-      description: "Review and approve the suggested diet plan.",
-      icon: <CheckCircle2 className="w-6 h-6" />,
-      path: "/patient/suggested-plans",
-      status: "pending",
-    },
-    {
-      id: 5,
-      title: "Secure Payment",
-      description: "Complete payment to activate your personalized plan.",
-      icon: <CreditCard className="w-6 h-6" />,
-      path: "/patient/suggested-plans",
-      status: "pending",
-    },
-    {
-      id: 6,
       title: "Miisky Verification",
       description: "Final verification and activation by the Miisky team.",
       icon: <ShieldCheck className="w-6 h-6" />,
@@ -74,7 +55,7 @@ const WorkFlow: React.FC = () => {
       status: "pending",
     },
     {
-      id: 7,
+      id: 5,
       title: "Daily Meal Setup",
       description: "Your nutritionist sets your daily meal schedules.",
       icon: <CheckCircle className="w-6 h-6" />,
