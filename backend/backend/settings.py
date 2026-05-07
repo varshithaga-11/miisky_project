@@ -29,16 +29,15 @@ SECRET_KEY = 'django-insecure-ot$t5-^hs2djx3&y84@2f42o(ot*su1apsb373*hb_mdvcl3u&
 
 DEBUG = True
 
-
 # ALLOWED_HOSTS = [
 #     h.strip()
 #     for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 #     if h.strip()
 # ]
 ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "testserver",
+    # "localhost",
+    # "127.0.0.1",
+    # "15.206.151.207",
     "api.miisky.com"
 ]
 
@@ -137,7 +136,34 @@ DATABASES = {
 
 
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+# ]
+
+CORS_ALLOWED_ORIGINS = [
+    # "http://localhost:5173",
+
+    # "https://localhost",
+    # "https://localhost:5173",
+    # "http://localhost",
+    # "http://localhost:5173",
+    # "http://127.0.0.1",
+    # "http://127.0.0.1:8000",
+    # "http://15.206.151.207",
+    # "http://15.206.151.207:8000",
+    # "https://15.206.151.207",
+    # "https://15.206.151.207:8000",
+    "https://api.miisky.com",
+    "http://api.miisky.com",
+    "https://web.miisky.com",
+]
+
+
+# CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_ALL_ORIGINS = False
+
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "DELETE",
