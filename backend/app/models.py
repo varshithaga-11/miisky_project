@@ -60,10 +60,21 @@ class UserRegister(AbstractUser):
 
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
 
+    # Overriding username to remove unique=True
+    username = models.CharField(
+        max_length=150,
+        unique=False,
+        help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+        validators=[AbstractUser.username_validator],
+        error_messages={
+            "unique": "A user with that username already exists.",
+        },
+    )
+
     # Basic Info
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=False, null=True, blank=True)
 
     mobile = models.CharField(max_length=15, null=True, blank=True)
     whatsapp = models.CharField(max_length=15, null=True, blank=True)
@@ -91,6 +102,10 @@ class UserRegister(AbstractUser):
     longitude = models.FloatField(null=True, blank=True)
     lat_lng_address = models.CharField(max_length=255, null=True, blank=True)
 
+    caste = models.CharField(max_length=100, null=True, blank=True)
+    religion = models.CharField(max_length=100, null=True, blank=True)
+    group = models.CharField(max_length=100, null=True, blank=True)
+
 
     joined_date = models.DateTimeField(null=True, blank=True)
 
@@ -108,6 +123,12 @@ class UserRegister(AbstractUser):
         blank=True,
         related_name="created_users",
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['email', 'role'], name='unique_email_role'),
+            models.UniqueConstraint(fields=['username', 'role'], name='unique_username_role'),
+        ]
 
 
 class NutritionistProfile(models.Model):

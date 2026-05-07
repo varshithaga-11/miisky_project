@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 from django.http import FileResponse, HttpResponse
+from rest_framework_simplejwt.tokens import RefreshToken
 import csv
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
@@ -370,10 +371,13 @@ class UserRegisterView(APIView):
     permission_classes = [AllowAny]  
     
     def post(self, request):
+        print("--- Incoming Registration Request ---")
+        print(f"Data: {request.data}")
         try:
             serializer = UserRegisterSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
+                print(f"Registration successful for user: {user.username}")
                 return Response({
                     "status": "success",
                     "response_code": status.HTTP_201_CREATED,
@@ -386,17 +390,64 @@ class UserRegisterView(APIView):
                         "created_by": user.created_by.id if user.created_by else None
                     }
                 })
+            print(f"Registration validation failed: {serializer.errors}")
             return Response({
                 "status": "failed",
                 "message": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(f"Registration Exception: {str(e)}")
             message = str(e)
             return Response({
                 "status": "failed",
                 "message": message
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
+
+class AvailableRolesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_query = Q()
+        if request.user.email:
+            user_query |= Q(email=request.user.email)
+        if request.user.username:
+            user_query |= Q(username=request.user.username)
+             
+        roles = UserRegister.objects.filter(user_query).values('role').distinct()
+        return Response({"roles": [r['role'] for r in roles]})
+
+class SwitchRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target_role = request.data.get('role')
+        if not target_role:
+            return Response({"error": "Role is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_query = Q()
+        if request.user.email:
+            user_query |= Q(email=request.user.email)
+        if request.user.username:
+            user_query |= Q(username=request.user.username)
+        
+        target_user = UserRegister.objects.filter(user_query, role=target_role).first()
+        
+        if not target_user:
+            return Response({"error": "You do not have an account with this role"}, status=status.HTTP_403_FORBIDDEN)
+            
+        refresh = RefreshToken.for_user(target_user)
+        refresh['username'] = target_user.username    
+        refresh['role'] = target_user.role
+        refresh['user_id'] = target_user.id
+
+        return Response({
+            "status": "success",
+            "tokens": {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+        })
 
 class LoginView(APIView):
     permission_classes = [AllowAny] 
@@ -4141,6 +4192,7 @@ class CountryViewSet(viewsets.ModelViewSet):
 
 
 class StateViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     serializer_class = StateSerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
@@ -4161,6 +4213,7 @@ class StateViewSet(viewsets.ModelViewSet):
 
 
 class CityViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     serializer_class = CitySerializer
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]

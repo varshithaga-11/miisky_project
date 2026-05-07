@@ -27,7 +27,8 @@ SECRET_KEY = 'django-insecure-ot$t5-^hs2djx3&y84@2f42o(ot*su1apsb373*hb_mdvcl3u&
 # DEBUG = True
 
 
-DEBUG = False
+DEBUG = True
+
 
 # ALLOWED_HOSTS = [
 #     h.strip()
@@ -35,9 +36,9 @@ DEBUG = False
 #     if h.strip()
 # ]
 ALLOWED_HOSTS = [
-    # "localhost",
-    # "127.0.0.1",
-    # "15.206.151.207",
+    "localhost",
+    "127.0.0.1",
+    "testserver",
     "api.miisky.com"
 ]
 
@@ -52,6 +53,12 @@ USE_X_FORWARDED_HOST = True   # 👈 ADD THIS
 
 
 AUTH_USER_MODEL = 'app.UserRegister'
+
+AUTHENTICATION_BACKENDS = [
+    'app.utils.auth_backend.RoleBasedModelBackend',
+]
+
+SILENCED_SYSTEM_CHECKS = ["auth.E003"]
 
 
 # Application definition
@@ -72,8 +79,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'backend.middleware.PrivateNetworkAccessMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -130,38 +137,27 @@ DATABASES = {
 
 
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-# ]
-
-CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:5173",
-
-    # "https://localhost",
-    # "https://localhost:5173",
-    # "http://localhost",
-    # "http://localhost:5173",
-    # "http://127.0.0.1",
-    # "http://127.0.0.1:8000",
-    # "http://15.206.151.207",
-    # "http://15.206.151.207:8000",
-    # "https://15.206.151.207",
-    # "https://15.206.151.207:8000",
-    "https://api.miisky.com",
-    "http://api.miisky.com",
-    "https://web.miisky.com",
-]
-
-
-# CORS_ALLOW_ALL_ORIGINS = True
-
-CORS_ALLOW_ALL_ORIGINS = False
-
-
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
-
-
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

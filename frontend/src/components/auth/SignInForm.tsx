@@ -8,11 +8,23 @@ import Button from "../ui/button/Button";
 import loginUser from "./signinApi";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Select from "../form/Select";
+
+const ROLE_OPTIONS = [
+  { value: "admin", label: "Admin" },
+  { value: "patient", label: "Patient" },
+  { value: "nutritionist", label: "Nutritionist" },
+  { value: "micro_kitchen", label: "Micro Kitchen" },
+  { value: "supply_chain", label: "Supply Chain" },
+  { value: "non_patient", label: "Non-Patient" },
+  { value: "doctor", label: "Doctor" },
+];
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,8 +33,8 @@ export default function SignInForm() {
     // Clear previous messages
 
 
-    if (!username || !password) {
-      toast.error("Please enter both username and password.")
+    if (!username || !password || !role) {
+      toast.error("Please enter username, password and select a role.")
       return;
     }
 
@@ -31,7 +43,8 @@ export default function SignInForm() {
     try {
       const result = await loginUser({
         username: username,
-        password: password
+        password: password,
+        role: role
       });
 
       if (result.success) {
@@ -172,6 +185,17 @@ export default function SignInForm() {
                     placeholder="Enter your username"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>
+                    Role <span className="text-error-500">*</span>{" "}
+                  </Label>
+                  <Select
+                    options={ROLE_OPTIONS}
+                    value={role}
+                    onChange={setRole}
+                    placeholder="Select your role"
                   />
                 </div>
                 <div>

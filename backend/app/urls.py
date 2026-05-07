@@ -492,6 +492,8 @@ urlpatterns = [
     ),
     path('import/<str:module>/<str:submenu>/', UniversalImportView.as_view(), name='universal-import'),
     path('import/<str:module>/<str:submenu>/template/', TemplateDownloadView.as_view(), name='template-download'),
+    path('available-roles/', AvailableRolesView.as_view(), name='available-roles'),
+    path('switch-role/', SwitchRoleView.as_view(), name='switch-role'),
     path('register/', UserRegisterView.as_view(), name='register'),
     # path('userlist/', UserListView.as_view(), name='user_list'),
     path("admin/patient-orders-summary/", views.AdminOrdersSummaryView.as_view(), name="admin-patient-orders-summary"),

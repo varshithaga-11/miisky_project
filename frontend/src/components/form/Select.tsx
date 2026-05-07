@@ -13,6 +13,7 @@ interface SelectProps {
   error?: string;               // optional error message
   required?: boolean; // <-- add required
   onFocus?: () => void;
+  leadingIcon?: React.ReactNode;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -26,12 +27,14 @@ const Select: React.FC<SelectProps> = ({
   error,
   required = false, // <-- default false
   onFocus,
+  leadingIcon,
 
 }) => {
   const [open, setOpen] = useState(false);
   const [internal, setInternal] = useState(value ?? "");
+  const [searchTerm, setSearchTerm] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const [touched, setTouched] = useState(false); // track if field was touched
+  const [touched, setTouched] = useState(false);
 
   // sync external value
   useEffect(() => { if (value !== undefined) setInternal(value); }, [value]);
@@ -41,16 +44,26 @@ const Select: React.FC<SelectProps> = ({
     const onDoc = (e: MouseEvent) => {
       if (!ref.current || ref.current.contains(e.target as Node)) return;
       setOpen(false);
+      setSearchTerm("");
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
   const selected = options.find(o => o.value === internal);
-  const showError = required && touched && !internal; // show error if required and empty
+  const showError = required && touched && !internal;
+
+  const filteredOptions = options.filter(opt => 
+    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div ref={ref} className={`relative ${className}`}>
+      {leadingIcon && (
+        <span className="absolute z-10 -translate-y-1/2 left-4 top-1/2">
+          {leadingIcon}
+        </span>
+      )}
       <button
         id={id}
         type="button"
@@ -61,7 +74,7 @@ const Select: React.FC<SelectProps> = ({
         }}
         disabled={disabled}
         className={`h-11 w-full rounded-lg border border-gray-300 dark:border-gray-700
-                  bg-white dark:bg-gray-900 px-4 pr-10 text-left text-sm
+                  bg-white dark:bg-gray-900 ${leadingIcon ? 'pl-11' : 'px-4'} pr-10 text-left text-sm
                   ${selected ? "text-blue-600 dark:text-blue-400 font-bold" : "text-gray-900 dark:text-white/90"}
                   focus:outline-none focus:ring-2 focus:ring-blue-500/20
                   ${disabled ? "opacity-50 cursor-not-allowed" : ""}
@@ -73,27 +86,43 @@ const Select: React.FC<SelectProps> = ({
       </button>
 
       {open && (
-        <ul
-          className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg
+        <div
+          className="absolute gap-2 p-2 z-50 mt-1 w-full max-h-72 overflow-hidden rounded-lg
                      border border-gray-700 dark:border-gray-900 bg-white dark:bg-gray-900
-                     shadow-lg"
+                     shadow-lg flex flex-col"
         >
-          {options.map(opt => (
-            <li key={opt.value}>
-              <button
-                type="button"
-                onClick={() => { setInternal(opt.value); onChange(opt.value); setOpen(false); }}
-                className={`block w-full px-4 py-2 text-left text-sm
-                           ${internal === opt.value
-                              ? "bg-gray-100 dark:bg-gray-800"
-                              : "hover:bg-gray-50 dark:hover:bg-gray-800/70"}
-                           text-gray-900 dark:text-gray-100`}
-              >
-                {opt.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+          <div className="px-1 py-1">
+            <input 
+              type="text"
+              placeholder="Search..."
+              className="w-full h-8 px-3 text-xs rounded-md border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <ul className="flex-1 overflow-auto max-h-48">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(opt => (
+                <li key={opt.value}>
+                  <button
+                    type="button"
+                    onClick={() => { setInternal(opt.value); onChange(opt.value); setOpen(false); setSearchTerm(""); }}
+                    className={`block w-full px-4 py-2 text-left text-sm
+                               ${internal === opt.value
+                                  ? "bg-gray-100 dark:bg-gray-800"
+                                  : "hover:bg-gray-50 dark:hover:bg-gray-800/70"}
+                               text-gray-900 dark:text-gray-100`}
+                  >
+                    {opt.label}
+                  </button>
+                </li>
+              ))
+            ) : (
+              <li className="px-4 py-2 text-xs text-gray-500 italic">No results found</li>
+            )}
+          </ul>
+        </div>
       )}
       {(showError || error) && <p className="text-red-500 text-xs mt-1">{error || "This field is required"}</p>}
 

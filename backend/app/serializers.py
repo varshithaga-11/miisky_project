@@ -23,7 +23,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'role',
             'password',
             'password_confirm',
-            'created_by'
+            'created_by',
+            'mobile',
+            'whatsapp',
+            'dob',
+            'gender',
+            'address',
+            'city',
+            'state',
+            'zip_code',
+            'photo',
+            'caste',
+            'religion',
+            'group',
+            'lat_lng_address'
         ]
         extra_kwargs = {
             'password': {'write_only': True},
@@ -103,6 +116,9 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'is_patient_mapped',
             'password',
             'password_confirm',
+            'caste',
+            'religion',
+            'group',
         ]
         read_only_fields = ['created_on', 'city_name', 'state_name', 'country_name', 'created_by_name', 'created_by_role']
 
@@ -159,12 +175,14 @@ class UserManagementSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    role = serializers.CharField(required=True)
     
     def validate(self, data):
         username = data.get("username")
         password = data.get("password")
+        role = data.get("role")
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=username, password=password, role=role)
         if not user:
             raise Exception("Invalid username or password.")
 
@@ -239,8 +257,8 @@ class UserUpdateSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         user = self.context["request"].user
-        if UserRegister.objects.filter(username=value).exclude(id=user.id).exists():
-            raise serializers.ValidationError("Username already exists.")
+        if UserRegister.objects.filter(username=value, role=user.role).exclude(id=user.id).exists():
+            raise serializers.ValidationError("Username already exists for this role.")
         return value
 
     def validate_new_password(self, value):

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { createApiUrl } from '../../access/access.ts';
 
 // Types for the registration API
@@ -9,6 +10,19 @@ interface UserData {
   password: string;
   password_confirm: string;
   role: string;
+  mobile?: string;
+  whatsapp?: string;
+  dob?: string;
+  gender?: string;
+  address?: string;
+  city?: number;
+  state?: number;
+  zip_code?: string;
+  photo?: any;
+  caste?: string;
+  religion?: string;
+  group?: string;
+  lat_lng_address?: string;
 }
 
 interface ApiResponse {
@@ -23,43 +37,65 @@ interface ApiResponse {
 // Register a new user
 export const registerUser = async (userData: UserData): Promise<ApiResponse> => {
   try {
-    console.log('Attempting to register user with data:', userData);
-    console.log('API URL:', createApiUrl('api/register/'));
+    console.log('--- Registration Attempt ---');
+    console.log('Target URL:', createApiUrl('api/register/'));
+    console.log('Data:', userData);
     
-    const response = await fetch(createApiUrl('api/register/'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
+    let config: any = {
+      headers: {}
+    };
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
+    let dataToSend: any;
 
-    const data = await response.json();
-    console.log('Response data:', data);
+    if (userData.photo) {
+      dataToSend = new FormData();
+      Object.entries(userData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          dataToSend.append(key, value);
+        }
+      });
+      // Axios will set the correct Content-Type for FormData
+    } else {
+      dataToSend = userData;
+      config.headers['Content-Type'] = 'application/json';
+    }
 
-    if (response.ok && data.status === 'success') {
+    const response = await axios.post(createApiUrl('api/register/'), dataToSend, config);
+
+    console.log('Registration Success:', response.status, response.data);
+
+    if (response.data.status === 'success') {
       return {
         success: true,
-        data: data,
-        message: data.message || 'User registered successfully'
+        data: response.data,
+        message: response.data.message || 'User registered successfully'
       };
     } else {
       return {
         success: false,
-        error: data.message || 'Registration failed',
-        details: data.message
+        error: response.data.message || 'Registration failed',
+        details: response.data.message
       };
     }
   } catch (error: any) {
-    console.error('Registration API Error:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
+    console.error('--- Registration Error ---');
+    if (axios.isAxiosError(error)) {
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      console.error('Headers:', error.response?.headers);
+      console.error('Config:', error.config);
+      
+      const errorMessage = error.response?.data?.message || error.message;
+      const details = error.response?.data?.message || error.response?.data || error.message;
+      
+      return {
+        success: false,
+        error: `API Error: ${errorMessage}`,
+        details: details
+      };
+    }
+    
+    console.error('Non-Axios Error:', error);
     return {
       success: false,
       error: `Network error occurred: ${error.message}`,
@@ -70,3 +106,35 @@ export const registerUser = async (userData: UserData): Promise<ApiResponse> => 
 
 // Export types for use in other components
 export type { UserData, ApiResponse };
+
+export const getAvailableRoles = async (): Promise<{ success: boolean; roles?: string[]; error?: string }> => {
+  try {
+    const token = localStorage.getItem("access");
+    const response = await axios.get(createApiUrl("api/available-roles/"), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return { success: true, roles: response.data.roles };
+  } catch (error: any) {
+    return { success: false, error: error.response?.data?.error || "Failed to fetch roles" };
+  }
+};
+
+export const switchRole = async (role: string): Promise<{ success: boolean; tokens?: any; error?: string }> => {
+  try {
+    const token = localStorage.getItem("access");
+    const response = await axios.post(
+      createApiUrl("api/switch-role/"),
+      { role },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return { success: true, tokens: response.data.tokens };
+  } catch (error: any) {
+    return { success: false, error: error.response?.data?.error || "Failed to switch role" };
+  }
+};
