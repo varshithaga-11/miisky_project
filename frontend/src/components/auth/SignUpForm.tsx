@@ -120,10 +120,18 @@ export default function SignUpForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    let updatedData = { ...formData, [name]: value };
+
+    // If the user types into 'username' field, check if it's an email
+    if (name === 'username') {
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      if (isEmail) {
+        updatedData.email = value;
+      }
+    }
+
+    setFormData(updatedData);
 
     // Real-time password validation
     if (name === 'password' || name === 'password_confirm') {

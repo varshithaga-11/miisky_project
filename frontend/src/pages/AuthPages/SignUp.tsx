@@ -9,9 +9,9 @@ export default function SignUp() {
         title="SignUp Page"
         description="SignUp Page"
       />
-      <AuthLayout>
-        <SignUpForm />
-      </AuthLayout>
+      {/* <AuthLayout> */}
+      <SignUpForm />
+      {/* </AuthLayout> */}
     </>
   );
 }

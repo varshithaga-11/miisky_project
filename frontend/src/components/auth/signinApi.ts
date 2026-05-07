@@ -60,4 +60,36 @@ const loginUser = async (credentials: LoginCredentials): Promise<LoginResponse> 
 
 
 
+export const getUserRolesByIdentifier = async (identifier: string): Promise<{ success: boolean; roles?: string[]; username?: string; error?: string }> => {
+  try {
+    const response = await fetch(createApiUrl(`api/user-roles-by-identifier/?identifier=${encodeURIComponent(identifier)}`), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        roles: data.roles,
+        username: data.username,
+      };
+    } else {
+      return {
+        success: false,
+        error: data.error || 'Failed to fetch roles',
+      };
+    }
+  } catch (error) {
+    console.error('Fetch roles error:', error);
+    return {
+      success: false,
+      error: 'Network error occurred',
+    };
+  }
+};
+
 export default loginUser;

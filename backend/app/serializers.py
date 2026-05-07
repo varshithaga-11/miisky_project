@@ -45,11 +45,21 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
+        
+        # If username is not provided or empty, use email as username
+        if not attrs.get('username') and attrs.get('email'):
+            attrs['username'] = attrs['email']
+            
         return attrs
     
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
+        
+        # Double check username/email consistency
+        if not validated_data.get('username') and validated_data.get('email'):
+            validated_data['username'] = validated_data['email']
+            
         user = UserRegister(**validated_data)
         user.set_password(password)
         user.save()

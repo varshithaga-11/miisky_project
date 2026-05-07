@@ -417,6 +417,37 @@ class AvailableRolesView(APIView):
         roles = UserRegister.objects.filter(user_query).values('role').distinct()
         return Response({"roles": [r['role'] for r in roles]})
 
+
+class UserRolesByIdentifierView(APIView):
+    """
+    AllowAny endpoint — fetches available roles for a given identifier (email or username)
+    before the user is authenticated. Used by the sign-in form to show a
+    role-selection step after the user enters identifier + password.
+
+    GET /api/user-roles-by-identifier/?identifier=<email_or_username>
+    Returns: { "roles": ["patient", "nutritionist", ...], "username": "<username>" }
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        identifier = request.query_params.get('identifier', '').strip()
+        if not identifier:
+            return Response({"error": "Identifier (email or username) is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Look up by email (case-insensitive) OR username
+        users = UserRegister.objects.filter(
+            Q(email__iexact=identifier) | Q(username=identifier)
+        ).values('role', 'username').distinct()
+
+        if not users.exists():
+            return Response({"error": "No account found with this identifier."}, status=status.HTTP_404_NOT_FOUND)
+
+        roles = list({u['role'] for u in users})
+        # Use the actual username found for the login step
+        username = users.first()['username']
+        return Response({"roles": roles, "username": username})
+        return Response({"roles": roles, "username": username})
+
 class SwitchRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
