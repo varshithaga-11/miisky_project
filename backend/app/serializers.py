@@ -2976,6 +2976,10 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
                 'title': obj.diet_plan.title,
                 'final_amount': str(obj.diet_plan.final_amount),
                 'no_of_days': obj.diet_plan.no_of_days,
+                'features': [
+                    {'id': f.id, 'feature': f.feature, 'order': f.order}
+                    for f in obj.diet_plan.features.all().order_by('order')
+                ]
             }
         return None
 

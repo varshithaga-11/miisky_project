@@ -70,6 +70,7 @@ export interface SuggestedPlansLite {
     title: string;
     final_amount: string;
     no_of_days: number | null;
+    features?: { id: number; feature: string; order: number }[];
   } | null;
   nutritionist_details: {
     first_name: string;

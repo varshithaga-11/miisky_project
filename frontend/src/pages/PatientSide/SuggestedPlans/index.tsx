@@ -11,7 +11,7 @@ import {
 } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
-import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage, FiHome, FiUpload, FiClock, FiStopCircle, FiCheck, FiEdit } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiCreditCard, FiPackage, FiHome, FiUpload, FiClock, FiStopCircle, FiCheck, FiEdit, FiInfo } from "react-icons/fi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getUserRoleFromToken } from "../../../utils/auth";
 
@@ -39,6 +39,7 @@ const SuggestedPlansPage: React.FC = () => {
   const [approveModal, setApproveModal] = useState<SuggestedPlansLite | null>(null);
   const [rejectModal, setRejectModal] = useState<SuggestedPlansLite | null>(null);
   const [paymentModal, setPaymentModal] = useState<SuggestedPlansLite | null>(null);
+  const [featuresModal, setFeaturesModal] = useState<SuggestedPlansLite | null>(null);
   const [rejectFeedback, setRejectFeedback] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -249,6 +250,14 @@ const SuggestedPlansPage: React.FC = () => {
                           <FiXCircle /> Reject
                         </button>
                       </div>
+                      <div className="px-6 pb-6 pt-0">
+                        <button
+                          onClick={() => setFeaturesModal(udp)}
+                          className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/10 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all border border-indigo-100 dark:border-indigo-900/20"
+                        >
+                          <FiInfo size={14} /> View Plan Features
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -358,6 +367,7 @@ const SuggestedPlansPage: React.FC = () => {
                           <FiHome size={12} /> {udp.micro_kitchen_details.brand_name}
                         </p>
                       )}
+                      
                       <p className="text-gray-500 text-sm mt-2">
                         {udp.start_date && udp.end_date && (
                           <>
@@ -366,6 +376,15 @@ const SuggestedPlansPage: React.FC = () => {
                           </>
                         )}
                       </p>
+
+                      <div className="mt-4">
+                        <button
+                          onClick={() => setFeaturesModal(udp)}
+                          className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/10 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all border border-indigo-100 dark:border-indigo-900/20"
+                        >
+                          <FiInfo size={14} /> View Plan Features
+                        </button>
+                      </div>
 
                       {udp.status === "active" && editingPlanId === udp.id && (
                         <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-3">
@@ -615,6 +634,55 @@ const SuggestedPlansPage: React.FC = () => {
         message={statusUpdate ? `Are you sure you want to mark "${statusUpdate.plan.diet_plan_details?.title || 'this plan'}" as ${statusUpdate.status.replace('_', ' ')}?` : ""}
         confirmText="Update Status"
       />
+
+      {/* Features Modal */}
+      {featuresModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Plan Features</h2>
+                  <p className="text-sm text-gray-500 mt-1">{featuresModal.diet_plan_details?.title}</p>
+                </div>
+                <button 
+                  onClick={() => setFeaturesModal(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <FiXCircle size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
+                {featuresModal.diet_plan_details?.features && featuresModal.diet_plan_details.features.length > 0 ? (
+                  featuresModal.diet_plan_details.features.map((feat) => (
+                    <div key={feat.id} className="flex gap-3 p-4 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-gray-100 dark:border-white/[0.05]">
+                      <FiCheckCircle className="text-emerald-500 shrink-0 mt-1" size={18} />
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {feat.feature}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="bg-gray-100 dark:bg-white/5 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FiInfo className="text-gray-400" size={32} />
+                    </div>
+                    <p className="text-gray-500 font-medium">No specific features listed for this plan.</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setFeaturesModal(null)}
+                className="w-full mt-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 transition-opacity"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
