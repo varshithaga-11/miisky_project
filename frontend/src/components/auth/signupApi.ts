@@ -17,6 +17,7 @@ interface UserData {
   address?: string;
   city?: number;
   state?: number;
+  country?: number;
   zip_code?: string;
   photo?: any;
   caste?: string;

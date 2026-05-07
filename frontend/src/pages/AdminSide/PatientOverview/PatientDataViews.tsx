@@ -1702,7 +1702,7 @@ export function DisplayKitchenRatings({
             ))}
           </div>
 
-          <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => { })} />
+          <InfiniteScrollTrigger hasMore={!!hasMore} loading={!!loadingMore} onLoad={onLoadMore || (() => { })} />
         </>
       )}
     </div>
@@ -1881,7 +1881,7 @@ export function DisplayDeliveryFeedback({
         </div>
       )}
 
-      <InfiniteScrollTrigger hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore || (() => { })} />
+      <InfiniteScrollTrigger hasMore={!!hasMore} loading={!!loadingMore} onLoad={onLoadMore || (() => { })} />
     </div>
   );
 }
