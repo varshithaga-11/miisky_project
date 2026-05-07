@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { 
-  EyeCloseIcon, 
-  EyeIcon, 
-  UserIcon, 
-  EnvelopeIcon, 
-  LockIcon, 
+import {
+  EyeCloseIcon,
+  EyeIcon,
+  UserIcon,
+  EnvelopeIcon,
+  LockIcon,
   CalenderIcon,
   PlusIcon,
   PencilIcon,
@@ -70,8 +70,6 @@ export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(124);
   const [formData, setFormData] = useState<FormData>({
     first_name: '',
     last_name: '',
@@ -99,10 +97,10 @@ export default function SignUpForm() {
   });
   const [passwordsMatch, setPasswordsMatch] = useState(true);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
-  
-  const [countries, setCountries] = useState<{value: string, label: string}[]>([]);
-  const [states, setStates] = useState<{value: string, label: string}[]>([]);
-  const [cities, setCities] = useState<{value: string, label: string}[]>([]);
+
+  const [countries, setCountries] = useState<{ value: string, label: string }[]>([]);
+  const [states, setStates] = useState<{ value: string, label: string }[]>([]);
+  const [cities, setCities] = useState<{ value: string, label: string }[]>([]);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -234,6 +232,8 @@ export default function SignUpForm() {
           country: data.country?.toString() || prev.country,
           state: data.state?.toString() || prev.state,
           city: data.city?.toString() || prev.city,
+          password: data.password || prev.password,
+          password_confirm: data.password || prev.password_confirm,
         }));
         if (data.country) fetchStates(data.country.toString());
         if (data.state) fetchCities(data.state.toString());
@@ -270,10 +270,21 @@ export default function SignUpForm() {
       if (result.success) {
         toast.success("Registration successful");
       } else {
-        toast.error(result.error || "Registration failed");
+        // Extract specific error messages if available in result.details
+        if (result.details && typeof result.details === 'object') {
+          Object.values(result.details).forEach((messages: any) => {
+            if (Array.isArray(messages)) {
+              messages.forEach(msg => toast.error(msg));
+            } else {
+              toast.error(messages);
+            }
+          });
+        } else {
+          toast.error(result.error || "Registration failed");
+        }
       }
     } catch (err) {
-      toast.error("Error occurred");
+      toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -286,21 +297,6 @@ export default function SignUpForm() {
           <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md text-center">
             Sign Up
           </h1>
-          <div className="absolute top-0 right-0 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLiked(!isLiked);
-                setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-200 ${
-                isLiked ? "bg-red-50 border-red-200 text-red-500" : "bg-white border-gray-200 text-gray-400 hover:text-red-400"
-              }`}
-            >
-              <FiHeart className={isLiked ? 'fill-red-500' : ''} size={16} />
-              <span className="text-xs font-semibold">{likeCount}</span>
-            </button>
-          </div>
           <ToastContainer position="top-center" autoClose={3000} className="z-[99999]" />
         </div>
 

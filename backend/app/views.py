@@ -373,6 +373,36 @@ class UserRegisterView(APIView):
     def post(self, request):
         print("--- Incoming Registration Request ---")
         print(f"Data: {request.data}")
+        
+        email = request.data.get('email')
+        username = request.data.get('username')
+        password = request.data.get('password')
+        role = request.data.get('role')
+
+        # Security check: If user already exists with this email/username, verify password
+        if email or username:
+            existing_user = UserRegister.objects.filter(
+                Q(email__iexact=email) | Q(username=username)
+            ).first()
+
+            if existing_user:
+                if not existing_user.check_password(password):
+                    return Response({
+                        "status": "failed",
+                        "message": {
+                            "password": ["The password provided does not match your existing account. Please use your existing password to add a new role."]
+                        }
+                    }, status=status.HTTP_401_UNAUTHORIZED)
+                
+                # Also check if they already have this role
+                if existing_user.role == role:
+                    return Response({
+                        "status": "failed",
+                        "message": {
+                            "role": [f"You are already registered as a {role}."]
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             serializer = UserRegisterSerializer(data=request.data)
             if serializer.is_valid():
