@@ -22,14 +22,12 @@ export default function LoginPage() {
 
     try {
       const loginResult = await authApi.login({ username: formData.username, password: formData.password });
-      console.log("Login successful, tokens received:", loginResult);
 
       // Give browser time to set the cookie before navigating
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirect to the requested page or home
       const nextUrl = searchParams.get("next") || "/";
-      console.log("Redirecting to:", nextUrl);
       navigate(nextUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid username or password. Please try again.";

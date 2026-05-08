@@ -50,7 +50,6 @@ export const getFoodNameList = async (
 
   const isAll = limit === "all";
   const url = createApiUrl(isAll ? "api/foodname/all/" : "api/foodname/");
-  console.log(`FoodName API Call: ${isAll ? "Fetching all" : "Page " + page}, URL: ${url}`);
   const response = await axios.get<PaginatedResponses<FoodName> | FoodName[]>(url, {
     headers: await getAuthHeaders(),
     params: {
@@ -58,8 +57,6 @@ export const getFoodNameList = async (
       _t: Date.now(), // Cache buster
     },
   });
-
-  console.log(`FoodName API Response Status: ${response.status}, Data type: ${Array.isArray(response.data) ? "Array" : typeof response.data}`);
 
   if (isAll) {
     return {

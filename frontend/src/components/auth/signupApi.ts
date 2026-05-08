@@ -38,10 +38,7 @@ interface ApiResponse {
 // Register a new user
 export const registerUser = async (userData: UserData): Promise<ApiResponse> => {
   try {
-    console.log('--- Registration Attempt ---');
-    console.log('Target URL:', createApiUrl('api/register/'));
-    console.log('Data:', userData);
-    
+
     let config: any = {
       headers: {}
     };
@@ -63,7 +60,6 @@ export const registerUser = async (userData: UserData): Promise<ApiResponse> => 
 
     const response = await axios.post(createApiUrl('api/register/'), dataToSend, config);
 
-    console.log('Registration Success:', response.status, response.data);
 
     if (response.data.status === 'success') {
       return {
@@ -85,17 +81,17 @@ export const registerUser = async (userData: UserData): Promise<ApiResponse> => 
       console.error('Data:', error.response?.data);
       console.error('Headers:', error.response?.headers);
       console.error('Config:', error.config);
-      
+
       const errorMessage = error.response?.data?.message || error.message;
       const details = error.response?.data?.message || error.response?.data || error.message;
-      
+
       return {
         success: false,
         error: `API Error: ${errorMessage}`,
         details: details
       };
     }
-    
+
     console.error('Non-Axios Error:', error);
     return {
       success: false,

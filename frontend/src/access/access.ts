@@ -37,16 +37,11 @@ const getAuthHeaders = async (): Promise<AuthHeaders> => {
   let refresh_token: string | null = localStorage.getItem('refresh');
 
   if (isAccessTokenExpired(access_token)) {
-    console.log("Access token expired or missing, attempting refresh...");
     try {
       const newAccessToken = await refreshAccessToken(refresh_token);
       access_token = newAccessToken;
       localStorage.setItem('access', newAccessToken);
-      console.log("Token refreshed successfully.");
     } catch (error) {
-      console.error("Token refresh failed:", error);
-      // Optional: redirect to login if refresh fails
-      // window.location.href = '/login';
       throw error;
     }
   }
@@ -98,7 +93,6 @@ const refreshAccessToken = async (refresh_token: string | null): Promise<string>
   }
 
   const refreshUrl = createApiUrl('api/token/refresh/');
-  console.log("Requesting token refresh from:", refreshUrl);
 
   const response = await fetch(refreshUrl, {
     method: 'POST',

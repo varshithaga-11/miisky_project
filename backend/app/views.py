@@ -371,8 +371,6 @@ class UserRegisterView(APIView):
     permission_classes = [AllowAny]  
     
     def post(self, request):
-        print("--- Incoming Registration Request ---")
-        print(f"Data: {request.data}")
         
         email = request.data.get('email')
         username = request.data.get('username')
@@ -381,9 +379,14 @@ class UserRegisterView(APIView):
 
         # Security check: If user already exists with this email/username, verify password
         if email or username:
-            existing_user = UserRegister.objects.filter(
-                Q(email__iexact=email) | Q(username=username)
-            ).first()
+            user_ident_query = Q()
+            if email:
+                user_ident_query |= Q(email__iexact=email)
+            if username:
+                user_ident_query |= Q(username=username)
+
+            existing_users = UserRegister.objects.filter(user_ident_query)
+            existing_user = existing_users.first()
 
             if existing_user:
                 if not existing_user.check_password(password):
@@ -395,7 +398,7 @@ class UserRegisterView(APIView):
                     }, status=status.HTTP_401_UNAUTHORIZED)
                 
                 # Also check if they already have this role
-                if existing_user.role == role:
+                if existing_users.filter(role=role).exists():
                     return Response({
                         "status": "failed",
                         "message": {
@@ -407,7 +410,45 @@ class UserRegisterView(APIView):
             serializer = UserRegisterSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
-                print(f"Registration successful for user: {user.username}")
+
+                # Gather all roles for this email/username
+                final_ident_query = Q()
+                if user.email:
+                    final_ident_query |= Q(email__iexact=user.email)
+                if user.username:
+                    final_ident_query |= Q(username=user.username)
+                
+                all_roles = list(UserRegister.objects.filter(final_ident_query).values_list('role', flat=True).distinct())
+
+                # Send welcome email with credentials
+                if user.email:
+                    subject = "Welcome to Miisky SVASTH - Account Created"
+                    roles_list = ", ".join([r.replace('_', ' ').title() for r in all_roles])
+                    
+                    email_body = (
+                        f"Hello {user.first_name or user.username},\n\n"
+                        f"Your account has been successfully created/updated with the role: {user.role.replace('_', ' ').title()}.\n\n"
+                        f"Your login credentials are:\n"
+                        f"Username: {user.username}\n"
+                        f"Password: {password}\n\n"
+                        f"Your registered roles: {roles_list}\n\n"
+                        f"You can now log in to the platform using these credentials and switch between your roles as needed.\n\n"
+                        f"Regards,\n"
+                        f"Team Miisky SVASTH"
+                    )
+                    
+                    try:
+                        send_mail(
+                            subject,
+                            email_body,
+                            settings.DEFAULT_FROM_EMAIL,
+                            [user.email],
+                            fail_silently=True
+                        )
+                    except Exception as e:
+                        # Log but don't block registration
+                        logger.error(f"Failed to send registration email to {user.email}: {e}")
+
                 return Response({
                     "status": "success",
                     "response_code": status.HTTP_201_CREATED,
@@ -417,16 +458,15 @@ class UserRegisterView(APIView):
                         "username": user.username,
                         "email": user.email,
                         "role": user.role,
+                        "roles": all_roles,
                         "created_by": user.created_by.id if user.created_by else None
                     }
                 })
-            print(f"Registration validation failed: {serializer.errors}")
             return Response({
                 "status": "failed",
                 "message": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(f"Registration Exception: {str(e)}")
             message = str(e)
             return Response({
                 "status": "failed",
@@ -948,7 +988,7 @@ class AdminAllOrdersView(APIView):
                     s, e = get_period_range(period, start_date, end_date)
                     qs = qs.filter(created_at__date__range=[s, e])
                 except Exception as ex:
-                    print(f"AdminAllOrdersView date filter: {ex}")
+                    pass
 
         if search:
             qs = qs.filter(
@@ -1162,7 +1202,7 @@ class MicroKitchenOrderPaymentSnapshotsView(generics.ListAPIView):
                 s, e = get_period_range(period, sd, ed)
                 qs = qs.filter(order__created_at__date__range=[s, e])
             except Exception as ex:
-                print(f"MicroKitchenOrderPaymentSnapshotsView date filter error: {ex}")
+                pass
 
         return qs.order_by("-created_at")
 
@@ -1615,7 +1655,7 @@ class OrderPaymentSnapshotAdminViewSet(viewsets.ReadOnlyModelViewSet):
                 s, e = get_period_range(period, start_date, end_date)
                 qs = qs.filter(created_at__date__range=[s, e])
             except Exception as ex:
-                print(f"OrderPaymentSnapshotAdminViewSet date filter: {ex}")
+                pass
 
         search = (self.request.query_params.get("search") or "").strip()
         if search:
@@ -12941,7 +12981,7 @@ class SupplyChainDeliveryLeaveViewSet(viewsets.ModelViewSet):
                 # Filter leave rows that overlap selected date window.
                 qs = qs.filter(start_date__lte=e, end_date__gte=s)
             except Exception as ex:
-                print(f"leave list period filter: {ex}")
+                pass
         handling_status = (request.query_params.get("kitchen_handling_status") or "").strip()
         if handling_status and handling_status != "all":
             allowed = {"not_started", "in_progress", "complete"}
@@ -13026,7 +13066,7 @@ class PatientFoodRecommendationViewSet(viewsets.ModelViewSet):
             s, e = get_period_range(period, start_date, end_date)
             return qs.filter(recommended_on__date__range=[s, e])
         except Exception as ex:
-            print(f"PatientFoodRecommendationViewSet date filter: {ex}")
+            pass
             return qs
 
     def _apply_search_filters(self, qs):
