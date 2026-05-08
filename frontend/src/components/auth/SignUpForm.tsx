@@ -23,15 +23,14 @@ import { MapLocationPicker } from "../common/MapLocationPicker";
 import DatePicker2 from "../form/date-picker2";
 
 const ROLE_OPTIONS = [
-  { value: "patient", label: "Patient" },
-  { value: "nutritionist", label: "Nutritionist" },
+  // { value: "admin", label: "Admin" },
+  // { value: "master", label: "Master" },
+  { value: "nutritionist", label: "Nutritionist/Dietician" },
+  { value: "doctor", label: "Doctor" },
   { value: "micro_kitchen", label: "Micro Kitchen" },
   { value: "supply_chain", label: "Supply Chain" },
-  { value: "non_patient", label: "Non-Patient" },
-  { value: "admin", label: "Admin" },
-  { value: "doctor", label: "Doctor" },
-  { value: "food_buyer", label: "Food Buyer" },
-  { value: "master", label: "Master" },
+  { value: "patient", label: "Patient" },
+  { value: "non_patient", label: "Non Patient" },
 ];
 
 const GENDER_OPTIONS = [
@@ -44,21 +43,18 @@ interface FormData {
   first_name: string;
   last_name: string;
   email: string;
+  alternative_email: string;
   username: string;
   password: string;
   password_confirm: string;
-  role: string;
+  roles: string[];
   gender: string;
-  dob: string;
   mobile: string;
-  whatsapp: string;
+  alternative_mobile: string;
   lat_lng_address: string;
   latitude: number | null;
   longitude: number | null;
   address: string;
-  group: string;
-  caste: string;
-  religion: string;
   country: string;
   state: string;
   city: string;
@@ -74,21 +70,18 @@ export default function SignUpForm() {
     first_name: '',
     last_name: '',
     email: '',
+    alternative_email: '',
     username: '',
     password: '',
     password_confirm: '',
-    role: '',
+    roles: [],
     gender: '',
-    dob: '',
     mobile: '',
-    whatsapp: '',
+    alternative_mobile: '',
     lat_lng_address: '',
     latitude: null,
     longitude: null,
     address: '',
-    group: '',
-    caste: '',
-    religion: '',
     country: '',
     state: '',
     city: '',
@@ -156,6 +149,17 @@ export default function SignUpForm() {
     }
   };
 
+  const handleRoleChange = (roleValue: string) => {
+    setFormData(prev => {
+      const isSelected = prev.roles.includes(roleValue);
+      if (isSelected) {
+        return { ...prev, roles: prev.roles.filter(r => r !== roleValue) };
+      } else {
+        return { ...prev, roles: [...prev.roles, roleValue] };
+      }
+    });
+  };
+
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -216,18 +220,19 @@ export default function SignUpForm() {
         const data = response.data;
         setFormData(prev => ({
           ...prev,
+          email: data.email || prev.email,
+          username: data.username || prev.username,
+          roles: data.roles || prev.roles,
           first_name: data.first_name || prev.first_name,
           last_name: data.last_name || prev.last_name,
           gender: data.gender || prev.gender,
-          dob: data.dob || prev.dob,
           mobile: data.mobile || prev.mobile,
-          whatsapp: data.whatsapp || prev.whatsapp,
+          alternative_mobile: data.alternative_mobile || prev.alternative_mobile,
+          alternative_email: data.alternative_email || prev.alternative_email,
           address: data.address || prev.address,
           lat_lng_address: data.lat_lng_address || prev.lat_lng_address,
           latitude: data.latitude || prev.latitude,
           longitude: data.longitude || prev.longitude,
-          religion: data.religion || prev.religion,
-          caste: data.caste || prev.caste,
           zip_code: data.zip_code || prev.zip_code,
           country: data.country?.toString() || prev.country,
           state: data.state?.toString() || prev.state,
@@ -256,8 +261,8 @@ export default function SignUpForm() {
     e.preventDefault();
     if (formData.password !== formData.password_confirm) { toast.error("Passwords do not match"); return; }
     if (!isCaptchaVerified) { toast.error("Please verify Captcha"); return; }
-    if (!formData.first_name || !formData.last_name || !formData.username || !formData.email || !formData.password || !formData.role) {
-      toast.error("Please fill in all required fields"); return;
+    if (!formData.first_name || !formData.last_name || !formData.username || !formData.email || !formData.password || formData.roles.length === 0) {
+      toast.error("Please fill in all required fields and select at least one role"); return;
     }
     setIsLoading(true);
     try {
@@ -311,6 +316,12 @@ export default function SignUpForm() {
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center">
+                <Label className="col-span-1">Alternative Email</Label>
+                <div className="col-span-2">
+                  <Input name="alternative_email" type="email" placeholder="alt@abc.com" value={formData.alternative_email} onChange={handleInputChange} leadingIcon={<EnvelopeIcon className="size-5 fill-gray-500" />} />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 items-center">
                 <Label className="col-span-1">Username</Label>
                 <div className="col-span-2">
                   <Input name="username" placeholder="Username" value={formData.username} onChange={handleInputChange} onBlur={(e) => fetchDetailsByIdentifier(e.target.value)} leadingIcon={<UserIcon className="size-5 fill-gray-500" />} />
@@ -335,12 +346,6 @@ export default function SignUpForm() {
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center">
-                <Label className="col-span-1">Date Of Birth</Label>
-                <div className="col-span-2">
-                  <DatePicker2 id="dob" value={formData.dob} onChange={(date) => setFormData(prev => ({ ...prev, dob: date }))} placeholder="YYYY-MM-DD" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 items-center">
                 <Label className="col-span-1">Password</Label>
                 <div className="col-span-2 relative">
                   <Input name="password" type={showPassword ? "text" : "password"} placeholder="Password" value={formData.password} onChange={handleInputChange} leadingIcon={<span onClick={() => setShowPassword(!showPassword)} className="cursor-pointer">{showPassword ? <EyeIcon className="size-5 fill-gray-500" /> : <EyeCloseIcon className="size-5 fill-gray-500" />}</span>} />
@@ -356,6 +361,12 @@ export default function SignUpForm() {
                 <Label className="col-span-1">Mobile</Label>
                 <div className="col-span-2">
                   <Input name="mobile" placeholder="Mobile Number" value={formData.mobile} onChange={handleInputChange} leadingIcon={<UserIcon className="size-5 fill-gray-500" />} />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 items-center">
+                <Label className="col-span-1">Alternative Mobile</Label>
+                <div className="col-span-2">
+                  <Input name="alternative_mobile" placeholder="Alt Mobile Number" value={formData.alternative_mobile} onChange={handleInputChange} leadingIcon={<UserIcon className="size-5 fill-gray-500" />} />
                 </div>
               </div>
               <div className="grid grid-cols-3 items-start pt-2">
@@ -400,24 +411,30 @@ export default function SignUpForm() {
                   <Input name="zip_code" placeholder="Enter Zip" value={formData.zip_code} onChange={handleInputChange} />
                 </div>
               </div>
-              <div className="grid grid-cols-3 items-center">
-                <Label className="col-span-1">Role</Label>
+              <div className="grid grid-cols-3 items-start">
+                <Label className="col-span-1 mt-1">Roles</Label>
                 <div className="col-span-2">
-                  <Select options={ROLE_OPTIONS} value={formData.role} onChange={(val) => handleSelectChange('role', val)} placeholder="Search and Select Role" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-800/20">
+                    {ROLE_OPTIONS.map((option) => (
+                      <label key={option.value} className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative flex items-center">
+                          <input
+                            type="checkbox"
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 dark:border-gray-600 checked:bg-brand-500 checked:border-brand-500 transition-all"
+                            checked={formData.roles.includes(option.value)}
+                            onChange={() => handleRoleChange(option.value)}
+                          />
+                          <svg className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-brand-500 transition-colors">
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 items-center">
-                <Label className="col-span-1">Religion</Label>
-                <div className="col-span-2">
-                  <Input name="religion" placeholder="Religion" value={formData.religion} onChange={handleInputChange} />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 items-center">
-                <Label className="col-span-1">Caste</Label>
-                <div className="col-span-2">
-                  <Input name="caste" placeholder="Caste" value={formData.caste} onChange={handleInputChange} />
-                </div>
-              </div>
+
               <div className="grid grid-cols-3 items-center">
                 <Label className="col-span-1">Photo</Label>
                 <div className="col-span-2">

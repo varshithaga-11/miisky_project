@@ -371,106 +371,122 @@ class UserRegisterView(APIView):
     permission_classes = [AllowAny]  
     
     def post(self, request):
-        
+        roles = request.data.get('roles')
+        if not roles:
+            role = request.data.get('role')
+            roles = [role] if role else []
+
+        if not roles:
+            return Response({
+                "status": "failed",
+                "message": {"role": ["This field is required."]}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        password = request.data.get('password')
         email = request.data.get('email')
         username = request.data.get('username')
-        password = request.data.get('password')
-        role = request.data.get('role')
+        
+        last_user = None
+        
+        try:
+            for role in roles:
+                # Security check: If user already exists with this email/username, verify password
+                if email or username:
+                    user_ident_query = Q()
+                    if email:
+                        user_ident_query |= Q(email__iexact=email)
+                    if username:
+                        user_ident_query |= Q(username=username)
 
-        # Security check: If user already exists with this email/username, verify password
-        if email or username:
-            user_ident_query = Q()
-            if email:
-                user_ident_query |= Q(email__iexact=email)
-            if username:
-                user_ident_query |= Q(username=username)
+                    existing_users = UserRegister.objects.filter(user_ident_query)
+                    existing_user = existing_users.first()
 
-            existing_users = UserRegister.objects.filter(user_ident_query)
-            existing_user = existing_users.first()
+                    if existing_user:
+                        if not existing_user.check_password(password):
+                            return Response({
+                                "status": "failed",
+                                "message": {
+                                    "password": ["The password provided does not match your existing account. Please use your existing password to add a new role."]
+                                }
+                            }, status=status.HTTP_401_UNAUTHORIZED)
+                        
+                        # Also check if they already have this role
+                        if existing_users.filter(role=role).exists():
+                            continue
 
-            if existing_user:
-                if not existing_user.check_password(password):
-                    return Response({
-                        "status": "failed",
-                        "message": {
-                            "password": ["The password provided does not match your existing account. Please use your existing password to add a new role."]
-                        }
-                    }, status=status.HTTP_401_UNAUTHORIZED)
+                # Prepare data for this specific role
+                role_data = request.data.copy()
+                role_data['role'] = role
                 
-                # Also check if they already have this role
-                if existing_users.filter(role=role).exists():
+                serializer = UserRegisterSerializer(data=role_data)
+                if serializer.is_valid():
+                    last_user = serializer.save()
+                else:
                     return Response({
                         "status": "failed",
-                        "message": {
-                            "role": [f"You are already registered as a {role}."]
-                        }
+                        "message": serializer.errors
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            serializer = UserRegisterSerializer(data=request.data)
-            if serializer.is_valid():
-                user = serializer.save()
-
-                # Gather all roles for this email/username
-                final_ident_query = Q()
-                if user.email:
-                    final_ident_query |= Q(email__iexact=user.email)
-                if user.username:
-                    final_ident_query |= Q(username=user.username)
-                
-                all_roles = list(UserRegister.objects.filter(final_ident_query).values_list('role', flat=True).distinct())
-
-                # Send welcome email with credentials
-                if user.email:
-                    subject = "Welcome to Miisky SVASTH - Account Created"
-                    roles_list = ", ".join([r.replace('_', ' ').title() for r in all_roles])
-                    
-                    email_body = (
-                        f"Hello {user.first_name or user.username},\n\n"
-                        f"Your account has been successfully created/updated with the role: {user.role.replace('_', ' ').title()}.\n\n"
-                        f"Your login credentials are:\n"
-                        f"Username: {user.username}\n"
-                        f"Password: {password}\n\n"
-                        f"Your registered roles: {roles_list}\n\n"
-                        f"You can now log in to the platform using these credentials and switch between your roles as needed.\n\n"
-                        f"Regards,\n"
-                        f"Team Miisky SVASTH"
-                    )
-                    
-                    try:
-                        send_mail(
-                            subject,
-                            email_body,
-                            settings.DEFAULT_FROM_EMAIL,
-                            [user.email],
-                            fail_silently=True
-                        )
-                    except Exception as e:
-                        # Log but don't block registration
-                        logger.error(f"Failed to send registration email to {user.email}: {e}")
-
+            if not last_user:
+                # This happens if all roles already existed
                 return Response({
-                    "status": "success",
-                    "response_code": status.HTTP_201_CREATED,
-                    "message": "User registered successfully",
-                    "user": {
-                        "id": user.id,
-                        "username": user.username,
-                        "email": user.email,
-                        "role": user.role,
-                        "roles": all_roles,
-                        "created_by": user.created_by.id if user.created_by else None
-                    }
-                })
+                    "status": "failed",
+                    "message": "User is already registered with all selected roles."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Success! (Use last_user to gather final role list)
+            final_ident_query = Q()
+            if last_user.email:
+                final_ident_query |= Q(email__iexact=last_user.email)
+            if last_user.username:
+                final_ident_query |= Q(username=last_user.username)
+            
+            all_roles = list(UserRegister.objects.filter(final_ident_query).values_list('role', flat=True).distinct())
+
+            # Send welcome email
+            if last_user.email:
+                subject = "Welcome to Miisky SVASTH - Account Created"
+                roles_list = ", ".join([r.replace('_', ' ').title() for r in all_roles])
+                
+                email_body = (
+                    f"Hello {last_user.first_name or last_user.username},\n\n"
+                    f"Your account has been successfully created/updated with the roles: {roles_list}.\n\n"
+                    f"Your login credentials are:\n"
+                    f"Username: {last_user.username}\n"
+                    f"Password: {password}\n\n"
+                    f"You can now log in to the platform using these credentials and switch between your roles as needed.\n\n"
+                    f"Regards,\n"
+                    f"Team Miisky SVASTH"
+                )
+                
+                try:
+                    send_mail(
+                        subject,
+                        email_body,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [last_user.email],
+                        fail_silently=True
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send registration email to {last_user.email}: {e}")
+
             return Response({
-                "status": "failed",
-                "message": serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "status": "success",
+                "response_code": status.HTTP_201_CREATED,
+                "message": "User registered successfully",
+                "user": {
+                    "id": last_user.id,
+                    "username": last_user.username,
+                    "email": last_user.email,
+                    "roles": all_roles,
+                    "created_by": last_user.created_by.id if last_user.created_by else None
+                }
+            })
+
         except Exception as e:
-            message = str(e)
             return Response({
                 "status": "failed",
-                "message": message
+                "message": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 
@@ -492,6 +508,7 @@ class UserDetailsByIdentifierView(APIView):
     """
     AllowAny endpoint — fetches entire details for a given identifier (email or username).
     Used by the sign-up form to pre-populate details if the user exists.
+    Now includes all roles associated with the identifier.
     """
     permission_classes = [AllowAny]
 
@@ -500,16 +517,25 @@ class UserDetailsByIdentifierView(APIView):
         if not identifier:
             return Response({"error": "Identifier required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = UserRegister.objects.filter(
-            Q(email__iexact=identifier) | Q(username=identifier)
-        ).first()
+        # Look up by email (case-insensitive) OR username
+        user_query = Q(email__iexact=identifier) | Q(username=identifier)
+        users = UserRegister.objects.filter(user_query)
+        
+        user = users.first()
 
         if not user:
             return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         from .serializers import UserRegisterSerializer
         serializer = UserRegisterSerializer(user)
-        return Response(serializer.data)
+        
+        # Gather all unique roles for this identity
+        all_roles = list(users.values_list('role', flat=True).distinct())
+        
+        data = serializer.data
+        data['roles'] = all_roles
+        
+        return Response(data)
 
 class UserRolesByIdentifierView(APIView):
     """

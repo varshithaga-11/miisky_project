@@ -9,10 +9,10 @@ interface UserData {
   username: string;
   password: string;
   password_confirm: string;
-  role: string;
+  roles: string[];
   mobile?: string;
-  whatsapp?: string;
-  dob?: string;
+  alternative_mobile?: string;
+  alternative_email?: string;
   gender?: string;
   address?: string;
   city?: number;
@@ -20,9 +20,6 @@ interface UserData {
   country?: number;
   zip_code?: string;
   photo?: any;
-  caste?: string;
-  religion?: string;
-  group?: string;
   lat_lng_address?: string;
 }
 
@@ -49,7 +46,11 @@ export const registerUser = async (userData: UserData): Promise<ApiResponse> => 
       dataToSend = new FormData();
       Object.entries(userData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          dataToSend.append(key, value);
+          if (Array.isArray(value)) {
+            value.forEach(item => dataToSend.append(key, item));
+          } else {
+            dataToSend.append(key, value);
+          }
         }
       });
       // Axios will set the correct Content-Type for FormData

@@ -74,12 +74,19 @@ class UserRegister(AbstractUser):
     # Basic Info
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
+    
     email = models.EmailField(unique=False, null=True, blank=True)
+    alternative_email = models.EmailField(unique=False, null=True, blank=True)
 
     mobile = models.CharField(max_length=15, null=True, blank=True)
-    whatsapp = models.CharField(max_length=15, null=True, blank=True)
+    is_otp_verified = models.BooleanField(default=False)
 
-    dob = models.DateField(null=True, blank=True)
+    alternative_mobile = models.CharField(max_length=15, null=True, blank=True)
+    is_alternative_otp_verified = models.BooleanField(default=False)
+
+    pan_no = models.CharField(max_length=20, null=True, blank=True)
+
+    aadhaar_no = models.CharField(max_length=20, null=True, blank=True)
 
     gender = models.CharField(max_length=10, choices=[
         ('male', 'Male'),
@@ -102,9 +109,6 @@ class UserRegister(AbstractUser):
     longitude = models.FloatField(null=True, blank=True)
     lat_lng_address = models.CharField(max_length=255, null=True, blank=True)
 
-    caste = models.CharField(max_length=100, null=True, blank=True)
-    religion = models.CharField(max_length=100, null=True, blank=True)
-    group = models.CharField(max_length=100, null=True, blank=True)
 
 
     joined_date = models.DateTimeField(null=True, blank=True)

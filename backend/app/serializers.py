@@ -18,6 +18,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
+            'alternative_email',
             'first_name',
             'last_name',
             'role',
@@ -25,17 +26,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'password_confirm',
             'created_by',
             'mobile',
-            'whatsapp',
-            'dob',
+            'alternative_mobile',
             'gender',
             'address',
             'city',
             'state',
             'zip_code',
             'photo',
-            'caste',
-            'religion',
-            'group',
             'lat_lng_address'
         ]
         extra_kwargs = {
@@ -98,12 +95,12 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
+            'alternative_email',
             'first_name',
             'last_name',
             'role',
             'mobile',
-            'whatsapp',
-            'dob',
+            'alternative_mobile',
             'gender',
             'photo',
             'address',
@@ -126,9 +123,6 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'is_patient_mapped',
             'password',
             'password_confirm',
-            'caste',
-            'religion',
-            'group',
         ]
         read_only_fields = ['created_on', 'city_name', 'state_name', 'country_name', 'created_by_name', 'created_by_role']
 
@@ -244,9 +238,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRegister
         fields = [
-            'id', 'username', 'email', 'role',
-            'first_name', 'last_name', 'mobile', 'whatsapp',
-            'dob', 'gender', 'photo', 'address', 'lat_lng_address', 'city',
+            'id', 'username', 'email', 'alternative_email', 'role',
+            'first_name', 'last_name', 'mobile', 'alternative_mobile',
+            'gender', 'photo', 'address', 'lat_lng_address', 'city',
             'zip_code', 'state', 'country', 'latitude', 'longitude',
             'joined_date', 'is_active', 'created_on'
         ]
