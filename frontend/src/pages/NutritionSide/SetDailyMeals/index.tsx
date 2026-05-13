@@ -527,7 +527,8 @@ const SetDailyMealsPage: React.FC = () => {
             id: food.id,
             name: food.name,
             meal_types: food.meal_types,
-            meal_type_details: food.meal_type_details
+            meal_type_details: food.meal_type_details,
+            serving_sizes: food.serving_sizes
         }));
         e.dataTransfer.effectAllowed = "copy";
         (e.target as HTMLElement).style.opacity = "0.5";
@@ -558,7 +559,8 @@ const SetDailyMealsPage: React.FC = () => {
         const raw = e.dataTransfer.getData(DRAG_TYPE);
         if (!raw || !selectedPatient || !activePlan) return;
         try {
-            const { id, meal_types, meal_type_details } = JSON.parse(raw);
+            const rawData = JSON.parse(raw);
+            const { id, meal_types, meal_type_details, serving_sizes } = rawData;
             if (!id) return;
             const newEntry: Partial<UserMeal> = {
                 user: selectedPatient.user.id,
@@ -567,9 +569,15 @@ const SetDailyMealsPage: React.FC = () => {
                 meal_type: selectedMealTypeId || (meal_types && meal_types.length > 0 ? meal_types[0] : (mealTypes[0]?.id || undefined)),
                 food: id,
                 quantity: 1,
+                serving_size: serving_sizes && serving_sizes.length > 0 ? serving_sizes[0].id : null,
                 packaging_material: selectedPackagingMaterialId || null,
                 available_meal_types: meal_types || [],
                 available_meal_type_details: meal_type_details || [],
+                food_details: {
+                    id,
+                    name: rawData.name,
+                    serving_sizes: serving_sizes || []
+                }
             };
             setDailyEntries(prev => [...prev, newEntry]);
             setShowSaveButton(true);
@@ -1301,6 +1309,20 @@ const SetDailyMealsPage: React.FC = () => {
                                                                                         <div className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold">
                                                                                             {foodName}
                                                                                         </div>
+                                                                                    </div>
+                                                                                    <div className="flex-1 min-w-[120px]">
+                                                                                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Serving Size</label>
+                                                                                        <select
+                                                                                            value={entry.serving_size || ""}
+                                                                                            disabled={isReadOnly}
+                                                                                            onChange={(e) => handleEntryUpdate(globalIdx, 'serving_size', Number(e.target.value))}
+                                                                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm font-bold outline-none disabled:opacity-50"
+                                                                                        >
+                                                                                            <option value="">None</option>
+                                                                                            {entry.food_details?.serving_sizes?.map(ss => (
+                                                                                                <option key={ss.id} value={ss.id}>{ss.label} (₹{ss.price})</option>
+                                                                                            ))}
+                                                                                        </select>
                                                                                     </div>
                                                                                     <div className="w-20">
                                                                                         <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qty</label>

@@ -2079,6 +2079,14 @@ class UserMeal(models.Model):
     quantity = models.FloatField(null=True, blank=True)
     # grams / units / servings
 
+    serving_size = models.ForeignKey(
+        'FoodServingSize',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="user_meals"
+    )
+
     meal_date = models.DateField()
 
     # 🔹 Tracking

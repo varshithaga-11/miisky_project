@@ -932,10 +932,11 @@ class FoodSerializer(serializers.ModelSerializer):
 class SetDailyMealsFoodListSerializer(serializers.ModelSerializer):
     """Minimal food row for Set Daily Meals picker — id and name only (no nutrition, ingredients, steps)."""
     meal_type_details = MealTypePatientLiteSerializer(source='meal_types', many=True, read_only=True)
+    serving_sizes = FoodServingSizeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Food
-        fields = ["id", "name", "meal_types", "meal_type_details"]
+        fields = ["id", "name", "meal_types", "meal_type_details", "serving_sizes"]
 
 
 class NormalRangeForHealthParameterSerializer(serializers.ModelSerializer):
@@ -3178,6 +3179,7 @@ class UserMealSerializer(serializers.ModelSerializer):
     delivery_person_details = serializers.SerializerMethodField()
     delivery_assignment_id = serializers.SerializerMethodField()
     delivery_slot_details = serializers.SerializerMethodField()
+    serving_size_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMeal
@@ -3186,7 +3188,7 @@ class UserMealSerializer(serializers.ModelSerializer):
             'meal_type_details',
             'food', 'food_details',
             'quantity', 'meal_date', 'is_consumed', 'consumed_at',
-            'status',
+            'status', 'serving_size', 'serving_size_details',
             'notes', 'packaging_material', 'packaging_material_details',
             'micro_kitchen', 'micro_kitchen_details', 'delivery_person_details',
             'delivery_assignment_id', 'delivery_slot_details',
@@ -3223,7 +3225,17 @@ class UserMealSerializer(serializers.ModelSerializer):
                 'meal_types': list(obj.food.meal_types.values_list('id', flat=True)),
                 'meal_type_details': [
                     {'id': mt.id, 'name': mt.name} for mt in obj.food.meal_types.all()
-                ]
+                ],
+                'serving_sizes': FoodServingSizeSerializer(obj.food.serving_sizes.all(), many=True).data
+            }
+        return None
+
+    def get_serving_size_details(self, obj):
+        if obj.serving_size:
+            return {
+                'id': obj.serving_size.id,
+                'label': obj.serving_size.label,
+                'price': str(obj.serving_size.price)
             }
         return None
 
@@ -3292,6 +3304,7 @@ class BulkUserMealSerializer(serializers.ModelSerializer):
             'meal_date',
             'notes',
             'packaging_material',
+            'serving_size',
         ]
         validators = []
 

@@ -8039,6 +8039,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                     meal_obj.user_diet_plan = udp
                     meal_obj.notes = item.get('notes')
                     meal_obj.packaging_material = item.get('packaging_material')
+                    meal_obj.serving_size = item.get('serving_size')
                     meal_obj.micro_kitchen_id = target_kitchen_id
                     meal_obj.save()
                     continue
@@ -8052,6 +8053,7 @@ class UserMealViewSet(viewsets.ModelViewSet):
                     user_diet_plan=udp,
                     notes=item.get('notes'),
                     packaging_material=item.get('packaging_material'),
+                    serving_size=item.get('serving_size'),
                     micro_kitchen_id=target_kitchen_id,
                 )
                 DeliveryAssignment.ensure_for_meal(meal_obj)

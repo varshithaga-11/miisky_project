@@ -56,8 +56,11 @@ export interface UserMeal {
         image?: string;
         meal_types?: number[];
         meal_type_details?: { id: number; name: string }[];
+        serving_sizes?: { id: number; label: string; price: string | number }[];
     };
     packaging_material_details?: { id: number; name: string } | null;
+    serving_size?: number | null;
+    serving_size_details?: { id: number; label: string; price: string } | null;
     micro_kitchen?: number | null;
     micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
     available_meal_types?: number[];
@@ -360,6 +363,7 @@ export const saveBulkMeals = async (meals: UserMeal[]): Promise<unknown> => {
         food: m.food,
         quantity: m.quantity ?? 1,
         meal_date: m.meal_date,
+        serving_size: m.serving_size ?? null,
         ...(m.notes != null && m.notes !== "" && { notes: m.notes }),
         packaging_material: m.packaging_material ?? null,
     }));
