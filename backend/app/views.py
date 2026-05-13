@@ -16,6 +16,7 @@ from django.conf import settings
 from django.http import FileResponse, HttpResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 import csv
+import json
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 import os
@@ -38,6 +39,7 @@ from .utils.file_parsers import get_file_parser
 from .services.import_service import ImportService
 from .questionnaire_sync import sync_user_questionnaire_relations
 from website.pagination import WebsitePagination
+from .hdfc_gateway import HDFCSmartGateway
 
 try:
     from weasyprint import CSS, HTML
@@ -6379,7 +6381,7 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         udp.approve(start_date=start_date)
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
         """Patient rejects the suggested plan."""
         udp = self.get_object()
@@ -6389,6 +6391,81 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return Response({"detail": f"Cannot reject: current status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
         udp.reject(feedback=request.data.get('user_feedback'))
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='initiate_hdfc_payment')
+    def initiate_hdfc_payment(self, request, pk=None):
+        """Initiates HDFC SmartGateway payment for the diet plan."""
+        udp = self.get_object()
+        if udp.user_id != request.user.id:
+            return Response({"detail": "Only the assigned patient can initiate payment."}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Accept payment if status is payment_pending
+        if udp.status != 'payment_pending':
+            return Response({"detail": f"Cannot initiate payment: status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        gateway = HDFCSmartGateway()
+        response_data = gateway.create_session(udp, request.user)
+        
+        if response_data.get('error'):
+            return Response({"detail": response_data.get('detail', 'Gateway Error')}, status=status.HTTP_502_BAD_GATEWAY)
+            
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='payment_callback', permission_classes=[AllowAny])
+    def payment_callback(self, request):
+        """
+        Handles redirection from HDFC SmartGateway after payment.
+        """
+        data = request.data
+        logger.info(f"HDFC Payment Callback Data: {json.dumps(data)}")
+        
+        # Identify the plan using UDF1 (Plan ID)
+        plan_id = data.get('udf1')
+        status_val = data.get('status')
+        resp_code = data.get('resp_code')
+        
+        if status_val == 'CHARGED' or resp_code == 'SUCCESS':
+            if plan_id:
+                try:
+                    udp = UserDietPlan.objects.get(id=plan_id)
+                    # Automatically mark as uploaded/paid if successful
+                    if udp.status == 'payment_pending':
+                        udp.payment_status = 'uploaded' # Marks as ready for admin verification
+                        udp.transaction_id = data.get('order_id')
+                        udp.amount_paid = data.get('amount')
+                        udp.save()
+                        logger.info(f"Plan {plan_id} updated to paid status via HDFC callback.")
+                except UserDietPlan.DoesNotExist:
+                    logger.error(f"Plan ID {plan_id} not found in HDFC callback.")
+            return Response({"detail": "Payment Successful"}, status=200)
+        
+        return Response({"detail": "Payment Failed or Cancelled"}, status=400)
+
+    @action(detail=True, methods=['get'], url_path='check_payment_status')
+    def check_payment_status(self, request, pk=None):
+        """
+        Manually check the payment status of a plan from HDFC gateway.
+        """
+        udp = self.get_object()
+        if udp.user_id != request.user.id and request.user.role != 'admin':
+            return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+            
+        if not udp.transaction_id:
+            return Response({"detail": "No transaction ID found for this plan."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        gateway = HDFCSmartGateway()
+        status_data = gateway.get_order_status(udp.transaction_id, f"CUST-{udp.user_id}")
+        
+        if status_data.get('error'):
+            return Response({"detail": status_data.get('detail', 'Gateway Error')}, status=status.HTTP_502_BAD_GATEWAY)
+            
+        # Optional: update local status if gateway says it's charged
+        if status_data.get('status') == 'CHARGED':
+            if udp.status == 'payment_pending':
+                udp.payment_status = 'uploaded'
+                udp.save()
+                
+        return Response(status_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def upload_payment(self, request, pk=None):

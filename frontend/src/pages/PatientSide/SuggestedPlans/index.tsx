@@ -7,6 +7,7 @@ import {
   rejectPlan,
   uploadPaymentScreenshot,
   updatePlanStatus,
+  initiateHdfcPayment,
   SuggestedPlansLite,
 } from "./api";
 import { createApiUrl } from "../../../access/access";
@@ -47,6 +48,7 @@ const SuggestedPlansPage: React.FC = () => {
   const [transactionId, setTransactionId] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [statusUpdate, setStatusUpdate] = useState<{ plan: SuggestedPlansLite, status: string } | null>(null);
+  const [payingOnline, setPayingOnline] = useState<number | null>(null);
 
   const isPatientUser = getUserRoleFromToken() === "patient";
 
@@ -102,8 +104,7 @@ const SuggestedPlansPage: React.FC = () => {
       const updated = await approvePlan(approveModal.id);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setApproveModal(null);
-      toast.success("Plan approved. Please upload payment screenshot.");
-      setPaymentModal(updated);
+      toast.success("Plan approved. You can now pay online or upload a screenshot.");
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Failed to approve");
     } finally {
@@ -124,6 +125,22 @@ const SuggestedPlansPage: React.FC = () => {
       toast.error(err?.response?.data?.detail || "Failed to reject");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePayOnline = async (plan: SuggestedPlansLite) => {
+    setPayingOnline(plan.id);
+    try {
+      const data = await initiateHdfcPayment(plan.id);
+      if (data.payment_links?.web) {
+        window.location.href = data.payment_links.web;
+      } else {
+        toast.error("Payment link not found. Please try again or use manual upload.");
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to initiate online payment");
+    } finally {
+      setPayingOnline(null);
     }
   };
 
@@ -315,17 +332,38 @@ const SuggestedPlansPage: React.FC = () => {
                             )}
                           </div>
                         )}
-                        <button
-                          onClick={() => {
-                            setPaymentModal(udp);
-                            setScreenshotFile(null);
-                            setAmountPaid(udp.diet_plan_details?.final_amount || "");
-                            setTransactionId(udp.transaction_id || "");
-                          }}
-                          className="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2"
-                        >
-                          <FiUpload /> {udp.payment_screenshot ? "Re-upload" : "Upload"} Payment Screenshot
-                        </button>
+                        <div className="mt-4 flex flex-col gap-2">
+                          <button
+                            onClick={() => handlePayOnline(udp)}
+                            disabled={payingOnline === udp.id}
+                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20"
+                          >
+                            {payingOnline === udp.id ? (
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                            ) : (
+                              <FiCreditCard />
+                            )}
+                            Pay Online (HDFC Gateway)
+                          </button>
+                          
+                          <div className="flex items-center gap-2 my-1">
+                            <div className="h-[1px] flex-1 bg-gray-100 dark:bg-white/5"></div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase">Or</span>
+                            <div className="h-[1px] flex-1 bg-gray-100 dark:bg-white/5"></div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setPaymentModal(udp);
+                              setScreenshotFile(null);
+                              setAmountPaid(udp.diet_plan_details?.final_amount || "");
+                              setTransactionId(udp.transaction_id || "");
+                            }}
+                            className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                          >
+                            <FiUpload /> {udp.payment_screenshot ? "Re-upload" : "Upload"} Screenshot
+                          </button>
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -552,6 +590,25 @@ const SuggestedPlansPage: React.FC = () => {
             )}
             
             <div className="space-y-4 mb-6">
+              <button
+                onClick={() => handlePayOnline(paymentModal)}
+                disabled={payingOnline === paymentModal.id}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-indigo-500/20"
+              >
+                {payingOnline === paymentModal.id ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+                ) : (
+                  <FiCreditCard size={22} />
+                )}
+                PAY ONLINE (HDFC)
+              </button>
+
+              <div className="flex items-center gap-3 my-4">
+                <div className="h-[1px] flex-1 bg-gray-100 dark:bg-white/5"></div>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">OR MANUAL UPLOAD</span>
+                <div className="h-[1px] flex-1 bg-gray-100 dark:bg-white/5"></div>
+              </div>
+
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   Amount Paid (₹)

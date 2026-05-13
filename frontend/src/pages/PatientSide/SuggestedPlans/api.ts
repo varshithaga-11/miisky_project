@@ -82,6 +82,7 @@ export interface SuggestedPlansLite {
   original_micro_kitchen_details?: {
     brand_name: string;
   } | null;
+  payment_link?: string | null;
 }
 
 export const getMySuggestedPlans = async (): Promise<UserDietPlan[]> => {
@@ -129,5 +130,11 @@ export const uploadPaymentScreenshot = async (
 export const updatePlanStatus = async (id: number, status: string): Promise<UserDietPlan> => {
   const url = createApiUrl(`api/userdietplan/${id}/`);
   const response = await axios.patch(url, { status }, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const initiateHdfcPayment = async (id: number): Promise<any> => {
+  const url = createApiUrl(`api/userdietplan/${id}/initiate_hdfc_payment/`);
+  const response = await axios.post(url, {}, { headers: await getAuthHeaders() });
   return response.data;
 };
