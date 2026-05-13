@@ -4731,6 +4731,30 @@ class MealTypeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class MealPackageViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for meal packages.
+    """
+    queryset = MealPackage.objects.all().prefetch_related('meal_types')
+    serializer_class = MealPackageSerializer
+    permission_classes = [IsAdminOrNutritionistRole]
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
+    ordering_fields = ['sort_order', 'name', 'created_at']
+    ordering = ['sort_order', 'name']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def all(self, request):
+        """Unpaginated list for dropdowns."""
+        qs = self.get_queryset().filter(is_active=True)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+
 class PackagingMaterialViewSet(viewsets.ModelViewSet):
     queryset = PackagingMaterial.objects.all()
     serializer_class = PackagingMaterialSerializer

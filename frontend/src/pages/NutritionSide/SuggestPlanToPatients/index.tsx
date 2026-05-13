@@ -10,12 +10,14 @@ import {
   updatePlanStatus,
   getDietPlansMinimal,
   getMicroKitchensMinimal,
+  getMealPackagesMinimal,
   REASSIGN_MICRO_KITCHEN_REASONS,
   MappedPatientResponse,
   NutritionistReview,
   UserDietPlan,
   MinimalDietPlan,
   MinimalMicroKitchen,
+  MinimalMealPackage,
 } from "./api";
 import SearchableSelect, { Option } from "../../../components/form/SearchableSelect";
 import DatePicker2 from "../../../components/form/date-picker2";
@@ -30,12 +32,14 @@ const SuggestPlanToPatientsPage: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<MappedPatientResponse | null>(null);
   const [plans, setPlans] = useState<MinimalDietPlan[]>([]);
   const [kitchens, setKitchens] = useState<MinimalMicroKitchen[]>([]);
+  const [mealPackages, setMealPackages] = useState<MinimalMealPackage[]>([]);
   const [reviews, setReviews] = useState<NutritionistReview[]>([]);
   const [suggestedPlans, setSuggestedPlans] = useState<UserDietPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | "">("");
   const [selectedKitchenId, setSelectedKitchenId] = useState<number | "">("");
+  const [selectedPackageId, setSelectedPackageId] = useState<number | "">("");
   const [selectedReviewId, setSelectedReviewId] = useState<number | "">("");
   const [notes, setNotes] = useState("");
   const [switchKitchenPlanId, setSwitchKitchenPlanId] = useState<number | "">("");
@@ -101,10 +105,14 @@ const SuggestPlanToPatientsPage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const patientsData = await getMyPatients();
+        const [patientsData, packagesData] = await Promise.all([
+          getMyPatients(),
+          getMealPackagesMinimal(),
+        ]);
         setPatients(patientsData);
+        setMealPackages(packagesData);
       } catch (err) {
-        toast.error("Failed to load patients");
+        toast.error("Failed to load initial data");
       } finally {
         setLoading(false);
       }
@@ -123,6 +131,8 @@ const SuggestPlanToPatientsPage: React.FC = () => {
           setReviews(reviewsData);
           setSuggestedPlans(suggestedData);
           setSelectedPlanId("");
+          setSelectedKitchenId("");
+          setSelectedPackageId("");
           setSelectedReviewId("");
           setNotes("");
           setSwitchKitchenPlanId("");
@@ -157,12 +167,14 @@ const SuggestPlanToPatientsPage: React.FC = () => {
         diet_plan: number;
         micro_kitchen?: number;
         review?: number;
+        selected_package?: number;
         nutritionist_notes?: string;
         amount_paid?: string;
       } = {
         user: selectedPatient.user.id,
         diet_plan: Number(selectedPlanId),
         micro_kitchen: Number(selectedKitchenId),
+        selected_package: selectedPackageId ? Number(selectedPackageId) : undefined,
         nutritionist_notes: notes.trim() || undefined,
         amount_paid: selectedPlan?.final_amount ? String(selectedPlan.final_amount) : undefined,
       };
@@ -172,6 +184,7 @@ const SuggestPlanToPatientsPage: React.FC = () => {
       setSuggestedPlans((prev) => [created, ...prev]);
       setSelectedPlanId("");
       setSelectedKitchenId("");
+      setSelectedPackageId("");
       setSelectedReviewId("");
       setNotes("");
     } catch (err: any) {
@@ -424,6 +437,19 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Meal Package *</label>
+                        <SearchableSelect
+                          options={mealPackages.map(pkg => ({
+                            value: pkg.id,
+                            label: pkg.name
+                          }))}
+                          value={selectedPackageId}
+                          onChange={(val) => setSelectedPackageId(val)}
+                          placeholder="Select package (e.g. All Meals)"
+                          required
+                        />
+                      </div>
+                      <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link to review (optional)</label>
                         <select
                           value={selectedReviewId}
@@ -450,7 +476,7 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                       </div>
                       <button
                         type="submit"
-                        disabled={submitting || !selectedPlanId || !selectedKitchenId}
+                        disabled={submitting || !selectedPlanId || !selectedKitchenId || !selectedPackageId}
                         className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3 transition-all"
                       >
                         {submitting ? "Sending..." : "Suggest Plan & Kitchen"} <FiSend />
@@ -499,6 +525,11 @@ const SuggestPlanToPatientsPage: React.FC = () => {
                             {udp.micro_kitchen_details && (
                               <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
                                 <FiHome size={12} /> {udp.micro_kitchen_details.brand_name}
+                              </p>
+                            )}
+                            {udp.selected_package_details && (
+                              <p className="text-xs text-indigo-600 dark:text-indigo-400 mb-1 flex items-center gap-1">
+                                <FiPackage size={12} /> {udp.selected_package_details.name}
                               </p>
                             )}
                             <p className="text-[11px] text-gray-500 mb-2">

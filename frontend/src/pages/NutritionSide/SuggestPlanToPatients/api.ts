@@ -64,6 +64,8 @@ export interface UserDietPlan {
   micro_kitchen_effective_from?: string | null;
   review: number | null;
   review_details: { id: number; comments: string; created_on: string } | null;
+  selected_package: number | null;
+  selected_package_details: { id: number; name: string } | null;
   nutritionist_notes: string | null;
   status: string;
   user_feedback: string | null;
@@ -86,6 +88,7 @@ export const suggestPlanToPatient = async (data: {
   diet_plan: number;
   micro_kitchen?: number;
   review?: number;
+  selected_package?: number;
   nutritionist_notes?: string;
   amount_paid?: string;
 }): Promise<UserDietPlan> => {
@@ -130,4 +133,15 @@ export const getMicroKitchensMinimal = async (search?: string): Promise<MinimalM
   const url = createApiUrl(`api/microkitchenprofile/list_minimal/${search ? `?search=${encodeURIComponent(search)}` : ""}`);
   const response = await axios.get(url, { headers: await getAuthHeaders() });
   return response.data;
+};
+
+export interface MinimalMealPackage {
+    id: number;
+    name: string;
+}
+
+export const getMealPackagesMinimal = async (): Promise<MinimalMealPackage[]> => {
+    const url = createApiUrl("api/mealpackage/all/");
+    const response = await axios.get(url, { headers: await getAuthHeaders() });
+    return response.data;
 };

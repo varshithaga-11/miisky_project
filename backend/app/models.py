@@ -933,12 +933,41 @@ class Food(models.Model):
 
     micro_kitchen = models.ForeignKey(MicroKitchenProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='foods')
 
-    price = models.IntegerField(null=True, blank=True)
+    # price = models.IntegerField(null=True, blank=True)
 
     posted_by = models.ForeignKey("UserRegister", on_delete=models.SET_NULL, null=True, blank=True, related_name="posted_foods")
 
     def __str__(self):
         return self.name
+
+
+
+class FoodServingSize(models.Model):
+    """
+    Each row = one size variant of a Food.
+    e.g. Idli → 2 pieces (₹25), 4 pieces (₹50), 6 pieces (₹75)
+    Nutrition values are per THIS serving size.
+    Replaces FoodNutrition (which assumed one serving per food).
+    """
+    food = models.ForeignKey(
+        Food,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='serving_sizes',
+    )
+
+    label = models.CharField(
+        max_length=100,
+        help_text="e.g. '2 pieces', '1 bowl', '100g', 'Half plate'",
+    )
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        null=True, blank=True,
+        help_text="Price for this specific serving size.",
+    )
+
+    def __str__(self):
+        return f"{self.food.name} - {self.label} ({self.price})"
 
 
 class FoodNutrition(models.Model):
@@ -1166,7 +1195,7 @@ class DietPlans(models.Model):
     title = models.CharField(max_length=100)  # e.g. "Weight Loss Plan"
     code = models.CharField(max_length=50, unique=True, null=True, blank=True)  # e.g. "WL001"
 
-    amount = models.DecimalField(max_digits=10, decimal_places=2)  # e.g. 2000.00
+    amount = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)  # e.g. 2000.00
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # e.g. 500.00
 
     no_of_days = models.IntegerField(null=True, blank=True)  # e.g. 30 days
@@ -1731,6 +1760,49 @@ class NutritionistReview(models.Model):
     
 
 
+
+
+# ─── LAYER 1: Standalone Package (global, reusable) ──────────────────────────
+
+class MealPackage(models.Model):
+    """
+    Global reusable package definition.
+    e.g. "Breakfast Only", "Breakfast + Lunch", "All Meals"
+    Not tied to any specific DietPlan — linked via DietPlanPackage.
+    """
+    name = models.CharField(max_length=100, unique=True)
+    # e.g. "Breakfast Only", "Lunch + Dinner", "All Meals"
+
+    meal_types = models.ManyToManyField(
+        MealType,
+        related_name='packages',
+    )
+    # e.g. Breakfast Only → [Breakfast]
+    # e.g. Breakfast + Lunch → [Breakfast, Lunch]
+    # e.g. All Meals → [Breakfast, Lunch, Dinner, Snacks]
+
+    description = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    estimation_amount=models.IntegerField(null=True, blank=True)
+
+    created_by = models.ForeignKey(
+        'UserRegister',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='created_meal_packages',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
 from django.utils.timezone import now
 from datetime import timedelta
 
@@ -1766,6 +1838,15 @@ class UserDietPlan(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True
+    )
+    
+    # ✅ The NEW link field — points to the global reusable package
+    selected_package = models.ForeignKey(
+        MealPackage,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_diet_plans',
     )
 
     # ✅ Single kitchen (as per your requirement)

@@ -125,6 +125,7 @@ router.register(r'kitchen-reassignment', MicroKitchenReassignmentViewSet, basena
 
 # Food System routes
 router.register(r'mealtype',      MealTypeViewSet,    basename='mealtype')
+router.register(r'mealpackage',   MealPackageViewSet, basename='mealpackage')
 router.register(r'packagingmaterial', PackagingMaterialViewSet)
 router.register(r'cuisinetype',   CuisineTypeViewSet, basename='cuisinetype')
 router.register(r'food',          FoodViewSet, basename='food')

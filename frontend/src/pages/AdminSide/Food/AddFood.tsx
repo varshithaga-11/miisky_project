@@ -24,7 +24,9 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
-  const [price, setPrice] = useState("");
+  const [servingSizes, setServingSizes] = useState<{ label: string; price: string }[]>([
+    { label: "", price: "" }
+  ]);
   const [loading, setLoading] = useState(false);
   const userRole = getUserRoleFromToken();
   const isAdmin = userRole === "admin" || userRole === "master";
@@ -97,6 +99,20 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
     setNutrition(prev => ({ ...prev, [field]: value === "" ? undefined : value }));
   };
 
+  const addServingSize = () => {
+    setServingSizes([...servingSizes, { label: "", price: "" }]);
+  };
+
+  const removeServingSize = (index: number) => {
+    setServingSizes(servingSizes.filter((_, i) => i !== index));
+  };
+
+  const handleServingSizeChange = (index: number, field: "label" | "price", value: string) => {
+    const updated = [...servingSizes];
+    updated[index][field] = value;
+    setServingSizes(updated);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedMealTypes.length === 0) {
@@ -111,17 +127,20 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
       // Append many-to-many fields
       selectedMealTypes.forEach(id => formData.append("meal_types", id));
       selectedCuisines.forEach(id => formData.append("cuisine_types", id));
-      
+
       formData.append("description", description);
       if (image) {
         formData.append("image", image);
       }
-      if (price) {
-        formData.append("price", price);
+
+      // Filter out empty serving sizes and stringify
+      const validServingSizes = servingSizes.filter(s => s.label.trim() !== "");
+      if (validServingSizes.length > 0) {
+        formData.append("serving_sizes_input", JSON.stringify(validServingSizes));
       }
 
       const createdFood = await createFood(formData);
-      
+
       // Create nutrition record
       await createFoodNutrition({
         ...nutrition,
@@ -182,29 +201,29 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
+
             {/* Left Column: Basic Info & Macros */}
             <div className="space-y-6">
               <section className="space-y-4">
                 <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <SearchableSelect2 
-                      label="Meal Types *" 
-                      options={mealTypeOptions} 
-                      value={selectedMealTypes} 
-                      onChange={setSelectedMealTypes} 
-                      onFocus={fetchMealTypes} 
+                    <SearchableSelect2
+                      label="Meal Types *"
+                      options={mealTypeOptions}
+                      value={selectedMealTypes}
+                      onChange={setSelectedMealTypes}
+                      onFocus={fetchMealTypes}
                       required
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <SearchableSelect2 
-                      label="Cuisine Types" 
-                      options={cuisineOptions} 
-                      value={selectedCuisines} 
-                      onChange={setSelectedCuisines} 
-                      onFocus={fetchCuisineTypes} 
+                    <SearchableSelect2
+                      label="Cuisine Types"
+                      options={cuisineOptions}
+                      value={selectedCuisines}
+                      onChange={setSelectedCuisines}
+                      onFocus={fetchCuisineTypes}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -219,12 +238,55 @@ const AddFood: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                     <Label htmlFor="image">Image</Label>
                     <input id="image" type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700" disabled={loading} />
                   </div>
-                  <div>
-                    <Label htmlFor="price">Price (₹)</Label>
-                    <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 150" disabled={loading} />
+
+                  <div className="md:col-span-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="mb-0">Serving Sizes & Prices *</Label>
+                      <button
+                        type="button"
+                        onClick={addServingSize}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                      >
+                        + Add Size
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {servingSizes.map((ss, index) => (
+                        <div key={index} className="flex gap-3 items-end">
+                          <div className="flex-1">
+                            <Input
+                              placeholder="e.g. 2 pieces, 1 bowl"
+                              value={ss.label}
+                              onChange={(e) => handleServingSizeChange(index, "label", e.target.value)}
+                              disabled={loading}
+                              required={index === 0}
+                            />
+                          </div>
+                          <div className="w-32">
+                            <Input
+                              type="number"
+                              placeholder="Price (₹)"
+                              value={ss.price}
+                              onChange={(e) => handleServingSizeChange(index, "price", e.target.value)}
+                              disabled={loading}
+                              required={index === 0}
+                            />
+                          </div>
+                          {servingSizes.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeServingSize(index)}
+                              className="mb-2 text-red-500 hover:text-red-700 p-2"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div>
-                    <Label htmlFor="serving_size">Serving Size</Label>
+                    <Label htmlFor="serving_size">Serving Size(For Nutrients)</Label>
                     <Input id="serving_size" type="text" value={nutrition.serving_size} onChange={(e) => handleNutritionChange("serving_size", e.target.value)} placeholder="e.g. 100g, 3-4" disabled={loading} />
                   </div>
                 </div>

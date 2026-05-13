@@ -446,6 +446,26 @@ class MealTypeSerializer(serializers.ModelSerializer):
         return value
 
 
+class MealPackageSerializer(serializers.ModelSerializer):
+    meal_type_names = serializers.StringRelatedField(source='meal_types', many=True, read_only=True)
+    created_by_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = MealPackage
+        fields = [
+            'id', 'name', 'meal_types', 'meal_type_names', 
+            'description', 'is_active', 'sort_order', 'estimation_amount',
+            'created_by', 'created_by_name', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_by', 'created_at', 'updated_at']
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            name = f"{obj.created_by.first_name or ''} {obj.created_by.last_name or ''}".strip()
+            return name or obj.created_by.username
+        return None
+
+
 class MealTypePatientLiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealType
@@ -720,6 +740,12 @@ class MicroKitchenFoodSerializer(serializers.ModelSerializer):
         return None
 
 
+class FoodServingSizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodServingSize
+        fields = ['id', 'label', 'price']
+
+
 class FoodSerializer(serializers.ModelSerializer):
     # Nested read — show full ingredient + step lists when retrieving a food
     ingredients = FoodIngredientSerializer(
@@ -731,6 +757,7 @@ class FoodSerializer(serializers.ModelSerializer):
     meal_type_names = serializers.StringRelatedField(source='meal_types', many=True, read_only=True)
     cuisine_type_names = serializers.StringRelatedField(source='cuisine_types', many=True, read_only=True)
     nutrition = FoodNutritionSerializer(read_only=True)
+    serving_sizes = FoodServingSizeSerializer(many=True, read_only=True)
 
     meal_type_names_input = serializers.CharField(write_only=True, required=False)
     cuisine_type_names_input = serializers.CharField(write_only=True, required=False)
@@ -756,6 +783,7 @@ class FoodSerializer(serializers.ModelSerializer):
     vitamin_c = serializers.FloatField(write_only=True, required=False, allow_null=True)
     vitamin_d = serializers.FloatField(write_only=True, required=False, allow_null=True)
     vitamin_b12 = serializers.FloatField(write_only=True, required=False, allow_null=True)
+    serving_sizes_input = serializers.CharField(write_only=True, required=False) # JSON string
 
     posted_by_role = serializers.CharField(source='posted_by.role', read_only=True)
     posted_by_name = serializers.SerializerMethodField(read_only=True)
@@ -772,12 +800,14 @@ class FoodSerializer(serializers.ModelSerializer):
                   'meal_type_names_input', 'cuisine_type_names_input',
                   'calories', 'protein', 'carbs', 'fat', 'fiber', 'serving_size',
                   'glycemic_index', 'sugar', 'saturated_fat', 'trans_fat', 'cholesterol',
-                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 'price', 
+                  'sodium', 'potassium', 'calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_b12', 
+                  'serving_sizes', 'serving_sizes_input',
                   'posted_by_role', 'posted_by_name']
 
     def create(self, validated_data):
         meal_names = validated_data.pop('meal_type_names_input', None)
         cuisine_names = validated_data.pop('cuisine_type_names_input', None)
+        serving_sizes_data = validated_data.pop('serving_sizes_input', None)
         
         # Pop nutrition data
         nutrition_data = {
@@ -818,11 +848,22 @@ class FoodSerializer(serializers.ModelSerializer):
             for name in names:
                 ct, _ = CuisineType.objects.get_or_create(name=name)
                 food.cuisine_types.add(ct)
+        
+        if serving_sizes_data:
+            import json
+            try:
+                sizes = json.loads(serving_sizes_data)
+                for size in sizes:
+                    FoodServingSize.objects.create(food=food, **size)
+            except Exception as e:
+                print(f"Error parsing serving sizes: {e}")
+
         return food
 
     def update(self, instance, validated_data):
         meal_names = validated_data.pop('meal_type_names_input', None)
         cuisine_names = validated_data.pop('cuisine_type_names_input', None)
+        serving_sizes_data = validated_data.pop('serving_sizes_input', None)
         
         # Pop nutrition data
         nutrition_data = {
@@ -866,6 +907,16 @@ class FoodSerializer(serializers.ModelSerializer):
             for name in names:
                 ct, _ = CuisineType.objects.get_or_create(name=name)
                 food.cuisine_types.add(ct)
+        
+        if serving_sizes_data is not None:
+            import json
+            try:
+                sizes = json.loads(serving_sizes_data)
+                instance.serving_sizes.all().delete()
+                for size in sizes:
+                    FoodServingSize.objects.create(food=instance, **size)
+            except Exception as e:
+                print(f"Error parsing serving sizes: {e}")
                 
         return food
 
@@ -2770,6 +2821,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
     review_details = serializers.SerializerMethodField()
     micro_kitchen_details = serializers.SerializerMethodField()
     original_micro_kitchen_details = serializers.SerializerMethodField()
+    selected_package_details = serializers.SerializerMethodField()
     verified_by_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -2778,7 +2830,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             'id', 'user', 'user_details', 'nutritionist', 'nutritionist_details',
             'original_nutritionist', 'diet_plan', 'diet_plan_details', 'micro_kitchen', 'micro_kitchen_details',
             'original_micro_kitchen', 'original_micro_kitchen_details', 'micro_kitchen_effective_from',
-            'review', 'review_details',
+            'review', 'review_details', 'selected_package', 'selected_package_details',
             'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
             'amount_paid', 'transaction_id', 'payment_status',
             'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
@@ -2787,6 +2839,14 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             'suggested_on', 'approved_on', 'created_on', 'updated_on'
         ]
         read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on', 'payment_uploaded_on', 'verified_on', 'verified_by_details']
+
+    def get_selected_package_details(self, obj):
+        if obj.selected_package:
+            return {
+                'id': obj.selected_package.id,
+                'name': obj.selected_package.name,
+            }
+        return None
 
     def get_diet_plan_details(self, obj):
         if obj.diet_plan:

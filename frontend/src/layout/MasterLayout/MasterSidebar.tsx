@@ -362,6 +362,13 @@ const nutritionistNavItems: NavItem[] = [
     name: "Diet Plans",
     path: "/nutrition/diet-plan",
   },
+
+  {
+    icon: <Briefcase className="w-5 h-5" />,
+    name: "Meal Packages",
+    path: "/nutrition/meal-package",
+  },
+
   {
     icon: <Briefcase className="w-5 h-5" />,
     name: "Food Management",

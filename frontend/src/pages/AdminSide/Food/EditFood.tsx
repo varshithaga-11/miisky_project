@@ -25,9 +25,11 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
   const [cuisines, setCuisines] = useState<CuisineType[]>([]);
   const [image, setImage] = useState<File | null>(null);
   const [existingImage, setExistingImage] = useState<string | null>(null);
-  const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [servingSizes, setServingSizes] = useState<{ label: string; price: string }[]>([
+    { label: "", price: "" }
+  ]);
   const [mealOptionsLoaded, setMealOptionsLoaded] = useState(false);
   const [cuisineOptionsLoaded, setCuisineOptionsLoaded] = useState(false);
   const fetchingMealsRef = useRef(false);
@@ -110,8 +112,16 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
           setSelectedCuisines(foodData.cuisine_types ? foodData.cuisine_types.map(String) : []);
           setDescription(foodData.description || "");
           setExistingImage(foodData.image || null);
-          setPrice(foodData.price ? String(foodData.price) : "");
-          
+
+          if (foodData.serving_sizes && foodData.serving_sizes.length > 0) {
+            setServingSizes(foodData.serving_sizes.map((ss: any) => ({
+              label: ss.label,
+              price: String(ss.price)
+            })));
+          } else {
+            setServingSizes([{ label: "", price: "" }]);
+          }
+
           if (mealTypes.length === 0) {
             setMealTypes(mealsRes.results);
             setMealOptionsLoaded(true);
@@ -124,36 +134,36 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
           if (foodData.nutrition) {
             setNutrition(foodData.nutrition);
           } else {
-             setNutrition({
-                calories: undefined,
-                protein: undefined,
-                carbs: undefined,
-                fat: undefined,
-                fiber: undefined,
-                sugar: undefined,
-                saturated_fat: undefined,
-                trans_fat: undefined,
-                sodium: undefined,
-                potassium: undefined,
-                calcium: undefined,
-                iron: undefined,
-                vitamin_a: undefined,
-                vitamin_b1: undefined,
-                vitamin_b2: undefined,
-                vitamin_b3: undefined,
-                vitamin_b5: undefined,
-                vitamin_b6: undefined,
-                vitamin_b7: undefined,
-                vitamin_b9: undefined,
-                vitamin_b12: undefined,
-                vitamin_c: undefined,
-                vitamin_d: undefined,
-                vitamin_e: undefined,
-                vitamin_k: undefined,
-                cholesterol: undefined,
-                glycemic_index: undefined,
-                serving_size: "",
-              });
+            setNutrition({
+              calories: undefined,
+              protein: undefined,
+              carbs: undefined,
+              fat: undefined,
+              fiber: undefined,
+              sugar: undefined,
+              saturated_fat: undefined,
+              trans_fat: undefined,
+              sodium: undefined,
+              potassium: undefined,
+              calcium: undefined,
+              iron: undefined,
+              vitamin_a: undefined,
+              vitamin_b1: undefined,
+              vitamin_b2: undefined,
+              vitamin_b3: undefined,
+              vitamin_b5: undefined,
+              vitamin_b6: undefined,
+              vitamin_b7: undefined,
+              vitamin_b9: undefined,
+              vitamin_b12: undefined,
+              vitamin_c: undefined,
+              vitamin_d: undefined,
+              vitamin_e: undefined,
+              vitamin_k: undefined,
+              cholesterol: undefined,
+              glycemic_index: undefined,
+              serving_size: "",
+            });
           }
         } catch (err) {
           toast.error("Failed to load food data");
@@ -169,6 +179,20 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
     setNutrition(prev => ({ ...prev, [field]: value === "" ? undefined : value }));
   };
 
+  const addServingSize = () => {
+    setServingSizes([...servingSizes, { label: "", price: "" }]);
+  };
+
+  const removeServingSize = (index: number) => {
+    setServingSizes(servingSizes.filter((_, i) => i !== index));
+  };
+
+  const handleServingSizeChange = (index: number, field: "label" | "price", value: string) => {
+    const updated = [...servingSizes];
+    updated[index][field] = value;
+    setServingSizes(updated);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -178,13 +202,16 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
       // Append M2M IDs
       selectedMealTypes.forEach(id => formData.append("meal_types", id));
       selectedCuisines.forEach(id => formData.append("cuisine_types", id));
-      
+
       formData.append("description", description);
       if (image) {
         formData.append("image", image);
       }
-      if (price) {
-        formData.append("price", price);
+
+      // Filter out empty serving sizes and stringify
+      const validServingSizes = servingSizes.filter(s => s.label.trim() !== "");
+      if (validServingSizes.length > 0) {
+        formData.append("serving_sizes_input", JSON.stringify(validServingSizes));
       }
 
       await updateFood(foodId, formData);
@@ -240,35 +267,35 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
 
         {loading ? (
           <div className="py-20 text-center text-gray-500">
-             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-             Loading food data...
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            Loading food data...
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              
+
               {/* Left Column: Basic Info & Macros */}
               <div className="space-y-6">
                 <section className="space-y-4">
                   <h3 className="font-semibold text-primary-500 uppercase text-xs tracking-wider border-b dark:border-gray-700 pb-1">Basic Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                       <SearchableSelect2 
-                        label="Meal Types *" 
-                        options={mealTypeOptions} 
-                        value={selectedMealTypes} 
-                        onChange={setSelectedMealTypes} 
-                        onFocus={fetchMealTypes} 
+                      <SearchableSelect2
+                        label="Meal Types *"
+                        options={mealTypeOptions}
+                        value={selectedMealTypes}
+                        onChange={setSelectedMealTypes}
+                        onFocus={fetchMealTypes}
                         required
                       />
                     </div>
                     <div className="md:col-span-2">
-                       <SearchableSelect2 
-                        label="Cuisine Types" 
-                        options={cuisineOptions} 
-                        value={selectedCuisines} 
-                        onChange={setSelectedCuisines} 
-                        onFocus={fetchCuisineTypes} 
+                      <SearchableSelect2
+                        label="Cuisine Types"
+                        options={cuisineOptions}
+                        value={selectedCuisines}
+                        onChange={setSelectedCuisines}
+                        onFocus={fetchCuisineTypes}
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -284,12 +311,55 @@ const EditFood: React.FC<EditFoodProps> = ({ foodId, isOpen, onClose, onUpdated 
                       {existingImage && <div className="mb-2"><img src={existingImage} alt="Current" className="w-20 h-20 object-cover rounded shadow-sm border" /></div>}
                       <input id="image" type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500" disabled={saving} />
                     </div>
-                    <div>
-                      <Label htmlFor="price">Price (₹)</Label>
-                      <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 150" disabled={saving} />
+
+                    <div className="md:col-span-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="mb-0">Serving Sizes & Prices *</Label>
+                        <button
+                          type="button"
+                          onClick={addServingSize}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                        >
+                          + Add Size
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {servingSizes.map((ss, index) => (
+                          <div key={index} className="flex gap-3 items-end">
+                            <div className="flex-1">
+                              <Input
+                                placeholder="e.g. 2 pieces, 1 bowl"
+                                value={ss.label}
+                                onChange={(e) => handleServingSizeChange(index, "label", e.target.value)}
+                                disabled={saving}
+                                required={index === 0}
+                              />
+                            </div>
+                            <div className="w-32">
+                              <Input
+                                type="number"
+                                placeholder="Price (₹)"
+                                value={ss.price}
+                                onChange={(e) => handleServingSizeChange(index, "price", e.target.value)}
+                                disabled={saving}
+                                required={index === 0}
+                              />
+                            </div>
+                            {servingSizes.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeServingSize(index)}
+                                className="mb-2 text-red-500 hover:text-red-700 p-2"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div>
-                      <Label htmlFor="serving_size">Serving Size</Label>
+                      <Label htmlFor="serving_size">Serving Size(For Nutrients)</Label>
                       <Input id="serving_size" type="text" value={nutrition.serving_size} onChange={(e) => handleNutritionChange("serving_size", e.target.value)} placeholder="e.g. 100g, 3-4" disabled={saving} />
                     </div>
                   </div>

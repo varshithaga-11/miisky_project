@@ -170,6 +170,9 @@ import InventoryPage from "./pages/MicroKitchenSide/InventoryIngredient/index";
 import SupplyChainWorkFlowPage from "./pages/SupplyChain/Workflow/index";
 
 
+// import MealTypeManagementPage from "./pages/NutritionSide/MealTypeManagement/index";
+import MealPackageManagementPage from "./pages/NutritionSide/MealPackages/index";
+
 
 // Master Side Pages
 import MasterDashboard from "./pages/MasterSide/Dashboard/index";
@@ -422,6 +425,10 @@ export function appRoutes() {
           <Route path="nutrition/blogtag" element={<BlogTagPage />} />
           <Route path="nutrition/blogpost" element={<BlogPostPage />} />
           <Route path="nutrition/blogcomment" element={<BlogCommentPage />} />
+
+
+          {/*Nutrition meal package*/}
+          <Route path="nutrition/meal-package" element={<MealPackageManagementPage />} />
 
           {/* Nutritionist Food Management */}
           <Route path="nutrition/meal-type" element={<MealTypeManagementPage />} />

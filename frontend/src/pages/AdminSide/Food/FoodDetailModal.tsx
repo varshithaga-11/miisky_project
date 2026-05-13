@@ -65,6 +65,25 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({ food, onClose }) => {
             </div>
           )}
 
+          {/* Serving Sizes & Prices */}
+          {food.serving_sizes && food.serving_sizes.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                <div className="w-8 h-[2px] bg-indigo-500"></div> Serving Sizes & Prices
+              </h3>
+              <div className="flex flex-wrap gap-4">
+                {food.serving_sizes.map((ss, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100/50 dark:border-indigo-900/20">
+                    <span className="font-bold text-gray-700 dark:text-gray-200">{ss.label}</span>
+                    <span className="px-3 py-1 bg-white dark:bg-gray-800 rounded-lg text-xs font-black text-indigo-600 dark:text-indigo-400 shadow-sm">
+                      ₹{ss.price}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             
             {/* Ingredients */}

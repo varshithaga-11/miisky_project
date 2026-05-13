@@ -41,6 +41,13 @@ export interface CuisineType {
   posted_by_name?: string;
 }
 
+export interface FoodServingSize {
+  id?: number;
+  food?: number;
+  label: string;
+  price: string | number;
+}
+
 export interface Food {
   id?: number;
   name: string;
@@ -54,7 +61,7 @@ export interface Food {
   nutrition?: FoodNutrition;
   ingredients?: any[];
   steps?: any[];
-  price?: number;
+  serving_sizes?: FoodServingSize[];
   posted_by_role?: string;
   posted_by_name?: string;
 }
