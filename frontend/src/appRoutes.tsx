@@ -172,7 +172,7 @@ import SupplyChainWorkFlowPage from "./pages/SupplyChain/Workflow/index";
 
 // import MealTypeManagementPage from "./pages/NutritionSide/MealTypeManagement/index";
 import MealPackageManagementPage from "./pages/NutritionSide/MealPackages/index";
-
+import AddExtraFeesPage from "./pages/NutritionSide/AddExtraFees/index";
 
 // Master Side Pages
 import MasterDashboard from "./pages/MasterSide/Dashboard/index";
@@ -429,6 +429,7 @@ export function appRoutes() {
 
           {/*Nutrition meal package*/}
           <Route path="nutrition/meal-package" element={<MealPackageManagementPage />} />
+          <Route path="nutrition/add-extra-fees" element={<AddExtraFeesPage />} />
 
           {/* Nutritionist Food Management */}
           <Route path="nutrition/meal-type" element={<MealTypeManagementPage />} />

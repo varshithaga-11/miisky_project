@@ -13444,3 +13444,36 @@ class InventoryIngredientViewSet(viewsets.ModelViewSet):
                 raise drf_serializers.ValidationError({"detail": "Micro Kitchen profile not found for this user."})
         else:
             serializer.save()
+
+class UserDietPlanExtraChargeViewSet(viewsets.ModelViewSet):
+    serializer_class = UserDietPlanExtraChargeSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = UserDietPlanExtraCharge.objects.all().select_related('user', 'user_diet_plan')
+        
+        plan_id = self.request.query_params.get('user_diet_plan')
+        if plan_id:
+            queryset = queryset.filter(user_diet_plan_id=plan_id)
+            
+        patient_id = self.request.query_params.get('user')
+        if patient_id:
+            queryset = queryset.filter(user_id=patient_id)
+            
+        if user.role == 'nutritionist':
+            # Optionally filter by plans managed by this nutritionist
+            queryset = queryset.filter(user_diet_plan__nutritionist=user)
+        elif user.role == 'patient':
+            queryset = queryset.filter(user=user)
+            
+        return queryset.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        # Auto-set the user from the diet plan if not provided
+        diet_plan = serializer.validated_data.get('user_diet_plan')
+        if diet_plan and not serializer.validated_data.get('user'):
+            serializer.save(user=diet_plan.user)
+        else:
+            serializer.save()

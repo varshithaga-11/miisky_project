@@ -3005,12 +3005,20 @@ class UserDietPlanNewRequestLiteSerializer(serializers.ModelSerializer):
             "brand_name": obj.micro_kitchen.brand_name,
         }
 
+class UserDietPlanExtraChargeSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=UserRegister.objects.all(), required=False, allow_null=True)
+    class Meta:
+        model = UserDietPlanExtraCharge
+        fields = ['id', 'user', 'user_diet_plan', 'label', 'amount', 'reason', 'created_at']
+        read_only_fields = ['created_at']
+
 
 class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
     diet_plan_details = serializers.SerializerMethodField()
     nutritionist_details = serializers.SerializerMethodField()
     micro_kitchen_details = serializers.SerializerMethodField()
     original_micro_kitchen_details = serializers.SerializerMethodField()
+    user_details = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
@@ -3021,8 +3029,18 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
             'transaction_id', 'payment_screenshot', 'payment_uploaded_on',
             'micro_kitchen_effective_from',
             'diet_plan_details', 'nutritionist_details',
-            'micro_kitchen_details', 'original_micro_kitchen_details',
+            'micro_kitchen_details', 'original_micro_kitchen_details', 'user_details',
         ]
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name,
+                'email': obj.user.email,
+            }
+        return None
 
     def get_diet_plan_details(self, obj):
         if obj.diet_plan:

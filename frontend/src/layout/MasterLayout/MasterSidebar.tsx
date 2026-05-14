@@ -371,6 +371,12 @@ const nutritionistNavItems: NavItem[] = [
 
   {
     icon: <Briefcase className="w-5 h-5" />,
+    name: "Add Extra Fees",
+    path: "/nutrition/add-extra-fees",
+  },
+
+  {
+    icon: <Briefcase className="w-5 h-5" />,
     name: "Food Management",
     subItems: [
       { name: "Meal Type", path: "/nutrition/meal-type" },

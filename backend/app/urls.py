@@ -113,6 +113,7 @@ router.register(r'micro-kitchen-delivery-team', MicroKitchenDeliveryTeamViewSet,
 router.register(r'microkitchen-ingredient-unit', MicroKitchenIngredientUnitViewSet, basename='microkitchen-ingredient-unit')
 router.register(r'microkitchen-ingredient', MicroKitchenIngredientViewSet, basename='microkitchen-ingredient')
 router.register(r'inventory-ingredient', InventoryIngredientViewSet, basename='inventory-ingredient')
+router.register(r'user-diet-plan-extra-charge', UserDietPlanExtraChargeViewSet, basename='user-diet-plan-extra-charge')
 
 # Support Ticket routes
 router.register(r'ticketcategory', TicketCategoryViewSet, basename='ticketcategory')
