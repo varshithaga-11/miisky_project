@@ -2172,6 +2172,12 @@ class UserDietPlanExtraCharge(models.Model):
     created_by=models.ForeignKey(
         "UserRegister", on_delete=models.SET_NULL, related_name="extra_charges_created",null=True,blank=True
     )
+    billing_invoice = models.ForeignKey(
+        "BillingCycleInvoice",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="extra_charges",
+    )
 
     def __str__(self):
         return f"{self.user_diet_plan} | {self.label} | ₹{self.amount}"

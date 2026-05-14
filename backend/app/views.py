@@ -13471,9 +13471,27 @@ class UserDietPlanExtraChargeViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-created_at')
 
     def perform_create(self, serializer):
+        from .billing_utils import get_or_create_active_invoice, update_invoice_totals
         # Auto-set the user from the diet plan if not provided
         diet_plan = serializer.validated_data.get('user_diet_plan')
         if diet_plan and not serializer.validated_data.get('user'):
-            serializer.save(user=diet_plan.user, created_by=self.request.user)
+            instance = serializer.save(user=diet_plan.user, created_by=self.request.user)
         else:
-            serializer.save(created_by=self.request.user)
+            instance = serializer.save(created_by=self.request.user)
+        
+        # Trigger invoice update
+        if instance.user_diet_plan:
+            invoice = get_or_create_active_invoice(instance.user_diet_plan)
+            update_invoice_totals(invoice)
+
+    def perform_destroy(self, instance):
+        from .billing_utils import update_invoice_totals
+        diet_plan = instance.user_diet_plan
+        invoice = instance.billing_invoice
+        instance.delete()
+        if invoice:
+            update_invoice_totals(invoice)
+        elif diet_plan:
+            from .billing_utils import get_or_create_active_invoice
+            invoice = get_or_create_active_invoice(diet_plan)
+            update_invoice_totals(invoice)

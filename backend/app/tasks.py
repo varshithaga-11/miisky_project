@@ -403,6 +403,12 @@ def calculate_daily_meal_billing():
                 "meal_breakdown":     breakdown,
             }
         )
+
+        # 🚀 New: Automatically update or create a draft invoice for this plan
+        from .billing_utils import get_or_create_active_invoice, update_invoice_totals
+        invoice = get_or_create_active_invoice(plan)
+        update_invoice_totals(invoice)
+        
         results.append(f"{plan.pk}: {total}")
     
-    return f"Calculated billing for {len(results)} plans: {results}"
+    return f"Calculated billing and updated invoices for {len(results)} plans: {results}"
