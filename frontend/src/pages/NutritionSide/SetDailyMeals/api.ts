@@ -65,6 +65,7 @@ export interface UserMeal {
     micro_kitchen_details?: { id: number; brand_name?: string | null; status?: string } | null;
     available_meal_types?: number[];
     available_meal_type_details?: { id: number; name: string }[];
+    meal_price?: string | number | null;
 }
 
 export interface FoodNutritionById {
@@ -364,6 +365,7 @@ export const saveBulkMeals = async (meals: UserMeal[]): Promise<unknown> => {
         quantity: m.quantity ?? 1,
         meal_date: m.meal_date,
         serving_size: m.serving_size ?? null,
+        meal_price: m.meal_price ?? null,
         ...(m.notes != null && m.notes !== "" && { notes: m.notes }),
         packaging_material: m.packaging_material ?? null,
     }));

@@ -2086,6 +2086,12 @@ class UserMeal(models.Model):
         blank=True,
         related_name="user_meals"
     )
+    meal_price = models.DecimalField(
+    max_digits=10, decimal_places=2,
+    null=True, blank=True,
+    help_text="Snapshot of FoodServingSize.price at time of allotment. Never changes.",
+)
+
 
     meal_date = models.DateField()
 
@@ -2138,6 +2144,13 @@ class UserMeal(models.Model):
             models.Index(fields=['micro_kitchen', 'meal_date']),
         ]
         ordering = ['meal_date', 'meal_type']
+
+    def save(self, *args, **kwargs):
+        # Snapshot the price from the serving size at the time of allotment.
+        # If serving_size is set and meal_price is not yet fixed, we capture it.
+        if self.serving_size and self.meal_price is None:
+            self.meal_price = self.serving_size.price
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} - {self.meal_type} - {self.meal_date}"

@@ -3188,7 +3188,7 @@ class UserMealSerializer(serializers.ModelSerializer):
             'meal_type_details',
             'food', 'food_details',
             'quantity', 'meal_date', 'is_consumed', 'consumed_at',
-            'status', 'serving_size', 'serving_size_details',
+            'status', 'serving_size', 'serving_size_details', 'meal_price',
             'notes', 'packaging_material', 'packaging_material_details',
             'micro_kitchen', 'micro_kitchen_details', 'delivery_person_details',
             'delivery_assignment_id', 'delivery_slot_details',
@@ -3305,6 +3305,7 @@ class BulkUserMealSerializer(serializers.ModelSerializer):
             'notes',
             'packaging_material',
             'serving_size',
+            'meal_price',
         ]
         validators = []
 

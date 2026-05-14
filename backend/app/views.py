@@ -8040,10 +8040,13 @@ class UserMealViewSet(viewsets.ModelViewSet):
                     meal_obj.notes = item.get('notes')
                     meal_obj.packaging_material = item.get('packaging_material')
                     meal_obj.serving_size = item.get('serving_size')
+                    if meal_obj.serving_size:
+                        meal_obj.meal_price = meal_obj.serving_size.price
                     meal_obj.micro_kitchen_id = target_kitchen_id
                     meal_obj.save()
                     continue
 
+                ss = item.get('serving_size')
                 meal_obj = UserMeal.objects.create(
                     user=item['user'],
                     meal_date=meal_date,
@@ -8053,7 +8056,8 @@ class UserMealViewSet(viewsets.ModelViewSet):
                     user_diet_plan=udp,
                     notes=item.get('notes'),
                     packaging_material=item.get('packaging_material'),
-                    serving_size=item.get('serving_size'),
+                    serving_size=ss,
+                    meal_price=ss.price if ss else None,
                     micro_kitchen_id=target_kitchen_id,
                 )
                 DeliveryAssignment.ensure_for_meal(meal_obj)
