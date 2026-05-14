@@ -9689,6 +9689,33 @@ class AdminPatientOverviewViewSet(viewsets.ReadOnlyModelViewSet):
         return AdminPatientListSerializer
 
 
+class AdminPlanBillingOverviewViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin-only: Nested view of Patients -> Plans -> (Daily Summaries + Extra Charges)
+    Used for the Final Amount Overview page.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    serializer_class = AdminPatientBillingOverviewSerializer
+    pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+
+    def get_queryset(self):
+        from .models import DailyMealBillingSummary, UserDietPlanExtraCharge, UserDietPlan
+        from django.db.models import Prefetch
+
+        # Prefetch daily summaries and extra charges for each plan
+        plans_prefetch = Prefetch(
+            'diet_plans',
+            queryset=UserDietPlan.objects.select_related('diet_plan').prefetch_related(
+                Prefetch('daily_billing_summaries', queryset=DailyMealBillingSummary.objects.order_by('-summary_date')),
+                Prefetch('extra_charges', queryset=UserDietPlanExtraCharge.objects.select_related('created_by').order_by('-created_at'))
+            )
+        )
+
+        return UserRegister.objects.filter(role='patient').prefetch_related(plans_prefetch).order_by('-id')
+
+
 class AdminMicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Admin-only: list patients assigned to a specific micro kitchen (daily slots).

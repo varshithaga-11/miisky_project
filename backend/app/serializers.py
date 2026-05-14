@@ -3023,6 +3023,27 @@ class UserDietPlanExtraChargeSerializer(serializers.ModelSerializer):
             }
         return None
 
+class DailyMealBillingSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyMealBillingSummary
+        fields = ['id', 'summary_date', 'total_meal_amount', 'total_meals_count', 'meal_breakdown']
+
+class AdminPlanBillingDetailSerializer(serializers.ModelSerializer):
+    daily_summaries = DailyMealBillingSummarySerializer(many=True, read_only=True)
+    extra_charges = UserDietPlanExtraChargeSerializer(many=True, read_only=True)
+    diet_plan_title = serializers.CharField(source='diet_plan.title', read_only=True)
+
+    class Meta:
+        model = UserDietPlan
+        fields = ['id', 'status', 'start_date', 'end_date', 'diet_plan_title', 'daily_summaries', 'extra_charges']
+
+
+class AdminPatientBillingOverviewSerializer(serializers.ModelSerializer):
+    diet_plans = AdminPlanBillingDetailSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = UserRegister
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'diet_plans']
 
 class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
     diet_plan_details = serializers.SerializerMethodField()

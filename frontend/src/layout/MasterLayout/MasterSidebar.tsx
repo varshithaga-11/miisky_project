@@ -142,6 +142,7 @@ const adminNavItems: NavItem[] = [
       { name: "Record Plan Payouts", path: "/admin/record-plan-payouts" },
       { name: "Plan Payments Overview", path: "/admin/plan-payments-overview" },
       { name: "Add Extra Charges", path: "/admin/add-extra-charges" },
+      { name: "Final Amount Overview", path: "/admin/each-plan-final-amount" },
     ],
   },
   {
