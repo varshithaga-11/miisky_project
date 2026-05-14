@@ -1888,6 +1888,8 @@ class UserDietPlan(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='suggested')
 
+    is_plan_approved_by_patient=models.BooleanField(default=False)
+
     # 🔹 User response
     user_feedback = models.TextField(null=True, blank=True)
     decision_on = models.DateTimeField(null=True, blank=True)
@@ -1950,18 +1952,12 @@ class UserDietPlan(models.Model):
     # 🔥 BUSINESS LOGIC METHODS
     # =====================================================
 
-    def approve(self, start_date=None):
+    def approve(self):
         """User approves the plan"""
-        self.status = 'payment_pending'
+        self.status = 'active'
+        self.is_plan_approved_by_patient = True
         self.approved_on = now()
         self.decision_on = now()
-
-        if start_date:
-            self.start_date = start_date
-            if self.diet_plan and self.diet_plan.no_of_days:
-                # no_of_days=2 means start + end (inclusive): 26th + 27th → end_date = 27th = start + 1 day
-                self.end_date = start_date + timedelta(days=self.diet_plan.no_of_days - 1)
-
         self.save()
 
     def reject(self, feedback=None):
@@ -2154,6 +2150,126 @@ class UserMeal(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.meal_type} - {self.meal_date}"
+
+# --------------------------------------------------------------
+# Daily Meal Billing System
+# --------------------------------------------------------------
+
+class UserDietPlanExtraCharge(models.Model):
+    """
+    Optional extra charges (delivery, special packaging, etc.) linked to a plan and patient.
+    """
+    user = models.ForeignKey(
+        "UserRegister", on_delete=models.CASCADE, related_name="extra_charges"
+    )
+    user_diet_plan = models.ForeignKey(
+        "UserDietPlan", on_delete=models.CASCADE, related_name="extra_charges"
+    )
+    label = models.CharField(max_length=255, help_text="e.g. Delivery fee, Special handling")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    reason = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user_diet_plan} | {self.label} | ₹{self.amount}"
+
+class BillingCycleInvoice(models.Model):
+    """
+    Aggregated invoice for a specific period (e.g. weekly/monthly).
+    Sums up all daily meal summaries and extra charges.
+    """
+    user_diet_plan = models.ForeignKey(
+        "UserDietPlan", on_delete=models.CASCADE, related_name="billing_invoices"
+    )
+    user = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="billing_invoices"
+    )
+
+    period_from = models.DateField()
+    period_to = models.DateField()
+
+    total_food_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+    total_extra_charges = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+    grand_total = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    
+    # Track status (draft, sent, paid, cancelled)
+    status = models.CharField(max_length=20, default="draft") 
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Invoice #{self.id} | {self.user} | {self.period_from} to {self.period_to}"
+
+class DailyMealBillingSummary(models.Model):
+    """
+    Created once per day per UserDietPlan at 11pm by Celery.
+    Sums all UserMeal.meal_price for that day.
+    Never recalculated — past days are locked.
+    """
+
+    user_diet_plan = models.ForeignKey(
+        "UserDietPlan",
+        on_delete=models.CASCADE,
+        related_name="daily_billing_summaries",
+    )
+    user = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="daily_billing_summaries",
+    )
+
+    summary_date = models.DateField(db_index=True)
+
+    # All meals that day
+    total_meal_amount = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Sum of all UserMeal.meal_price for this date",
+    )
+    total_meals_count = models.PositiveIntegerField(default=0)
+
+    # Which meals were included (for reference)
+    meal_breakdown = models.JSONField(
+        default=list,
+        help_text="[{meal_type, food_name, meal_price}, ...] for audit",
+    )
+
+    # Links to invoice when generated
+    billing_invoice = models.ForeignKey(
+        "BillingCycleInvoice",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="daily_summaries",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user_diet_plan", "summary_date")
+        indexes = [
+            models.Index(fields=["user_diet_plan", "summary_date"]),
+            models.Index(fields=["user", "summary_date"]),
+        ]
+        ordering = ["summary_date"]
+
+    def __str__(self):
+        return (
+            f"{self.user} | {self.summary_date} | "
+            f"₹{self.total_meal_amount} ({self.total_meals_count} meals)"
+        )
 
 
 # --------------------------------------------------------------

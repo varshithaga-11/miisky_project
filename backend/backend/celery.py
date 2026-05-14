@@ -23,4 +23,9 @@ app.conf.beat_schedule = {
         "task": "app.tasks.send_weekly_food_plan_emails",
         "schedule": crontab(day_of_week="sun", hour=8, minute=0),
     },
+    # Daily at 11pm: calculate billing summaries for today's meals.
+    "daily-meal-billing": {
+        "task": "app.tasks.calculate_daily_meal_billing",
+        "schedule": crontab(hour=23, minute=0),
+    },
 }

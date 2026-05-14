@@ -2832,7 +2832,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             'original_nutritionist', 'diet_plan', 'diet_plan_details', 'micro_kitchen', 'micro_kitchen_details',
             'original_micro_kitchen', 'original_micro_kitchen_details', 'micro_kitchen_effective_from',
             'review', 'review_details', 'selected_package', 'selected_package_details',
-            'nutritionist_notes', 'status', 'user_feedback', 'decision_on',
+            'nutritionist_notes', 'status', 'is_plan_approved_by_patient', 'user_feedback', 'decision_on',
             'amount_paid', 'transaction_id', 'payment_status',
             'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
             'verified_by', 'verified_by_details', 'verified_on',
@@ -3016,7 +3016,7 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
         model = UserDietPlan
         fields = [
             'id', 'status',
-            'suggested_on', 'nutritionist_notes',
+            'suggested_on', 'nutritionist_notes', 'is_plan_approved_by_patient',
             'start_date', 'end_date',
             'transaction_id', 'payment_screenshot', 'payment_uploaded_on',
             'micro_kitchen_effective_from',
@@ -3073,8 +3073,8 @@ class ApprovedPlansLiteSerializer(serializers.ModelSerializer):
             'user_details',
             'diet_plan_details',
             'micro_kitchen_details',
-            'start_date',
-            'status',
+            'start_date', 'end_date',
+            'status', 'is_plan_approved_by_patient',
             'created_on',
             'payment_status',
             'nutritionist_notes',

@@ -344,3 +344,65 @@ def send_weekly_food_plan_emails():
     Intended to run every Sunday via Celery Beat.
     """
     return run_send_weekly_food_plan_emails()
+
+
+@shared_task
+def calculate_daily_meal_billing():
+    """
+    Runs at 11pm every day.
+    Fetches today's UserMeals per active plan,
+    sums meal_price, stores in DailyMealBillingSummary.
+    """
+    from .models import DailyMealBillingSummary, UserDietPlan, UserMeal
+    from django.db.models import Sum
+    from decimal import Decimal
+
+    today = timezone.now().date()
+
+    # Get all active plans
+    active_plans = UserDietPlan.objects.filter(
+        status="active",
+        start_date__lte=today,
+        end_date__gte=today,
+    ).select_related("user")
+
+    results = []
+    for plan in active_plans:
+        # Fetch today's meals for this plan
+        meals = UserMeal.objects.filter(
+            user_diet_plan=plan,
+            meal_date=today,
+            status__in=["scheduled", "prepared", "delivered"],
+        ).select_related("meal_type", "food")
+
+        if not meals.exists():
+            continue
+
+        total = meals.aggregate(
+            t=Sum("meal_price")
+        )["t"] or Decimal("0.00")
+
+        # Build breakdown for audit
+        breakdown = [
+            {
+                "meal_type": m.meal_type.name if m.meal_type else None,
+                "food":      m.food.name if m.food else None,
+                "price":     str(m.meal_price or 0),
+            }
+            for m in meals
+        ]
+
+        # Store — one row per plan per day
+        summary, created = DailyMealBillingSummary.objects.update_or_create(
+            user_diet_plan=plan,
+            summary_date=today,
+            defaults={
+                "user":               plan.user,
+                "total_meal_amount":  total,
+                "total_meals_count":  meals.count(),
+                "meal_breakdown":     breakdown,
+            }
+        )
+        results.append(f"{plan.pk}: {total}")
+    
+    return f"Calculated billing for {len(results)} plans: {results}"

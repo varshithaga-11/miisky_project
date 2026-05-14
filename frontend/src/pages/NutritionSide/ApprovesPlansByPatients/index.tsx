@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import { getApprovedPlansForNutritionist, PaginatedUserDietPlan } from "./api";
+import { getApprovedPlansForNutritionist, PaginatedUserDietPlan, updatePlanDates } from "./api";
 import type { ApprovedPlanLite } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import { 
     FiCheckCircle, FiUser, FiPackage, FiActivity, 
     FiCreditCard, FiSearch, FiChevronLeft, FiChevronRight,
-    FiEye, FiInfo, FiBox
+    FiEye, FiInfo, FiBox, FiMoreVertical, FiX, FiCalendar, FiThumbsUp
 } from "react-icons/fi";
+import DatePicker2 from "../../../components/form/date-picker2";
 
 const ApprovesPlansByPatientsPage: React.FC = () => {
     const [plans, setPlans] = useState<ApprovedPlanLite[]>([]);
@@ -23,6 +24,53 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
     const [count, setCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
 
+    const [dateModalPlan, setDateModalPlan] = useState<ApprovedPlanLite | null>(null);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [updating, setUpdating] = useState(false);
+
+    const handleUpdateDates = async () => {
+        if (!dateModalPlan || updating) return;
+        setUpdating(true);
+        try {
+            await updatePlanDates(
+                dateModalPlan.id, 
+                startDate || null,
+                endDate || null
+            );
+            toast.success("Plan dates updated successfully");
+            setDateModalPlan(null);
+            fetchPlans();
+        } catch (err) {
+            toast.error("Failed to update plan dates");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const fetchPlans = async () => {
+        setLoading(true);
+        try {
+            const statusParam = filter === "all" || filter === "patient_approved" ? "" : filter;
+            const isPatientApproved = filter === "patient_approved" ? true : undefined;
+            const data: PaginatedUserDietPlan = await getApprovedPlansForNutritionist(
+                statusParam, 
+                page, 
+                limit, 
+                debouncedSearch,
+                isPatientApproved
+            );
+            setPlans(data.results);
+            setCount(data.count);
+            setTotalPages(data.total_pages);
+            setExpandedRows([]);
+        } catch (error) {
+            toast.error("Failed to load approved plans");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
@@ -32,21 +80,6 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
     }, [search]);
 
     useEffect(() => {
-        const fetchPlans = async () => {
-            setLoading(true);
-            try {
-                const statusParam = filter === "all" ? "" : filter;
-                const data: PaginatedUserDietPlan = await getApprovedPlansForNutritionist(statusParam, page, limit, debouncedSearch);
-                setPlans(data.results);
-                setCount(data.count);
-                setTotalPages(data.total_pages);
-                setExpandedRows([]);
-            } catch (error) {
-                toast.error("Failed to load approved plans");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchPlans();
     }, [filter, debouncedSearch, page, limit]);
 
@@ -62,6 +95,7 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
 
     const statusIcons: Record<string, React.ReactElement> = {
         all: <FiPackage />,
+        patient_approved: <FiThumbsUp />,
         approved: <FiCheckCircle />,
         payment_pending: <FiCreditCard />,
         active: <FiActivity />,
@@ -85,7 +119,7 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-[40px] border border-transparent dark:border-white/[0.05] shadow-xl shadow-gray-200/50 dark:shadow-none space-y-6">
                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
                         <div className="flex flex-wrap gap-2">
-                            {["all", "approved", "payment_pending", "active", "completed"].map((st) => (
+                            {["all", "patient_approved", "approved", "payment_pending", "active", "completed"].map((st) => (
                                 <button
                                     key={st}
                                     onClick={() => {
@@ -201,14 +235,42 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
                                                 <td className="px-6 py-6 text-center">
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${getStatusStyles(udp.status)}`}>
                                                         {statusIcons[udp.status] || <FiActivity />} {udp.status.replace("_", " ")}
+                                                        {udp.is_plan_approved_by_patient && udp.status === 'suggested' && (
+                                                            <span className="ml-1 text-[8px] opacity-70">(Patient Approved)</span>
+                                                        )}
                                                     </span>
                                                 </td>
-                                                <td className="px-8 py-6 text-right">
-                                                    <button 
-                                                        className={`size-10 rounded-xl transition-all flex items-center justify-center ${expandedRows.includes(udp.id) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-indigo-600'}`}
-                                                    >
-                                                        <FiEye size={18} />
-                                                    </button>
+                                                <td className="px-8 py-6 text-right" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex justify-end gap-2">
+                                                        <button 
+                                                            className={`size-10 rounded-xl transition-all flex items-center justify-center ${expandedRows.includes(udp.id) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-indigo-600'}`}
+                                                            onClick={() => toggleRow(udp.id)}
+                                                        >
+                                                            <FiEye size={18} />
+                                                        </button>
+                                                        
+                                                        {(udp.is_plan_approved_by_patient || udp.status === 'approved') && (
+                                                            <div className="relative group/menu">
+                                                                <button 
+                                                                    className="size-10 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-indigo-600 transition-all flex items-center justify-center"
+                                                                >
+                                                                    <FiMoreVertical size={18} />
+                                                                </button>
+                                                                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-white/5 py-2 z-50 invisible group-hover/menu:visible opacity-0 group-hover/menu:opacity-100 transition-all">
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            setDateModalPlan(udp);
+                                                                            setStartDate(udp.start_date || "");
+                                                                            setEndDate(udp.end_date || "");
+                                                                        }}
+                                                                        className="w-full px-4 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 flex items-center gap-2"
+                                                                    >
+                                                                        <FiCalendar size={14} /> Set Plan Dates
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                             {/* Expanded Row */}
@@ -224,6 +286,11 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
                                                                     <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Plan suggested on: {new Date(udp.created_on).toLocaleDateString()}</p>
                                                                     <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Assigned Kitchen: {udp.micro_kitchen_details?.brand_name || 'N/A'}</p>
                                                                     <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Payment: {udp.payment_status?.toUpperCase() || 'UNKNOWN'}</p>
+                                                                    {udp.is_plan_approved_by_patient && (
+                                                                        <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                                                                            <FiThumbsUp size={12} /> Approved by Patient
+                                                                        </p>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                             <div className="md:col-span-2 space-y-4">
@@ -277,6 +344,60 @@ const ApprovesPlansByPatientsPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Date Selection Modal */}
+            {dateModalPlan && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-gray-800 rounded-[32px] p-8 max-w-md w-full shadow-2xl border border-transparent dark:border-white/5 space-y-6">
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Set Plan Dates</h3>
+                                <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest">{dateModalPlan.user_details?.first_name}'s Plan</p>
+                            </div>
+                            <button 
+                                onClick={() => setDateModalPlan(null)}
+                                className="size-10 rounded-xl bg-gray-50 dark:bg-white/5 text-gray-400 flex items-center justify-center hover:text-red-500 transition-colors"
+                            >
+                                <FiX size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <DatePicker2
+                                id="start-date"
+                                label="Start Date"
+                                value={startDate}
+                                onChange={(date) => setStartDate(date)}
+                                placeholder="Select start date"
+                            />
+                            <DatePicker2
+                                id="end-date"
+                                label="End Date"
+                                value={endDate}
+                                minDate={startDate}
+                                onChange={(date) => setEndDate(date)}
+                                placeholder="Select end date"
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-white/5">
+                            <button 
+                                onClick={() => setDateModalPlan(null)}
+                                className="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                            >
+                                Dismiss
+                            </button>
+                            <button 
+                                onClick={handleUpdateDates}
+                                disabled={updating}
+                                className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50"
+                            >
+                                {updating ? "Processing..." : "Update Dates"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

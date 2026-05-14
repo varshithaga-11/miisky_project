@@ -104,7 +104,7 @@ const SuggestedPlansPage: React.FC = () => {
       const updated = await approvePlan(approveModal.id);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setApproveModal(null);
-      toast.success("Plan approved. You can now pay online or upload a screenshot.");
+      toast.success("Plan approved. Nutritionist will set the dates shortly.");
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || "Failed to approve");
     } finally {
@@ -233,9 +233,9 @@ const SuggestedPlansPage: React.FC = () => {
                         )}
                         {udp.original_micro_kitchen_details && (
                           <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100/50">
-                             <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
-                               <FiHome size={10} /> Reassigned from: {udp.original_micro_kitchen_details.brand_name}
-                             </p>
+                            <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
+                              <FiHome size={10} /> Reassigned from: {udp.original_micro_kitchen_details.brand_name}
+                            </p>
                           </div>
                         )}
                         <p className="text-2xl font-black text-gray-900 dark:text-white mt-4">
@@ -345,7 +345,7 @@ const SuggestedPlansPage: React.FC = () => {
                             )}
                             Pay Online (HDFC Gateway)
                           </button>
-                          
+
                           <div className="flex items-center gap-2 my-1">
                             <div className="h-[1px] flex-1 bg-gray-100 dark:bg-white/5"></div>
                             <span className="text-[10px] font-bold text-gray-400 uppercase">Or</span>
@@ -405,7 +405,7 @@ const SuggestedPlansPage: React.FC = () => {
                           <FiHome size={12} /> {udp.micro_kitchen_details.brand_name}
                         </p>
                       )}
-                      
+
                       <p className="text-gray-500 text-sm mt-2">
                         {udp.start_date && udp.end_date && (
                           <>
@@ -588,7 +588,7 @@ const SuggestedPlansPage: React.FC = () => {
                 </a>
               </div>
             )}
-            
+
             <div className="space-y-4 mb-6">
               <button
                 onClick={() => handlePayOnline(paymentModal)}
@@ -646,41 +646,41 @@ const SuggestedPlansPage: React.FC = () => {
                 />
               </div>
             </div>
-              {screenshotFile && (
-                <div className="mt-4">
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Preview</p>
-                  <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10">
-                    <ScreenshotPreview file={screenshotFile} />
-                  </div>
+            {screenshotFile && (
+              <div className="mt-4">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Preview</p>
+                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10">
+                  <ScreenshotPreview file={screenshotFile} />
                 </div>
-              )}
-              <p className="text-xs text-gray-500 mt-2">
-                Upload a screenshot of your payment. Admin will verify and activate your plan.
-              </p>
-              
-              <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => {
-                    setPaymentModal(null);
-                    setScreenshotFile(null);
-                    setAmountPaid("");
-                    setTransactionId("");
-                  }}
-                  className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUploadPayment}
-                  disabled={submitting || !transactionId}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2"
-                >
-                  {submitting ? "..." : <> <FiUpload /> Submit Payment </>}
-                </button>
               </div>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              Upload a screenshot of your payment. Admin will verify and activate your plan.
+            </p>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => {
+                  setPaymentModal(null);
+                  setScreenshotFile(null);
+                  setAmountPaid("");
+                  setTransactionId("");
+                }}
+                className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUploadPayment}
+                disabled={submitting || !transactionId}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2"
+              >
+                {submitting ? "..." : <> <FiUpload /> Submit Payment </>}
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
       <ConfirmationModal
         isOpen={!!statusUpdate}
         onClose={() => setStatusUpdate(null)}
@@ -702,7 +702,7 @@ const SuggestedPlansPage: React.FC = () => {
                   <h2 className="text-2xl font-black text-gray-900 dark:text-white">Plan Features</h2>
                   <p className="text-sm text-gray-500 mt-1">{featuresModal.diet_plan_details?.title}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setFeaturesModal(null)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
                 >

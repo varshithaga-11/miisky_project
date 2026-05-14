@@ -3921,7 +3921,6 @@ class UserNutritionistMappingViewSet(viewsets.ModelViewSet):
                 {"detail": "Nutritionists only."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-
         patient_ids = set(_build_nutritionist_patient_map(request.user).keys())
         user_ids_param = (request.query_params.get("user_ids") or "").strip()
         if user_ids_param:
@@ -6274,12 +6273,15 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         payment_status_filter = self.request.query_params.get('payment_status')
         start_date_filter = self.request.query_params.get('start_date')
         end_date_filter = self.request.query_params.get('end_date')
+        is_patient_approved = self.request.query_params.get('is_plan_approved_by_patient')
 
         if user.role == "admin":
             if patient_id:
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
+            if is_patient_approved is not None:
+                queryset = queryset.filter(is_plan_approved_by_patient=is_patient_approved.lower() == 'true')
             if payment_status_filter:
                 queryset = queryset.filter(payment_status=payment_status_filter)
             
@@ -6344,6 +6346,8 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(user_id=patient_id)
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
+            if is_patient_approved is not None:
+                queryset = queryset.filter(is_plan_approved_by_patient=is_patient_approved.lower() == 'true')
             if start_date_filter:
                 queryset = queryset.filter(start_date__gte=start_date_filter)
             if end_date_filter:
@@ -6386,23 +6390,13 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Patient approves plan. Optional start_date; admin assigns it when verifying payment."""
+        """Patient approves plan."""
         udp = self.get_object()
         if udp.user_id != request.user.id:
             return Response({"detail": "Only the assigned patient can approve."}, status=status.HTTP_403_FORBIDDEN)
         if udp.status != 'suggested':
             return Response({"detail": f"Cannot approve: current status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
-        start_date = None
-        start_date_str = request.data.get('start_date')
-        if start_date_str:
-            from datetime import datetime
-            try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                return Response({"detail": "Invalid start_date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-            if start_date < timezone.now().date():
-                return Response({"detail": "Start date cannot be in the past."}, status=status.HTTP_400_BAD_REQUEST)
-        udp.approve(start_date=start_date)
+        udp.approve()
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='reject')
@@ -8021,6 +8015,14 @@ class UserMealViewSet(viewsets.ModelViewSet):
             for item in serializer.validated_data:
                 udp = item['user_diet_plan']
                 meal_date = item['meal_date']
+
+                # Protect past meals from being edited or created via this API
+                today = timezone.now().date()
+                if meal_date < today:
+                    return Response(
+                        {"error": f"Cannot edit or create meals for past dates ({meal_date})."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 target_kitchen_id = resolve_kitchen_id_for_date(udp, meal_date)
                 meal_id = item.get('id')
 
