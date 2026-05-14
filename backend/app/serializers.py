@@ -3007,10 +3007,21 @@ class UserDietPlanNewRequestLiteSerializer(serializers.ModelSerializer):
 
 class UserDietPlanExtraChargeSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=UserRegister.objects.all(), required=False, allow_null=True)
+    created_by_details = serializers.SerializerMethodField()
     class Meta:
         model = UserDietPlanExtraCharge
-        fields = ['id', 'user', 'user_diet_plan', 'label', 'amount', 'reason', 'created_at']
-        read_only_fields = ['created_at']
+        fields = ['id', 'user', 'user_diet_plan', 'label', 'amount', 'reason', 'created_at', 'created_by', 'created_by_details']
+        read_only_fields = ['created_at', 'created_by']
+
+    def get_created_by_details(self, obj):
+        if obj.created_by:
+            return {
+                'id': obj.created_by.id,
+                'first_name': obj.created_by.first_name,
+                'last_name': obj.created_by.last_name,
+                'role': obj.created_by.role
+            }
+        return None
 
 
 class SuggestedPlansLiteSerializer(serializers.ModelSerializer):

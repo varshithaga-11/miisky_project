@@ -27,27 +27,25 @@ export interface PatientPlan {
     status: string;
 }
 
-export interface AllotedPatient {
-    user: {
-        id: number;
-        first_name?: string;
-        last_name?: string;
-        email: string;
-        username: string;
-    };
+export interface AdminPatient {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    username: string;
 }
 
-export interface AllotedPatientsLiteResponse {
+export interface AdminPatientsResponse {
     count: number;
-    results: AllotedPatient[];
+    results: AdminPatient[];
     total_pages: number;
 }
 
-export const getMyAllotedPatientsLite = async (params: {
+export const getAllPatients = async (params: {
     page: number;
     limit: number;
     search?: string;
-}): Promise<AllotedPatientsLiteResponse> => {
+}): Promise<AdminPatientsResponse> => {
     const query = new URLSearchParams({
         page: String(params.page),
         limit: String(params.limit),
@@ -55,8 +53,8 @@ export const getMyAllotedPatientsLite = async (params: {
     if (params.search?.trim()) {
         query.set("search", params.search.trim());
     }
-    const url = createApiUrl(`api/usernutritionistmapping/my-patients-lite/?${query.toString()}`);
-    const response = await axios.get<AllotedPatientsLiteResponse>(url, { headers: await getAuthHeaders() });
+    const url = createApiUrl(`api/admin-patients/?${query.toString()}`);
+    const response = await axios.get<AdminPatientsResponse>(url, { headers: await getAuthHeaders() });
     return response.data;
 };
 

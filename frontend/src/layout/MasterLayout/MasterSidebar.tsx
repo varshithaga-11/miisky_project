@@ -141,6 +141,7 @@ const adminNavItems: NavItem[] = [
       { name: "Payment Verification", path: "/admin/patient-payment-verification" },
       { name: "Record Plan Payouts", path: "/admin/record-plan-payouts" },
       { name: "Plan Payments Overview", path: "/admin/plan-payments-overview" },
+      { name: "Add Extra Charges", path: "/admin/add-extra-charges" },
     ],
   },
   {

@@ -3,23 +3,23 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
 import { 
-    getMyAllotedPatientsLite,
+    getAllPatients,
     getPatientPlans,
     getExtraCharges, 
     addExtraCharge, 
     deleteExtraCharge,
     ExtraCharge,
-    AllotedPatient,
+    AdminPatient,
     PatientPlan
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/form/input/InputField";
-import { FiPlus, FiTrash2, FiUser, FiPackage, FiDollarSign, FiInfo, FiSearch, FiChevronDown, FiChevronUp, FiAlertCircle, FiCalendar, FiClock } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiUser, FiPackage, FiDollarSign, FiInfo, FiSearch, FiChevronDown, FiChevronUp, FiAlertCircle, FiCalendar, FiClock, FiSettings } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
-const AddExtraFeesPage: React.FC = () => {
-    const [patients, setPatients] = useState<AllotedPatient[]>([]);
+const AdminAddExtraChargesPage: React.FC = () => {
+    const [patients, setPatients] = useState<AdminPatient[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [totalPatients, setTotalPatients] = useState(0);
@@ -40,7 +40,7 @@ const AddExtraFeesPage: React.FC = () => {
     const fetchPatients = async (page: number, search?: string) => {
         setLoading(true);
         try {
-            const response = await getMyAllotedPatientsLite({ page, limit: 10, search });
+            const response = await getAllPatients({ page, limit: 10, search });
             setPatients(response.results);
             setTotalPatients(response.count);
         } catch (err) {
@@ -148,8 +148,8 @@ const AddExtraFeesPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50 pb-12">
-            <PageMeta title="Add Extra Fees" description="Manage extra charges for patient diet plans." />
-            <PageBreadcrumb pageTitle="Extra Fee Management" />
+            <PageMeta title="Admin: Add Extra Charges" description="Admin management for patient extra charges." />
+            <PageBreadcrumb pageTitle="Extra Charges (Admin)" />
             <ToastContainer position="bottom-right" />
 
             <div className="px-4 md:px-8 max-w-7xl mx-auto space-y-6">
@@ -157,7 +157,7 @@ const AddExtraFeesPage: React.FC = () => {
                 <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] md:flex-row md:items-center md:justify-between">
                     <div className="w-full md:w-80">
                         <InputField
-                            placeholder="Search by name, email or username..."
+                            placeholder="Search all patients..."
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
@@ -165,8 +165,13 @@ const AddExtraFeesPage: React.FC = () => {
                             }}
                         />
                     </div>
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Total Allotted Patients: {totalPatients}
+                    <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                            <FiSettings size={16} />
+                        </div>
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            Global Patient Management: {totalPatients} Total
+                        </div>
                     </div>
                 </div>
 
@@ -177,8 +182,8 @@ const AddExtraFeesPage: React.FC = () => {
                             <TableHeader>
                                 <TableRow className="bg-gray-50/50 dark:bg-white/[0.02]">
                                     <TableCell isHeader className="px-5 py-4 text-start font-bold">Patient</TableCell>
-                                    <TableCell isHeader className="px-5 py-4 text-start font-bold">Email</TableCell>
-                                    <TableCell isHeader className="px-5 py-4 text-start font-bold">Username</TableCell>
+                                    <TableCell isHeader className="px-5 py-4 text-start font-bold">Contact Info</TableCell>
+                                    <TableCell isHeader className="px-5 py-4 text-start font-bold text-center">User Type</TableCell>
                                     <TableCell isHeader className="px-5 py-4 text-end font-bold">Actions</TableCell>
                                 </TableRow>
                             </TableHeader>
@@ -195,42 +200,47 @@ const AddExtraFeesPage: React.FC = () => {
                                 ) : patients.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="px-5 py-20 text-center text-gray-500 italic">
-                                            {searchTerm ? "No patients found matching your search." : "No patients have been allotted to you yet."}
+                                            {searchTerm ? "No patients found matching your search." : "No patients found."}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     patients.map((p) => (
-                                        <React.Fragment key={p.user.id}>
+                                        <React.Fragment key={p.id}>
                                             <TableRow className="border-t border-gray-100 dark:border-white/[0.05] hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-colors">
                                                 <TableCell className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10">
                                                             <FiUser size={18} />
                                                         </div>
-                                                        <span className="font-semibold text-gray-900 dark:text-white">
-                                                            {p.user.first_name || p.user.last_name ? `${p.user.first_name || ""} ${p.user.last_name || ""}` : p.user.username}
-                                                        </span>
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="truncate font-semibold text-gray-900 dark:text-white">
+                                                                {p.first_name || p.last_name ? `${p.first_name || ""} ${p.last_name || ""}` : p.username}
+                                                            </span>
+                                                            <span className="truncate text-[10px] text-gray-400 font-black uppercase tracking-widest">@{p.username}</span>
+                                                        </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4">
-                                                    <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{p.user.email}</span>
+                                                    <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{p.email}</span>
                                                 </TableCell>
-                                                <TableCell className="px-5 py-4">
-                                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">@{p.user.username}</span>
+                                                <TableCell className="px-5 py-4 text-center">
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-500/20">
+                                                        Patient
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-end">
                                                     <button 
-                                                        onClick={() => togglePatient(p.user.id)}
-                                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${expandedPatients.includes(p.user.id) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}
+                                                        onClick={() => togglePatient(p.id)}
+                                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${expandedPatients.includes(p.id) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}
                                                     >
-                                                        {expandedPatients.includes(p.user.id) ? <><FiChevronUp /> Hide Plans</> : <><FiChevronDown /> View Plans</>}
+                                                        {expandedPatients.includes(p.id) ? <><FiChevronUp /> Hide Plans</> : <><FiChevronDown /> View Plans</>}
                                                     </button>
                                                 </TableCell>
                                             </TableRow>
 
                                             {/* Expandable Patient Row (Plans List) */}
                                             <AnimatePresence>
-                                                {expandedPatients.includes(p.user.id) && (
+                                                {expandedPatients.includes(p.id) && (
                                                     <TableRow className="bg-gray-50/30 dark:bg-white/[0.01]">
                                                         <TableCell colSpan={4} className="p-0 border-t-0">
                                                             <motion.div 
@@ -244,17 +254,17 @@ const AddExtraFeesPage: React.FC = () => {
                                                                         <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
                                                                             <FiPackage size={14} />
                                                                         </div>
-                                                                        <h5 className="font-black uppercase tracking-widest text-[10px] text-gray-900 dark:text-white">Assigned Diet Plans</h5>
+                                                                        <h5 className="font-black uppercase tracking-widest text-[10px] text-gray-900 dark:text-white">Patient's Diet Plans</h5>
                                                                     </div>
 
-                                                                    {plansLoading[p.user.id] ? (
+                                                                    {plansLoading[p.id] ? (
                                                                         <div className="flex items-center gap-2 py-4">
                                                                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent"></div>
                                                                             <span className="text-[10px] font-bold text-gray-400 uppercase">Fetching plans...</span>
                                                                         </div>
-                                                                    ) : plansByUserId[p.user.id]?.length > 0 ? (
+                                                                    ) : plansByUserId[p.id]?.length > 0 ? (
                                                                         <div className="grid grid-cols-1 gap-3">
-                                                                            {plansByUserId[p.user.id].map((plan) => (
+                                                                            {plansByUserId[p.id].map((plan) => (
                                                                                 <div key={plan.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden shadow-sm">
                                                                                     <div className="p-5 flex items-center justify-between">
                                                                                         <div className="flex items-center gap-6">
@@ -303,7 +313,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                 {/* Fee History */}
                                                                                                 <div className="space-y-4">
                                                                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                                                                                        <FiDollarSign className="text-indigo-500" /> Current Extra Charges
+                                                                                                        <FiDollarSign className="text-indigo-500" /> Charge History
                                                                                                     </p>
                                                                                                     <div className="space-y-3">
                                                                                                         {extraChargesByPlanId[plan.id]?.length > 0 ? (
@@ -319,7 +329,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                                                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{new Date(c.created_at || '').toLocaleDateString()}</p>
                                                                                                                                 <div className="size-1 rounded-full bg-gray-200" />
                                                                                                                                 <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter">
-                                                                                                                                    By: {c.created_by_details?.first_name || 'System'} ({c.created_by_details?.role})
+                                                                                                                                    By: {c.created_by_details?.first_name || 'System'} ({c.created_by_details?.role || 'Admin'})
                                                                                                                                 </p>
                                                                                                                             </div>
                                                                                                                         </div>
@@ -334,7 +344,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                             ))
                                                                                                         ) : (
                                                                                                             <div className="py-8 text-center bg-white/50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
-                                                                                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">No fees recorded</p>
+                                                                                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">No extra charges found</p>
                                                                                                             </div>
                                                                                                         )}
                                                                                                     </div>
@@ -343,7 +353,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                 {/* Add Form */}
                                                                                                 <div className="space-y-4">
                                                                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                                                                                        <FiPlus className="text-green-500" /> New Extra Fee
+                                                                                                        <FiPlus className="text-green-500" /> New Admin Fee
                                                                                                     </p>
                                                                                                     <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-white/5 space-y-4 shadow-sm">
                                                                                                         <div className="grid grid-cols-2 gap-4">
@@ -351,7 +361,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Label</label>
                                                                                                                 <input 
                                                                                                                     type="text"
-                                                                                                                    placeholder="Delivery, Packaging..."
+                                                                                                                    placeholder="Admin Surcharge, etc."
                                                                                                                     value={formStates[plan.id]?.label || ""}
                                                                                                                     onChange={(e) => handleFormChange(plan.id, "label", e.target.value)}
                                                                                                                     className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl px-4 py-2.5 text-xs font-bold dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none"
@@ -369,10 +379,10 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                             </div>
                                                                                                         </div>
                                                                                                         <div className="space-y-2">
-                                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Reason</label>
+                                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Admin Reason / Note</label>
                                                                                                             <textarea 
                                                                                                                 rows={1}
-                                                                                                                placeholder="Optional details..."
+                                                                                                                placeholder="Reason for admin charge..."
                                                                                                                 value={formStates[plan.id]?.reason || ""}
                                                                                                                 onChange={(e) => handleFormChange(plan.id, "reason", e.target.value)}
                                                                                                                 className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl px-4 py-2 text-xs font-bold dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
@@ -383,7 +393,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                                                             disabled={formStates[plan.id]?.submitting}
                                                                                                             className="w-full py-3 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                                                                                                         >
-                                                                                                            {formStates[plan.id]?.submitting ? "Adding..." : "Confirm Extra Charge"}
+                                                                                                            {formStates[plan.id]?.submitting ? "Adding..." : "Add Admin Fee"}
                                                                                                         </button>
                                                                                                     </div>
                                                                                                 </div>
@@ -395,7 +405,7 @@ const AddExtraFeesPage: React.FC = () => {
                                                                         </div>
                                                                     ) : (
                                                                         <div className="py-12 text-center bg-white/30 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 rounded-[32px]">
-                                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No active or approved diet plans for this patient</p>
+                                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No active plans found for this patient</p>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -416,4 +426,4 @@ const AddExtraFeesPage: React.FC = () => {
     );
 };
 
-export default AddExtraFeesPage;
+export default AdminAddExtraChargesPage;

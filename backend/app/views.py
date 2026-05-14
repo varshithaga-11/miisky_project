@@ -13474,6 +13474,6 @@ class UserDietPlanExtraChargeViewSet(viewsets.ModelViewSet):
         # Auto-set the user from the diet plan if not provided
         diet_plan = serializer.validated_data.get('user_diet_plan')
         if diet_plan and not serializer.validated_data.get('user'):
-            serializer.save(user=diet_plan.user)
+            serializer.save(user=diet_plan.user, created_by=self.request.user)
         else:
-            serializer.save()
+            serializer.save(created_by=self.request.user)

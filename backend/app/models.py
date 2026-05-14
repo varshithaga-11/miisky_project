@@ -2160,15 +2160,18 @@ class UserDietPlanExtraCharge(models.Model):
     Optional extra charges (delivery, special packaging, etc.) linked to a plan and patient.
     """
     user = models.ForeignKey(
-        "UserRegister", on_delete=models.CASCADE, related_name="extra_charges"
+        "UserRegister", on_delete=models.SET_NULL, related_name="extra_charges",null=True,blank=True
     )
     user_diet_plan = models.ForeignKey(
-        "UserDietPlan", on_delete=models.CASCADE, related_name="extra_charges"
+        "UserDietPlan", on_delete=models.SET_NULL, related_name="extra_charges",null=True,blank=True
     )
     label = models.CharField(max_length=255, help_text="e.g. Delivery fee, Special handling")
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by=models.ForeignKey(
+        "UserRegister", on_delete=models.SET_NULL, related_name="extra_charges_created",null=True,blank=True
+    )
 
     def __str__(self):
         return f"{self.user_diet_plan} | {self.label} | ₹{self.amount}"
@@ -2179,7 +2182,7 @@ class BillingCycleInvoice(models.Model):
     Sums up all daily meal summaries and extra charges.
     """
     user_diet_plan = models.ForeignKey(
-        "UserDietPlan", on_delete=models.CASCADE, related_name="billing_invoices"
+        "UserDietPlan", on_delete=models.SET_NULL, related_name="billing_invoices",null=True,blank=True
     )
     user = models.ForeignKey(
         "UserRegister",
@@ -2205,7 +2208,7 @@ class BillingCycleInvoice(models.Model):
     paid_at = models.DateTimeField(null=True, blank=True)
     
     # Track status (draft, sent, paid, cancelled)
-    status = models.CharField(max_length=20, default="draft") 
+    status = models.CharField(max_length=20,default="draft",null=True,blank=True) 
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -2221,7 +2224,7 @@ class DailyMealBillingSummary(models.Model):
 
     user_diet_plan = models.ForeignKey(
         "UserDietPlan",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,null=True,blank=True,
         related_name="daily_billing_summaries",
     )
     user = models.ForeignKey(
