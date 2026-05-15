@@ -92,13 +92,74 @@ class HDFCJWEHelper:
             # Step 3: Serialize to HDFC specific JSON format
             return {
                 "header": jwe_header_b64,
-                "encryptedKey": base64.b64encode(encrypted_key).decode('utf-8'),
-                "iv": base64.b64encode(iv).decode('utf-8'),
-                "encryptedPayload": base64.b64encode(ciphertext).decode('utf-8'),
-                "tag": base64.b64encode(tag).decode('utf-8')
+                "encryptedKey": base64url_encode(encrypted_key),
+                "iv": base64url_encode(iv),
+                "encryptedPayload": base64url_encode(ciphertext),
+                "tag": base64url_encode(tag)
             }
         except Exception as e:
-            logger.error(f"HDFC JWE Implementation Error: {str(e)}")
+            logger.error(f"HDFC JWE Encryption Error: {str(e)}")
+            raise e
+
+    @staticmethod
+    def decrypt(encrypted_data, public_key_pem, private_key_pem):
+        """
+        Decrypts HDFC SmartGateway response.
+        1. Decrypt CEK using Merchant Private Key.
+        2. Decrypt Payload using CEK + IV + Tag + Header(AAD).
+        3. Parse resulting JWS and return unencrypted payload.
+        """
+        try:
+            header_b64 = encrypted_data.get("header")
+            encrypted_key_b64 = encrypted_data.get("encryptedKey")
+            iv_b64 = encrypted_data.get("iv")
+            ciphertext_b64 = encrypted_data.get("encryptedPayload")
+            tag_b64 = encrypted_data.get("tag")
+
+            if not all([header_b64, encrypted_key_b64, iv_b64, ciphertext_b64, tag_b64]):
+                raise ValueError("Missing required fields in encrypted response")
+
+            # Decode from base64url
+            def base64url_decode(b64_str):
+                rem = len(b64_str) % 4
+                if rem > 0:
+                    b64_str += '=' * (4 - rem)
+                return base64.urlsafe_b64decode(b64_str)
+
+            encrypted_key = base64url_decode(encrypted_key_b64)
+            iv = base64url_decode(iv_b64)
+            ciphertext = base64url_decode(ciphertext_b64)
+            tag = base64url_decode(tag_b64)
+
+            # --- STEP 1: Decrypt CEK ---
+            private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=None)
+            cek = private_key.decrypt(
+                encrypted_key,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+
+            # --- STEP 2: Decrypt Payload ---
+            aesgcm = AESGCM(cek)
+            # Tag is appended to ciphertext for AESGCM.decrypt
+            ciphertext_with_tag = ciphertext + tag
+            decrypted_jws_str = aesgcm.decrypt(iv, ciphertext_with_tag, header_b64.encode('utf-8')).decode('utf-8')
+
+            # --- STEP 3: Parse JWS ---
+            jws_json = json.loads(decrypted_jws_str)
+            payload_b64 = jws_json.get("payload")
+            if not payload_b64:
+                # Some implementations might return the payload directly if not signed on response
+                return jws_json
+
+            # Decode the actual payload
+            return json.loads(base64url_decode(payload_b64).decode('utf-8'))
+
+        except Exception as e:
+            logger.error(f"HDFC JWE Decryption Error: {str(e)}")
             raise e
 
     @staticmethod
@@ -142,6 +203,12 @@ class HDFCSmartGateway:
             return HDFCJWEHelper.encrypt(body, self.public_key, self.private_key, self.key_id)
         return body
 
+    def _decrypt_response(self, encrypted_data):
+        """Decrypts HDFC response if keys are available."""
+        if self.public_key and self.private_key:
+            return HDFCJWEHelper.decrypt(encrypted_data, self.public_key, self.private_key)
+        return encrypted_data
+
     def create_session(self, plan: UserDietPlan, user: UserRegister):
         """Creates a session in HDFC SmartGateway."""
         order_id = f"JP{int(time.time())}{str(plan.id)[-2:]}"
@@ -172,9 +239,12 @@ class HDFCSmartGateway:
             response = requests.post(self.url, json=payload, headers=headers, timeout=30)
             if response.status_code != 200:
                 logger.error(f"HDFC Session Error: {response.status_code} - {response.text}")
-                return {"error": True, "detail": f"Gateway Error: {response.status_code}"}
+                return {"error": True, "detail": f"Gateway Error: {response.status_code}", "raw": response.text}
             
-            return response.json()
+            resp_json = response.json()
+            if "encryptedPayload" in resp_json:
+                return self._decrypt_response(resp_json)
+            return resp_json
         except Exception as e:
             logger.error(f"HDFC Session Exception: {str(e)}")
             return {"error": True, "detail": str(e)}
@@ -191,9 +261,12 @@ class HDFCSmartGateway:
             response = requests.request("GET", status_url, json=payload, headers=headers, timeout=30)
             if response.status_code != 200:
                 logger.error(f"HDFC Status Error: {response.status_code} - {response.text}")
-                return {"error": True, "detail": f"Gateway Error: {response.status_code}"}
+                return {"error": True, "detail": f"Gateway Error: {response.status_code}", "raw": response.text}
             
-            return response.json()
+            resp_json = response.json()
+            if "encryptedPayload" in resp_json:
+                return self._decrypt_response(resp_json)
+            return resp_json
         except Exception as e:
             logger.error(f"HDFC Status Exception: {str(e)}")
             return {"error": True, "detail": str(e)}

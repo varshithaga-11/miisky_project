@@ -6435,7 +6435,16 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
         Handles redirection from HDFC SmartGateway after payment.
         """
         data = request.data
-        logger.info(f"HDFC Payment Callback Data: {json.dumps(data)}")
+        logger.info(f"HDFC Payment Callback Data (Raw): {json.dumps(data)}")
+        
+        gateway = HDFCSmartGateway()
+        if "encryptedPayload" in data:
+            try:
+                data = gateway._decrypt_response(data)
+                logger.info(f"HDFC Payment Callback Data (Decrypted): {json.dumps(data)}")
+            except Exception as e:
+                logger.error(f"Failed to decrypt HDFC callback: {str(e)}")
+                return Response({"detail": "Decryption failed"}, status=400)
         
         # Identify the plan using UDF1 (Plan ID)
         plan_id = data.get('udf1')
