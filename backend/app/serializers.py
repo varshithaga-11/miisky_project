@@ -3028,8 +3028,17 @@ class DailyMealBillingSummarySerializer(serializers.ModelSerializer):
         model = DailyMealBillingSummary
         fields = ['id', 'summary_date', 'total_meal_amount', 'total_meals_count', 'meal_breakdown']
 
+class AdminPlanMealDetailSerializer(serializers.ModelSerializer):
+    food_name = serializers.CharField(source='food.name', read_only=True)
+    meal_type_name = serializers.CharField(source='meal_type.name', read_only=True)
+    serving_size_label = serializers.CharField(source='serving_size.label', read_only=True, allow_null=True)
+
+    class Meta:
+        model = UserMeal
+        fields = ['id', 'meal_date', 'food_name', 'meal_type_name', 'meal_price', 'quantity', 'serving_size_label', 'status']
+
 class AdminPlanBillingDetailSerializer(serializers.ModelSerializer):
-    daily_summaries = DailyMealBillingSummarySerializer(many=True, read_only=True)
+    daily_summaries = DailyMealBillingSummarySerializer(source='daily_billing_summaries', many=True, read_only=True)
     extra_charges = UserDietPlanExtraChargeSerializer(many=True, read_only=True)
     diet_plan_title = serializers.CharField(source='diet_plan.title', read_only=True)
 

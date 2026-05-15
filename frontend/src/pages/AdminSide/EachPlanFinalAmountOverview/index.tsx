@@ -7,7 +7,9 @@ import {
     PatientBilling,
     PlanBilling,
     DailySummary,
-    ExtraCharge
+    ExtraCharge,
+    getDailyMeals,
+    MealDetail
 } from "./api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -26,6 +28,11 @@ const EachPlanFinalAmountOverview: React.FC = () => {
     const [expandedPatients, setExpandedPatients] = useState<number[]>([]);
     const [expandedPlans, setExpandedPlans] = useState<number[]>([]);
     const [planTab, setPlanTab] = useState<Record<number, 'daily' | 'extra'>>({});
+    
+    // New: Summary expansion for meals
+    const [expandedSummaries, setExpandedSummaries] = useState<number[]>([]);
+    const [summaryMeals, setSummaryMeals] = useState<Record<number, MealDetail[]>>({});
+    const [loadingMeals, setLoadingMeals] = useState<Record<number, boolean>>({});
 
     const fetchData = async () => {
         setLoading(true);
@@ -53,9 +60,32 @@ const EachPlanFinalAmountOverview: React.FC = () => {
         if (!planTab[id]) setPlanTab(prev => ({ ...prev, [id]: 'daily' }));
     };
 
+    const toggleSummary = async (summaryId: number, planId: number, date: string) => {
+        const isExpanded = expandedSummaries.includes(summaryId);
+        
+        if (isExpanded) {
+            setExpandedSummaries(prev => prev.filter(i => i !== summaryId));
+        } else {
+            setExpandedSummaries(prev => [...prev, summaryId]);
+            
+            // Only fetch if not already loaded
+            if (!summaryMeals[summaryId]) {
+                setLoadingMeals(prev => ({ ...prev, [summaryId]: true }));
+                try {
+                    const meals = await getDailyMeals(planId, date);
+                    setSummaryMeals(prev => ({ ...prev, [summaryId]: meals }));
+                } catch (err) {
+                    toast.error("Failed to load meal details");
+                } finally {
+                    setLoadingMeals(prev => ({ ...prev, [summaryId]: false }));
+                }
+            }
+        }
+    };
+
     const calculatePlanTotal = (plan: PlanBilling) => {
-        const food = plan.daily_summaries.reduce((acc, curr) => acc + parseFloat(curr.total_meal_amount), 0);
-        const extra = plan.extra_charges.reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
+        const food = (plan.daily_summaries || []).reduce((acc, curr) => acc + parseFloat(curr.total_meal_amount), 0);
+        const extra = (plan.extra_charges || []).reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
         return { food, extra, total: food + extra };
     };
 
@@ -192,45 +222,102 @@ const EachPlanFinalAmountOverview: React.FC = () => {
                                                                                     onClick={() => setPlanTab(prev => ({ ...prev, [plan.id]: 'daily' }))}
                                                                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${planTab[plan.id] === 'daily' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                                                                 >
-                                                                                    <FiClock /> Daily Meal Costs ({plan.daily_summaries.length})
+                                                                                    <FiClock /> Daily Meal Costs ({(plan.daily_summaries || []).length})
                                                                                 </button>
                                                                                 <button 
                                                                                     onClick={() => setPlanTab(prev => ({ ...prev, [plan.id]: 'extra' }))}
                                                                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${planTab[plan.id] === 'extra' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                                                                 >
-                                                                                    <FiTag /> Extra Charges ({plan.extra_charges.length})
+                                                                                    <FiTag /> Extra Charges ({(plan.extra_charges || []).length})
                                                                                 </button>
                                                                             </div>
 
                                                                             {planTab[plan.id] === 'daily' ? (
                                                                                 <div className="space-y-3">
-                                                                                    {plan.daily_summaries.length === 0 ? (
+                                                                                    {(!plan.daily_summaries || plan.daily_summaries.length === 0) ? (
                                                                                         <p className="text-center py-12 text-[10px] font-black text-gray-400 uppercase tracking-widest border border-dashed rounded-3xl">No daily summaries generated yet.</p>
                                                                                     ) : (
-                                                                                        plan.daily_summaries.map(s => (
-                                                                                            <div key={s.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl flex items-center justify-between shadow-sm border border-gray-100 dark:border-white/5">
-                                                                                                <div className="flex items-center gap-4">
-                                                                                                    <div className="size-10 rounded-xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-400">
-                                                                                                        <FiCalendar />
+                                                                                        (plan.daily_summaries || []).map(s => (
+                                                                                            <div key={s.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 overflow-hidden">
+                                                                                                <div 
+                                                                                                    onClick={() => toggleSummary(s.id, plan.id, s.summary_date)}
+                                                                                                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors"
+                                                                                                >
+                                                                                                    <div className="flex items-center gap-4">
+                                                                                                        <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${expandedSummaries.includes(s.id) ? 'bg-indigo-600 text-white' : 'bg-gray-50 dark:bg-gray-900 text-gray-400'}`}>
+                                                                                                            <FiCalendar />
+                                                                                                        </div>
+                                                                                                        <div>
+                                                                                                            <p className="text-xs font-black text-gray-900 dark:text-white">{new Date(s.summary_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                                                                                            <p className="text-[9px] font-bold text-gray-400 uppercase">{s.total_meals_count} Meals Recorded</p>
+                                                                                                        </div>
                                                                                                     </div>
-                                                                                                    <div>
-                                                                                                        <p className="text-xs font-black text-gray-900 dark:text-white">{new Date(s.summary_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                                                                        <p className="text-[9px] font-bold text-gray-400 uppercase">{s.total_meals_count} Meals Recorded</p>
+                                                                                                    <div className="flex items-center gap-6">
+                                                                                                        <div className="text-right">
+                                                                                                            <p className="text-sm font-black text-gray-900 dark:text-white">₹{parseFloat(s.total_meal_amount).toFixed(2)}</p>
+                                                                                                        </div>
+                                                                                                        <div className="text-gray-400">
+                                                                                                            {expandedSummaries.includes(s.id) ? <FiChevronUp /> : <FiChevronDown />}
+                                                                                                        </div>
                                                                                                     </div>
                                                                                                 </div>
-                                                                                                <div className="text-right">
-                                                                                                    <p className="text-sm font-black text-gray-900 dark:text-white">₹{parseFloat(s.total_meal_amount).toFixed(2)}</p>
-                                                                                                </div>
+
+                                                                                                {/* Meals List */}
+                                                                                                <AnimatePresence>
+                                                                                                    {expandedSummaries.includes(s.id) && (
+                                                                                                        <motion.div
+                                                                                                            initial={{ height: 0, opacity: 0 }}
+                                                                                                            animate={{ height: "auto", opacity: 1 }}
+                                                                                                            exit={{ height: 0, opacity: 0 }}
+                                                                                                            className="border-t border-gray-50 dark:border-white/5 bg-gray-50/30 dark:bg-black/5"
+                                                                                                        >
+                                                                                                            <div className="p-4 space-y-2">
+                                                                                                                {loadingMeals[s.id] ? (
+                                                                                                                    <div className="flex items-center justify-center py-6 gap-2">
+                                                                                                                        <div className="size-4 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+                                                                                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fetching meals...</span>
+                                                                                                                    </div>
+                                                                                                                ) : !summaryMeals[s.id] || summaryMeals[s.id].length === 0 ? (
+                                                                                                                    <p className="text-center py-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest">No detailed meal data found.</p>
+                                                                                                                ) : (
+                                                                                                                    summaryMeals[s.id].map(m => (
+                                                                                                                        <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800/50 border border-gray-50 dark:border-white/5 shadow-sm">
+                                                                                                                            <div className="flex items-center gap-3">
+                                                                                                                                <div className="size-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 text-[10px] font-black uppercase">
+                                                                                                                                    {m.meal_type_name?.[0]}
+                                                                                                                                </div>
+                                                                                                                                <div>
+                                                                                                                                    <p className="text-[11px] font-black text-gray-900 dark:text-white uppercase leading-none">{m.food_name}</p>
+                                                                                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                                                                                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-tighter">{m.meal_type_name}</span>
+                                                                                                                                        <span className="size-1 rounded-full bg-gray-200" />
+                                                                                                                                        <span className="text-[8px] font-bold text-gray-400">{m.serving_size_label || 'Standard'} • Qty: {m.quantity}</span>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                            </div>
+                                                                                                                            <div className="flex items-center gap-4">
+                                                                                                                                <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase ${m.status === 'consumed' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                                                                                                    {m.status}
+                                                                                                                                </span>
+                                                                                                                                <p className="text-xs font-black text-gray-900 dark:text-white">₹{parseFloat(m.meal_price).toFixed(2)}</p>
+                                                                                                                            </div>
+                                                                                                                        </div>
+                                                                                                                    ))
+                                                                                                                )}
+                                                                                                            </div>
+                                                                                                        </motion.div>
+                                                                                                    )}
+                                                                                                </AnimatePresence>
                                                                                             </div>
                                                                                         ))
                                                                                     )}
                                                                                 </div>
                                                                             ) : (
                                                                                 <div className="space-y-3">
-                                                                                    {plan.extra_charges.length === 0 ? (
+                                                                                    {(!plan.extra_charges || plan.extra_charges.length === 0) ? (
                                                                                         <p className="text-center py-12 text-[10px] font-black text-gray-400 uppercase tracking-widest border border-dashed rounded-3xl">No extra charges added.</p>
                                                                                     ) : (
-                                                                                        plan.extra_charges.map(c => (
+                                                                                        (plan.extra_charges || []).map(c => (
                                                                                             <div key={c.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl flex items-center justify-between shadow-sm border border-gray-100 dark:border-white/5">
                                                                                                 <div className="flex items-center gap-4">
                                                                                                     <div className="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600">

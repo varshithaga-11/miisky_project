@@ -9724,6 +9724,24 @@ class AdminPlanBillingOverviewViewSet(viewsets.ReadOnlyModelViewSet):
 
         return UserRegister.objects.filter(role='patient').prefetch_related(plans_prefetch).order_by('-id')
 
+    @action(detail=False, methods=['get'], url_path='plan-daily-meals')
+    def plan_daily_meals(self, request):
+        plan_id = request.query_params.get('plan_id')
+        date_str = request.query_params.get('date')
+        if not plan_id or not date_str:
+            return Response({"error": "plan_id and date are required"}, status=400)
+        
+        from .models import UserMeal
+        from .serializers import AdminPlanMealDetailSerializer
+        
+        meals = UserMeal.objects.filter(
+            user_diet_plan_id=plan_id,
+            meal_date=date_str
+        ).select_related('food', 'meal_type', 'serving_size').order_by('meal_type__id')
+        
+        serializer = AdminPlanMealDetailSerializer(meals, many=True)
+        return Response(serializer.data)
+
 
 class AdminMicroKitchenPatientsViewSet(viewsets.ReadOnlyModelViewSet):
     """

@@ -82,3 +82,66 @@ def generate_invoice(user_diet_plan, period_from, period_to):
     )
     update_invoice_totals(invoice)
     return invoice
+
+def calculate_daily_billing_for_date(target_date):
+    """
+    Core logic to calculate billing for a specific date.
+    Fetches UserMeals for active plans on target_date,
+    sums meal_price, stores in DailyMealBillingSummary,
+    and updates the corresponding draft invoice.
+    """
+    from .models import DailyMealBillingSummary, UserDietPlan, UserMeal
+    from django.db.models import Sum
+
+    # Get all active plans for target_date
+    active_plans = UserDietPlan.objects.filter(
+        status="active",
+        start_date__lte=target_date,
+        end_date__gte=target_date,
+    ).select_related("user")
+
+    results = []
+    for plan in active_plans:
+        # Fetch target_date's meals for this plan
+        meals = UserMeal.objects.filter(
+            user_diet_plan=plan,
+            meal_date=target_date,
+            status__in=["scheduled", "prepared", "delivered"],
+        ).select_related("meal_type", "food")
+
+        if not meals.exists():
+            continue
+
+        total = meals.aggregate(
+            t=Sum("meal_price")
+        )["t"] or Decimal("0.00")
+
+        # Build breakdown for audit
+        breakdown = [
+            {
+                "meal_type": m.meal_type.name if m.meal_type else None,
+                "food":      m.food.name if m.food else None,
+                "price":     str(m.meal_price or 0),
+            }
+            for m in meals
+        ]
+
+        # Store — one row per plan per day
+        summary, created = DailyMealBillingSummary.objects.update_or_create(
+            user_diet_plan=plan,
+            summary_date=target_date,
+            defaults={
+                "user":               plan.user,
+                "total_meal_amount":  total,
+                "total_meals_count":  meals.count(),
+                "meal_breakdown":     breakdown,
+            }
+        )
+
+        # Automatically update or create a draft invoice for this plan
+        invoice = get_or_create_active_invoice(plan)
+        update_invoice_totals(invoice)
+        
+        results.append(f"{plan.pk}: {total}")
+    
+    return results

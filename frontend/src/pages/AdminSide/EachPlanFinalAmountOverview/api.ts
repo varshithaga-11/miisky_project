@@ -46,10 +46,30 @@ export interface BillingOverviewResponse {
     total_pages: number;
 }
 
+export interface MealDetail {
+    id: number;
+    meal_date: string;
+    food_name: string;
+    meal_type_name: string;
+    meal_price: string;
+    quantity: number;
+    serving_size_label: string | null;
+    status: string;
+}
+
 export const getBillingOverview = async (params: { page: number; search?: string }) => {
     const url = createApiUrl("api/admin-plan-billing-overview/");
     const response = await axios.get<BillingOverviewResponse>(url, {
         params,
+        headers: await getAuthHeaders()
+    });
+    return response.data;
+};
+
+export const getDailyMeals = async (planId: number, date: string) => {
+    const url = createApiUrl("api/admin-plan-billing-overview/plan-daily-meals/");
+    const response = await axios.get<MealDetail[]>(url, {
+        params: { plan_id: planId, date },
         headers: await getAuthHeaders()
     });
     return response.data;
