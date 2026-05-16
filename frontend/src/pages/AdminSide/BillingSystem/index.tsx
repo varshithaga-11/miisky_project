@@ -57,28 +57,97 @@ const BillingSystem: React.FC = () => {
     );
   }
 
-  const totalCredits = credits
+  const totalPaid = credits
     .filter(c => c.status === "captured")
     .reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
 
+  const totalBilled = invoices
+    .reduce((acc, curr) => acc + parseFloat(curr.grand_total), 0);
+
+  const totalApplied = invoices
+    .reduce((acc, curr) => acc + parseFloat(curr.deposit_applied), 0);
+
+  const availableBalance = totalPaid - totalApplied;
+
   const totalUnpaid = invoices
-    .filter(i => i.status === "unpaid" || i.status === "partially_paid")
+    .filter(i => !i.is_paid)
     .reduce((acc, curr) => acc + parseFloat(curr.amount_due), 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <ToastContainer position="bottom-right" className="z-[99999]" />
+      <div className="bg-white dark:bg-slate-900/50 p-10 rounded-[3rem] border border-gray-100 dark:border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+            <div>
+              <h2 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                <div className="p-3 bg-indigo-600 rounded-2xl text-white">
+                  <FiDollarSign size={24} />
+                </div>
+                Financial Overview
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Patient billing and wallet summary for Plan #{planId}</p>
+            </div>
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-2 rounded-2xl border border-gray-100 dark:border-white/5">
+              <div className="px-4 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-white/5">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</p>
+                <p className="text-sm font-black text-emerald-500 uppercase tracking-tight">Active Plan</p>
+              </div>
+              <div className="px-4 py-2">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Currency</p>
+                <p className="text-sm font-black text-gray-700 dark:text-gray-300">INR (₹)</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-1">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <FiFileText size={14} className="text-blue-500" /> Total Invoiced
+              </p>
+              <h4 className="text-2xl font-black text-gray-900 dark:text-white">₹{totalBilled.toLocaleString()}</h4>
+              <div className="h-1 w-12 bg-blue-500 rounded-full mt-2"></div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <FiCheckCircle size={14} className="text-emerald-500" /> Total Paid (Wallet)
+              </p>
+              <h4 className="text-2xl font-black text-gray-900 dark:text-white">₹{totalPaid.toLocaleString()}</h4>
+              <div className="h-1 w-12 bg-emerald-500 rounded-full mt-2"></div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <FiActivity size={14} className="text-indigo-500" /> Wallet Applied
+              </p>
+              <h4 className="text-2xl font-black text-gray-900 dark:text-white">₹{totalApplied.toLocaleString()}</h4>
+              <div className="h-1 w-12 bg-indigo-500 rounded-full mt-2"></div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <FiClock size={14} className="text-rose-500" /> Total Outstanding
+              </p>
+              <h4 className="text-2xl font-black text-rose-500">₹{totalUnpaid.toLocaleString()}</h4>
+              <div className="h-1 w-12 bg-rose-500 rounded-full mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 rounded-[2rem] text-white shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
             <FiShield size={120} />
           </div>
           <div className="relative z-10">
-            <p className="text-indigo-100 text-xs font-black uppercase tracking-widest mb-1">Available Credits</p>
-            <h3 className="text-4xl font-black mb-4">₹{totalCredits.toLocaleString()}</h3>
-            <div className="flex items-center gap-2 text-indigo-100 text-sm font-bold bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md">
-              <FiTrendingUp size={14} /> Active Balance
+            <p className="text-indigo-100 text-xs font-black uppercase tracking-widest mb-1">Available Balance</p>
+            <h3 className="text-3xl font-black mb-4">₹{availableBalance.toLocaleString()}</h3>
+            <div className="flex items-center gap-2 text-indigo-100 text-[10px] font-bold bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-md">
+              <FiTrendingUp size={12} /> Wallet Funds
             </div>
           </div>
         </div>
@@ -90,8 +159,19 @@ const BillingSystem: React.FC = () => {
             </div>
           </div>
           <p className="text-gray-400 dark:text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Outstanding Due</p>
-          <h3 className="text-3xl font-black text-gray-900 dark:text-white">₹{totalUnpaid.toLocaleString()}</h3>
-          <p className="text-rose-500 text-xs font-bold mt-2">Across {invoices.filter(i => !i.is_paid).length} invoices</p>
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white">₹{totalUnpaid.toLocaleString()}</h3>
+          <p className="text-rose-500 text-[10px] font-bold mt-2">To be settled</p>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-gray-100 dark:border-white/10 shadow-xl group hover:border-blue-200 dark:hover:border-blue-500/30 transition-all duration-500">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl text-blue-600 group-hover:scale-110 transition-transform">
+              <FiFileText size={24} />
+            </div>
+          </div>
+          <p className="text-gray-400 dark:text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Total Billed</p>
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white">₹{totalBilled.toLocaleString()}</h3>
+          <p className="text-blue-500 text-[10px] font-bold mt-2">All-time invoices</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-gray-100 dark:border-white/10 shadow-xl group hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all duration-500">
@@ -100,9 +180,9 @@ const BillingSystem: React.FC = () => {
               <FiCheckCircle size={24} />
             </div>
           </div>
-          <p className="text-gray-400 dark:text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Plan Activity</p>
-          <h3 className="text-3xl font-black text-gray-900 dark:text-white">Plan #{planId}</h3>
-          <p className="text-emerald-500 text-xs font-bold mt-2">Billing logic: Active</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Total Paid</p>
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white">₹{totalPaid.toLocaleString()}</h3>
+          <p className="text-emerald-500 text-[10px] font-bold mt-2">Confirmed credits</p>
         </div>
       </div>
 
