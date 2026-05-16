@@ -9,6 +9,7 @@ import {
   updatePlanStatus,
   initiateHdfcPayment,
   SuggestedPlansLite,
+  setBillingConfig,
 } from "./api";
 import { createApiUrl } from "../../../access/access";
 import { toast, ToastContainer } from "react-toastify";
@@ -41,6 +42,7 @@ const SuggestedPlansPage: React.FC = () => {
   const [rejectModal, setRejectModal] = useState<SuggestedPlansLite | null>(null);
   const [paymentModal, setPaymentModal] = useState<SuggestedPlansLite | null>(null);
   const [featuresModal, setFeaturesModal] = useState<SuggestedPlansLite | null>(null);
+  const [billingConfigModal, setBillingConfigModal] = useState<SuggestedPlansLite | null>(null);
   const [rejectFeedback, setRejectFeedback] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +51,8 @@ const SuggestedPlansPage: React.FC = () => {
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [statusUpdate, setStatusUpdate] = useState<{ plan: SuggestedPlansLite, status: string } | null>(null);
   const [payingOnline, setPayingOnline] = useState<number | null>(null);
+  const [billingMode, setBillingMode] = useState("prepaid");
+  const [billingCycle, setBillingCycle] = useState("monthly");
 
   const isPatientUser = getUserRoleFromToken() === "patient";
 
@@ -97,11 +101,26 @@ const SuggestedPlansPage: React.FC = () => {
     }
   };
 
+  const handleSetBillingConfig = async () => {
+    if (!billingConfigModal) return;
+    setSubmitting(true);
+    try {
+      await setBillingConfig(billingConfigModal.id, billingMode, billingCycle);
+      setBillingConfigModal(null);
+      toast.success("Billing configuration updated successfully");
+      fetchPlans();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to update billing configuration");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleApprove = async () => {
     if (!approveModal) return;
     setSubmitting(true);
     try {
-      const updated = await approvePlan(approveModal.id);
+      const updated = await approvePlan(approveModal.id, billingMode, billingCycle);
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setApproveModal(null);
       toast.success("Plan approved. Nutritionist will set the dates shortly.");
@@ -427,6 +446,19 @@ const SuggestedPlansPage: React.FC = () => {
                       {udp.status === "active" && editingPlanId === udp.id && (
                         <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-3">
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Plan actions</p>
+                          {isPatientUser && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBillingConfigModal(udp);
+                                setBillingMode(udp.billing_config?.billing_mode || "prepaid");
+                                setBillingCycle(udp.billing_config?.billing_cycle || "monthly");
+                              }}
+                              className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/10 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-900/30 transition-all uppercase tracking-wider"
+                            >
+                              <FiCreditCard size={14} /> Add/Update Billing Config
+                            </button>
+                          )}
                           {!isPatientUser && (
                             <button
                               type="button"
@@ -502,7 +534,39 @@ const SuggestedPlansPage: React.FC = () => {
                 <FiHome size={14} /> {approveModal.micro_kitchen_details.brand_name}
               </p>
             )}
-            {!approveModal.micro_kitchen_details && <div className="mb-6" />}
+
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Billing Mode</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {['prepaid', 'postpaid'].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setBillingMode(m)}
+                      className={`py-3 px-4 rounded-xl text-sm font-bold border-2 transition-all ${billingMode === m ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600' : 'border-gray-100 dark:border-white/5 text-gray-400 hover:border-gray-200'}`}
+                    >
+                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Billing Cycle</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {['weekly', 'fortnightly', 'monthly', 'quarterly'].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setBillingCycle(c)}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold border-2 transition-all ${billingCycle === c ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600' : 'border-gray-100 dark:border-white/5 text-gray-400 hover:border-gray-200'}`}
+                    >
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={() => setApproveModal(null)}
@@ -513,9 +577,9 @@ const SuggestedPlansPage: React.FC = () => {
               <button
                 onClick={handleApprove}
                 disabled={submitting}
-                className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl font-bold"
+                className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all"
               >
-                {submitting ? "..." : "Approve"}
+                {submitting ? "..." : "Approve Plan"}
               </button>
             </div>
           </div>
@@ -691,6 +755,64 @@ const SuggestedPlansPage: React.FC = () => {
         message={statusUpdate ? `Are you sure you want to mark "${statusUpdate.plan.diet_plan_details?.title || 'this plan'}" as ${statusUpdate.status.replace('_', ' ')}?` : ""}
         confirmText="Update Status"
       />
+
+      {/* Billing Config Modal */}
+      {billingConfigModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Billing Configuration</h3>
+            <p className="text-gray-500 text-sm mb-2">{billingConfigModal.diet_plan_details?.title}</p>
+            
+            <div className="space-y-4 mb-8 mt-6">
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Billing Mode</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {['prepaid', 'postpaid'].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setBillingMode(m)}
+                      className={`py-3 px-4 rounded-xl text-sm font-bold border-2 transition-all ${billingMode === m ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600' : 'border-gray-100 dark:border-white/5 text-gray-400 hover:border-gray-200'}`}
+                    >
+                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Billing Cycle</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {['weekly', 'fortnightly', 'monthly', 'quarterly'].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setBillingCycle(c)}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold border-2 transition-all ${billingCycle === c ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600' : 'border-gray-100 dark:border-white/5 text-gray-400 hover:border-gray-200'}`}
+                    >
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setBillingConfigModal(null)}
+                className="flex-1 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSetBillingConfig}
+                disabled={submitting}
+                className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all"
+              >
+                {submitting ? "..." : "Save Config"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Features Modal */}
       {featuresModal && (

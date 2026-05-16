@@ -2824,6 +2824,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
     original_micro_kitchen_details = serializers.SerializerMethodField()
     selected_package_details = serializers.SerializerMethodField()
     verified_by_details = serializers.SerializerMethodField(read_only=True)
+    billing_config = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
@@ -2837,6 +2838,7 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
             'payment_screenshot', 'payment_uploaded_on', 'is_payment_verified',
             'verified_by', 'verified_by_details', 'verified_on',
             'start_date', 'end_date', 'nutritionist_effective_from',
+            'billing_config',
             'suggested_on', 'approved_on', 'created_on', 'updated_on'
         ]
         read_only_fields = ['suggested_on', 'approved_on', 'created_on', 'updated_on', 'payment_uploaded_on', 'verified_on', 'verified_by_details']
@@ -2933,6 +2935,14 @@ class UserDietPlanSerializer(serializers.ModelSerializer):
                 'last_name': u.last_name,
                 'email': u.email,
                 'username': u.username,
+            }
+        return None
+
+    def get_billing_config(self, obj):
+        if hasattr(obj, 'billing_config') and obj.billing_config:
+            return {
+                'billing_mode': obj.billing_config.billing_mode,
+                'billing_cycle': obj.billing_config.billing_cycle,
             }
         return None
 
@@ -3060,6 +3070,7 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
     micro_kitchen_details = serializers.SerializerMethodField()
     original_micro_kitchen_details = serializers.SerializerMethodField()
     user_details = serializers.SerializerMethodField()
+    billing_config = serializers.SerializerMethodField()
 
     class Meta:
         model = UserDietPlan
@@ -3071,6 +3082,7 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
             'micro_kitchen_effective_from',
             'diet_plan_details', 'nutritionist_details',
             'micro_kitchen_details', 'original_micro_kitchen_details', 'user_details',
+            'billing_config',
         ]
 
     def get_user_details(self, obj):
@@ -3116,6 +3128,14 @@ class SuggestedPlansLiteSerializer(serializers.ModelSerializer):
         if obj.original_micro_kitchen:
             return {
                 'brand_name': obj.original_micro_kitchen.brand_name,
+            }
+        return None
+
+    def get_billing_config(self, obj):
+        if hasattr(obj, 'billing_config') and obj.billing_config:
+            return {
+                'billing_mode': obj.billing_config.billing_mode,
+                'billing_cycle': obj.billing_config.billing_cycle,
             }
         return None
 
@@ -5818,3 +5838,13 @@ class InventoryIngredientSerializer(serializers.ModelSerializer):
         model = InventoryIngredient
         fields = '__all__'
         read_only_fields = ['micro_kitchen']
+
+class PlanWalletCreditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanWalletCredit
+        fields = '__all__'
+
+class BillingCycleInvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BillingCycleInvoice
+        fields = '__all__'

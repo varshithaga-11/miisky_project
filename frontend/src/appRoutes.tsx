@@ -139,6 +139,7 @@ import RecordPlanPayoutsPage from "./pages/AdminSide/RecordPlanPayouts/index";
 import PlanPaymentsOverviewPage from "./pages/AdminSide/PlanPaymentsOverview/index";
 import AdminAddExtraChargesPage from "./pages/AdminSide/AddExtraCharges/index";
 import EachPlanFinalAmountOverview from "./pages/AdminSide/EachPlanFinalAmountOverview/index";
+import BillingSystemPage from "./pages/AdminSide/BillingSystem/index";
 import OrderCommissionPage from "./pages/AdminSide/OrderCommission";
 import NutritionPlanPayoutsPage from "./pages/NutritionSide/PlanPayouts/index";
 import MicroKitchenPlanPayoutsPage from "./pages/MicroKitchenSide/PlanPayouts/index";
@@ -377,6 +378,7 @@ export function appRoutes() {
           <Route path="admin/plan-payments-overview" element={<PlanPaymentsOverviewPage />} />
           <Route path="admin/add-extra-charges" element={<AdminAddExtraChargesPage />} />
           <Route path="admin/each-plan-final-amount" element={<EachPlanFinalAmountOverview />} />
+          <Route path="admin/billing-system" element={<BillingSystemPage />} />
           <Route path="nutrition/reference/ranges" element={<ReferenceLibraryPage />} />
           <Route path="patient/questionnaire" element={<PatientQuestionnairePage />} />
           <Route path="patient/nutrition-allotted" element={<NutritionAllotedPage />} />

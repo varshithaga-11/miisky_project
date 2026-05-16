@@ -2182,6 +2182,160 @@ class UserDietPlanExtraCharge(models.Model):
     def __str__(self):
         return f"{self.user_diet_plan} | {self.label} | ₹{self.amount}"
 
+
+class BillingConfig(models.Model):
+    """
+    Stores what the patient selected: billing mode + cycle frequency.
+    One per UserDietPlan. Frozen after activation.
+    """
+
+    BILLING_MODE_CHOICES = [
+        ("prepaid", "Prepaid"),
+        ("postpaid", "Postpaid"),
+    ]
+
+    BILLING_CYCLE_CHOICES = [
+        ("weekly", "Weekly"),
+        ("fortnightly", "Fortnightly"),
+        ("monthly", "Monthly"),
+        ("quarterly", "Quarterly"),
+    ]
+
+    user_diet_plan = models.OneToOneField(
+        "UserDietPlan",
+        on_delete=models.CASCADE,
+        related_name="billing_config",
+    )
+
+    billing_mode = models.CharField(max_length=20, choices=BILLING_MODE_CHOICES)
+    billing_cycle = models.CharField(max_length=20, choices=BILLING_CYCLE_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="created_billing_configs",
+    )
+
+    def clean(self):
+        if self.pk:
+            # We use a fresh fetch to avoid seeing current instance's unsaved changes
+            original = BillingConfig.objects.get(pk=self.pk)
+            if original.user_diet_plan.status in ['active', 'completed', 'stopped']:
+                if original.billing_mode != self.billing_mode or original.billing_cycle != self.billing_cycle:
+                    raise ValidationError("Cannot change billing configuration once the plan is active.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user_diet_plan} | {self.billing_mode} / {self.billing_cycle}"
+
+
+class PlanWalletCredit(models.Model):
+    """
+    Every amount the patient credits to their plan account.
+    Prepaid: upfront deposit before plan starts.
+    Postpaid or mid-plan: voluntary top-up at any time.
+
+    These credits are consumed when BillingCycleInvoice is settled.
+    Running balance = sum(credits) - sum(invoice.deposit_applied)
+    """
+
+    CREDIT_TYPE_CHOICES = [
+        ("upfront_deposit", "Upfront Deposit"),   # prepaid, before plan starts
+        ("mid_plan_topup", "Mid-Plan Top-Up"),     # patient pays early anytime
+        ("carry_forward", "Carry Forward Credit"), # overpayment from previous cycle
+    ]
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),       # Razorpay order created, not paid yet
+        ("captured", "Captured"),     # Razorpay confirmed
+        ("failed", "Failed"),
+        ("refunded", "Refunded"),
+    ]
+
+    user_diet_plan = models.ForeignKey(
+        "UserDietPlan",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="wallet_credits",
+    )
+
+    billing_config = models.ForeignKey(
+        BillingConfig,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="wallet_credits",
+    )
+
+    credit_type = models.CharField(max_length=30, choices=CREDIT_TYPE_CHOICES)
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # Razorpay fields
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_signature = models.CharField(max_length=255, null=True, blank=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    paid_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        "UserRegister",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="plan_wallet_credits",
+    )
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def verify_payment(self, payment_id=None, signature=None):
+        """
+        Mark credit as captured after Razorpay confirmation.
+        """
+        if payment_id:
+            self.razorpay_payment_id = payment_id
+        if signature:
+            self.razorpay_signature = signature
+        
+        self.status = "captured"
+        self.paid_at = now()
+        self.save()
+
+    def __str__(self):
+        return f"{self.user_diet_plan} | {self.credit_type} ₹{self.amount} [{self.status}]"
+
+    @staticmethod
+    def get_available_balance(user_diet_plan) -> Decimal:
+        """
+        Available balance = total captured credits - total deposit_applied across all invoices.
+        Call this before settling any invoice.
+        """
+        from django.db.models import Sum
+
+        credited = (
+            PlanWalletCredit.objects.filter(
+                user_diet_plan=user_diet_plan,
+                status="captured",
+            ).aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+        )
+
+        applied = (
+            BillingCycleInvoice.objects.filter(
+                user_diet_plan=user_diet_plan,
+            ).aggregate(s=Sum("deposit_applied"))["s"] or Decimal("0.00")
+        )
+
+        return max(credited - applied, Decimal("0.00"))
+
+
 class BillingCycleInvoice(models.Model):
     """
     Aggregated invoice for a specific period (e.g. weekly/monthly).
@@ -2197,6 +2351,14 @@ class BillingCycleInvoice(models.Model):
         related_name="billing_invoices"
     )
 
+    billing_config = models.ForeignKey(
+        BillingConfig,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="invoices",
+        help_text="Links invoice to the patient's selected billing mode and cycle.",
+    )
+
     period_from = models.DateField()
     period_to = models.DateField()
 
@@ -2210,13 +2372,43 @@ class BillingCycleInvoice(models.Model):
         max_digits=10, decimal_places=2, default=Decimal("0.00")
     )
 
+    # Wallet credit consumed when settling this invoice
+    deposit_applied = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Amount pulled from PlanWalletCredit balance to offset this invoice.",
+    )
+
+    # After deposit_applied: what patient still owes
+    amount_due = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="grand_total - deposit_applied. What patient must pay via Razorpay.",
+    )
+
+    # Razorpay order for the amount_due
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+
     is_paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(null=True, blank=True)
     
-    # Track status (draft, sent, paid, cancelled)
-    status = models.CharField(max_length=20,default="draft",null=True,blank=True) 
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("sent", "Sent"),
+        ("partially_paid", "Partially Paid"),
+        ("paid", "Paid"),
+        ("overdue", "Overdue"),
+        ("cancelled", "Cancelled"),
+    ]
+    # Track status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft",null=True,blank=True) 
+
+    payment_due_date = models.DateField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"Invoice #{self.id} | {self.user} | {self.period_from} to {self.period_to}"

@@ -6388,6 +6388,32 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
                 ),
             )
 
+    @action(detail=True, methods=['post'], url_path='set-billing-config')
+    def set_billing_config(self, request, pk=None):
+        """Allows patient or admin to update/set billing configuration."""
+        udp = self.get_object()
+        
+        # Check permission: Only the assigned patient or an admin can set this.
+        if request.user.role != 'admin' and udp.user_id != request.user.id:
+            return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+            
+        billing_mode = request.data.get('billing_mode')
+        billing_cycle = request.data.get('billing_cycle')
+
+        if not billing_mode or not billing_cycle:
+            return Response({"detail": "Billing mode and cycle are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from .models import BillingConfig
+        BillingConfig.objects.update_or_create(
+            user_diet_plan=udp,
+            defaults={
+                'billing_mode': billing_mode,
+                'billing_cycle': billing_cycle,
+                'created_by': request.user
+            }
+        )
+        return Response({"detail": "Billing configuration updated successfully."}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """Patient approves plan."""
@@ -6396,6 +6422,24 @@ class UserDietPlanViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Only the assigned patient can approve."}, status=status.HTTP_403_FORBIDDEN)
         if udp.status != 'suggested':
             return Response({"detail": f"Cannot approve: current status is {udp.status}."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        billing_mode = request.data.get('billing_mode')
+        billing_cycle = request.data.get('billing_cycle')
+
+        if not billing_mode or not billing_cycle:
+            return Response({"detail": "Billing mode and cycle are required for approval."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Initialize BillingConfig
+        from .models import BillingConfig
+        BillingConfig.objects.update_or_create(
+            user_diet_plan=udp,
+            defaults={
+                'billing_mode': billing_mode,
+                'billing_cycle': billing_cycle,
+                'created_by': request.user
+            }
+        )
+
         udp.approve()
         return Response(self.get_serializer(udp).data, status=status.HTTP_200_OK)
 
@@ -13549,3 +13593,27 @@ class UserDietPlanExtraChargeViewSet(viewsets.ModelViewSet):
             from .billing_utils import get_or_create_active_invoice
             invoice = get_or_create_active_invoice(diet_plan)
             update_invoice_totals(invoice)
+
+
+class PlanWalletCreditViewSet(viewsets.ModelViewSet):
+    queryset = PlanWalletCredit.objects.all()
+    serializer_class = PlanWalletCreditSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['user_diet_plan']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class BillingCycleInvoiceViewSet(viewsets.ModelViewSet):
+    queryset = BillingCycleInvoice.objects.all()
+    serializer_class = BillingCycleInvoiceSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['user_diet_plan']
+
+    @action(detail=True, methods=['post'])
+    def settle(self, request, pk=None):
+        invoice = self.get_object()
+        from .billing_utils import settle_invoice
+        settle_invoice(invoice)
+        return Response(self.get_serializer(invoice).data)

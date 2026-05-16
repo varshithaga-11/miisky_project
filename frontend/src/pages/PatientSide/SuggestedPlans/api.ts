@@ -83,6 +83,10 @@ export interface SuggestedPlansLite {
     brand_name: string;
   } | null;
   payment_link?: string | null;
+  billing_config?: {
+    billing_mode: string;
+    billing_cycle: string;
+  } | null;
 }
 
 export const getMySuggestedPlans = async (): Promise<UserDietPlan[]> => {
@@ -97,9 +101,32 @@ export const getMySuggestedPlansLite = async (): Promise<SuggestedPlansLite[]> =
   return response.data;
 };
 
-export const approvePlan = async (id: number, startDate?: string): Promise<UserDietPlan> => {
+export const approvePlan = async (
+  id: number,
+  billingMode: string,
+  billingCycle: string,
+  startDate?: string
+): Promise<UserDietPlan> => {
   const url = createApiUrl(`api/userdietplan/${id}/approve/`);
-  const body = startDate ? { start_date: startDate } : {};
+  const body = {
+    start_date: startDate,
+    billing_mode: billingMode,
+    billing_cycle: billingCycle,
+  };
+  const response = await axios.post(url, body, { headers: await getAuthHeaders() });
+  return response.data;
+};
+
+export const setBillingConfig = async (
+  id: number,
+  billingMode: string,
+  billingCycle: string
+): Promise<any> => {
+  const url = createApiUrl(`api/userdietplan/${id}/set-billing-config/`);
+  const body = {
+    billing_mode: billingMode,
+    billing_cycle: billingCycle,
+  };
   const response = await axios.post(url, body, { headers: await getAuthHeaders() });
   return response.data;
 };

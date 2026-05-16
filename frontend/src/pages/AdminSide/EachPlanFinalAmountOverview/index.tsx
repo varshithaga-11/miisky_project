@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table";
@@ -14,7 +15,7 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/form/input/InputField";
-import { FiUser, FiPackage, FiDollarSign, FiSearch, FiChevronDown, FiChevronUp, FiCalendar, FiClock, FiActivity, FiTag, FiFileText } from "react-icons/fi";
+import { FiUser, FiPackage, FiDollarSign, FiSearch, FiChevronDown, FiChevronUp, FiCalendar, FiClock, FiActivity, FiTag, FiFileText, FiArrowRight, FiCreditCard } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
 const EachPlanFinalAmountOverview: React.FC = () => {
@@ -194,17 +195,25 @@ const EachPlanFinalAmountOverview: React.FC = () => {
                                                                         </div>
                                                                     </div>
                                                                     
-                                                                    <div className="flex items-center gap-8">
+                                                                    <div className="flex items-center gap-4">
                                                                         <div className="text-right">
                                                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Amount</p>
                                                                             <p className="text-lg font-black text-gray-900 dark:text-white">₹{totals.total.toFixed(2)}</p>
                                                                         </div>
-                                                                        <button 
-                                                                            onClick={() => togglePlan(plan.id)}
-                                                                            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${expandedPlans.includes(plan.id) ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10'}`}
-                                                                        >
-                                                                            {expandedPlans.includes(plan.id) ? 'Hide Details' : 'View Billing Breakdown'}
-                                                                        </button>
+                                                                        <div className="flex gap-2">
+                                                                            <Link 
+                                                                                to={`/admin/billing-system?planId=${plan.id}`}
+                                                                                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-600/20"
+                                                                            >
+                                                                                <FiCreditCard size={14} /> Wallet & Invoices
+                                                                            </Link>
+                                                                            <button 
+                                                                                onClick={() => togglePlan(plan.id)}
+                                                                                className={`p-2.5 rounded-2xl transition-all ${expandedPlans.includes(plan.id) ? 'bg-gray-100 dark:bg-white/10 text-gray-600' : 'bg-gray-50 dark:bg-white/5 text-gray-400'}`}
+                                                                            >
+                                                                                {expandedPlans.includes(plan.id) ? <FiChevronUp /> : <FiChevronDown />}
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
 

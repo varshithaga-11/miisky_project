@@ -11,21 +11,56 @@ from .models import DailyMealBillingSummary, BillingCycleInvoice, UserDietPlanEx
 def get_or_create_active_invoice(user_diet_plan):
     """
     Finds or creates a 'draft' invoice for the current plan.
-    Currently, we assume one invoice per plan for simplicity, 
-    but this can be expanded to support multiple cycles.
+    Honors BillingConfig cycle (weekly/monthly etc.) and finds the next logical period.
     """
+    from datetime import timedelta
+    
     invoice = BillingCycleInvoice.objects.filter(
         user_diet_plan=user_diet_plan,
         status="draft"
     ).first()
 
     if not invoice:
-        # If no draft exists, create one covering the whole plan period
+        # 1. Determine Start Date
+        last_invoice = BillingCycleInvoice.objects.filter(
+            user_diet_plan=user_diet_plan
+        ).order_by('-period_to').first()
+        
+        if last_invoice:
+            start_date = last_invoice.period_to + timedelta(days=1)
+        else:
+            start_date = user_diet_plan.start_date or now().date()
+            
+        # 2. Determine End Date based on config
+        config = getattr(user_diet_plan, 'billing_config', None)
+        end_date = user_diet_plan.end_date or start_date # default fallback
+        
+        if config:
+            cycle = config.billing_cycle
+            if cycle == 'weekly':
+                end_date = start_date + timedelta(days=6)
+            elif cycle == 'fortnightly':
+                end_date = start_date + timedelta(days=13)
+            elif cycle == 'monthly':
+                end_date = start_date + timedelta(days=29)
+            elif cycle == 'quarterly':
+                end_date = start_date + timedelta(days=89)
+        
+        # 3. Cap at Plan End Date
+        if user_diet_plan.end_date and end_date > user_diet_plan.end_date:
+            end_date = user_diet_plan.end_date
+
+        # If start_date is already past plan end, we might not need a new invoice, 
+        # but the caller usually handles active plan filtering.
+        if user_diet_plan.end_date and start_date > user_diet_plan.end_date:
+            return None
+
         invoice = BillingCycleInvoice.objects.create(
             user_diet_plan=user_diet_plan,
             user=user_diet_plan.user,
-            period_from=user_diet_plan.start_date or now().date(),
-            period_to=user_diet_plan.end_date or now().date(),
+            billing_config=config,
+            period_from=start_date,
+            period_to=end_date,
             status="draft"
         )
     return invoice
@@ -145,3 +180,28 @@ def calculate_daily_billing_for_date(target_date):
         results.append(f"{plan.pk}: {total}")
     
     return results
+    
+@transaction.atomic
+def settle_invoice(invoice):
+    """
+    Apply available wallet balance to the invoice and determine amount_due.
+    """
+    from .models import PlanWalletCredit
+    
+    available = PlanWalletCredit.get_available_balance(invoice.user_diet_plan)
+
+    applied = min(available, invoice.grand_total)
+    invoice.deposit_applied = applied
+    invoice.amount_due = invoice.grand_total - applied
+
+    if invoice.amount_due == 0:
+        invoice.status = "paid"
+        invoice.is_paid = True
+        invoice.paid_at = now()
+    else:
+        # Create Razorpay order for amount_due and send invoice to patient
+        # NOTE: Razorpay order creation logic should be called here in a real scenario
+        invoice.status = "sent"
+
+    invoice.save()
+    return invoice
