@@ -16,6 +16,18 @@ export default function ForgotPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  admin: "Admin",
+  patient: "Patient",
+  nutritionist: "Nutritionist/Dietician",
+  micro_kitchen: "Micro Kitchen",
+  supply_chain: "Supply Chain",
+  non_patient: "Non-Patient",
+  doctor: "Doctor",
+  master: "Master",
+};
 
   // 1️ Send OTP
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -25,6 +37,9 @@ export default function ForgotPasswordForm() {
     if (result.success && result.email) {
       toast.success(result.message || "OTP sent successfully.");
       setVerifiedEmail(result.email);
+      if (result.roles) {
+        setRoles(result.roles);
+      }
       setStep(2);
     } else {
       toast.error(result.error)
@@ -111,6 +126,19 @@ export default function ForgotPasswordForm() {
           <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
             <h2 className="text-xl font-bold mb-4 text-center">Verify OTP</h2>
 
+            {roles.length > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs text-blue-700 dark:text-blue-300">
+                <span className="font-semibold block mb-1">Roles linked to this account:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {roles.map((r) => (
+                    <span key={r} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/60 rounded text-blue-800 dark:text-blue-200 capitalize font-medium">
+                      {ROLE_DISPLAY_NAMES[r] || r.replace('_', ' ')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleVerifyOtp}>
               <Input
                 type="text"
@@ -153,6 +181,20 @@ export default function ForgotPasswordForm() {
         <div className="flex justify-center mt-[210px]">
           <div className="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded shadow">
             <h2 className="text-xl font-bold mb-4 text-center">Reset Password</h2>
+
+            {roles.length > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs text-blue-700 dark:text-blue-300">
+                <span className="font-semibold block mb-1">This will update the password for all linked roles:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {roles.map((r) => (
+                    <span key={r} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/60 rounded text-blue-800 dark:text-blue-200 capitalize font-medium">
+                      {ROLE_DISPLAY_NAMES[r] || r.replace('_', ' ')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleResetPassword}>
 
               {/* New Password Field with Eye Icon */}

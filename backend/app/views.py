@@ -12308,13 +12308,21 @@ class SendOtpView(APIView):
         if not identifier:
             return Response({"error": "Email or Username is required"})
 
-        user = UserRegister.objects.filter(Q(email=identifier) | Q(username=identifier)).first()
-        if not user:
+        matching_users = UserRegister.objects.filter(Q(email=identifier) | Q(username=identifier))
+        if not matching_users.exists():
             return Response({"error": "User with this email or username not found"})
 
-        email = user.email
+        # Get primary representative user to resolve email address
+        representative_user = list(matching_users.order_by('-id'))[0]
+        email = representative_user.email
         if not email:
             return Response({"error": "User has no email address associated. Please contact support."})
+
+        # Fetch all role records for this physical user's email/username to display on OTP screen
+        all_user_records = UserRegister.objects.filter(Q(email=email) | Q(username=representative_user.username))
+        roles = list(all_user_records.filter(is_active=True).values_list('role', flat=True).distinct())
+        if not roles:
+            roles = list(all_user_records.values_list('role', flat=True).distinct())
 
         otp = str(random.randint(100000, 999999))
 
@@ -12339,7 +12347,8 @@ class SendOtpView(APIView):
             obfuscated_email = f"{email[:3]}...@{email.split('@')[-1]}"
             return Response({
                 "message": f"OTP sent successfully to your registered email ({obfuscated_email})",
-                "email": email 
+                "email": email,
+                "roles": roles
             })
         except Exception as e:
             return Response({"error": f"Failed to send email: {str(e)}"})
@@ -12396,19 +12405,24 @@ class ResetPasswordView(APIView):
         #   USER LOOKUP
         # ===============================
         # Check by email or mobile
-        user = UserRegister.objects.filter(email=email_or_mobile).first()
+        users = list(UserRegister.objects.filter(email=email_or_mobile))
 
-        if not user:
-            user = UserRegister.objects.filter(mobile=email_or_mobile).first()
+        if not users:
+            users = list(UserRegister.objects.filter(mobile=email_or_mobile))
 
-        if not user:
+        if not users:
             return Response({"error": "User with this email or mobile not found."})
+
+        # Find all records sharing the same username as any of the matched rows to ensure sync
+        usernames = {u.username for u in users}
+        all_users = list(UserRegister.objects.filter(username__in=usernames))
 
         # ===============================
         #   UPDATE PASSWORD
         # ===============================
-        user.set_password(new_password)
-        user.save()
+        for u in all_users:
+            u.set_password(new_password)
+            u.save()
 
         # Reset OTP flag
         otp_obj.verified = False

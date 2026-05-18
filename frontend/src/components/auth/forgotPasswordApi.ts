@@ -6,6 +6,7 @@ interface OtpResponse {
   message?: string;
   error?: string;
   email?: string;
+  roles?: string[];
 }
 
 interface VerifyOtpResponse {
@@ -29,7 +30,7 @@ export const sendOtp = async (email: string): Promise<OtpResponse> => {
     });
     const data = await response.json();
     return response.ok
-      ? { success: true, message: data.message, email: data.email }
+      ? { success: true, message: data.message, email: data.email, roles: data.roles }
       : { success: false, error: data.error || data.message || "Failed to send OTP" };
   } catch (err: any) {
     return { success: false, error: err.message };
