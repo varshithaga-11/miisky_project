@@ -15,6 +15,17 @@ import Select from "../../../components/form/Select";
 import Label from "../../../components/form/Label";
 import ImportButton from "../../../components/common/ImportButton";
 
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  admin: "Admin",
+  patient: "Patient",
+  nutritionist: "Nutritionist/Dietician",
+  micro_kitchen: "Micro Kitchen",
+  supply_chain: "Supply Chain",
+  non_patient: "Non-Patient",
+  doctor: "Doctor",
+  master: "Master",
+};
+
 export interface UserRegister {
   id?: number;
   username: string;
@@ -22,6 +33,8 @@ export interface UserRegister {
   first_name?: string;
   last_name?: string;
   role: string;
+  roles?: string[];
+  role_ids?: Record<string, number>;
   is_active?: boolean;
   created_by?: number;
   created_by_name?: string;
@@ -290,9 +303,20 @@ const UserManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4">{user.first_name}</TableCell>
                     <TableCell className="px-5 py-4">{user.last_name}</TableCell>
                     <TableCell className="px-5 py-4">
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                        {user.role}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {user.role.split(',').map((r) => {
+                          const cleanRole = r.trim();
+                          if (!cleanRole) return null;
+                          return (
+                            <span 
+                              key={cleanRole} 
+                              className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 capitalize"
+                            >
+                              {ROLE_DISPLAY_NAMES[cleanRole] || cleanRole.replace('_', ' ')}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       <input

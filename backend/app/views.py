@@ -927,6 +927,7 @@ class ProfileView(viewsets.ModelViewSet):
 class UserManagementViewSet(viewsets.ModelViewSet):
     """
     Admin CRUD for UserRegister model.
+    Grouped by username to support multiple roles per physical user.
     Supports search on username/email/name/mobile and optional filter by created_by.
     Accepts multipart/form-data for photo upload.
     Optional query param: role (e.g. role=patient) to restrict list.
@@ -966,19 +967,228 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             
         return qs
 
+    def _group_users(self, queryset_or_users, list_of_ordered_usernames=None):
+        """
+        Helper to group a list of UserRegister objects by username.
+        Preserves the order specified by list_of_ordered_usernames if provided.
+        """
+        from collections import defaultdict
+        grouped = defaultdict(list)
+        for u in queryset_or_users:
+            grouped[u.username].append(u)
+
+        ordered_usernames = list_of_ordered_usernames or list(grouped.keys())
+        
+        results = []
+        for username in ordered_usernames:
+            users_list = grouped.get(username, [])
+            if not users_list:
+                continue
+            
+            # Sort by id descending so the latest record is first and represents the user
+            users_list.sort(key=lambda x: x.id, reverse=True)
+            representative = users_list[0]
+            
+            # Gather all roles and active/inactive status across all role records
+            roles = [u.role for u in users_list if u.is_active]
+            if not roles:
+                roles = [u.role for u in users_list]
+                
+            # Dictionary mapping role to ID
+            role_ids = {u.role: u.id for u in users_list}
+            
+            # Count if at least one record is active
+            is_active = any(u.is_active for u in users_list)
+            
+            # Serialize the representative user
+            serializer = self.get_serializer(representative)
+            data = serializer.data
+            
+            # Add/override role-related grouped properties
+            data['roles'] = roles
+            data['role'] = ", ".join(roles)
+            data['role_ids'] = role_ids
+            data['is_active'] = is_active
+            
+            results.append(data)
+            
+        return results
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Group by username, get the maximum ID for sorting/representative record
+        grouped_qs = queryset.values('username').annotate(max_id=models.Max('id')).order_by('-max_id')
+        
+        page = self.paginate_queryset(grouped_qs)
+        if page is not None:
+            usernames = [item['username'] for item in page]
+            users = UserRegister.objects.filter(username__in=usernames).select_related('city', 'state', 'country', 'created_by')
+            grouped_data = self._group_users(users, usernames)
+            return self.get_paginated_response(grouped_data)
+
+        usernames = [item['username'] for item in grouped_qs]
+        users = UserRegister.objects.filter(username__in=usernames).select_related('city', 'state', 'country', 'created_by')
+        grouped_data = self._group_users(users, usernames)
+        return Response(grouped_data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        users = UserRegister.objects.filter(username=instance.username).select_related('city', 'state', 'country', 'created_by')
+        grouped = self._group_users(users)
+        if grouped:
+            return Response(grouped[0])
+        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request, *args, **kwargs):
+        roles = request.data.get('roles', [])
+        if hasattr(request.data, 'getlist'):
+            for key in ['roles', 'roles[]']:
+                list_roles = request.data.getlist(key)
+                if list_roles:
+                    roles = list_roles
+                    break
+
+        if not roles:
+            single_role = request.data.get('role')
+            roles = [single_role] if single_role else []
+            
+        if not roles:
+            return Response({"roles": ["At least one role is required."]}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if isinstance(roles, str):
+            roles = [r.strip() for r in roles.split(',') if r.strip()]
+            
+        username = request.data.get('username')
+        email = request.data.get('email')
+        raw_password = request.data.get('password')
+        
+        existing_users = UserRegister.objects.filter(Q(username=username) | Q(email__iexact=email))
+        
+        created_users = []
+        errors = {}
+        
+        for role in roles:
+            data = request.data.copy()
+            data['role'] = role
+            role_exist = existing_users.filter(role=role).first()
+            if role_exist:
+                serializer = self.get_serializer(role_exist, data=data, partial=True)
+            else:
+                serializer = self.get_serializer(data=data)
+            
+            if not serializer.is_valid():
+                errors[role] = serializer.errors
+                
+        if errors:
+            return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
+            
+        for role in roles:
+            data = request.data.copy()
+            data['role'] = role
+            role_exist = existing_users.filter(role=role).first()
+            if role_exist:
+                serializer = self.get_serializer(role_exist, data=data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                user = serializer.save()
+            else:
+                serializer = self.get_serializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                user = serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+            created_users.append(user)
+            
+        if raw_password and created_users:
+            main_user = created_users[0]
+            if main_user.email:
+                send_user_credentials_email(main_user.id, raw_password)
+                
+        all_records = UserRegister.objects.filter(username=username).select_related('city', 'state', 'country', 'created_by')
+        grouped = self._group_users(all_records)
+        return Response(grouped[0] if grouped else {}, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        username = instance.username
+        
+        existing_records = list(UserRegister.objects.filter(username=username))
+        if not existing_records:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        new_roles = request.data.get('roles')
+        if hasattr(request.data, 'getlist'):
+            for key in ['roles', 'roles[]']:
+                list_roles = request.data.getlist(key)
+                if list_roles:
+                    new_roles = list_roles
+                    break
+
+        if new_roles is None:
+            single_role = request.data.get('role')
+            if single_role:
+                new_roles = [single_role]
+                
+        if new_roles is not None:
+            if isinstance(new_roles, str):
+                new_roles = [r.strip() for r in new_roles.split(',') if r.strip()]
+            elif not isinstance(new_roles, list):
+                new_roles = [new_roles]
+                
+        # Create a copy of the request data for updating generic profile fields.
+        # We must exclude 'role' and 'roles' to avoid Choice validation errors,
+        # since each existing record retains its own individual role choice.
+        profile_data = request.data.copy()
+        profile_data.pop('role', None)
+        profile_data.pop('roles', None)
+        profile_data.pop('roles[]', None)
+
+        updated_records = []
+        raw_password = request.data.get('password')
+        
+        for rec in existing_records:
+            rec_serializer = self.get_serializer(rec, data=profile_data, partial=True)
+            rec_serializer.is_valid(raise_exception=True)
+            updated_rec = rec_serializer.save()
+            updated_records.append(updated_rec)
+            
+        if new_roles is not None:
+            existing_roles_map = {rec.role: rec for rec in existing_records}
+            
+            for r in new_roles:
+                if r not in existing_roles_map:
+                    add_data = request.data.copy()
+                    add_data['role'] = r
+                    add_data['username'] = username
+                    if 'is_active' not in add_data:
+                        add_data['is_active'] = True
+                        
+                    add_serializer = self.get_serializer(data=add_data)
+                    add_serializer.is_valid(raise_exception=True)
+                    new_rec = add_serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+                    if not raw_password:
+                        new_rec.password = instance.password
+                        new_rec.save()
+                    updated_records.append(new_rec)
+                else:
+                    existing_rec = existing_roles_map[r]
+                    if not existing_rec.is_active:
+                        existing_rec.is_active = True
+                        existing_rec.save()
+                        
+            for r, rec in existing_roles_map.items():
+                if r not in new_roles:
+                    rec.is_active = False
+                    rec.save()
+                    
+        all_records = UserRegister.objects.filter(username=username).select_related('city', 'state', 'country', 'created_by')
+        grouped = self._group_users(all_records)
+        return Response(grouped[0] if grouped else {})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.is_active = False
-        instance.save()
+        username = instance.username
+        UserRegister.objects.filter(username=username).update(is_active=False)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-    def perform_create(self, serializer):
-        user = serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
-        raw_password = serializer.validated_data.get('password')
-        if raw_password and user.email:
-            # Called synchronously to avoid Redis environment issues
-            send_user_credentials_email(user.id, raw_password)
 
 
 class AdminAllOrdersView(APIView):

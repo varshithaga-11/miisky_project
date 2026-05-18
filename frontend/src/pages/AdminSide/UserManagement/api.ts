@@ -7,6 +7,8 @@ export interface UserRegister {
   first_name?: string;
   last_name?: string;
   role: string;                // e.g., 'admin', 'master', 'user', etc.
+  roles?: string[];            // active roles list
+  role_ids?: Record<string, number>; // mapping of role to ID
   is_active?: boolean;
   created_by?: number;         // user ID of creator, optional for creation
   created_by_name?: string;
@@ -144,6 +146,10 @@ const toUserFormData = (data: Partial<UserRegister>) => {
     if (value === null) return;
     if (value instanceof File) {
       fd.append(key, value);
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((v) => fd.append(key, String(v)));
       return;
     }
     fd.append(key, String(value));

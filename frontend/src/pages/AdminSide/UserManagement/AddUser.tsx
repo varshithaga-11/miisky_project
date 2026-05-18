@@ -21,7 +21,7 @@ interface AddUserProps {
 const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRegister["role"]>("patient");
+  const [roles, setRoles] = useState<string[]>(["patient"]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -159,6 +159,10 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  if (roles.length === 0) {
+    toast.error("Please select at least one role");
+    return;
+  }
   if (password !== confirmPassword) {
     toast.error("Passwords do not match");
     return;
@@ -170,10 +174,11 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
 
   setLoading(true);
   try {
-    const newUser: UserRegister = {
+    const newUser: any = {
       username,
       email,
-      role,
+      roles,
+      role: roles.join(","),
       first_name: firstName,
       last_name: lastName,
       is_active: isActive,
@@ -299,13 +304,14 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
             />
           </div>
 
-          {/* Role */}
+          {/* Roles */}
           <div>
-            <Label htmlFor="role">Role</Label>
-            <SearchableSelect
-              value={role}
-              onChange={(val) => setRole(val as any)}
-              options={[
+            <Label>Roles *</Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Select one or more roles for this user
+            </p>
+            <div className="grid grid-cols-2 gap-2 border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 max-h-48 overflow-y-auto">
+              {[
                 { value: "admin", label: "Admin" },
                 { value: "master", label: "Master" },
                 { value: "nutritionist", label: "Nutritionist/Dietician" },
@@ -314,10 +320,30 @@ const AddUser: React.FC<AddUserProps> = ({ onClose, onAdd }) => {
                 { value: "doctor", label: "Doctor" },
                 { value: "micro_kitchen", label: "Micro Kitchen" },
                 { value: "non_patient", label: "Non Patient" },
-              ]}
-              className="w-full"
-              disabled={loading}
-            />
+              ].map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-md border border-gray-150 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-all select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={roles.includes(opt.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setRoles([...roles, opt.value]);
+                      } else {
+                        setRoles(roles.filter((r) => r !== opt.value));
+                      }
+                    }}
+                    className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+                    disabled={loading}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {opt.label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div>

@@ -22,6 +22,7 @@ interface EditUserProps {
 
 const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated }) => {
   const [userData, setUserData] = useState<Partial<UserRegister>>({});
+  const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -93,7 +94,16 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
     setLoading(true);
     setError("");
     getUserById(userId)
-      .then((data) => setUserData(data))
+      .then((data) => {
+        setUserData(data);
+        if (data.roles) {
+          setRoles(data.roles);
+        } else if (data.role) {
+          setRoles(data.role.split(',').map((r: string) => r.trim()).filter(Boolean));
+        } else {
+          setRoles([]);
+        }
+      })
       .catch(() => setError("Failed to load user data"))
       .finally(() => setLoading(false));
   }, [isOpen, userId]);
@@ -156,6 +166,11 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (roles.length === 0) {
+      toast.error("Please select at least one role");
+      return;
+    }
+
     if (password || confirmPassword) {
       if (password !== confirmPassword) {
         toast.error("Passwords do not match");
@@ -169,7 +184,9 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
 
     setSaving(true);
     try {
-      const updateData: Partial<UserRegister> = { ...userData };
+      const updateData: any = { ...userData };
+      updateData.roles = roles;
+      updateData.role = roles.join(",");
       if (password) updateData.password = password;
       if (password || confirmPassword) updateData.password_confirm = confirmPassword;
       if (photo) updateData.photo = photo;
@@ -296,13 +313,14 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
             />
           </div>
 
-          {/* Role */}
+          {/* Roles */}
           <div>
-            <Label htmlFor="role">Role</Label>
-            <SearchableSelect
-              value={userData.role || "patient"}
-              onChange={(val) => handleChange("role", val)}
-              options={[
+            <Label>Roles *</Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Select one or more roles for this user
+            </p>
+            <div className="grid grid-cols-2 gap-2 border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 max-h-48 overflow-y-auto">
+              {[
                 { value: "admin", label: "Admin" },
                 { value: "master", label: "Master" },
                 { value: "nutritionist", label: "Nutritionist/Dietician" },
@@ -311,10 +329,30 @@ const EditUser: React.FC<EditUserProps> = ({ userId, isOpen, onClose, onUpdated 
                 { value: "doctor", label: "Doctor" },
                 { value: "micro_kitchen", label: "Micro Kitchen" },
                 { value: "non_patient", label: "Non Patient" },
-              ]}
-              className="w-full"
-              disabled={saving}
-            />
+              ].map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-md border border-gray-150 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-all select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={roles.includes(opt.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setRoles([...roles, opt.value]);
+                      } else {
+                        setRoles(roles.filter((r) => r !== opt.value));
+                      }
+                    }}
+                    className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+                    disabled={saving}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {opt.label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div>
