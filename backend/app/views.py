@@ -6247,15 +6247,23 @@ class UserUpdateView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
+        old_username = user.username
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
-        if "username" in serializer.validated_data:
-            user.username = serializer.validated_data["username"]
-        if "new_password" in serializer.validated_data:
-            user.set_password(serializer.validated_data["new_password"])
+        # Get all records sharing this user's old username to update them simultaneously
+        all_users = list(UserRegister.objects.filter(username=old_username))
 
-        user.save()
+        new_username = serializer.validated_data.get("username")
+        new_password = serializer.validated_data.get("new_password")
+
+        for u in all_users:
+            if new_username:
+                u.username = new_username
+            if new_password:
+                u.set_password(new_password)
+            u.save()
+
         return Response({"detail": "Profile updated successfully."}, status=status.HTTP_200_OK)
 
 

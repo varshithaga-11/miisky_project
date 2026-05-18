@@ -247,9 +247,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username', 'email', 'role', 'joined_date', 'is_active', 'created_on']
     
     def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        # Get all records sharing this user's username to keep them identical
+        all_users = UserRegister.objects.filter(username=instance.username)
+        for u in all_users:
+            for attr, value in validated_data.items():
+                setattr(u, attr, value)
+            u.save()
         return instance
 
 
@@ -261,7 +264,13 @@ class UserUpdateSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         user = self.context["request"].user
-        if UserRegister.objects.filter(username=value, role=user.role).exclude(id=user.id).exists():
+        # Find all records sharing this user's current username
+        all_my_records = UserRegister.objects.filter(username=user.username)
+        my_ids = set(all_my_records.values_list('id', flat=True))
+        my_roles = set(all_my_records.values_list('role', flat=True))
+        
+        # Check if the new username is already taken by anyone else with any of my roles
+        if UserRegister.objects.filter(username=value, role__in=my_roles).exclude(id__in=my_ids).exists():
             raise serializers.ValidationError("Username already exists for this role.")
         return value
 
