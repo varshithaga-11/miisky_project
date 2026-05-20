@@ -144,7 +144,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <ul>
                           <li><Link to="/research">Innovation</Link></li>
                           <li><Link to="/patents">Patent</Link></li>
-                          <li><Link to="/partners">Collaration</Link></li>
+                          <li><Link to="/partners">Collaboration</Link></li>
                         </ul>
                       </li>
                       <li>
@@ -244,7 +244,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                         <ul>
                           <li><Link to="/research">Innovation</Link></li>
                           <li><Link to="/patents">Patent</Link></li>
-                          <li><Link to="/partners">Collaration</Link></li>
+                          <li><Link to="/partners">Collaboration</Link></li>
                         </ul>
                       </li>
                       <li>

@@ -97,8 +97,8 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                       </ul>
                     )}
                     {devices.length > 0 && (
-                      <div 
-                        className={`dropdown-btn ${activeDropdown === 20 ? "open" : ""}`} 
+                      <div
+                        className={`dropdown-btn ${activeDropdown === 20 ? "open" : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
@@ -134,7 +134,7 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                 <ul className="sub-menu">
                   <li><Link to="/research">Innovation</Link></li>
                   <li><Link to="/patents">Patent</Link></li>
-                  <li><Link to="/partners">Collaration</Link></li>
+                  <li><Link to="/partners">Collaboration</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 3 ? "open" : ""}`} onClick={() => toggleDropdown(3)}>
                   <span className="fa fa-angle-right" />
@@ -152,9 +152,9 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
 
               {/* Registration & Login */}
               <li style={{ padding: '15px 25px 0 25px', display: 'flex', gap: '10px' }}>
-                <Link to="/signup" reloadDocument className="theme-btn btn-one" style={{ 
-                  flex: 1, 
-                  padding: '10px 0', 
+                <Link to="/signup" reloadDocument className="theme-btn btn-one" style={{
+                  flex: 1,
+                  padding: '10px 0',
                   borderRadius: '5px',
                   fontSize: '13px',
                   fontWeight: '600',
@@ -164,9 +164,9 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
                 }}>
                   Register
                 </Link>
-                <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{ 
-                  flex: 1, 
-                  padding: '10px 0', 
+                <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{
+                  flex: 1,
+                  padding: '10px 0',
                   borderRadius: '5px',
                   fontSize: '13px',
                   fontWeight: '600',
@@ -182,12 +182,12 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
           </div>
 
           <div className="contact-info">
-              <h4>Contact Info</h4>
-              <ul>
-                  <li>#211, Temple Street, 9th Main Road, BEML III Stage, Rajarajeswarinagar, Bengaluru - 560098</li>
-                  <li><Link to="tel:+919845497950">+91 9845497950</Link></li>
-                  <li><Link to="mailto:support@miisky.com">support@miisky.com</Link></li>
-              </ul>
+            <h4>Contact Info</h4>
+            <ul>
+              <li>#211, Temple Street, 9th Main Road, BEML III Stage, Rajarajeswarinagar, Bengaluru - 560098</li>
+              <li><Link to="tel:+919845497950">+91 9845497950</Link></li>
+              <li><Link to="mailto:support@miisky.com">support@miisky.com</Link></li>
+            </ul>
           </div>
 
           {/* Social Links */}

@@ -48,7 +48,7 @@ export default function Header3({
       try {
         const response = await getDepartments();
         let data = [];
-        
+
         if (Array.isArray(response?.data)) {
           data = response.data;
         } else if (response?.data?.results && Array.isArray(response.data.results)) {
@@ -56,7 +56,7 @@ export default function Header3({
         } else if (response?.data) {
           data = Array.isArray(response.data) ? response.data : [];
         }
-        
+
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for header:", err);
@@ -72,9 +72,8 @@ export default function Header3({
     <>
       {/* main header */}
       <header
-        className={`main-header header-style-three ${
-          scroll ? "fixed-header" : ""
-        }`}
+        className={`main-header header-style-three ${scroll ? "fixed-header" : ""
+          }`}
       >
         <div className="header-lower">
           <div className="outer-container">
@@ -139,7 +138,7 @@ export default function Header3({
                         <ul>
                           <li><Link to="/research">Innovation</Link></li>
                           <li><Link to="/patents">Patent</Link></li>
-                          <li><Link to="/partners">Collaration</Link></li>
+                          <li><Link to="/partners">Collaboration</Link></li>
                         </ul>
                       </li>
                       <li>
@@ -222,7 +221,7 @@ export default function Header3({
                         <ul>
                           <li><Link to="/research">Innovation</Link></li>
                           <li><Link to="/patents">Patent</Link></li>
-                          <li><Link to="/partners">Collaration</Link></li>
+                          <li><Link to="/partners">Collaboration</Link></li>
                         </ul>
                       </li>
                       <li>
