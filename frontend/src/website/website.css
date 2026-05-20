@@ -834,27 +834,34 @@ html, body {
     bottom: 0 !important;
     margin: 25px auto 0 auto !important;
     max-width: 92% !important;
-    width: 480px !important;
-    height: 300px !important;
+    width: 520px !important;
+    height: 350px !important;
     text-align: center !important;
     background-color: #ffffff !important;
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05) !important;
     border-radius: 24px !important;
-    padding: 15px !important;
+    padding: 10px !important;
   }
 
-  .banner-section .image-box .image,
-  .banner-section .image-box .image img {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    width: auto !important;
-    height: auto !important;
-    aspect-ratio: auto !important;
-    margin: auto !important;
+  .banner-section .image-box .image {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .banner-section .image-box .image img {
+    max-width: 90% !important;
+    max-height: 90% !important;
+    width: 90% !important;
+    height: 90% !important;
     object-fit: contain !important;
     border-radius: 12px !important;
+    display: block !important;
   }
 
   /* Typography Fixes */
@@ -1326,15 +1333,16 @@ html, body {
 /* ─────────────────────────────────────────────────────────────────────────────
    GLOBAL BANNER IMAGE TWEAKS (DESKTOP)
    ───────────────────────────────────────────────────────────────────────────── */
-@media only screen and (min-width: 1201px) {
+@media only screen and (min-width: 992px) {
   .banner-section {
     min-height: 700px !important;
     /* Ensure enough room for desktop content and images */
   }
 
   .banner-section .image-box {
-    width: 600px !important;
-    height: 400px !important;
+    width: 700px !important;
+    max-width: 90% !important;
+    height: 500px !important;
     right: 50px !important;
     top: 50% !important;
     /* Center vertically */
@@ -1348,20 +1356,27 @@ html, body {
     z-index: 10 !important;
     background-color: #ffffff !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08) !important;
-    padding: 24px !important;
+    padding: 15px !important;
     border: 1px solid rgba(0, 0, 0, 0.03) !important;
   }
 
-  .banner-section .image-box .image,
+  .banner-section .image-box .image {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+
+  .banner-section .image-box .image img,
   .banner-section .image-box img {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    width: auto !important;
-    height: auto !important;
+    max-width: 90% !important;
+    max-height: 90% !important;
+    width: 90% !important;
+    height: 90% !important;
     object-fit: contain !important;
-    margin: auto !important;
-    padding: 0 !important;
-    border-radius: 15px !important;
+    border-radius: 16px !important;
     display: block !important;
   }
 }

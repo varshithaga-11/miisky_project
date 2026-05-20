@@ -31,6 +31,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'address',
             'city',
             'state',
+            'country',
             'zip_code',
             'photo',
             'lat_lng_address'

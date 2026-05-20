@@ -148,10 +148,10 @@ export default function Banner({
                     width={711}
                     height={700}
                     style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      width: 'auto',
-                      height: 'auto',
+                      maxWidth: '90%',
+                      maxHeight: '90%',
+                      width: '90%',
+                      height: '90%',
                       objectFit: 'contain'
                     }}
                   />

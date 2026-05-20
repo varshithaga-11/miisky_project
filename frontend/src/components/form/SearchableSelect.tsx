@@ -21,6 +21,8 @@ interface SearchableSelectProps<T = string | number> {
   onFocus?: () => void | Promise<void>;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
+  leadingIcon?: React.ReactNode;
+  hasMore?: boolean;
 }
 
 const SearchableSelect = <T extends string | number>({
@@ -36,6 +38,8 @@ const SearchableSelect = <T extends string | number>({
   onFocus,
   onLoadMore,
   isLoadingMore = false,
+  leadingIcon,
+  hasMore = true,
 }: SearchableSelectProps<T>) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -73,6 +77,11 @@ const SearchableSelect = <T extends string | number>({
 
   return (
     <div ref={ref} className={`relative ${className}`}>
+      {leadingIcon && (
+        <span className="absolute z-10 -translate-y-1/2 left-4 top-1/2">
+          {leadingIcon}
+        </span>
+      )}
       <button
         type="button"
         onClick={() => {
@@ -82,7 +91,7 @@ const SearchableSelect = <T extends string | number>({
         }}
         disabled={disabled}
         className={`h-11 w-full rounded-lg border border-gray-300 dark:border-gray-700
-          bg-white dark:bg-gray-900 px-4 pr-10 text-left text-sm
+          bg-white dark:bg-gray-900 ${leadingIcon ? 'pl-11' : 'px-4'} pr-10 text-left text-sm
           text-gray-900 dark:text-white/90 focus:outline-none relative
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
           ${showError ? "border-red-500" : ""}

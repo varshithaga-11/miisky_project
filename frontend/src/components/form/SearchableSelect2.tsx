@@ -4,6 +4,7 @@ import { FiCheck, FiChevronDown, FiSearch, FiX } from "react-icons/fi";
 export interface Option<T = string | number> {
   value: T;
   label: string;
+  image?: string | null;
 }
 
 interface SearchableSelect2Props<T = string | number> {
@@ -18,6 +19,10 @@ interface SearchableSelect2Props<T = string | number> {
   error?: string;
   required?: boolean;
   onFocus?: () => void | Promise<void>;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
+  leadingIcon?: React.ReactNode;
+  hasMore?: boolean;
 }
 
 const SearchableSelect2 = <T extends string | number>({
@@ -32,6 +37,10 @@ const SearchableSelect2 = <T extends string | number>({
   error,
   required = false,
   onFocus,
+  onLoadMore,
+  isLoadingMore = false,
+  leadingIcon,
+  hasMore = true,
 }: SearchableSelect2Props<T>) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -59,6 +68,21 @@ const SearchableSelect2 = <T extends string | number>({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  // Reset touched state when value is cleared from outside (e.g., form reset)
+  useEffect(() => {
+    if (!value || value.length === 0) {
+      setTouched(false);
+    }
+  }, [value]);
+
+  // Clear search on close
+  useEffect(() => {
+    if (!open) {
+      setSearch("");
+      if (onSearch) onSearch("");
+    }
+  }, [open, onSearch]);
+
   const toggleOption = (optionValue: T) => {
     const newValue = value.includes(optionValue)
       ? value.filter((v) => v !== optionValue)
@@ -79,6 +103,11 @@ const SearchableSelect2 = <T extends string | number>({
       )}
       
       <div className="relative">
+        {leadingIcon && (
+          <span className="absolute z-10 -translate-y-1/2 left-4 top-1/2">
+            {leadingIcon}
+          </span>
+        )}
         <div
           onClick={() => {
             if (disabled) return;
@@ -87,7 +116,7 @@ const SearchableSelect2 = <T extends string | number>({
             setTouched(true);
           }}
           className={`min-h-[44px] w-full rounded-lg border border-gray-300 dark:border-gray-700
-            bg-white dark:bg-gray-900 px-3 py-1.5 text-left text-sm cursor-pointer
+            bg-white dark:bg-gray-900 ${leadingIcon ? 'pl-11' : 'px-3'} py-1.5 text-left text-sm cursor-pointer
             text-gray-900 dark:text-white/90 focus-within:ring-2 focus-within:ring-brand-500/20
             flex flex-wrap gap-1.5 items-center pr-10
             ${disabled ? "opacity-50 cursor-not-allowed" : ""}
@@ -100,7 +129,7 @@ const SearchableSelect2 = <T extends string | number>({
               return (
                 <span
                   key={String(v)}
-                  className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-0.5 rounded-md text-xs font-medium"
+                  className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-0.5 rounded-md text-xs font-medium animate-fadeIn"
                 >
                   {opt?.label || String(v)}
                   <button
@@ -109,7 +138,7 @@ const SearchableSelect2 = <T extends string | number>({
                       e.stopPropagation();
                       removeValue(v);
                     }}
-                    className="hover:text-red-500"
+                    className="hover:text-red-500 transition-colors"
                   >
                     <FiX size={12} />
                   </button>
@@ -152,30 +181,50 @@ const SearchableSelect2 = <T extends string | number>({
             </div>
 
             {/* Options list */}
-            <ul className="flex-1 overflow-y-auto py-1 custom-scrollbar">
+            <ul
+              className="flex-1 overflow-y-auto py-1 custom-scrollbar"
+              onScroll={(e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                if (scrollHeight - scrollTop <= clientHeight + 10) {
+                  if (onLoadMore && !isLoadingMore && hasMore) {
+                    onLoadMore();
+                  }
+                }
+              }}
+            >
               {filtered.length > 0 ? (
-                filtered.map((opt) => {
-                  const isSelected = value.includes(opt.value);
-                  return (
-                    <li key={String(opt.value)}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleOption(opt.value);
-                        }}
-                        className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm transition-colors
-                          ${isSelected ? "bg-brand-50/50 dark:bg-brand-900/10 text-brand-600 dark:text-brand-400 font-medium" : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60"}`}
-                      >
-                        <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-all
-                          ${isSelected ? "bg-brand-500 border-brand-500" : "border-gray-300 dark:border-gray-600 bg-transparent"}`}>
-                          {isSelected && <FiCheck className="text-white" size={12} />}
-                        </div>
-                        <span className="truncate">{opt.label}</span>
-                      </button>
+                <>
+                  {filtered.map((opt) => {
+                    const isSelected = value.includes(opt.value);
+                    return (
+                      <li key={String(opt.value)}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleOption(opt.value);
+                          }}
+                          className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm transition-colors
+                            ${isSelected ? "bg-brand-50/50 dark:bg-brand-900/10 text-brand-600 dark:text-brand-400 font-medium" : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60"}`}
+                        >
+                          <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-all
+                            ${isSelected ? "bg-brand-500 border-brand-500" : "border-gray-300 dark:border-gray-600 bg-transparent"}`}>
+                            {isSelected && <FiCheck className="text-white" size={12} />}
+                          </div>
+                          {opt.image && (
+                            <img src={opt.image} alt="" className="h-6 w-6 rounded-md object-cover flex-shrink-0" />
+                          )}
+                          <span className="truncate">{opt.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {isLoadingMore && (
+                    <li className="px-4 py-2 text-center text-xs text-gray-400">
+                      Loading more...
                     </li>
-                  );
-                })
+                  )}
+                </>
               ) : (
                 <li className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                   No results found

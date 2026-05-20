@@ -53,7 +53,7 @@ const Select: React.FC<SelectProps> = ({
   const selected = options.find(o => o.value === internal);
   const showError = required && touched && !internal;
 
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     opt.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -67,10 +67,10 @@ const Select: React.FC<SelectProps> = ({
       <button
         id={id}
         type="button"
-        onClick={() => { 
+        onClick={() => {
           if (!open) onFocus?.();
-          setOpen(o => !o); 
-          setTouched(true); 
+          setOpen(o => !o);
+          setTouched(true);
         }}
         disabled={disabled}
         className={`h-11 w-full rounded-lg border border-gray-300 dark:border-gray-700
@@ -82,7 +82,7 @@ const Select: React.FC<SelectProps> = ({
       >
         {selected ? selected.label : <span className="text-gray-400">{placeholder}</span>}
         <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70"
-             viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"/></svg>
+          viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" /></svg>
       </button>
 
       {open && (
@@ -92,7 +92,7 @@ const Select: React.FC<SelectProps> = ({
                      shadow-lg flex flex-col"
         >
           <div className="px-1 py-1">
-            <input 
+            <input
               type="text"
               placeholder="Search..."
               className="w-full h-8 px-3 text-xs rounded-md border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -110,8 +110,8 @@ const Select: React.FC<SelectProps> = ({
                     onClick={() => { setInternal(opt.value); onChange(opt.value); setOpen(false); setSearchTerm(""); }}
                     className={`block w-full px-4 py-2 text-left text-sm
                                ${internal === opt.value
-                                  ? "bg-gray-100 dark:bg-gray-800"
-                                  : "hover:bg-gray-50 dark:hover:bg-gray-800/70"}
+                        ? "bg-gray-100 dark:bg-gray-800"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800/70"}
                                text-gray-900 dark:text-gray-100`}
                   >
                     {opt.label}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import {
   EyeCloseIcon,
@@ -16,11 +16,12 @@ import Input from "../form/input/InputField";
 import { registerUser } from "./signupApi.ts";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Select from "../form/Select";
+import SearchableSelect from "../form/SearchableSelect";
 import axios from "axios";
 import { createApiUrl } from "../../access/access.ts";
 import { MapLocationPicker } from "../common/MapLocationPicker";
 import DatePicker2 from "../form/date-picker2";
+import Select from "../form/Select";
 
 const ROLE_OPTIONS = [
   // { value: "admin", label: "Admin" },
@@ -92,42 +93,133 @@ export default function SignUpForm() {
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   const [countries, setCountries] = useState<{ value: string, label: string }[]>([]);
+  const [countryPage, setCountryPage] = useState(1);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [countryLoading, setCountryLoading] = useState(false);
+  const [countryHasMore, setCountryHasMore] = useState(true);
+
   const [states, setStates] = useState<{ value: string, label: string }[]>([]);
+  const [statePage, setStatePage] = useState(1);
+  const [stateSearch, setStateSearch] = useState("");
+  const [stateLoading, setStateLoading] = useState(false);
+  const [stateHasMore, setStateHasMore] = useState(true);
+
   const [cities, setCities] = useState<{ value: string, label: string }[]>([]);
+  const [cityPage, setCityPage] = useState(1);
+  const [citySearch, setCitySearch] = useState("");
+  const [cityLoading, setCityLoading] = useState(false);
+  const [cityHasMore, setCityHasMore] = useState(true);
+
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
+  const countryDebounceRef = useRef<any>(null);
+  const stateDebounceRef = useRef<any>(null);
+  const cityDebounceRef = useRef<any>(null);
+
   useEffect(() => {
-    fetchCountries();
+    fetchCountries(1, "");
+    return () => {
+      clearTimeout(countryDebounceRef.current);
+      clearTimeout(stateDebounceRef.current);
+      clearTimeout(cityDebounceRef.current);
+    };
   }, []);
 
-  const fetchCountries = async () => {
+  const fetchCountries = async (page: number, search: string, append: boolean = false) => {
+    if (countryLoading) return;
+    setCountryLoading(true);
     try {
-      const response = await axios.get(createApiUrl('api/country/?limit=250'));
-      const options = response.data.results.map((c: any) => ({ value: c.id.toString(), label: c.name }));
-      setCountries(options);
+      const response = await axios.get(createApiUrl(`api/country/?page=${page}&limit=10&search=${encodeURIComponent(search)}`));
+      const results = response.data.results || [];
+      const options = results.map((c: any) => ({ value: c.id.toString(), label: c.name }));
+      setCountries(prev => append ? [...prev, ...options] : options);
+      setCountryHasMore(!!response.data.next);
+      setCountryPage(page);
     } catch (err) {
       console.error("Failed to fetch countries", err);
+    } finally {
+      setCountryLoading(false);
     }
   };
 
-  const fetchStates = async (countryId: string) => {
+  const fetchStates = async (countryId: string, page: number = 1, search: string = "", append: boolean = false) => {
+    if (!countryId || stateLoading) return;
+    setStateLoading(true);
     try {
-      const response = await axios.get(createApiUrl(`api/state/?country=${countryId}&limit=100`));
-      const options = response.data.results.map((s: any) => ({ value: s.id.toString(), label: s.name }));
-      setStates(options);
+      const response = await axios.get(createApiUrl(`api/state/?country=${countryId}&page=${page}&limit=10&search=${encodeURIComponent(search)}`));
+      const results = response.data.results || [];
+      const options = results.map((s: any) => ({ value: s.id.toString(), label: s.name }));
+      setStates(prev => append ? [...prev, ...options] : options);
+      setStateHasMore(!!response.data.next);
+      setStatePage(page);
     } catch (err) {
       console.error("Failed to fetch states", err);
+    } finally {
+      setStateLoading(false);
     }
   };
 
-  const fetchCities = async (stateId: string) => {
+  const fetchCities = async (stateId: string, page: number = 1, search: string = "", append: boolean = false) => {
+    if (!stateId || cityLoading) return;
+    setCityLoading(true);
     try {
-      const response = await axios.get(createApiUrl(`api/city/?state=${stateId}&limit=100`));
-      const options = response.data.results.map((c: any) => ({ value: c.id.toString(), label: c.name }));
-      setCities(options);
+      const response = await axios.get(createApiUrl(`api/city/?state=${stateId}&page=${page}&limit=10&search=${encodeURIComponent(search)}`));
+      const results = response.data.results || [];
+      const options = results.map((c: any) => ({ value: c.id.toString(), label: c.name }));
+      setCities(prev => append ? [...prev, ...options] : options);
+      setCityHasMore(!!response.data.next);
+      setCityPage(page);
     } catch (err) {
       console.error("Failed to fetch cities", err);
+    } finally {
+      setCityLoading(false);
+    }
+  };
+
+  const handleCountrySearch = (term: string) => {
+    setCountrySearch(term);
+    clearTimeout(countryDebounceRef.current);
+    countryDebounceRef.current = setTimeout(() => {
+      fetchCountries(1, term);
+    }, 400);
+  };
+
+  const handleCountryScrollEnd = () => {
+    if (countryHasMore && !countryLoading) {
+      fetchCountries(countryPage + 1, countrySearch, true);
+    }
+  };
+
+  const handleStateSearch = (term: string) => {
+    setStateSearch(term);
+    clearTimeout(stateDebounceRef.current);
+    stateDebounceRef.current = setTimeout(() => {
+      if (formData.country) {
+        fetchStates(formData.country, 1, term);
+      }
+    }, 400);
+  };
+
+  const handleStateScrollEnd = () => {
+    if (stateHasMore && !stateLoading && formData.country) {
+      fetchStates(formData.country, statePage + 1, stateSearch, true);
+    }
+  };
+
+  const handleCitySearch = (term: string) => {
+    setCitySearch(term);
+    clearTimeout(cityDebounceRef.current);
+    cityDebounceRef.current = setTimeout(() => {
+      if (formData.state) {
+        fetchCities(formData.state, 1, term);
+      }
+    }, 400);
+  };
+
+  const handleCityScrollEnd = () => {
+    if (cityHasMore && !cityLoading && formData.state) {
+      fetchCities(formData.state, cityPage + 1, citySearch, true);
     }
   };
 
@@ -167,14 +259,23 @@ export default function SignUpForm() {
     }));
 
     if (name === 'country') {
-      fetchStates(value);
       setFormData(prev => ({ ...prev, country: value, state: '', city: '' }));
       setStates([]);
       setCities([]);
+      setStatePage(1);
+      setStateSearch("");
+      setStateHasMore(true);
+      setCityPage(1);
+      setCitySearch("");
+      setCityHasMore(true);
+      fetchStates(value, 1, "");
     } else if (name === 'state') {
-      fetchCities(value);
       setFormData(prev => ({ ...prev, state: value, city: '' }));
       setCities([]);
+      setCityPage(1);
+      setCitySearch("");
+      setCityHasMore(true);
+      fetchCities(value, 1, "");
     }
   };
 
@@ -240,8 +341,60 @@ export default function SignUpForm() {
           password: data.password || prev.password,
           password_confirm: data.password || prev.password_confirm,
         }));
-        if (data.country) fetchStates(data.country.toString());
-        if (data.state) fetchCities(data.state.toString());
+
+        // Dynamically fetch and prepend country if not present in options
+        if (data.country) {
+          const countryId = data.country.toString();
+          try {
+            const cRes = await axios.get(createApiUrl(`api/country/${countryId}/`));
+            if (cRes.data) {
+              const opt = { value: cRes.data.id.toString(), label: cRes.data.name };
+              setCountries(prev => {
+                if (prev.some(c => c.value === countryId)) return prev;
+                return [opt, ...prev];
+              });
+            }
+          } catch (err) {
+            console.error("Failed to fetch selected country details", err);
+          }
+          await fetchStates(countryId);
+        }
+
+        // Dynamically fetch and prepend state if not present in options
+        if (data.state) {
+          const stateId = data.state.toString();
+          try {
+            const sRes = await axios.get(createApiUrl(`api/state/${stateId}/`));
+            if (sRes.data) {
+              const opt = { value: sRes.data.id.toString(), label: sRes.data.name };
+              setStates(prev => {
+                if (prev.some(s => s.value === stateId)) return prev;
+                return [opt, ...prev];
+              });
+            }
+          } catch (err) {
+            console.error("Failed to fetch selected state details", err);
+          }
+          await fetchCities(stateId);
+        }
+
+        // Dynamically fetch and prepend city if not present in options
+        if (data.city) {
+          const cityId = data.city.toString();
+          try {
+            const cRes = await axios.get(createApiUrl(`api/city/${cityId}/`));
+            if (cRes.data) {
+              const opt = { value: cRes.data.id.toString(), label: cRes.data.name };
+              setCities(prev => {
+                if (prev.some(c => c.value === cityId)) return prev;
+                return [opt, ...prev];
+              });
+            }
+          } catch (err) {
+            console.error("Failed to fetch selected city details", err);
+          }
+        }
+
         toast.info("Existing details fetched");
       }
     } catch (err) {
@@ -390,19 +543,51 @@ export default function SignUpForm() {
               <div className="grid grid-cols-3 items-center">
                 <Label className="col-span-1">Country</Label>
                 <div className="col-span-2">
-                  <Select options={countries} value={formData.country} onChange={(val) => handleSelectChange('country', val)} placeholder="Search Country" leadingIcon={<FiGlobe className="size-5 text-gray-500" />} />
+                  <SearchableSelect
+                    options={countries}
+                    value={formData.country}
+                    onChange={(val) => handleSelectChange('country', val)}
+                    placeholder="Search Country"
+                    leadingIcon={<FiGlobe className="size-5 text-gray-500" />}
+                    onSearch={handleCountrySearch}
+                    onLoadMore={handleCountryScrollEnd}
+                    isLoadingMore={countryLoading}
+                    hasMore={countryHasMore}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center">
                 <Label className="col-span-1">State</Label>
                 <div className="col-span-2">
-                  <Select options={states} value={formData.state} onChange={(val) => handleSelectChange('state', val)} placeholder="Search State" leadingIcon={<PlusIcon className="size-5 fill-gray-500" />} disabled={!formData.country} />
+                  <SearchableSelect
+                    options={states}
+                    value={formData.state}
+                    onChange={(val) => handleSelectChange('state', val)}
+                    placeholder="Search State"
+                    leadingIcon={<PlusIcon className="size-5 fill-gray-500" />}
+                    disabled={!formData.country}
+                    onSearch={handleStateSearch}
+                    onLoadMore={handleStateScrollEnd}
+                    isLoadingMore={stateLoading}
+                    hasMore={stateHasMore}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center">
                 <Label className="col-span-1">City</Label>
                 <div className="col-span-2">
-                  <Select options={cities} value={formData.city} onChange={(val) => handleSelectChange('city', val)} placeholder="Search City" leadingIcon={<PlusIcon className="size-5 fill-gray-500" />} disabled={!formData.state} />
+                  <SearchableSelect
+                    options={cities}
+                    value={formData.city}
+                    onChange={(val) => handleSelectChange('city', val)}
+                    placeholder="Search City"
+                    leadingIcon={<PlusIcon className="size-5 fill-gray-500" />}
+                    disabled={!formData.state}
+                    onSearch={handleCitySearch}
+                    onLoadMore={handleCityScrollEnd}
+                    isLoadingMore={cityLoading}
+                    hasMore={cityHasMore}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center">
