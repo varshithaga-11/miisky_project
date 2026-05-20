@@ -94,9 +94,9 @@ const MealPackageManagementPage: React.FC = () => {
     return [...packages].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
-      if (aValue === undefined && bValue === undefined) return 0;
-      if (aValue === undefined) return 1;
-      if (bValue === undefined) return -1;
+      if ((aValue === undefined || aValue === null) && (bValue === undefined || bValue === null)) return 0;
+      if (aValue === undefined || aValue === null) return 1;
+      if (bValue === undefined || bValue === null) return -1;
       if (sortDirection === 'asc') {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
@@ -227,7 +227,7 @@ const MealPackageManagementPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start text-theme-sm dark:text-white/90">
                       <div className="flex flex-wrap gap-1">
                         {pkg.meal_type_names?.map((name, i) => (
-                          <Badge key={i} color="blue" variant="light" size="sm">
+                          <Badge key={i} color="info" variant="light" size="sm">
                             {name}
                           </Badge>
                         ))}

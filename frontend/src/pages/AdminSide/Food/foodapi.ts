@@ -62,6 +62,7 @@ export interface Food {
   ingredients?: any[];
   steps?: any[];
   serving_sizes?: FoodServingSize[];
+  price?: string | number;
   posted_by_role?: string;
   posted_by_name?: string;
 }

@@ -110,7 +110,7 @@ const EditMealPackage: React.FC<EditMealPackageProps> = ({ packageId, isOpen, on
               {mealTypes.map((type) => (
                 <div key={type.id} className="flex items-center gap-2">
                   <Checkbox
-                    checked={formData.meal_types?.includes(type.id)}
+                    checked={!!formData.meal_types?.includes(type.id)}
                     onChange={() => handleToggleMealType(type.id)}
                   />
                   <span className="text-sm dark:text-white/90">{type.name}</span>
@@ -151,7 +151,7 @@ const EditMealPackage: React.FC<EditMealPackageProps> = ({ packageId, isOpen, on
             </div>
             <div className="flex items-center gap-2 mt-8">
               <Checkbox
-                checked={formData.is_active}
+                checked={!!formData.is_active}
                 onChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
               <Label className="mb-0">Is Active</Label>
