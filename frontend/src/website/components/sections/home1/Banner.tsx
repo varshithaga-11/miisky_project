@@ -127,13 +127,33 @@ export default function Banner({
 
 
               {/* Image Box */}
-              <div className="image-box">
-                <figure className="image">
+              <div className="image-box" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                maxHeight: '550px'
+              }}>
+                <figure className="image" style={{
+                  margin: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
                   <Image
                     src={slide.image}
                     alt={slide.title}
                     width={711}
                     height={700}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain'
+                    }}
                   />
                 </figure>
               </div>

@@ -826,7 +826,9 @@ html, body {
   }
 
   .banner-section .image-box {
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     position: relative !important;
     right: 0 !important;
     bottom: 0 !important;
@@ -836,14 +838,15 @@ html, body {
 
   .banner-section .image-box .image,
   .banner-section .image-box .image img {
-    max-width: 90% !important;
-    width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
+    max-width: 95% !important;
+    width: auto !important;
     height: auto !important;
+    max-height: 380px !important;
+    aspect-ratio: auto !important;
     margin: 0 auto !important;
     opacity: 1 !important;
     transform: none !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     border-radius: 15px !important;
   }
 
@@ -1332,16 +1335,21 @@ html, body {
     transform: translateY(-50%) !important;
     overflow: hidden !important;
     border-radius: 20px !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     z-index: 10 !important;
+    background-color: transparent !important;
   }
 
   .banner-section .image-box .image,
   .banner-section .image-box img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    margin: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin: auto !important;
     padding: 0 !important;
     border-radius: 20px !important;
     display: block !important;
