@@ -48,7 +48,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
     <>
       {/* main header */}
       <header className={`main-header ${scroll ? "fixed-header" : ""}`}>
-          <div className="header-top">
+        {/* <div className="header-top">
             <div className="outer-container">
               <div className="top-inner">
                 <ul className="info-list clearfix">
@@ -65,7 +65,7 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
 
               </div>
             </div>
-          </div>
+          </div> */}
 
         <div className="header-lower">
           <div className="outer-container">

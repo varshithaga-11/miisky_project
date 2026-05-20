@@ -19,7 +19,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
       try {
         const response = await getDepartments();
         let data = [];
-        
+
         if (Array.isArray(response?.data)) {
           data = response.data;
         } else if (response?.data?.results && Array.isArray(response.data.results)) {
@@ -27,7 +27,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
         } else if (response?.data) {
           data = Array.isArray(response.data) ? response.data : [];
         }
-        
+
         setDepartments(data);
       } catch (err) {
         console.error("Failed to fetch departments for header:", err);
@@ -43,7 +43,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
     <>
       {/* main header */}
       <header className={`main-header header-style-two ${scroll ? "fixed-header" : ""}`}>
-        <div className="header-top">
+        {/* <div className="header-top">
           <div className="auto-container">
             <div className="top-inner">
               <ul className="info-list clearfix">
@@ -68,7 +68,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
               </ul>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="header-lower">
           <div className="auto-container">
@@ -90,7 +90,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent2">
                     <ul className="navigation clearfix">
-                       <li>
+                      <li>
                         <Link to="/">Home</Link>
                       </li>
                       <li>
@@ -140,24 +140,24 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
 
               <div className="menu-right-content">
                 <div className="support-box" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                  <div className="icon-box" style={{ 
-                      width: '50px', 
-                      height: '50px', 
-                      backgroundColor: '#fba354', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      marginRight: '15px',
-                      flexShrink: 0,
-                      position: 'relative'
+                  <div className="icon-box" style={{
+                    width: '50px',
+                    height: '50px',
+                    backgroundColor: '#fba354',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    flexShrink: 0,
+                    position: 'relative'
                   }}>
                     <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                   </div>
                   <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative' }}>
                     <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
                     <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                      <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
                     </h6>
                   </div>
                 </div>
@@ -187,7 +187,7 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent2Sticky">
                     <ul className="navigation clearfix">
-                       <li>
+                      <li>
                         <Link to="/">Home</Link>
                       </li>
                       <li>
@@ -237,23 +237,23 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
 
               <div className="menu-right-content">
                 <div className="support-box" style={{ display: 'flex', alignItems: 'center' }}>
-                  <div className="icon-box" style={{ 
-                      width: '50px', 
-                      height: '50px', 
-                      backgroundColor: '#fba354', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      marginRight: '15px',
-                      flexShrink: 0
+                  <div className="icon-box" style={{
+                    width: '50px',
+                    height: '50px',
+                    backgroundColor: '#fba354',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    flexShrink: 0
                   }}>
                     <Image src="/website/assets/images/icons/icon-1.svg" alt="Icon" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                   </div>
                   <div className="content" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
                     <span style={{ fontSize: '13px', color: '#aaaaaa', fontWeight: 400, marginBottom: '2px' }}>Emergency Call</span>
                     <h6 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                       <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
+                      <Link to="tel:+919845497950" style={{ color: '#111' }}>+91 9845497950</Link>
                     </h6>
                   </div>
                 </div>
