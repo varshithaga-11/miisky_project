@@ -217,6 +217,46 @@ html, body {
   margin-top: 0px !important;
 }
 
+/* Cascading Submenu (EcoSystem -> Products -> Medical Devices) to align off to the right */
+.main-header .navigation li.dropdown ul li.dropdown > ul {
+  top: 0 !important;
+  left: 100% !important;
+  border-top: none !important;
+  border-left: 3px solid #0646ac !important;
+  margin-top: -10px !important;
+  box-shadow: 5px 5px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.main-header .navigation li.dropdown ul li.dropdown:hover > ul {
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: -10px !important;
+}
+
+/* Sub-submenu Indicator Arrow */
+.main-header .navigation li.dropdown ul li.dropdown > a {
+  position: relative !important;
+  padding-right: 35px !important; /* Space for the arrow */
+}
+
+.main-header .navigation li.dropdown ul li.dropdown > a::after {
+  font-family: "Font Awesome 5 Free", "Font Awesome 5 Pro", "FontAwesome", sans-serif !important;
+  content: "\f105" !important;
+  font-weight: 900 !important;
+  position: absolute !important;
+  right: 15px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  font-size: 12px !important;
+  color: #777777 !important;
+  transition: all 0.3s ease !important;
+}
+
+.main-header .navigation li.dropdown ul li.dropdown:hover > a::after {
+  color: #0646ac !important;
+  transform: translateY(-50%) translateX(3px) !important;
+}
+
 /* Dropdown link styles */
 .main-header .navigation li ul li {
   margin: 0 !important;

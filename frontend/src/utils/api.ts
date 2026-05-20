@@ -56,6 +56,7 @@ export const deleteMedicalDeviceCategory = (id: number | string) => API.delete(`
 // MEDICAL DEVICES
 // ============================================================================
 export const getMedicalDevices = () => API.get('/website/medicaldevice/');
+export const getMedicalDevicesWithLimit = (page = 1, limit = 10) => API.get(`/website/medicaldevice/?page=${page}&limit=${limit}`);
 export const getMedicalDeviceById = (id: number | string) => API.get(`/website/medicaldevice/${id}/`);
 export const createMedicalDevice = (data: any) => API.post('/website/medicaldevice/', data);
 export const updateMedicalDevice = (id: number | string, data: any) => API.put(`/website/medicaldevice/${id}/`, data);

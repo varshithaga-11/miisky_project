@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Image from '@website/components/Image';
+import { getMedicalDevicesWithLimit } from "@/utils/api";
 
 type MobileMenuProps = {
   isSidebar: boolean;
@@ -10,6 +11,27 @@ type MobileMenuProps = {
 
 export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar }: MobileMenuProps) {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [devices, setDevices] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await getMedicalDevicesWithLimit(1, 10);
+        let data = [];
+        if (Array.isArray(response?.data)) {
+          data = response.data;
+        } else if (response?.data?.results && Array.isArray(response.data.results)) {
+          data = response.data.results;
+        } else if (response?.data) {
+          data = Array.isArray(response.data) ? response.data : [];
+        }
+        setDevices(data);
+      } catch (err) {
+        console.error("Failed to fetch medical devices for mobile menu:", err);
+      }
+    };
+    fetchDevices();
+  }, []);
 
   const toggleDropdown = (key: number) => {
     if (activeDropdown === key) {
@@ -63,7 +85,42 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
               <li className={`dropdown ${activeDropdown === 2 ? "active" : ""}`}>
                 <Link to="/device-categories">EcoSystem</Link>
                 <ul className="sub-menu">
-                  <li><Link to="/device-categories">Products</Link></li>
+                  <li className={`dropdown ${activeDropdown === 20 ? "active" : ""}`} style={{ position: 'relative' }}>
+                    <Link to="/device-categories">Products</Link>
+                    {devices.length > 0 && (
+                      <ul className="sub-menu" style={{ display: activeDropdown === 20 ? 'block' : 'none' }}>
+                        {devices.map((device) => (
+                          <li key={device.uid || device.id}>
+                            <Link to={`/medical-devices/${device.uid}`}>{device.name}</Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {devices.length > 0 && (
+                      <div 
+                        className={`dropdown-btn ${activeDropdown === 20 ? "open" : ""}`} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          toggleDropdown(20);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '6px',
+                          width: '30px',
+                          height: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 10
+                        }}
+                      >
+                        <span className="fa fa-angle-right" />
+                      </div>
+                    )}
+                  </li>
                   <li><Link to="/departments">Services</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 2 ? "open" : ""}`} onClick={() => toggleDropdown(2)}>

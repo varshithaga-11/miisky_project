@@ -179,3 +179,22 @@ export interface Partner {
   website_url?: string;
   position?: number;
 }
+
+export interface ContactUsInfo {
+  id?: number;
+  uid?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+  phone_primary?: string;
+  phone_secondary?: string;
+  email_support?: string;
+  email_general?: string;
+  whatsapp_number?: string;
+  google_maps_url?: string;
+  google_maps_embed_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+

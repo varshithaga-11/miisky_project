@@ -196,6 +196,7 @@ import ReportTypePage from "./pages/MasterSide/ReportType/index";
 import WebsiteReportPage from "./pages/MasterSide/WebsiteReport/index";
 import DepartmentPage from "./pages/MasterSide/Department/index";
 import TeamMemberPage from "./pages/MasterSide/TeamMember/index";
+import ContactUsInfoPage from "./pages/MasterSide/ContactUsInfo/index";
 import JobListingPage from "./pages/MasterSide/JobListing/index";
 import JobApplicationPage from "./pages/MasterSide/JobApplication/index";
 import GalleryCategoryPage from "./pages/MasterSide/GalleryCategory/index";
@@ -288,6 +289,7 @@ export function appRoutes() {
           <Route path="master/reporttype" element={<ReportTypePage />} />
           <Route path="master/websitereport" element={<WebsiteReportPage />} />
           <Route path="master/department" element={<DepartmentPage />} />
+          <Route path="master/contactusinfo" element={<ContactUsInfoPage />} />
           <Route path="master/teammember" element={<TeamMemberPage />} />
           <Route path="master/joblisting" element={<JobListingPage />} />
           <Route path="master/jobapplication" element={<JobApplicationPage />} />

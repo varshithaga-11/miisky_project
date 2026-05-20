@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Image from '@website/components/Image';
 import MobileMenu from "../MobileMenu";
-import { getDepartments } from '@/utils/api';
+import { getDepartments, getMedicalDevicesWithLimit } from '@/utils/api';
 import { MOCK_DEPARTMENTS } from "@/website/utils/mockData";
 
 // ✅ Define props type
@@ -14,6 +14,27 @@ type Header1Props = {
 
 export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Header1Props) {
   const [departments, setDepartments] = useState<any[]>([]);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [hasLoadedDevices, setHasLoadedDevices] = useState(false);
+
+  const handleProductsHover = async () => {
+    if (hasLoadedDevices) return;
+    try {
+      const response = await getMedicalDevicesWithLimit(1, 10);
+      let data = [];
+      if (Array.isArray(response?.data)) {
+        data = response.data;
+      } else if (response?.data?.results && Array.isArray(response.data.results)) {
+        data = response.data.results;
+      } else if (response?.data) {
+        data = Array.isArray(response.data) ? response.data : [];
+      }
+      setDevices(data);
+      setHasLoadedDevices(true);
+    } catch (err) {
+      console.error("Failed to fetch medical devices for header:", err);
+    }
+  };
   useLocation();
 
   useEffect(() => {
@@ -103,7 +124,18 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li className="dropdown">
                         <Link to="/device-categories">EcoSystem</Link>
                         <ul>
-                          <li><Link to="/device-categories">Products</Link></li>
+                          <li className="dropdown" onMouseEnter={handleProductsHover}>
+                            <Link to="/device-categories">Products</Link>
+                            {devices.length > 0 && (
+                              <ul>
+                                {devices.map((device) => (
+                                  <li key={device.uid || device.id}>
+                                    <Link to={`/medical-devices/${device.uid}`}>{device.name}</Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </li>
                           <li><Link to="/departments">Services</Link></li>
                         </ul>
                       </li>
@@ -192,7 +224,18 @@ export default function Header1({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li className="dropdown">
                         <Link to="/device-categories">EcoSystem</Link>
                         <ul>
-                          <li><Link to="/device-categories">Products</Link></li>
+                          <li className="dropdown" onMouseEnter={handleProductsHover}>
+                            <Link to="/device-categories">Products</Link>
+                            {devices.length > 0 && (
+                              <ul>
+                                {devices.map((device) => (
+                                  <li key={device.uid || device.id}>
+                                    <Link to={`/medical-devices/${device.uid}`}>{device.name}</Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </li>
                           <li><Link to="/departments">Services</Link></li>
                         </ul>
                       </li>

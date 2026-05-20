@@ -58,6 +58,7 @@ router.register(r'legalpage', views.LegalPageViewSet, basename='legalpage')
 router.register(r'patent', views.PatentViewSet, basename='patent')
 router.register(r'workflowstep', views.WorkflowStepViewSet, basename='workflowstep')
 router.register(r'pricingplan', views.PricingPlanViewSet, basename='pricingplan')
+router.register(r'contactusinfo', views.ContactUsInfoViewSet, basename='contactusinfo')
 
 urlpatterns = [
     path('dashboard-stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),

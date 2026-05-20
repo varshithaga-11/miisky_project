@@ -372,3 +372,15 @@ class StatCounterSerializer(serializers.ModelSerializer):
     class Meta:
         model = StatCounter
         fields = '__all__'
+
+
+# ===========================================================================
+# 26. CONTACT US INFO
+# ===========================================================================
+
+class ContactUsInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactUsInfo
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+

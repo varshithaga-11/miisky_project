@@ -1085,3 +1085,23 @@ class StatCounter(UIDMixin):
     def __str__(self):
         return f"{self.title}: {self.value}{self.suffix or ''}"
 
+
+
+
+class ContactUsInfo(UIDMixin):
+    country=models.CharField(max_length=100,null=True,blank=True)
+    state=models.CharField(max_length=100,null=True,blank=True)
+    city=models.CharField(max_length=100,null=True,blank=True)
+    address=models.CharField(max_length=255,null=True,blank=True)
+    phone_primary = models.CharField(max_length=20,null=True,blank=True)
+    phone_secondary = models.CharField(max_length=20, blank=True, null=True)
+    email_support = models.CharField(max_length=200,null=True,blank=True)
+    email_general = models.CharField(max_length=200,null=True,blank=True)
+    whatsapp_number = models.CharField(max_length=20,null=True,blank=True)
+    google_maps_url = models.CharField(max_length=500, blank=True, null=True)
+    google_maps_embed_url = models.CharField(max_length=1000, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.country

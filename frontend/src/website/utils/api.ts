@@ -400,3 +400,6 @@ export const careersApi = {
 export const getAboutSections = () => getList<any>("website/companyaboutsection/", { is_active: true });
 
 export const getCompanyInfo = () => get<any>("website/companyinfo/1/");
+
+export const getContactUsInfoList = () => getList<import("./types").ContactUsInfo>("website/contactusinfo/");
+

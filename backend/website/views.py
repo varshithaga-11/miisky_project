@@ -952,3 +952,21 @@ class StatCounterViewSet(viewsets.ModelViewSet):
         elif not self.request.user.is_authenticated:
             qs = qs.filter(is_active=True)
         return qs.order_by('position')
+
+
+# ===========================================================================
+# 26. CONTACT US INFO
+# ===========================================================================
+
+class ContactUsInfoViewSet(PolymorphicLookupMixin, viewsets.ModelViewSet):
+    serializer_class = ContactUsInfoSerializer
+    lookup_field = 'uid'
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = WebsitePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['country', 'state', 'city', 'address']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return ContactUsInfo.objects.all().order_by('-created_at')
+

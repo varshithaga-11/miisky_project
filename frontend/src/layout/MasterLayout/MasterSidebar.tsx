@@ -691,6 +691,7 @@ const masterNavItems: NavItem[] = [
     subItems: [
       { name: "About Sections", path: "/master/companyaboutsection" },
       { name: "Company Info", path: "/master/companyinfo" },
+      { name: "Contact Us Info", path: "/master/contactusinfo" },
       { name: "Hero Banners", path: "/master/herobanner" },
       { name: "Legal Pages", path: "/master/legalpage" },
       { name: "Workflow Steps", path: "/master/workflowstep" },
