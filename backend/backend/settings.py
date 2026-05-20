@@ -256,6 +256,16 @@ CELERY_TIMEZONE = "UTC"
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
+
+# HDFC SmartGateway Configuration
+HDFC_PAYMENT_SANDBOX = True
+HDFC_MERCHANT_ID = 'hdfcmaster'
+HDFC_RESELLER_ID = 'hdfc_reseller'
+HDFC_RETURN_URL = 'https://api.miisky.com/api/userdietplan/payment_callback/'
+HDFC_PUBLIC_KEY = None  # Bank's Public Key (PEM)
+HDFC_PRIVATE_KEY = None # Your Private Key (PEM)
+HDFC_KEY_ID = ''         # Key UUID provided by HDFC
+HDFC_API_KEY = ''        # API Key for Authorization header
 EMAIL_PORT = 587  
 EMAIL_USE_TLS = True  
 EMAIL_USE_SSL = False
