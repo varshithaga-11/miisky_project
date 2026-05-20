@@ -832,22 +832,29 @@ html, body {
     position: relative !important;
     right: 0 !important;
     bottom: 0 !important;
-    margin-top: 15px !important;
+    margin: 25px auto 0 auto !important;
+    max-width: 92% !important;
+    width: 480px !important;
+    height: 300px !important;
     text-align: center !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 24px !important;
+    padding: 15px !important;
   }
 
   .banner-section .image-box .image,
   .banner-section .image-box .image img {
-    max-width: 95% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
     width: auto !important;
     height: auto !important;
-    max-height: 380px !important;
     aspect-ratio: auto !important;
-    margin: 0 auto !important;
+    margin: auto !important;
     opacity: 1 !important;
     transform: none !important;
     object-fit: contain !important;
-    border-radius: 15px !important;
+    border-radius: 12px !important;
   }
 
   /* Typography Fixes */
@@ -1334,12 +1341,15 @@ html, body {
     bottom: auto !important;
     transform: translateY(-50%) !important;
     overflow: hidden !important;
-    border-radius: 20px !important;
+    border-radius: 30px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     z-index: 10 !important;
-    background-color: transparent !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08) !important;
+    padding: 24px !important;
+    border: 1px solid rgba(0, 0, 0, 0.03) !important;
   }
 
   .banner-section .image-box .image,
@@ -1351,7 +1361,7 @@ html, body {
     object-fit: contain !important;
     margin: auto !important;
     padding: 0 !important;
-    border-radius: 20px !important;
+    border-radius: 15px !important;
     display: block !important;
   }
 }
@@ -2988,5 +2998,88 @@ html, body {
 
   .home-image-caption-section .home-image-caption-text {
     font-size: 15px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HERO BANNER PREMIUM NAVIGATION ARROWS
+   ───────────────────────────────────────────────────────────────────────────── */
+.banner-carousel .swiper-button-prev::after,
+.banner-carousel .swiper-button-next::after {
+  display: none !important;
+}
+
+.banner-section .banner-nav-btn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 54px !important;
+  height: 54px !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 50% !important;
+  color: var(--secondary-color, #1a202c) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 100 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+  opacity: 0.9 !important;
+}
+
+.banner-section .banner-nav-btn svg {
+  transition: transform 0.3s ease !important;
+}
+
+.banner-section .banner-nav-btn:hover {
+  background: var(--secondary-color, #1f2937) !important;
+  color: #ffffff !important;
+  transform: translateY(-50%) scale(1.08) !important;
+  box-shadow: 0 15px 35px rgba(31, 41, 55, 0.2) !important;
+  opacity: 1 !important;
+}
+
+.banner-section .banner-nav-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.banner-section .banner-nav-btn.prev-btn:hover svg {
+  transform: translateX(-2px) scale(1.1);
+}
+
+.banner-section .banner-nav-btn.next-btn:hover svg {
+  transform: translateX(2px) scale(1.1);
+}
+
+.banner-section .banner-nav-btn.swiper-button-disabled {
+  opacity: 0.25 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.banner-section .banner-nav-btn.prev-btn {
+  left: 40px !important;
+}
+
+.banner-section .banner-nav-btn.next-btn {
+  right: 40px !important;
+}
+
+@media only screen and (max-width: 1400px) {
+  .banner-section .banner-nav-btn.prev-btn {
+    left: 20px !important;
+  }
+  .banner-section .banner-nav-btn.next-btn {
+    right: 20px !important;
+  }
+}
+
+@media only screen and (max-width: 991px) {
+  .banner-section .banner-nav-btn {
+    display: none !important; /* Hide arrows on mobile touchscreens to maximize space */
   }
 }
