@@ -43,32 +43,24 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
     <>
       {/* main header */}
       <header className={`main-header header-style-two ${scroll ? "fixed-header" : ""}`}>
-        {/* <div className="header-top">
+        <div className="header-top">
           <div className="auto-container">
             <div className="top-inner">
               <ul className="info-list clearfix">
-                <li>
-                  <i className="icon-46"></i>
-                  <a href="mailto:support@miisky.com">support@miisky.com</a>
-                </li>
-
-                <li>
-                  <i className="icon-3"></i>
-                  Open Hours: <span>Mon - Fri: 9:30am to 6:00pm</span>
+                <li style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fas fa-user-plus" style={{ position: 'static', transform: 'translateY(2px)', color: '#fff' }}></i>
+                  <Link to="/signup" reloadDocument style={{ color: '#fff' }}>Registration</Link>
                 </li>
               </ul>
-              <ul className="social-links clearfix">
-                <li>
-                  <h6>Follow Us</h6>
+              <ul className="info-list clearfix" style={{ float: 'right', display: 'flex', alignItems: 'center', margin: 0 }}>
+                <li style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', margin: 0, paddingLeft: 0 }}>
+                  <i className="fas fa-sign-in-alt" style={{ position: 'static', transform: 'translateY(2px)', color: '#fff' }}></i>
+                  <Link to="/signin" reloadDocument style={{ color: '#fff' }}>Login</Link>
                 </li>
-                <li><Link to="/"><i className="fab fa-facebook-f"></i></Link></li>
-                <li><Link to="/"><i className="fab fa-dribbble"></i></Link></li>
-                <li><Link to="/"><i className="fab fa-twitter"></i></Link></li>
-                <li><Link to="/"><i className="fab fa-instagram"></i></Link></li>
               </ul>
             </div>
           </div>
-        </div> */}
+        </div>
 
         <div className="header-lower">
           <div className="auto-container">
@@ -93,45 +85,37 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li>
                         <Link to="/">Home</Link>
                       </li>
-                      <li>
+                      <li className="dropdown">
                         <Link to="/about">About Us</Link>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/departments">Our Departments</Link></li>
-                          {departments.map((dept: any) => (
-                            <li key={dept.id}>
-                              <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
-                            </li>
-                          ))}
+                          <li><Link to="/about">Incorporation</Link></li>
+                          <li><Link to="/about#work">Work till now</Link></li>
+                          <li><Link to="/about#vision">Vision</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/device-categories">Products</Link>
+                        <Link to="/device-categories">EcoSystem</Link>
                         <ul>
-                          <li><Link to="/device-categories">Device Categories</Link></li>
+                          <li><Link to="/device-categories">Products</Link></li>
+                          <li><Link to="/departments">Services</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/">Pages</Link>
+                        <Link to="/research">Collaborations</Link>
                         <ul>
-                          <li><Link to="/doctors">Our Doctors</Link></li>
-                          <li><Link to="/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/portfolio">Portfolio One</Link></li>
-                          <li><Link to="/portfolio-2">Portfolio Two</Link></li>
-                          <li><Link to="/pricing">Pricing</Link></li>
-                          <li><Link to="/error">Not Found</Link></li>
-                        </ul>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/blog">Blog</Link>
-                        <ul>
-                          <li><Link to="/blog">Blog Grid</Link></li>
+                          <li><Link to="/research">Innovation</Link></li>
+                          <li><Link to="/patents">Patent</Link></li>
+                          <li><Link to="/partners">Collaration</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/contact">Contact</Link>
+                        <Link to="/blog">Blog</Link>
+                      </li>
+                      <li>
+                        <Link to="/careers">Career</Link>
+                      </li>
+                      <li>
+                        <Link to="/contact">Contact Us</Link>
                       </li>
                     </ul>
                   </div>
@@ -190,45 +174,37 @@ export default function Header2({ scroll, isMobileMenu, handleMobileMenu }: Head
                       <li>
                         <Link to="/">Home</Link>
                       </li>
-                      <li>
+                      <li className="dropdown">
                         <Link to="/about">About Us</Link>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/departments">Our Departments</Link></li>
-                          {departments.map((dept: any) => (
-                            <li key={dept.id}>
-                              <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
-                            </li>
-                          ))}
+                          <li><Link to="/about">Incorporation</Link></li>
+                          <li><Link to="/about#work">Work till now</Link></li>
+                          <li><Link to="/about#vision">Vision</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/device-categories">Products</Link>
+                        <Link to="/device-categories">EcoSystem</Link>
                         <ul>
-                          <li><Link to="/device-categories">Device Categories</Link></li>
+                          <li><Link to="/device-categories">Products</Link></li>
+                          <li><Link to="/departments">Services</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/">Pages</Link>
+                        <Link to="/research">Collaborations</Link>
                         <ul>
-                          <li><Link to="/doctors">Our Doctors</Link></li>
-                          <li><Link to="/doctor-details">Doctor Details</Link></li>
-                          <li><Link to="/portfolio">Portfolio One</Link></li>
-                          {/* <li><Link to="/portfolio-2">Portfolio Two</Link></li> */}
-                          <li><Link to="/pricing">Pricing</Link></li>
-                          <li><Link to="/error">Not Found</Link></li>
-                        </ul>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/blog">Blog</Link>
-                        <ul>
-                          <li><Link to="/blog">Blog Grid</Link></li>
+                          <li><Link to="/research">Innovation</Link></li>
+                          <li><Link to="/patents">Patent</Link></li>
+                          <li><Link to="/partners">Collaration</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/contact">Contact</Link>
+                        <Link to="/blog">Blog</Link>
+                      </li>
+                      <li>
+                        <Link to="/careers">Career</Link>
+                      </li>
+                      <li>
+                        <Link to="/contact">Contact Us</Link>
                       </li>
                     </ul>
                   </div>

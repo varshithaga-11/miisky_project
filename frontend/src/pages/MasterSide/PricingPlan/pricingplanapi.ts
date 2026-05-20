@@ -3,16 +3,20 @@ import { createApiUrl, getAuthHeaders } from "../../../access/access";
 
 export interface PricingPlan {
   id?: number;
+  uid?: string;
   name: string;
-  price_monthly: number;
-  price_yearly?: number;
+  price: number;
+  currency_symbol?: string;
+  billing_period?: string;
+  savings_text?: string;
+  icon_class?: string;
   features: string[]; // JSON list mapping from backend
-  is_featured: boolean;
+  is_popular?: boolean;
+  cta_text?: string;
+  cta_url?: string;
   is_active: boolean;
   position: number;
   created_at?: string;
-  button_text?: string;
-  plan_category?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -48,24 +52,24 @@ export const getPricingPlanList = async (
   return response.data;
 };
 
-export const getPricingPlanById = async (id: number) => {
-  const url = createApiUrl(`api/website/pricingplan/${id}/`);
+export const getPricingPlanById = async (uid: string) => {
+  const url = createApiUrl(`api/website/pricingplan/${uid}/`);
   const response = await axios.get(url, {
     headers: await getAuthHeaders(),
   });
   return response.data;
 };
 
-export const updatePricingPlan = async (id: number, data: Partial<PricingPlan>) => {
-  const url = createApiUrl(`api/website/pricingplan/${id}/`);
+export const updatePricingPlan = async (uid: string, data: Partial<PricingPlan>) => {
+  const url = createApiUrl(`api/website/pricingplan/${uid}/`);
   const response = await axios.patch(url, data, {
     headers: await getAuthHeaders(),
   });
   return response.data;
 };
 
-export const deletePricingPlan = async (id: number) => {
-  const url = createApiUrl(`api/website/pricingplan/${id}/`);
+export const deletePricingPlan = async (uid: string) => {
+  const url = createApiUrl(`api/website/pricingplan/${uid}/`);
   await axios.delete(url, {
     headers: await getAuthHeaders(),
   });

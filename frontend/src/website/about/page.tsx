@@ -20,8 +20,8 @@ export default function About_Page() {
 
     return (
         <div className="boxed_wrapper">
-                <About/>
-                <section className="innovation-section p_relative pb_100 pt_100">
+                <div id="incorporation"><About/></div>
+                <section id="work" className="innovation-section p_relative pb_100 pt_100">
                     <div className="auto-container">
                         <div className="sec-title mb_60 centred">
                             <span className="sub-title mb_5">Our Innovation Journey</span>
@@ -68,8 +68,7 @@ export default function About_Page() {
                         </div>
                     </div>
                 </section>
-
-                <section className="vision-section p_relative pb_100 pt_100" style={{ backgroundColor: '#f9fafb' }}>
+                <section id="vision" className="vision-section p_relative pb_100 pt_100" style={{ backgroundColor: '#f9fafb' }}>
                     <div className="auto-container">
                         <div className="row clearfix">
                             <div className="col-lg-12 col-md-12 col-sm-12 content-column">

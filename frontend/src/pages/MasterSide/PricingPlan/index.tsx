@@ -21,9 +21,9 @@ const PricingPlanPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingUid, setEditingUid] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [idToDelete, setIdToDelete] = useState<number | null>(null);
+  const [uidToDelete, setUidToDelete] = useState<string | null>(null);
 
   const fetchPlans = useCallback(async () => {
     setLoading(true);
@@ -43,17 +43,17 @@ const PricingPlanPage: React.FC = () => {
     fetchPlans();
   }, [fetchPlans]);
 
-  const handleDelete = (id: number) => {
-    setIdToDelete(id);
+  const handleDelete = (uid: string) => {
+    setUidToDelete(uid);
   };
 
   const confirmDelete = async () => {
-    if (idToDelete === null) return;
+    if (uidToDelete === null) return;
     setIsDeleting(true);
     try {
-      await deletePricingPlan(idToDelete);
+      await deletePricingPlan(uidToDelete);
       toast.success("Pricing plan archived successfully!");
-      setIdToDelete(null);
+      setUidToDelete(null);
       fetchPlans();
     } catch (error) {
       toast.error("Failed to archive pricing plan.");
@@ -122,7 +122,8 @@ const PricingPlanPage: React.FC = () => {
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">#</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Plan Name</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Pricing (Monthly/Yearly)</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Price & Period</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Savings Label</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Features</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
@@ -131,11 +132,11 @@ const PricingPlanPage: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading && plans.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">Loading...</TableCell>
                 </TableRow>
               ) : plans.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No plans found</TableCell>
+                  <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">No plans found</TableCell>
                 </TableRow>
               ) : (
                 plans.map((plan, index) => (
@@ -146,30 +147,30 @@ const PricingPlanPage: React.FC = () => {
                     <TableCell className="px-5 py-4 text-start">
                         <div className="flex flex-col">
                           <div className="font-bold text-gray-900 dark:text-white">{plan.name}</div>
-                          <div className="text-[10px] font-black uppercase text-blue-600 tracking-wider font-sans">{plan.plan_category}</div>
+                          {plan.cta_text && (
+                            <div className="text-[10px] font-black uppercase text-blue-600 tracking-wider font-sans">Button: {plan.cta_text}</div>
+                          )}
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <div className="flex flex-col gap-0.5">
                           <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                             ${plan.price_monthly} <span className="text-[10px] text-gray-400 font-normal">/ mo</span>
+                             {plan.currency_symbol || "$"}{plan.price} <span className="text-[10px] text-gray-400 font-normal">/ {plan.billing_period || "monthly"}</span>
                           </div>
-                          {plan.price_yearly && (
-                            <div className="text-[10px] font-bold text-green-600">
-                               ${plan.price_yearly} <span className="text-gray-400 font-normal">/ yr</span>
-                            </div>
-                          )}
                         </div>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start font-medium text-gray-600 dark:text-gray-300">
+                        {plan.savings_text || "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
                         <div className="flex flex-wrap gap-1">
-                          {plan.features.slice(0, 2).map((feature, i) => (
+                          {(plan.features || []).slice(0, 2).map((feature, i) => (
                             <span key={i} className="px-2 py-0.5 bg-gray-50 text-[10px] font-medium text-gray-500 rounded border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                               {feature}
                             </span>
                           ))}
-                          {plan.features.length > 2 && (
-                            <span className="text-[10px] text-gray-400 font-bold">+{plan.features.length - 2} more</span>
+                          {(plan.features || []).length > 2 && (
+                            <span className="text-[10px] text-gray-400 font-bold">+{(plan.features || []).length - 2} more</span>
                           )}
                         </div>
                     </TableCell>
@@ -180,17 +181,17 @@ const PricingPlanPage: React.FC = () => {
                            }`}>
                                {plan.is_active ? "LIVE" : "DRAFT"}
                            </span>
-                           {plan.is_featured && (
+                           {plan.is_popular && (
                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-center inline-block max-w-fit bg-blue-50 text-blue-600 border border-blue-100">
-                                FEATURED
+                                POPULAR
                              </span>
                            )}
                         </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start text-theme-sm">
                         <div className="flex items-center gap-3">
-                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingId(plan.id!)}><FiEdit /></button>
-                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(plan.id!)}><FiTrash2 /></button>
+                            <button className="text-blue-600 hover:text-blue-800 text-lg" onClick={() => setEditingUid(plan.uid!)}><FiEdit /></button>
+                            <button className="text-red-600 hover:text-red-800 text-lg" onClick={() => handleDelete(plan.uid!)}><FiTrash2 /></button>
                         </div>
                     </TableCell>
                   </TableRow>
@@ -247,17 +248,17 @@ const PricingPlanPage: React.FC = () => {
         />
       )}
 
-      {editingId && (
+      {editingUid && (
         <EditPricingPlan 
-          id={editingId} 
+          uid={editingUid} 
           onSuccess={() => fetchPlans()} 
-          onClose={() => setEditingId(null)} 
+          onClose={() => setEditingUid(null)} 
         />
       )}
 
       <ConfirmationModal
-        isOpen={idToDelete !== null}
-        onClose={() => setIdToDelete(null)}
+        isOpen={uidToDelete !== null}
+        onClose={() => setUidToDelete(null)}
         onConfirm={confirmDelete}
         isLoading={isDeleting}
         title="Archive Pricing Plan?"

@@ -84,56 +84,40 @@ export default function Header3({
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent3">
                     <ul className="navigation clearfix">
-                       <li className="current">
+                      <li>
                         <Link to="/">Home</Link>
                       </li>
-                      <li>
+                      <li className="dropdown">
                         <Link to="/about">About Us</Link>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/departments">Our Departments</Link></li>
-                          {departments.map((dept: any) => (
-                            <li key={dept.id}>
-                              <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
-                            </li>
-                          ))}
+                          <li><Link to="/about">Incorporation</Link></li>
+                          <li><Link to="/about#work">Work till now</Link></li>
+                          <li><Link to="/about#vision">Vision</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/device-categories">Products</Link>
+                        <Link to="/device-categories">EcoSystem</Link>
                         <ul>
-                          <li><Link to="/device-categories">Device Categories</Link></li>
-                          <li><Link to="/medical-devices">Medical Devices</Link></li>
+                          <li><Link to="/device-categories">Products</Link></li>
+                          <li><Link to="/departments">Services</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/research">Innovation</Link>
+                        <Link to="/research">Collaborations</Link>
                         <ul>
-                          <li><Link to="/research">Research</Link></li>
-                          <li><Link to="/patents">Patents</Link></li>
-                        </ul>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/">Support</Link>
-                        <ul>
-                          <li><Link to="/doctors">Doctors</Link></li>
-                          <li><Link to="/careers">Careers</Link></li>
-                          <li><Link to="/faq">FAQ</Link></li>
-                          <li><Link to="/gallery">Gallery</Link></li>
-                          <li><Link to="/partners">Partners</Link></li>
-                          <li><Link to="/pricing">Pricing</Link></li>
-                        </ul>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/blog">Blog</Link>
-                        <ul>
-                          <li><Link to="/blog">Blog Grid</Link></li>
+                          <li><Link to="/research">Innovation</Link></li>
+                          <li><Link to="/patents">Patent</Link></li>
+                          <li><Link to="/partners">Collaration</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/contact">Contact</Link>
+                        <Link to="/blog">Blog</Link>
+                      </li>
+                      <li>
+                        <Link to="/careers">Career</Link>
+                      </li>
+                      <li>
+                        <Link to="/contact">Contact Us</Link>
                       </li>
                     </ul>
                   </div>
@@ -172,56 +156,40 @@ export default function Header3({
                 <nav className="main-menu navbar-expand-md navbar-light clearfix">
                   <div className="collapse navbar-collapse show clearfix" id="navbarSupportedContent3Sticky">
                     <ul className="navigation clearfix">
-                       <li>
+                      <li>
                         <Link to="/">Home</Link>
                       </li>
-                      <li>
+                      <li className="dropdown">
                         <Link to="/about">About Us</Link>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/departments">Departments</Link>
                         <ul>
-                          <li><Link to="/departments">Our Departments</Link></li>
-                          {departments.map((dept: any) => (
-                            <li key={dept.id}>
-                              <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
-                            </li>
-                          ))}
+                          <li><Link to="/about">Incorporation</Link></li>
+                          <li><Link to="/about#work">Work till now</Link></li>
+                          <li><Link to="/about#vision">Vision</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/medical-devices">Products</Link>
+                        <Link to="/device-categories">EcoSystem</Link>
                         <ul>
-                          <li><Link to="/medical-devices">Medical Devices</Link></li>
-                          <li><Link to="/device-categories">Device Categories</Link></li>
+                          <li><Link to="/device-categories">Products</Link></li>
+                          <li><Link to="/departments">Services</Link></li>
                         </ul>
                       </li>
                       <li className="dropdown">
-                        <Link to="/research">Innovation</Link>
+                        <Link to="/research">Collaborations</Link>
                         <ul>
-                          <li><Link to="/research">Research</Link></li>
-                          <li><Link to="/patents">Patents</Link></li>
-                        </ul>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/">Support</Link>
-                        <ul>
-                          <li><Link to="/doctors">Doctors</Link></li>
-                          <li><Link to="/careers">Careers</Link></li>
-                          <li><Link to="/faq">FAQ</Link></li>
-                          <li><Link to="/gallery">Gallery</Link></li>
-                          <li><Link to="/partners">Partners</Link></li>
-                          <li><Link to="/pricing">Pricing</Link></li>
-                        </ul>
-                      </li>
-                      <li className="dropdown">
-                        <Link to="/blog">Blog</Link>
-                        <ul>
-                          <li><Link to="/blog">Blog Grid</Link></li>
+                          <li><Link to="/research">Innovation</Link></li>
+                          <li><Link to="/patents">Patent</Link></li>
+                          <li><Link to="/partners">Collaration</Link></li>
                         </ul>
                       </li>
                       <li>
-                        <Link to="/contact">Contact</Link>
+                        <Link to="/blog">Blog</Link>
+                      </li>
+                      <li>
+                        <Link to="/careers">Career</Link>
+                      </li>
+                      <li>
+                        <Link to="/contact">Contact Us</Link>
                       </li>
                     </ul>
                   </div>

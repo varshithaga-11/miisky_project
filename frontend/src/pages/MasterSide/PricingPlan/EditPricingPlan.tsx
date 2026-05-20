@@ -6,22 +6,26 @@ import Input from "../../../components/form/input/InputField";
 import Label from "../../../components/form/Label";
 
 interface Props {
-  id: number;
+  uid: string;
   onSuccess: () => void;
   onClose: () => void;
 }
 
-const EditPricingPlan: React.FC<Props> = ({ id, onSuccess, onClose }) => {
+const EditPricingPlan: React.FC<Props> = ({ uid, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [formData, setFormData] = useState<Partial<PricingPlan>>({});
+  const [featuresText, setFeaturesText] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       setFetching(true);
       try {
-        const data = await getPricingPlanById(id);
+        const data = await getPricingPlanById(uid);
         setFormData(data);
+        if (data.features) {
+          setFeaturesText(data.features.join("\n"));
+        }
       } catch (error) {
         toast.error("Failed to load pricing plan data");
       } finally {
@@ -29,13 +33,24 @@ const EditPricingPlan: React.FC<Props> = ({ id, onSuccess, onClose }) => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [uid]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await updatePricingPlan(id, formData);
+      const parsedFeatures = featuresText
+        .split(/[\n,]+/)
+        .map((item) => item.trim())
+        .filter((item) => item !== "");
+
+      // Exclude read-only fields from the request payload to ensure server side compatibility
+      const { id, uid: planUid, created_at, ...updateData } = formData;
+
+      await updatePricingPlan(uid, {
+        ...updateData,
+        features: parsedFeatures,
+      });
       toast.success("Pricing plan updated successfully!");
       onSuccess();
       onClose();
@@ -74,40 +89,83 @@ const EditPricingPlan: React.FC<Props> = ({ id, onSuccess, onClose }) => {
                 />
               </div>
               <div>
-                <Label htmlFor="plan_category">Plan Category</Label>
-                <select
-                  id="plan_category"
-                  value={formData.plan_category || ""}
-                  onChange={(e) => setFormData({ ...formData, plan_category: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-900 dark:border-gray-700 dark:text-white text-sm"
+                <Label htmlFor="price">Price *</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.price || 0}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                   disabled={loading}
-                >
-                  <option value="standard">Standard</option>
-                  <option value="premium">Premium</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="price_monthly">Monthly Price *</Label>
+                <Label htmlFor="currency_symbol">Currency Symbol</Label>
                 <Input
-                  id="price_monthly"
-                  type="number"
-                  required
-                  value={formData.price_monthly || 0}
-                  onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) || 0 })}
+                  id="currency_symbol"
+                  type="text"
+                  value={formData.currency_symbol || ""}
+                  onChange={(e) => setFormData({ ...formData, currency_symbol: e.target.value })}
                   disabled={loading}
                 />
               </div>
               <div>
-                <Label htmlFor="price_yearly">Yearly Price</Label>
+                <Label htmlFor="billing_period">Billing Period</Label>
                 <Input
-                  id="price_yearly"
-                  type="number"
-                  value={formData.price_yearly || 0}
-                  onChange={(e) => setFormData({ ...formData, price_yearly: parseFloat(e.target.value) || 0 })}
+                  id="billing_period"
+                  type="text"
+                  value={formData.billing_period || ""}
+                  onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="savings_text">Savings Text</Label>
+                <Input
+                  id="savings_text"
+                  type="text"
+                  value={formData.savings_text || ""}
+                  onChange={(e) => setFormData({ ...formData, savings_text: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Label htmlFor="icon_class">Icon Class</Label>
+                <Input
+                  id="icon_class"
+                  type="text"
+                  value={formData.icon_class || ""}
+                  onChange={(e) => setFormData({ ...formData, icon_class: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="cta_text">CTA Button Text</Label>
+                <Input
+                  id="cta_text"
+                  type="text"
+                  value={formData.cta_text || ""}
+                  onChange={(e) => setFormData({ ...formData, cta_text: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Label htmlFor="cta_url">CTA Target URL</Label>
+                <Input
+                  id="cta_url"
+                  type="text"
+                  value={formData.cta_url || ""}
+                  onChange={(e) => setFormData({ ...formData, cta_url: e.target.value })}
                   disabled={loading}
                 />
               </div>
@@ -118,56 +176,45 @@ const EditPricingPlan: React.FC<Props> = ({ id, onSuccess, onClose }) => {
               <textarea
                 id="features"
                 required
-                value={(formData.features || []).join(", ")}
-                onChange={(e) => setFormData({ ...formData, features: e.target.value.split(",").map(i => i.trim()).filter(i => i) })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-none"
+                value={featuresText}
+                onChange={(e) => setFeaturesText(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm h-24 resize-y"
                 disabled={loading}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                  <Label htmlFor="button_text">Button Text</Label>
-                  <Input
-                    id="button_text"
-                    type="text"
-                    value={formData.button_text || ""}
-                    onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                    disabled={loading}
-                  />
-               </div>
-               <div>
-                  <Label htmlFor="position">Sort Order</Label>
-                  <Input
-                    id="position"
-                    type="number"
-                    value={formData.position || 0}
-                    onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                    disabled={loading}
-                  />
-               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-6 pt-2">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_featured"
-                  checked={formData.is_featured || false}
-                  onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              <div>
+                <Label htmlFor="position">Sort Order</Label>
+                <Input
+                  id="position"
+                  type="number"
+                  value={formData.position || 0}
+                  onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+                  disabled={loading}
                 />
-                <Label htmlFor="is_featured" className="mb-0 cursor-pointer">Featured Plan</Label>
               </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formData.is_active || false}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
-                <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
+              <div className="flex flex-col justify-end gap-3 pb-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="is_popular"
+                    checked={formData.is_popular || false}
+                    onChange={(e) => setFormData({ ...formData, is_popular: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <Label htmlFor="is_popular" className="mb-0 cursor-pointer">Popular Plan</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={formData.is_active || false}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <Label htmlFor="is_active" className="mb-0 cursor-pointer">Live on Website</Label>
+                </div>
               </div>
             </div>
 

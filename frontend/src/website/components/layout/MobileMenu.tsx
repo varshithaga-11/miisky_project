@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Image from '@website/components/Image';
-import { getDepartments } from '@/utils/api';
-import { MOCK_DEPARTMENTS } from "@/website/utils/mockData";
 
 type MobileMenuProps = {
   isSidebar: boolean;
@@ -12,30 +10,6 @@ type MobileMenuProps = {
 
 export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar }: MobileMenuProps) {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  const [departments, setDepartments] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchDepartmentsData = async () => {
-      try {
-        const response = await getDepartments();
-        let data = [];
-        
-        if (Array.isArray(response?.data)) {
-          data = response.data;
-        } else if (response?.data?.results && Array.isArray(response.data.results)) {
-          data = response.data.results;
-        } else if (response?.data) {
-          data = Array.isArray(response.data) ? response.data : [];
-        }
-        
-        setDepartments(data);
-      } catch (err) {
-        console.error("Failed to fetch departments for mobile menu:", err);
-        setDepartments(MOCK_DEPARTMENTS);
-      }
-    };
-    fetchDepartmentsData();
-  }, []);
 
   const toggleDropdown = (key: number) => {
     if (activeDropdown === key) {
@@ -72,86 +46,72 @@ export default function MobileMenu({ isSidebar, handleMobileMenu, handleSidebar 
               {/* Home */}
               <li><Link to="/">Home</Link></li>
 
-              {/* About */}
-              <li><Link to="/about">About Us</Link></li>
-
-              {/* Departments */}
+              {/* About Us */}
               <li className={`dropdown ${activeDropdown === 1 ? "active" : ""}`}>
-                <Link to="/departments">Departments</Link>
+                <Link to="/about">About Us</Link>
                 <ul className="sub-menu">
-                  <li><Link to="/departments">Our Departments</Link></li>
-                  {departments.map((dept: any) => (
-                    <li key={dept.id}>
-                      <Link to={`/department-details/${dept.uid || dept.id}`}>{dept.name}</Link>
-                    </li>
-                  ))}
+                  <li><Link to="/about">Incorporation</Link></li>
+                  <li><Link to="/about#work">Work till now</Link></li>
+                  <li><Link to="/about#vision">Vision</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 1 ? "open" : ""}`} onClick={() => toggleDropdown(1)}>
                   <span className="fa fa-angle-right" />
                 </div>
               </li>
 
-              {/* Products */}
+              {/* EcoSystem */}
               <li className={`dropdown ${activeDropdown === 2 ? "active" : ""}`}>
-                <Link to="/device-categories">Products</Link>
+                <Link to="/device-categories">EcoSystem</Link>
                 <ul className="sub-menu">
-                  <li><Link to="/device-categories">Device Categories</Link></li>
-                  <li><Link to="/medical-devices">Medical Devices</Link></li>
+                  <li><Link to="/device-categories">Products</Link></li>
+                  <li><Link to="/departments">Services</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 2 ? "open" : ""}`} onClick={() => toggleDropdown(2)}>
                   <span className="fa fa-angle-right" />
                 </div>
               </li>
 
-              {/* Innovation */}
+              {/* Collaborations */}
               <li className={`dropdown ${activeDropdown === 3 ? "active" : ""}`}>
-                <Link to="/research">Innovation</Link>
+                <Link to="/research">Collaborations</Link>
                 <ul className="sub-menu">
-                  <li><Link to="/research">Research Papers</Link></li>
-                  <li><Link to="/patents">Patents</Link></li>
+                  <li><Link to="/research">Innovation</Link></li>
+                  <li><Link to="/patents">Patent</Link></li>
+                  <li><Link to="/partners">Collaration</Link></li>
                 </ul>
                 <div className={`dropdown-btn ${activeDropdown === 3 ? "open" : ""}`} onClick={() => toggleDropdown(3)}>
                   <span className="fa fa-angle-right" />
                 </div>
               </li>
 
-              {/* Support */}
-              <li className={`dropdown ${activeDropdown === 4 ? "active" : ""}`}>
-                <Link to="/">Support</Link>
-                <ul className="sub-menu">
-                  <li><Link to="/doctors">Our Doctors</Link></li>
-                  <li><Link to="/careers">Careers</Link></li>
-                  <li><Link to="/faq">FAQ</Link></li>
-                  <li><Link to="/gallery">Gallery</Link></li>
-                  <li><Link to="/partners">Our Partners</Link></li>
-                  <li><Link to="/plans">Plans</Link></li>
-                </ul>
-                <div className={`dropdown-btn ${activeDropdown === 4 ? "open" : ""}`} onClick={() => toggleDropdown(4)}>
-                  <span className="fa fa-angle-right" />
-                </div>
-              </li>
-
               {/* Blog */}
-              <li className={`dropdown ${activeDropdown === 5 ? "active" : ""}`}>
-                <Link to="/blog">Blog</Link>
-                <ul className="sub-menu">
-                  <li><Link to="/blog">Blog Grid</Link></li>
-                </ul>
-                <div className={`dropdown-btn ${activeDropdown === 5 ? "open" : ""}`} onClick={() => toggleDropdown(5)}>
-                  <span className="fa fa-angle-right" />
-                </div>
-              </li>
+              <li><Link to="/blog">Blog</Link></li>
 
-              {/* Contact */}
-              <li><Link to="/contact">Contact</Link></li>
+              {/* Career */}
+              <li><Link to="/careers">Career</Link></li>
 
-              {/* Login */}
-              <li style={{ padding: '15px 25px 0 25px' }}>
-                <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{ 
-                  width: '100%', 
+              {/* Contact Us */}
+              <li><Link to="/contact">Contact Us</Link></li>
+
+              {/* Registration & Login */}
+              <li style={{ padding: '15px 25px 0 25px', display: 'flex', gap: '10px' }}>
+                <Link to="/signup" reloadDocument className="theme-btn btn-one" style={{ 
+                  flex: 1, 
                   padding: '10px 0', 
                   borderRadius: '5px',
-                  fontSize: '14px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                  textAlign: 'center'
+                }}>
+                  Register
+                </Link>
+                <Link to="/signin" reloadDocument className="theme-btn btn-one" style={{ 
+                  flex: 1, 
+                  padding: '10px 0', 
+                  borderRadius: '5px',
+                  fontSize: '13px',
                   fontWeight: '600',
                   textTransform: 'uppercase',
                   display: 'block',

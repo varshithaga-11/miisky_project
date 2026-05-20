@@ -875,7 +875,7 @@ class WebsiteInquiryViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [AllowAny()]
 
     def perform_create(self, serializer):
         # Always force 'new' status for public submissions
